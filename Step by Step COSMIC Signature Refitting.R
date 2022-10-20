@@ -9,7 +9,7 @@ library(vegan)
 library(IRanges)
 library(GenomicRanges)
 library(fuzzyjoin)
-set.seed(3135) #What is set.seed? What does the number mean?
+set.seed(3135) # For reproducible random number generation
 
 #Load the count data
 PRC_BM_Trinuc_R <- read.delim("PRC_BM_Trinuc_Count_R.txt")
