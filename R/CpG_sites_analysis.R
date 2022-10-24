@@ -31,5 +31,21 @@ get_regions <- function(species) {
 
 
 # Step 3 - enumerate all the CpG sites within those regions identified
+identify_CpG_sites <- function(regions) {
+  all_CpGs <- list()
+  for (i in seq_along(regions_ranges)) {
+    CpG_sites <- Biostrings::matchPattern(pattern = "CG",
+                                          subject = regions_ranges[i]$sequence[[1]])
+    CpG_sites <- GRanges(seqnames = seqnames(regions_ranges[i]),
+                         ranges = IRanges(start = start(ranges(CpG_sites)) + start(regions_ranges[i])-1,
+                                          end = end(ranges(CpG_sites)) + start(regions_ranges[i])-1))
+    all_CpGs[[i]] <- CpG_sites
+  }
+  all_CpGs <- do.call("c", all_CpGs)
+  return(all_CpGs)
+}
 
-Biostrings::matchPattern(pattern = "CG", subject = regions_ranges[i]$sequence[[1]])
+# Step 4 - join mutation data with CpG sites
+regions_ranges <- get_regions("human")
+CpG_sites <- identify_CpG_sites(regions_ranges)
+CpGs_from_data <- plyranges::find_overlaps(per.nucleotide.data, CpG_sites)
