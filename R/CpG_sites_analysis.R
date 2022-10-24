@@ -23,7 +23,7 @@ get_regions <- function(species) {
                                             end.field = "end",
                                             starts.in.df.are.0based = TRUE)
   
-  # Step 2 - Get FASTA reference sequences for regions of interest
+  # Step 2 - Get reference sequences for regions of interest
   seqs <- getSeq(get(db), names = regions_ranges)
   mcols(regions_ranges)$sequence <- seqs
   return(regions_ranges)
@@ -32,4 +32,4 @@ get_regions <- function(species) {
 
 # Step 3 - enumerate all the CpG sites within those regions identified
 
-Biostrings::matchPattern(pattern = "CG", subject = test[[i]])
+Biostrings::matchPattern(pattern = "CG", subject = regions_ranges[i]$sequence[[1]])
