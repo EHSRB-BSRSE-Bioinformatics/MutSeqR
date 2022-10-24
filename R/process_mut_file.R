@@ -12,7 +12,7 @@ library(fuzzyjoin)
 #' @param mut_sep The delimiter for importing the .mut file
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @export
-import_ds_data <- function(mut_file = "../..//data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+import_ds_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
                            rsids = F,
                            sample_data_file = NULL,
                            sd_sep = "\t",
