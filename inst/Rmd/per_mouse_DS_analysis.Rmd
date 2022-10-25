@@ -28,8 +28,8 @@ library(tidyverse)
 #library(GenomicRanges)
 library(fuzzyjoin)
 #library(pamr)
-library(heatmap3)
-library(ggpubr)
+#library(heatmap3)
+#library(ggpubr)
 set.seed(3135)
 
 
@@ -39,72 +39,34 @@ set.seed(3135)
 
 ```{r import-data}
 
-per.nucleotide.data <- import_ds_data(mut_file = "./data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt", 
-                                      rsids = T)
+mutation_data <-
+  import_mut_data(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+                 rsids = T, grouping_variable = "tissue")
 
-#Note: col names
-#mut_depth = final_somatic_alt_depth
-#total_depth_ = informative_total_depth
+# generate frequency tables
 
-#Create a new column for unique mutation counts (if you want to run the analysis without clonal expansion)
-#per.nucleotide.data.unique <- per.nucleotide.data %>%
-#  mutate(unique_mut_depth = ifelse(!variation_type=="no_variant", 1, 0))
-
-#generate frequency tables
-trinucleotide_frequencies_global <- per.nucleotide.data %>%
+trinucleotide_frequencies_global <- mutation_data %>%
    group_by(context, subtype) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
  
- trinucleotide_frequencies_dose_group <- per.nucleotide.data %>%
-   group_by(context, subtype, Dose) %>%
+ trinucleotide_frequencies_dose_group <- mutation_data %>%
+   group_by(context, subtype, tissue) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
  
- trinucleotide_frequencies_per_mouse <- per.nucleotide.data %>%
+ trinucleotide_frequencies_per_individual <- mutation_data %>%
    group_by(context, subtype, sample) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
- 
- trinucleotide_counts_per_dose <- per.nucleotide.data %>%
-   group_by(context, subtype, Dose) %>%
-   summarise(count = sum(mut_depth))
 
 ```
 
-## Clean data and join tables
+## GC Content
 
-```{r clean_join}
+```{r gc-content}
 
-################
-# Clean up data:
-# Select only SNVs
-# Remove sites where mut_depth (final_somatic_alt_depth) is zero
-# Get reverse complement of sequence context where mutation is listed on purine context
-# Change all purine substitutions to pyrimidine substitutions
-# Make new column with COSMIC-style 96 base context
-# Calculate depth for each sequence context and dose group
-# Calculate frequency for each mouse within each 96 trinucleotide mutation
+gc_content_data <- annotate_CpG_sites(get_regions("human"), mutation_data)
+# TODO instead of manually specifying human or mouse, it should be a config parameter.
+as.data.frame(gc_content_data) %>% dplyr::group_by(subtype) %>% tally()
 
-trinucleotide_frequencies_depth <- per.nucleotide.data %>%
-  mutate(context = ifelse(subtype %in% c("G>T","G>A","G>C","A>T","A>C","A>G"),
-                          mapply(function(x) spgs::reverseComplement(x, case="upper"), context),
-                          context)) %>%
-  mutate(subtype = str_replace(subtype, "G>T", "C>A")) %>%
-  mutate(subtype = str_replace(subtype, "G>A", "C>T")) %>%
-  mutate(subtype = str_replace(subtype, "G>C", "C>G")) %>%
-  mutate(subtype = str_replace(subtype, "A>T", "T>A")) %>%
-  mutate(subtype = str_replace(subtype, "A>C", "T>G")) %>%
-  mutate(subtype = str_replace(subtype, "A>G", "T>C")) %>%
-  mutate(context_with_mutation = paste0(str_sub(context, 1, 1),"[",subtype,"]",str_sub(context, 3, 3)) ) %>%
-  group_by(context, Dose) %>%
-  mutate(group_depth = sum(total_depth)) %>%
-  ungroup() %>%
-  group_by(context_with_mutation, sample) %>%
-  mutate(frequency = (sum(mut_depth)/group_depth) ) %>%
-  ungroup() %>%
-  filter(variation_type=="snv") %>%
-  filter(!mut_depth==0) %>%
-  mutate(gc_content = (str_count(string = context, pattern = "G") + 
-                       str_count(string = context, pattern = "C"))
-                      /str_count(context))
 ```
 
 ## Split by genic and intergenic regions
