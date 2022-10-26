@@ -35,7 +35,7 @@ get_region_seqs <- function(species) {
   return(regions_ranges)
 }
 
-annotate_CpG_sites <- function(regions, mut_data) {
+get_CpG_mutations <- function(regions, mut_data) {
   # Step 3 - find all the CpG sites within those regions identified
   all_CpGs <- list()
   for (i in seq_along(regions)) {
