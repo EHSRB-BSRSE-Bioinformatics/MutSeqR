@@ -52,29 +52,41 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   # Calculate frequency for each mouse within each 96 trinucleotide mutation
   
   dat <- dat %>%
-    dplyr::mutate(normalized_context = ifelse(subtype %in% c("G>T","G>A","G>C","A>T","A>C","A>G"),
-                                       mapply(function(x) spgs::reverseComplement(x, case="upper"), context),
-                                       context)) %>%
-    dplyr::mutate(normalized_subtype = str_replace(subtype, "G>T", "C>A")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(subtype, "G>A", "C>T")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(subtype, "G>C", "C>G")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(subtype, "A>T", "T>A")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(subtype, "A>C", "T>G")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(subtype, "A>G", "T>C")) %>%
+    dplyr::mutate(normalized_context = ifelse(
+      test = subtype %in% c("G>T","G>A","G>C","A>T","A>C","A>G"),
+      yes = mapply(function(x) spgs::reverseComplement(x, case="upper"), context),
+      no = context)) %>%
+    dplyr::mutate(normalized_subtype = subtype) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>A", "C>T")) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>C", "C>G")) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "A>T", "T>A")) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "A>C", "T>G")) %>%
+    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "A>G", "T>C")) %>%
     dplyr::mutate(context_with_mutation = paste0(str_sub(normalized_context, 1, 1),
                                           "[",normalized_subtype,"]",
                                           str_sub(normalized_context, 3, 3)) ) %>%
-    dplyr::group_by(context, .data[[grouping_variable]]) %>%
+    dplyr::group_by(normalized_context, !!sym(grouping_variable)) %>%
     dplyr::mutate(group_depth = sum(total_depth)) %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(context_with_mutation, sample) %>%
-    dplyr::mutate(frequency = (sum(mut_depth)/group_depth) ) %>%
+    dplyr::group_by(!!sym(grouping_variable)) %>%
+    dplyr::mutate(group_mut_count = sum(mut_depth)) %>%
     dplyr::ungroup() %>%
-    dplyr::filter(variation_type=="snv") %>%
-    dplyr::filter(!mut_depth==0) %>%
-    dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") + 
-                           str_count(string = context, pattern = "C"))
-           /str_count(context))
+    dplyr::group_by(context_with_mutation, !!sym(grouping_variable)) %>%
+    dplyr::mutate(group_mut_count_by_type = sum(mut_depth)) %>%
+    dplyr::mutate(group_frequency = group_mut_count_by_type/group_mut_count/group_depth) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(normalized_context, sample) %>%
+    dplyr::mutate(sample_depth = sum(total_depth)) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(sample_frequency = (sum(mut_depth)/sample_depth) ) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(variation_type == "snv") %>%
+    dplyr::filter(!mut_depth == 0) %>%
+    dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") +
+                                  str_count(string = context, pattern = "C"))
+                  /str_count(context))
   
   mut_ranges <- makeGRangesFromDataFrame(df = dat,
                            keep.extra.columns = T,
@@ -94,12 +106,5 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                                          starts.in.df.are.0based = TRUE)
   
   ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
-  # ranges_joined <- findOverlaps(mut_ranges, region_ranges)
-  
-  # dat <- fuzzyjoin::genome_join(dat, genic_regions, by=c("contig", "start", "end"), mode="inner") %>%
-  #   dplyr::rename("start" = "start.x",
-  #                 "end" = "end.x",
-  #                 "contig" = "contig.x")
-  
   return(ranges_joined)
 }
