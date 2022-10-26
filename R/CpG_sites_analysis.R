@@ -51,3 +51,18 @@ get_CpG_mutations <- function(regions, mut_data) {
   CpGs_in_data <- plyranges::find_overlaps(mut_data, CpGs_combined)
   return(CpGs_in_data)
 }
+
+get_CpG_regions <- function(regions) {
+  # Similar to the above function but instead returns all the sites where CpGs are found in the reference (instead of the mutation data)
+  all_CpGs <- list()
+  for (i in seq_along(regions)) {
+    CpG_sites <- Biostrings::matchPattern(pattern = "CG",
+                                          subject = regions[i]$sequence[[1]])
+    CpG_sites <- GRanges(seqnames = seqnames(regions[i]),
+                         ranges = IRanges(start = start(ranges(CpG_sites)) + start(regions[i])-1,
+                                          end = end(ranges(CpG_sites)) + start(regions[i])-1))
+    all_CpGs[[i]] <- CpG_sites
+  }
+  CpGs_combined <- do.call("c", all_CpGs)
+  return(CpGs_combined)
+}
