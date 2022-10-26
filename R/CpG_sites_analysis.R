@@ -2,7 +2,7 @@ library(tidyverse)
 library(GenomicRanges)
 library(Biostrings)
 
-get_regions <- function(species) {
+get_region_seqs <- function(species) {
   # Step 1 - Import the regions of interest
   # Load species database
   if (species == "human") {
