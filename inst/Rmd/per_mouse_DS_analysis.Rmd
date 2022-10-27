@@ -83,15 +83,24 @@ n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
 
 # Mutations at CpG sites...
 cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
-  dplyr::group_by(subtype, !!ensym(group_var)) %>%
+  dplyr::group_by(!!ensym(group_var)) %>%
+  dplyr::add_count(mut_depth, name = "total_muts_per_group") %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(subtype, !!ensym(group_var), total_muts_per_group) %>%
   dplyr::tally() %>%
-  dplyr::mutate(pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples))
+  dplyr::mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
+  dplyr::mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
 
 # Mutations at CpG sites, broken down by trinucleotide mutation context
 cpg_summary_context <- as.data.frame(cpg_mutations) %>%
-  dplyr::group_by(context_with_mutation, !!ensym(group_var)) %>%
+  dplyr::group_by(!!ensym(group_var)) %>%
+  dplyr::add_count(mut_depth, name = "total_muts_per_group") %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(context_with_mutation, !!ensym(group_var), total_muts_per_group) %>%
   dplyr::tally() %>%
-  dplyr::mutate(pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples))
+  dplyr::mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
+  dplyr::mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
+
 cpg_tables <- list(CpGs_by_subtype = cpg_summary_subtype,
                    CpGs_by_trinucleotide = cpg_summary_context)
 write_excel_from_list(list_of_tables = cpg_tables,
