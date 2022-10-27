@@ -6,7 +6,7 @@
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
-#' @param grouping_variable Analagous to the DESeq2 nomenclature for "interesting groups", this should be a column in your data for which you would like to build comparisons upon, e.g., dose, or tissue, or sex
+#' @param grouping_variable Group of experimental interest, this should be a column in your data for which you would like to build comparisons upon, e.g., dose, or tissue, or sex
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @export
 import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",

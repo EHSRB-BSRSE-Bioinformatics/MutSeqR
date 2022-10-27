@@ -42,3 +42,35 @@ write_excel_from_list <- function(list_of_tables, output_path, workbook_name) {
   saveWorkbook(wb1, fname, overwrite = TRUE)
 }
 
+write_excel_single_table <- function(mut_data, output_path, workbook_name) {
+  if (!require(openxlsx)) {
+    stop("openxlsx not installed")
+  }
+  hs1 <- createStyle(textDecoration = "Bold",
+                     border = "Bottom",
+                     fontColour = "black")
+  hs2 <- createStyle(textDecoration = "Bold",
+                     border = c("top", "bottom", "left", "right"),
+                     fontColour = "black",
+                     fgFill = "#C5D9F1")
+  options("openxlsx.borderColour" = "#4F80BD")
+  options("openxlsx.borderStyle" = "thin")
+  options("openxlsx.maxWidth" = 50)
+  wb1 <- createWorkbook()
+  dataToWrite <- as.data.frame(mut_data)
+  addWorksheet(wb1, workbook_name)
+  freezePane(wb1, sheet = 1, firstRow = TRUE, firstActiveCol = 1)
+  writeDataTable(wb1,
+                 sheet = 1,
+                 x = dataToWrite,
+                 colNames = TRUE,
+                 rowNames = F,
+                 tableStyle = "none",
+                 headerStyle = hs1,
+                 keepNA = T,
+                 na.string = "NA")
+  setColWidths(wb1, sheet = 1, cols = 1:ncol(dataToWrite), widths = "auto")
+  fname <- file.path(output_path, paste0(workbook_name,".xlsx"))
+  saveWorkbook(wb1, fname, overwrite = TRUE)
+}
+

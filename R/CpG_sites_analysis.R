@@ -1,8 +1,14 @@
-library(tidyverse)
-library(GenomicRanges)
-library(Biostrings)
 
 get_region_seqs <- function(species) {
+  if (!require(tidyverse)) {
+    stop("tidyverse not installed")
+  }
+  if (!require(GenomicRanges)) {
+    stop("GenomicRanges not installed")
+  }
+  if (!require(Biostrings)) {
+    stop("Biostrings not installed")
+  }
   # Step 1 - Import the regions of interest
   # Load species database
   if (species == "human") {
@@ -36,6 +42,15 @@ get_region_seqs <- function(species) {
 }
 
 get_CpG_mutations <- function(regions, mut_data) {
+  if (!require(tidyverse)) {
+    stop("tidyverse not installed")
+  }
+  if (!require(GenomicRanges)) {
+    stop("GenomicRanges not installed")
+  }
+  if (!require(Biostrings)) {
+    stop("Biostrings not installed")
+  }
   # Step 3 - find all the CpG sites within those regions identified
   all_CpGs <- list()
   for (i in seq_along(regions)) {
@@ -53,6 +68,15 @@ get_CpG_mutations <- function(regions, mut_data) {
 }
 
 get_CpG_regions <- function(regions) {
+  if (!require(tidyverse)) {
+    stop("tidyverse not installed")
+  }
+  if (!require(GenomicRanges)) {
+    stop("GenomicRanges not installed")
+  }
+  if (!require(Biostrings)) {
+    stop("Biostrings not installed")
+  }
   # Similar to the above function but instead returns all the sites where CpGs are found in the reference (instead of the mutation data)
   all_CpGs <- list()
   for (i in seq_along(regions)) {
@@ -65,4 +89,17 @@ get_CpG_regions <- function(regions) {
   }
   CpGs_combined <- do.call("c", all_CpGs)
   return(CpGs_combined)
+}
+
+annotate_CpG_sites <- function(mut_data) {
+  if (!require(tidyverse)) {
+    stop("tidyverse not installed")
+  }
+  if (!require(Biostrings)) {
+    stop("Biostrings not installed")
+  }
+  annotated_data <- as.data.frame(mut_data) %>%
+    dplyr::mutate(CpG_site = Biostrings::vcountPattern(pattern = "CG", context)) %>%
+    dplyr::mutate(CpG_site = ifelse(CpG_site == 0, F, T))
+  return(annotated_data)
 }
