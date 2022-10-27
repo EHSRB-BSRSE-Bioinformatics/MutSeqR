@@ -1,3 +1,11 @@
+#' Write Excel tables
+#'
+#' Takes a list of tables (data frames) and writes each one to a separate Excel sheet in a workbook. Names of tabs will be based on names in the list. 
+#' @param list_of_tables A named list of data frames to be written.
+#' @param output_path The directory where the Excel file should be written.
+#' @param workbook_name The file name for the Excel file.
+#' @returns A saved Excel workbook.
+#' @export
 write_excel_from_list <- function(list_of_tables, output_path, workbook_name) {
   if (!require(openxlsx)) {
     stop("openxlsx not installed")
