@@ -45,6 +45,7 @@ signature_matrices <- SigProfilerMatrixGeneratorR(project = project_name,
                                                   cushion=100)
 
 source_python(file.path(here::here(),"inst","signatures.py"))
+
 cosmic_fitR(file.path(output_path,"/output/SBS",paste0(project_name,".SBS96.all")),
             output_path)
 
