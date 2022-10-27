@@ -1,9 +1,3 @@
-#!/usr/bin/R
-library(tidyverse)
-library(fuzzyjoin)
-library(GenomicRanges)
-library(plyranges)
-
 #' Import a .mut file
 #'
 #' Imports a .mut file into the local R environment.
@@ -22,7 +16,15 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                            mut_sep = "\t",
                            regions_file = "../../inst/genic_regions_hg38.txt",
                            grouping_variable = "dose") {
-
+  if (!require(tidyverse)) {
+    stop("tidyverse not installed")
+  }
+  if (!require(GenomicRanges)) {
+    stop("GenomicRanges not installed")
+  }
+  if (!require(plyranges)) {
+    stop("plyranges not installed")
+  }
   # Read in mut file
   # Note: col names
   # mut_depth = final_somatic_alt_depth
@@ -48,7 +50,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   # Get reverse complement of sequence context where mutation is listed on purine context
   # Change all purine substitutions to pyrimidine substitutions
   # Make new column with COSMIC-style 96 base context
-  # Calculate depth for each sequence context and dose group
+  # Calculate depth for each of the 32 sequence contexts, by sample and by group
   # Calculate frequency for each mouse within each 96 trinucleotide mutation
   
   dat <- dat %>%
