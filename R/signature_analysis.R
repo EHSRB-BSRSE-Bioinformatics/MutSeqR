@@ -25,7 +25,6 @@ signature_decomposition <- function(mutations = mutation_data,
                                     project_genome = "GRCh38",
                                     group = "sample",
                                     python_path = "/usr/bin/python3.9") {
-  
   if (!require(reticulate)) {
     stop("reticulate not installed")
   }
@@ -35,19 +34,21 @@ signature_decomposition <- function(mutations = mutation_data,
   if (!require(tidyverse)) {
     stop("tidyverse not installed")
   }
-  
-  #reticulate::use_python(python_path)
-  #reticulate::py_config()
-  
+
+  # reticulate::use_python(python_path)
+  # reticulate::py_config()
+
   # Clean data into required format for Alexandrov Lab tools...
   signature_data <- as.data.frame(mutations) %>%
     dplyr::select(!!ensym(group), id, variation_type, seqnames, start, end, ref, alt) %>%
-    dplyr::rename("Sample" = group,
-                  "ID" = "id",
-                  "mut_type" = "variation_type",
-                  "chrom" = "seqnames",
-                  "pos_start" = "start",
-                  "pos_end" = "end") %>%
+    dplyr::rename(
+      "Sample" = group,
+      "ID" = "id",
+      "mut_type" = "variation_type",
+      "chrom" = "seqnames",
+      "pos_start" = "start",
+      "pos_end" = "end"
+    ) %>%
     dplyr::mutate(Sample = stringr::str_replace_all(Sample, " ", "_")) %>%
     dplyr::mutate(chrom = stringr::str_replace(chrom, "chr", "")) %>%
     dplyr::mutate(Project = project_name) %>%
@@ -56,31 +57,42 @@ signature_decomposition <- function(mutations = mutation_data,
     dplyr::relocate(Project) %>%
     dplyr::relocate(Genome, .after = ID) %>%
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
-  
-  output_path = file.path(here::here(),
-                          "output",
-                          "SigProfiler",
-                          group)
-  
-  if (!dir.exists(output_path)) { dir.create(file.path(output_path,"matrices"), recursive = T) }
-  
-  write.table(signature_data, file = file.path(output_path,"matrices","mutations.txt"),
-              sep = "\t", row.names = F, quote = F)
-  
-  signature_matrices <- SigProfilerMatrixGeneratorR(project = project_name,
-                                                    genome = project_genome,
-                                                    matrix_path = file.path(output_path,"matrices"),
-                                                    plot = T, exome = F, bed_file = NULL,
-                                                    chrom_based = F, tsb_stat = T, seqInfo = T,
-                                                    cushion=100)
-  
-  source_python(file.path(here::here(),"inst","signatures.py"))
-  
-  cosmic_fitR(file.path(output_path,"matrices","output","SBS",paste0(project_name,".SBS96.all")),
-              output_path)
-  
-  sigProfilerExtractorR(file.path(output_path,"matrices","output","SBS",paste0(project_name,".SBS96.all")),
-                        file.path(output_path,"SigProfilerExtractor"),
-                        project_genome)
-  
+
+  output_path <- file.path(
+    here::here(),
+    "output",
+    "SigProfiler",
+    group
+  )
+
+  if (!dir.exists(output_path)) {
+    dir.create(file.path(output_path, "matrices"), recursive = T)
+  }
+
+  write.table(signature_data,
+    file = file.path(output_path, "matrices", "mutations.txt"),
+    sep = "\t", row.names = F, quote = F
+  )
+
+  signature_matrices <- SigProfilerMatrixGeneratorR(
+    project = project_name,
+    genome = project_genome,
+    matrix_path = file.path(output_path, "matrices"),
+    plot = T, exome = F, bed_file = NULL,
+    chrom_based = F, tsb_stat = T, seqInfo = T,
+    cushion = 100
+  )
+
+  source_python(file.path(here::here(), "inst", "signatures.py"))
+
+  cosmic_fitR(
+    file.path(output_path, "matrices", "output", "SBS", paste0(project_name, ".SBS96.all")),
+    output_path
+  )
+
+  sigProfilerExtractorR(
+    file.path(output_path, "matrices", "output", "SBS", paste0(project_name, ".SBS96.all")),
+    file.path(output_path, "SigProfilerExtractor"),
+    project_genome
+  )
 }
