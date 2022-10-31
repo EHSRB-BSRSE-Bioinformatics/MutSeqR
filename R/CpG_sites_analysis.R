@@ -1,4 +1,9 @@
-
+#' Get sequence of Duplex Sequencing target regions
+#'
+#' Imports package data to find target regions and some associated information, and further extends the table by getting raw nucleotide sequences for each region of the genome. Note that the way this is written, currently, the default genomes are hg38 and mm10 for human and mouse, respectively.
+#' @param species One of "mouse" or "human", to determine which regions to return.
+#' @returns A GRanges object where each range is a target region
+#' @export
 get_region_seqs <- function(species) {
   if (!require(tidyverse)) {
     stop("tidyverse not installed")
@@ -43,6 +48,13 @@ get_region_seqs <- function(species) {
   return(regions_ranges)
 }
 
+#' Get mutations at CpG sites
+#'
+#' Subset the mutations provided and return only mutations that are found at CpG sites.
+#' @param regions A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.
+#' @param mut_data A GRanges object containing the mutation data to be interrogated.
+#' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
+#' @export
 get_CpG_mutations <- function(regions, mut_data) {
   if (!require(tidyverse)) {
     stop("tidyverse not installed")
@@ -75,6 +87,12 @@ get_CpG_mutations <- function(regions, mut_data) {
   return(CpGs_in_data)
 }
 
+#' Get the coordinates of CpG sites
+#'
+#' Imports package data to find target regions and some associated information, and further extends the table by getting raw nucleotide sequences for each region of the genome. Note that the way this is written, currently, the default genomes are hg38 and mm10 for human and mouse, respectively.
+#' @param regions A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.
+#' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
+#' @export
 get_CpG_regions <- function(regions) {
   if (!require(tidyverse)) {
     stop("tidyverse not installed")
@@ -105,6 +123,12 @@ get_CpG_regions <- function(regions) {
   return(CpGs_combined)
 }
 
+#' Annotate CpG sites
+#'
+#' A simple method to test whether your trinucleotide context contains a CpG site. Vectorized version of Biostrings::vcountPattern is used.
+#' @param mut_data A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.
+#' @returns A data frame with the same number of rows as there were ranges in the input, but with an additional metadata column indicating CpG sites in the target sequence of the mutation.
+#' @export
 annotate_CpG_sites <- function(mut_data) {
   if (!require(tidyverse)) {
     stop("tidyverse not installed")
