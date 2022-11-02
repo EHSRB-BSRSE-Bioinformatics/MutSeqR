@@ -82,8 +82,8 @@ signature_decomposition <- function(mutations = mutation_data,
     chrom_based = F, tsb_stat = T, seqInfo = T,
     cushion = 100
   )
-
-  source_python(file.path(here::here(), "inst", "signatures.py"))
+  signatures_python_code <- system.file('extdata', 'signatures.py', package = "DupSeqR")
+  source_python(signatures_python_code)
 
   cosmic_fitR(
     file.path(output_path, "matrices", "output", "SBS", paste0(project_name, ".SBS96.all")),
