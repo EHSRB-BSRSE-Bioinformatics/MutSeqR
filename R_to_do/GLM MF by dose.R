@@ -1,6 +1,6 @@
 library(car)
 library(multcomp)
-library(doBy)
+
 
 #' GLM on mutation data by a factor
 #'
@@ -9,9 +9,15 @@ library(doBy)
 #' @param factor_name The name (character vector) of the column to use as a factor in the analysis.
 #' @returns A data frame of the results from the GLM modeling.
 #' @export
-glm_mf_by_factor <- function(mut_frequency_data, factor_name = "dose") {
+glm_mf_by_factor <- function(mut_frequency_data,
+                             factor_name = "dose",
+                             muts = "mut_depth",
+                             total_count = "total_depth") {
   # needed
   library(readxl)
+  library(rlang)
+  library(doBy)
+  
   ##################################################################
   #Reading in the data
   ##################################################################
@@ -20,23 +26,20 @@ glm_mf_by_factor <- function(mut_frequency_data, factor_name = "dose") {
   mutation_frequencies <- read_excel(mut_frequency_data)
   mutation_frequencies <- read_excel("./from-annette/PRC Mutation Frequency R.xlsx")
   
-  dat<-mutation_frequencies
-  head(mutation_frequencies)
-  mutation_frequencies$dose <- as.factor(mutation_frequencies$dose)
-  
+  mutation_frequencies[[factor_name]] <- as.factor(mutation_frequencies[[factor_name]])
   
   ##################################################################
   # Generalized Linear Model
   # quasibinomial in order to account for over dispersion
   ##################################################################
-  #for lacZ data#
-  m <- glm(cbind(mutants,plaques) ~ dose, family = "quasibinomial", data = mutation_frequencies)
-  mutation_frequencies$MF <- mutation_frequencies$mutants/mutation_frequencies$plaques
+  glm_formula <- as.formula(paste0(muts,"/(",muts,"+",total_count,") ~ ", factor_name))
+
+  m <- glm(glm_formula,
+           family = "quasibinomial", data = mutation_frequencies,
+           weights = get(muts) + get(total_count))
   
-  #For DS data#
-  m <- glm(cbind(mut_depth,total_depth) ~ dose, family = "quasibinomial", data = mutation_frequencies)
-  mutation_frequencies$MF <- mutation_frequencies$mut_depth/mutation_frequencies$total_depth
-  
+  # Isn't this already in the TS data?
+  mutation_frequencies$MF <- mutation_frequencies[[muts]]/mutation_frequencies[[total_count]]
   
   mutation_frequencies$Resid <- m$residuals
   
@@ -51,7 +54,6 @@ glm_mf_by_factor <- function(mut_frequency_data, factor_name = "dose") {
   #  1 DNA02444 PRC 121           129   728699669 0.000000177 0.000000130 0.000000188 0     0.000000177 0.255
   
   hist(mutation_frequencies$Resid, main = "Residuals", col = "yellow")
-  library(ggplot2)
   qqnorm(mutation_frequencies$Resid)
   abline(h = -3, col = "red", lwd = 2)
   abline(h = 3, col = "red", lwd = 2)
