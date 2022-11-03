@@ -1,5 +1,5 @@
-library(car)
-library(multcomp)
+library(car) # used?
+library(multcomp) # used?
 
 
 #' GLM on mutation data by a factor
