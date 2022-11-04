@@ -26,15 +26,13 @@ library(tidyverse)
 #library(vegan)
 #library(IRanges)
 #library(GenomicRanges)
-library(fuzzyjoin)
+#library(fuzzyjoin)
 #library(pamr)
 #library(heatmap3)
 #library(ggpubr)
 set.seed(3135)
 
-source(file.path(here::here(),"R","CpG_sites_analysis.R"))
-source(file.path(here::here(),"R","process_mut_file.R"))
-source(file.path(here::here(),"R","signature_analysis.R"))
+library(DupSeqR)
 output_dir <- file.path(here::here(),"output")
 if (!dir.exists(output_dir)) { dir.create(output_dir)}
 ```
@@ -48,7 +46,8 @@ project <- "Axelson_2022"
 project_genome = "GRCh38"
 
 mutation_data <-
-  import_mut_data(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+  import_mut_data(mut_file = file.path("../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt"),
+                  regions_file = file.path("../../inst/extdata/genic_regions_hg38.txt"),
                  rsids = T, grouping_variable = group_var) %>%
   dplyr::mutate(sample_and_group = stringr::str_c(!!ensym(group_var), sample, sep = " "))
 
