@@ -10,7 +10,7 @@ import_mut_data(
   sample_data_file = NULL,
   sd_sep = "\\t",
   mut_sep = "\\t",
-  regions_file = "../../inst/genic_regions_hg38.txt",
+  regions_file = "../../inst/extdata/genic_regions_hg38.txt",
   grouping_variable = "dose"
 )
 }

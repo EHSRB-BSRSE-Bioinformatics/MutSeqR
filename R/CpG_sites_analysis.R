@@ -22,14 +22,14 @@ get_region_seqs <- function(species) {
       stop("BSgenome.Hsapiens.UCSC.hg38 not installed")
     }
     # library(org.Hs.eg.db) # May be useful...
-    regions_file <- "../../inst/genic_regions_hg38.txt"
+    regions_file <- "../../inst/extdata/genic_regions_hg38.txt"
   } else if (species == "mouse") {
     db <- "BSgenome.Mmusculus.UCSC.mm10"
     if (!require(BSgenome.Mmusculus.UCSC.mm10)) {
       stop("BSgenome.Mmusculus.UCSC.mm10 not installed")
     }
     # library(org.Mm.eg.db) # May be useful...
-    regions_file <- "../../inst/genic_regions_mm10.txt"
+    regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
   }
 
   regions <- read.delim(regions_file)
