@@ -149,6 +149,7 @@ write_excel_from_list(list_of_tables = cpg_tables,
                       workbook_name = "cpg_tables")
 
 ```
+
 ## Signature Decomposition
 
 ```{r cosmic-signatures}
@@ -159,6 +160,20 @@ signature_decomposition(project_name = project, group = group_var)
 # Aggregate by sample and group
 signature_decomposition(project_name = project, group = "sample_and_group")
 
+```
+
+## Recurring mutations
+
+Are any mutations observed in more than one individual?
+
+```{r}
+
+recurring_mutations <- mutation_data_cpgs %>% dplyr::group_by(seqnames,start,end) %>% tally() %>% dplyr::arrange(-n)
+
+recurring_mutations_group <- mutation_data_cpgs %>% dplyr::group_by(seqnames,start,end,sample) %>% tally() %>% dplyr::arrange(-n)
+
+
+recurring_mutations_rsid <- mutation_data_cpgs %>% dplyr::group_by(id) %>% tally() %>% dplyr::arrange(-n)
 ```
 
 ## Write data
