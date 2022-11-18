@@ -1,0 +1,190 @@
+---
+title: "Duplex Sequencing Summary Report"
+author: "Matthew J. Meier"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+    theme: spacelab
+    code_download: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r load_libraries, warning=F, echo=F}
+# Script to analyze distances between two dose groups of a chemical exposure using trinucleotide mutational patterns
+library(ggplot2)
+theme_set(theme_bw())
+library(tidyverse)
+#library(spgs)
+#library(MutationalPatterns)
+#library(SomaticSignatures)
+#library(deconstructSigs)
+#library(phyloseq)
+#library(vegan)
+#library(IRanges)
+#library(GenomicRanges)
+#library(fuzzyjoin)
+#library(pamr)
+#library(heatmap3)
+#library(ggpubr)
+set.seed(3135)
+
+library(DupSeqR)
+output_dir <- file.path(here::here(),"output")
+if (!dir.exists(output_dir)) { dir.create(output_dir)}
+```
+
+# Import Data
+
+```{r import-data}
+group_var <- "tissue"
+dupseq_species <- "human"
+project <- "Axelson_2022"
+project_genome = "GRCh38"
+
+mutation_data <-
+  import_mut_data(mut_file = file.path("../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt"),
+                  regions_file = file.path("../../inst/extdata/genic_regions_hg38.txt"),
+                 rsids = T, grouping_variable = group_var) %>%
+  dplyr::mutate(sample_and_group = stringr::str_c(!!ensym(group_var), sample, sep = " "))
+
+mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
+
+```
+
+```{r exploratory-spectra}
+
+# Look at overall spectrum
+as.data.frame(mutation_data) %>% dplyr::group_by(subtype) %>% tally()
+as.data.frame(mutation_data) %>% dplyr::group_by(normalized_subtype) %>% tally()
+
+# generate frequency tables
+trinucleotide_frequencies_global <- mutation_data %>%
+   group_by(normalized_context, normalized_subtype) %>%
+   summarise(depth_per_trinucleotide = sum(total_depth))
+ 
+ trinucleotide_frequencies_group <- mutation_data %>%
+   group_by(normalized_context, normalized_subtype, !!sym(group_var)) %>%
+   summarise(depth_per_trinucleotide = sum(total_depth))
+ 
+ trinucleotide_frequencies_per_individual <- mutation_data %>%
+   group_by(normalized_context, normalized_subtype, sample) %>%
+   summarise(depth_per_trinucleotide = sum(total_depth))
+
+```
+
+## CpG Mutations
+
+```{r cpg-mutations}
+cpg_mutations <- get_CpG_mutations(get_region_seqs(dupseq_species), mutation_data)
+cpg_sites <- get_CpG_regions(get_region_seqs(dupseq_species))
+# Total number of CpG sites
+nrow(as.data.frame(cpg_sites)) # could also use %>% count() %>% pull()
+n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
+
+# Mutations at CpG sites...
+cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
+  dplyr::group_by(!!ensym(group_var)) %>%
+  dplyr::add_count(mut_depth, name = "total_muts_per_group") %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(subtype, !!ensym(group_var), total_muts_per_group) %>%
+  dplyr::tally() %>%
+  dplyr::mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
+  dplyr::mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
+
+# Mutations at CpG sites, broken down by trinucleotide mutation context
+cpg_summary_context <- as.data.frame(cpg_mutations) %>%
+  dplyr::group_by(!!ensym(group_var)) %>%
+  dplyr::add_count(mut_depth, name = "total_muts_per_group") %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(context_with_mutation, !!ensym(group_var), total_muts_per_group) %>%
+  dplyr::tally() %>%
+  dplyr::mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
+  dplyr::mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
+
+cpg_12base_pct <- as.data.frame(mutation_data_cpgs) %>%
+  dplyr::group_by(CpG_site, subtype, !!ensym(group_var)) %>%
+  dplyr::tally() %>% 
+  dplyr::ungroup() %>%
+  dplyr::group_by(subtype, !!ensym(group_var)) %>%
+  dplyr::mutate(total_mutations = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(percent = 100*n/total_mutations) %>%
+  dplyr::filter(CpG_site == T) %>%
+  dplyr::select(-1)
+
+cpg_6base_pct <- as.data.frame(mutation_data_cpgs) %>%
+  dplyr::group_by(CpG_site, normalized_subtype, !!ensym(group_var)) %>%
+  dplyr::tally() %>% 
+  dplyr::ungroup() %>%
+  dplyr::group_by(normalized_subtype, !!ensym(group_var)) %>%
+  dplyr::mutate(total_mutations = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(percent = 100*n/total_mutations) %>%
+  dplyr::filter(CpG_site == T) %>%
+  dplyr::select(-1)
+
+cpg_96base_pct <- as.data.frame(mutation_data_cpgs) %>%
+  dplyr::group_by(CpG_site, context_with_mutation, !!ensym(group_var)) %>%
+  dplyr::tally() %>% 
+  dplyr::ungroup() %>%
+  dplyr::group_by(context_with_mutation, !!ensym(group_var)) %>%
+  dplyr::mutate(total_mutations = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(percent = 100*n/total_mutations) %>%
+  dplyr::filter(CpG_site == T) %>%
+  dplyr::select(-1)
+
+cpg_tables <- list(CpGs_12base_percentage = cpg_12base_pct,
+                   CpGs_6base_percentage = cpg_6base_pct,
+                   #CpGs_trinucleotide_percentage = cpg_96base_pct, # Data too sparse.
+                   CpGs_by_subtype = cpg_summary_subtype,
+                   CpGs_by_trinucleotide = cpg_summary_context)
+
+write_excel_from_list(list_of_tables = cpg_tables,
+                      output_path = output_dir,
+                      workbook_name = "cpg_tables")
+
+```
+
+## Signature Decomposition
+
+```{r cosmic-signatures}
+# Aggregate by sample
+signature_decomposition(project_name = project, group = "sample")
+# Aggregate by group
+signature_decomposition(project_name = project, group = group_var)
+# Aggregate by sample and group
+signature_decomposition(project_name = project, group = "sample_and_group")
+
+```
+
+## Recurring mutations
+
+Are any mutations observed in more than one individual?
+
+```{r}
+
+recurring_mutations <- mutation_data_cpgs %>% dplyr::group_by(seqnames,start,end) %>% tally() %>% dplyr::arrange(-n)
+
+recurring_mutations_group <- mutation_data_cpgs %>% dplyr::group_by(seqnames,start,end,sample) %>% tally() %>% dplyr::arrange(-n)
+
+
+recurring_mutations_rsid <- mutation_data_cpgs %>% dplyr::group_by(id) %>% tally() %>% dplyr::arrange(-n)
+```
+
+## Write data
+
+```{r write-output-tables}
+
+# All mutation data, cleaned and processed
+write_excel_single_table(mut_data = mutation_data_cpgs,
+                      output_path = output_dir,
+                      workbook_name = paste0(project,"_mutation_data"))
+
+```
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
