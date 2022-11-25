@@ -62,6 +62,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       yes = mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
       no = context
     )) %>%
+    dplyr::mutate(ref_depth = total_depth - alt_depth) %>%
     dplyr::mutate(normalized_subtype = subtype) %>%
     dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
     dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
@@ -105,6 +106,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     starts.in.df.are.0based = TRUE
   )
 
+  # To do... locate and enumerate recurrent mutations?
+  
   # Annotate the mut file with additional information about genomic regions in the file
   genic_regions <- read.delim(regions_file)
 
