@@ -44,6 +44,13 @@ The other important component of importing your data for proper use is to assign
  columns such as `dose` or `tissue` or `treatment` can be added, and these 
  columns will be joined with your `.mut` file to capture that information and
   associate it with each mutation.
+  
+### Other Notes
+
+When first importing a `.mut` file, it is preferred to keep non-variant rows.
+This allows the calculuation of mutation frequencies. The data set can be pared
+down later to include only mutations of interest (SNVs, indels, SVs, or any 
+combination).
 
 To be filled in more...
 
