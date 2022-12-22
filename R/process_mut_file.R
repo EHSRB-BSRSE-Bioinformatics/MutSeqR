@@ -48,7 +48,6 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
 
   ################
   # Clean up data:
-  # Select only SNVs
   # Remove sites where mut_depth (final_somatic_alt_depth) is zero
   # Get reverse complement of sequence context where mutation is listed on purine context
   # Change all purine substitutions to pyrimidine substitutions
@@ -91,8 +90,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     dplyr::ungroup() %>%
     dplyr::mutate(sample_frequency = (sum(mut_depth) / sample_depth)) %>%
     dplyr::ungroup() %>%
-    dplyr::filter(variation_type == "snv") %>%
-    dplyr::filter(!mut_depth == 0) %>%
+    #dplyr::filter(variation_type == "snv") %>%
+    #dplyr::filter(!mut_depth == 0) %>%
     dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") +
       str_count(string = context, pattern = "C"))
     / str_count(context))
