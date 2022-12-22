@@ -37,6 +37,10 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                            You may want to set mut_sep to properly reflect
                            the delimiter used for the data you are importing.")}
   if (rsids == T) {
+    if(!"id" %in% colnames(dat)) {
+      stop("Error: you have set rsids to TRUE,
+      but there is no id column in the mut file!")
+    }
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
     dat <- dat %>% mutate(is_known = ifelse(!id == ".", "Y", "N"))
   }
