@@ -32,6 +32,10 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   # mut_depth = final_somatic_alt_depth
   # total_depth_ = informative_total_depth
   dat <- read.table(mut_file, header = T, sep = "\t", fileEncoding = "UTF-8-BOM")
+  dat <- read.table(mut_file, header = T, sep = mut_sep, fileEncoding = "UTF-8-BOM")
+  if (ncol(dat)<=1) { stop("Your imported data only has one column.
+                           You may want to set mut_sep to properly reflect
+                           the delimiter used for the data you are importing.")}
   if (rsids == T) {
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
     dat <- dat %>% mutate(is_known = ifelse(!id == ".", "Y", "N"))
