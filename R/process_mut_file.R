@@ -32,7 +32,15 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   # mut_depth = final_somatic_alt_depth
   # total_depth_ = informative_total_depth
   dat <- read.table(mut_file, header = T, sep = "\t", fileEncoding = "UTF-8-BOM")
+  dat <- read.table(mut_file, header = T, sep = mut_sep, fileEncoding = "UTF-8-BOM")
+  if (ncol(dat)<=1) { stop("Your imported data only has one column.
+                           You may want to set mut_sep to properly reflect
+                           the delimiter used for the data you are importing.")}
   if (rsids == T) {
+    if(!"id" %in% colnames(dat)) {
+      stop("Error: you have set rsids to TRUE,
+      but there is no id column in the mut file!")
+    }
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
     dat <- dat %>% mutate(is_known = ifelse(!id == ".", "Y", "N"))
   }
@@ -48,7 +56,6 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
 
   ################
   # Clean up data:
-  # Select only SNVs
   # Remove sites where mut_depth (final_somatic_alt_depth) is zero
   # Get reverse complement of sequence context where mutation is listed on purine context
   # Change all purine substitutions to pyrimidine substitutions
@@ -62,6 +69,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       yes = mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
       no = context
     )) %>%
+    dplyr::mutate(ref_depth = total_depth - alt_depth) %>%
     dplyr::mutate(normalized_subtype = subtype) %>%
     dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
     dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
@@ -90,8 +98,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     dplyr::ungroup() %>%
     dplyr::mutate(sample_frequency = (sum(mut_depth) / sample_depth)) %>%
     dplyr::ungroup() %>%
-    dplyr::filter(variation_type == "snv") %>%
-    dplyr::filter(!mut_depth == 0) %>%
+    #dplyr::filter(variation_type == "snv") %>%
+    #dplyr::filter(!mut_depth == 0) %>%
     dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") +
       str_count(string = context, pattern = "C"))
     / str_count(context))
@@ -105,6 +113,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     starts.in.df.are.0based = TRUE
   )
 
+  # To do... locate and enumerate recurrent mutations?
+  
   # Annotate the mut file with additional information about genomic regions in the file
   genic_regions <- read.delim(regions_file)
 

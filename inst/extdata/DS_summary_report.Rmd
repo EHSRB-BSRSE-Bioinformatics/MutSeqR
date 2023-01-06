@@ -55,6 +55,14 @@ mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
 
 ```
 
+```{r write_ref_and_muts, eval = F}
+# Write a reference FASTA file...
+# write_reference_fasta(ref_ranges = get_region_seqs("human"),
+#                       fasta_out = "hg38_duplex_sequencing_targets.fasta")
+
+write_VCF_from_mut(mutation_data)
+```
+
 ```{r exploratory-spectra}
 
 # Look at overall spectrum
