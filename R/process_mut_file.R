@@ -6,7 +6,6 @@
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
-#' @param grouping_variable Group of experimental interest, this should be a column in your data for which you would like to build comparisons upon, e.g., dose, or tissue, or sex
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @import tidyverse
 #' @import plyranges
@@ -16,8 +15,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                             sample_data_file = NULL,
                             sd_sep = "\t",
                             mut_sep = "\t",
-                            regions_file = "../../inst/extdata/genic_regions_hg38.txt",
-                            grouping_variable = "dose") {
+                            regions_file = "../../inst/extdata/genic_regions_hg38.txt") {
   if (!require(tidyverse)) {
     stop("tidyverse not installed")
   }
@@ -47,62 +45,44 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
 
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
-    sampledata <- read.delim(file.path(sample_data_file),
-      sep = sd_sep,
-      header = T
-    )
-    dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
+    sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
+                             header = T)
+    dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
 
   ################
   # Clean up data:
-  # Remove sites where mut_depth (final_somatic_alt_depth) is zero
   # Get reverse complement of sequence context where mutation is listed on purine context
   # Change all purine substitutions to pyrimidine substitutions
-  # Make new column with COSMIC-style 96 base context
-  # Calculate depth for each of the 32 sequence contexts, by sample and by group
-  # Calculate frequency for each mouse within each 96 trinucleotide mutation
+  # Make new column with COSMIC-style 96 base contex
 
+  # Define substitution dictionary to normalize to pyrimidine context
+  sub_dict <- c("G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
+                "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A")
+  
   dat <- dat %>%
-    dplyr::mutate(normalized_context = ifelse(
-      test = subtype %in% c("G>T", "G>A", "G>C", "A>T", "A>C", "A>G"),
-      yes = mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
-      no = context
-    )) %>%
-    dplyr::mutate(ref_depth = total_depth - alt_depth) %>%
-    dplyr::mutate(normalized_subtype = subtype) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>T", "C>A")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>A", "C>T")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "G>C", "C>G")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "A>T", "T>A")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "A>C", "T>G")) %>%
-    dplyr::mutate(normalized_subtype = str_replace(normalized_subtype, "A>G", "T>C")) %>%
-    dplyr::mutate(context_with_mutation = paste0(
+   mutate(
+      ref_depth = total_depth - alt_depth,
+      context_with_mutation = paste0(
+        str_sub(context, 1, 1),
+        "[", subtype, "]",
+        str_sub(context, 3, 3)),
+      normalized_context = ifelse(
+        test = subtype %in% names(sub_dict),
+        yes = mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
+        no = context),
+      normalized_subtype = ifelse(
+        test = subtype %in% names(sub_dict),
+        yes = sub_dict[subtype],
+        no = subtype)) %>%
+    mutate(normalized_context_with_mutation = paste0(
       str_sub(normalized_context, 1, 1),
       "[", normalized_subtype, "]",
       str_sub(normalized_context, 3, 3)
     )) %>%
-    dplyr::group_by(normalized_context, !!sym(grouping_variable)) %>%
-    dplyr::mutate(group_depth = sum(total_depth)) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(!!sym(grouping_variable)) %>%
-    dplyr::mutate(group_mut_count = sum(mut_depth)) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(context_with_mutation, !!sym(grouping_variable)) %>%
-    dplyr::mutate(group_mut_count_by_type = sum(mut_depth)) %>%
-    dplyr::mutate(group_frequency = group_mut_count_by_type / group_mut_count / group_depth) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(normalized_context, sample) %>%
-    dplyr::mutate(sample_depth = sum(total_depth)) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(sample_frequency = (sum(mut_depth) / sample_depth)) %>%
-    dplyr::ungroup() %>%
-    #dplyr::filter(variation_type == "snv") %>%
-    #dplyr::filter(!mut_depth == 0) %>%
     dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") +
-      str_count(string = context, pattern = "C"))
-    / str_count(context))
+                                  str_count(string = context, pattern = "C"))
+                  / str_count(context))
 
   mut_ranges <- makeGRangesFromDataFrame(
     df = dat,
@@ -112,8 +92,6 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     end.field = "end",
     starts.in.df.are.0based = TRUE
   )
-
-  # To do... locate and enumerate recurrent mutations?
   
   # Annotate the mut file with additional information about genomic regions in the file
   genic_regions <- read.delim(regions_file)
@@ -130,3 +108,5 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
   return(ranges_joined)
 }
+
+
