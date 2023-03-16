@@ -9,6 +9,7 @@
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @import tidyverse
 #' @import plyranges
+#' @import GenomicRanges
 #' @export
 import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
                             rsids = F,
@@ -16,20 +17,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                             sd_sep = "\t",
                             mut_sep = "\t",
                             regions_file = "../../inst/extdata/genic_regions_hg38.txt") {
-  if (!require(tidyverse)) {
-    stop("tidyverse not installed")
-  }
-  if (!require(GenomicRanges)) {
-    stop("GenomicRanges not installed")
-  }
-  if (!require(plyranges)) {
-    stop("plyranges not installed")
-  }
-  # Read in mut file
-  # Note: col names
-  # mut_depth = final_somatic_alt_depth
-  # total_depth_ = informative_total_depth
-  dat <- read.table(mut_file, header = T, sep = "\t", fileEncoding = "UTF-8-BOM")
+
   dat <- read.table(mut_file, header = T, sep = mut_sep, fileEncoding = "UTF-8-BOM")
   if (ncol(dat)<=1) { stop("Your imported data only has one column.
                            You may want to set mut_sep to properly reflect
@@ -108,5 +96,3 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
   return(ranges_joined)
 }
-
-
