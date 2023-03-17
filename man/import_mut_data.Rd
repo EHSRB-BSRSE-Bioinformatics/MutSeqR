@@ -10,8 +10,7 @@ import_mut_data(
   sample_data_file = NULL,
   sd_sep = "\\t",
   mut_sep = "\\t",
-  regions_file = "../../inst/extdata/genic_regions_hg38.txt",
-  grouping_variable = "dose"
+  regions_file = "../../inst/extdata/genic_regions_hg38.txt"
 )
 }
 \arguments{
@@ -24,8 +23,6 @@ import_mut_data(
 \item{sd_sep}{The delimiter for importing sample metadata tables}
 
 \item{mut_sep}{The delimiter for importing the .mut file}
-
-\item{grouping_variable}{Group of experimental interest, this should be a column in your data for which you would like to build comparisons upon, e.g., dose, or tissue, or sex}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
