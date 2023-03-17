@@ -42,32 +42,43 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   # Clean up data:
   # Get reverse complement of sequence context where mutation is listed on purine context
   # Change all purine substitutions to pyrimidine substitutions
-  # Make new column with COSMIC-style 96 base contex
+  # Make new column with COSMIC-style 96 base context
 
   # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c("G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
                 "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A")
   
+  # The column that represents depth might vary...
+  depth_col <- ifelse("total_depth" %in% colnames(dat),
+                      "total_depth",
+                      ifelse("depth" %in% colnames(dat),
+                             "depth",  stop("Error: I'm not sure which column
+                             specifies depth.")))
+  
   dat <- dat %>%
-   mutate(
-      ref_depth = total_depth - alt_depth,
-      context_with_mutation = paste0(
-        str_sub(context, 1, 1),
-        "[", subtype, "]",
-        str_sub(context, 3, 3)),
+    mutate(
+      ref_depth = !!sym(depth_col) - alt_depth,
+      context_with_mutation =
+        ifelse(subtype != ".",
+               paste0(str_sub(context, 1, 1),
+                      "[", subtype, "]",
+                      str_sub(context, 3, 3)),
+               "."),
       normalized_context = ifelse(
-        test = subtype %in% names(sub_dict),
-        yes = mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
-        no = context),
+        subtype %in% names(sub_dict),
+        mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
+        context),
       normalized_subtype = ifelse(
-        test = subtype %in% names(sub_dict),
-        yes = sub_dict[subtype],
-        no = subtype)) %>%
-    mutate(normalized_context_with_mutation = paste0(
-      str_sub(normalized_context, 1, 1),
-      "[", normalized_subtype, "]",
-      str_sub(normalized_context, 3, 3)
-    )) %>%
+        subtype %in% names(sub_dict),
+        sub_dict[subtype],
+        subtype)
+     ) %>%
+    mutate(normalized_context_with_mutation =
+             ifelse(subtype != ".",
+                    paste0(str_sub(normalized_context, 1, 1),
+                           "[", normalized_subtype, "]",
+                           str_sub(normalized_context, 3, 3)),
+                    ".")) %>%
     dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") +
                                   str_count(string = context, pattern = "C"))
                   / str_count(context))
