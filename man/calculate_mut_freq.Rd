@@ -7,10 +7,11 @@
 calculate_mut_freq(
   data,
   cols_to_group = "sample",
-  freq_col_prefix = "sample",
   subtype_resolution = "6base",
   vaf_cutoff = 0.1,
-  summary = TRUE
+  clonality_cutoff = 0.3,
+  summary = TRUE,
+  variant_type = "snv"
 )
 }
 \arguments{
@@ -19,11 +20,7 @@ calculate_mut_freq(
 \item{cols_to_group}{A vector of grouping variables: this should be the groups
 of interest that you want to calculate a frequency for. For instance, getting
 the frequency by \code{sample}. Other options might include \code{locus}, or,
-\code{c("sample","locus")}}
-
-\item{freq_col_prefix}{The prefix for column names to use for the new
-calculated frequency. This is a prefix because we will append \verb{_clonal} and
-\verb{_unique}.}
+\code{c("sample","locus")}. Must be a column in the mutation data table.}
 
 \item{subtype_resolution}{At what resolution should the frequencies be
 calculated? This is an important consideration because the reference bases
@@ -35,11 +32,22 @@ total depth across all the selected metadata columns.}
 \item{vaf_cutoff}{Exclude rows from frequency calculations
 with a variant allele fraction (VAF) greater than this value. Default is 0.1.}
 
+\item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
+This value determines the fraction of reads that
+is considered a constitutional variant. If a mutation is present at a
+fraction higher than this value, the reference base will be swapped,
+and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
+
 \item{summary}{TRUE or FALSE, whether to return a summary table (i.e., where
 only relevant columns for frequencies and groupings are returned). Setting
 this to false returns all columns in the original data, which might make
 plotting more difficult, but may provide additional flexibility to power
 users.}
+
+\item{variation_type}{One of "snv", "indel", "sv", "mnv". This is used for
+calculating proportions; thus, you can only select one at a time.
+This is done, in part, to avoid double counting the depth for sites having
+more than one type of variation.}
 }
 \value{
 A data frame with the mutation frequency calculated.

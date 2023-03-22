@@ -62,6 +62,15 @@ mutation_data <-
 
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
 
+six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = T)
+six_base_full <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = F)
+
+six_base_w_description <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "6base",
+                                       summary = T,
+                                       cols_to_group = c("sample","description"))
+
+
 ```
 
 ```{r write_ref_and_muts, eval = F}

@@ -12,10 +12,7 @@
 #' @param cols_to_group A vector of grouping variables: this should be the groups
 #' of interest that you want to calculate a frequency for. For instance, getting
 #' the frequency by `sample`. Other options might include `locus`, or,
-#' `c("sample","locus")`
-#' @param freq_col_prefix The prefix for column names to use for the new
-#' calculated frequency. This is a prefix because we will append `_clonal` and
-#' `_unique`.
+#' `c("sample","locus")`. Must be a column in the mutation data table.
 #' @param subtype_resolution At what resolution should the frequencies be
 #' calculated? This is an important consideration because the reference bases
 #' sequencing depth will differ depending on which mutation subtypes are being
@@ -29,17 +26,31 @@
 #' this to false returns all columns in the original data, which might make
 #' plotting more difficult, but may provide additional flexibility to power
 #' users.
+#' @param variation_type One of "snv", "indel", "sv", "mnv". This is used for
+#'  calculating proportions; thus, you can only select one at a time.
+#'  This is done, in part, to avoid double counting the depth for sites having
+#'  more than one type of variation.
+#' @param  clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
+#' This value determines the fraction of reads that
+#' is considered a constitutional variant. If a mutation is present at a 
+#' fraction higher than this value, the reference base will be swapped,
+#' and the alt_depth recalculated. 0.3 (30%) would be a sane default? 
 #' @returns A data frame with the mutation frequency calculated.
 #' @import tidyverse
 #' @importFrom rlang :=
 #' @export
 calculate_mut_freq <- function(data,
                                cols_to_group = "sample",
-                               freq_col_prefix = "sample",
                                subtype_resolution = "6base",
                                vaf_cutoff = 0.1,
-                               summary = TRUE) {
+                               clonality_cutoff = 0.3,
+                               summary = TRUE,
+                               variant_type = "snv") {
 
+  # Define internal objects
+  
+  freq_col_prefix <- paste0(cols_to_group, collapse = "_")
+  
   subtype_dict <- c(
     "none" = NA,
     "6base" = "normalized_subtype",
@@ -55,70 +66,79 @@ calculate_mut_freq <- function(data,
     "96base" = "normalized_context",
     "192base" = "context"
     )
+  
   if (!subtype_resolution %in% names(subtype_dict)) {
     stop("Error: you need to set subtype_resolution to one of \"none\",\"6base\",
          \"12base\", \"96base\" or \"192base\".")
   }
 
-  # If subtype_resolution is not in subtype_dict, throw an error... TODO
-  
   numerator_groups <- c(cols_to_group, subtype_dict[[subtype_resolution]])
   numerator_groups <- numerator_groups[!is.na(numerator_groups)]
   denominator_groups <- c(cols_to_group, denominator_dict[[subtype_resolution]])
   denominator_groups <- denominator_groups[!is.na(denominator_groups)]
+  
+  # Filter data to restrict analysis to variant type under consideration
+  # NEED TO ADD DEPTH FOR INDELS
+  #filtered_data <- data %>% filter(variation_type %in% c(variant_type,
+  #                                                       "no_variant"))
+  
+  # Calculate mutation frequencies
   mut_freq_table <- data %>%
+    # Identify duplicate entries for depth calculation later on
+    group_by(across(all_of(c(cols_to_group, start, total_depth,
+                             !!sym(names(.)[1]))))) %>%
+    mutate(is_duplicate = duplicated(paste(!!sym(names(.)[1]), start, total_depth))) %>%
     # Calculate numerators
     group_by(across(all_of(numerator_groups))) %>%
     mutate(
-      !!paste0(freq_col_prefix,"_sum_clonal_included") :=
-        sum(alt_depth[VAF < vaf_cutoff])
+      !!paste0(freq_col_prefix,"_sum_clonal") :=
+        sum(alt_depth[!alt =="." & VAF < vaf_cutoff])
       ) %>%
     mutate(
-      !!paste0(freq_col_prefix, "_sum_unique_only") :=
+      !!paste0(freq_col_prefix, "_sum_unique") :=
         length(alt_depth[!alt =="." & VAF < vaf_cutoff])
       ) %>%
-    # Add grouping by contig and start to prevent double counts for denominator
-    # Must be 1st and 2nd columns, i.e., the default scenario; names won't matter
-    # this way.
-    group_by(across(all_of(c(denominator_groups,  names(.)[1], names(.)[2])))) %>%
-    # Remove duplicate sites for depth calculation
-    distinct(!!sym(names(.)[1]), !!sym(names(.)[2]), .keep_all = TRUE) %>% # IS THIS DESTRUCTIVE?
-    group_by(across(all_of(c(denominator_groups)))) %>%
+    # Calculate denominator (same for clonal and unique mutations)
+    group_by(across(all_of(denominator_groups))) %>%
     mutate(
-      !!paste0(freq_col_prefix, "_depth") := sum(total_depth)
+      !!paste0(freq_col_prefix, "_depth") := sum(total_depth[!is_duplicate])
       ) %>%
+    # Calculate frequencies
     mutate(!!paste0(freq_col_prefix, "_MF_clonal") :=
-             !!sym(paste0(freq_col_prefix, "_sum_clonal_included")) /
+             !!sym(paste0(freq_col_prefix, "_sum_clonal")) /
              !!sym(paste0(freq_col_prefix, "_depth"))) %>%
-    mutate(!!paste0(freq_col_prefix, "_MF_unique_only") :=
-             !!sym(paste0(freq_col_prefix, "_sum_unique_only")) /
+    mutate(!!paste0(freq_col_prefix, "_MF_unique") :=
+             !!sym(paste0(freq_col_prefix, "_sum_unique")) /
              !!sym(paste0(freq_col_prefix, "_depth"))) %>%
-    mutate(proportion_clonal_included =
-             !!sym(paste0(freq_col_prefix, "_sum_clonal_included")) /
-             sum(!!sym(paste0(freq_col_prefix, "_sum_clonal_included"))) /
-             !!sym(paste0(freq_col_prefix, "_depth")) /
-             sum(!!sym(paste0(freq_col_prefix, "_depth")))) %>%
-    mutate(proportion_unique =
-             !!sym(paste0(freq_col_prefix, "_sum_unique_only")) /
-             sum(!!sym(paste0(freq_col_prefix, "_sum_unique_only")))) %>% # /
-             #!!sym(paste0(freq_col_prefix, "_depth"))) %>%
-    #mutate(proportion_unique = proportion_unique / sum(proportion_unique)) %>%
     ungroup()
 
+  # Define columns of interest for summary table
   cols <- c(
-    union(numerator_groups, denominator_groups),
-    paste0(freq_col_prefix, "_sum_unique_only"),
-    paste0(freq_col_prefix, "_sum_clonal_included"),
+    numerator_groups,
+    paste0(freq_col_prefix, "_sum_unique"),
+    paste0(freq_col_prefix, "_sum_clonal"),
     paste0(freq_col_prefix, "_depth"),
     paste0(freq_col_prefix, "_MF_clonal"),
-    paste0(freq_col_prefix, "_MF_unique_only"),
-    "proportion_clonal_included",
-    "proportion_unique"
+    paste0(freq_col_prefix, "_MF_unique")
   )
+
+  # Make summary table of frequencies
+  # This is also where subtype proportions are calculated
   summary_table <- mut_freq_table %>%
+    filter(!variation_type == "no_variant") %>%
     dplyr::select({{ cols }}) %>%
-    distinct()
-  
+    distinct() %>%
+    mutate(freq_clonal =
+             !!sym(paste0(freq_col_prefix, "_sum_clonal")) /
+             sum(!!sym(paste0(freq_col_prefix, "_sum_clonal"))) /
+             !!sym(paste0(freq_col_prefix, "_depth")) ) %>%
+    mutate(prop_clonal = freq_clonal / sum(freq_clonal)) %>%
+    mutate(freq_unique =
+             !!sym(paste0(freq_col_prefix, "_sum_unique")) /
+             sum(!!sym(paste0(freq_col_prefix, "_sum_unique"))) /
+             !!sym(paste0(freq_col_prefix, "_depth")) ) %>%
+    mutate(prop_unique = freq_unique / sum(freq_unique))
+
   if (!summary) {
     return(mut_freq_table)
   } else if (summary) {
