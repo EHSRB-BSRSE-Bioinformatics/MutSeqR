@@ -26,10 +26,6 @@
 #' this to false returns all columns in the original data, which might make
 #' plotting more difficult, but may provide additional flexibility to power
 #' users.
-#' @param variation_type One of "snv", "indel", "sv", "mnv". This is used for
-#'  calculating proportions; thus, you can only select one at a time.
-#'  This is done, in part, to avoid double counting the depth for sites having
-#'  more than one type of variation.
 #' @param  clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
 #' This value determines the fraction of reads that
 #' is considered a constitutional variant. If a mutation is present at a 
@@ -44,8 +40,7 @@ calculate_mut_freq <- function(data,
                                subtype_resolution = "6base",
                                vaf_cutoff = 0.1,
                                clonality_cutoff = 0.3,
-                               summary = TRUE,
-                               variant_type = "snv") {
+                               summary = TRUE) {
 
   # Define internal objects
   
@@ -77,16 +72,10 @@ calculate_mut_freq <- function(data,
   denominator_groups <- c(cols_to_group, denominator_dict[[subtype_resolution]])
   denominator_groups <- denominator_groups[!is.na(denominator_groups)]
   
-  # Filter data to restrict analysis to variant type under consideration
-  # NEED TO ADD DEPTH FOR INDELS
-  #filtered_data <- data %>% filter(variation_type %in% c(variant_type,
-  #                                                       "no_variant"))
-  
   # Calculate mutation frequencies
   mut_freq_table <- data %>%
     # Identify duplicate entries for depth calculation later on
-    group_by(across(all_of(c(cols_to_group, start, total_depth,
-                             !!sym(names(.)[1]))))) %>%
+    group_by(across(all_of(c(cols_to_group)))) %>%
     mutate(is_duplicate = duplicated(paste(!!sym(names(.)[1]), start, total_depth))) %>%
     # Calculate numerators
     group_by(across(all_of(numerator_groups))) %>%
