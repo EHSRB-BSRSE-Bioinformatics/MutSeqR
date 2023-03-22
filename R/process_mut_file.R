@@ -71,7 +71,14 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       normalized_subtype = ifelse(
         subtype %in% names(sub_dict),
         sub_dict[subtype],
-        subtype)
+        subtype),
+      short_ref = substr(ref, 1, 1),
+      normalized_ref = case_when(
+        substr(ref, 1, 1) == "A" ~ "T",
+        substr(ref, 1, 1) == "G" ~ "C",
+        substr(ref, 1, 1) == "C" ~ "C",
+        substr(ref, 1, 1) == "T" ~ "T"
+      )
      ) %>%
     mutate(normalized_context_with_mutation =
              ifelse(subtype != ".",
@@ -81,11 +88,17 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                     "."),
            gc_content = (str_count(string = context, pattern = "G") +
                            str_count(string = context, pattern = "C"))
-           / str_count(context),
-           total_depth = if_else(depth_col == "depth", depth - no_calls, NA_real_))
+           / str_count(context)) %>%
+    { if ("depth" %in% names(.))
+      mutate(., total_depth = depth - no_calls)
+      else
+      .
+    }
+  
+  dat <- dat %>% mutate(VAF = alt_depth / total_depth)
   
   mut_ranges <- makeGRangesFromDataFrame(
-    df = dat,
+    df = as.data.frame(dat),
     keep.extra.columns = T,
     seqnames.field = "contig",
     start.field = "start",
