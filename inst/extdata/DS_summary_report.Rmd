@@ -40,16 +40,25 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 # Import Data
 
 ```{r import-data}
-group_var <- "tissue"
-dupseq_species <- "human"
-project <- "Axelson_2022"
-project_genome = "GRCh38"
+#group_var <- "tissue"
+#dupseq_species <- "human"
+#project <- "Axelson_2022"
+#project_genome <- "GRCh38"
+#mut_file <- ../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt
+#regions_file <- "../../inst/extdata/genic_regions_hg38.txt"
 
+group_var <- "sample"
+dupseq_species <- "mouse"
+project <- "Mouse Test"
+project_genome = "mm10"
+mut_file <- "../../data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
+regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
+  
 mutation_data <-
-  import_mut_data(mut_file = file.path("../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt"),
-                  regions_file = file.path("../../inst/extdata/genic_regions_hg38.txt"),
-                 rsids = T, grouping_variable = group_var) %>%
-  dplyr::mutate(sample_and_group = stringr::str_c(!!ensym(group_var), sample, sep = " "))
+  import_mut_data(mut_file = file.path(mut_file),
+                  regions_file = file.path(regions_file),
+                  rsids = T) #%>%
+  #dplyr::mutate(sample_and_group = stringr::str_c(!!ensym(group_var), sample, sep = " "))
 
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
 
@@ -68,7 +77,9 @@ write_VCF_from_mut(mutation_data)
 # Look at overall spectrum
 as.data.frame(mutation_data) %>% dplyr::group_by(subtype) %>% tally()
 as.data.frame(mutation_data) %>% dplyr::group_by(normalized_subtype) %>% tally()
-
+as.data.frame(mutation_data) %>% dplyr::group_by(ref) %>% tally()
+as.data.frame(mutation_data) %>% dplyr::group_by(short_ref) %>% tally()
+as.data.frame(mutation_data) %>% dplyr::group_by(normalized_ref) %>% tally()
 # generate frequency tables
 trinucleotide_frequencies_global <- mutation_data %>%
    group_by(normalized_context, normalized_subtype) %>%

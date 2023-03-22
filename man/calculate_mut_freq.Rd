@@ -4,22 +4,54 @@
 \alias{calculate_mut_freq}
 \title{Calculate mutation frequency}
 \usage{
-calculate_mut_freq(data, group_vars, freq_col_name)
+calculate_mut_freq(
+  data,
+  cols_to_group = "sample",
+  freq_col_prefix = "sample",
+  subtype_resolution = "6base",
+  vaf_cutoff = 0.1,
+  summary = TRUE
+)
 }
 \arguments{
 \item{data}{The data frame to be processed}
 
-\item{group_vars}{A vector of grouping variables: this should be the groups
-of interest that you want to calculate a frequency for. For instance, to get
-the}
+\item{cols_to_group}{A vector of grouping variables: this should be the groups
+of interest that you want to calculate a frequency for. For instance, getting
+the frequency by \code{sample}. Other options might include \code{locus}, or,
+\code{c("sample","locus")}}
 
-\item{freq_col_name}{The column name to use for the new calculated frequency}
+\item{freq_col_prefix}{The prefix for column names to use for the new
+calculated frequency. This is a prefix because we will append \verb{_clonal} and
+\verb{_unique}.}
+
+\item{subtype_resolution}{At what resolution should the frequencies be
+calculated? This is an important consideration because the reference bases
+sequencing depth will differ depending on which mutation subtypes are being
+considered. Options are "none", 6base", "12base", "96base", and "192base".
+Could add 24 base option eventually. By selecting "none", this will use the
+total depth across all the selected metadata columns.}
+
+\item{vaf_cutoff}{Exclude rows from frequency calculations
+with a variant allele fraction (VAF) greater than this value. Default is 0.1.}
+
+\item{summary}{TRUE or FALSE, whether to return a summary table (i.e., where
+only relevant columns for frequencies and groupings are returned). Setting
+this to false returns all columns in the original data, which might make
+plotting more difficult, but may provide additional flexibility to power
+users.}
 }
 \value{
-A data frame where an additional column with the new calculated
-frequency has been added
+A data frame with the mutation frequency calculated.
 }
 \description{
-Calculates the mutation frequency for arbitrary groupings and adds a
-new named column to the data frame.
+Calculates the mutation frequency for arbitrary groupings and creates a new
+dataframe with the results. Mutation frequency is # mutations / total bases,
+but this can be subset in different ways: e.g., by mutation context. In this
+case, it is necessary to change the denominator of total bases to reflect
+the sequencing depth at the proper reference bases under consideration.
+}
+\details{
+Additionally, the operation is run by default using clonally expanded as well
+as unique mutations.
 }

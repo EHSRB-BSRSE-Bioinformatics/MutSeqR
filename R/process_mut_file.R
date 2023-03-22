@@ -48,7 +48,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   sub_dict <- c("G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
                 "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A")
   
-  # The column that represents depth might vary...
+  # The column that represents depth might vary
   depth_col <- ifelse("total_depth" %in% colnames(dat),
                       "total_depth",
                       ifelse("depth" %in% colnames(dat),
@@ -78,11 +78,12 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                     paste0(str_sub(normalized_context, 1, 1),
                            "[", normalized_subtype, "]",
                            str_sub(normalized_context, 3, 3)),
-                    ".")) %>%
-    dplyr::mutate(gc_content = (str_count(string = context, pattern = "G") +
-                                  str_count(string = context, pattern = "C"))
-                  / str_count(context))
-
+                    "."),
+           gc_content = (str_count(string = context, pattern = "G") +
+                           str_count(string = context, pattern = "C"))
+           / str_count(context),
+           total_depth = if_else(depth_col == "depth", depth - no_calls, NA_real_))
+  
   mut_ranges <- makeGRangesFromDataFrame(
     df = dat,
     keep.extra.columns = T,
