@@ -30,7 +30,9 @@
 #' This value determines the fraction of reads that
 #' is considered a constitutional variant. If a mutation is present at a 
 #' fraction higher than this value, the reference base will be swapped,
-#' and the alt_depth recalculated. 0.3 (30%) would be a sane default? 
+#' and the alt_depth recalculated. 0.3 (30%) would be a sane default?
+#' @param variant_types Include these variant types. A vector of one or more
+#'  "snv", "indel", "sv", "mnv", "no_variant"
 #' @returns A data frame with the mutation frequency calculated.
 #' @import tidyverse
 #' @importFrom rlang :=
@@ -40,7 +42,8 @@ calculate_mut_freq <- function(data,
                                subtype_resolution = "6base",
                                vaf_cutoff = 0.1,
                                clonality_cutoff = 0.3,
-                               summary = TRUE) {
+                               summary = TRUE,
+                               variant_types = "snv") {
 
   # Define internal objects
   
@@ -76,7 +79,7 @@ calculate_mut_freq <- function(data,
   mut_freq_table <- data %>%
     # Identify duplicate entries for depth calculation later on
     group_by(across(all_of(c(cols_to_group)))) %>%
-    mutate(is_duplicate = duplicated(paste(!!sym(names(.)[1]), start, total_depth))) %>%
+    mutate(is_duplicate = duplicated(paste(!!sym(names(.)[1]), start))) %>% # NOTE THIS STILL CAN VARY BECAUSE THE DEPTH MAY BE DIFFERENT BETWEEN TWO DUPLICATES
     # Calculate numerators
     group_by(across(all_of(numerator_groups))) %>%
     mutate(
@@ -114,7 +117,7 @@ calculate_mut_freq <- function(data,
   # Make summary table of frequencies
   # This is also where subtype proportions are calculated
   summary_table <- mut_freq_table %>%
-    filter(!variation_type == "no_variant") %>%
+    filter(variation_type %in% variant_types) %>%
     dplyr::select({{ cols }}) %>%
     distinct() %>%
     mutate(freq_clonal =

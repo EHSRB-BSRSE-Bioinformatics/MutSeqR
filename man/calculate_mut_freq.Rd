@@ -11,7 +11,7 @@ calculate_mut_freq(
   vaf_cutoff = 0.1,
   clonality_cutoff = 0.3,
   summary = TRUE,
-  variant_type = "snv"
+  variant_types = "snv"
 )
 }
 \arguments{
@@ -44,10 +44,8 @@ this to false returns all columns in the original data, which might make
 plotting more difficult, but may provide additional flexibility to power
 users.}
 
-\item{variation_type}{One of "snv", "indel", "sv", "mnv". This is used for
-calculating proportions; thus, you can only select one at a time.
-This is done, in part, to avoid double counting the depth for sites having
-more than one type of variation.}
+\item{variant_types}{Include these variant types. A vector of one or more
+"snv", "indel", "sv", "mnv", "no_variant"}
 }
 \value{
 A data frame with the mutation frequency calculated.
