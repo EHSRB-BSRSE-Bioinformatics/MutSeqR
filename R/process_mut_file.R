@@ -65,7 +65,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                       str_sub(context, 3, 3)),
                "."),
       normalized_context = ifelse(
-        subtype %in% names(sub_dict),
+        str_sub(context, 2, 2) %in% c("G","A","g","a"),
         mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
         context),
       normalized_subtype = ifelse(
