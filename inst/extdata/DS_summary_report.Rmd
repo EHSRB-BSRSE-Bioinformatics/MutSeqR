@@ -18,18 +18,7 @@ output:
 library(ggplot2)
 theme_set(theme_bw())
 library(tidyverse)
-#library(spgs)
-#library(MutationalPatterns)
-#library(SomaticSignatures)
-#library(deconstructSigs)
-#library(phyloseq)
-#library(vegan)
-#library(IRanges)
-#library(GenomicRanges)
-#library(fuzzyjoin)
-#library(pamr)
-#library(heatmap3)
-#library(ggpubr)
+
 set.seed(3135)
 
 library(DupSeqR)
@@ -40,18 +29,62 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 # Import Data
 
 ```{r import-data}
-group_var <- "tissue"
-dupseq_species <- "human"
-project <- "Axelson_2022"
-project_genome = "GRCh38"
+#group_var <- "tissue"
+#dupseq_species <- "human"
+#project <- "Axelson_2022"
+#project_genome <- "GRCh38"
+#mut_data <- ../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt
+#regions_file <- "../../inst/extdata/genic_regions_hg38.txt"
 
+# group_var <- "sample"
+# dupseq_species <- "mouse"
+# project <- "Mouse Test"
+# project_genome = "mm10"
+# mut_data <- "../../data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
+# regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
+
+group_var <- "sample"
+dupseq_species <- "mouse"
+project <- "Mouse Test"
+project_genome = "mm10"
+mut_data <- "../../from-annette/mutfiles/"
+regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
+ 
 mutation_data <-
-  import_mut_data(mut_file = file.path("../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt"),
-                  regions_file = file.path("../../inst/extdata/genic_regions_hg38.txt"),
-                 rsids = T, grouping_variable = group_var) %>%
-  dplyr::mutate(sample_and_group = stringr::str_c(!!ensym(group_var), sample, sep = " "))
+  import_mut_data(mut_file = mut_data,
+                  regions_file = file.path(regions_file),
+                  rsids = T)
 
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
+
+six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "6base",
+                                       summary = T)
+
+six_base_summary_snps <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "6base",
+                                       summary = T,
+                                       variant_types = "snv")
+
+six_base_full <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = F)
+
+six_base_w_description <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "6base",
+                                       summary = T,
+                                       cols_to_group = c("sample","description"))
+
+summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "none",
+                                       summary = T,
+                                       cols_to_group = c("sample"))
+
+var_types <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                subtype_resolution = "6base",
+                                summary = T,
+                                variant_types = c("snv","indel"),
+                                cols_to_group = c("sample"))
+
+
 
 ```
 
@@ -68,7 +101,9 @@ write_VCF_from_mut(mutation_data)
 # Look at overall spectrum
 as.data.frame(mutation_data) %>% dplyr::group_by(subtype) %>% tally()
 as.data.frame(mutation_data) %>% dplyr::group_by(normalized_subtype) %>% tally()
-
+as.data.frame(mutation_data) %>% dplyr::group_by(ref) %>% tally()
+as.data.frame(mutation_data) %>% dplyr::group_by(short_ref) %>% tally()
+as.data.frame(mutation_data) %>% dplyr::group_by(normalized_ref) %>% tally()
 # generate frequency tables
 trinucleotide_frequencies_global <- mutation_data %>%
    group_by(normalized_context, normalized_subtype) %>%
