@@ -1,7 +1,10 @@
 #' Import a .mut file
 #'
 #' Imports a .mut file into the local R environment.
-#' @param mut_file The .mut file containing mutation data to be imported. Columns required are... (fill in one day)
+#' @param mut_file The .mut file containing mutation data to be imported. If you
+#' specify a folder, function will attempt to read all files in the folder and 
+#' combine them into a single data frame.
+#' Columns required are... (fill in one day)
 #' @param rsids TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
@@ -17,8 +20,18 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                             sd_sep = "\t",
                             mut_sep = "\t",
                             regions_file = "../../inst/extdata/genic_regions_hg38.txt") {
-
-  dat <- read.table(mut_file, header = T, sep = mut_sep, fileEncoding = "UTF-8-BOM")
+  mut_file <- file.path(mut_file)
+  if (file.info(mut_file)$isdir == T) {
+    mut_files <- list.files(path = mut_file, full.names = T)
+    # Read in the files and bind them together
+    dat <- lapply(mut_files, function(file) {
+      read.table(file, header = TRUE, sep = mut_sep,
+                 fileEncoding = "UTF-8-BOM")
+      }) %>% bind_rows()
+  } else {
+    dat <- read.table(mut_file, header = T, sep = mut_sep,
+                      fileEncoding = "UTF-8-BOM")
+  }
   if (ncol(dat)<=1) { stop("Your imported data only has one column.
                            You may want to set mut_sep to properly reflect
                            the delimiter used for the data you are importing.")}
@@ -43,6 +56,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   # Get reverse complement of sequence context where mutation is listed on purine context
   # Change all purine substitutions to pyrimidine substitutions
   # Make new column with COSMIC-style 96 base context
+  # TODO - describe better
 
   # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c("G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
@@ -54,7 +68,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                       ifelse("depth" %in% colnames(dat),
                              "depth",  stop("Error: I'm not sure which column
                              specifies depth.")))
-  
+  write.table(dat, file = "DATA.txt")
   dat <- dat %>%
     mutate(
       ref_depth = !!sym(depth_col) - alt_depth,
@@ -63,7 +77,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                paste0(str_sub(context, 1, 1),
                       "[", subtype, "]",
                       str_sub(context, 3, 3)),
-               "."),
+               variation_type),
       normalized_context = ifelse(
         str_sub(context, 2, 2) %in% c("G","A","g","a"),
         mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
@@ -85,10 +99,21 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                     paste0(str_sub(normalized_context, 1, 1),
                            "[", normalized_subtype, "]",
                            str_sub(normalized_context, 3, 3)),
-                    "."),
+                    variation_type),
            gc_content = (str_count(string = context, pattern = "G") +
                            str_count(string = context, pattern = "C"))
            / str_count(context)) %>%
+    mutate(
+      normalized_subtype = ifelse(
+        normalized_subtype == ".",
+        variation_type,
+        normalized_subtype),
+      subtype = ifelse(
+        subtype == ".",
+        variation_type,
+        subtype
+      )
+    ) %>%
     { if ("depth" %in% names(.))
       mutate(., total_depth = depth - no_calls)
       else
