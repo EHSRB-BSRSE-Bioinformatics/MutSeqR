@@ -11,7 +11,7 @@ calculate_mut_freq(
   vaf_cutoff = 0.1,
   clonality_cutoff = 0.3,
   summary = TRUE,
-  variant_types = "snv",
+  variant_types = c("snv", "indel", "mnv", "sv"),
   custom_column_names = list(chr = "seqnames")
 )
 }

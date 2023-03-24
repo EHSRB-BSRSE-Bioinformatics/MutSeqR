@@ -14,7 +14,10 @@ import_mut_data(
 )
 }
 \arguments{
-\item{mut_file}{The .mut file containing mutation data to be imported. Columns required are... (fill in one day)}
+\item{mut_file}{The .mut file containing mutation data to be imported. If you
+specify a folder, function will attempt to read all files in the folder and
+combine them into a single data frame.
+Columns required are... (fill in one day)}
 
 \item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)}
 
