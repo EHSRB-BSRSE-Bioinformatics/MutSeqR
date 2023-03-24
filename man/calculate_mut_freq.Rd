@@ -11,11 +11,12 @@ calculate_mut_freq(
   vaf_cutoff = 0.1,
   clonality_cutoff = 0.3,
   summary = TRUE,
-  variant_types = "snv"
+  variant_types = "snv",
+  custom_column_names = list(chr = "seqnames")
 )
 }
 \arguments{
-\item{data}{The data frame to be processed}
+\item{data}{The data frame to be processed containing mutation data.}
 
 \item{cols_to_group}{A vector of grouping variables: this should be the groups
 of interest that you want to calculate a frequency for. For instance, getting
@@ -46,6 +47,14 @@ users.}
 
 \item{variant_types}{Include these variant types. A vector of one or more
 "snv", "indel", "sv", "mnv", "no_variant"}
+
+\item{custom_column_names}{A list of names to specify the meaning of column
+headers. Since column names can vary with data, this might be necessary to
+digest the mutation data table properly. Typical defaults are set, but can
+be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
+examples. You can change one or more of these. The most likely column to
+need changing is the "chromosome name" (chr), which by default is "seqnames"
+but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)}
 }
 \value{
 A data frame with the mutation frequency calculated.
