@@ -9,24 +9,28 @@ License: MIT + file LICENSE
 Depends:
   R (>= 3.4.0)
 Imports:
-    tidyverse,
+    dplyr,
+    magrittr,
+    stringr,
+    rlang,
     ggplot2,
     openxlsx,
-    reticulate,
-    SigProfilerMatrixGeneratorR,
-    SigProfilerExtractorR,
     GenomicRanges,
     plyranges,
-    Biostrings,
-    BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome.Mmusculus.UCSC.mm10,
-    rlang
+    VariantAnnotation,
+    spgs,
+    Biostrings
 Suggests:
     rmarkdown,
     knitr,
+    reticulate,
+    SigProfilerMatrixGeneratorR,
+    SigProfilerExtractorR,
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10,
     testthat (>= 3.0.0)
 Remotes:
-  git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR
+  git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR,
   git::https://github.com/AlexandrovLab/SigProfilerExtractorR
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

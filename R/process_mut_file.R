@@ -10,7 +10,7 @@
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
-#' @importFrom dplyr bind mutate left_join case_when
+#' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub str_count
 #' @importFrom spgs reverseComplement
