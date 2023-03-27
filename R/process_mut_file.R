@@ -10,9 +10,12 @@
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
-#' @import tidyverse
-#' @import plyranges
-#' @import GenomicRanges
+#' @importFrom dplyr bind mutate left_join case_when
+#' @importFrom magrittr %>%
+#' @importFrom stringr str_sub str_count
+#' @importFrom spgs reverseComplement
+#' @importFrom plyranges join_overlap_left
+#' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @export
 import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
                             rsids = F,
@@ -27,7 +30,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     dat <- lapply(mut_files, function(file) {
       read.table(file, header = TRUE, sep = mut_sep,
                  fileEncoding = "UTF-8-BOM")
-      }) %>% bind_rows()
+      }) %>% dplyr::bind_rows()
   } else {
     dat <- read.table(mut_file, header = T, sep = mut_sep,
                       fileEncoding = "UTF-8-BOM")
@@ -68,18 +71,18 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                       ifelse("depth" %in% colnames(dat),
                              "depth",  stop("Error: I'm not sure which column
                              specifies depth.")))
-  write.table(dat, file = "DATA.txt")
+
   dat <- dat %>%
     mutate(
-      ref_depth = !!sym(depth_col) - alt_depth,
+      ref_depth = .data[[depth_col]] - alt_depth,
       context_with_mutation =
         ifelse(subtype != ".",
-               paste0(str_sub(context, 1, 1),
+               paste0(stringr::str_sub(context, 1, 1),
                       "[", subtype, "]",
-                      str_sub(context, 3, 3)),
+                      stringr::str_sub(context, 3, 3)),
                variation_type),
       normalized_context = ifelse(
-        str_sub(context, 2, 2) %in% c("G","A","g","a"),
+        stringr::str_sub(context, 2, 2) %in% c("G","A","g","a"),
         mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
         context),
       normalized_subtype = ifelse(
@@ -87,7 +90,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
         sub_dict[subtype],
         subtype),
       short_ref = substr(ref, 1, 1),
-      normalized_ref = case_when(
+      normalized_ref = dplyr::case_when(
         substr(ref, 1, 1) == "A" ~ "T",
         substr(ref, 1, 1) == "G" ~ "C",
         substr(ref, 1, 1) == "C" ~ "C",
@@ -96,13 +99,13 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
      ) %>%
     mutate(normalized_context_with_mutation =
              ifelse(subtype != ".",
-                    paste0(str_sub(normalized_context, 1, 1),
+                    paste0(stringr::str_sub(normalized_context, 1, 1),
                            "[", normalized_subtype, "]",
-                           str_sub(normalized_context, 3, 3)),
+                           stringr::str_sub(normalized_context, 3, 3)),
                     variation_type),
-           gc_content = (str_count(string = context, pattern = "G") +
-                           str_count(string = context, pattern = "C"))
-           / str_count(context)) %>%
+           gc_content = (stringr::str_count(string = context, pattern = "G") +
+                           stringr::str_count(string = context, pattern = "C"))
+           / stringr::str_count(context)) %>%
     mutate(
       normalized_subtype = ifelse(
         normalized_subtype == ".",
@@ -132,7 +135,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   )
   
   # Annotate the mut file with additional information about genomic regions in the file
-  genic_regions <- read.delim(regions_file)
+  genic_regions <- read.delim(file.path(regions_file))
 
   region_ranges <- makeGRangesFromDataFrame(
     df = genic_regions,

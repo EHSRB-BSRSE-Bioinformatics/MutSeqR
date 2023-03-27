@@ -15,9 +15,9 @@ output:
 
 ```{r load_libraries, warning=F, echo=F}
 # Script to analyze distances between two dose groups of a chemical exposure using trinucleotide mutational patterns
-library(ggplot2)
-theme_set(theme_bw())
-library(tidyverse)
+#library(ggplot2)
+#theme_set(theme_bw())
+#library(tidyverse)
 
 set.seed(3135)
 
@@ -52,7 +52,7 @@ regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
  
 mutation_data <-
   import_mut_data(mut_file = mut_data,
-                  regions_file = file.path(regions_file),
+                  regions_file = regions_file,
                   rsids = T)
 
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
@@ -67,6 +67,7 @@ six_base_summary_snps <- calculate_mut_freq(data = as.data.frame(mutation_data),
                                        variant_types = "snv")
 
 six_base_full <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = F)
+six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = T,vaf_cutoff = 0.01)
 
 six_base_w_description <- calculate_mut_freq(data = as.data.frame(mutation_data),
                                        subtype_resolution = "6base",
@@ -84,7 +85,10 @@ var_types <- calculate_mut_freq(data = as.data.frame(mutation_data),
                                 variant_types = c("snv","indel"),
                                 cols_to_group = c("sample"))
 
-
+summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "96base",
+                                       summary = T,
+                                       cols_to_group = c("sample"))
 
 ```
 

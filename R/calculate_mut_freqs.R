@@ -42,8 +42,8 @@
 #'  need changing is the "chromosome name" (chr), which by default is "seqnames"
 #'  but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)
 #' @returns A data frame with the mutation frequency calculated.
-#' @import tidyverse
-#' @import collapse
+#' @importFrom dplyr mutate
+#' @importFrom magrittr %>%
 #' @importFrom rlang :=
 #' @export
 calculate_mut_freq <- function(data,
@@ -83,8 +83,8 @@ calculate_mut_freq <- function(data,
     )
   
   if (!subtype_resolution %in% names(subtype_dict)) {
-    stop("Error: you need to set subtype_resolution to one of \"none\",\"6base\",
-         \"12base\", \"96base\", \"192base\".")
+    stop(paste0("Error: you need to set subtype_resolution to one of: ",
+                paste(names(subtype_dict), collapse = ", ")))
   }
 
   numerator_groups <- c(cols_to_group, subtype_dict[[subtype_resolution]])
@@ -100,7 +100,7 @@ calculate_mut_freq <- function(data,
            dup_id = row_number()) %>% 
     ungroup() %>%
     mutate(is_duplicated = num_dups > 1) %>%
-    mutate(depth_undupes = ifelse(dup_id>1, 0, !!sym(cols$total_depth))) %>%
+    mutate(depth_undupes = ifelse(dup_id>1, 0, .data[[cols$total_depth]])) %>%
     #Identify values with the same start, sample, and depth
     group_by(across(all_of(c(cols_to_group, cols$chr, cols$start, cols$total_depth)))) %>%
     mutate(is_depth_duplicated = n() > 1) %>%
@@ -109,7 +109,7 @@ calculate_mut_freq <- function(data,
     # For duplicated depths, set all instance but one to zero; for
     # indels/svs/mnvs, take the 'no_variant' depth instead.
     mutate(depth_final = ifelse(is_duplicated == TRUE & is_depth_duplicated == FALSE,
-                                ifelse(variation_type == "no_variant", !!sym(cols$total_depth), 0),
+                                ifelse(variation_type == "no_variant", .data[[cols$total_depth]], 0),
                                 ifelse(is_depth_duplicated == TRUE, depth_undupes, total_depth))) %>%
     group_by(across(all_of(numerator_groups))) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_clonal") :=
@@ -122,11 +122,11 @@ calculate_mut_freq <- function(data,
     #mutate(!!paste0(freq_col_prefix, "_depth") := sum(total_depth[!is_duplicate])) %>%
     # Calculate frequencies
     mutate(!!paste0(freq_col_prefix, "_MF_clonal") :=
-             !!sym(paste0(freq_col_prefix, "_sum_clonal")) /
-             !!sym(paste0(freq_col_prefix, "_depth"))) %>%
+             .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
+             .data[[paste0(freq_col_prefix, "_depth")]]) %>%
     mutate(!!paste0(freq_col_prefix, "_MF_unique") :=
-             !!sym(paste0(freq_col_prefix, "_sum_unique")) /
-             !!sym(paste0(freq_col_prefix, "_depth"))) %>%
+             .data[[paste0(freq_col_prefix, "_sum_unique")]] /
+             .data[[paste0(freq_col_prefix, "_depth")]]) %>%
     ungroup()
 
   # Define columns of interest for summary table
@@ -146,14 +146,14 @@ calculate_mut_freq <- function(data,
     dplyr::select({{ summary_cols }}) %>%
     distinct() %>%
     mutate(freq_clonal =
-             !!sym(paste0(freq_col_prefix, "_sum_clonal")) /
-             sum(!!sym(paste0(freq_col_prefix, "_sum_clonal"))) /
-             !!sym(paste0(freq_col_prefix, "_depth")) ) %>%
+             .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
+             sum(.data[[paste0(freq_col_prefix, "_sum_clonal")]]) /
+             .data[[paste0(freq_col_prefix, "_depth")]] ) %>%
     mutate(prop_clonal = freq_clonal / sum(freq_clonal)) %>%
     mutate(freq_unique =
-             !!sym(paste0(freq_col_prefix, "_sum_unique")) /
-             sum(!!sym(paste0(freq_col_prefix, "_sum_unique"))) /
-             !!sym(paste0(freq_col_prefix, "_depth")) ) %>%
+             .data[[paste0(freq_col_prefix, "_sum_unique")]] /
+             sum(.data[[paste0(freq_col_prefix, "_sum_unique")]]) /
+             .data[[paste0(freq_col_prefix, "_depth")]] ) %>%
     mutate(prop_unique = freq_unique / sum(freq_unique))
 
   if (!summary) {

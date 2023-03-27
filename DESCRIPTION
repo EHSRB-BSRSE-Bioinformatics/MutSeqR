@@ -9,17 +9,18 @@ License: MIT + file LICENSE
 Depends:
   R (>= 3.4.0)
 Imports:
-  tidyverse,
-  ggplot2,
-  openxlsx,
-  reticulate,
-  SigProfilerMatrixGeneratorR,
-  SigProfilerExtractorR,
-  GenomicRanges,
-  plyranges,
-  Biostrings,
-  BSgenome.Hsapiens.UCSC.hg38,
-  BSgenome.Mmusculus.UCSC.mm10
+    tidyverse,
+    ggplot2,
+    openxlsx,
+    reticulate,
+    SigProfilerMatrixGeneratorR,
+    SigProfilerExtractorR,
+    GenomicRanges,
+    plyranges,
+    Biostrings,
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10,
+    rlang
 Suggests:
     rmarkdown,
     knitr,
