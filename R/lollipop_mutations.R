@@ -3,6 +3,10 @@
 #' Uses the trackViewer package to plot mutations in a lollipop plot in specific
 #' regions as defined by the user input.
 #' 
+#' @param species One of "human" or "mouse"
+#' @param mutations A GRanges object with mutation data
+#' @param ... Additional arguments to trackViewer::lolliplot (e.g.,
+#' `ranges = GRanges("chr1", IRanges(104, 109))` )
 #' @importFrom trackViewer lolliplot
 #' @importFrom GenomicRanges GRanges
 #' @export
