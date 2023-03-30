@@ -36,19 +36,19 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 #mut_data <- ../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt
 #regions_file <- "../../inst/extdata/genic_regions_hg38.txt"
 
-# group_var <- "sample"
-# dupseq_species <- "mouse"
-# project <- "Mouse Test"
-# project_genome = "mm10"
-# mut_data <- "../../data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
-# regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
-
 group_var <- "sample"
 dupseq_species <- "mouse"
 project <- "Mouse Test"
 project_genome = "mm10"
-mut_data <- "../../from-annette/mutfiles/"
+mut_data <- "../../data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
 regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
+
+# group_var <- "sample"
+# dupseq_species <- "mouse"
+# project <- "Mouse Test"
+# project_genome = "mm10"
+# mut_data <- "../../from-annette/mutfiles/"
+# regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
  
 mutation_data <-
   import_mut_data(mut_file = mut_data,
@@ -100,7 +100,7 @@ summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
 write_VCF_from_mut(mutation_data)
 ```
 
-```{r exploratory-spectra}
+```{r exploratory-spectra, warning = F}
 
 # Look at overall spectrum
 as.data.frame(mutation_data) %>% dplyr::group_by(subtype) %>% tally()
@@ -121,6 +121,16 @@ trinucleotide_frequencies_global <- mutation_data %>%
    group_by(normalized_context, normalized_subtype, sample) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
 
+ggplot(six_base_summary, aes(x=normalized_subtype, y=sample_MF_unique)) +
+  geom_col() +
+  facet_grid(sample ~ .)
+
+tvti_plot(mutations = mutation_data, y = NULL)
+tvti_plot(mutations = mutation_data)
+
+
+tvti_plot(mutations = mutation_data, type = "Frequency")
+tvti_plot(mutations = mutation_data, type = "Proportion")
 ```
 
 ## CpG Mutations

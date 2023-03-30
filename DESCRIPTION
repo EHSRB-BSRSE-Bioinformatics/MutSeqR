@@ -19,19 +19,21 @@ Imports:
     plyranges,
     VariantAnnotation,
     spgs,
+    reticulate,
+    SigProfilerMatrixGeneratorR,
+    SigProfilerExtractorR,
+    SigProfilerAssignmentR,
     Biostrings
 Suggests:
     rmarkdown,
     knitr,
-    reticulate,
-    SigProfilerMatrixGeneratorR,
-    SigProfilerExtractorR,
     BSgenome.Hsapiens.UCSC.hg38,
     BSgenome.Mmusculus.UCSC.mm10,
     testthat (>= 3.0.0)
 Remotes:
   git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR,
-  git::https://github.com/AlexandrovLab/SigProfilerExtractorR
+  git::https://github.com/AlexandrovLab/SigProfilerExtractorR,
+  git::https://github.com/AlexandrovLab/SigProfilerAssignmentR
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
