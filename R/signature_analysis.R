@@ -55,7 +55,7 @@ signature_decomposition <- function(mutations = mutation_data,
   
   #Sys.setenv(RETICULATE_PYTHON = python_path)
   #Sys.setenv(RETICULATE_PYTHON =  py_config()$python)
-  Sys.setenv(RETICULATE_PYTHON_ENV =  py_config()$python)
+  #Sys.setenv(RETICULATE_PYTHON_ENV =  py_config()$python)
   cat(paste(py_config()))
   have_SigProfilerAssignment <- py_module_available("SigProfilerAssignment")
   have_SigProfilerExtractor <- py_module_available("SigProfilerExtractor")

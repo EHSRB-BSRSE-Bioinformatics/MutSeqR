@@ -1,6 +1,10 @@
 #' Get sequence of Duplex Sequencing target regions
 #'
-#' Imports package data to find target regions and some associated information, and further extends the table by getting raw nucleotide sequences for each region of the genome. Note that the way this is written, currently, the default genomes are hg38 and mm10 for human and mouse, respectively.
+#' This is mostly a helper function. It imports package data to find target
+#' regions and some associated information, and further extends the table by
+#' getting raw nucleotide sequences for each region of the genome. Note that the
+#'  way this is written, currently, the default genomes are hg38 and mm10 for
+#'  human and mouse, respectively.
 #' @param species One of "mouse" or "human", to determine which regions to return.
 #' @returns A GRanges object where each range is a target region.
 #' @export
