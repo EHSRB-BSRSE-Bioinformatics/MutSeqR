@@ -111,13 +111,13 @@ calculate_mut_freq <- function(data,
     mutate(depth_final = ifelse(is_duplicated == TRUE & is_depth_duplicated == FALSE,
                                 ifelse(variation_type == "no_variant", .data[[cols$total_depth]], 0),
                                 ifelse(is_depth_duplicated == TRUE, depth_undupes, total_depth))) %>%
-    dplyr::group_by(across(all_of(numerator_groups))) %>%
+    dplyr::group_by(across(all_of(c(numerator_groups)))) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_clonal") :=
         sum(alt_depth[!variation_type == "no_variant" & VAF < vaf_cutoff])) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_unique") :=
              length(alt_depth[!variation_type == "no_variant" & VAF < vaf_cutoff])) %>%
     # Calculate denominator (same for clonal and unique mutations)
-    dplyr::group_by(across(all_of(denominator_groups))) %>%
+    dplyr::group_by(across(all_of(c(denominator_groups)))) %>%
     mutate(!!paste0(freq_col_prefix, "_depth") := sum(depth_final)) %>%
     #mutate(!!paste0(freq_col_prefix, "_depth") := sum(total_depth[!is_duplicate])) %>%
     # Calculate frequencies
