@@ -4,10 +4,13 @@
 \alias{get_CpG_regions}
 \title{Get the coordinates of CpG sites}
 \usage{
-get_CpG_regions(regions)
+get_CpG_regions(regions, motif)
 }
 \arguments{
 \item{regions}{A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.}
+
+\item{motif}{Default "CG", which returns CpG sites. You could in theory use
+an arbitrary string to look at different motifs. Use with caution.}
 }
 \value{
 A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).

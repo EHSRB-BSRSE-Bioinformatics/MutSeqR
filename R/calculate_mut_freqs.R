@@ -55,43 +55,25 @@ calculate_mut_freq <- function(data,
                                variant_types = c("snv","indel","mnv","sv"),
                                custom_column_names = list(chr = "seqnames")) {
 
-  # Define internal objects
-  default_columns <- list(
-    start = "start",
-    total_depth = "total_depth",
-    n_depth = "no_calls",
-    chr = "seqnames"
-  )
+  # Determine columns to use for different parts
+  default_columns <- DupSeqR::op$column
   cols <- modifyList(default_columns, custom_column_names)
   
   freq_col_prefix <- paste0(cols_to_group, collapse = "_")
   
-  subtype_dict <- c(
-    "none" = NA,
-    "6base" = "normalized_subtype",
-    "12base" = "subtype",
-    "96base" = "normalized_context_with_mutation",
-    "192base" = "context_with_mutation"
-    )
-
-  denominator_dict <- c(
-    "none" = NA,
-    "6base" = "normalized_ref",
-    "12base" = "short_ref",
-    "96base" = "normalized_context",
-    "192base" = "context"
-    )
-  
-  if (!subtype_resolution %in% names(subtype_dict)) {
+  if (!subtype_resolution %in% names(DupSeqR::subtype_dict)) {
     stop(paste0("Error: you need to set subtype_resolution to one of: ",
-                paste(names(subtype_dict), collapse = ", ")))
+                paste(names(DupSeqR::subtype_dict), collapse = ", ")))
   }
 
-  numerator_groups <- c(cols_to_group, subtype_dict[[subtype_resolution]])
+  numerator_groups <- c(cols_to_group, DupSeqR::subtype_dict[[subtype_resolution]])
   numerator_groups <- numerator_groups[!is.na(numerator_groups)]
-  denominator_groups <- c(cols_to_group, denominator_dict[[subtype_resolution]])
+  denominator_groups <- c(cols_to_group, DupSeqR::denominator_dict[[subtype_resolution]])
   denominator_groups <- denominator_groups[!is.na(denominator_groups)]
-  
+  # Check if data is provided as GRanges: if so, convert to data frame.
+  if (class(data) == "GRanges") { data <- as.data.frame(data) }
+  if (class(data) != "data.frame") { warning("You should probably use a 
+                                             data frame as input here.")}
   # Calculate mutation frequencies
   mut_freq_table <- data %>%
     # Identify duplicate entries prior to depth calculation
