@@ -8,6 +8,8 @@ make_CpG_summary_table(cpg_muts = cpg_mutations, ...)
 }
 \arguments{
 \item{cpg_muts}{A data frame containing CpG mutations}
+
+\item{...}{Additional arguments to calculate_mut_freqs()}
 }
 \description{
 Creates a summary table of CpG sites based on groupings of interest. This is

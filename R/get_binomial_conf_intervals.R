@@ -11,6 +11,7 @@
 #' @param method The method used by binom::binom.confint to calculate intervals.
 #' Default is "wilson".
 #' @returns A data frame with added columns indicating the confidence intervals.
+#' @importFrom binom binom.confint
 #' @export
 add_binom_conf_intervals <-
   function (df,

@@ -88,10 +88,10 @@ six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
 #                                 variant_types = c("snv","indel"),
 #                                 cols_to_group = c("sample"))
 # 
-# summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                        subtype_resolution = "96base",
-#                                        summary = T,
-#                                        cols_to_group = c("sample"))
+summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
+                                       subtype_resolution = "96base",
+                                       summary = T,
+                                       cols_to_group = c("sample"))
 
 ```
 

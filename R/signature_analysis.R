@@ -22,6 +22,8 @@
 #' @importFrom SigProfilerAssignmentR cosmic_fit
 #' @importFrom SigProfilerExtractorR sigprofilerextractor
 #' @importFrom SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR
+#' @importFrom here here
+#' @importFrom utils write.table
 #' @import reticulate
 #' @export
 signature_decomposition <- function(mutations = mutation_data,
@@ -30,11 +32,8 @@ signature_decomposition <- function(mutations = mutation_data,
                                     group = "sample",
                                     python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9", #
                                     python_home = "~/.virtualenvs/r-reticulate") {
-  if (!require(reticulate)) {
+  if (!requireNamespace(reticulate)) {
     stop("reticulate not installed")
-  }
-  if (!require(SigProfilerMatrixGeneratorR)) {
-    stop("SigProfilerMatrixGeneratorR not installed")
   }
   
   message("This function requires python to be installed on whichever
@@ -54,22 +53,21 @@ signature_decomposition <- function(mutations = mutation_data,
   # options(reticulate.conda_binary = python_home)
   
   #Sys.setenv(RETICULATE_PYTHON = python_path)
-  #Sys.setenv(RETICULATE_PYTHON =  py_config()$python)
+  Sys.setenv(RETICULATE_PYTHON =  py_config()$python)
   #Sys.setenv(RETICULATE_PYTHON_ENV =  py_config()$python)
   cat(paste(py_config()))
   #reticulate::use_python(python_path)
   #reticulate::py_config()
   #cat(paste(py_config()))
-  #use_virtualenv("r-reticulate")
-  #use_python("r-reticulate/bin/python") 
+  #use_virtualenv("~/.virtualenvs/r-reticulate/")
+  #use_python("~/.virtualenvs/r-reticulate/Scripts/python.exe") 
   cat(paste(py_config()))
   have_SigProfilerAssignment <- py_module_available("SigProfilerAssignment")
   have_SigProfilerExtractor <- py_module_available("SigProfilerExtractor")
   have_SigProfilerMatrixGenerator <- py_module_available("SigProfilerMatrixGenerator")
   
   #if (!have_SigProfilerAssignment) {
-    reticulate::py_install("SigProfilerAssignment", pip = F,
-                           python_version = py_config()$python) 
+    reticulate::py_install("SigProfilerAssignment", pip = F) 
   #}
   #if (!have_SigProfilerExtractor) {
     reticulate::py_install("SigProfilerExtractor", pip = F) 

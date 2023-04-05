@@ -45,6 +45,7 @@
 #' @import dplyr
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
+#' @importFrom utils modifyList
 #' @export
 calculate_mut_freq <- function(data,
                                cols_to_group = "sample",

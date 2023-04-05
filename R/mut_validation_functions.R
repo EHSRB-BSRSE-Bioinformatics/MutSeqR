@@ -1,3 +1,10 @@
+#' Validate a mut file
+#' 
+#' Not tested yet. TODO! Could avoid data.table dependency here I think.
+#' @param mut_table mutation data
+#' @param op Default is DupSeqR::op, a list of options (see also, op, TODO)
+#' @importFrom data.table as.data.table
+#' @export
 migrate_mut <- function(mut_table, op = DupSeqR::op) {
   mut_table <- data.table::as.data.table(mut_table)
   

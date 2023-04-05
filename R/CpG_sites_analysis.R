@@ -110,8 +110,11 @@ annotate_CpG_sites <- function(mut_data,
 #' data (or any data). See the documentation for that function for parameters. 
 #' It is up to the user to supply proper data to the function.
 #' @param cpg_muts A data frame containing CpG mutations
+#' @param ... Additional arguments to calculate_mut_freqs()
 #' @export
 make_CpG_summary_table <- function(cpg_muts = cpg_mutations, ...) {
     # Verify that cpg_muts has a 
+  # Do we even need a special function for this? Might get by with 
+  # calculate_mut_freqs().
   
 }

@@ -9,7 +9,7 @@ signature_decomposition(
   project_name = "Default",
   project_genome = "GRCh38",
   group = "sample",
-  python_path = "C:/Users/MAMEIER/AppData/Local/Programs/Python/Python310/python.exe",
+  python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe",
   python_home = "~/.virtualenvs/r-reticulate"
 )
 }

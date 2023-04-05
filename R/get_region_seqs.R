@@ -7,22 +7,17 @@
 #'  human and mouse, respectively.
 #' @param species One of "mouse" or "human", to determine which regions to return.
 #' @returns A GRanges object where each range is a target region.
+#' @importFrom Biostrings getSeq
+#' @importFrom GenomicRanges makeGRangesFromDataFrame
+#' @importFrom utils read.delim
 #' @export
 get_region_seqs <- function(species) {
-  if (!require(tidyverse)) {
-    stop("tidyverse not installed")
-  }
-  if (!require(GenomicRanges)) {
-    stop("GenomicRanges not installed")
-  }
-  if (!require(Biostrings)) {
-    stop("Biostrings not installed")
-  }
+
   # Step 1 - Import the regions of interest
   # Load species database
   if (species == "human") {
     db <- "BSgenome.Hsapiens.UCSC.hg38"
-    if (!require(BSgenome.Hsapiens.UCSC.hg38)) {
+    if (!requireNamespace(BSgenome.Hsapiens.UCSC.hg38)) {
       stop("BSgenome.Hsapiens.UCSC.hg38 not installed")
     }
     # library(org.Hs.eg.db) # May be useful...
@@ -31,7 +26,7 @@ get_region_seqs <- function(species) {
                                 package="DupSeqR")
   } else if (species == "mouse") {
     db <- "BSgenome.Mmusculus.UCSC.mm10"
-    if (!require(BSgenome.Mmusculus.UCSC.mm10)) {
+    if (!requireNamespace(BSgenome.Mmusculus.UCSC.mm10)) {
       stop("BSgenome.Mmusculus.UCSC.mm10 not installed")
     }
     # library(org.Mm.eg.db) # May be useful...
@@ -41,7 +36,7 @@ get_region_seqs <- function(species) {
   }
   
   regions <- read.delim(regions_file)
-  regions_ranges <- makeGRangesFromDataFrame(
+  regions_ranges <- GenomicRanges::makeGRangesFromDataFrame(
     df = regions,
     keep.extra.columns = T,
     seqnames.field = "contig",

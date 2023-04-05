@@ -4,7 +4,7 @@
 \alias{get_CpG_regions}
 \title{Get the coordinates of CpG sites}
 \usage{
-get_CpG_regions(regions, motif)
+get_CpG_regions(regions, motif = "CG")
 }
 \arguments{
 \item{regions}{A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.}
