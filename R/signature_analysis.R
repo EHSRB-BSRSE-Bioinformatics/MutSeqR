@@ -22,19 +22,18 @@
 #' @importFrom SigProfilerAssignmentR cosmic_fit
 #' @importFrom SigProfilerExtractorR sigprofilerextractor
 #' @importFrom SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR
+#' @importFrom here here
+#' @importFrom utils write.table
 #' @import reticulate
 #' @export
 signature_decomposition <- function(mutations = mutation_data,
                                     project_name = "Default",
                                     project_genome = "GRCh38",
                                     group = "sample",
-                                    python_path = "C:/Users/MAMEIER/AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9", #
+                                    python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9", #
                                     python_home = "~/.virtualenvs/r-reticulate") {
-  if (!require(reticulate)) {
+  if (!requireNamespace(reticulate)) {
     stop("reticulate not installed")
-  }
-  if (!require(SigProfilerMatrixGeneratorR)) {
-    stop("SigProfilerMatrixGeneratorR not installed")
   }
   
   message("This function requires python to be installed on whichever
@@ -54,25 +53,28 @@ signature_decomposition <- function(mutations = mutation_data,
   # options(reticulate.conda_binary = python_home)
   
   #Sys.setenv(RETICULATE_PYTHON = python_path)
-  #Sys.setenv(RETICULATE_PYTHON =  py_config()$python)
+  Sys.setenv(RETICULATE_PYTHON =  py_config()$python)
   #Sys.setenv(RETICULATE_PYTHON_ENV =  py_config()$python)
+  cat(paste(py_config()))
+  #reticulate::use_python(python_path)
+  #reticulate::py_config()
+  #cat(paste(py_config()))
+  #use_virtualenv("~/.virtualenvs/r-reticulate/")
+  #use_python("~/.virtualenvs/r-reticulate/Scripts/python.exe") 
   cat(paste(py_config()))
   have_SigProfilerAssignment <- py_module_available("SigProfilerAssignment")
   have_SigProfilerExtractor <- py_module_available("SigProfilerExtractor")
   have_SigProfilerMatrixGenerator <- py_module_available("SigProfilerMatrixGenerator")
   
-  if (!have_SigProfilerAssignment) {
-    reticulate::py_install("SigProfilerAssignment") 
-  }
-  if (!have_SigProfilerExtractor) {
-    reticulate::py_install("SigProfilerExtractor", pip = T) 
-  }
-  if (!have_SigProfilerMatrixGenerator) {
-    reticulate::py_install("SigProfilerMatrixGenerator", pip = T) 
-  }
-  
-  #reticulate::use_python(python_path)
-  # reticulate::py_config()
+  #if (!have_SigProfilerAssignment) {
+    reticulate::py_install("SigProfilerAssignment", pip = F) 
+  #}
+  #if (!have_SigProfilerExtractor) {
+    reticulate::py_install("SigProfilerExtractor", pip = F) 
+  #}
+  #if (!have_SigProfilerMatrixGenerator) {
+    reticulate::py_install("SigProfilerMatrixGenerator", pip = F) 
+  #}
 
   # Clean data into required format for Alexandrov Lab tools...
   signature_data <- as.data.frame(mutations) %>%
@@ -110,20 +112,21 @@ signature_decomposition <- function(mutations = mutation_data,
     sep = "\t", row.names = F, quote = F
   )
 
-  signature_matrices <-
-    SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
-      project = project_name,
-      genome = project_genome,
-      matrix_path = file.path(output_path, "matrices"),
-      plot = T, exome = F, bed_file = NULL,
-      chrom_based = F, tsb_stat = T, seqInfo = T,
-      cushion = 100
-      )
-  
-  #signatures_python_code <- system.file('extdata', 'signatures.py', package = "DupSeqR")
-  #source_python(signatures_python_code)
+  # signature_matrices <-
+  #   SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
+  #     project = project_name,
+  #     genome = project_genome,
+  #     matrix_path = file.path(output_path, "matrices"),
+  #     plot = T, exome = F, bed_file = NULL,
+  #     chrom_based = F, tsb_stat = T, seqInfo = T,
+  #     cushion = 100
+  #     )
+  # 
+  signatures_python_code <- system.file('extdata', 'signatures.py',
+                                        package = "DupSeqR")
+  reticulate::source_python(signatures_python_code)
 
-  SigProfilerAssignmentR::cosmic_fit(
+  cosmic_fit_DupSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
     output_path = output,

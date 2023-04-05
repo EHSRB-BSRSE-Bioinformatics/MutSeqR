@@ -26,6 +26,10 @@ Columns required are... (fill in one day)}
 \item{sd_sep}{The delimiter for importing sample metadata tables}
 
 \item{mut_sep}{The delimiter for importing the .mut file}
+
+\item{regions_file}{A tab delimited file with genomic regions to target.
+TODO: make this more flexible for the user. Use built in files easily by
+species name, allow custom files to be provided.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.

@@ -13,5 +13,9 @@ get_region_seqs(species)
 A GRanges object where each range is a target region.
 }
 \description{
-Imports package data to find target regions and some associated information, and further extends the table by getting raw nucleotide sequences for each region of the genome. Note that the way this is written, currently, the default genomes are hg38 and mm10 for human and mouse, respectively.
+This is mostly a helper function. It imports package data to find target
+regions and some associated information, and further extends the table by
+getting raw nucleotide sequences for each region of the genome. Note that the
+way this is written, currently, the default genomes are hg38 and mm10 for
+human and mouse, respectively.
 }

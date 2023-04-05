@@ -9,6 +9,9 @@
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
+#' @param regions_file A tab delimited file with genomic regions to target.
+#' TODO: make this more flexible for the user. Use built in files easily by
+#' species name, allow custom files to be provided.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -16,6 +19,7 @@
 #' @importFrom spgs reverseComplement
 #' @importFrom plyranges join_overlap_left
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
+#' @importFrom utils read.delim read.table
 #' @export
 import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
                             rsids = F,

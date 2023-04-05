@@ -4,12 +4,27 @@
 \alias{get_CpG_mutations}
 \title{Get mutations at CpG sites}
 \usage{
-get_CpG_mutations(regions, mut_data)
+get_CpG_mutations(
+  regions,
+  mut_data,
+  variant_types = c("snv", "indel", "mnv", "sv"),
+  include_no_variants = T,
+  motif = "CG"
+)
 }
 \arguments{
 \item{regions}{A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.}
 
 \item{mut_data}{A GRanges object containing the mutation data to be interrogated.}
+
+\item{variant_types}{TODO Copy in info}
+
+\item{include_no_variants}{TRUE or FALSE to indicate whether the table should
+include CpG sites with no variants. Useful if you want to know how many of
+the potential sites were mutated.}
+
+\item{motif}{Default "CG", which returns CpG sites. You could in theory use
+an arbitrary string to look at different motifs. Use with caution.}
 }
 \value{
 A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
