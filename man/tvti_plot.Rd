@@ -19,6 +19,9 @@ tvti_plot(
 \item{group}{Experimental group (a column in the mutation data) by which
 to aggregate samples}
 
+\item{y}{Default expected proportions for each mutation subtype. See
+documentation for \code{GenVisR::TvTi}.}
+
 \item{...}{Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
 sample_order_input, sort, type = "Proportion" or "Frequency")}
 }

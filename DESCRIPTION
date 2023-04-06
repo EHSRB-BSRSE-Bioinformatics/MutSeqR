@@ -8,6 +8,14 @@ Description: Standard methods for importing the mutation lists provided within a
 License: MIT + file LICENSE
 Depends:
   R (>= 3.4.0)
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "SigProfilerAssignment"),
+      list(package = "SigProfilerExtractor"),
+      list(package = "SigProfilerMatrixGenerator")
+    )
+  )
 Imports:
     dplyr,
     magrittr,
@@ -25,6 +33,8 @@ Imports:
     VariantAnnotation,
     spgs,
     reticulate,
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10,
     SigProfilerMatrixGeneratorR,
     SigProfilerExtractorR,
     SigProfilerAssignmentR,
@@ -32,8 +42,6 @@ Imports:
 Suggests:
     rmarkdown,
     knitr,
-    BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome.Mmusculus.UCSC.mm10,
     testthat (>= 3.0.0)
 Remotes:
   git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR,

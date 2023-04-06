@@ -72,8 +72,8 @@ calculate_mut_freq <- function(data,
   denominator_groups <- c(cols_to_group, DupSeqR::denominator_dict[[subtype_resolution]])
   denominator_groups <- denominator_groups[!is.na(denominator_groups)]
   # Check if data is provided as GRanges: if so, convert to data frame.
-  if (class(data) == "GRanges") { data <- as.data.frame(data) }
-  if (class(data) != "data.frame") { warning("You should probably use a 
+  if (inherits(data, "GRanges")) { data <- as.data.frame(data) }
+  if (!inherits(data, "data.frame")) { warning("You should probably use a 
                                              data frame as input here.")}
   # Calculate mutation frequencies
   mut_freq_table <- data %>%

@@ -139,6 +139,9 @@ tvti_plot(mutations = mutation_data, type = "Proportion")
 ## CpG Mutations
 
 ```{r cpg-mutations}
+# Create a GRanges object, containing all mutation data, but a column added
+# to indicate whether the 'context' column contains a CpG site (i.e., is the
+# mutation at a CpG site or not)
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
 cpg_mutations <- get_CpG_mutations(get_region_seqs(dupseq_species), mutation_data)
 # This only returns CpG sites, nothing to do with mutation data
@@ -220,13 +223,30 @@ write_excel_from_list(list_of_tables = cpg_tables,
 
 ## Signature Decomposition
 
-```{r cosmic-signatures}
+```{r cosmic-signatures-sigminer}
 # Aggregate by sample
-signature_decomposition(project_name = project, group = "sample")
-# Aggregate by group
-signature_decomposition(project_name = project, group = group_var)
-# Aggregate by sample and group
-signature_decomposition(project_name = project, group = "sample_and_group")
+sigminer_results <- signature_analysis_sigminer(project_name = project, group = "sample",
+                        project_genome = "BSgenome.Mmusculus.UCSC.mm10")
+
+show_sig_profile(sigminer_results$fitting_results,
+                 mode = "SBS", style = "cosmic", x_label_angle = 90)
+
+
+show_sig_exposure(sigminer_results$fitting_results, style = "cosmic")
+
+show_sig_bootstrap_exposure(sigminer_results$bootstrap_results)
+show_sig_bootstrap_error(sigminer_results$bootstrap_results)
+show_sig_bootstrap_stability(sigminer_results$bootstrap_results)
+
+show_catalogue(t(sigminer_results$tally_results$nmf_matrix), style = "cosmic", x_label_angle = 90)
+
+```
+```{r display_sigs}
+# Use sigminer to show signatures of interest for comparison
+# Look at arbitrary indices... could program this to show most similar ones to data
+#show_cosmic_sig_profile(sig_index = c(4, 5, 6), style = "cosmic", sig_db = "ID")
+#show_cosmic_sig_profile(sig_index = c(1, 2, 3), style = "cosmic", sig_db = "DBS")
+#show_cosmic_sig_profile(sig_index = c(1, 5, 6), style = "cosmic")
 
 ```
 
