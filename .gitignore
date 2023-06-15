@@ -39,6 +39,8 @@ vignettes/*.pdf
 .Renviron
 .Rproj.user
 
+from*
+
 # Data and outputs
 data*
 output*
