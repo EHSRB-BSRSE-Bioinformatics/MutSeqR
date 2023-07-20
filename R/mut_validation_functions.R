@@ -8,7 +8,7 @@
 migrate_mut <- function(mut_table, op = DupSeqR::op) {
   mut_table <- data.table::as.data.table(mut_table)
   
-  for (required_column in names(op)) {
+  for (required_column in names(op$column)) {
     if (!op[[required_column]] %in% colnames(mut_table)) {
       matching_column_indices <- which(colnames(mut_table) %in% op[[required_column]])
       stopifnot(
