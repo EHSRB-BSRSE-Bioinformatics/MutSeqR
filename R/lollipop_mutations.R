@@ -14,8 +14,8 @@ lollipop_mutations <- function(species = "human",
                                mutations = mutation_data,
                                ...
                                ) {
-  if (!class(mutations) == "GRanges") { stop("Please supply a GRanges 
-                                                object as the `mutations`
+  if (!inherits(mutations, "GRanges")) { stop("Please supply a GRanges 
+                                                object for the `mutations`
                                                 parameter.")}
   features.gr <- get_region_seqs(species)
   SNP.gr <- mutations[elementMetadata(mutations)[["variation_type"]] == "snv"]

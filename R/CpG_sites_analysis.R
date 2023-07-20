@@ -12,6 +12,8 @@
 #' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges ranges
+#' @importFrom GenomeInfoDb seqnames
 #' @importFrom dplyr filter
 #' @importFrom plyranges find_overlaps
 #' @export
@@ -27,10 +29,10 @@ get_CpG_mutations <- function(regions, mut_data,
       subject = regions[i]$sequence[[1]]
     )
     CpG_sites <- GenomicRanges::GRanges(
-      seqnames = seqnames(regions[i]),
-      ranges = IRanges(
-        start = start(ranges(CpG_sites)) + start(regions[i]) - 1,
-        end = end(ranges(CpG_sites)) + start(regions[i]) - 1
+      seqnames = GenomeInfoDb::seqnames(regions[i]),
+      ranges = IRanges::IRanges(
+        start = start(IRanges::ranges(CpG_sites)) + start(regions[i]) - 1,
+        end = end(IRanges::ranges(CpG_sites)) + start(regions[i]) - 1
       )
     )
     all_CpGs[[i]] <- CpG_sites
@@ -55,6 +57,8 @@ get_CpG_mutations <- function(regions, mut_data,
 #' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom IRanges IRanges ranges
 #' @export
 get_CpG_regions <- function(regions, motif = "CG") {
   # Similar to the above function but instead returns all the sites where CpGs are found in the reference (instead of the mutation data)
@@ -64,11 +68,11 @@ get_CpG_regions <- function(regions, motif = "CG") {
       pattern = motif,
       subject = regions[i]$sequence[[1]]
     )
-    CpG_sites <- GRanges(
-      seqnames = seqnames(regions[i]),
-      ranges = IRanges(
-        start = start(ranges(CpG_sites)) + start(regions[i]) - 1,
-        end = end(ranges(CpG_sites)) + start(regions[i]) - 1
+    CpG_sites <- GenomicRanges::GRanges(
+      seqnames = GenomeInfoDb::seqnames(regions[i]),
+      ranges = IRanges::IRanges(
+        start = start(IRanges::ranges(CpG_sites)) + start(regions[i]) - 1,
+        end = end(IRanges::ranges(CpG_sites)) + start(regions[i]) - 1
       )
     )
     all_CpGs[[i]] <- CpG_sites
@@ -97,7 +101,7 @@ annotate_CpG_sites <- function(mut_data,
   annotated_data <- as.data.frame(mut_data) |>
     dplyr::mutate(CpG_site = Biostrings::vcountPattern(
       pattern = motif,
-      subject = column_query,
+      subject = .data[[column_query]],
       ...)) |>
     dplyr::mutate(CpG_site = ifelse(CpG_site == 0, F, T))
   return(annotated_data)

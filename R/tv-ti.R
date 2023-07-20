@@ -4,6 +4,8 @@
 #' @param mutations Mutation data, either as GRanges or data frame
 #' @param group Experimental group (a column in the mutation data) by which
 #' to aggregate samples
+#' @param y Default expected proportions for each mutation subtype. See 
+#' documentation for `GenVisR::TvTi`.
 #' @param ... Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
 #' sample_order_input, sort, type = "Proportion" or "Frequency")
 #' @importFrom GenVisR TvTi
@@ -19,7 +21,7 @@ tvti_plot <- function(mutations = mutation_data,
                             `G->T or C->A (TV)` = 0.093),
                       ...) {
   # If mutation data is GRanges, convert to data frame
-  if (class(mutations) == "GRanges") { mutations <- as.data.frame(mutations) }
+  if (inherits(mutations, "GRanges")) { mutations <- as.data.frame(mutations) }
   snvs_genvisr <- mutations %>%
     dplyr::mutate(
       sample = .data[[group]],
