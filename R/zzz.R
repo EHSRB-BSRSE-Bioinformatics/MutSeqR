@@ -1,4 +1,5 @@
 #' @import BiocManager
+# To do: check if they have them installed before it asks if they want to install pkgs
 
 .onAttach <- function(libname, pkgname) {
   auto_install_options <- c("Yes, install Bioconductor packages", "No, do not install")

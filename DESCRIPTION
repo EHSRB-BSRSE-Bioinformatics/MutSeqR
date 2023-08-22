@@ -39,7 +39,8 @@ Imports:
     SigProfilerExtractorR,
     SigProfilerAssignmentR,
     Biostrings,
-    BiocManager
+    BiocManager,
+    httr
 Suggests:
     rmarkdown,
     knitr,
