@@ -2,25 +2,37 @@
 % Please edit documentation in R/get_seq.R
 \name{get_seq}
 \alias{get_seq}
-\title{get target sequence from ensembl}
+\title{Get sequence of Duplex Sequencing target regions
+To replace get_region_seqs.R for its relaince on importing the entire genomes
+This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
+Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
+The code is functional, but inconsistent. It will work, but occasionally it will not be able to retrieve the sequences from ensembl
+Perhaps an issue w network connectivity or the ensemble api server load}
 \usage{
-get_seq(species, chr, start, end)
+get_seq(species, regions_df)
 }
 \arguments{
 \item{species}{"human" or "mouse"}
 
-\item{chr}{chromosome of target region "chr1"}
-
-\item{start}{start location of target region. Numeric}
-
-\item{end}{end location of target region. Numeric}
+\item{regions_df}{data frame with columns: contig, start, and end}
 }
 \value{
-plain text character set of target sequence
+a GRanges object with sequences and metadata
 }
 \description{
-get target sequence from ensembl
+Get sequence of Duplex Sequencing target regions
+To replace get_region_seqs.R for its relaince on importing the entire genomes
+This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
+Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
+The code is functional, but inconsistent. It will work, but occasionally it will not be able to retrieve the sequences from ensembl
+Perhaps an issue w network connectivity or the ensemble api server load
 }
 \examples{
-get_seq("human", "chr11", 108510787, 108513187)
+regions_df <- data.frame(contig = c("chr11", "chr13"),
+                     start = c(108510788, 75803913),
+                     end = c(108513187, 75806312),
+                     gene = c("GeneA", "GeneB"),
+                     transcription_status = c("genic", "intergenic"))
+t <- get_seq("human", region_df)
+t$sequence
 }
