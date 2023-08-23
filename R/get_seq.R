@@ -1,4 +1,5 @@
 #' Get sequence of Duplex Sequencing target regions
+#'
 #' To replace get_region_seqs.R for its relaince on importing the entire genomes
 #' This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble 
 #' Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome

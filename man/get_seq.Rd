@@ -2,12 +2,7 @@
 % Please edit documentation in R/get_seq.R
 \name{get_seq}
 \alias{get_seq}
-\title{Get sequence of Duplex Sequencing target regions
-To replace get_region_seqs.R for its relaince on importing the entire genomes
-This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
-Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
-The code is functional, but inconsistent. It will work, but occasionally it will not be able to retrieve the sequences from ensembl
-Perhaps an issue w network connectivity or the ensemble api server load}
+\title{Get sequence of Duplex Sequencing target regions}
 \usage{
 get_seq(species, regions_df)
 }
@@ -20,7 +15,6 @@ get_seq(species, regions_df)
 a GRanges object with sequences and metadata
 }
 \description{
-Get sequence of Duplex Sequencing target regions
 To replace get_region_seqs.R for its relaince on importing the entire genomes
 This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
 Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
