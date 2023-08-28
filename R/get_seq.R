@@ -21,21 +21,19 @@
 #' t$sequence
 #' @export
 get_seq <- function(species, genome_version = NULL, regions_df, is_0_based = TRUE) {
-  seq_list <- list()
-  for (i in 1:nrow(regions_df)) {
-    contig <- regions_df$contig[i]
-    start <- regions_df$start[i]
-    end <- regions_df$end[i]
-    
-    # Adjust start based on is_0_based parameter
+  process_region <- function(contig, start, end) {
     if (is_0_based) {
       start <- start + 1
     }
     
     ext <- paste0("https://rest.ensembl.org/sequence/region/", species, "/", contig, ":", start, "..", end, ifelse(!is.null(genome_version), paste0("?coord_system_version=", genome_version), ""))
     r <- httr::GET(paste(ext, sep = ""), httr::content_type("text/plain"))
-    seq_list[[i]] <- httr::content(r)
+    return(httr::content(r))
   }
+  
+  seq_list <- lapply(1:nrow(regions_df), function(i) {
+    process_region(regions_df$contig[i], regions_df$start[i], regions_df$end[i])
+  })
   
   seqs <- unlist(seq_list)
   seqs_df <- data.frame(sequence = seqs)
@@ -56,3 +54,4 @@ get_seq <- function(species, genome_version = NULL, regions_df, is_0_based = TRU
 
 
 #https://rest.ensembl.org/sequence/region/human/chr11:108510787-108513187
+#dat <- read.delim("~/DupSeq R Package Building/duplex-sequencing/inst/extdata/genic_regions_mm10.txt")

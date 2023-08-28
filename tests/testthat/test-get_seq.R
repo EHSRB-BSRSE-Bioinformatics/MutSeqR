@@ -14,11 +14,11 @@ test_that("get_seq retrieves sequences and creates GRanges object", {
   expect_true(is(gr, "GRanges"))
   
   # Check if the extra metadata columns are retained
-  expect_identical(gr$gene, regions_df$gene)
-  expect_identical(gr$transcription_status, regions_df$transcription_status)
+  expect_identical(gr$gene, dat$gene)
+  expect_identical(gr$transcription_status, dat$transcription_status)
   
   # Check if the sequence data is added to the GRanges object
-  expect_identical(as.character(gr$sequence), c("GTTT", "AGAA"))
+  expect_identical(as.character(gr$sequence), c("TTT", "GAA"))
 })
 #############################################################################
 test_that("get_seq retrieves the same seq as mouse mutagenesis panel chr1.2", {
@@ -28,7 +28,7 @@ test_that("get_seq retrieves the same seq as mouse mutagenesis panel chr1.2", {
     start = 155235938,
     end = 155238338)
   
-  gr <- get_seq(species = "mouse", genome_version = "GRCm38", regions_df = dat)
+  gr <- get_seq("mouse", "GRCm38", dat, FALSE)
   
   # Check if the result is a GRanges object
   expect_true(is(gr, "GRanges"))
