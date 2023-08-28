@@ -33,8 +33,6 @@ Imports:
     VariantAnnotation,
     spgs,
     reticulate,
-    BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome.Mmusculus.UCSC.mm10,
     SigProfilerMatrixGeneratorR,
     SigProfilerExtractorR,
     SigProfilerAssignmentR,
@@ -44,7 +42,9 @@ Imports:
 Suggests:
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10
 Remotes:
   git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR,
   git::https://github.com/AlexandrovLab/SigProfilerExtractorR,

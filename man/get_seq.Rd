@@ -4,15 +4,17 @@
 \alias{get_seq}
 \title{Get sequence of Duplex Sequencing target regions}
 \usage{
-get_seq(species, regions_df)
+get_seq(species, genome_version = NULL, regions_df)
 }
 \arguments{
-\item{species}{"human" or "mouse"}
+\item{species}{"human", "mouse", or "rat"}
 
-\item{regions_df}{data frame with columns: contig, start, and end}
+\item{genome_version}{"Genome version", ex. "GRCm38". Default = NULL (no version specified; human = GRCh38, mouse = GRCm39, rat = mRatBN7)}
+
+\item{regions_df}{data frame with target locations. Contains columns: contig, start, and end}
 }
 \value{
-a GRanges object with sequences and metadata
+a GRanges object with sequences and metadata of targeted regions
 }
 \description{
 To replace get_region_seqs.R for its relaince on importing the entire genomes
@@ -27,6 +29,6 @@ regions_df <- data.frame(contig = c("chr11", "chr13"),
                      end = c(108513187, 75806312),
                      gene = c("GeneA", "GeneB"),
                      transcription_status = c("genic", "intergenic"))
-t <- get_seq("human", region_df)
+t <- get_seq(speceis = "human", genome_version = "GRCh37", regions_df = regions_df)
 t$sequence
 }

@@ -1,6 +1,6 @@
 #' @import BiocManager
 # To do: check if they have them installed before it asks if they want to install pkgs
-.onAttach <- function(libname, pkgname) {
+.onLoad <- function(libname, pkgname) {
   # List of Bioconductor packages your package depends on
   bioconductor_packages <- c("Biostrings", "VariantAnnotation", "trackViewer", "GenVisR", "plyranges", "GenomicRanges", "BSgenome.Hsapiens.UCSC.hg38", "BSgenome.Mmusculus.UCSC.mm10")
   
