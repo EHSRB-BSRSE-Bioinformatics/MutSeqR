@@ -2,8 +2,10 @@ Package: DupSeqR
 Title: Analysis of Duplex Sequencing Data
 Version: 0.0.0.9000
 Authors@R: 
-  person("Matthew", "Meier", , "matthew.meier@hc-sc.gc.ca", role = c("aut", "cre"),
-         comment = c(ORCID = "0000-0001-8199-8754"))
+  c(person("Matthew", "Meier", , "matthew.meier@hc-sc.gc.ca", role = c("aut", "cre"),
+         comment = c(ORCID = "0000-0001-8199-8754")), 
+         person("Annette", "Dodge", email = "annette.dodge@hc-sc.gc.ca", role = "aut", 
+         comment = c(ORCID = "0000-0002-0446-9055")))
 Description: Standard methods for importing the mutation lists provided within a Duplex Sequencing experiment. Provides a set of analytical tools for statistical testing and visualization of mutation data; comparison to COSMIC and/or germline signatures; etc.
 License: MIT + file LICENSE
 Depends:
