@@ -11,8 +11,6 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim
 #' @importFrom S4Vectors mcols
-#' @import BSgenome.Mmusculus.UCSC.mm10
-#' @import BSgenome.Hsapiens.UCSC.hg38
 #' @export
 get_region_seqs <- function(species) {
 

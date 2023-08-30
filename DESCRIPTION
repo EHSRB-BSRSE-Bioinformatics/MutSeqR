@@ -1,57 +1,59 @@
 Package: DupSeqR
 Title: Analysis of Duplex Sequencing Data
 Version: 0.0.0.9000
-Authors@R: 
-  c(person("Matthew", "Meier", , "matthew.meier@hc-sc.gc.ca", role = c("aut", "cre"),
-         comment = c(ORCID = "0000-0001-8199-8754")), 
-         person("Annette", "Dodge", email = "annette.dodge@hc-sc.gc.ca", role = "aut", 
-         comment = c(ORCID = "0000-0002-0446-9055")))
-Description: Standard methods for importing the mutation lists provided within a Duplex Sequencing experiment. Provides a set of analytical tools for statistical testing and visualization of mutation data; comparison to COSMIC and/or germline signatures; etc.
+Authors@R: c(
+    person("Matthew", "Meier", , "matthew.meier@hc-sc.gc.ca", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8199-8754")),
+    person("Annette", "Dodge", , "annette.dodge@hc-sc.gc.ca", role = "aut",
+           comment = c(ORCID = "0000-0002-0446-9055"))
+  )
+Description: Standard methods for importing the mutation lists provided
+    within a Duplex Sequencing experiment. Provides a set of analytical
+    tools for statistical testing and visualization of mutation data;
+    comparison to COSMIC and/or germline signatures; etc.
 License: MIT + file LICENSE
 Depends:
-  R (>= 3.4.0)
-Config/reticulate:
-  list(
-    packages = list(
-      list(package = "SigProfilerAssignment"),
-      list(package = "SigProfilerExtractor"),
-      list(package = "SigProfilerMatrixGenerator")
-    )
-  )
+    R (>= 3.4.0)
 Imports:
-    dplyr,
-    magrittr,
-    binom,
-    data.table,
-    here,
-    stringr,
-    rlang,
-    ggplot2,
-    openxlsx,
-    GenomicRanges,
-    plyranges,
-    GenVisR,
-    trackViewer,
-    VariantAnnotation,
-    spgs,
-    reticulate,
-    SigProfilerMatrixGeneratorR,
-    SigProfilerExtractorR,
-    SigProfilerAssignmentR,
-    Biostrings,
     BiocManager,
-    httr
+    Biostrings,
+    data.table,
+    dplyr,
+    GenomeInfoDb,
+    GenomicRanges,
+    GenVisR,
+    ggplot2,
+    here,
+    httr,
+    IRanges,
+    magrittr,
+    openxlsx,
+    plyranges,
+    reticulate,
+    rlang,
+    S4Vectors,
+    sigminer,
+    SigProfilerAssignmentR,
+    SigProfilerExtractorR,
+    SigProfilerMatrixGeneratorR,
+    spgs,
+    stringr,
+    trackViewer,
+    VariantAnnotation
 Suggests:
-    rmarkdown,
-    knitr,
-    testthat (>= 3.0.0),
     BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome.Mmusculus.UCSC.mm10
+    BSgenome.Mmusculus.UCSC.mm10,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
 Remotes:
-  git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR,
-  git::https://github.com/AlexandrovLab/SigProfilerExtractorR,
-  git::https://github.com/AlexandrovLab/SigProfilerAssignmentR
+    git::https://github.com/AlexandrovLab/SigProfilerAssignmentR,
+    git::https://github.com/AlexandrovLab/SigProfilerExtractorR,
+    git::https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR
+Config/reticulate: list( packages = list( list(package =
+    "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),
+    list(package = "SigProfilerMatrixGenerator") ) )
+Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-Config/testthat/edition: 3

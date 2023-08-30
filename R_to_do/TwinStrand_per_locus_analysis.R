@@ -1,7 +1,7 @@
 require(data.table)
 require(assertthat)
 require(dplyr)
-require(binom)
+#require(binom) use binom_confint instead of binom::binom.confint
 require(GenomicRanges)
 
 MUT_FILEPATH <- "data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
@@ -311,7 +311,7 @@ add_binom_conf_intervals <-
           )
         }
         else {
-          binom::binom.confint(x_val,
+          binom_confint(x_val,
                                n_val,
                                conf.level = conf.level,
                                method = method)
