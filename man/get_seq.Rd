@@ -31,6 +31,6 @@ regions_df <- data.frame(contig = c("chr11", "chr13"),
                      end = c(108513187, 75806312),
                      gene = c("GeneA", "GeneB"),
                      transcription_status = c("genic", "intergenic"))
-t <- get_seq(speceis = "human", genome_version = "GRCh37", regions_df = regions_df)
+t <- get_seq(species = "human", genome_version = "GRCh37", regions_df = regions_df)
 t$sequence
 }

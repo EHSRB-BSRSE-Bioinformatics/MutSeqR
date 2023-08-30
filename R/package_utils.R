@@ -6,7 +6,7 @@
 # To do: check if they have them installed before it asks if they want to install pkgs
 .onLoad <- function(libname, pkgname) {
   # List of Bioconductor packages the package depends on
-  bioconductor_packages <- c("Biostrings", "VariantAnnotation", "trackViewer")
+  bioconductor_packages <- c("Biostrings", "VariantAnnotation", "trackViewer", "GenomicRanges")
   
   missing_packages <- bioconductor_packages[!sapply(bioconductor_packages, requireNamespace, quietly = TRUE)]
   
@@ -21,13 +21,13 @@
         install.packages("BiocManager")
       }
       
-      message("Installing missing Bioconductor packages...")
+      packageStartupMessage("Installing missing Bioconductor packages...")
       BiocManager::install(missing_packages, dependencies = TRUE)
       message("Bioconductor packages installed.")
     } else {
       warning("Some required Bioconductor packages are missing. Please install them manually.")
     }
   } else {
-    message("All required Bioconductor packages are already installed.")
+    packageStartupMessage("All required Bioconductor packages are already installed.")
   }
 }

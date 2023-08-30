@@ -36,7 +36,6 @@ Imports:
     SigProfilerAssignmentR,
     SigProfilerExtractorR,
     SigProfilerMatrixGeneratorR,
-    spgs,
     stringr,
     trackViewer,
     VariantAnnotation
