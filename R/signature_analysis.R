@@ -23,7 +23,7 @@
 #' @importFrom SigProfilerExtractorR sigprofilerextractor
 #' @importFrom SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 #' @importFrom here here
-#' @import dplyr
+#' @importFrom dplyr filter select rename mutate relocate 
 #' @importFrom utils write.table
 #' @import reticulate
 #' @import stringr

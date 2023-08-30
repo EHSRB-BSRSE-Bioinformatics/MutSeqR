@@ -9,7 +9,7 @@
 #' @param ... Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
 #' sample_order_input, sort, type = "Proportion" or "Frequency")
 #' @importFrom GenVisR TvTi
-#' @importFrom dplyr mutate select filter
+#' @importFrom dplyr mutate select filter group_by
 #' @export
 tvti_plot <- function(mutations = mutation_data,
                       group = "sample",

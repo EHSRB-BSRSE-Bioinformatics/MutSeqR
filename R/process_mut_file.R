@@ -16,7 +16,6 @@
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub str_count
-#' @importFrom spgs reverseComplement
 #' @importFrom plyranges join_overlap_left
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim read.table
@@ -87,7 +86,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                variation_type),
       normalized_context = ifelse(
         stringr::str_sub(context, 2, 2) %in% c("G","A","g","a"),
-        mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
+        mapply(function(x) reverseComplement(x, case = "upper"), context),
         context),
       normalized_subtype = ifelse(
         subtype %in% names(sub_dict),
