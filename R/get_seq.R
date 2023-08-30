@@ -17,7 +17,7 @@
 #'                      end = c(108513187, 75806312),
 #'                      gene = c("GeneA", "GeneB"),
 #'                      transcription_status = c("genic", "intergenic"))
-#' t <- get_seq(speceis = "human", genome_version = "GRCh37", regions_df = regions_df)
+#' t <- get_seq(species = "human", genome_version = "GRCh37", regions_df = regions_df)
 #' t$sequence
 #' @export
 get_seq <- function(species, genome_version = NULL, regions_df, is_0_based = TRUE) {
