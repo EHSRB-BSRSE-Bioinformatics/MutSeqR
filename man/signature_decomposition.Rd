@@ -28,6 +28,9 @@ signature_decomposition(
 }
 \value{
 Creates a subfolder in the output directory with SigProfiler tools results.
+SigProfilerAssignmentR cosmic_fit
+SigProfilerExtractorR sigprofilerextractor
+SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 }
 \description{
 After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).

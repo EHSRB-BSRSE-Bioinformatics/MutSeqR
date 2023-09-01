@@ -7,7 +7,7 @@
 # ...other python tools from Alexandrov lab
 # You must also install a reference genome:
 # SigProfilerMatrixGeneratorR::install('GRCh38') # Don't run this every time...
-
+# TO DO: sigporfiler packages are in suggests; write a feature that will ask users if they want to install them. 
 
 #' Run COSMIC signatures comparison
 #'
@@ -19,9 +19,9 @@
 #' @param group The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)
 #' @param python_path The path to the version of python to be used with reticulate. It is important that this version of python meets the dependecies, including the SigProfiler python tools.
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.
-#' @importFrom SigProfilerAssignmentR cosmic_fit
-#' @importFrom SigProfilerExtractorR sigprofilerextractor
-#' @importFrom SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
+#'  SigProfilerAssignmentR cosmic_fit
+#'  SigProfilerExtractorR sigprofilerextractor
+#'  SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate 
 #' @importFrom utils write.table

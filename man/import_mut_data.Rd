@@ -10,7 +10,7 @@ import_mut_data(
   sample_data_file = NULL,
   sd_sep = "\\t",
   mut_sep = "\\t",
-  regions_file = "../../inst/extdata/genic_regions_hg38.txt"
+  regions_file = NULL
 )
 }
 \arguments{
@@ -27,7 +27,9 @@ Columns required are... (fill in one day)}
 
 \item{mut_sep}{The delimiter for importing the .mut file}
 
-\item{regions_file}{A tab delimited file with genomic regions to target.
+\item{regions_file}{"human", "mouse", (to do: add rat). Will refer to a tab delimited file with genomic regions of the TwinStrand Mutagenesis Panel for the respective species}
+
+\item{custom_regions_file}{a tab delimited file with genomic regions of custom targeted regions.
 TODO: make this more flexible for the user. Use built in files easily by
 species name, allow custom files to be provided.}
 }
