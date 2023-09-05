@@ -4,15 +4,13 @@
 #' @param mut_file The .mut file containing mutation data to be imported. If you
 #' specify a folder, function will attempt to read all files in the folder and 
 #' combine them into a single data frame.
-#' Columns required are... (fill in one day)
+#' Columns required are: depth, no_calls, alt_depth, subtype, context, variation_type, contig, start, end. (Synonymous names are accepted)
 #' @param rsids TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat. 
-#' @param custom_regions_file "filepath" if regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. 
-#' TODO: make this more flexible for the user. Use built in files easily by
-#' species name, allow custom files to be provided.
+#' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -23,7 +21,7 @@
 #' @export
 
 #To delete later:
-#"C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files"
+#"C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files
 #inst/extdata/genic_regions_mm10.txt
 
 import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
@@ -31,9 +29,36 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                             sample_data_file = NULL,
                             sd_sep = "\t",
                             mut_sep = "\t",
-                            regions_file = c("human", "mouse"),
+                            regions_file = c("human", "mouse", "custom"),
                             custom_regions_file = NULL) {
-  mut_file <- file.path(mut_file)
+ 
+
+  #col name synonyms
+  column_name_mapping <- c(
+    "chromosome" = "contig",
+    "chr" = "contig",
+    "position" = "start",
+    "pos" = "start",
+    "sample_id" = "sample",
+    "Sample" = "sample",
+    "variant_type" = "variation_type",
+    "mutation_type" = "variation_type",
+    "reference" = "ref",
+    "ref_allele" = "ref",
+    "alternate" = "alt",
+    "alt_allele" = "alt",
+    "alt_read_depth" = "alt_depth",
+    "coverage" = "depth",
+    "read_depth" = "depth",
+    "no_depth" = "no_calls",
+    "n_calls" = "no_calls",
+    "mutation_subtype" = "subtype",
+    "sequence_context" = "context",
+    "flanking_sequence" = "context"
+  )
+ 
+  
+   mut_file <- file.path(mut_file)
   if (file.info(mut_file)$isdir == T) {
     mut_files <- list.files(path = mut_file, full.names = T)
     # Read in the files and bind them together
@@ -56,7 +81,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
     dat <- dat %>% mutate(is_known = ifelse(!id == ".", "Y", "N"))
   }
-
+  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
@@ -64,6 +89,14 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
 
+  # Change column names to default
+   for (synonym in names(column_name_mapping)) {
+     matching_col <- which(colnames(dat) %in% synonym)
+     if (length(matching_col) > 0) {
+       colnames(dat)[matching_col] <- column_name_mapping[synonym]
+     }
+   }
+  
   ################
   # Clean up data:
   # Get reverse complement of sequence context where mutation is listed on purine context
@@ -145,7 +178,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   )
   
  # Annotate the mut file with additional information about genomic regions in the file
-    if (regions_file == "human") {
+  if (regions_file == "human") {
       genic_regions <- read.table("inst/extdata/genic_regions_hg38.txt", header = TRUE) 
       } 
       else if (regions_file == "mouse") {
