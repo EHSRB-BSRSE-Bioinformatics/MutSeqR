@@ -189,7 +189,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       genic_regions <- read.table(custom_regions_file, header = TRUE)
     } else {
       stop("You must provide a custom regions file when regions_file is set to 'custom'.")
-    }
+    } 
   }
     
   region_ranges <- makeGRangesFromDataFrame(
