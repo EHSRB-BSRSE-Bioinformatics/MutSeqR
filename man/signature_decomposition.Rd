@@ -14,15 +14,17 @@ signature_decomposition(
 )
 }
 \arguments{
+\item{mutations}{A data frame, "mutation_data", imported from a .mut file}
+
 \item{project_name}{The name of the project; used to get mutation data into the required .txt format for SigProfiler}
 
 \item{project_genome}{A string describing the reference genome to use; e.g., GRCh38}
 
 \item{group}{The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)}
 
-\item{python_path}{The path to the version of python to be used with reticulate. It is important that this version of python meets the dependecies, including the SigProfiler python tools.}
+\item{python_path}{The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.}
 
-\item{mutation_data}{A data frame imported from a .mut file}
+\item{python_home}{The path to the virtual envionrment that contains the required python packages}
 
 \item{output_path}{The directory where output results should be written}
 }
