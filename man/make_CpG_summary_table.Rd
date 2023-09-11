@@ -4,10 +4,11 @@
 \alias{make_CpG_summary_table}
 \title{Summarize CpG sites}
 \usage{
-make_CpG_summary_table(cpg_muts = cpg_mutations, ...)
+make_CpG_summary_table(cpg_muts, ...)
 }
 \arguments{
-\item{cpg_muts}{A data frame containing CpG mutations}
+\item{cpg_muts}{A data frame containing CpG mutations
+TO DO: cpg_muts = df "cpg_mutations" is created in the .Rmd file, but is not created by any other function.}
 
 \item{...}{Additional arguments to calculate_mut_freqs()}
 }
