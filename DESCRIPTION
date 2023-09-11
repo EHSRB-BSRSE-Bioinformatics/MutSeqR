@@ -16,7 +16,7 @@ Depends:
     R (>= 3.4.0)
 biocViews:
 Imports:
-    BiocManager,
+    binom,
     Biostrings,
     data.table,
     dplyr,
