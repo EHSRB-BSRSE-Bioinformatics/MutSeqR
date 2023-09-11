@@ -53,14 +53,12 @@ write_excel_from_list <- function(list_of_tables, output_path, workbook_name) {
 #' @param mut_data The data frame to be written.
 #' @param output_path The directory where the Excel file should be written.
 #' @param workbook_name The file name for the Excel file.
+#' @import openxlsx
 #' @returns A saved Excel workbook.
 #' @export
 write_excel_single_table <- function(mut_data,
                                      output_path = "./",
                                      workbook_name = "Default") {
-  if (!requireNamespace(openxlsx)) {
-    stop("openxlsx not installed")
-  }
   hs1 <- createStyle(
     textDecoration = "Bold",
     border = "Bottom",

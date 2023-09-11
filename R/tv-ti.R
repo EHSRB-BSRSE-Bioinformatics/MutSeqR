@@ -11,6 +11,7 @@
 #' sample_order_input, sort, type = "Proportion" or "Frequency")
 #' Suggests GenVisR TvTi
 #' @importFrom dplyr mutate select filter group_by
+#' @importFrom rlang .data
 #' @export
 tvti_plot <- function(mutations = mutation_data,
                       group = "sample",
@@ -26,10 +27,10 @@ tvti_plot <- function(mutations = mutation_data,
   snvs_genvisr <- mutations %>%
     dplyr::mutate(
       sample = .data[[group]],
-      reference = ref,
-      variant = alt) %>%
-    dplyr::filter(variation_type == "snv") %>%
-    dplyr::select(sample, reference, variant)
+      reference = .data$ref,
+      variant = .data$alt) %>%
+    dplyr::filter(.data$variation_type == "snv") %>%
+    dplyr::select(sample, .data$reference, .data$variant)
   GenVisR::TvTi(snvs_genvisr, fileType = "MGI",  progress = FALSE, ...)
  
   #tv_ti_ratio <- tv_ti_table$main %>% dplyr::mutate(Class = str_extract(string=trans_tranv, pattern=regex("\\(\\w++\\)")))

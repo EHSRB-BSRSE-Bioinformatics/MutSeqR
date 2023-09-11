@@ -42,9 +42,9 @@
 #'  need changing is the "chromosome name" (chr), which by default is "seqnames"
 #'  but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)
 #' @returns A data frame with the mutation frequency calculated.
-#' @importFrom dplyr group_by n mutate row_number ungroup filter select distinct 
+#' @importFrom dplyr across all_of filter group_by mutate n row_number select distinct ungroup  
 #' @importFrom magrittr %>%
-#' @importFrom rlang :=
+#' @importFrom rlang := .data
 #' @importFrom utils modifyList
 #' @export
 calculate_mut_freq <- function(data,
@@ -78,31 +78,31 @@ calculate_mut_freq <- function(data,
   # Calculate mutation frequencies
   mut_freq_table <- data %>%
     # Identify duplicate entries prior to depth calculation
-    dplyr::group_by(across(all_of(c(cols_to_group, cols$chr, cols$start)))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group, cols$chr, cols$start)))) %>%
     mutate(num_dups = dplyr::n(), 
            dup_id = dplyr::row_number()) %>% 
     dplyr::ungroup() %>%
-    mutate(is_duplicated = num_dups > 1) %>%
-    mutate(depth_undupes = ifelse(dup_id>1, 0, .data[[cols$total_depth]])) %>%
+    mutate(is_duplicated = .data$num_dups > 1) %>%
+    mutate(depth_undupes = ifelse(.data$dup_id>1, 0, .data[[cols$total_depth]])) %>%
     #Identify values with the same start, sample, and depth
-    dplyr::group_by(across(all_of(c(cols_to_group, cols$chr, cols$start, cols$total_depth)))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group, cols$chr, cols$start, cols$total_depth)))) %>%
     mutate(is_depth_duplicated = dplyr::n() > 1) %>%
     dplyr::ungroup() %>%
     # For sites that share start positions within a group, deduplicate depth.
     # For duplicated depths, set all instance but one to zero; for
     # indels/svs/mnvs, take the 'no_variant' depth instead.
-    mutate(depth_final = ifelse(is_duplicated == TRUE & is_depth_duplicated == FALSE,
-                                ifelse(variation_type == "no_variant", .data[[cols$total_depth]], 0),
-                                ifelse(is_depth_duplicated == TRUE, depth_undupes, total_depth))) %>%
-    dplyr::group_by(across(all_of(c(numerator_groups)))) %>%
+    mutate(depth_final = ifelse(.data$is_duplicated == TRUE & .data$is_depth_duplicated == FALSE,
+                                ifelse(.data$variation_type == "no_variant", .data[[cols$total_depth]], 0),
+                                ifelse(.data$is_depth_duplicated == TRUE, .data$depth_undupes, .data$total_depth))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_clonal") :=
-        sum(alt_depth[!variation_type == "no_variant" & VAF < vaf_cutoff])) %>%
+        sum(.data$alt_depth[!.data$variation_type == "no_variant" & .data$VAF < vaf_cutoff])) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_unique") :=
-             length(alt_depth[!variation_type == "no_variant" & VAF < vaf_cutoff])) %>%
+             length(.data$alt_depth[!.data$variation_type == "no_variant" & .data$VAF < vaf_cutoff])) %>%
     # Calculate denominator (same for clonal and unique mutations)
-    dplyr::group_by(across(all_of(c(denominator_groups)))) %>%
-    mutate(!!paste0(freq_col_prefix, "_depth") := sum(depth_final)) %>%
-    #mutate(!!paste0(freq_col_prefix, "_depth") := sum(total_depth[!is_duplicate])) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(denominator_groups)))) %>%
+    mutate(!!paste0(freq_col_prefix, "_depth") := sum(.data$depth_final)) %>%
+    #mutate(!!paste0(freq_col_prefix, "_depth") := sum(.data$total_depth[!is_duplicate])) %>%
     # Calculate frequencies
     mutate(!!paste0(freq_col_prefix, "_MF_clonal") :=
              .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
@@ -125,19 +125,19 @@ calculate_mut_freq <- function(data,
   # Make summary table of frequencies
   # This is also where subtype proportions are calculated
   summary_table <- mut_freq_table %>%
-    dplyr::filter(variation_type %in% variant_types) %>%
+    dplyr::filter(.data$variation_type %in% variant_types) %>%
     dplyr::select({{ summary_cols }}) %>%
     dplyr::distinct() %>%
     mutate(freq_clonal =
              .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
              sum(.data[[paste0(freq_col_prefix, "_sum_clonal")]]) /
              .data[[paste0(freq_col_prefix, "_depth")]] ) %>%
-    mutate(prop_clonal = freq_clonal / sum(freq_clonal)) %>%
+    mutate(prop_clonal = .data$freq_clonal / sum(.data$freq_clonal)) %>%
     mutate(freq_unique =
              .data[[paste0(freq_col_prefix, "_sum_unique")]] /
              sum(.data[[paste0(freq_col_prefix, "_sum_unique")]]) /
              .data[[paste0(freq_col_prefix, "_depth")]] ) %>%
-    mutate(prop_unique = freq_unique / sum(freq_unique))
+    mutate(prop_unique = .data$freq_unique / sum(.data$freq_unique))
 
   if (!summary) {
     return(mut_freq_table)

@@ -18,6 +18,7 @@
 #' @importFrom plyranges join_overlap_left
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim read.table
+#' @importFrom rlang .data
 #' @export
 
 #To delete later:
@@ -79,7 +80,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       but there is no id column in the mut file!")
     }
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
-    dat <- dat %>% mutate(is_known = ifelse(!id == ".", "Y", "N"))
+    dat <- dat %>% mutate(is_known = ifelse(!.data$id == ".", "Y", "N"))
   }
   
   # Read in sample data if it's provided
@@ -117,56 +118,56 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
 
   dat <- dat %>%
     mutate(
-      ref_depth = .data[[depth_col]] - alt_depth,
+      ref_depth = .data[[depth_col]] - .data$alt_depth,
       context_with_mutation =
-        ifelse(subtype != ".",
-               paste0(stringr::str_sub(context, 1, 1),
-                      "[", subtype, "]",
-                      stringr::str_sub(context, 3, 3)),
-               variation_type),
+        ifelse(.data$subtype != ".",
+               paste0(stringr::str_sub(.data$context, 1, 1),
+                      "[", .data$subtype, "]",
+                      stringr::str_sub(.data$context, 3, 3)),
+               .data$variation_type),
       normalized_context = ifelse(
-        stringr::str_sub(context, 2, 2) %in% c("G","A","g","a"),
-        mapply(function(x) reverseComplement(x, case = "upper"), context),
-        context),
+        stringr::str_sub(.data$context, 2, 2) %in% c("G","A","g","a"),
+        mapply(function(x) reverseComplement(x, case = "upper"), .data$context),
+        .data$context),
       normalized_subtype = ifelse(
-        subtype %in% names(sub_dict),
-        sub_dict[subtype],
-        subtype),
-      short_ref = substr(ref, 1, 1),
+        .data$subtype %in% names(sub_dict),
+        sub_dict[.data$subtype],
+        .data$subtype),
+      short_ref = substr(.data$ref, 1, 1),
       normalized_ref = dplyr::case_when(
-        substr(ref, 1, 1) == "A" ~ "T",
-        substr(ref, 1, 1) == "G" ~ "C",
-        substr(ref, 1, 1) == "C" ~ "C",
-        substr(ref, 1, 1) == "T" ~ "T"
+        substr(.data$ref, 1, 1) == "A" ~ "T",
+        substr(.data$ref, 1, 1) == "G" ~ "C",
+        substr(.data$ref, 1, 1) == "C" ~ "C",
+        substr(.data$ref, 1, 1) == "T" ~ "T"
       )
      ) %>%
     mutate(normalized_context_with_mutation =
-             ifelse(subtype != ".",
-                    paste0(stringr::str_sub(normalized_context, 1, 1),
-                           "[", normalized_subtype, "]",
-                           stringr::str_sub(normalized_context, 3, 3)),
-                    variation_type),
-           gc_content = (stringr::str_count(string = context, pattern = "G") +
-                           stringr::str_count(string = context, pattern = "C"))
-           / stringr::str_count(context)) %>%
+             ifelse(.data$subtype != ".",
+                    paste0(stringr::str_sub(.data$normalized_context, 1, 1),
+                           "[", .data$normalized_subtype, "]",
+                           stringr::str_sub(.data$normalized_context, 3, 3)),
+                    .data$variation_type),
+           gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
+                           stringr::str_count(string = .data$context, pattern = "C"))
+           / stringr::str_count(.data$context)) %>%
     mutate(
       normalized_subtype = ifelse(
-        normalized_subtype == ".",
-        variation_type,
-        normalized_subtype),
+        .data$normalized_subtype == ".",
+        .data$variation_type,
+        .data$normalized_subtype),
       subtype = ifelse(
-        subtype == ".",
-        variation_type,
-        subtype
+        .data$subtype == ".",
+        .data$variation_type,
+        .data$subtype
       )
     ) %>%
-    { if ("depth" %in% names(.))
-      mutate(., total_depth = depth - no_calls)
+    { if ("depth" %in% names(.data$.))
+      mutate(., total_depth = .data$depth - .data$no_calls)
       else
       .
     }
   
-  dat <- dat %>% mutate(VAF = alt_depth / total_depth)
+  dat <- dat %>% mutate(VAF = .data$alt_depth / .data$total_depth)
   
   mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
