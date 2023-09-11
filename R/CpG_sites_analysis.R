@@ -14,7 +14,7 @@
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges ranges
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom dplyr filter
+#' @importFrom dplyr filter mutate
 #' @importFrom plyranges find_overlaps
 #' @export
 get_CpG_mutations <- function(regions, mut_data,

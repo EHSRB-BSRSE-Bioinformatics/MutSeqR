@@ -42,7 +42,7 @@
 #'  need changing is the "chromosome name" (chr), which by default is "seqnames"
 #'  but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)
 #' @returns A data frame with the mutation frequency calculated.
-#' @import dplyr
+#' @importFrom dplyr group_by n mutate row_number ungroup filter select distinct 
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 #' @importFrom utils modifyList

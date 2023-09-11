@@ -1,5 +1,6 @@
 #' Analyse transition/transversion ratios
 #' 
+#' TO DO: create plot witohut the GenVisR package. 
 #' Function to convert mutation data to a format that can be passed to GenVisR
 #' @param mutations Mutation data, either as GRanges or data frame
 #' @param group Experimental group (a column in the mutation data) by which
@@ -8,8 +9,8 @@
 #' documentation for `GenVisR::TvTi`.
 #' @param ... Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
 #' sample_order_input, sort, type = "Proportion" or "Frequency")
-#' @importFrom GenVisR TvTi
-#' @importFrom dplyr mutate select filter
+#' Suggests GenVisR TvTi
+#' @importFrom dplyr mutate select filter group_by
 #' @export
 tvti_plot <- function(mutations = mutation_data,
                       group = "sample",

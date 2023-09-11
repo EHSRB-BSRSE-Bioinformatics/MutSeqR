@@ -29,6 +29,7 @@ working as expected first.}
 }
 \value{
 Creates a subfolder in the output directory with SigProfiler tools results.
+Suggests: sigminer
 }
 \description{
 After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).

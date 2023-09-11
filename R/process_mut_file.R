@@ -9,24 +9,30 @@
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
-#' @param regions_file A tab delimited file with genomic regions to target.
+#' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat. 
+#' @param custom_regions_file "filepath" if regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. 
 #' TODO: make this more flexible for the user. Use built in files easily by
 #' species name, allow custom files to be provided.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub str_count
-#' @importFrom spgs reverseComplement
 #' @importFrom plyranges join_overlap_left
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim read.table
 #' @export
+
+#To delete later:
+#"C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files"
+#inst/extdata/genic_regions_mm10.txt
+
 import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
                             rsids = F,
                             sample_data_file = NULL,
                             sd_sep = "\t",
                             mut_sep = "\t",
-                            regions_file = "../../inst/extdata/genic_regions_hg38.txt") {
+                            regions_file = c("human", "mouse"),
+                            custom_regions_file = NULL) {
   mut_file <- file.path(mut_file)
   if (file.info(mut_file)$isdir == T) {
     mut_files <- list.files(path = mut_file, full.names = T)
@@ -87,7 +93,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
                variation_type),
       normalized_context = ifelse(
         stringr::str_sub(context, 2, 2) %in% c("G","A","g","a"),
-        mapply(function(x) spgs::reverseComplement(x, case = "upper"), context),
+        mapply(function(x) reverseComplement(x, case = "upper"), context),
         context),
       normalized_subtype = ifelse(
         subtype %in% names(sub_dict),
@@ -138,9 +144,21 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     starts.in.df.are.0based = TRUE
   )
   
-  # Annotate the mut file with additional information about genomic regions in the file
-  genic_regions <- read.delim(file.path(regions_file))
-
+ # Annotate the mut file with additional information about genomic regions in the file
+    if (regions_file == "human") {
+      genic_regions <- read.table("inst/extdata/genic_regions_hg38.txt", header = TRUE) 
+      } 
+      else if (regions_file == "mouse") {
+      genic_regions <- read.table("inst/extdata/genic_regions_mm10.txt", header = TRUE)
+      }
+  else if (regions_file == "custom") {
+    if (!is.null(custom_regions_file)) {
+      genic_regions <- read.table(custom_regions_file, header = TRUE)
+    } else {
+      stop("You must provide a custom regions file when regions_file is set to 'custom'.")
+    }
+  }
+    
   region_ranges <- makeGRangesFromDataFrame(
     df = genic_regions,
     keep.extra.columns = T,

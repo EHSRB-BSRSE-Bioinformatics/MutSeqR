@@ -23,8 +23,10 @@ to aggregate samples}
 documentation for \code{GenVisR::TvTi}.}
 
 \item{...}{Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
-sample_order_input, sort, type = "Proportion" or "Frequency")}
+sample_order_input, sort, type = "Proportion" or "Frequency")
+Suggests GenVisR TvTi}
 }
 \description{
+TO DO: create plot witohut the GenVisR package.
 Function to convert mutation data to a format that can be passed to GenVisR
 }

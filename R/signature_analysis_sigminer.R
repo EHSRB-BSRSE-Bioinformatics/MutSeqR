@@ -11,7 +11,7 @@
 #' working as expected first.
 #' @param ...
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.
-#' @import sigminer
+#'  Suggests: sigminer
 #' @importFrom here here
 #' @importFrom dplyr select rename mutate
 #' @importFrom utils write.table
