@@ -161,7 +161,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
         .data$subtype
       )
     ) %>%
-    { if ("depth" %in% names(.data$.))
+    { if ("depth" %in% names(.))
       mutate(., total_depth = .data$depth - .data$no_calls)
       else
       .
@@ -180,18 +180,21 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   
  # Annotate the mut file with additional information about genomic regions in the file
   if (regions_file == "human") {
-      genic_regions <- read.table("inst/extdata/genic_regions_hg38.txt", header = TRUE) 
+      genic_regions <- read.table(system.file("extdata", "genic_regions_hg38.txt", package = "DupSeqR"), header = TRUE) 
       } 
       else if (regions_file == "mouse") {
-      genic_regions <- read.table("inst/extdata/genic_regions_mm10.txt", header = TRUE)
+      genic_regions <- read.table(system.file("extdata", "genic_regions_mm10.txt", package = "DupSeqR"), header = TRUE)
       }
   else if (regions_file == "custom") {
     if (!is.null(custom_regions_file)) {
       genic_regions <- read.table(custom_regions_file, header = TRUE)
     } else {
-      stop("You must provide a custom regions file when regions_file is set to 'custom'.")
+      warning("You must provide a file path to custom_regions_file when regions_file is set to 'custom'.")
     } 
+  } else {
+    warning("Invalid regions_file parameter. Choose from 'human', 'mouse', or 'custom'.")
   }
+  
     
   region_ranges <- makeGRangesFromDataFrame(
     df = genic_regions,
