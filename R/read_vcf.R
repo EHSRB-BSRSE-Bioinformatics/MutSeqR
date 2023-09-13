@@ -47,11 +47,14 @@ dat <-data.frame(
   alt = alt(vcf),
   LSEQ = info(vcf)$LSEQ,
   RSEQ = info(vcf)$RSEQ,
-  qual = info(vcf)$QUAL,
+  qual = info(vcf)$QUAL, #is this the right one?
   depth = geno(vcf)$DP[, c(1)],
   alt_depth = geno(vcf)$VD[, c(1)],
   variation_type = info(vcf)$TYPE,
-  SVTYPE = info(vcf)$SVTYPE
+  SVTYPE = info(vcf)$SVTYPE,
+  SVLEN = info(vcf)$SVLEN,
+  FILTER = filter(vcf) # is this right?
+  
  )
 
 # Clean data
@@ -82,7 +85,8 @@ dat <- dat %>%
   select(-.data$LSEQ, -.data$Rseq)
 # change the variation type to lower case to match mut file
 
-  
+#end
+}  
   
   
 

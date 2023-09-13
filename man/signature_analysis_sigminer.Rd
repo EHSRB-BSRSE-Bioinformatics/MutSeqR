@@ -25,7 +25,9 @@ signature_analysis_sigminer(
 \item{run_bootstrapping}{TRUE or FALSE. Default FALSE. Determines if the
 sig_fit_bootstrap_batch() function should be run. This \emph{should} be done, but
 the process is slow, so it's best to confirm that the rest of the analysis is
-working as expected first.
+working as expected first.}
+
+\item{...}{additional arguments may be supplied
 To Do: we need to document the elipsis ... in the parameters of the function in a way that doesn't cause a warning during Check()}
 }
 \value{
