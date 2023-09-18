@@ -8,16 +8,6 @@
 #' #Add sample data
 #' #Add regions file
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
-#
-<<<<<<< HEAD
-#' @importFrom  VariantAnnotations read_vcf info() geno()
-#' @importFrom dplyr mutate select rename
-#' @importFrom magrittr %>%
-#' @importFrom rlang .data
-#' @importFrom stringr tolower
-#' 
-# "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/PRC_ST_113.1.consensus.variant-calls.genome.vcf"
-=======
 #' @importFrom VariantAnnotation read_vcf info() geno()
 #' @importFrom dplyr mutate select rename
 #' @importFrom magrittr %>%
@@ -25,7 +15,6 @@
 #' @importFrom stringr str_sub str_count
 #' 
 # "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test/PRC_ST_113.1.consensus.variant-calls.genome.vcf"
->>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
 
 read_vcf <- function(vcf_file) {
   vcf_file <- file.path(vcf_file)
@@ -57,16 +46,6 @@ dat <-data.frame(
   alt = alt(vcf),
   LSEQ = info(vcf)$LSEQ,
   RSEQ = info(vcf)$RSEQ,
-<<<<<<< HEAD
-  qual = info(vcf)$QUAL,
-  depth = geno(vcf)$DP[, c(1)],
-  alt_depth = geno(vcf)$VD[, c(1)],
-  variation_type = info(vcf)$TYPE,
-  SVTYPE = info(vcf)$SVTYPE
- )
-
-# Clean data
-=======
   qual = info(vcf)$QUAL, #is this the right one?
   depth = geno(vcf)$DP[, c(1)],
   alt_depth = geno(vcf)$VD[, c(1)],
@@ -77,7 +56,6 @@ dat <-data.frame(
 
 # Clean data
 #Clean up variation_type column
->>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
 dat <- dat %>%
   dplyr::mutate(
     variation_type2 = 
@@ -89,31 +67,13 @@ dat <- dat %>%
   dplyr::select(-.data$variation_type) %>%
   dplyr::rename(variation_type = .data$variation_type2)
 
-<<<<<<< HEAD
-dat$variation_type <- stringr::tolower(dat$variation_type)
- 
-=======
 dat$variation_type <- tolower(dat$variation_type)
 
 #create ref_depth, subtype, context 
->>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
 dat <- dat %>%
   dplyr::mutate(
     ref_depth = .data$depth - .data$alt_depth,
     subtype = 
-<<<<<<< HEAD
-      ifelse(.data$variation_type == "SNV",
-             paste0(.data$ref, ">", .data$alt.value),
-             "."),
-    context = 
-      ifelse(.data$variation_type != "no_variant", 
-             paste0(substr(.data$LSEQ, 20, 20), ref, substr(.data$RSEQ, 1, 1)),
-             ".")) %>%
-  select(-.data$LSEQ, -.data$Rseq)
-# change the variation type to lower case to match mut file
-
-  
-=======
       ifelse(.data$variation_type == "snv",
              paste0(.data$ref, ">", .data$alt.value),
              "."),
@@ -232,7 +192,6 @@ ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
 return(ranges_joined)
 }
 
->>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
   
   
 

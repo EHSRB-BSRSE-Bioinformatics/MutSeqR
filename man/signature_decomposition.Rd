@@ -5,7 +5,7 @@
 \title{Run COSMIC signatures comparison}
 \usage{
 signature_decomposition(
-  mutations = mutation_data,
+  mutations,
   project_name = "Default",
   project_genome = "GRCh38",
   group = "sample",
@@ -14,7 +14,7 @@ signature_decomposition(
 )
 }
 \arguments{
-\item{mutations}{A data frame, "mutation_data", imported from a .mut file}
+\item{mutations}{A data frame, imported from a .mut file}
 
 \item{project_name}{The name of the project; used to get mutation data into the required .txt format for SigProfiler}
 
@@ -25,11 +25,7 @@ output_path The directory where output results should be written. *not a paramet
 
 \item{python_path}{The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.}
 
-
 \item{python_home}{The path to the conda virtual environment that contains the required python dependencies}
-
-\item{output_path}{The directory where output results should be written}
-
 }
 \value{
 Creates a subfolder in the output directory with SigProfiler tools results.
