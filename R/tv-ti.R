@@ -13,7 +13,7 @@
 #' @importFrom dplyr mutate select filter group_by
 #' @importFrom rlang .data
 #' @export
-tvti_plot <- function(mutations = mutation_data,
+tvti_plot <- function(mutations,
                       group = "sample",
                       y = c(`A->C or T->G (TV)` = 0.066,
                             `A->G or T->C (TI)` = 0.217,

@@ -12,7 +12,7 @@
 #' Run COSMIC signatures comparison
 #'
 #' After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
-#' @param mutations A data frame, "mutation_data", imported from a .mut file
+#' @param mutations A data frame, imported from a .mut file
 #' @param project_name The name of the project; used to get mutation data into the required .txt format for SigProfiler
 #' @param project_genome A string describing the reference genome to use; e.g., GRCh38
 #' output_path The directory where output results should be written. *not a parameter of the function
@@ -30,7 +30,7 @@
 #' @import reticulate
 #' @import stringr
 #' @export
-signature_decomposition <- function(mutations = mutation_data,
+signature_decomposition <- function(mutations,
                                     project_name = "Default",
                                     project_genome = "GRCh38",
                                     group = "sample",
