@@ -21,10 +21,7 @@ export(write_VCF_from_mut)
 export(write_excel_from_list)
 export(write_excel_single_table)
 export(write_reference_fasta)
-<<<<<<< HEAD
-=======
 import(binom)
->>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
 import(openxlsx)
 import(reticulate)
 import(stringr)

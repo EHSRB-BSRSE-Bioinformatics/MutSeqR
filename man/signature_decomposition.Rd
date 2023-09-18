@@ -25,13 +25,11 @@ output_path The directory where output results should be written. *not a paramet
 
 \item{python_path}{The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.}
 
-<<<<<<< HEAD
-\item{python_home}{The path to the virtual envionrment that contains the required python packages}
+
+\item{python_home}{The path to the conda virtual environment that contains the required python dependencies}
 
 \item{output_path}{The directory where output results should be written}
-=======
-\item{python_home}{The path to the conda virtual environment that contains the required python dependencies}
->>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
+
 }
 \value{
 Creates a subfolder in the output directory with SigProfiler tools results.
