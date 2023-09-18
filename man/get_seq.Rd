@@ -26,11 +26,13 @@ The code is functional, but inconsistent. It will work, but occasionally it will
 Perhaps an issue w network connectivity or the ensemble api server load
 }
 \examples{
-regions_df <- data.frame(contig = c("chr11", "chr13"),
-                     start = c(108510788, 75803913),
-                     end = c(108513187, 75806312),
-                     gene = c("GeneA", "GeneB"),
-                     transcription_status = c("genic", "intergenic"))
+regions_df <- data.frame(
+  contig = c("chr11", "chr13"),
+  start = c(108510788, 75803913),
+  end = c(108513187, 75806312),
+  gene = c("GeneA", "GeneB"),
+  transcription_status = c("genic", "intergenic")
+)
 t <- get_seq(species = "human", genome_version = "GRCh37", regions_df = regions_df)
 t$sequence
 }

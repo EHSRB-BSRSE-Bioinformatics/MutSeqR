@@ -12,7 +12,7 @@
 #' @importFrom GenomicRanges GRanges elementMetadata
 #' @export
 lollipop_mutations <- function(species = "human",
-                               mutations = mutation_data,
+                               mutations,
                                ...
                                ) {
   if (!inherits(mutations, "GRanges")) { stop("Please supply a GRanges 

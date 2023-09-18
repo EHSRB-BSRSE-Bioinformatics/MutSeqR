@@ -16,6 +16,10 @@ Depends:
     R (>= 3.4.0)
 biocViews:
 Imports:
+<<<<<<< HEAD
+=======
+    binom,
+>>>>>>> 5ba6989ce12106cc390e94eafb559cf554e5f7d8
     Biostrings,
     data.table,
     dplyr,

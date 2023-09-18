@@ -20,7 +20,7 @@
 #' @import reticulate
 #' @import stringr
 #' @export
-signature_analysis_sigminer <- function(mutations = mutation_data,
+signature_analysis_sigminer <- function(mutations,
                                         project_name = "Default",
                                         project_genome = "BSgenome.Mmusculus.UCSC.hg38",
                                         group = "sample",

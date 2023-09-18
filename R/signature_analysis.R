@@ -30,7 +30,7 @@
 #' @import reticulate
 #' @import stringr
 #' @export
-signature_decomposition <- function(mutations = mutation_data,
+signature_decomposition <- function(mutations,
                                     project_name = "Default",
                                     project_genome = "GRCh38",
                                     group = "sample",
