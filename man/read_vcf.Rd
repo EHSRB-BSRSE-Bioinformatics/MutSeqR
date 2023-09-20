@@ -4,13 +4,24 @@
 \alias{read_vcf}
 \title{Import a vcf file}
 \usage{
-read_vcf(vcf_file)
+read_vcf(
+  vcf_file,
+  sample_data_file = NULL,
+  sd_sep = "\\t",
+  regions_file = c("human", "mouse", "custom"),
+  custom_regions_file = NULL
+)
 }
 \arguments{
-\item{vcf_file}{The .vcf file containing mutation data to be imported.
-TO DO: get it to import everything in a folder and bind it together.
-#Add sample data
-#Add regions file}
+\item{vcf_file}{The .vcf file containing mutation data to be imported.}
+
+\item{sample_data_file}{An optional file containing additional sample metadata (dose, timepoint, etc.)}
+
+\item{sd_sep}{The delimiter for importing sample metadata tables}
+
+\item{regions_file}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
+
+\item{custom_regions_file}{"filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
