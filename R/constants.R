@@ -2,7 +2,7 @@
 #'
 #' A list of column specifications
 #'
-#' @format A list with potentially variable column names
+#' @format A list with potential variable column names
 #' @export
 op <- list()
 op$column <- list()

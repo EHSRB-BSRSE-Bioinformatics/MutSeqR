@@ -1,11 +1,8 @@
 #' Get sequence of Duplex Sequencing target regions
 #'
-#' To replace get_region_seqs.R for its relaince on importing the entire genomes
+#' To replace get_region_seqs.R for its reliance on importing the entire genomes
 #' This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
 #' Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
-#' The code is functional, but inconsistent. It will work, but occasionally it will not be able to retrieve the sequences from ensembl
-#'   Perhaps an issue w network connectivity or the ensemble api server load
-
 #' @param species "human", "mouse", or "rat"
 #' @param genome_version "Genome version", ex. "GRCm38". Default = NULL (no version specified; human = GRCh38, mouse = GRCm39, rat = mRatBN7)
 #' @param regions_df data frame with target locations. Contains columns: contig, start, and end
