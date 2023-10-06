@@ -10,7 +10,7 @@
 #' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
-#' @importFrom  VariantAnnotation alt info geno readVcf ref  
+#' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr mutate select rename
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
@@ -49,13 +49,14 @@ read_vcf <- function(
     }
   } else {
     vcf <- VariantAnnotation::readVcf(vcf_file)
+    rownames(SummarizedExperiment::colData(vcf)) <- "sample"
   }
   
   # Extract mutation data into a dataframe
   dat <-data.frame(
     sample = VariantAnnotation::info(vcf)$SAMPLE,
-    contig = seqnames(vcf),
-    start = start(vcf)-1,
+    contig = SummarizedExperiment::seqnames(vcf),
+    start = SummarizedExperiment::start(vcf)-1,
     end = VariantAnnotation::info(vcf)$END,
     ref = VariantAnnotation::ref(vcf),
     alt = VariantAnnotation::alt(vcf),
@@ -69,6 +70,44 @@ read_vcf <- function(
     SVLEN = VariantAnnotation::info(vcf)$SVLEN
   )
   
+#################################
+test <- VariantAnnotation::geno(vcf)$AD  
+test_df <- as.data.frame(do.call(rbind, test))
+colnames(test_df) <- paste0("depth", 1:ncol(test_df))
+test_df <- test_df %>%
+  mutate(total_depth = rowSums(select(., where(is.numeric)), na.rm = TRUE))
+
+dat$total_depth <- test_df$total_depth
+dat$ref_depth <- test_df$depth1
+dat$var_depth <- test_df$depth2
+
+# Option 1, take the average of the depths 
+dat <- dat %>%
+  group_by(sample, contig, start) %>%
+  mutate(
+    total_depth = mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+    no_calls = depth - total_depth
+  )
+
+# Option 2, in mismatches, take the depth of the deletion/complex variant.
+dat <- dat %>%
+  group_by(sample, contig, start, end) %>%
+  mutate(
+    total_depth = case_when(
+      any(variation_type == "Deletion") ~ mean(ifelse(variation_type == "Deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) == 1 & !any(variation_type == "Deletion")) ~ mean(ifelse(variation_type == "Complex", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) > 1) ~ mean(ref_depth[!is.na(ref_depth)], na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+      all(!is.na(ref_depth)) && length(unique(ref_depth[!is.na(ref_depth)])) == 1 ~ mean(ref_depth, na.rm = TRUE),
+      TRUE ~ NA_real_
+    )
+  )
+
+dat <- dat %>%
+  dplyr::mutate(no_calls = depth - total_depth)
+####################################
+ 
+  
+  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -81,28 +120,25 @@ read_vcf <- function(
   
   # Clean data
   #Clean up variation_type column
+# CHANGE AGAIN NOW THAT TS CHANGED THEIR VARIATION COL
   dat <- dat %>%
     dplyr::mutate(
       variation_type = tolower(dat$variation_type),
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
-          ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus"), "sv",
-            ifelse(.data$variation_type == "insertion" | .data$variation_type == "deletion", "indel",
-               .data$variation_type))
+         # change in SV call, will include IUPAC symbols - TO DO. 
+                ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus"), "symbolic",
+               .data$variation_type)
           ),
       nchar_ref = nchar(ref),
       nchar_alt = nchar(alt.value),
+    # Complex type may refer to mnv or indel/mnv overlap. 
+    # In new mut files, Complex refers to when nref =! nalt & there is a change in nucleotides. 
       variation_type = 
-        ifelse( .data$variation_type == "complex" & .data$nchar_ref != .data$nchar_alt, "indel",
            ifelse(.data$variation_type == "complex" & .data$nchar_ref == .data$nchar_alt, "mnv",
-             .data$variation_type)
-      ),
-      INDELTYPE = 
-        ifelse(.data$variation_type == "indel" & .data$nchar_ref < .data$nchar_alt, "insertion",
-          ifelse(.data$variation_type == "indel" & .data$nchar_ref > .data$nchar_alt, "deletion",
-                 ".")),
+                      .data$variation_type),
       INDELLEN = 
-        ifelse(.data$variation_type == "indel", abs(.data$nchar_ref - .data$nchar_alt), 
+        ifelse(.data$variation_type == "insertion" | .data$variation_type == "deletion", abs(.data$nchar_ref - .data$nchar_alt), 
                ".")
     )
     
@@ -116,9 +152,9 @@ read_vcf <- function(
                "."),
       short_ref = substr(.data$ref, 1, 1),
       context = 
-        ifelse(.data$variation_type %in% c("snv", "sv") | (.data$INDELTYPE == "insertion" & nchar_ref == 1),
+        ifelse(.data$variation_type %in% c("snv", "sv") | (.data$variation_type == "insertion"),
                paste0(stringr::str_sub(.data$LSEQ, -1, -1), ref, stringr::str_sub(.data$RSEQ, 1, 1)), 
-               ifelse(.data$variation_type =="mnv" | .data$INDELTYPE == "deletion" | .data$INDELTYPE == "insertion" & nchar_ref > 1 , 
+               ifelse(.data$variation_type =="mnv" | .data$variation_type == "deletion" | .data$variation_type == "complex", 
                       paste0(stringr::str_sub(.data$LSEQ, -1, -1), stringr::str_sub(.data$ref, 1, 2)), 
                       "."))) %>%
     dplyr::select(-.data$LSEQ, -.data$RSEQ)
@@ -216,19 +252,87 @@ read_vcf <- function(
   } else {
     warning("Invalid regions_file parameter. Choose from 'human', 'mouse', or 'custom'.")
   }
+#####################################################################################################
+# Retrieve reference sequences
+
+  # Get the genome that was used
+genome_param <- unique(VariantAnnotation::meta(VariantAnnotation::header(vcf))$contig$assembly)
+  #Genome name mapping
+  genome_synonyms <- c(
+    "mm10" = "GRCm38",
+    "GCF_000001635.26" = "GRCm38",
+    "GRCm38" = "GRCm38",
+    "mm39" = "GRCm39",
+    "GCF_000001635.27" = "GRCm39",
+    "GRCm39" = "GRCm39",
+    "hg38" = "GRCh38",
+    "GCF_000001405.40" = "GRCh38",
+    "GRCh38" = "GRCh38",
+    "hg19" = "GRCh37",
+    "GCF_000001405.25" = "GRCh37",
+    "GRCh37" = "GRCh37"
+     )
   
-  
-  region_ranges <- makeGRangesFromDataFrame(
-    df = genic_regions,
-    keep.extra.columns = T,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = TRUE
+  get_genome_param <- function(synonym) {
+    if (synonym %in% names(genome_synonyms)) {
+      return(genome_synonyms[[synonym]])
+    } else {
+      stop("Invalid genome synonym.")
+    }
+  }
+
+genome_param <- get_genome_param(genome_param)
+
+  # Create a mapping of synonyms to parameter values and species
+  genome_info <- list(
+    GRCm38 = list(species = "mouse"),
+    GRCm39 = list(species = "mouse"),
+    GRCh37 = list(species = "human"),
+    GRCh38 = list(species = "human")
+    # Add more genome-specific information as needed
   )
+
+  #get the species based on the genome  
+  get_species_param <- function(genome_param) {
+    if (genome_param %in% c("GRCm38", "GRCm39")) {
+      return("mouse")
+    } else if (genome_param %in% c("GRCh37", "GRCh38")) {
+      return("human")
+    } else {
+      stop("Invalid genome assembly in contig field")
+    }
+  }
   
-  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
+#retrieve the sequences (GRanges object)
+region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_species_param(genome_param), genome_version = genome_param)
+  
+#  region_ranges <- makeGRangesFromDataFrame(
+#    df = genic_regions,
+#    keep.extra.columns = T,
+#    seqnames.field = "contig",
+#    start.field = "start",
+#    end.field = "end",
+#    starts.in.df.are.0based = TRUE
+#  )
+###################################################  
+# Add the target start position to the metadata so it is retained after the join
+region_ranges$start_rg <- as.vector(start(region_ranges))
+  
+# Join with mutation data
+ ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
   return(ranges_joined)
+  
+####################################################  
+# Get no_variant context
+ 
+ # get string position of nucleotide location within reference sequence
+ranges_joined <- plyranges::mutate(ranges_joined, start_string = start - start_rg +1)
+ 
+ 
+
+########################################################
+  
+
 }
 
 

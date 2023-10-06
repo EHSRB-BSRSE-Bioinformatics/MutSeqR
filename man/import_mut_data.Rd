@@ -11,7 +11,8 @@ import_mut_data(
   sd_sep = "\\t",
   mut_sep = "\\t",
   regions_file = c("human", "mouse", "custom"),
-  custom_regions_file = NULL
+  custom_regions_file = NULL,
+  rg_sep = "\\t"
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, 
 \item{regions_file}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
 
 \item{custom_regions_file}{"filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".}
+
+\item{rg_sep}{The delimiter for importing the custom_regions_file}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
