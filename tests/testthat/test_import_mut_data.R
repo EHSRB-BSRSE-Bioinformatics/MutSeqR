@@ -1,22 +1,22 @@
 library(testthat)
 
 # Define a test case for import_mut_data function
-test_that("import_mut_data function correctly imports mutation data", {
+test_that("import_mut_data function correctly imports mutation data from default complete file", {
   # Create temporary test file with example mutation data
   tmpfile <- tempfile(fileext = ".mut")
   write.table(
     data.frame(
       sample = c("mouse1", "mouse2", "mouse1", "mouse2"),
-      chromosome = c("chr1", "chr1", "chr2", "chr2"),
+      contig = c("chr1", "chr1", "chr2", "chr2"),
       start = c(69304225, 69304240, 50833424, 50833439),
       end = c(69304226, 69304241, 50833425, 50833440),
       context = c("GCA", "GGC", "ATC", "AAC"),
-      subtype = c("C>T", "G>A", "T>G", "."),
-      variation_type = c("snv", "snv", "snv", "indel"),
+      subtype = c("C>T", "G>A", ".", "."),
+      variation_type = c("snv", "snv", "no_variant", "indel"),
       total_depth = c(50, 100, 75, 150),
       alt_depth = c(10, 20, 30, 50),
-      reference = c("C", "G", "T", "AA"),
-      alt = c("T", "A", "G", "A" )
+      ref = c("C", "G", "T", "AA"),
+      alt = c("T", "A", ".", "A" )
     ),
     file = tmpfile,
     sep = "\t", row.names = FALSE
@@ -63,6 +63,17 @@ test_that("import_mut_data function correctly imports mutation data", {
                         short_ref = "character", normalized_ref = "character", normalized_context_with_mutation = "character", 
                         gc_content = "numeric", VAF = "numeric", description = "character", location_relative_to_genes = "character" ),
     info = " Check if the resulting object has the correct data type for each metadata column" )
+  
+  # Check that the output is correct
+  expect_equal(mut_data$ref_depth, c(40, 80, 45, 100), info = "Check if the ref_depth values are correct")
+  expect_equal(mut_data$context_with_mutation, c("G[C>T]A", "G[G>A]C", "no_variant", "indel"), info = "Check if the context_with_mutation values are correct")
+  expect_equal(mut_data$normalized_context, c("GCA", "GCC", "ATC", "GTT"), info = "Check if the normalized_context values are correct")
+  expect_equal(mut_data$normalized_subtype, c("C>T", "C>T", "no_variant", "indel"), info = "Check if the normalized_subtype values are correct")
+  expect_equal(mut_data$short_ref, c("C", "G", "T", "A"), info = "Check if the short_ref values are correct")
+  expect_equal(mut_data$normalized_ref, c("C", "C", "T", "T"), info = "Check if the normalized_ref values are correct")
+  expect_equal(mut_data$normalized_context_with_mutation, c("G[C>T]A", "G[C>T]C", "no_variant", "indel"), info = "Check if the normalized_context_with_mutation values are correct")
+  expect_equal(mut_data$gc_content, c(2/3, 1, 1/3, 1/3), info = "Check if the gc_content values are correct")
+  expect_equal(mut_data$VAF, c(10/50, 20/100, 30/75, 50/150), info = "Check if the VAF values are correct")
   
   # Clean up temporary file
   unlink(tmpfile)
