@@ -41,7 +41,6 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     "position" = "start",
     "pos" = "start",
     "sample_id" = "sample",
-    "Sample" = "sample",
     "variant_type" = "variation_type",
     "mutation_type" = "variation_type",
     "reference" = "ref",
@@ -98,6 +97,9 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
 
+  #Trim and lowercase column headings
+  colnames(dat) <- tolower(trimws(colnames(dat)))
+  
   # Change column names to default
   for (synonym in names(column_name_mapping)) {
     matching_col <- which(colnames(dat) %in% synonym)
@@ -105,6 +107,10 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       colnames(dat)[matching_col] <- column_name_mapping[synonym]
     }
   }
+  
+  #Uppercase context and subtype columns
+  dat$context <- toupper(dat$context)
+  dat$subtype <- toupper(dat$subtype)
 
   ################
   # Clean up data:
@@ -141,7 +147,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
           .data$variation_type
         ),
       normalized_context = ifelse(
-        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A", "g", "a"),
+        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
         mapply(function(x) reverseComplement(x, case = "upper"), .data$context),
         .data$context
       ),
