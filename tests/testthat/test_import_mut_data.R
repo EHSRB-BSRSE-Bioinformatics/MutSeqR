@@ -74,8 +74,39 @@ test_that("import_mut_data function correctly imports mutation data from default
   expect_equal(mut_data$normalized_context_with_mutation, c("G[C>T]A", "G[C>T]C", "no_variant", "indel"), info = "Check if the normalized_context_with_mutation values are correct")
   expect_equal(mut_data$gc_content, c(2/3, 1, 1/3, 1/3), info = "Check if the gc_content values are correct")
   expect_equal(mut_data$VAF, c(10/50, 20/100, 30/75, 50/150), info = "Check if the VAF values are correct")
+  expect_equal(mut_data$description, c("region_330", "region_330", "region_4547", "region_4547"), info = "Check if the description values are correct")
+  expect_equal(mut_data$location_relative_to_genes, c("intergenic", "intergenic", "intergenic", "intergenic"), info = "Check if the location_relative_to_genes values are correct")
   
   # Clean up temporary file
   unlink(tmpfile)
   unlink(tmpfile2)
 })
+
+test_that("import_mut_data function fails to import mutation data from an empty file", {
+  # Create temporary empty test file
+  tmpfile <- tempfile(fileext = ".mut")
+  
+  #create a temporary custom regions file
+  tmpfile2 <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      contig = c("chr1", "chr2"),
+      start = c(69304217, 50833175),
+      end = c(69306617, 50835575),
+      description = c("region_330", "region_4547"), 
+      location_relative_to_genes = c("intergenic", "intergenic")
+    ), 
+    file = tmpfile2,
+    sep = "\t", row.names = FALSE
+  )
+  
+  # Call the import_mut_data function on the test data
+  expect_error(import_mut_data(mut_file = tmpfile, regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: You are trying to import an empty file/folder.", 
+               info = "Check if we gets error message when imported file is empty")
+  
+  # Clean up temporary file
+  unlink(tmpfile)
+  unlink(tmpfile2)
+})
+

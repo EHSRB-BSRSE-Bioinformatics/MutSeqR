@@ -59,6 +59,11 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
 
 
   mut_file <- file.path(mut_file)
+  
+  if (file.info(mut_file)$size == 0 || is.na(file.info(mut_file)$size)) {
+    stop("Error: You are trying to import an empty file/folder.")
+  }
+  
   if (file.info(mut_file)$isdir == T) {
     mut_files <- list.files(path = mut_file, full.names = T)
     # Read in the files and bind them together
@@ -70,8 +75,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     }) %>% dplyr::bind_rows()
   } else {
     dat <- read.table(mut_file,
-      header = T, sep = mut_sep,
-      fileEncoding = "UTF-8-BOM"
+    header = T, sep = mut_sep,
+    fileEncoding = "UTF-8-BOM"
     )
   }
   if (ncol(dat) <= 1) {
