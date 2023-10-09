@@ -66,6 +66,12 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   
   if (file.info(mut_file)$isdir == T) {
     mut_files <- list.files(path = mut_file, full.names = T)
+    # Check if any of the files are empty
+    for (file_path in mut_files) {
+      if (is.na(file.info(file_path)$size) || file.info(file_path)$size == 0) {
+        warning(paste("Warning: One of the files in this direcotry is empty:", file_path))
+      }
+    }
     # Read in the files and bind them together
     dat <- lapply(mut_files, function(file) {
       read.table(file,
@@ -79,6 +85,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     fileEncoding = "UTF-8-BOM"
     )
   }
+  
   if (ncol(dat) <= 1) {
     stop("Your imported data only has one column.
                            You may want to set mut_sep to properly reflect
