@@ -280,3 +280,67 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
   unlink(tmpfile)
   unlink(tmpfile2)
 })
+
+test_that("import_mut_data function correctly imports mutation data when file contains synonymous headings", {
+  # Create temporary test file with mutation data
+  tmpfile <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      SaMpLE_ID = c("mouse1", "mouse2", "mouse1", "mouse2"),
+      cHromosOMe = c("chr1", "chr1", "chr2", "chr2"),
+      POs = c(69304225, 69304240, 50833424, 50833439),
+      ENd = c(69304226, 69304241, 50833425, 50833440),
+      fLaNkinG_seQUeNCE = c("GCA", "GGC", "ATC", "AAC"),
+      mUtaTiOn_sUBtYpE = c("C>T", "G>A", ".", "."),
+      muTatioN_tYpe = c("snv", "snv", "no_variant", "indel"),
+      CovERage = c(50, 100, 75, 150),
+      No_Depth = c(5, 5, 5, 5),
+      alt_rEAD_DEPtH = c(10, 20, 30, 50),
+      REFEREnCe = c("C", "G", "T", "AA"),
+      alTERnATE = c("T", "A", ".", "A" )
+    ),
+    file = tmpfile,
+    sep = "\t", row.names = FALSE
+  )
+  
+  #create a temporary custom regions file
+  tmpfile2 <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      contig = c("chr1", "chr2"),
+      start = c(69304217, 50833175),
+      end = c(69306617, 50835575),
+      description = c("region_330", "region_4547"), 
+      location_relative_to_genes = c("intergenic", "intergenic")
+    ), 
+    file = tmpfile2,
+    sep = "\t", row.names = FALSE
+  )
+  
+  # Call the import_mut_data function on the test data
+  mut_data <- import_mut_data(mut_file = tmpfile, regions_file = "custom", custom_regions_file = tmpfile2)
+  
+  expect_equal(names(mcols(mut_data)), c(
+    "sample", "context", "subtype", "variation_type", "depth", "no_calls",
+    "alt_depth", "ref", "alt", "ref_depth", "context_with_mutation",
+    "normalized_context", "normalized_subtype", "short_ref", "normalized_ref", 
+    "normalized_context_with_mutation", "gc_content", "total_depth", "VAF", 
+    "description", "location_relative_to_genes"
+  ), info = "Check if the resulting object has the correct meta data column names, showing that lower-case/trimming and the synonym dictionary work")
+
+  expect_equal(sapply(mcols(mut_data), class),
+               c(sample = "character", context = "character", subtype = "character", variation_type = "character",
+                 depth = "integer", no_calls = "integer", alt_depth = "integer", ref = "character", alt = "character", 
+                 ref_depth = "integer", context_with_mutation = "character", normalized_context = "character", normalized_subtype = "character",
+                 short_ref = "character", normalized_ref = "character", normalized_context_with_mutation = "character",
+                 gc_content = "numeric", total_depth = "integer", VAF = "numeric", description = "character", location_relative_to_genes = "character" ),
+               info = " Check if the resulting object has the correct data type for each metadata column" )
+
+  # Check that the output is correct
+  expect_equal(mut_data$total_depth, c(45, 95, 70, 145), info = "Check if the total_depth values are correct")
+  expect_equal(mut_data$VAF, c(10/45, 20/95, 30/70, 50/145), info = "Check if the VAF values are correct")
+
+  # Clean up temporary file
+  unlink(tmpfile)
+  unlink(tmpfile2)
+})
