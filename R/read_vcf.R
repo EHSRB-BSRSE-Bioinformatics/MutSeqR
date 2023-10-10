@@ -9,7 +9,7 @@
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file
-#' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the Deletion in the group, then adding all alt depths, if there is no deletion, then it takes the mean of the reference depths.
+#' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, then adding all alt depths, if there is no deletion, then it takes the mean of the reference depths.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr mutate select rename
@@ -133,41 +133,37 @@ read_vcf <- function(
 AD <- VariantAnnotation::geno(vcf)$AD  
 AD_df <- as.data.frame(do.call(rbind, AD))
 colnames(AD_df) <- paste0("depth", 1:ncol(AD_df))
-AD_df <- AD_df %>%
-  mutate(total_depth = rowSums(select(., where(is.numeric)), na.rm = TRUE))
 
 dat$ref_depth <- AD_df$depth1
 dat$var_depth <- AD_df$depth2
 
 
-if (method == "take_mean") {
+if (depth_calc == "take_mean") {
 # Option 1, take the average of the depths 
 dat <- dat %>%
   group_by(sample, contig, start) %>%
   mutate(
-    total_depth = mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+    total_depth = round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE)),
     no_calls = depth - total_depth
-  )
-} else if (method == "take_indel") {
+  ) %>%
+  ungroup()
+} else if (depth_calc == "take_del") {
 # Option 2, when mismatches in depth occur at the same location, 
   #take the depth of the deletion/complex variant over the depth of the no_variant.
-dat <- dat %>%
-  group_by(sample, contig, start, end) %>%
-  mutate(
-    total_depth = case_when(
-      any(variation_type == "Deletion") ~ mean(ifelse(variation_type == "Deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) > 1 & !any(variation_type == "Deletion")) ~ mean(ifelse(variation_type == "Complex", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) == 1) ~ mean(ref_depth[!is.na(ref_depth)], na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      all(!is.na(ref_depth)) && length(unique(ref_depth[!is.na(ref_depth)])) == 1 ~ mean(ref_depth, na.rm = TRUE),
-      TRUE ~ NA_real_
-    )
-  )
-
-dat <- dat %>%
-  dplyr::mutate(no_calls = depth - total_depth)
-
+  dat <- dat %>%
+    group_by(sample, contig, start) %>%
+    mutate(
+      total_depth = case_when(
+        any(variation_type == "deletion") & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
+          sum(ifelse(variation_type == "deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+        TRUE ~
+          round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
+      ),
+    no_calls = depth - total_depth) %>%
+  ungroup()
+  
 } else {
-  stop("Invalid method. Please choose 'take_mean' or 'take_indel'.")
+  stop("Invalid method. Please choose 'take_mean' or 'take_del'.")
 }
 #################################### 
 
