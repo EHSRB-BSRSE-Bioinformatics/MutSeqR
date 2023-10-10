@@ -100,7 +100,7 @@ test_that("import_mut_data function fails to import mutation data from an empty 
   
   # Call the import_mut_data function on the test data
   expect_error(import_mut_data(mut_file = tmpfile, regions_file = "custom", custom_regions_file = tmpfile2),
-               "Error: You are trying to import an empty file/folder.", 
+               "Error: You are trying to import an empty file/folder OR the file path you specified is invalid.", 
                info = "Check if we get an error message when imported file is empty")
   
   expect_error(import_mut_data(mut_file = NULL, regions_file = "custom", custom_regions_file = tmpfile2),
@@ -237,5 +237,46 @@ test_that("import_mut_data function fails to import mutation data from an incomp
   unlink(tmpfileC)
   unlink(tmpfileD)
   unlink(tmpfileE)
+  unlink(tmpfile2)
+})
+
+test_that("import_mut_data function fails to import mutation data if an invalid file path is specified", {
+  # Create temporary non-empty test file with mutation data
+  tmpfile <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      contig = c("chr1", "chr1", "chr2", "chr2")
+    ),
+    file = tmpfile,
+    sep = "\t", row.names = FALSE
+  )
+  
+  #create a temporary custom regions file
+  tmpfile2 <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      contig = c("chr1", "chr2"),
+      start = c(69304217, 50833175),
+      end = c(69306617, 50835575),
+      description = c("region_330", "region_4547"), 
+      location_relative_to_genes = c("intergenic", "intergenic")
+    ), 
+    file = tmpfile2,
+    sep = "\t", row.names = FALSE
+  )
+  
+  invalid_file_path <- file.exists(paste(file.path(tmpfile, "(1)")))
+  
+  # Call the import_mut_data function on the test data
+  expect_error(import_mut_data(mut_file = invalid_file_path, regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: You are trying to import an empty file/folder OR the file path you specified is invalid", 
+               info = "Check that we get an error message when an incorrect file path is specified")
+  
+  expect_error(import_mut_data(mut_file = "", regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: You are trying to import an empty file/folder OR the file path you specified is invalid",
+               info = "Check that we get an error message when a blank file path is specified")
+
+  # Clean up temporary file
+  unlink(tmpfile)
   unlink(tmpfile2)
 })

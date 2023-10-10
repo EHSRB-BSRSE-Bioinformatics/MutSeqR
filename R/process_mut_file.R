@@ -61,7 +61,7 @@ import_mut_data <- function(mut_file = "",
   mut_file <- file.path(mut_file)
   
   if (file.info(mut_file)$size == 0 || is.na(file.info(mut_file)$size)) {
-    stop("Error: You are trying to import an empty file/folder.")
+    stop("Error: You are trying to import an empty file/folder OR the file path you specified is invalid.")
   }
   
   if (file.info(mut_file)$isdir == T) {
