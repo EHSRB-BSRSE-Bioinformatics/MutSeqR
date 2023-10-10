@@ -120,6 +120,30 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     }
   }
   
+  # Check that input contains all required columns
+  dat_column_names <- colnames(dat)
+  required_columns <- as.character(c("alt_depth", "subtype", "context", "ref", "variation_type", "contig", "start", "end"))
+  missing_columns <- setdiff(required_columns, dat_column_names)
+  
+  has_total_depth <- "total_depth" %in% dat_column_names
+  has_depth <- "depth" %in% dat_column_names
+  has_no_calls <- "no_calls" %in% dat_column_names
+  
+  if (!has_total_depth && !has_depth && !has_no_calls) {
+    missing_columns <- append(missing_columns, "(depth and no_calls) OR total_depth")
+  }
+  if (!has_depth && has_no_calls) {
+    missing_columns <- append(missing_columns, "depth")
+  }
+  if (!has_no_calls && has_depth) {
+    missing_columns <- append(missing_columns, "no_calls")
+  }
+  
+  if (length(missing_columns) > 0) {
+    missing_columns_str <- paste(missing_columns, collapse = ", ")
+    stop(paste("Required column(s) missing:", missing_columns_str))
+  } 
+  
   #Uppercase context and subtype columns
   dat$context <- toupper(dat$context)
   dat$subtype <- toupper(dat$subtype)
