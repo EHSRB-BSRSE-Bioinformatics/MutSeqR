@@ -83,12 +83,13 @@ read_vcf <- function(
   }
   
 # Clean up variation_type column to match .mut
-# REF --> no_variant
-# sv subtypes and IUPAC symbols --> symbolic
-# Complex, when n(ref) = n(alt) --> mnv
-# n(ref) > n(alt) == 1 --> deletion
-# n(ref) == 1 < n(alt) --> insertion
-# Complex, n(ref) != n(alt) & neither == 1 --> "complex"
+  # REF --> no_variant
+  # sv subtypes and IUPAC symbols --> symbolic
+  # n(ref) = n(alt) > 1 --> mnv
+  # n(ref) > n(alt) == 1 --> deletion
+  # n(ref) == 1 < n(alt) --> insertion
+  # n(ref) != n(alt) & neither == 1 --> "complex"
+# Create an VARLEN column
   dat <- dat %>%
     dplyr::mutate(
        nchar_ref = nchar(ref),
@@ -98,14 +99,16 @@ read_vcf <- function(
         ifelse(.data$variation_type == "ref", "no_variant", 
           ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus",
                                              "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
-           ifelse(.data$nchar_ref == .data$nchar_alt & .data$nchar_ref >= 2 , "mnv",
-            ifelse(.data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
-             ifelse(.data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
-              ifelse(.data$nchar_ref != .data$nchar_alt & .data$nchar_alt >= 2 &  .data$nchar_ref >= 2, "complex",
+           ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
+            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
+             ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
+              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 &  .data$nchar_ref > 1, "complex",
                     .data$variation_type)))))),
-      INDELLEN = 
-        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref, 
-               ".")
+      VARLEN = 
+        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
+         ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
+          ifelse(.data$variation_type == "symbolic", .data$SVLEN,
+               ".")))
     )
     
   #create ref_depth, short_ref, subtype, context 
