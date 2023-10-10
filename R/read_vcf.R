@@ -9,6 +9,7 @@
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file
+#' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the Deletion in the group, then adding all alt depths, if there is no deletion, then it takes the mean of the reference depths.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr mutate select rename
@@ -27,7 +28,8 @@ read_vcf <- function(
                       sd_sep = "\t",
                       regions_file = c("human", "mouse", "custom"),
                       custom_regions_file = NULL,
-                      rg_sep = "\t") {
+                      rg_sep = "\t",
+                      depth_calc = "take_del") {
   
   vcf_file <- file.path(vcf_file)
   if (file.info(vcf_file)$isdir == T) {
@@ -70,44 +72,6 @@ read_vcf <- function(
     SVLEN = VariantAnnotation::info(vcf)$SVLEN
   )
   
-#################################
-test <- VariantAnnotation::geno(vcf)$AD  
-test_df <- as.data.frame(do.call(rbind, test))
-colnames(test_df) <- paste0("depth", 1:ncol(test_df))
-test_df <- test_df %>%
-  mutate(total_depth = rowSums(select(., where(is.numeric)), na.rm = TRUE))
-
-dat$total_depth <- test_df$total_depth
-dat$ref_depth <- test_df$depth1
-dat$var_depth <- test_df$depth2
-
-# Option 1, take the average of the depths 
-dat <- dat %>%
-  group_by(sample, contig, start) %>%
-  mutate(
-    total_depth = mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-    no_calls = depth - total_depth
-  )
-
-# Option 2, in mismatches, take the depth of the deletion/complex variant.
-dat <- dat %>%
-  group_by(sample, contig, start, end) %>%
-  mutate(
-    total_depth = case_when(
-      any(variation_type == "Deletion") ~ mean(ifelse(variation_type == "Deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) == 1 & !any(variation_type == "Deletion")) ~ mean(ifelse(variation_type == "Complex", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) > 1) ~ mean(ref_depth[!is.na(ref_depth)], na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      all(!is.na(ref_depth)) && length(unique(ref_depth[!is.na(ref_depth)])) == 1 ~ mean(ref_depth, na.rm = TRUE),
-      TRUE ~ NA_real_
-    )
-  )
-
-dat <- dat %>%
-  dplyr::mutate(no_calls = depth - total_depth)
-####################################
- 
-  
-  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -118,27 +82,29 @@ dat <- dat %>%
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
   
-  # Clean data
-  #Clean up variation_type column
-# CHANGE AGAIN NOW THAT TS CHANGED THEIR VARIATION COL
+# Clean up variation_type column to match .mut
+# REF --> no_variant
+# sv subtypes and IUPAC symbols --> symbolic
+# Complex, when n(ref) = n(alt) --> mnv
+# n(ref) > n(alt) == 1 --> deletion
+# n(ref) == 1 < n(alt) --> insertion
+# Complex, n(ref) != n(alt) & neither == 1 --> "complex"
   dat <- dat %>%
     dplyr::mutate(
+       nchar_ref = nchar(ref),
+      nchar_alt = nchar(alt.value),
       variation_type = tolower(dat$variation_type),
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
-         # change in SV call, will include IUPAC symbols - TO DO. 
-                ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus"), "symbolic",
-               .data$variation_type)
-          ),
-      nchar_ref = nchar(ref),
-      nchar_alt = nchar(alt.value),
-    # Complex type may refer to mnv or indel/mnv overlap. 
-    # In new mut files, Complex refers to when nref =! nalt & there is a change in nucleotides. 
-      variation_type = 
-           ifelse(.data$variation_type == "complex" & .data$nchar_ref == .data$nchar_alt, "mnv",
-                      .data$variation_type),
+          ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus",
+                                             "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
+           ifelse(.data$nchar_ref == .data$nchar_alt & .data$nchar_ref >= 2 , "mnv",
+            ifelse(.data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
+             ifelse(.data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
+              ifelse(.data$nchar_ref != .data$nchar_alt & .data$nchar_alt >= 2 &  .data$nchar_ref >= 2, "complex",
+                    .data$variation_type)))))),
       INDELLEN = 
-        ifelse(.data$variation_type == "insertion" | .data$variation_type == "deletion", abs(.data$nchar_ref - .data$nchar_alt), 
+        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref, 
                ".")
     )
     
@@ -159,7 +125,50 @@ dat <- dat %>%
                       "."))) %>%
     dplyr::select(-.data$LSEQ, -.data$RSEQ)
   
-  # Define substitution dictionary to normalize to pyrimidine context
+#################################
+  # Create total_depth and no_calls columns based on set parameter depth_calc
+AD <- VariantAnnotation::geno(vcf)$AD  
+AD_df <- as.data.frame(do.call(rbind, AD))
+colnames(AD_df) <- paste0("depth", 1:ncol(AD_df))
+AD_df <- AD_df %>%
+  mutate(total_depth = rowSums(select(., where(is.numeric)), na.rm = TRUE))
+
+dat$ref_depth <- AD_df$depth1
+dat$var_depth <- AD_df$depth2
+
+
+if (method == "take_mean") {
+# Option 1, take the average of the depths 
+dat <- dat %>%
+  group_by(sample, contig, start) %>%
+  mutate(
+    total_depth = mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+    no_calls = depth - total_depth
+  )
+} else if (method == "take_indel") {
+# Option 2, when mismatches in depth occur at the same location, 
+  #take the depth of the deletion/complex variant over the depth of the no_variant.
+dat <- dat %>%
+  group_by(sample, contig, start, end) %>%
+  mutate(
+    total_depth = case_when(
+      any(variation_type == "Deletion") ~ mean(ifelse(variation_type == "Deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) > 1 & !any(variation_type == "Deletion")) ~ mean(ifelse(variation_type == "Complex", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) == 1) ~ mean(ref_depth[!is.na(ref_depth)], na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
+      all(!is.na(ref_depth)) && length(unique(ref_depth[!is.na(ref_depth)])) == 1 ~ mean(ref_depth, na.rm = TRUE),
+      TRUE ~ NA_real_
+    )
+  )
+
+dat <- dat %>%
+  dplyr::mutate(no_calls = depth - total_depth)
+
+} else {
+  stop("Invalid method. Please choose 'take_mean' or 'take_indel'.")
+}
+#################################### 
+
+# Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
     "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
     "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
