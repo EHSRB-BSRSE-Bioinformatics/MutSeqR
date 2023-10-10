@@ -26,7 +26,7 @@
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files
 # inst/extdata/genic_regions_mm10.txt
 
-import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+import_mut_data <- function(mut_file = "",
                             rsids = F,
                             sample_data_file = NULL,
                             sd_sep = "\t",

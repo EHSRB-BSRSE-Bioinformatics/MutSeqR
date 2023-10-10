@@ -103,6 +103,10 @@ test_that("import_mut_data function fails to import mutation data from an empty 
                "Error: You are trying to import an empty file/folder.", 
                info = "Check if we get an error message when imported file is empty")
   
+  expect_error(import_mut_data(mut_file = NULL, regions_file = "custom", custom_regions_file = tmpfile2),
+               "missing value where TRUE/FALSE needed", 
+               info = "Check if we get an error message when imported file is empty")
+  
   # Clean up temporary file
   unlink(tmpfile)
   unlink(tmpfile2)
