@@ -10,12 +10,12 @@
 write_excel_from_list <- function(list_of_tables, output_path, workbook_name) {
 
   stopifnot(is.list(list_of_tables))
-  hs1 <- createStyle(
+  hs1 <- openxlsx::createStyle(
     textDecoration = "Bold",
     border = "Bottom",
     fontColour = "black"
   )
-  hs2 <- createStyle(
+  hs2 <- openxlsx::createStyle(
     textDecoration = "Bold",
     border = c("top", "bottom", "left", "right"),
     fontColour = "black",
@@ -44,7 +44,7 @@ write_excel_from_list <- function(list_of_tables, output_path, workbook_name) {
                            widths = "auto")
   }
   fname <- file.path(output_path, paste0(workbook_name, ".xlsx"))
-  saveWorkbook(wb1, fname, overwrite = TRUE)
+  openxlsx::saveWorkbook(wb1, fname, overwrite = TRUE)
 }
 
 #' Write Excel table
@@ -59,12 +59,15 @@ write_excel_from_list <- function(list_of_tables, output_path, workbook_name) {
 write_excel_single_table <- function(mut_data,
                                      output_path = "./",
                                      workbook_name = "Default") {
-  hs1 <- createStyle(
+  if (!requireNamespace(openxlsx)) {
+    stop("openxlsx not installed")
+  }
+  hs1 <- openxlsx::createStyle(
     textDecoration = "Bold",
     border = "Bottom",
     fontColour = "black"
   )
-  hs2 <- createStyle(
+  hs2 <- openxlsx::createStyle(
     textDecoration = "Bold",
     border = c("top", "bottom", "left", "right"),
     fontColour = "black",
@@ -75,9 +78,9 @@ write_excel_single_table <- function(mut_data,
   options("openxlsx.maxWidth" = 50)
   wb1 <- createWorkbook()
   dataToWrite <- as.data.frame(mut_data)
-  addWorksheet(wb1, workbook_name)
-  freezePane(wb1, sheet = 1, firstRow = TRUE, firstActiveCol = 1)
-  writeDataTable(wb1,
+  openxlsx::addWorksheet(wb1, workbook_name)
+  openxlsx::freezePane(wb1, sheet = 1, firstRow = TRUE, firstActiveCol = 1)
+  openxlsx::writeDataTable(wb1,
     sheet = 1,
     x = dataToWrite,
     colNames = TRUE,
@@ -87,7 +90,7 @@ write_excel_single_table <- function(mut_data,
     keepNA = T,
     na.string = "NA"
   )
-  setColWidths(wb1, sheet = 1, cols = 1:ncol(dataToWrite), widths = "auto")
+  openxlsx::setColWidths(wb1, sheet = 1, cols = 1:ncol(dataToWrite), widths = "auto")
   fname <- file.path(output_path, paste0(workbook_name, ".xlsx"))
-  saveWorkbook(wb1, fname, overwrite = TRUE)
+  openxlsx::saveWorkbook(wb1, fname, overwrite = TRUE)
 }
