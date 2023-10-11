@@ -128,48 +128,61 @@ read_vcf <- function(
                       "."))) %>%
     dplyr::select(-.data$LSEQ, -.data$RSEQ)
   
-#################################
-  # Create total_depth and no_calls columns based on set parameter depth_calc
+
+# Create total_depth and no_calls columns based on set parameter depth_calc
 AD <- VariantAnnotation::geno(vcf)$AD  
-AD_df <- as.data.frame(do.call(rbind, AD))
-colnames(AD_df) <- paste0("depth", 1:ncol(AD_df))
+AD <- as.data.frame(do.call(rbind, AD))
+colnames(AD) <- paste0("depth", 1:ncol(AD))
 
-dat$ref_depth <- AD_df$depth1
-dat$var_depth <- AD_df$depth2
-
-
-if (depth_calc == "take_mean") {
-# Option 1, take the average of the depths 
+dat$ref_depth <- AD$depth1
+dat$var_depth <- AD$depth2
 dat <- dat %>%
-  group_by(sample, contig, start) %>%
   mutate(
-    total_depth = round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE)),
-    no_calls = depth - total_depth
-  ) %>%
-  ungroup()
-} else if (depth_calc == "take_del") {
-# Option 2, when mismatches in depth occur at the same location, 
-  #take the depth of the deletion/complex variant over the depth of the no_variant.
-  dat <- dat %>%
+    var_depth = ifelse(is.na(var_depth), 0, var_depth))
+
+# Filter the rows where "sample," "contig," and "start" are duplicated
+duplicated_rows <- dat %>%
+  group_by(sample, contig, start) %>%
+  filter(n() > 1)
+
+# Calculate total_depth for the duplicated rows
+if (depth_calc == "take_del") {
+  total_depth_duplicated <- duplicated_rows %>%
     group_by(sample, contig, start) %>%
-    mutate(
+    dplyr::summarize(
       total_depth = case_when(
         any(variation_type == "deletion") & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
           sum(ifelse(variation_type == "deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-       
         any(variation_type == "complex" & !any(variation_type == "deletion")) & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
           sum(ifelse(variation_type == "complex", ref_depth, 0), na.rm = TRUE + sum(var_depth, na.rm = TRUE)),
-        
-         TRUE ~
-          round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
-      ),
-    no_calls = depth - total_depth) %>%
-  ungroup()
+        TRUE ~ round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
+      )
+    ) %>%
+    ungroup()
   
-} else {
-  stop("Invalid method. Please choose 'take_mean' or 'take_del'.")
+} else if (depth_calc == "take_mean") {
+  total_depth_duplicated <- duplicated_rows %>%
+    group_by(sample, contig, start) %>%
+    dplyr::summarize(
+      total_depth = round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
+    ) %>%
+    ungroup()
+
+  } else {
+  stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
 }
-#################################### 
+
+# Merge the total_depth values for duplicated rows back into the original data frame
+dat <- dat %>%
+  left_join(total_depth_duplicated, by = c("sample", "contig", "start"))
+
+# Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
+dat <- dat %>%
+  mutate(
+    total_depth = ifelse(!duplicated(dat[, c("sample", "contig", "start")]), ref_depth + var_depth, total_depth),
+    no_calls = depth - total_depth
+  )
+
 
 # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
