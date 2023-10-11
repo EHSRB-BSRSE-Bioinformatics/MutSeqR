@@ -4,7 +4,13 @@
 \alias{get_seq}
 \title{Get sequence of Duplex Sequencing target regions}
 \usage{
-get_seq(species, genome_version = NULL, regions_df, is_0_based = TRUE)
+get_seq(
+  species,
+  genome_version = NULL,
+  regions_df,
+  is_0_based = TRUE,
+  padding = 1
+)
 }
 \arguments{
 \item{species}{"human", "mouse", or "rat"}
@@ -14,6 +20,8 @@ get_seq(species, genome_version = NULL, regions_df, is_0_based = TRUE)
 \item{regions_df}{data frame with target locations. Contains columns: contig, start, and end}
 
 \item{is_0_based}{TRUE or FALSE. Are the target region coordinates 0 based (TRUE) or 1 based (FALSE)}
+
+\item{padding}{An interger value by which the function will extend the range of the target sequence on both sides. Modified region regions will be reported in ext_start and ext_end.}
 }
 \value{
 a GRanges object with sequences and metadata of targeted regions

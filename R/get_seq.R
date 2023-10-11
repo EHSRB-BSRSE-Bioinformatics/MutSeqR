@@ -7,6 +7,7 @@
 #' @param genome_version "Genome version", ex. "GRCm38". Default = NULL (no version specified; human = GRCh38, mouse = GRCm39, rat = mRatBN7)
 #' @param regions_df data frame with target locations. Contains columns: contig, start, and end
 #' @param is_0_based TRUE or FALSE. Are the target region coordinates 0 based (TRUE) or 1 based (FALSE)
+#' @param padding An interger value by which the function will extend the range of the target sequence on both sides. Modified region regions will be reported in ext_start and ext_end. 
 #' @return a GRanges object with sequences and metadata of targeted regions
 #' @examples
 #' regions_df <- data.frame(
@@ -19,12 +20,20 @@
 #' t <- get_seq(species = "human", genome_version = "GRCh37", regions_df = regions_df)
 #' t$sequence
 #' @export
-get_seq <- function(species, genome_version = NULL, regions_df, is_0_based = TRUE) {
+get_seq <- function(
+                    species, 
+                    genome_version = NULL, 
+                    regions_df, 
+                    is_0_based = TRUE,
+                    padding = 1) {
   process_region <- function(contig, start, end) {
     if (is_0_based) {
       start <- start + 1
     }
-
+ # Add padding to start and subtract padding from end
+  start <- max(1, start - padding)
+  end <- end + padding
+    
     ext <- paste0("https://rest.ensembl.org/sequence/region/", species, "/", contig, ":", start, "..", end, ifelse(!is.null(genome_version), paste0("?coord_system_version=", genome_version), ""))
     r <- httr::GET(paste(ext, sep = ""), httr::content_type("text/plain"))
     return(httr::content(r))
@@ -35,7 +44,15 @@ get_seq <- function(species, genome_version = NULL, regions_df, is_0_based = TRU
   })
 
   seqs <- unlist(seq_list)
-  seqs_df <- data.frame(sequence = seqs)
+  ext_df <- data.frame(
+                      sequence = seqs,
+                      ext_start =  
+                        if (is_0_based) {
+                        regions_df$start + 1 - padding
+                      } else {
+                        regions_df$start - padding},
+                      ext_end = regions_df$end + padding)
+
 
   gr <- GenomicRanges::makeGRangesFromDataFrame(
     df = regions_df,
@@ -47,7 +64,9 @@ get_seq <- function(species, genome_version = NULL, regions_df, is_0_based = TRU
     starts.in.df.are.0based = is_0_based
   )
 
-  gr$sequence <- seqs_df$sequence
+  gr$sequence <- ext_df$sequence
+  gr$ext_start <-ext_df$ext_start
+  gr$ext_end <-ext_df$ext_end
   return(gr)
 }
 
