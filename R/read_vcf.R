@@ -156,7 +156,11 @@ dat <- dat %>%
       total_depth = case_when(
         any(variation_type == "deletion") & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
           sum(ifelse(variation_type == "deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-        TRUE ~
+       
+        any(variation_type == "complex" & !any(variation_type == "deletion")) & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
+          sum(ifelse(variation_type == "complex", ref_depth, 0), na.rm = TRUE + sum(var_depth, na.rm = TRUE)),
+        
+         TRUE ~
           round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
       ),
     no_calls = depth - total_depth) %>%
