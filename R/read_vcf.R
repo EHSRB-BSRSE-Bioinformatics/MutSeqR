@@ -9,10 +9,10 @@
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file
-#' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, then adding all alt depths, if there is no deletion, then it takes the mean of the reference depths.
+#' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, or if no deletion is present, the complex variant, then adding all alt depths, if there is no deletion or complex variant, then it takes the mean of the reference depths.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
-#' @importFrom dplyr mutate select rename
+#' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @importFrom stringr str_sub str_count
@@ -21,6 +21,7 @@
 #' 
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test
 # /PRC_ST_113.1.consensus.variant-calls.genome.vcf
+# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
 
 read_vcf <- function(
                       vcf_file,
@@ -126,7 +127,7 @@ read_vcf <- function(
                ifelse(.data$variation_type =="mnv" | .data$variation_type == "deletion" | .data$variation_type == "complex", 
                       paste0(stringr::str_sub(.data$LSEQ, -1, -1), stringr::str_sub(.data$ref, 1, 2)), 
                       "."))) %>%
-    dplyr::select(-.data$LSEQ, -.data$RSEQ)
+    dplyr::select(-.data$LSEQ, -.data$RSEQ, -.data$alt.group, -.data$alt.group_name)
   
 
 # Create total_depth and no_calls columns based on set parameter depth_calc
@@ -137,36 +138,36 @@ colnames(AD) <- paste0("depth", 1:ncol(AD))
 dat$ref_depth <- AD$depth1
 dat$var_depth <- AD$depth2
 dat <- dat %>%
-  mutate(
-    var_depth = ifelse(is.na(var_depth), 0, var_depth))
+  dplyr::mutate(
+        var_depth = ifelse(is.na(.data$var_depth), 0, .data$var_depth))
 
 # Filter the rows where "sample," "contig," and "start" are duplicated
 duplicated_rows <- dat %>%
-  group_by(sample, contig, start) %>%
-  filter(n() > 1)
+  dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+  dplyr::filter(n() > 1)
 
 # Calculate total_depth for the duplicated rows
 if (depth_calc == "take_del") {
   total_depth_duplicated <- duplicated_rows %>%
-    group_by(sample, contig, start) %>%
+    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
     dplyr::summarize(
       total_depth = case_when(
-        any(variation_type == "deletion") & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
-          sum(ifelse(variation_type == "deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-        any(variation_type == "complex" & !any(variation_type == "deletion")) & length(unique(ref_depth[!is.na(ref_depth)])) > 1 ~
-          sum(ifelse(variation_type == "complex", ref_depth, 0), na.rm = TRUE + sum(var_depth, na.rm = TRUE)),
-        TRUE ~ round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
+        any(.data$variation_type == "deletion") & length(unique(.data$ref_depth[!is.na(.data$ref_depth)])) > 1 ~
+          sum(ifelse(.data$variation_type == "deletion", .data$ref_depth, 0), na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE),
+        any(.data$variation_type == "complex" & !any(.data$variation_type == "deletion")) & length(unique(.data$ref_depth[!is.na(.data$ref_depth)])) > 1 ~
+          sum(ifelse(.data$variation_type == "complex", .data$ref_depth, 0), na.rm = TRUE + sum(.data$var_depth, na.rm = TRUE)),
+        TRUE ~ round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
       )
     ) %>%
-    ungroup()
+    dplyr::ungroup()
   
 } else if (depth_calc == "take_mean") {
   total_depth_duplicated <- duplicated_rows %>%
-    group_by(sample, contig, start) %>%
+    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
     dplyr::summarize(
-      total_depth = round(mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE))
+      total_depth = round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
     ) %>%
-    ungroup()
+    dplyr::ungroup()
 
   } else {
   stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
@@ -174,14 +175,16 @@ if (depth_calc == "take_del") {
 
 # Merge the total_depth values for duplicated rows back into the original data frame
 dat <- dat %>%
-  left_join(total_depth_duplicated, by = c("sample", "contig", "start"))
+  dplyr::left_join(total_depth_duplicated, by = c("sample", "contig", "start"))
 
 # Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
 dat <- dat %>%
-  mutate(
-    total_depth = ifelse(!duplicated(dat[, c("sample", "contig", "start")]), ref_depth + var_depth, total_depth),
-    no_calls = depth - total_depth
-  )
+  dplyr::mutate(
+    total_depth = ifelse(!duplicated(dat[, c("sample", "contig", "start")]), .data$ref_depth + .data$var_depth, .data$total_depth),
+    no_calls = .data$depth - .data$total_depth,
+    VAF = .data$alt_depth / .data$total_depth
+  ) %>%
+  dplyr::select(-.data$var_depth)
 
 
 # Define substitution dictionary to normalize to pyrimidine context
@@ -249,11 +252,7 @@ dat <- dat %>%
         .data$subtype
       )
     )
-  
-  # We don't have a total_depth column yet. 
-  # When we do - we will have to add depth_col 
-  dat <- dat %>% mutate(VAF = .data$alt_depth / .data$depth)
-  
+
   mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
     keep.extra.columns = T,
