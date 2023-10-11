@@ -7,12 +7,13 @@
 #' regions included for the data.
 #' @param fasta_out The path for the FASTA file output.
 #' @returns Writes a FASTA reference file to be used in downstream applications.
+#' @importFrom Biostrings writeXStringSet
 #' @export
 write_reference_fasta <- function(ref_ranges,
                                   fasta_out = "./reference_output.fasta") {
   ref <- ref_ranges$sequence
   names(ref) <- make.unique(as.vector(seqnames(ref_ranges)))
-  writeXStringSet(ref,
+  Biostrings::writeXStringSet(ref,
                   fasta_out,
                   append=FALSE,
                   format="fasta")
