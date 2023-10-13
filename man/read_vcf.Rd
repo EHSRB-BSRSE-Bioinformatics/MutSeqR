@@ -11,7 +11,9 @@ read_vcf(
   regions_file = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
-  depth_calc = "take_del"
+  assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
+  depth_calc = "take_del",
+  is_0_based = TRUE
 )
 }
 \arguments{
@@ -27,13 +29,15 @@ read_vcf(
 
 \item{rg_sep}{The delimiter for importing the custom_regions_file}
 
+\item{assembly}{The genome assembly. Accepted values "GRCh37", "GRCh38", "GRCm38", "GRCm39"}
+
 \item{depth_calc}{In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, or if no deletion is present, the complex variant, then adding all alt depths, if there is no deletion or complex variant, then it takes the mean of the reference depths.}
+
+\item{is_0_based}{TRUE or FALSE. Indicates whether the variant calls in the vcf files are 0based or not (ie 1based). Default is TRUE.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
 }
 \description{
 Imports a .vcf file into the R environment and converts it into a dataframe
-TO DO: vcf files need to first be modified because they contain different column names...
-The last column name is the sample name. This must be removed in order to bind them all together.
 }

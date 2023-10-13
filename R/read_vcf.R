@@ -1,15 +1,15 @@
 #' Import a vcf file
 #' 
 #' Imports a .vcf file into the R environment and converts it into a dataframe
-#' TO DO: vcf files need to first be modified because they contain different column names...
-#' The last column name is the sample name. This must be removed in order to bind them all together. 
 #' @param vcf_file The .vcf file containing mutation data to be imported.
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file
+#' @param assembly The genome assembly. Accepted values "GRCh37", "GRCh38", "GRCm38", "GRCm39"
 #' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, or if no deletion is present, the complex variant, then adding all alt depths, if there is no deletion or complex variant, then it takes the mean of the reference depths.
+#' @param is_0_based TRUE or FALSE. Indicates whether the variant calls in the vcf files are 0based or not (ie 1based). Default is TRUE.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
@@ -30,7 +30,9 @@ read_vcf <- function(
                       regions_file = c("human", "mouse", "custom"),
                       custom_regions_file = NULL,
                       rg_sep = "\t",
-                      depth_calc = "take_del") {
+                      assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
+                      depth_calc = "take_del",
+                      is_0_based = TRUE) {
   
   vcf_file <- file.path(vcf_file)
   if (file.info(vcf_file)$isdir == T) {
@@ -112,7 +114,7 @@ read_vcf <- function(
                ".")))
     )
     
-  #create ref_depth, short_ref, subtype, context 
+  #create ref_depth, short_ref, subtype
   dat <- dat %>%
     dplyr::mutate(
       ref_depth = .data$depth - .data$alt_depth,
@@ -120,14 +122,8 @@ read_vcf <- function(
         ifelse(.data$variation_type == "snv",
                paste0(.data$ref, ">", .data$alt.value),
                "."),
-      short_ref = substr(.data$ref, 1, 1),
-      context = 
-        ifelse(.data$variation_type %in% c("snv", "sv") | (.data$variation_type == "insertion"),
-               paste0(stringr::str_sub(.data$LSEQ, -1, -1), ref, stringr::str_sub(.data$RSEQ, 1, 1)), 
-               ifelse(.data$variation_type =="mnv" | .data$variation_type == "deletion" | .data$variation_type == "complex", 
-                      paste0(stringr::str_sub(.data$LSEQ, -1, -1), stringr::str_sub(.data$ref, 1, 2)), 
-                      "."))) %>%
-    dplyr::select(-.data$LSEQ, -.data$RSEQ, -.data$alt.group, -.data$alt.group_name)
+      short_ref = substr(.data$ref, 1, 1)) %>%
+    dplyr::select(-LSEQ, -RSEQ, -alt.group, -alt.group_name)
   
 
 # Create total_depth and no_calls columns based on set parameter depth_calc
@@ -184,82 +180,18 @@ dat <- dat %>%
     no_calls = .data$depth - .data$total_depth,
     VAF = .data$alt_depth / .data$total_depth
   ) %>%
-  dplyr::select(-.data$var_depth)
+  dplyr::select(-var_depth)
 
-
-# Define substitution dictionary to normalize to pyrimidine context
-  sub_dict <- c(
-    "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
-    "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
-  )
-  # Clean up data:
-  # Get reverse complement of sequence context where mutation is listed on purine context
-  # Change all purine substitutions to pyrimidine substitutions
-  # Make new column with COSMIC-style 96 base context
-  # Get GC Content
-  # TODO - describe better
-  
-  # Context with mutation
-  dat <- dat %>%
-    dplyr::mutate(
-      context_with_mutation =
-        ifelse(.data$subtype != ".",
-               paste0(
-                 stringr::str_sub(.data$context, 1, 1),
-                 "[", .data$subtype, "]",
-                 stringr::str_sub(.data$context, 3, 3)
-               ),
-               .data$variation_type
-        ),
-      normalized_context = ifelse(
-        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A", "g", "a"),
-        mapply(function(x) reverseComplement.default(x, case = "upper"), .data$context),
-        .data$context
-      ),
-      normalized_subtype = 
-        ifelse(.data$subtype %in% names(sub_dict),
-               sub_dict[.data$subtype],
-               .data$subtype
-        ),
-      normalized_ref = dplyr::case_when(
-        substr(.data$ref, 1, 1) == "A" ~ "T",
-        substr(.data$ref, 1, 1) == "G" ~ "C",
-        substr(.data$ref, 1, 1) == "C" ~ "C",
-        substr(.data$ref, 1, 1) == "T" ~ "T"
-      ),
-      normalized_context_with_mutation =
-        ifelse(.data$normalized_subtype != ".",
-               paste0(
-                 stringr::str_sub(.data$normalized_context, 1, 1),
-                 "[", .data$normalized_subtype, "]",
-                 stringr::str_sub(.data$normalized_context, 3, 3)
-               ),
-               .data$variation_type
-        ),
-      gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
-                      stringr::str_count(string = .data$context, pattern = "C"))
-      / stringr::str_count(.data$context)
-    ) %>%
-    mutate(
-      normalized_subtype = ifelse(
-        .data$normalized_subtype == ".",
-        .data$variation_type,
-        .data$normalized_subtype
-      ),
-      subtype = ifelse(
-        .data$subtype == ".",
-        .data$variation_type,
-        .data$subtype
-      )
-    )
-
-  mut_ranges <- makeGRangesFromDataFrame(
+##############################################################
+# Create Context Column using target Sequences
+# Turn dat into a GRanges object, adjust for 0based.  
+mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
     keep.extra.columns = T,
     seqnames.field = "contig",
     start.field = "start",
     end.field = "end",
-    starts.in.df.are.0based = TRUE
+    starts.in.df.are.0based = is_0_based
   )
   
   # Annotate the mut file with additional information about genomic regions in the file
@@ -279,82 +211,98 @@ dat <- dat %>%
 #####################################################################################################
 # Retrieve reference sequences
 
-  # Get the genome that was used
-genome_param <- unique(VariantAnnotation::meta(VariantAnnotation::header(vcf))$contig$assembly)
-  #Genome name mapping
-  genome_synonyms <- c(
-    "mm10" = "GRCm38",
-    "GCF_000001635.26" = "GRCm38",
-    "GRCm38" = "GRCm38",
-    "mm39" = "GRCm39",
-    "GCF_000001635.27" = "GRCm39",
-    "GRCm39" = "GRCm39",
-    "hg38" = "GRCh38",
-    "GCF_000001405.40" = "GRCh38",
-    "GRCh38" = "GRCh38",
-    "hg19" = "GRCh37",
-    "GCF_000001405.25" = "GRCh37",
-    "GRCh37" = "GRCh37"
-     )
-  
-  get_genome_param <- function(synonym) {
-    if (synonym %in% names(genome_synonyms)) {
-      return(genome_synonyms[[synonym]])
-    } else {
-      stop("Invalid genome synonym.")
-    }
-  }
-
-genome_param <- get_genome_param(genome_param)
-
-  # Create a mapping of synonyms to parameter values and species
-  genome_info <- list(
-    GRCm38 = list(species = "mouse"),
-    GRCm39 = list(species = "mouse"),
-    GRCh37 = list(species = "human"),
-    GRCh38 = list(species = "human")
-    # Add more genome-specific information as needed
-  )
-
   #get the species based on the genome  
-  get_species_param <- function(genome_param) {
-    if (genome_param %in% c("GRCm38", "GRCm39")) {
+  get_species_param <- function(assembly) {
+    if (assembly %in% c("GRCm38", "GRCm39")) {
       return("mouse")
-    } else if (genome_param %in% c("GRCh37", "GRCh38")) {
+    } else if (assembly %in% c("GRCh37", "GRCh38")) {
       return("human")
     } else {
-      stop("Invalid genome assembly in contig field")
+      stop("Invalid assembly parameter")
     }
   }
   
 #retrieve the sequences (GRanges object)
-region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_species_param(genome_param), genome_version = genome_param)
-  
-#  region_ranges <- makeGRangesFromDataFrame(
-#    df = genic_regions,
-#    keep.extra.columns = T,
-#    seqnames.field = "contig",
-#    start.field = "start",
-#    end.field = "end",
-#    starts.in.df.are.0based = TRUE
-#  )
-###################################################  
-# Add the target start position to the metadata so it is retained after the join
-region_ranges$start_rg <- as.vector(start(region_ranges))
+region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_species_param(assembly), genome_version = assembly)
   
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
   return(ranges_joined)
-  
-####################################################  
-# Get no_variant context
- 
- # get string position of nucleotide location within reference sequence
-ranges_joined <- plyranges::mutate(ranges_joined, start_string = start - start_rg +1)
- 
- 
 
-########################################################
+# Get no_variant context
+dat <- ranges_joined %>%
+  plyranges::mutate(
+                    start_string = start - ext_start +1,
+                    context = substr(sequence, start_string - 1, start_string + 1)) %>%
+  plyranges::select(-start_string)
+
+# Define substitution dictionary to normalize to pyrimidine context
+  sub_dict <- c(
+    "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
+    "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
+  )
+  # Clean up data:
+  # Get reverse complement of sequence context where mutation is listed on purine context
+  # Change all purine substitutions to pyrimidine substitutions
+  # Make new column with COSMIC-style 96 base context
+  # Get GC Content
+  # TODO - describe better
+  
+  # Context with mutation
+  dat <- dat %>%
+    plyranges::mutate(
+      context_with_mutation =
+        ifelse(subtype != ".",
+               paste0(
+                 stringr::str_sub(context, 1, 1),
+                 "[", subtype, "]",
+                 stringr::str_sub(context, 3, 3)
+               ),
+               variation_type
+        ),
+       normalized_context = ifelse(
+        stringr::str_sub(context, 2, 2) %in% c("G", "A", "g", "a"),
+        mapply(function(x) reverseComplement.default(x, case = "upper"), context),
+        context
+      ),
+      normalized_subtype = 
+        ifelse(subtype %in% names(sub_dict),
+               sub_dict[subtype],
+               subtype
+        ),
+      normalized_ref = dplyr::case_when(
+        substr(ref, 1, 1) == "A" ~ "T",
+        substr(ref, 1, 1) == "G" ~ "C",
+        substr(ref, 1, 1) == "C" ~ "C",
+        substr(ref, 1, 1) == "T" ~ "T"
+      ),
+      normalized_context_with_mutation =
+        ifelse(normalized_subtype != ".",
+               paste0(
+                 stringr::str_sub(normalized_context, 1, 1),
+                 "[", normalized_subtype, "]",
+                 stringr::str_sub(normalized_context, 3, 3)
+               ),
+               variation_type
+        ),
+      gc_content = (stringr::str_count(string = context, pattern = "G") +
+                      stringr::str_count(string = context, pattern = "C"))
+      / stringr::str_count(context)
+    ) %>%
+    plyranges::mutate(
+      normalized_subtype = ifelse(
+        normalized_subtype == ".",
+        variation_type,
+        normalized_subtype
+      ),
+      subtype = ifelse(
+        subtype == ".",
+        variation_type,
+        subtype
+      )
+    )
+
+ 
   
 
 }
