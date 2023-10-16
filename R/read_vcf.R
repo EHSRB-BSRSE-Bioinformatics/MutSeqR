@@ -9,7 +9,6 @@
 #' @param rg_sep The delimiter for importing the custom_regions_file
 #' @param assembly The genome assembly. Accepted values "GRCh37", "GRCh38", "GRCm38", "GRCm39"
 #' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, or if no deletion is present, the complex variant, then adding all alt depths, if there is no deletion or complex variant, then it takes the mean of the reference depths.
-#' @param is_0_based TRUE or FALSE. Indicates whether the variant calls in the vcf files are 0based or not (ie 1based). Default is TRUE.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
@@ -31,8 +30,7 @@ read_vcf <- function(
                       custom_regions_file = NULL,
                       rg_sep = "\t",
                       assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
-                      depth_calc = "take_del",
-                      is_0_based = TRUE) {
+                      depth_calc = "take_del") {
   
   vcf_file <- file.path(vcf_file)
   if (file.info(vcf_file)$isdir == T) {
@@ -58,22 +56,24 @@ read_vcf <- function(
   }
   
   # Extract mutation data into a dataframe
-  dat <-data.frame(
-    sample = VariantAnnotation::info(vcf)$SAMPLE,
+  dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
-    start = SummarizedExperiment::start(vcf)-1,
-    end = VariantAnnotation::info(vcf)$END,
+    start = SummarizedExperiment::start(vcf),
     ref = VariantAnnotation::ref(vcf),
     alt = VariantAnnotation::alt(vcf),
-    LSEQ = VariantAnnotation::info(vcf)$LSEQ,
-    RSEQ = VariantAnnotation::info(vcf)$RSEQ,
-    qual = VariantAnnotation::info(vcf)$QUAL, #is this the right one?
-    depth = VariantAnnotation::geno(vcf)$DP[, c(1)],
-    alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1)],
-    variation_type = VariantAnnotation::info(vcf)$TYPE,
-    SVTYPE = VariantAnnotation::info(vcf)$SVTYPE,
-    SVLEN = VariantAnnotation::info(vcf)$SVLEN
-  )
+    depth = VariantAnnotation::geno(vcf)$DP[, c(1,2)],
+    alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1,2)]
+    )  
+  # Retain all INFO fields
+  info <- as.data.frame(info(vcf))
+  row.names(info) <- NULL
+  
+  dat <- cbind(dat, info)
+  names(dat)[names(dat) == "TYPE"] <- "variation_type"
+  names(dat)[names(dat) == "SAMPLE"] <- "sample"
+  names(dat)[names(dat) == "END"] <- "end"
+ 
+  
   
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
@@ -100,7 +100,9 @@ read_vcf <- function(
       variation_type = tolower(dat$variation_type),
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
-          ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus",
+          ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
+                                             "cnv:tr", "dup:tandem", "del:me", "ins:me",
+                                      #These ambiguity codes may need to be defiend from the alt column instead
                                              "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
             ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
@@ -122,12 +124,24 @@ read_vcf <- function(
         ifelse(.data$variation_type == "snv",
                paste0(.data$ref, ">", .data$alt.value),
                "."),
-      short_ref = substr(.data$ref, 1, 1)) %>%
-    dplyr::select(-LSEQ, -RSEQ, -alt.group, -alt.group_name)
+      short_ref = substr(.data$ref, 1, 1))
   
 
-# Create total_depth and no_calls columns based on set parameter depth_calc
+# Create total_depth and no_calls columns based on set parameter depth_calc.
+  # Requires AD field in FORMAT of vcf. If this field is missing, we use depth instead of total_depth
 AD <- VariantAnnotation::geno(vcf)$AD  
+
+if (length(AD) == 0) {
+  # Handle the case where AD is missing
+  dat <- dat %>%
+    dplyr::mutate(
+      no_calls = 0,  # Since AD is missing, no calls can't be calculated
+      VAF = .data$alt_depth / .data$depth  # Calculate VAF using depth
+    )
+  cat("Warning: no_calls cannot be calculated because there is no AD field.\n")
+  cat("VAF calculated with depth (DP; includes N-calls) because AD field is missing.\n")
+  
+} else {  
 AD <- as.data.frame(do.call(rbind, AD))
 colnames(AD) <- paste0("depth", 1:ncol(AD))
 
@@ -181,17 +195,17 @@ dat <- dat %>%
     VAF = .data$alt_depth / .data$total_depth
   ) %>%
   dplyr::select(-var_depth)
+}
 
 ##############################################################
 # Create Context Column using target Sequences
-# Turn dat into a GRanges object, adjust for 0based.  
+# Turn dat into a GRanges object.  
 mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
     keep.extra.columns = T,
     seqnames.field = "contig",
     start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = is_0_based
+    end.field = "end"
   )
   
   # Annotate the mut file with additional information about genomic regions in the file
