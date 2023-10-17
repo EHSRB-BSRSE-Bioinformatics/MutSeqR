@@ -60,18 +60,39 @@ import_mut_data <- function(mut_file = "",
 
   mut_file <- file.path(mut_file)
   
-  if (file.info(mut_file)$size == 0 || is.na(file.info(mut_file)$size)) {
-    stop("Error: You are trying to import an empty file/folder OR the file path you specified is invalid.")
+  # Validate file/folder input
+  if (file.exists(mut_file)) {
+    file_info <- file.info(mut_file)
+    
+    if (file_info$isdir == TRUE) {
+      # Handle the case where mut_file exists and is a directory
+      file_list <- list.files(path = mut_file, full.names = T)
+      
+      if (length(file_list) == 0) {
+        stop("Error: The folder you've specified is empty")
+      }
+      
+      # Warn if any of the files in folder are empty
+      for (file_path in file_list) {
+        if (is.na(file.info(file_path)$size) || file.info(file_path)$size == 0) {
+          warning(paste("Warning: The following file in your specified direcotry is empty:", basename(file_path), "\n"))
+        }
+      }
+      
+    } else {
+      # Handle the case where mut_file exists and is not a directory (a file)
+      if (file_info$size == 0 || is.na(file_info$size)) {
+        stop("Error: You are trying to import an empty file")
+      }
+    }
+  } else {
+    # Handle the case where mut_file does not exist
+    stop("Error: The file path you've specified is invalid")
   }
+  
   
   if (file.info(mut_file)$isdir == T) {
     mut_files <- list.files(path = mut_file, full.names = T)
-    # Check if any of the files are empty
-    for (file_path in mut_files) {
-      if (is.na(file.info(file_path)$size) || file.info(file_path)$size == 0) {
-        warning(paste("Warning: One of the files in this direcotry is empty:", file_path))
-      }
-    }
     # Read in the files and bind them together
     dat <- lapply(mut_files, function(file) {
       read.table(file,
