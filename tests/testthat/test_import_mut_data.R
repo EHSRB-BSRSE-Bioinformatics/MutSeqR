@@ -1,4 +1,5 @@
 library(testthat)
+library(fs)
 
 # Define test cases for import_mut_data function
 test_that("import_mut_data function correctly imports mutation data from default complete file", {
@@ -82,7 +83,10 @@ test_that("import_mut_data function correctly imports mutation data from default
 
 test_that("import_mut_data function fails to import mutation data from an empty file", {
   # Create temporary empty test file
-  tmpfile <- tempfile(fileext = ".mut")
+  empty_file <- "empty.txt"
+  file.create(empty_file)
+  
+  expect_equal(file.info(empty_file)$size, 0, info = "Check that empty file has size = 0")
   
   #create a temporary custom regions file
   tmpfile2 <- tempfile(fileext = ".mut")
@@ -99,16 +103,12 @@ test_that("import_mut_data function fails to import mutation data from an empty 
   )
   
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = tmpfile, regions_file = "custom", custom_regions_file = tmpfile2),
-               "Error: You are trying to import an empty file/folder OR the file path you specified is invalid.", 
+  expect_error(import_mut_data(mut_file = empty_file, regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: You are trying to import an empty file",
                info = "Check if we get an error message when imported file is empty")
-  
-  expect_error(import_mut_data(mut_file = NULL, regions_file = "custom", custom_regions_file = tmpfile2),
-               "missing value where TRUE/FALSE needed", 
-               info = "Check if we get an error message when imported file is empty")
-  
+
   # Clean up temporary file
-  unlink(tmpfile)
+  unlink(empty_file)
   unlink(tmpfile2)
 })
 
@@ -251,6 +251,9 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
     sep = "\t", row.names = FALSE
   )
   
+  invalid_file <- paste0(file.path(tmpfile), "(1)")
+  expect_false(file.exists(file.path(invalid_file)))
+  
   #create a temporary custom regions file
   tmpfile2 <- tempfile(fileext = ".mut")
   write.table(
@@ -265,16 +268,21 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
     sep = "\t", row.names = FALSE
   )
   
-  invalid_file_path <- file.exists(paste(file.path(tmpfile, "(1)")))
-  
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = invalid_file_path, regions_file = "custom", custom_regions_file = tmpfile2),
-               "Error: You are trying to import an empty file/folder OR the file path you specified is invalid", 
+  expect_error(import_mut_data(mut_file = invalid_file, regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: The file path you've specified is invalid",
                info = "Check that we get an error message when an incorrect file path is specified")
   
   expect_error(import_mut_data(mut_file = "", regions_file = "custom", custom_regions_file = tmpfile2),
-               "Error: You are trying to import an empty file/folder OR the file path you specified is invalid",
+               "Error: The file path you've specified is invalid",
                info = "Check that we get an error message when a blank file path is specified")
+  
+  expect_error(import_mut_data(mut_file = is.null(), regions_file = "custom", custom_regions_file = tmpfile2),
+               info = "Check if we get an error message when imported file is NULL")
+  
+  expect_error(import_mut_data(mut_file = is.na(), regions_file = "custom", custom_regions_file = tmpfile2),
+               info = "Check if we get an error message when imported file is NA")
+  
 
   # Clean up temporary file
   unlink(tmpfile)
@@ -327,7 +335,7 @@ test_that("import_mut_data function correctly imports mutation data when file co
     "normalized_context_with_mutation", "gc_content", "total_depth", "VAF", 
     "description", "location_relative_to_genes"
   ), info = "Check if the resulting object has the correct meta data column names, showing that lower-case/trimming and the synonym dictionary work")
-
+  
   expect_equal(sapply(mcols(mut_data), class),
                c(sample = "character", context = "character", subtype = "character", variation_type = "character",
                  depth = "integer", no_calls = "integer", alt_depth = "integer", ref = "character", alt = "character", 
@@ -335,11 +343,11 @@ test_that("import_mut_data function correctly imports mutation data when file co
                  short_ref = "character", normalized_ref = "character", normalized_context_with_mutation = "character",
                  gc_content = "numeric", total_depth = "integer", VAF = "numeric", description = "character", location_relative_to_genes = "character" ),
                info = " Check if the resulting object has the correct data type for each metadata column" )
-
+  
   # Check that the output is correct
   expect_equal(mut_data$total_depth, c(45, 95, 70, 145), info = "Check if the total_depth values are correct")
   expect_equal(mut_data$VAF, c(10/45, 20/95, 30/70, 50/145), info = "Check if the VAF values are correct")
-
+  
   # Clean up temporary file
   unlink(tmpfile)
   unlink(tmpfile2)

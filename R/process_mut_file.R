@@ -75,7 +75,7 @@ import_mut_data <- function(mut_file = "",
       # Warn if any of the files in folder are empty
       for (file_path in file_list) {
         if (is.na(file.info(file_path)$size) || file.info(file_path)$size == 0) {
-          warning(paste("Warning: The following file in your specified direcotry is empty:", basename(file_path), "\n"))
+          warning(paste("Warning: The following file in your specified directory is empty:", basename(file_path), "\n"))
         }
       }
       
