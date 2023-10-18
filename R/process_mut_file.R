@@ -66,45 +66,44 @@ import_mut_data <- function(mut_file = "",
     
     if (file_info$isdir == TRUE) {
       # Handle the case where mut_file exists and is a directory
-      file_list <- list.files(path = mut_file, full.names = T)
+      mut_files <- list.files(path = mut_file, full.names = T)
       
-      if (length(file_list) == 0) {
+      #cat("mut_file:", mut_file, "\n")
+      #cat("mut_files:", mut_files, "\n")
+      
+      if (length(mut_files) == 0) {
         stop("Error: The folder you've specified is empty")
       }
       
       # Warn if any of the files in folder are empty
-      for (file_path in file_list) {
+      for (file_path in mut_files) {
         if (is.na(file.info(file_path)$size) || file.info(file_path)$size == 0) {
           warning(paste("Warning: The following file in your specified directory is empty:", basename(file_path), "\n"))
         }
       }
+      
+      # Read in the files and bind them together
+      dat <- lapply(mut_files, function(file) {
+        read.table(file,
+                   header = TRUE, sep = mut_sep,
+                   fileEncoding = "UTF-8-BOM"
+        )
+      }) %>% dplyr::bind_rows()
       
     } else {
       # Handle the case where mut_file exists and is not a directory (a file)
       if (file_info$size == 0 || is.na(file_info$size)) {
         stop("Error: You are trying to import an empty file")
       }
+      
+      dat <- read.table(mut_file,
+                        header = T, sep = mut_sep,
+                        fileEncoding = "UTF-8-BOM"
+      )
     }
   } else {
     # Handle the case where mut_file does not exist
     stop("Error: The file path you've specified is invalid")
-  }
-  
-  
-  if (file.info(mut_file)$isdir == T) {
-    mut_files <- list.files(path = mut_file, full.names = T)
-    # Read in the files and bind them together
-    dat <- lapply(mut_files, function(file) {
-      read.table(file,
-        header = TRUE, sep = mut_sep,
-        fileEncoding = "UTF-8-BOM"
-      )
-    }) %>% dplyr::bind_rows()
-  } else {
-    dat <- read.table(mut_file,
-    header = T, sep = mut_sep,
-    fileEncoding = "UTF-8-BOM"
-    )
   }
   
   if (ncol(dat) <= 1) {
@@ -131,7 +130,11 @@ import_mut_data <- function(mut_file = "",
   }
 
   #Trim and lowercase column headings
-  colnames(dat) <- tolower(trimws(colnames(dat)))
+  colnames(dat) <- tolower(gsub("\\.+", "", #deals with middle periods
+                                gsub("(\\.+)?$", "", #deals with trailing periods
+                                     gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
+                                          colnames(dat))),
+                                perl = TRUE))
   
   # Change column names to default
   for (synonym in names(column_name_mapping)) {

@@ -86,8 +86,6 @@ test_that("import_mut_data function fails to import mutation data from an empty 
   empty_file <- "empty.txt"
   file.create(empty_file)
   
-  expect_equal(file.info(empty_file)$size, 0, info = "Check that empty file has size = 0")
-  
   #create a temporary custom regions file
   tmpfile2 <- tempfile(fileext = ".mut")
   write.table(
@@ -191,7 +189,8 @@ test_that("import_mut_data function fails to import mutation data from an incomp
       context = c("GCA", "GGC", "ATC", "AAC"),
       subtype = c("C>T", "G>A", ".", "."),
       variation_type = c("snv", "snv", "no_variant", "indel"),
-      total_depth = c(50, 100, 75, 150),
+      depth = c(50, 100, 75, 150),
+      no_calls = c(0, 0, 0, 0),
       alt_depth = c(10, 20, 30, 50),
       ref = c("C", "G", "T", "AA")
     ),
@@ -277,7 +276,6 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
   )
   
   invalid_file <- paste0(file.path(tmpfile), "(1)")
-  expect_false(file.exists(file.path(invalid_file)))
   
   #create a temporary custom regions file
   tmpfile2 <- tempfile(fileext = ".mut")
@@ -319,18 +317,18 @@ test_that("import_mut_data function correctly imports mutation data when file co
   tmpfile <- tempfile(fileext = ".mut")
   write.table(
     data.frame(
-      SaMpLE_ID = c("mouse1", "mouse2", "mouse1", "mouse2"),
-      cHromosOMe = c("chr1", "chr1", "chr2", "chr2"),
-      POs = c(69304225, 69304240, 50833424, 50833439),
-      ENd = c(69304226, 69304241, 50833425, 50833440),
-      fLaNkinG_seQUeNCE = c("GCA", "GGC", "ATC", "AAC"),
-      mUtaTiOn_sUBtYpE = c("C>T", "G>A", ".", "."),
-      muTatioN_tYpe = c("snv", "snv", "no_variant", "indel"),
-      CovERage = c(50, 100, 75, 150),
-      No_Depth = c(5, 5, 5, 5),
-      alt_rEAD_DEPtH = c(10, 20, 30, 50),
-      REFEREnCe = c("C", "G", "T", "AA"),
-      alTERnATE = c("T", "A", ".", "A" )
+      "SaMpLE_ID " = c("mouse1", "mouse2", "mouse1", "mouse2"),
+      "cHr omosOMe" = c("chr1", "chr1", "chr2", "chr2"),
+      " POs" = c(69304225, 69304240, 50833424, 50833439),
+      "  ENd" = c(69304226, 69304241, 50833425, 50833440),
+      "fLaNkinG_seQUeNCE  " = c("GCA", "GGC", "ATC", "AAC"),
+      "mUt aT  iOn_sUBtYpE" = c("C>T", "G>A", ".", "."),
+      "muTatioN_tYpe" = c("snv", "snv", "no_variant", "indel"),
+      "CovERage" = c(50, 100, 75, 150),
+      "No_Depth" = c(5, 5, 5, 5),
+      "alt_rEAD_DEPtH" = c(10, 20, 30, 50),
+      "REFEREnCe" = c("C", "G", "T", "AA"),
+      "alTERnATE" = c("T", "A", ".", "A" )
     ),
     file = tmpfile,
     sep = "\t", row.names = FALSE
@@ -363,16 +361,16 @@ test_that("import_mut_data function correctly imports mutation data when file co
   
   expect_equal(sapply(mcols(mut_data), class),
                c(sample = "character", context = "character", subtype = "character", variation_type = "character",
-                 depth = "integer", no_calls = "integer", alt_depth = "integer", ref = "character", alt = "character", 
+                 depth = "integer", no_calls = "integer", alt_depth = "integer", ref = "character", alt = "character",
                  ref_depth = "integer", context_with_mutation = "character", normalized_context = "character", normalized_subtype = "character",
                  short_ref = "character", normalized_ref = "character", normalized_context_with_mutation = "character",
                  gc_content = "numeric", total_depth = "integer", VAF = "numeric", description = "character", location_relative_to_genes = "character" ),
                info = " Check if the resulting object has the correct data type for each metadata column" )
-  
+
   # Check that the output is correct
   expect_equal(mut_data$total_depth, c(45, 95, 70, 145), info = "Check if the total_depth values are correct")
   expect_equal(mut_data$VAF, c(10/45, 20/95, 30/70, 50/145), info = "Check if the VAF values are correct")
-  
+
   # Clean up temporary file
   unlink(tmpfile)
   unlink(tmpfile2)
@@ -479,6 +477,4 @@ test_that("import_mut_data function correctly imports mutation data from a folde
   unlink(test_dir, recursive = TRUE)
   unlink(tmpfile2)
 })
-
-
 
