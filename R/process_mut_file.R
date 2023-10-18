@@ -66,19 +66,18 @@ import_mut_data <- function(mut_file = "",
     
     if (file_info$isdir == TRUE) {
       # Handle the case where mut_file exists and is a directory
-      mut_files <- list.files(path = mut_file, full.names = T)
+      mut_files <- list.files(path = mut_file, full.names = TRUE, no.. = TRUE)
       
       if (length(mut_files) == 0) {
         stop("Error: The folder you've specified is empty")
       }
       
       # Warning/error if any of the files in folder are empty
-      empty_list <- c()
-      for (file_path in mut_files) {
-        if (is.na(file.info(file_path)$size) || file.info(file_path)$size == 0) {
-          empty_list <- append(empty_list, basename(file_path))
-        }
-      }
+      files_info_all <- file.info(mut_files)
+      
+      empty_indices <- is.na(files_info_all$size) | files_info_all$size == 0
+      empty_list <- basename(mut_files[empty_indices])
+      
       empty_list_str <- paste(empty_list, collapse = ", ")
       
       if (length(empty_list) == length(mut_files)) {
