@@ -478,3 +478,31 @@ test_that("import_mut_data function correctly imports mutation data from a folde
   unlink(tmpfile2)
 })
 
+test_that("import_mut_data function correctly imports mutation data from an empty folder", {
+  # Create an empty directory
+  test_dir <- file.path(tempdir(), "Temp_test_folder1")
+  dir.create(test_dir, recursive = TRUE, showWarnings = FALSE, mode = "0777")
+
+  #create a temporary custom regions file
+  tmpfile2 <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      contig = c("chr1", "chr2"),
+      start = c(69304217, 50833175),
+      end = c(69306617, 50835575),
+      description = c("region_330", "region_4547"),
+      location_relative_to_genes = c("intergenic", "intergenic")
+    ),
+    file = tmpfile2,
+    sep = "\t", row.names = FALSE
+  )
+
+  # Call the import_mut_data function on the test data
+  expect_error(import_mut_data(mut_file = test_dir, regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: The folder you've specified is empty", fixed=TRUE,
+               info = "Check if we get an error message when imported folder is empty")
+
+  # Clean up temporary file
+  unlink(test_dir, recursive = TRUE)
+  unlink(tmpfile2)
+})
