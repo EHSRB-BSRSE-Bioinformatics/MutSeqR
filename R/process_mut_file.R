@@ -87,6 +87,9 @@ import_mut_data <- function(mut_file = "",
         warning(paste("Warning: The following files in the specified directory are empty:", empty_list_str))
       }
       
+      # Remove empty files from mut_files
+      mut_files <- mut_files[!empty_indices]
+      
       # Read in the files and bind them together
       dat <- lapply(mut_files, function(file) {
         read.table(file,
