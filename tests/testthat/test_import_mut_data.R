@@ -298,13 +298,13 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
   
   expect_error(import_mut_data(mut_file = "", regions_file = "custom", custom_regions_file = tmpfile2),
                "Error: The file path you've specified is invalid",
-               info = "Check that we get an error message when a blank file path is specified")
+               info = "Check that we get an error message when a blank path is specified")
   
   expect_error(import_mut_data(mut_file = is.null(), regions_file = "custom", custom_regions_file = tmpfile2),
-               info = "Check if we get an error message when imported file is NULL")
+               info = "Check if we get an error message when input is NULL")
   
   expect_error(import_mut_data(mut_file = is.na(), regions_file = "custom", custom_regions_file = tmpfile2),
-               info = "Check if we get an error message when imported file is NA")
+               info = "Check if we get an error message when input is NA")
   
 
   # Clean up temporary file
@@ -502,6 +502,37 @@ test_that("import_mut_data function correctly imports mutation data from an empt
                "Error: The folder you've specified is empty", fixed=TRUE,
                info = "Check if we get an error message when imported folder is empty")
 
+  # Clean up temporary file
+  unlink(test_dir, recursive = TRUE)
+  unlink(tmpfile2)
+})
+
+test_that("import_mut_data function fails to import mutation data if an invalid folder path is specified", {
+  # Create temporary non-empty folder with mutation data
+  test_dir <- file.path(tempdir(), "Temp_test_folder1")
+  dir.create(test_dir, recursive = TRUE, showWarnings = FALSE, mode = "0777")
+  
+  invalid_folder <- paste0(file.path(test_dir), "(1)")
+  
+  #create a temporary custom regions file
+  tmpfile2 <- tempfile(fileext = ".mut")
+  write.table(
+    data.frame(
+      contig = c("chr1", "chr2"),
+      start = c(69304217, 50833175),
+      end = c(69306617, 50835575),
+      description = c("region_330", "region_4547"), 
+      location_relative_to_genes = c("intergenic", "intergenic")
+    ), 
+    file = tmpfile2,
+    sep = "\t", row.names = FALSE
+  )
+  
+  # Call the import_mut_data function on the test data
+  expect_error(import_mut_data(mut_file = invalid_folder, regions_file = "custom", custom_regions_file = tmpfile2),
+               "Error: The file path you've specified is invalid",
+               info = "Check that we get an error message when an incorrect folder path is specified")
+  
   # Clean up temporary file
   unlink(test_dir, recursive = TRUE)
   unlink(tmpfile2)
