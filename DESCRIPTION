@@ -46,6 +46,7 @@ Suggests:
     SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
     trackViewer,
+    fs
 Remotes:
     git::https://github.com/AlexandrovLab/SigProfilerAssignmentR,
     git::https://github.com/AlexandrovLab/SigProfilerExtractorR,
