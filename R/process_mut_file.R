@@ -176,7 +176,16 @@ import_mut_data <- function(mut_file = "",
     stop(paste("Required column(s) missing:", missing_columns_str))
   } 
   
-  #Uppercase context and subtype columns
+  # Deal with data frame values being NA
+  excluded_columns <- c("total_depth", "depth", "no_calls")
+  na_rows <- dat[complete.cases(dat[, !colnames(dat) %in% excluded_columns]), ]
+  
+  if (nrow(dat) != nrow(na_rows)) {
+    warning("Warning: Some rows contained NA values and were removed. You input file/folder may contain incomplete data with missing columns; please double-check your input.")
+    dat <- na_rows
+  }
+  
+  # Uppercase context and subtype columns
   dat$context <- toupper(dat$context)
   dat$subtype <- toupper(dat$subtype)
 
@@ -193,18 +202,24 @@ import_mut_data <- function(mut_file = "",
     "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
   )
 
-  # The column that represents depth might vary
-  depth_col <- ifelse("total_depth" %in% colnames(dat),
-    "total_depth",
-    ifelse("depth" %in% colnames(dat),
-      "depth", stop("Error: I'm not sure which column
-                             specifies depth.")
+  dat <- dat %>% dplyr::rowwise() %>%
+    mutate(
+      ref_depth = if ("total_depth" %in% colnames(dat) & "depth" %in% colnames(dat)) {
+        if (is.na(total_depth) && !is.na(depth)) {depth - alt_depth}
+        else if (!is.na(total_depth) && is.na(depth)) {total_depth - alt_depth}
+        else stop("Error: Both total_depth and depth have non-NA values. It is unclear which column specifies depth.")
+      } else if ("total_depth" %in% colnames(dat) & !("depth" %in% colnames(dat))) {
+        if (is.na(total_depth)) {stop("Error: The total_depth column in your input data has NA values")}
+        else {total_depth - alt_depth}
+      } else if ("depth" %in% colnames(dat) & !("total_depth" %in% colnames(dat))) {
+        if (is.na(depth)) {stop("Error: The depth column in your input data has NA values")}
+        else {depth - alt_depth}
+      } else {stop("Error: It is unclear which column specifies depth.")}
     )
-  )
-
+  dat <- as.data.frame(dat)
+  
   dat <- dat %>%
     mutate(
-      ref_depth = .data[[depth_col]] - .data$alt_depth,
       context_with_mutation =
         ifelse(.data$subtype != ".",
           paste0(
@@ -257,14 +272,17 @@ import_mut_data <- function(mut_file = "",
         .data$variation_type,
         .data$subtype
       )
-    ) %>%
-    {
-      if ("depth" %in% names(.)) {
-        mutate(., total_depth = .data$depth - .data$no_calls)
-      } else {
-        .
+    )
+  
+  dat <- dat %>% dplyr::rowwise() %>%
+    mutate(
+      total_depth = if ("depth" %in% colnames(dat) && 
+                        (!("total_depth" %in% colnames(dat)) || ("total_depth" %in% colnames(dat2) && is.na(total_depth))) ) {
+        depth - no_calls
       }
-    }
+      else {total_depth}
+    )
+  dat <- as.data.frame(dat)
 
   dat <- dat %>% mutate(VAF = .data$alt_depth / .data$total_depth)
 
