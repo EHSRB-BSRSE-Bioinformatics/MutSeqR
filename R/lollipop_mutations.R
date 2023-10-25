@@ -9,17 +9,17 @@
 #' @param ... Additional arguments to trackViewer::lolliplot (e.g.,
 #' `ranges = GRanges("chr1", IRanges(104, 109))` )
 #' Suggests trackViewer lolliplot
-#' @importFrom GenomicRanges GRanges
+#' @importFrom GenomicRanges GRanges elementMetadata
 #' @export
 lollipop_mutations <- function(species = "human",
-                               mutations = mutation_data,
+                               mutations,
                                ...
                                ) {
   if (!inherits(mutations, "GRanges")) { stop("Please supply a GRanges 
                                                 object for the `mutations`
                                                 parameter.")}
   features.gr <- get_region_seqs(species)
-  SNP.gr <- mutations[elementMetadata(mutations)[["variation_type"]] == "snv"]
+  SNP.gr <- mutations[GenomicRanges::elementMetadata(mutations)[["variation_type"]] == "snv"]
   SNP.gr$names <- SNP.gr$normalized_context_with_mutation
   SNP.gr$color <- c("black")
   #SNP.gr$border <- c("black")

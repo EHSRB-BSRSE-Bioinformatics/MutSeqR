@@ -1,7 +1,7 @@
 #' Run COSMIC signatures comparison
 #'
 #' After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
-#' @param mutation_data A data frame imported from a .mut file
+#' @param mutations A data frame, imported from a .mut file
 #' @param project_name The name of the project; used to get mutation data into the required .txt format for SigProfiler
 #' @param project_genome A string describing the reference genome to use; e.g., GRCh38
 #' @param group The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)
@@ -9,16 +9,18 @@
 #' sig_fit_bootstrap_batch() function should be run. This *should* be done, but
 #' the process is slow, so it's best to confirm that the rest of the analysis is
 #' working as expected first.
-#' @param ...
+#' @param ... additional arguments may be supplied
+#' To Do: we need to document the elipsis ... in the parameters of the function in a way that doesn't cause a warning during Check()
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.
 #'  Suggests: sigminer
 #' @importFrom here here
 #' @importFrom dplyr select rename mutate
 #' @importFrom utils write.table
+#' @importFrom rlang .data
 #' @import reticulate
 #' @import stringr
 #' @export
-signature_analysis_sigminer <- function(mutations = mutation_data,
+signature_analysis_sigminer <- function(mutations,
                                         project_name = "Default",
                                         project_genome = "BSgenome.Mmusculus.UCSC.hg38",
                                         group = "sample",
@@ -26,9 +28,9 @@ signature_analysis_sigminer <- function(mutations = mutation_data,
                                         ...) {
   
   sigminer_input <- as.data.frame(mutations) |>
-    dplyr::filter(!variation_type %in% "no_variant") |>
-    dplyr::select(all_of(group), variation_type, seqnames,
-                  start, end, ref, alt) |>
+    dplyr::filter(!.data$variation_type %in% "no_variant") |>
+    dplyr::select(all_of(group), .data$variation_type, seqnames,
+                  .data$start, .data$end, .data$ref, .data$alt) |>
     dplyr::rename( # TODO add a column for "gene", but use locus with TS data.. should be Hugo_Symbol for MAF compatibility
       "Tumor_Sample_Barcode" = group,
       "Chromosome" = "seqnames",

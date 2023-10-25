@@ -4,7 +4,7 @@
 \alias{lollipop_mutations}
 \title{Plot mutations in lollipop plot}
 \usage{
-lollipop_mutations(species = "human", mutations = mutation_data, ...)
+lollipop_mutations(species = "human", mutations, ...)
 }
 \arguments{
 \item{species}{One of "human" or "mouse"}

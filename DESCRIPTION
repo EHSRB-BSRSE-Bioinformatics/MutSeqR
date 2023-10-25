@@ -16,6 +16,7 @@ Depends:
     R (>= 3.4.0)
 biocViews:
 Imports:
+    binom,
     Biostrings,
     data.table,
     dplyr,
@@ -32,6 +33,7 @@ Imports:
     rlang,
     S4Vectors,
     stringr,
+    SummarizedExperiment,
     VariantAnnotation
 Suggests:
     BSgenome.Hsapiens.UCSC.hg38,
@@ -40,7 +42,7 @@ Suggests:
     knitr,
     rmarkdown,
     sigminer,
-    SigProfileriAssignmentR,
+    SigProfilerAssignmentR,
     SigProfilerExtractorR,
     SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),

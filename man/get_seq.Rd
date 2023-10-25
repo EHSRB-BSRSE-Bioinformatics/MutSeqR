@@ -4,7 +4,13 @@
 \alias{get_seq}
 \title{Get sequence of Duplex Sequencing target regions}
 \usage{
-get_seq(species, genome_version = NULL, regions_df, is_0_based = TRUE)
+get_seq(
+  species,
+  genome_version = NULL,
+  regions_df,
+  is_0_based = TRUE,
+  padding = 1
+)
 }
 \arguments{
 \item{species}{"human", "mouse", or "rat"}
@@ -14,23 +20,25 @@ get_seq(species, genome_version = NULL, regions_df, is_0_based = TRUE)
 \item{regions_df}{data frame with target locations. Contains columns: contig, start, and end}
 
 \item{is_0_based}{TRUE or FALSE. Are the target region coordinates 0 based (TRUE) or 1 based (FALSE)}
+
+\item{padding}{An interger value by which the function will extend the range of the target sequence on both sides. Modified region regions will be reported in ext_start and ext_end.}
 }
 \value{
 a GRanges object with sequences and metadata of targeted regions
 }
 \description{
-To replace get_region_seqs.R for its relaince on importing the entire genomes
+To replace get_region_seqs.R for its reliance on importing the entire genomes
 This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
 Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
-The code is functional, but inconsistent. It will work, but occasionally it will not be able to retrieve the sequences from ensembl
-Perhaps an issue w network connectivity or the ensemble api server load
 }
 \examples{
-regions_df <- data.frame(contig = c("chr11", "chr13"),
-                     start = c(108510788, 75803913),
-                     end = c(108513187, 75806312),
-                     gene = c("GeneA", "GeneB"),
-                     transcription_status = c("genic", "intergenic"))
+regions_df <- data.frame(
+  contig = c("chr11", "chr13"),
+  start = c(108510788, 75803913),
+  end = c(108513187, 75806312),
+  gene = c("GeneA", "GeneB"),
+  transcription_status = c("genic", "intergenic")
+)
 t <- get_seq(species = "human", genome_version = "GRCh37", regions_df = regions_df)
 t$sequence
 }

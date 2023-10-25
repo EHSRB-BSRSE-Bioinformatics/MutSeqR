@@ -5,7 +5,7 @@
 \title{Run COSMIC signatures comparison}
 \usage{
 signature_analysis_sigminer(
-  mutations = mutation_data,
+  mutations,
   project_name = "Default",
   project_genome = "BSgenome.Mmusculus.UCSC.hg38",
   group = "sample",
@@ -14,6 +14,8 @@ signature_analysis_sigminer(
 )
 }
 \arguments{
+\item{mutations}{A data frame, imported from a .mut file}
+
 \item{project_name}{The name of the project; used to get mutation data into the required .txt format for SigProfiler}
 
 \item{project_genome}{A string describing the reference genome to use; e.g., GRCh38}
@@ -25,7 +27,8 @@ sig_fit_bootstrap_batch() function should be run. This \emph{should} be done, bu
 the process is slow, so it's best to confirm that the rest of the analysis is
 working as expected first.}
 
-\item{mutation_data}{A data frame imported from a .mut file}
+\item{...}{additional arguments may be supplied
+To Do: we need to document the elipsis ... in the parameters of the function in a way that doesn't cause a warning during Check()}
 }
 \value{
 Creates a subfolder in the output directory with SigProfiler tools results.

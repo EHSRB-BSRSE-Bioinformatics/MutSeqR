@@ -5,7 +5,7 @@
 \title{Analyse transition/transversion ratios}
 \usage{
 tvti_plot(
-  mutations = mutation_data,
+  mutations,
   group = "sample",
   y = c(`A->C or T->G (TV)` = 0.066, `A->G or T->C (TI)` = 0.217, `A->T or T->A (TV)` =
     0.065, `G->A or C->T (TI)` = 0.4945, `G->C or C->G (TV)` = 0.0645,
