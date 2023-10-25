@@ -7,14 +7,14 @@
 #'  vcf files must contain one sample each.  
 #' @param sample_data_file An optional file containing additional sample metadata 
 #' (dose, timepoint, etc.)
-#' @param sd_sep The delimiter for importing sample metadata tables. Default is "\t".
+#' @param sd_sep The delimiter for importing sample metadata tables. Default is tab-delimited
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the
 #'  TS Mutagenesis panel of the specified species, or to a custom panel. 
 #'  If custom, provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions_file is set to custom,
 #'  provide the file path for the file containing regions metadata. 
 #'  Required columns are "contig", "start", and "end"
-#' @param rg_sep The delimiter for importing the custom_regions_file. Default is "\t".
+#' @param rg_sep The delimiter for importing the custom_regions_file. Default is tab-delimited
 #' @param assembly The genome assembly. Accepted values: "GRCh37", "GRCh38", "GRCm38", "GRCm39" TO DO: MAKE GENERAL
 #' @param depth_calc In the instance when there are two or more calls at the 
 #' same location within a sample, and the depths differ, this parameter chooses 
@@ -31,6 +31,7 @@
 #' @importFrom rlang .data
 #' @importFrom stringr str_sub str_count
 #' @importFrom SummarizedExperiment colData
+#' @importFrom plyranges join_overlap_left mutate select
 #' @export
 #' 
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test
@@ -61,17 +62,17 @@ read_vcf <- function(
     # Search for variations of sample identifier names
     for (sample_name_var in possible_sample_names) {
       sample_name_var <- tolower(sample_name_var)  # Make the comparison case-insensitive
-      if (sample_name_var %in% tolower(names(info(vcf)))) {
+      if (sample_name_var %in% tolower(names(VariantAnnotation::info(vcf)))) {
         # If found, rename it to "sample" and break the loop
-        names(info(vcf))[tolower(names(info(vcf))) == sample_name_var] <- "sample"
+        names(VariantAnnotation::info(vcf))[tolower(names(VariantAnnotation::info(vcf))) == sample_name_var] <- "sample"
         break
       }
     }
     
     # If "sample" still doesn't exist, create it using colData
-    if (!"sample" %in% colnames(info(vcf))) {
+    if (!"sample" %in% colnames(VariantAnnotation::info(vcf))) {
       sample_info <- rownames(SummarizedExperiment::colData(vcf))
-      info(vcf)$sample <- sample_info
+      VariantAnnotation::info(vcf)$sample <- sample_info
     }
     
     return(vcf)
@@ -118,7 +119,7 @@ read_vcf <- function(
     alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1)]
     )  
   # Retain all INFO fields
-  info <- as.data.frame(info(vcf))
+  info <- as.data.frame(VariantAnnotation::info(vcf))
   dat <- cbind(dat, info)
   row.names(dat) <- NULL 
 
@@ -153,8 +154,6 @@ read_vcf <- function(
   # Call the function to check and map columns
   dat <- check_and_map_columns(dat, op$column, op$base_required_mut_cols)
   
- 
-###################################################################  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -323,7 +322,6 @@ region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_spec
   
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
-  return(ranges_joined)
 
 # Get no_variant context
 dat <- ranges_joined %>%
@@ -398,7 +396,7 @@ dat <- ranges_joined %>%
       )
     )
 
-
+return(dat)
 }
 
 
