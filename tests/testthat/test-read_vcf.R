@@ -4,34 +4,11 @@ library(testthat)
 test_that("read_vcf function correctly vcf files", {
   # Create temporary test file with example mutation data
  
-  write.table(
-    data.frame(
-      sample = c("mouse1", "mouse2", "mouse1", "mouse2"),
-      chromosome = c("chr1", "chr1", "chr2", "chr2"),
-      start = c(69304225, 69304240, 50833424, 50833439),
-      end = c(69304226, 69304241, 50833425, 50833440),
-      variation_type = c("SNV", "SNV", "SNV", "Deletion"),
-      alt_depth = c(10, 20, 30, 50),
-      reference = c("C", "G", "T", "AA"),
-      alt = c("T", "A", "G", "A" )
-    ))
-    
-  #create a temporary custom regions file
-  tmpfile2 <- tempfile(fileext = ".mut")
-  write.table(
-    data.frame(
-      contig = c("chr1", "chr2"),
-      start = c(69304217, 50833175),
-      end = c(69306617, 50835575),
-      description = c("region_330", "region_4547"), 
-      location_relative_to_genes = c("intergenic", "intergenic")
-    ), 
-    file = tmpfile2,
-    sep = "\t", row.names = FALSE
-  )
-  
+test_file <- system.file("extdata", "vcf_sample.vcf", package = "DupSeqR")
+
+
   # Call the import_mut_data function on the test data
-  mut_data <- import_mut_data(mut_file = tmpfile, regions_file = "custom", custom_regions_file = tmpfile2)
+  mut_data <- read_vcf(vcf_file = test_file, regions_file = "mouse", assembly = "GRCm38")
   
   
   expect_true(is(mut_data, "GRanges"), info = "Check if the resulting object is a granges object")

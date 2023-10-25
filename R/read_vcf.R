@@ -1,15 +1,30 @@
 #' Import a vcf file
 #' 
 #' Imports a .vcf file into the R environment and converts it into a dataframe
-#' @param vcf_file The .vcf file containing mutation data to be imported.
-#' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
-#' @param sd_sep The delimiter for importing sample metadata tables
-#' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
-#' @param rg_sep The delimiter for importing the custom_regions_file
-#' @param assembly The genome assembly. Accepted values "GRCh37", "GRCh38", "GRCm38", "GRCm39"
-#' @param depth_calc In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, or if no deletion is present, the complex variant, then adding all alt depths, if there is no deletion or complex variant, then it takes the mean of the reference depths.
-#' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
+#' @param vcf_file The path to the .vcf file  to be imported. If you
+#' specify a folder, the function will attempt to read all files in the folder and
+#' combine them into a single data frame. Multisample vcf files are not supported.
+#'  vcf files must contain one sample each.  
+#' @param sample_data_file An optional file containing additional sample metadata 
+#' (dose, timepoint, etc.)
+#' @param sd_sep The delimiter for importing sample metadata tables. Default is "\t".
+#' @param regions_file "human", "mouse", or "custom". The argument refers to the
+#'  TS Mutagenesis panel of the specified species, or to a custom panel. 
+#'  If custom, provide file path in custom_regions_file. TO DO: add rat.
+#' @param custom_regions_file "filepath". If regions_file is set to custom,
+#'  provide the file path for the file containing regions metadata. 
+#'  Required columns are "contig", "start", and "end"
+#' @param rg_sep The delimiter for importing the custom_regions_file. Default is "\t".
+#' @param assembly The genome assembly. Accepted values: "GRCh37", "GRCh38", "GRCm38", "GRCm39" TO DO: MAKE GENERAL
+#' @param depth_calc In the instance when there are two or more calls at the 
+#' same location within a sample, and the depths differ, this parameter chooses 
+#' the method of calculation for the total_depth. take_mean calculates the 
+#' total_depth by taking the mean reference depth and then adding all the alt depths. 
+#' take_del calculates the total_depth by choosing only the reference depth of 
+#' the deletion in the group, or if no deletion is present, the complex variant,
+#'  then adding all alt depths, if there is no deletion or complex variant, 
+#'  then it takes the mean of the reference depths. Default is "take_del".
+#' @returns A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
@@ -19,58 +34,95 @@
 #' @export
 #' 
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test
-# /PRC_ST_113.1.consensus.variant-calls.genome.vcf
+# /PRC_ST_208.1.consensus.variant-calls.genome.vcf
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
-
 read_vcf <- function(
-                      vcf_file,
-                      sample_data_file = NULL,
-                      sd_sep = "\t",
-                      regions_file = c("human", "mouse", "custom"),
-                      custom_regions_file = NULL,
-                      rg_sep = "\t",
-                      assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
-                      depth_calc = "take_del") {
-  
+    vcf_file,
+    sample_data_file = NULL,
+    sd_sep = "\t",
+    regions_file = c("human", "mouse", "custom"),
+    custom_regions_file = NULL,
+    rg_sep = "\t",
+    assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
+    depth_calc = "take_del"
+) {
   vcf_file <- file.path(vcf_file)
-  if (file.info(vcf_file)$isdir == T) {
-    vcf_files <- list.files(path = vcf_file, pattern = "\\.vcf$", full.names = T)
+  
+  # Check if a sample identifier is already present in the INFO field
+  check_and_rename_sample <- function(vcf) {
+  
+    # Define possible variations of sample identifier names
+    possible_sample_names <- c("sample","sample_name", "sample_id")
+    
+    # Initialize the sample_info column
+    sample_info <- NULL
+    
+    # Search for variations of sample identifier names
+    for (sample_name_var in possible_sample_names) {
+      sample_name_var <- tolower(sample_name_var)  # Make the comparison case-insensitive
+      if (sample_name_var %in% tolower(names(info(vcf)))) {
+        # If found, rename it to "sample" and break the loop
+        names(info(vcf))[tolower(names(info(vcf))) == sample_name_var] <- "sample"
+        break
+      }
+    }
+    
+    # If "sample" still doesn't exist, create it using colData
+    if (!"sample" %in% colnames(info(vcf))) {
+      sample_info <- rownames(SummarizedExperiment::colData(vcf))
+      info(vcf)$sample <- sample_info
+    }
+    
+    return(vcf)
+  }
+
+  # Read and bind vcfs from folder  
+  if (file.info(vcf_file)$isdir == TRUE) {
+    vcf_files <- list.files(path = vcf_file, pattern = "\\.vcf$", full.names = TRUE)
+    
     # Initialize an empty VCF object to store the combined data
     vcf <- NULL
+    
     # Read and combine VCF files
     for (file in vcf_files) {
-      vcf_list <- VariantAnnotation::readVcf(file)
+      vcf_list <- readVcf(file)
       
-      # Ensure consistent sample names and INFO columns here if needed
-      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample"
-      # Combine the VCF data 
+      # Rename or create the "sample" column in the INFO field
+      vcf_list <- check_and_rename_sample(vcf_list)
+      # Ensure consistent column names
+      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info" 
+      # Combine the VCF data
       if (is.null(vcf)) {
         vcf <- vcf_list
       } else {
-        vcf <- VariantAnnotation::rbind(vcf, vcf_list)
+        vcf <- rbind(vcf, vcf_list)
       }
     }
   } else {
-    vcf <- VariantAnnotation::readVcf(vcf_file)
-    rownames(SummarizedExperiment::colData(vcf)) <- "sample"
+
+  # Read a single vcf file
+        vcf <- readVcf(vcf_file)
+    # Rename or create the "sample" column in the INFO field
+    vcf <- check_and_rename_sample(vcf)
   }
   
-  # Extract mutation data into a dataframe
+
+   # Extract mutation data into a dataframe
   dat <- data.frame(
+    sample = VariantAnnotation::info(vcf)$sample,
     contig = SummarizedExperiment::seqnames(vcf),
     start = SummarizedExperiment::start(vcf),
     ref = VariantAnnotation::ref(vcf),
     alt = VariantAnnotation::alt(vcf),
-    depth = VariantAnnotation::geno(vcf)$DP[, c(1,2)],
-    alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1,2)]
+    depth = VariantAnnotation::geno(vcf)$DP[, c(1)],
+    alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1)]
     )  
   # Retain all INFO fields
   info <- as.data.frame(info(vcf))
-  row.names(info) <- NULL
-  
   dat <- cbind(dat, info)
+  row.names(dat) <- NULL 
+  # Rename columns
   names(dat)[names(dat) == "TYPE"] <- "variation_type"
-  names(dat)[names(dat) == "SAMPLE"] <- "sample"
   names(dat)[names(dat) == "END"] <- "end"
  
   
@@ -98,22 +150,24 @@ read_vcf <- function(
        nchar_ref = nchar(ref),
       nchar_alt = nchar(alt.value),
       variation_type = tolower(dat$variation_type),
+      #TO DO: fix sv - it doesn't change it to symbolic. 
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
           ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
                                              "cnv:tr", "dup:tandem", "del:me", "ins:me",
-                                      #These ambiguity codes may need to be defiend from the alt column instead
+                                      #These ambiguity codes may need to be defined from the alt column instead
                                              "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
+                 .data$variation_type))) %>%
+    dplyr::mutate(                
            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
             ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
               ifelse(.data$variation_type != "symbolic" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 &  .data$nchar_ref > 1, "complex",
-                    .data$variation_type)))))),
+                    .data$variation_type)))),
       VARLEN = 
         ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
          ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
-          ifelse(.data$variation_type == "symbolic", .data$SVLEN,
-               ".")))
+               "."))
     )
     
   #create ref_depth, short_ref, subtype
@@ -194,7 +248,7 @@ dat <- dat %>%
     no_calls = .data$depth - .data$total_depth,
     VAF = .data$alt_depth / .data$total_depth
   ) %>%
-  dplyr::select(-var_depth)
+  dplyr::select(-var_depth, ignore.case = FALSE)
 }
 
 ##############################################################
@@ -316,8 +370,6 @@ dat <- ranges_joined %>%
       )
     )
 
- 
-  
 
 }
 

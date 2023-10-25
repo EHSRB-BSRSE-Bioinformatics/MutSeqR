@@ -12,31 +12,43 @@ read_vcf(
   custom_regions_file = NULL,
   rg_sep = "\\t",
   assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
-  depth_calc = "take_del",
-  is_0_based = TRUE
+  depth_calc = "take_del"
 )
 }
 \arguments{
-\item{vcf_file}{The .vcf file containing mutation data to be imported.}
+\item{vcf_file}{The path to the .vcf file  to be imported. If you
+specify a folder, the function will attempt to read all files in the folder and
+combine them into a single data frame. Multisample vcf files are not supported.
+vcf files must contain one sample each.}
 
-\item{sample_data_file}{An optional file containing additional sample metadata (dose, timepoint, etc.)}
+\item{sample_data_file}{An optional file containing additional sample metadata
+(dose, timepoint, etc.)}
 
-\item{sd_sep}{The delimiter for importing sample metadata tables}
+\item{sd_sep}{The delimiter for importing sample metadata tables. Default is "\t".}
 
-\item{regions_file}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
+\item{regions_file}{"human", "mouse", or "custom". The argument refers to the
+TS Mutagenesis panel of the specified species, or to a custom panel.
+If custom, provide file path in custom_regions_file. TO DO: add rat.}
 
-\item{custom_regions_file}{"filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"}
+\item{custom_regions_file}{"filepath". If regions_file is set to custom,
+provide the file path for the file containing regions metadata.
+Required columns are "contig", "start", and "end"}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file}
+\item{rg_sep}{The delimiter for importing the custom_regions_file. Default is "\t".}
 
-\item{assembly}{The genome assembly. Accepted values "GRCh37", "GRCh38", "GRCm38", "GRCm39"}
+\item{assembly}{The genome assembly. Accepted values: "GRCh37", "GRCh38", "GRCm38", "GRCm39" TO DO: MAKE GENERAL}
 
-\item{depth_calc}{In the instance when there are two or more calls at the same location within a sample, and the depths differ, this parameter chooses the method of calculation for the total_depth. take_mean calculates the total_depth by taking the mean reference depth and then adding all the alt depths. take_del calculates the total_depth by choosing only the reference depth of the deletion in the group, or if no deletion is present, the complex variant, then adding all alt depths, if there is no deletion or complex variant, then it takes the mean of the reference depths.}
-
-\item{is_0_based}{TRUE or FALSE. Indicates whether the variant calls in the vcf files are 0based or not (ie 1based). Default is TRUE.}
+\item{depth_calc}{In the instance when there are two or more calls at the
+same location within a sample, and the depths differ, this parameter chooses
+the method of calculation for the total_depth. take_mean calculates the
+total_depth by taking the mean reference depth and then adding all the alt depths.
+take_del calculates the total_depth by choosing only the reference depth of
+the deletion in the group, or if no deletion is present, the complex variant,
+then adding all alt depths, if there is no deletion or complex variant,
+then it takes the mean of the reference depths. Default is "take_del".}
 }
 \value{
-A table where each row is a mutation, and columns indicate the location, type, and other data.
+A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
 }
 \description{
 Imports a .vcf file into the R environment and converts it into a dataframe

@@ -4,7 +4,7 @@
 #' @param mut_file The .mut file containing mutation data to be imported. If you
 #' specify a folder, function will attempt to read all files in the folder and
 #' combine them into a single data frame.
-#' Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, subtype, context, ref, variation_type, contig, start, end. (Synonymous names are accepted)
+#' Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, context, ref, variation_type, contig, start (Synonymous names are accepted)
 #' @param rsids TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)
 #' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
