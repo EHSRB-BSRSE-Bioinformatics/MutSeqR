@@ -86,16 +86,18 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       but there is no id column in the mut file!")
     }
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
-    dat <- dat %>% mutate(is_known = ifelse(!.data$id == ".", "Y", "N"))
+
+    dat <- dat %>% dplyr::mutate(is_known = ifelse(!id == ".", "Y", "N"))
+
   }
 
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
-    sampledata <- read.delim(file.path(sample_data_file),
-      sep = sd_sep,
-      header = T
-    )
-    dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
+
+    sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
+                             header = T)
+    dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
+
   }
 
   # Change column names to default
@@ -129,7 +131,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   )
 
   dat <- dat %>%
-    mutate(
+
+    dplyr::mutate(
       ref_depth = .data[[depth_col]] - .data$alt_depth,
       context_with_mutation =
         ifelse(.data$subtype != ".",
@@ -157,8 +160,9 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
         substr(.data$ref, 1, 1) == "C" ~ "C",
         substr(.data$ref, 1, 1) == "T" ~ "T"
       )
+
     ) %>%
-    mutate(
+    dplyr::mutate(
       normalized_context_with_mutation =
         ifelse(.data$subtype != ".",
           paste0(
@@ -172,7 +176,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
         stringr::str_count(string = .data$context, pattern = "C"))
       / stringr::str_count(.data$context)
     ) %>%
-    mutate(
+    dplyr::mutate(
       normalized_subtype = ifelse(
         .data$normalized_subtype == ".",
         .data$variation_type,
@@ -184,15 +188,16 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
         .data$subtype
       )
     ) %>%
+
     {
       if ("depth" %in% names(.)) {
-        mutate(., total_depth = .data$depth - .data$no_calls)
+        dplyr::mutate(., total_depth = .data$depth - .data$no_calls)
       } else {
         .
       }
     }
 
-  dat <- dat %>% mutate(VAF = .data$alt_depth / .data$total_depth)
+  dat <- dat %>% dplyr::mutate(VAF = .data$alt_depth / .data$total_depth)
 
   mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
