@@ -35,6 +35,7 @@
 #' 
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test
 # /PRC_ST_208.1.consensus.variant-calls.genome.vcf
+# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/test vcfs/vcf_sample_1.vcf
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
 read_vcf <- function(
     vcf_file,
@@ -109,7 +110,6 @@ read_vcf <- function(
 
    # Extract mutation data into a dataframe
   dat <- data.frame(
-    sample = VariantAnnotation::info(vcf)$sample,
     contig = SummarizedExperiment::seqnames(vcf),
     start = SummarizedExperiment::start(vcf),
     ref = VariantAnnotation::ref(vcf),
@@ -121,12 +121,40 @@ read_vcf <- function(
   info <- as.data.frame(info(vcf))
   dat <- cbind(dat, info)
   row.names(dat) <- NULL 
-  # Rename columns
-  names(dat)[names(dat) == "TYPE"] <- "variation_type"
-  names(dat)[names(dat) == "END"] <- "end"
+
+  # Check that all required columns are present. 
+  # Change names of columns to default (constants.R op$columns)
+ check_and_map_columns <- function(data, column_map, required_columns) {
+   # Map column names using the provided column mapping (case-insensitive)
+   mapped_columns <- names(data)
+   for (col in names(data)) {
+     # Convert column name and mapping key to lowercase for case-insensitive comparison
+     col_lower <- tolower(col)
+     if (col_lower %in% tolower(names(column_map))) {
+       mapped_col_name <- column_map[[tolower(col)]]
+       if (col_lower != tolower(mapped_col_name)) {
+         cat("Expected '", mapped_col_name, "' but found '", col, "', matching columns in input data\n")
+       }
+       mapped_columns[mapped_columns == col] <- mapped_col_name
+     }
+   }
+   names(data) <- mapped_columns
+   
+   # Check if all required columns are present
+   missing_columns <- setdiff(tolower(required_columns), tolower(names(data)))
+   
+   if (length(missing_columns) > 0) {
+     missing_col_names <- paste(missing_columns, collapse = ", ")
+     warning(paste("Some required columns are missing or their synonyms are not found: ", missing_col_names))
+   } 
+   
+   return(data)}
+
+  # Call the function to check and map columns
+  dat <- check_and_map_columns(dat, op$column, op$base_required_mut_cols)
+  
  
-  
-  
+###################################################################  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -148,7 +176,7 @@ read_vcf <- function(
   dat <- dat %>%
     dplyr::mutate(
        nchar_ref = nchar(ref),
-      nchar_alt = nchar(alt.value),
+      nchar_alt = nchar(alt),
       variation_type = tolower(dat$variation_type),
       #TO DO: fix sv - it doesn't change it to symbolic. 
       variation_type = 
@@ -176,7 +204,7 @@ read_vcf <- function(
       ref_depth = .data$depth - .data$alt_depth,
       subtype = 
         ifelse(.data$variation_type == "snv",
-               paste0(.data$ref, ">", .data$alt.value),
+               paste0(.data$ref, ">", .data$alt),
                "."),
       short_ref = substr(.data$ref, 1, 1))
   
@@ -248,7 +276,7 @@ dat <- dat %>%
     no_calls = .data$depth - .data$total_depth,
     VAF = .data$alt_depth / .data$total_depth
   ) %>%
-  dplyr::select(-var_depth, ignore.case = FALSE)
+  dplyr::select(-var_depth)
 }
 
 ##############################################################

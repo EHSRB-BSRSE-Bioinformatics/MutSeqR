@@ -8,16 +8,27 @@ op <- list()
 op$column <- list()
 op$column$total_depth <- "total_depth"
 op$column$n_depth <- "no_calls"
+op$column$n_calls <- "no_calls"
 op$column$vaf <- "vaf"
 op$column$depth <- "depth"
+op$column$alt.value <- "alt"
 op$column$alt_depth <- "alt_depth"
+op$column$var_depth <- "alt_depth"
 op$column$is.snp <- "is_snp"
 op$column$mut_depth <- "mut_depth"
 op$column$mut_freq <- "mut_freq"
+op$column$contig <- "contig"
 op$column$chr <- "contig"
+op$column$chromosome <- "contig"
 op$column$start <- "start"
+op$column$position <- "start"
 op$column$end <- "end"
 op$column$sample <- "sample"
+op$column$sample_name <- "sample"
+op$column$sample_id <- "sample"
+op$column$type <- "variation_type"
+op$column$mutation_type <- "variation_type"
+op$column$variant_type <- "variation_type"
 op$column$lower_ci <- "lower_ci"
 op$column$upper_ci <- "upper_ci"
 op$site$columns <- c("contig", "start")
@@ -38,7 +49,7 @@ op$base_required_mut_cols <-
     "alt",
     "alt_depth",
     "depth",
-    "no_calls")
+    "variation_type")
 op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 
 #' Values accepted for mutation subtypes
