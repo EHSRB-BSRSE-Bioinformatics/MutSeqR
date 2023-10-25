@@ -11,9 +11,12 @@
 #' an arbitrary string to look at different motifs. Use with caution.
 #' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
-#' @importFrom GenomicRanges GRanges
-#' @importFrom dplyr filter
+#' @importFrom GenomicRanges GRanges start end
+#' @importFrom IRanges IRanges ranges
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom dplyr filter mutate
 #' @importFrom plyranges find_overlaps
+#' @importFrom rlang .data
 #' @export
 get_CpG_mutations <- function(regions, mut_data,
                               variant_types = c("snv","indel","mnv","sv"),
@@ -27,10 +30,10 @@ get_CpG_mutations <- function(regions, mut_data,
       subject = regions[i]$sequence[[1]]
     )
     CpG_sites <- GenomicRanges::GRanges(
-      seqnames = seqnames(regions[i]),
-      ranges = IRanges(
-        start = start(ranges(CpG_sites)) + start(regions[i]) - 1,
-        end = end(ranges(CpG_sites)) + start(regions[i]) - 1
+      seqnames = GenomeInfoDb::seqnames(regions[i]),
+      ranges = IRanges::IRanges(
+        start = GenomicRanges::start(IRanges::ranges(CpG_sites)) + GenomicRanges::start(regions[i]) - 1,
+        end = GenomicRanges::end(IRanges::ranges(CpG_sites)) + GenomicRanges::start(regions[i]) - 1
       )
     )
     all_CpGs[[i]] <- CpG_sites
@@ -38,11 +41,11 @@ get_CpG_mutations <- function(regions, mut_data,
   CpGs_combined <- do.call("c", all_CpGs)
   # Step 4 - join mutation data with CpG sites
   CpGs_in_data <- plyranges::find_overlaps(mut_data, CpGs_combined) |>
-    dplyr::filter(variation_type %in% variant_types)
+    dplyr::filter(.data$variation_type %in% variant_types)
   if (include_no_variants == T) {
     return(CpGs_in_data)
   } else {
-    return(CpGs_in_data |> dplyr::filter(!variation_type == "no_variant"))
+    return(CpGs_in_data |> dplyr::filter(!.data$variation_type == "no_variant"))
   }
 }
 
@@ -55,6 +58,8 @@ get_CpG_mutations <- function(regions, mut_data,
 #' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom IRanges IRanges ranges
 #' @export
 get_CpG_regions <- function(regions, motif = "CG") {
   # Similar to the above function but instead returns all the sites where CpGs are found in the reference (instead of the mutation data)
@@ -64,11 +69,11 @@ get_CpG_regions <- function(regions, motif = "CG") {
       pattern = motif,
       subject = regions[i]$sequence[[1]]
     )
-    CpG_sites <- GRanges(
-      seqnames = seqnames(regions[i]),
-      ranges = IRanges(
-        start = start(ranges(CpG_sites)) + start(regions[i]) - 1,
-        end = end(ranges(CpG_sites)) + start(regions[i]) - 1
+    CpG_sites <- GenomicRanges::GRanges(
+      seqnames = GenomeInfoDb::seqnames(regions[i]),
+      ranges = IRanges::IRanges(
+        start = GenomicRanges::start(IRanges::ranges(CpG_sites)) + GenomicRanges::start(regions[i]) - 1,
+        end = GenomicRanges::end(IRanges::ranges(CpG_sites)) + GenomicRanges::start(regions[i]) - 1
       )
     )
     all_CpGs[[i]] <- CpG_sites
@@ -89,6 +94,7 @@ get_CpG_regions <- function(regions, motif = "CG") {
 #' @param ... Additional arguments to vcountPattern()
 #' @returns A data frame with the same number of rows as there were ranges in the input, but with an additional metadata column indicating CpG sites in the target sequence of the mutation.
 #' @importFrom Biostrings vcountPattern
+#' @importFrom rlang .data
 #' @export
 annotate_CpG_sites <- function(mut_data,
                                motif = "CG",
@@ -97,9 +103,9 @@ annotate_CpG_sites <- function(mut_data,
   annotated_data <- as.data.frame(mut_data) |>
     dplyr::mutate(CpG_site = Biostrings::vcountPattern(
       pattern = motif,
-      subject = column_query,
+      subject = .data[[column_query]],
       ...)) |>
-    dplyr::mutate(CpG_site = ifelse(CpG_site == 0, F, T))
+    dplyr::mutate(CpG_site = ifelse(.data$CpG_site == 0, F, T))
   return(annotated_data)
 }
 
@@ -109,10 +115,11 @@ annotate_CpG_sites <- function(mut_data,
 #' basically a convenience function that wraps `calculate_mut_freqs()` over CpG
 #' data (or any data). See the documentation for that function for parameters. 
 #' It is up to the user to supply proper data to the function.
-#' @param cpg_muts A data frame containing CpG mutations
+#' @param cpg_muts A data frame containing CpG mutations 
+#' TO DO: cpg_muts = df "cpg_mutations" is created in the .Rmd file, but is not created by any other function. 
 #' @param ... Additional arguments to calculate_mut_freqs()
 #' @export
-make_CpG_summary_table <- function(cpg_muts = cpg_mutations, ...) {
+make_CpG_summary_table <- function(cpg_muts, ...) {
     # Verify that cpg_muts has a 
   # Do we even need a special function for this? Might get by with 
   # calculate_mut_freqs().

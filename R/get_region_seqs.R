@@ -10,6 +10,7 @@
 #' @importFrom Biostrings getSeq
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim
+#' @importFrom S4Vectors mcols
 #' @export
 get_region_seqs <- function(species) {
 
@@ -17,7 +18,7 @@ get_region_seqs <- function(species) {
   # Load species database
   if (species == "human") {
     db <- "BSgenome.Hsapiens.UCSC.hg38"
-    if (!requireNamespace(BSgenome.Hsapiens.UCSC.hg38)) {
+    if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38")) {
       stop("BSgenome.Hsapiens.UCSC.hg38 not installed")
     }
     # library(org.Hs.eg.db) # May be useful...
@@ -26,7 +27,7 @@ get_region_seqs <- function(species) {
                                 package="DupSeqR")
   } else if (species == "mouse") {
     db <- "BSgenome.Mmusculus.UCSC.mm10"
-    if (!requireNamespace(BSgenome.Mmusculus.UCSC.mm10)) {
+    if (!requireNamespace("BSgenome.Mmusculus.UCSC.mm10")) {
       stop("BSgenome.Mmusculus.UCSC.mm10 not installed")
     }
     # library(org.Mm.eg.db) # May be useful...
@@ -47,6 +48,6 @@ get_region_seqs <- function(species) {
   
   # Step 2 - Get reference sequences for regions of interest
   seqs <- Biostrings::getSeq(get(db), names = regions_ranges)
-  mcols(regions_ranges)$sequence <- seqs
+  S4Vectors::mcols(regions_ranges)$sequence <- seqs
   return(regions_ranges)
 }

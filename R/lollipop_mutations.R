@@ -1,5 +1,6 @@
 #' Plot mutations in lollipop plot
 #' 
+#' TO DO: Create plt without trackViewer package. 
 #' Uses the trackViewer package to plot mutations in a lollipop plot in specific
 #' regions as defined by the user input.
 #' 
@@ -7,18 +8,18 @@
 #' @param mutations A GRanges object with mutation data
 #' @param ... Additional arguments to trackViewer::lolliplot (e.g.,
 #' `ranges = GRanges("chr1", IRanges(104, 109))` )
-#' @importFrom trackViewer lolliplot
-#' @importFrom GenomicRanges GRanges
+#' Suggests trackViewer lolliplot
+#' @importFrom GenomicRanges GRanges elementMetadata
 #' @export
 lollipop_mutations <- function(species = "human",
-                               mutations = mutation_data,
+                               mutations,
                                ...
                                ) {
-  if (!class(mutations) == "GRanges") { stop("Please supply a GRanges 
-                                                object as the `mutations`
+  if (!inherits(mutations, "GRanges")) { stop("Please supply a GRanges 
+                                                object for the `mutations`
                                                 parameter.")}
   features.gr <- get_region_seqs(species)
-  SNP.gr <- mutations[elementMetadata(mutations)[["variation_type"]] == "snv"]
+  SNP.gr <- mutations[GenomicRanges::elementMetadata(mutations)[["variation_type"]] == "snv"]
   SNP.gr$names <- SNP.gr$normalized_context_with_mutation
   SNP.gr$color <- c("black")
   #SNP.gr$border <- c("black")

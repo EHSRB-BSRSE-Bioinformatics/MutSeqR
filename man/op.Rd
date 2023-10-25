@@ -5,7 +5,7 @@
 \alias{op}
 \title{Column names for mut tables}
 \format{
-A list with potentially variable column names
+A list with potential variable column names
 }
 \usage{
 op

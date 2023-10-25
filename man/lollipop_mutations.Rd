@@ -4,7 +4,7 @@
 \alias{lollipop_mutations}
 \title{Plot mutations in lollipop plot}
 \usage{
-lollipop_mutations(species = "human", mutations = mutation_data, ...)
+lollipop_mutations(species = "human", mutations, ...)
 }
 \arguments{
 \item{species}{One of "human" or "mouse"}
@@ -12,9 +12,11 @@ lollipop_mutations(species = "human", mutations = mutation_data, ...)
 \item{mutations}{A GRanges object with mutation data}
 
 \item{...}{Additional arguments to trackViewer::lolliplot (e.g.,
-\code{ranges = GRanges("chr1", IRanges(104, 109))} )}
+\code{ranges = GRanges("chr1", IRanges(104, 109))} )
+Suggests trackViewer lolliplot}
 }
 \description{
+TO DO: Create plt without trackViewer package.
 Uses the trackViewer package to plot mutations in a lollipop plot in specific
 regions as defined by the user input.
 }

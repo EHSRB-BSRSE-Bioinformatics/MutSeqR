@@ -1,7 +1,7 @@
 require(data.table)
 require(assertthat)
 require(dplyr)
-require(binom)
+require(binom) 
 require(GenomicRanges)
 
 MUT_FILEPATH <- "data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"

@@ -1,15 +1,19 @@
 #' Analyse transition/transversion ratios
 #' 
+#' TO DO: create plot witohut the GenVisR package. 
 #' Function to convert mutation data to a format that can be passed to GenVisR
 #' @param mutations Mutation data, either as GRanges or data frame
 #' @param group Experimental group (a column in the mutation data) by which
 #' to aggregate samples
+#' @param y Default expected proportions for each mutation subtype. See 
+#' documentation for `GenVisR::TvTi`.
 #' @param ... Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
 #' sample_order_input, sort, type = "Proportion" or "Frequency")
-#' @importFrom GenVisR TvTi
-#' @importFrom dplyr mutate select filter
+#' Suggests GenVisR TvTi
+#' @importFrom dplyr mutate select filter group_by
+#' @importFrom rlang .data
 #' @export
-tvti_plot <- function(mutations = mutation_data,
+tvti_plot <- function(mutations,
                       group = "sample",
                       y = c(`A->C or T->G (TV)` = 0.066,
                             `A->G or T->C (TI)` = 0.217,
@@ -19,14 +23,14 @@ tvti_plot <- function(mutations = mutation_data,
                             `G->T or C->A (TV)` = 0.093),
                       ...) {
   # If mutation data is GRanges, convert to data frame
-  if (class(mutations) == "GRanges") { mutations <- as.data.frame(mutations) }
+  if (inherits(mutations, "GRanges")) { mutations <- as.data.frame(mutations) }
   snvs_genvisr <- mutations %>%
     dplyr::mutate(
       sample = .data[[group]],
-      reference = ref,
-      variant = alt) %>%
-    dplyr::filter(variation_type == "snv") %>%
-    dplyr::select(sample, reference, variant)
+      reference = .data$ref,
+      variant = .data$alt) %>%
+    dplyr::filter(.data$variation_type == "snv") %>%
+    dplyr::select(sample, .data$reference, .data$variant)
   GenVisR::TvTi(snvs_genvisr, fileType = "MGI",  progress = FALSE, ...)
  
   #tv_ti_ratio <- tv_ti_table$main %>% dplyr::mutate(Class = str_extract(string=trans_tranv, pattern=regex("\\(\\w++\\)")))

@@ -5,7 +5,7 @@
 \title{Analyse transition/transversion ratios}
 \usage{
 tvti_plot(
-  mutations = mutation_data,
+  mutations,
   group = "sample",
   y = c(`A->C or T->G (TV)` = 0.066, `A->G or T->C (TI)` = 0.217, `A->T or T->A (TV)` =
     0.065, `G->A or C->T (TI)` = 0.4945, `G->C or C->G (TV)` = 0.0645,
@@ -19,9 +19,14 @@ tvti_plot(
 \item{group}{Experimental group (a column in the mutation data) by which
 to aggregate samples}
 
+\item{y}{Default expected proportions for each mutation subtype. See
+documentation for \code{GenVisR::TvTi}.}
+
 \item{...}{Additional arguments sent to GenVisR::TvTi (e.g., out = "data",
-sample_order_input, sort, type = "Proportion" or "Frequency")}
+sample_order_input, sort, type = "Proportion" or "Frequency")
+Suggests GenVisR TvTi}
 }
 \description{
+TO DO: create plot witohut the GenVisR package.
 Function to convert mutation data to a format that can be passed to GenVisR
 }

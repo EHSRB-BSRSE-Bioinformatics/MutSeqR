@@ -2,7 +2,7 @@
 
 ## Pre-abmle
 
-To do: write a bit about the project, the scope, why it's necesary.
+To do: write a bit about the project, the scope, why it's necessary.
 
 Provide a little background on duplex sequencing, describe the technology
 briefly, and give some context for the type of data we are meant to be
