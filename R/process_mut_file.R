@@ -11,7 +11,7 @@
 #' @param mut_sep The delimiter for importing the .mut file
 #' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
-#' @param rg_sep The delimiter for importing the custom_regions_file
+#' @param rg_sep The delimiter for importing the custom_regions_file. Default is tab-delimited.
 #' @param vaf_cutoff Add a column to identify ostensibly germline variants using a cutoff for variant allele fraction (VAF). There is no default value provided, but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this will remove variants that are present at a frequency greater than this value at a given site.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
@@ -211,7 +211,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     starts.in.df.are.0based = TRUE
   )
 
-  genic_regions <- load_regions_file(regions_file, custom_regions_file)
+  genic_regions <- load_regions_file(regions_file, custom_regions_file, rg_sep)
 
   region_ranges <- makeGRangesFromDataFrame(
     df = genic_regions,
