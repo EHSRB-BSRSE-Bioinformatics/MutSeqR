@@ -40,12 +40,13 @@ get_CpG_mutations <- function(regions, mut_data,
   }
   CpGs_combined <- do.call("c", all_CpGs)
   # Step 4 - join mutation data with CpG sites
-  CpGs_in_data <- plyranges::find_overlaps(mut_data, CpGs_combined) |>
+  CpGs_in_data <- plyranges::find_overlaps(mut_data, CpGs_combined) %>%
+    as.data.frame %>%
     dplyr::filter(.data$variation_type %in% variant_types)
   if (include_no_variants == T) {
     return(CpGs_in_data)
   } else {
-    return(CpGs_in_data |> dplyr::filter(!.data$variation_type == "no_variant"))
+    return(CpGs_in_data %>% dplyr::filter(!.data$variation_type == "no_variant"))
   }
 }
 
@@ -100,11 +101,11 @@ annotate_CpG_sites <- function(mut_data,
                                motif = "CG",
                                column_query = "context",
                                ...) {
-  annotated_data <- as.data.frame(mut_data) |>
+  annotated_data <- as.data.frame(mut_data) %>%
     dplyr::mutate(CpG_site = Biostrings::vcountPattern(
       pattern = motif,
       subject = .data[[column_query]],
-      ...)) |>
+      ...)) %>%
     dplyr::mutate(CpG_site = ifelse(.data$CpG_site == 0, F, T))
   return(annotated_data)
 }

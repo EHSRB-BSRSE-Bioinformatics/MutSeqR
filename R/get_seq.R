@@ -5,7 +5,9 @@
 #' Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
 #' @param species "human", "mouse", or "rat"
 #' @param genome_version "Genome version", ex. "GRCm38". Default = NULL (no version specified; human = GRCh38, mouse = GRCm39, rat = mRatBN7)
-#' @param regions_df data frame with target locations. Contains columns: contig, start, and end
+#' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
+#' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
+#' @param rg_sep The delimiter for importing the custom_regions_file
 #' @param is_0_based TRUE or FALSE. Are the target region coordinates 0 based (TRUE) or 1 based (FALSE)
 #' @param padding An interger value by which the function will extend the range of the target sequence on both sides. Modified region regions will be reported in ext_start and ext_end. 
 #' @return a GRanges object with sequences and metadata of targeted regions
@@ -23,7 +25,9 @@
 get_seq <- function(
                     species, 
                     genome_version = NULL, 
-                    regions_df, 
+                    regions_file = c("human", "mouse", "custom"),
+                    custom_regions_file = NULL,
+                    rg_sep = "\t",
                     is_0_based = TRUE,
                     padding = 1) {
   process_region <- function(contig, start, end) {
@@ -38,6 +42,8 @@ get_seq <- function(
     r <- httr::GET(paste(ext, sep = ""), httr::content_type("text/plain"))
     return(httr::content(r))
   }
+  
+  regions_df <- load_regions_file(regions_file, custom_regions_file)
 
   seq_list <- lapply(1:nrow(regions_df), function(i) {
     process_region(regions_df$contig[i], regions_df$start[i], regions_df$end[i])

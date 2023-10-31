@@ -57,7 +57,7 @@ regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
  
 mutation_data <-
   import_mut_data(mut_file = mut_data,
-                  regions_file = regions_file,
+                  regions_file = "mouse",
                   rsids = T)
 
 six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
@@ -143,9 +143,14 @@ tvti_plot(mutations = mutation_data, type = "Proportion")
 # to indicate whether the 'context' column contains a CpG site (i.e., is the
 # mutation at a CpG site or not)
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
-cpg_mutations <- get_CpG_mutations(get_region_seqs(dupseq_species), mutation_data)
+cpg_mutations <- get_CpG_mutations(get_seq(species = dupseq_species,
+                                           genome_version = "GRCm38",
+                                           regions_file = "mouse"), mutation_data)
+# cpg_mutations <- get_CpG_mutations(get_region_seqs(dupseq_species), mutation_data)
 # This only returns CpG sites, nothing to do with mutation data
-cpg_sites <- get_CpG_regions(get_region_seqs(dupseq_species))
+cpg_sites <- get_CpG_regions(get_seq(species = dupseq_species,
+                                           genome_version = "GRCm38",
+                                           regions_file = "mouse"))
 # Total number of CpG sites
 nrow(as.data.frame(cpg_sites)) # could also use |> count() |> pull()
 n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
@@ -225,20 +230,20 @@ write_excel_from_list(list_of_tables = cpg_tables,
 
 ```{r cosmic-signatures-sigminer}
 # Aggregate by sample
-sigminer_results <- signature_analysis_sigminer(project_name = project, group = "sample",
-                        project_genome = "BSgenome.Mmusculus.UCSC.mm10")
+sigminer_results <- signature_analysis_sigminer(mutation_data, project_name = project, group = "sample",
+                        project_genome = "BSgenome.Mmusculus.UCSC.mm10", run_bootstrapping = T)
 
-show_sig_profile(sigminer_results$fitting_results,
-                 mode = "SBS", style = "cosmic", x_label_angle = 90)
+sigminer::show_sig_profile(sigminer_results$fitting_results,
+                           mode = "SBS", style = "cosmic", x_label_angle = 90)
 
 
-show_sig_exposure(sigminer_results$fitting_results, style = "cosmic")
+sigminer::show_sig_exposure(sigminer_results$fitting_results, style = "cosmic")
 
-show_sig_bootstrap_exposure(sigminer_results$bootstrap_results)
-show_sig_bootstrap_error(sigminer_results$bootstrap_results)
-show_sig_bootstrap_stability(sigminer_results$bootstrap_results)
+sigminer::show_sig_bootstrap_exposure(sigminer_results$bootstrap_results)
+sigminer::show_sig_bootstrap_error(sigminer_results$bootstrap_results)
+sigminer::show_sig_bootstrap_stability(sigminer_results$bootstrap_results)
 
-show_catalogue(t(sigminer_results$tally_results$nmf_matrix), style = "cosmic", x_label_angle = 90)
+sigminer::show_catalogue(t(sigminer_results$tally_results$nmf_matrix), style = "cosmic", x_label_angle = 90)
 
 ```
 ```{r display_sigs}
