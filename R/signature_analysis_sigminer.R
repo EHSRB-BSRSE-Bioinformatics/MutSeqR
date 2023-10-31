@@ -25,10 +25,12 @@ signature_analysis_sigminer <- function(mutations,
                                         project_genome = "BSgenome.Mmusculus.UCSC.hg38",
                                         group = "sample",
                                         run_bootstrapping = F,
+                                        vaf_cutoff,
                                         ...) {
   
   sigminer_input <- as.data.frame(mutations) |>
     dplyr::filter(!.data$variation_type %in% "no_variant") |>
+    dplyr::filter(!.data$VAF < vaf_cutoff) |>
     dplyr::select(all_of(group), .data$variation_type, seqnames,
                   .data$start, .data$end, .data$ref, .data$alt) |>
     dplyr::rename( # TODO add a column for "gene", but use locus with TS data.. should be Hugo_Symbol for MAF compatibility

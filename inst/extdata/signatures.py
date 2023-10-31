@@ -5,7 +5,7 @@ from SigProfilerExtractor import sigpro as sig
 from SigProfilerMatrixGenerator import install as genInstall
 
 def install_genome(genome):
-  genInstall.install(genome, rsync=True, bash=True, ftp=True)
+  genInstall.install(genome, rsync=False, bash=True, ftp=True)
 
 def cosmic_fit_DupSeqR(samples,
                        output,
