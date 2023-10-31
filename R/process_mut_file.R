@@ -208,7 +208,7 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     starts.in.df.are.0based = TRUE
   )
 
-  regions_df <- load_regions_file(regions_file, custom_regions_file)
+  genic_regions <- load_regions_file(regions_file, custom_regions_file)
 
   region_ranges <- makeGRangesFromDataFrame(
     df = genic_regions,
