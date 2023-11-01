@@ -8,14 +8,17 @@
 #' @param sample_data_file An optional file containing additional sample metadata 
 #' (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables. Default is tab-delimited
-#' @param regions_file "human", "mouse", or "custom". The argument refers to the
+#' @param regions "human", "mouse", or "custom". The argument refers to the
 #'  TS Mutagenesis panel of the specified species, or to a custom panel. 
-#'  If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions_file is set to custom,
+#'  If custom, provide file path in custom_regions_file, the species, and the genome assembly version. 
+#' @param custom_regions_file "filepath". If regions is set to custom,
 #'  provide the file path for the file containing regions metadata. 
 #'  Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file. Default is tab-delimited
-#' @param assembly The genome assembly. Accepted values: "GRCh37", "GRCh38", "GRCm38", "GRCm39" TO DO: MAKE GENERAL
+#' @param species When regions is set to "custom", provide the species of your samples. ex. "mouse", "human". 
+#' @param genome_version When regions is set to "custom", provide the genome assembly version.
+#' It will default to the most current genome assembly version unless specified. 
+#' Human: GRCh38, mouse: GRCm39, rat: mRatBN7.
 #' @param depth_calc In the instance when there are two or more calls at the 
 #' same location within a sample, and the depths differ, this parameter chooses 
 #' the method of calculation for the total_depth. take_mean calculates the 
@@ -42,10 +45,11 @@ read_vcf <- function(
     vcf_file,
     sample_data_file = NULL,
     sd_sep = "\t",
-    regions_file = c("human", "mouse", "custom"),
+    regions = c("human", "mouse", "custom"),
     custom_regions_file = NULL,
     rg_sep = "\t",
-    assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
+    species = NULL,
+    genome_version = NULL,
     depth_calc = "take_del"
 ) {
   vcf_file <- file.path(vcf_file)
@@ -278,7 +282,7 @@ dat <- dat %>%
   dplyr::select(-var_depth)
 }
 
-##############################################################
+
 # Create Context Column using target Sequences
 # Turn dat into a GRanges object.  
 mut_ranges <- makeGRangesFromDataFrame(
@@ -289,25 +293,31 @@ mut_ranges <- makeGRangesFromDataFrame(
     end.field = "end"
   )
   
-# Annotate the mut file with additional information about genomic regions in the file
-genic_regions <- load_regions_file(regions_file, custom_regions_file, rg_sep)
-
-# Retrieve reference sequences
-
-  #get the species based on the genome  
-  get_species_param <- function(assembly) {
-    if (assembly %in% c("GRCm38", "GRCm39")) {
-      return("mouse")
-    } else if (assembly %in% c("GRCh37", "GRCh38")) {
-      return("human")
-    } else {
-      stop("Invalid assembly parameter")
-    }
+# load regions ranges and retrieve sequences
+if (regions == "human") {
+  region_ranges <- DupSeqR::get_seq(regions = "human")
+  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCh38\n")
+} else if (regions == "mouse") {
+  region_ranges <- DupSeqR::get_seq(regions = "mouse")
+  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCm38\n")
+} else if (regions == "custom") { 
+    species_param <- species
+    genome_version_param <- genome_version
+  region_ranges <- DupSeqR::get_seq(regions = "custom", 
+                                    custom_regions_file = custom_regions_file,
+                                    rg_sep = rg_sep,
+                                    species = species_param,
+                                    genome_version = genome_version_param
+                                
+  )
+  if (is.null(genome_version)) {
+    cat("Populating context columns with sequences from ensembl.org '", species, "' default assembly version was used\n'" )
+  } else {
+   cat("Populating context columns with sequences from ensembl.org '", species, genome_version, "' assembly was used\n")  
   }
-  
-#retrieve the sequences (GRanges object)
-region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_species_param(assembly), genome_version = assembly)
-  
+ 
+  }
+
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
 

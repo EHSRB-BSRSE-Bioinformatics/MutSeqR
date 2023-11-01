@@ -7,8 +7,8 @@
 #' To replace get_region_seqs.R for its reliance on importing the entire genomes
 #' This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
 #' Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
-#' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
+#' @param regions "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
+#' @param custom_regions_file "filepath". If regions is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
 #' @param rg_sep The delimiter for importing the custom_regions_file. The default is tab-delimited.
 #' @param species If a custom regions file is provided, indicate species: "human", "mouse", or "rat"
 #' @param genome_version If a custom regions file is provided, indicate the genome assembly version, ex. "GRCm38". Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7
@@ -16,22 +16,19 @@
 #' @param padding An interger value by which the function will extend the range of the target sequence on both sides. Modified region ranges will be reported in ext_start and ext_end. 
 #' @return a GRanges object with sequences and metadata of targeted regions
 #' @examples
-#' regions_df <- data.frame(
-#'   contig = c("chr11", "chr13"),
-#'   start = c(108510788, 75803913),
-#'   end = c(108513187, 75806312),
-#'   gene = c("GeneA", "GeneB"),
-#'   transcription_status = c("genic", "intergenic")
-#' )
-#' t <- get_seq(species = "human", genome_version = "GRCh37", regions_df = regions_df)
+#' species_param <- "mouse"
+#' genome_param <- "GRCm38"
+#' t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 
+#'               species = species_param, genome_verison = genome_param,
+#'               is.0.based = FALSE)
 #' t$sequence
 #' @export
 get_seq <- function( 
-                    regions_file = c("human", "mouse", "custom"),
+                    regions = c("human", "mouse", "custom"),
                     custom_regions_file = NULL,
+                    rg_sep = "\t",
                     species = NULL, 
                     genome_version = NULL, 
-                    rg_sep = "\t",
                     is_0_based = TRUE,
                     padding = 1) {
   
@@ -44,13 +41,13 @@ get_seq <- function(
   end <- end + padding
   
   # State species and genome version defaults for Mutagenesis Panel
-  if (regions_file == "human") {
+  if (regions == "human") {
    species_param <- "human"
    genome_version_param <- "GRCh38"
-  } else if (regions_file == "mouse") {
+  } else if (regions == "mouse") {
      species_param <- "mouse"
      genome_version_param <- "GRCm38"
-   } else if (regions_file == "custom") {
+   } else if (regions == "custom") {
     if (!is.null(species)) {
       species_param <- species
       genome_version_param <- genome_version
@@ -62,7 +59,7 @@ get_seq <- function(
     r <- httr::GET(paste(ext, sep = ""), httr::content_type("text/plain"))
     return(httr::content(r))
   }
-   regions_df <- load_regions_file(regions_file, custom_regions_file, rg_sep)
+   regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
 
   seq_list <- lapply(1:nrow(regions_df), function(i) {
     process_region(regions_df$contig[i], regions_df$start[i], regions_df$end[i])

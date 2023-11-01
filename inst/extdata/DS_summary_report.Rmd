@@ -18,7 +18,7 @@ params:
   project_title: "Mouse Test"
   genome: "mm10"
   mut_data: "../../from-annette/mutfiles/"
-  regions_file: "../../inst/extdata/genic_regions_mm10.txt"
+  regions: "mouse"
 ---
 
 ```{r load_libraries, warning=F, echo=F}
@@ -40,26 +40,26 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 #project <- "Axelson_2022"
 #project_genome <- "GRCh38"
 #mut_data <- ../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt
-#regions_file <- "../../inst/extdata/genic_regions_hg38.txt"
+#regions "human"
 
 # group_var <- "sample"
 # dupseq_species <- "mouse"
 # project <- "Mouse Test"
 # project_genome = "mm10"
 # mut_data <- "../../data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
-# regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
+# regions "mouse"
 
 group_var <- "sample"
 dupseq_species <- "mouse"
 project <- "Mouse Test"
 project_genome <- "mm10"
-mut_data <- "../../from-annette/mutfiles/"
+mut_data <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files/tester"
 vaf_cutoff <- 0.1
-#regions_file <- "../../inst/extdata/genic_regions_mm10.txt"
+#regions "mouse"
  
 mutation_data <-
   import_mut_data(mut_file = mut_data,
-                  regions_file = "mouse",
+                  regions = "mouse",
                   rsids = T,
                   vaf_cutoff = vaf_cutoff)
 
@@ -108,22 +108,22 @@ write_VCF_from_mut(mutation_data)
 
 ```{r exploratory-spectra, warning = F}
 # Look at overall spectrum
-as.data.frame(mutation_data) |> group_by(subtype) |> tally()
-as.data.frame(mutation_data) |> group_by(normalized_subtype) |> tally()
-as.data.frame(mutation_data) |> group_by(ref) |> tally()
-as.data.frame(mutation_data) |> group_by(short_ref) |> tally()
-as.data.frame(mutation_data) |> group_by(normalized_ref) |> tally()
+as.data.frame(mutation_data) %>% group_by(subtype) %>% tally()
+as.data.frame(mutation_data) %>% group_by(normalized_subtype) %>% tally()
+as.data.frame(mutation_data) %>% group_by(ref) %>% tally()
+as.data.frame(mutation_data) %>% group_by(short_ref) %>% tally()
+as.data.frame(mutation_data) %>% group_by(normalized_ref) %>% tally()
 # generate frequency tables
-trinucleotide_frequencies_global <- mutation_data |>
-   group_by(normalized_context, normalized_subtype) |>
+trinucleotide_frequencies_global <- mutation_data %>%
+   group_by(normalized_context, normalized_subtype) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
  
- trinucleotide_frequencies_group <- mutation_data |>
-   group_by(normalized_context, normalized_subtype, !!sym(group_var)) |>
+ trinucleotide_frequencies_group <- mutation_data %>%
+   group_by(normalized_context, normalized_subtype, !!sym(group_var)) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
  
- trinucleotide_frequencies_per_individual <- mutation_data |>
-   group_by(normalized_context, normalized_subtype, sample) |>
+ trinucleotide_frequencies_per_individual <- mutation_data %>%
+   group_by(normalized_context, normalized_subtype, sample) %>%
    summarise(depth_per_trinucleotide = sum(total_depth))
 
 ggplot(six_base_summary, aes(x=normalized_subtype, y=sample_MF_unique)) +
@@ -147,14 +147,14 @@ tvti_plot(mutations = mutation_data, type = "Proportion")
 mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
 cpg_mutations <- get_CpG_mutations(get_seq(species = dupseq_species,
                                            genome_version = "GRCm38",
-                                           regions_file = "mouse"), mutation_data)
+                                           regions = "mouse"), mutation_data)
 # cpg_mutations <- get_CpG_mutations(get_region_seqs(dupseq_species), mutation_data)
 # This only returns CpG sites, nothing to do with mutation data
 cpg_sites <- get_CpG_regions(get_seq(species = dupseq_species,
                                            genome_version = "GRCm38",
-                                           regions_file = "mouse"))
+                                           regions = "mouse"))
 # Total number of CpG sites
-nrow(as.data.frame(cpg_sites)) # could also use |> count() |> pull()
+nrow(as.data.frame(cpg_sites)) # could also use %>% count() %>% pull()
 n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
 
 # Testing general function for this application...
@@ -165,55 +165,55 @@ cpg_summary_subtype <- calculate_mut_freq(data = as.data.frame(cpg_mutations),
                                        
 
 # Mutations at CpG sites...
-cpg_summary_subtype <- as.data.frame(cpg_mutations) |>
-  add_count(!!ensym(group_var), alt_depth, name = "total_muts_per_group") |>
-  ungroup() |>
-  group_by(subtype, !!ensym(group_var), total_muts_per_group) |>
-  tally() |>
-  mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) |>
+cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
+  add_count(!!ensym(group_var), alt_depth, name = "total_muts_per_group") %>%
+  ungroup() %>%
+  group_by(subtype, !!ensym(group_var), total_muts_per_group) %>%
+  tally() %>%
+  mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
   mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
 
 # Mutations at CpG sites, broken down by trinucleotide mutation context
-cpg_summary_context <- as.data.frame(cpg_mutations) |>
-  group_by(!!ensym(group_var)) |>
-  add_count(alt_depth, name = "total_muts_per_group") |>
-  ungroup() |>
-  group_by(context_with_mutation, !!ensym(group_var), total_muts_per_group) |>
-  tally() |>
-  mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) |>
+cpg_summary_context <- as.data.frame(cpg_mutations) %>%
+  group_by(!!ensym(group_var)) %>%
+  add_count(alt_depth, name = "total_muts_per_group") %>%
+  ungroup() %>%
+  group_by(context_with_mutation, !!ensym(group_var), total_muts_per_group) %>%
+  tally() %>%
+  mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
   mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
 
-cpg_12base_pct <- as.data.frame(mutation_data_cpgs) |>
-  group_by(CpG_site, subtype, !!ensym(group_var)) |>
-  tally() |> 
-  ungroup() |>
-  group_by(subtype, !!ensym(group_var)) |>
-  mutate(total_mutations = sum(n)) |>
-  ungroup() |>
-  mutate(percent = 100*n/total_mutations) |>
-  filter(CpG_site == T) |>
+cpg_12base_pct <- as.data.frame(mutation_data_cpgs) %>%
+  group_by(CpG_site, subtype, !!ensym(group_var)) %>%
+  tally() %>% 
+  ungroup() %>%
+  group_by(subtype, !!ensym(group_var)) %>%
+  mutate(total_mutations = sum(n)) %>%
+  ungroup() %>%
+  mutate(percent = 100*n/total_mutations) %>%
+  filter(CpG_site == T) %>%
   dplyr::select(-1)
 
-cpg_6base_pct <- as.data.frame(mutation_data_cpgs) |>
-  group_by(CpG_site, normalized_subtype, !!ensym(group_var)) |>
-  tally() |> 
-  ungroup() |>
-  group_by(normalized_subtype, !!ensym(group_var)) |>
-  mutate(total_mutations = sum(n)) |>
-  ungroup() |>
-  mutate(percent = 100*n/total_mutations) |>
-  filter(CpG_site == T) |>
+cpg_6base_pct <- as.data.frame(mutation_data_cpgs) %>%
+  group_by(CpG_site, normalized_subtype, !!ensym(group_var)) %>%
+  tally() %>% 
+  ungroup() %>%
+  group_by(normalized_subtype, !!ensym(group_var)) %>%
+  mutate(total_mutations = sum(n)) %>%
+  ungroup() %>%
+  mutate(percent = 100*n/total_mutations) %>%
+  filter(CpG_site == T) %>%
   dplyr::select(-1)
 
-cpg_96base_pct <- as.data.frame(mutation_data_cpgs) |>
-  group_by(CpG_site, context_with_mutation, !!ensym(group_var)) |>
-  tally() |> 
-  ungroup() |>
-  group_by(context_with_mutation, !!ensym(group_var)) |>
-  mutate(total_mutations = sum(n)) |>
-  ungroup() |>
-  mutate(percent = 100*n/total_mutations) |>
-  filter(CpG_site == T) |>
+cpg_96base_pct <- as.data.frame(mutation_data_cpgs) %>%
+  group_by(CpG_site, context_with_mutation, !!ensym(group_var)) %>%
+  tally() %>% 
+  ungroup() %>%
+  group_by(context_with_mutation, !!ensym(group_var)) %>%
+  mutate(total_mutations = sum(n)) %>%
+  ungroup() %>%
+  mutate(percent = 100*n/total_mutations) %>%
+  filter(CpG_site == T) %>%
   dplyr::select(-1)
 
 cpg_tables <- list(CpGs_12base_percentage = cpg_12base_pct,
@@ -248,7 +248,8 @@ sigminer::show_sig_bootstrap_exposure(sigminer_results$bootstrap_results)
 sigminer::show_sig_bootstrap_error(sigminer_results$bootstrap_results)
 sigminer::show_sig_bootstrap_stability(sigminer_results$bootstrap_results)
 
-sigminer::show_catalogue(t(sigminer_results$tally_results$nmf_matrix), style = "cosmic", x_label_angle = 90)
+sigminer::show_catalogue(t(sigminer_results$fitting_results$nmf_matrix), style = "cosmic", x_label_angle = 90)
+
 
 ```
 ```{r display_sigs}
@@ -266,20 +267,20 @@ Are any mutations observed in more than one individual?
 
 ```{r}
 
-recurring_mutations <- mutation_data_cpgs |>
-  group_by(seqnames,start,end) |>
-  filter(!variation_type %in% "no_variant") |>
-  tally() |>
+recurring_mutations <- mutation_data_cpgs %>%
+  group_by(seqnames,start,end) %>%
+  filter(!variation_type %in% "no_variant") %>%
+  tally() %>%
   arrange(-n)
 
-recurring_mutations_group <- mutation_data_cpgs |>
-  group_by(seqnames,start,end,sample) |>
-  tally() |>
+recurring_mutations_group <- mutation_data_cpgs %>%
+  group_by(seqnames,start,end,sample) %>%
+  tally() %>%
   arrange(-n)
 
-recurring_mutations_rsid <- mutation_data_cpgs |>
-  group_by(id) |>
-  tally() |>
+recurring_mutations_rsid <- mutation_data_cpgs %>%
+  group_by(id) %>%
+  tally() %>%
   arrange(-n)
 ```
 

@@ -37,7 +37,10 @@ test_that("import_mut_data function correctly imports mutation data", {
     )
   
   # Call the import_mut_data function on the test data
-  mut_data <- import_mut_data(mut_file = tmpfile, regions_file = "custom", custom_regions_file = tmpfile2)
+  mut_data <- import_mut_data(mut_file = tmpfile, 
+                              regions = "custom", 
+                              custom_regions_file = tmpfile2,
+                              vaf_cutoff = 0.1)
   
     
   expect_true(is(mut_data, "GRanges"), info = "Check if the resulting object is a granges object")
@@ -52,7 +55,7 @@ test_that("import_mut_data function correctly imports mutation data", {
     "sample", "context", "subtype", "variation_type", "total_depth",
     "alt_depth", "ref", "alt", "ref_depth", "context_with_mutation",
     "normalized_context", "normalized_subtype", "short_ref", "normalized_ref", 
-    "normalized_context_with_mutation", "gc_content", "VAF", 
+    "normalized_context_with_mutation", "gc_content", "VAF", "is_germline",
     "description", "location_relative_to_genes"
   ), info = "Check if the resulting object has the correct meta data column names")
   
@@ -61,7 +64,7 @@ test_that("import_mut_data function correctly imports mutation data", {
                         total_depth = "integer", alt_depth = "integer", ref = "character", alt = "character", ref_depth = "integer",
                         context_with_mutation = "character", normalized_context = "character", normalized_subtype = "character", 
                         short_ref = "character", normalized_ref = "character", normalized_context_with_mutation = "character", 
-                        gc_content = "numeric", VAF = "numeric", description = "character", location_relative_to_genes = "character" ),
+                        gc_content = "numeric", VAF = "numeric", is_germline = "logical", description = "character", location_relative_to_genes = "character" ),
     info = " Check if the resulting object has the correct data type for each metadata column" )
   
   # Clean up temporary file
