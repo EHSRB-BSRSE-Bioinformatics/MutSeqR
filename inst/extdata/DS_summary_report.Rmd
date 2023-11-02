@@ -53,7 +53,7 @@ group_var <- "sample"
 dupseq_species <- "mouse"
 project <- "Mouse Test"
 project_genome <- "mm10"
-mut_data <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files/tester"
+mut_data <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files"
 vaf_cutoff <- 0.1
 #regions "mouse"
  
@@ -239,14 +239,19 @@ sigminer_results <- signature_analysis_sigminer(
   vaf_cutoff = 0.1,
   run_bootstrapping = F)
 
+
+
+# Can only handle 10 signatures at a time??
+sigminer::show_sig_fit(sigminer_results$fitting_results, plot_fun = "violin")
+
 sigminer::show_sig_profile(sigminer_results$fitting_results,
                            mode = "SBS", style = "cosmic", x_label_angle = 90)
 
 sigminer::show_sig_exposure(sigminer_results$fitting_results, style = "cosmic")
 
-sigminer::show_sig_bootstrap_exposure(sigminer_results$bootstrap_results)
-sigminer::show_sig_bootstrap_error(sigminer_results$bootstrap_results)
-sigminer::show_sig_bootstrap_stability(sigminer_results$bootstrap_results)
+sigminer::show_sig_bootstrap_exposure(sigminer_results$bootstrap_results) + facet_grid(sample~.)
+sigminer::show_sig_bootstrap_error(sigminer_results$bootstrap_results) + facet_grid(sample~.)
+sigminer::show_sig_bootstrap_stability(sigminer_results$bootstrap_results) + facet_grid(sample~.)
 
 sigminer::show_catalogue(t(sigminer_results$fitting_results$nmf_matrix), style = "cosmic", x_label_angle = 90)
 

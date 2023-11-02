@@ -94,7 +94,7 @@ read_vcf <- function(
       vcf_list <- readVcf(file)
       
       # Rename or create the "sample" column in the INFO field
-      vcf_list <- check_and_rename_sample(vcf_list)
+      vcf_list <- suppressWarnings(check_and_rename_sample(vcf_list))
       # Ensure consistent column names
       rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info" 
       # Combine the VCF data
@@ -109,7 +109,7 @@ read_vcf <- function(
   # Read a single vcf file
         vcf <- readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
-    vcf <- check_and_rename_sample(vcf)
+        vcf <- suppressWarnings(check_and_rename_sample(vcf))
   }
   
 
@@ -179,9 +179,8 @@ read_vcf <- function(
   dat <- dat %>%
     dplyr::mutate(
        nchar_ref = nchar(ref),
-      nchar_alt = nchar(alt),
+       nchar_alt = ifelse(variation_type != "symbolic", nchar(alt), NA),
       variation_type = tolower(dat$variation_type),
-      #TO DO: fix sv - it doesn't change it to symbolic. 
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
           ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
@@ -198,13 +197,12 @@ read_vcf <- function(
       VARLEN = 
         ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
          ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
-               "."))
+               NA))
     )
     
   #create ref_depth, short_ref, subtype
   dat <- dat %>%
     dplyr::mutate(
-      ref_depth = .data$depth - .data$alt_depth,
       subtype = 
         ifelse(.data$variation_type == "snv",
                paste0(.data$ref, ">", .data$alt),
@@ -223,8 +221,8 @@ if (length(AD) == 0) {
       no_calls = 0,  # Since AD is missing, no calls can't be calculated
       VAF = .data$alt_depth / .data$depth  # Calculate VAF using depth
     )
-  cat("Warning: no_calls cannot be calculated because there is no AD field.\n")
-  cat("VAF calculated with depth (DP; includes N-calls) because AD field is missing.\n")
+  cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
+  cat("VAF calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
   
 } else {  
 AD <- as.data.frame(do.call(rbind, AD))

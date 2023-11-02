@@ -1,7 +1,7 @@
 #' Run COSMIC signatures comparison
 #'
 #' After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
-#' @param mutations A data frame, imported from a .mut file
+#' @param mutations A data frame, imported from a .mut or .vcf file
 #' @param project_name The name of the project; used to get mutation data into the required .txt format for SigProfiler
 #' @param project_genome A string describing the reference genome to use; e.g., GRCh38
 #' @param group The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)
@@ -70,14 +70,15 @@ signature_analysis_sigminer <- function(mutations,
                         ...)
   # add get_sig_similarity() to compare catalogs to signatures; TODO
   
+  
   sigminer_results$fitting_results <-
     sigminer::sig_fit(t(sigminer_results$tally_results$nmf_matrix),
-                      sig_db = "SBS", sig_index = "ALL")
-  
+                      sig_db = "SBS", sig_index = "ALL", type = "relative")
+ 
   if (run_bootstrapping == T) {
   sigminer_results$bootstrap_results <-
     sigminer::sig_fit_bootstrap_batch(t(sigminer_results$tally_results$nmf_matrix),
-                                      sig_db = "SBS", sig_index = "ALL")
+                                      sig_db = "SBS", sig_index = "ALL", type = "relative")
   }
   return(sigminer_results)
   

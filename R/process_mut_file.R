@@ -24,8 +24,8 @@
 #' @export
 
 # To delete later:
-# sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt"
-
+sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
+#dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
 import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
                             rsids = F,
                             sample_data_file = NULL,
@@ -134,7 +134,23 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
   dat <- dat %>%
 
     dplyr::mutate(
-      ref_depth = .data[[depth_col]] - .data$alt_depth,
+      nchar_ref = nchar(ref),
+      nchar_alt = ifelse(variation_type != "symbolic" | variation_type != "sv", nchar(alt), NA),
+      variation_type = tolower(dat$variation_type),
+      variation_type = 
+        ifelse(.data$variation_type == "sv" , "symbolic",
+          ifelse(.data$variation_type == "indel" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
+            ifelse(.data$variation_type == "indel" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion",
+                 .data$variation_type))),
+      VARLEN = 
+        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
+               ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
+                      NA)),
+       ref_depth = .data[[depth_col]] - .data$alt_depth,
+      subtype = 
+        ifelse(.data$variation_type == "snv",
+               paste0(.data$ref, ">", .data$alt),
+               "."),
       context_with_mutation =
         ifelse(.data$subtype != ".",
           paste0(
