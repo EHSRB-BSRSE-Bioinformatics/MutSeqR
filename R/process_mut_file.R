@@ -4,14 +4,28 @@
 #' @param mut_file The .mut file containing mutation data to be imported. If you
 #' specify a folder, function will attempt to read all files in the folder and
 #' combine them into a single data frame.
-#' Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, context, ref, variation_type, contig, start (Synonymous names are accepted)
-#' @param rsids TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)
-#' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
+#' Columns required are: depth col = (depth & no_calls or total_depth), 
+#' alt_depth, context, ref, variation_type, contig, start 
+#' (Synonymous names are accepted)
+#' @param rsids TRUE or FALSE; whether or not the .mut file contains rsID information 
+#' (existing SNPs)
+#' @param sample_data_file An optional file containing additional sample metadata 
+#' (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables
 #' @param mut_sep The delimiter for importing the .mut file
-#' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
-#' @param rg_sep The delimiter for importing the custom_regions_file
+#' @param regions "human", "mouse", or "custom". The argument refers to the 
+#' TS Mutagenesis panel of the specified species, or to a custom panel. 
+#' If custom, provide file path in custom_regions_file. TO DO: add rat.
+#' @param custom_regions_file "filepath". If regions is set to custom, 
+#' provide the file path for the tab-delimited file containing regions metadata. 
+#' Required columns are "contig", "start", and "end".
+#' @param rg_sep The delimiter for importing the custom_regions_file. 
+#' Default is tab-delimited.
+#' @param vaf_cutoff Add a column to identify ostensibly germline variants using 
+#' a cutoff for variant allele fraction (VAF). There is no default value provided, 
+#' but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this 
+#' will remove variants that are present at a frequency greater than this value 
+#' at a given site.
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -23,15 +37,15 @@
 #' @export
 
 # To delete later:
-# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files
-# inst/extdata/genic_regions_mm10.txt
-
-import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+# sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
+# dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
+import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
                             rsids = F,
                             sample_data_file = NULL,
                             sd_sep = "\t",
                             mut_sep = "\t",
-                            regions_file = c("human", "mouse", "custom"),
+                            vaf_cutoff,
+                            regions = c("human", "mouse", "custom"),
                             custom_regions_file = NULL,
                             rg_sep = "\t") {
   # col name synonyms
@@ -133,7 +147,23 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
   dat <- dat %>%
 
     dplyr::mutate(
-      ref_depth = .data[[depth_col]] - .data$alt_depth,
+      nchar_ref = nchar(ref),
+      nchar_alt = ifelse(variation_type != "symbolic" | variation_type != "sv", nchar(alt), NA),
+      variation_type = tolower(dat$variation_type),
+      variation_type = 
+        ifelse(.data$variation_type == "sv" , "symbolic",
+          ifelse(.data$variation_type == "indel" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
+            ifelse(.data$variation_type == "indel" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion",
+                 .data$variation_type))),
+      VARLEN = 
+        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
+               ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
+                      NA)),
+       ref_depth = .data[[depth_col]] - .data$alt_depth,
+      subtype = 
+        ifelse(.data$variation_type == "snv",
+               paste0(.data$ref, ">", .data$alt),
+               "."),
       context_with_mutation =
         ifelse(.data$subtype != ".",
           paste0(
@@ -197,7 +227,8 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
       }
     }
 
-  dat <- dat %>% dplyr::mutate(VAF = .data$alt_depth / .data$total_depth)
+  dat <- dat %>% dplyr::mutate(VAF = .data$alt_depth / .data$total_depth) %>%
+    dplyr::mutate(is_germline = ifelse(.data$VAF < vaf_cutoff, F, T))
 
   mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
@@ -208,24 +239,10 @@ import_mut_data <- function(mut_file = "../../data/Jonatan_Mutations_in_blood_an
     starts.in.df.are.0based = TRUE
   )
 
-  # Annotate the mut file with additional information about genomic regions in the file
-  if (regions_file == "human") {
-    genic_regions <- read.table(system.file("extdata", "genic_regions_hg38.txt", package = "DupSeqR"), header = TRUE)
-  } else if (regions_file == "mouse") {
-    genic_regions <- read.table(system.file("extdata", "genic_regions_mm10.txt", package = "DupSeqR"), header = TRUE)
-  } else if (regions_file == "custom") {
-    if (!is.null(custom_regions_file)) {
-      genic_regions <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)
-    } else {
-      warning("You must provide a file path to custom_regions_file when regions_file is set to 'custom'.")
-    }
-  } else {
-    warning("Invalid regions_file parameter. Choose from 'human', 'mouse', or 'custom'.")
-  }
-
+  regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
 
   region_ranges <- makeGRangesFromDataFrame(
-    df = genic_regions,
+    df = regions_df,
     keep.extra.columns = T,
     seqnames.field = "contig",
     start.field = "start",

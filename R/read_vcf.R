@@ -8,14 +8,17 @@
 #' @param sample_data_file An optional file containing additional sample metadata 
 #' (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables. Default is tab-delimited
-#' @param regions_file "human", "mouse", or "custom". The argument refers to the
+#' @param regions "human", "mouse", or "custom". The argument refers to the
 #'  TS Mutagenesis panel of the specified species, or to a custom panel. 
-#'  If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions_file is set to custom,
+#'  If custom, provide file path in custom_regions_file, the species, and the genome assembly version. 
+#' @param custom_regions_file "filepath". If regions is set to custom,
 #'  provide the file path for the file containing regions metadata. 
 #'  Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file. Default is tab-delimited
-#' @param assembly The genome assembly. Accepted values: "GRCh37", "GRCh38", "GRCm38", "GRCm39" TO DO: MAKE GENERAL
+#' @param species When regions is set to "custom", provide the species of your samples. ex. "mouse", "human". 
+#' @param genome_version When regions is set to "custom", provide the genome assembly version.
+#' It will default to the most current genome assembly version unless specified. 
+#' Human: GRCh38, mouse: GRCm39, rat: mRatBN7.
 #' @param depth_calc In the instance when there are two or more calls at the 
 #' same location within a sample, and the depths differ, this parameter chooses 
 #' the method of calculation for the total_depth. take_mean calculates the 
@@ -42,10 +45,11 @@ read_vcf <- function(
     vcf_file,
     sample_data_file = NULL,
     sd_sep = "\t",
-    regions_file = c("human", "mouse", "custom"),
+    regions = c("human", "mouse", "custom"),
     custom_regions_file = NULL,
     rg_sep = "\t",
-    assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
+    species = NULL,
+    genome_version = NULL,
     depth_calc = "take_del"
 ) {
   vcf_file <- file.path(vcf_file)
@@ -90,7 +94,7 @@ read_vcf <- function(
       vcf_list <- readVcf(file)
       
       # Rename or create the "sample" column in the INFO field
-      vcf_list <- check_and_rename_sample(vcf_list)
+      vcf_list <- suppressWarnings(check_and_rename_sample(vcf_list))
       # Ensure consistent column names
       rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info" 
       # Combine the VCF data
@@ -105,10 +109,9 @@ read_vcf <- function(
   # Read a single vcf file
         vcf <- readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
-    vcf <- check_and_rename_sample(vcf)
+        vcf <- suppressWarnings(check_and_rename_sample(vcf))
   }
   
-
    # Extract mutation data into a dataframe
   dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
@@ -174,10 +177,7 @@ read_vcf <- function(
 # Create an VARLEN column
   dat <- dat %>%
     dplyr::mutate(
-       nchar_ref = nchar(ref),
-      nchar_alt = nchar(alt),
       variation_type = tolower(dat$variation_type),
-      #TO DO: fix sv - it doesn't change it to symbolic. 
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
           ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
@@ -185,7 +185,10 @@ read_vcf <- function(
                                       #These ambiguity codes may need to be defined from the alt column instead
                                              "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
                  .data$variation_type))) %>%
-    dplyr::mutate(                
+    dplyr::mutate(
+      nchar_ref = nchar(ref),
+      nchar_alt = ifelse(variation_type != "symbolic", nchar(alt), NA),
+      variation_type = 
            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
             ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
@@ -194,13 +197,12 @@ read_vcf <- function(
       VARLEN = 
         ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
          ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
-               "."))
+               NA))
     )
     
   #create ref_depth, short_ref, subtype
   dat <- dat %>%
     dplyr::mutate(
-      ref_depth = .data$depth - .data$alt_depth,
       subtype = 
         ifelse(.data$variation_type == "snv",
                paste0(.data$ref, ">", .data$alt),
@@ -217,10 +219,10 @@ if (length(AD) == 0) {
   dat <- dat %>%
     dplyr::mutate(
       no_calls = 0,  # Since AD is missing, no calls can't be calculated
-      VAF = .data$alt_depth / .data$depth  # Calculate VAF using depth
+      vaf = .data$alt_depth / .data$depth  # Calculate vaf using depth
     )
-  cat("Warning: no_calls cannot be calculated because there is no AD field.\n")
-  cat("VAF calculated with depth (DP; includes N-calls) because AD field is missing.\n")
+  cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
+  cat("vaf calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
   
 } else {  
 AD <- as.data.frame(do.call(rbind, AD))
@@ -271,14 +273,15 @@ dat <- dat %>%
 # Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
 dat <- dat %>%
   dplyr::mutate(
-    total_depth = ifelse(!duplicated(dat[, c("sample", "contig", "start")]), .data$ref_depth + .data$var_depth, .data$total_depth),
+    duplicated = duplicated(dat[, c("sample", "contig", "start")]) | 
+      duplicated(dat[, c("sample", "contig", "start")], fromLast = TRUE),
+    total_depth = ifelse(duplicated, 
+                        .data$total_depth,  .data$ref_depth + .data$var_depth),
     no_calls = .data$depth - .data$total_depth,
-    VAF = .data$alt_depth / .data$total_depth
-  ) %>%
-  dplyr::select(-var_depth)
+    vaf = .data$alt_depth / .data$total_depth) %>%
+  dplyr::select(-var_depth, -duplicated)
 }
 
-##############################################################
 # Create Context Column using target Sequences
 # Turn dat into a GRanges object.  
 mut_ranges <- makeGRangesFromDataFrame(
@@ -289,37 +292,31 @@ mut_ranges <- makeGRangesFromDataFrame(
     end.field = "end"
   )
   
-  # Annotate the mut file with additional information about genomic regions in the file
-  if (regions_file == "human") {
-    genic_regions <- read.table(system.file("extdata", "genic_regions_hg38.txt", package = "DupSeqR"), header = TRUE)
-  } else if (regions_file == "mouse") {
-    genic_regions <- read.table(system.file("extdata", "genic_regions_mm10.txt", package = "DupSeqR"), header = TRUE)
-  } else if (regions_file == "custom") {
-    if (!is.null(custom_regions_file)) {
-      genic_regions <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)
-    } else {
-      warning("You must provide a file path to custom_regions_file when regions_file is set to 'custom'.")
-    }
+# load regions ranges and retrieve sequences
+if (regions == "human") {
+  region_ranges <- DupSeqR::get_seq(regions = "human")
+  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCh38\n")
+} else if (regions == "mouse") {
+  region_ranges <- DupSeqR::get_seq(regions = "mouse")
+  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCm38\n")
+} else if (regions == "custom") { 
+    species_param <- species
+    genome_version_param <- genome_version
+  region_ranges <- DupSeqR::get_seq(regions = "custom", 
+                                    custom_regions_file = custom_regions_file,
+                                    rg_sep = rg_sep,
+                                    species = species_param,
+                                    genome_version = genome_version_param
+                                
+  )
+  if (is.null(genome_version)) {
+    cat("Populating context columns with sequences from ensembl.org '", species, "' default assembly version was used\n'" )
   } else {
-    warning("Invalid regions_file parameter. Choose from 'human', 'mouse', or 'custom'.")
+   cat("Populating context columns with sequences from ensembl.org '", species, genome_version, "' assembly was used\n")  
   }
-#####################################################################################################
-# Retrieve reference sequences
+ 
+  }
 
-  #get the species based on the genome  
-  get_species_param <- function(assembly) {
-    if (assembly %in% c("GRCm38", "GRCm39")) {
-      return("mouse")
-    } else if (assembly %in% c("GRCh37", "GRCh38")) {
-      return("human")
-    } else {
-      stop("Invalid assembly parameter")
-    }
-  }
-  
-#retrieve the sequences (GRanges object)
-region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_species_param(assembly), genome_version = assembly)
-  
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
 

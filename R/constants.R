@@ -34,9 +34,9 @@ op$column$upper_ci <- "upper_ci"
 op$site$columns <- c("contig", "start")
 op$mut_count_method <- "min"
 op$processed_required_mut_cols <-
-  c("mut_depth",
+  c("alt_depth",
     "total_depth",
-    "var_type",
+    "variation_type",
     "subtype",
     "context",
     "vaf")

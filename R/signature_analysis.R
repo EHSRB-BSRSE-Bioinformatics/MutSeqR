@@ -36,10 +36,9 @@ signature_decomposition <- function(mutations,
                                     group = "sample",
                                     python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9", #
                                     python_home = "~/.virtualenvs/r-reticulate") {
-  # if (!requireNamespace(reticulate)) {
-  #   stop("reticulate not installed")
-  # }
-  
+  if (!requireNamespace(reticulate)) {
+    stop("reticulate not installed")
+  }
   message("This function requires python to be installed on whichever
           platform you are using and to be available on the command line.
           Note that it will also install several python dependencies using
@@ -47,6 +46,15 @@ signature_decomposition <- function(mutations,
           implications of this. For advanced use, it is suggested to
           use the SigProfiler python tools directly in python as described
           in their respective documentation.")
+  
+  # TODO - only run this once, not ever time function is called
+  # Use an if statement to determine if the dependencies are met already
+  reticulate::install_python(version = "3.9:latest")
+  reticulate::virtualenv_create("DupSeqR", python = "python3.9")
+  reticulate::virtualenv_install("DupSeqR", "SigProfilerAssignment")
+  reticulate::virtualenv_install("DupSeqR", "SigProfilerMatrixGenerator")
+  reticulate::virtualenv_install("DupSeqR", "SigProfilerExtractor")
+  reticulate::use_virtualenv("DupSeqR")
   
   # message(paste0("Creating a folder to store python dependencies at ",
   #                python_home, ". This can be avoided by setting it manually
@@ -119,11 +127,14 @@ signature_decomposition <- function(mutations,
   signatures_python_code <- system.file('extdata', 'signatures.py',
                                         package = "DupSeqR")
   #reticulate::use_python(Sys.which("python"))
-  use_python("C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate/Scripts/python.exe")
-  reticulate::use_virtualenv(
-    "C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate")
+  #use_python("C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate/Scripts/python.exe")
+  #reticulate::use_virtualenv(
+  #  "C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate")
   #reticulate::use_condaenv("myenv")
+  
   reticulate::source_python(signatures_python_code)
+  
+  # only do this once as well?
   install_genome(project_genome)
   signature_matrices <-
     SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
@@ -140,9 +151,7 @@ signature_decomposition <- function(mutations,
   cosmic_fit_DupSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
-    output_path = output,
     genome_build="GRCh38",
-    signatures=None,
     cosmic_version=3.3,
     verbose=True,
     exome=False
