@@ -112,7 +112,6 @@ read_vcf <- function(
         vcf <- suppressWarnings(check_and_rename_sample(vcf))
   }
   
-
    # Extract mutation data into a dataframe
   dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
@@ -178,8 +177,6 @@ read_vcf <- function(
 # Create an VARLEN column
   dat <- dat %>%
     dplyr::mutate(
-       nchar_ref = nchar(ref),
-       nchar_alt = ifelse(variation_type != "symbolic", nchar(alt), NA),
       variation_type = tolower(dat$variation_type),
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
@@ -188,7 +185,10 @@ read_vcf <- function(
                                       #These ambiguity codes may need to be defined from the alt column instead
                                              "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
                  .data$variation_type))) %>%
-    dplyr::mutate(                
+    dplyr::mutate(
+      nchar_ref = nchar(ref),
+      nchar_alt = ifelse(variation_type != "symbolic", nchar(alt), NA),
+      variation_type = 
            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
             ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 

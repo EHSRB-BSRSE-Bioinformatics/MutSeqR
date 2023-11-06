@@ -28,11 +28,11 @@ signature_analysis_sigminer <- function(mutations,
                                         vaf_cutoff,
                                         ...) {
   
-  sigminer_input <- as.data.frame(mutations) |>
-    dplyr::filter(!.data$variation_type %in% "no_variant") |>
-    dplyr::filter(!.data$VAF < vaf_cutoff) |>
+  sigminer_input <- as.data.frame(mutations) %>%
+    dplyr::filter(!.data$variation_type %in% "no_variant") %>%
+    dplyr::filter(!.data$VAF < vaf_cutoff) %>%
     dplyr::select(all_of(group), .data$variation_type, seqnames,
-                  .data$start, .data$end, .data$ref, .data$alt) |>
+                  .data$start, .data$end, .data$ref, .data$alt) %>%
     dplyr::rename( # TODO add a column for "gene", but use locus with TS data.. should be Hugo_Symbol for MAF compatibility
       "Tumor_Sample_Barcode" = group,
       "Chromosome" = "seqnames",
