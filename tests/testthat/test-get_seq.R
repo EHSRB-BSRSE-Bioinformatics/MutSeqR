@@ -19,11 +19,11 @@ test_that("get_seq retrieves sequences and creates GRanges object", {
   expect_true(is(gr, "GRanges"))
   
   # Check if the extra metadata columns are retained
-  expect_identical(gr$gene, dat$gene)
-  expect_identical(gr$transcription_status, dat$transcription_status)
+  expect_equal(gr$gene, c("GeneA", "GeneB"))
+  expect_equal(gr$transcription_status, c("genic", "intergenic"))
   
   # Check if the sequence data is added to the GRanges object
-  expect_identical(as.character(gr$sequence), c("GTTTC", "AGAAT"))
+  expect_equal(as.character(gr$sequence), c("GTTTC", "AGAAT"))
  
    unlink(tmpfile)
   })

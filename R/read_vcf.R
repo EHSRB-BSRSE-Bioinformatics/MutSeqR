@@ -219,10 +219,10 @@ if (length(AD) == 0) {
   dat <- dat %>%
     dplyr::mutate(
       no_calls = 0,  # Since AD is missing, no calls can't be calculated
-      VAF = .data$alt_depth / .data$depth  # Calculate VAF using depth
+      vaf = .data$alt_depth / .data$depth  # Calculate vaf using depth
     )
   cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
-  cat("VAF calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
+  cat("vaf calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
   
 } else {  
 AD <- as.data.frame(do.call(rbind, AD))
@@ -273,13 +273,14 @@ dat <- dat %>%
 # Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
 dat <- dat %>%
   dplyr::mutate(
-    total_depth = ifelse(!duplicated(dat[, c("sample", "contig", "start")]), .data$ref_depth + .data$var_depth, .data$total_depth),
+    duplicated = duplicated(dat[, c("sample", "contig", "start")]) | 
+      duplicated(dat[, c("sample", "contig", "start")], fromLast = TRUE),
+    total_depth = ifelse(duplicated, 
+                        .data$total_depth,  .data$ref_depth + .data$var_depth),
     no_calls = .data$depth - .data$total_depth,
-    VAF = .data$alt_depth / .data$total_depth
-  ) %>%
-  dplyr::select(-var_depth)
+    vaf = .data$alt_depth / .data$total_depth) %>%
+  dplyr::select(-var_depth, -duplicated)
 }
-
 
 # Create Context Column using target Sequences
 # Turn dat into a GRanges object.  

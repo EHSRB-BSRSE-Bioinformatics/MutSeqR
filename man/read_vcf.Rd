@@ -8,10 +8,11 @@ read_vcf(
   vcf_file,
   sample_data_file = NULL,
   sd_sep = "\\t",
-  regions_file = c("human", "mouse", "custom"),
+  regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
-  assembly = c("GRCh37", "GRCh38", "GRCm38", "GRCm39"),
+  species = NULL,
+  genome_version = NULL,
   depth_calc = "take_del"
 )
 }
@@ -24,19 +25,23 @@ vcf files must contain one sample each.}
 \item{sample_data_file}{An optional file containing additional sample metadata
 (dose, timepoint, etc.)}
 
-\item{sd_sep}{The delimiter for importing sample metadata tables. Default is "\t".}
+\item{sd_sep}{The delimiter for importing sample metadata tables. Default is tab-delimited}
 
-\item{regions_file}{"human", "mouse", or "custom". The argument refers to the
+\item{regions}{"human", "mouse", or "custom". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide file path in custom_regions_file. TO DO: add rat.}
+If custom, provide file path in custom_regions_file, the species, and the genome assembly version.}
 
-\item{custom_regions_file}{"filepath". If regions_file is set to custom,
+\item{custom_regions_file}{"filepath". If regions is set to custom,
 provide the file path for the file containing regions metadata.
 Required columns are "contig", "start", and "end"}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file. Default is "\t".}
+\item{rg_sep}{The delimiter for importing the custom_regions_file. Default is tab-delimited}
 
-\item{assembly}{The genome assembly. Accepted values: "GRCh37", "GRCh38", "GRCm38", "GRCm39" TO DO: MAKE GENERAL}
+\item{species}{When regions is set to "custom", provide the species of your samples. ex. "mouse", "human".}
+
+\item{genome_version}{When regions is set to "custom", provide the genome assembly version.
+It will default to the most current genome assembly version unless specified.
+Human: GRCh38, mouse: GRCm39, rat: mRatBN7.}
 
 \item{depth_calc}{In the instance when there are two or more calls at the
 same location within a sample, and the depths differ, this parameter chooses

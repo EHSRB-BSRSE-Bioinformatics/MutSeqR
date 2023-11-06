@@ -1,27 +1,32 @@
-# TO DO: Refine the get seq function now that we changed the regions_df import
-# Specify the species and the genome only if you are using a custom regions file. 
-# Otherwise, use TS defaults
-# Fix custom and ensure genome version works as expected with NULL default. 
 #' Get sequence of Duplex Sequencing target regions
 #'
 #' To replace get_region_seqs.R for its reliance on importing the entire genomes
-#' This will create a granges object from the target metadata and import raw nucleotide sequences from ensemble
-#' Current defaults are GRCh38 and GRCm39 for human and mouse. Will add to specify genome
-#' @param regions "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".
-#' @param rg_sep The delimiter for importing the custom_regions_file. The default is tab-delimited.
-#' @param species If a custom regions file is provided, indicate species: "human", "mouse", or "rat"
-#' @param genome_version If a custom regions file is provided, indicate the genome assembly version, ex. "GRCm38". Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7
-##' @param is_0_based TRUE or FALSE. Are the target region coordinates 0 based (TRUE) or 1 based (FALSE)
-#' @param padding An interger value by which the function will extend the range of the target sequence on both sides. Modified region ranges will be reported in ext_start and ext_end. 
+#' This will create a granges object from the target metadata and import raw nucleotide sequences from ensembl.org
+#' @param regions "human", "mouse", or "custom". The argument refers to the 
+#' TS Mutagenesis panel of the specified species, or to a custom panel. 
+#' If custom, provide file path in custom_regions_file. TO DO: add rat.
+#' @param custom_regions_file "filepath". If regions is set to custom, 
+#' provide the file path for the tab-delimited file containing regions metadata. 
+#' Required columns are "contig", "start", and "end".
+#' @param rg_sep The delimiter for importing the custom_regions_file. 
+#' The default is tab-delimited.
+#' @param species If a custom regions file is provided, indicate the species: 
+#' ex. "human", "mouse", or "rat"
+#' @param genome_version If a custom regions file is provided, 
+#' indicate the genome assembly version, ex. "GRCm38". 
+#' Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7
+#' @param is_0_based TRUE or FALSE. Indicates whether the target region coordinates 0 based (TRUE) or 1 based (FALSE)
+#' @param padding An interger value by which the function will extend the range 
+#' of the target sequence on both sides. Modified region ranges will be reported 
+#' in ext_start and ext_end. Default is 1.
 #' @return a GRanges object with sequences and metadata of targeted regions
 #' @examples
-#' species_param <- "mouse"
-#' genome_param <- "GRCm38"
 #' t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 
-#'               species = species_param, genome_verison = genome_param,
-#'               is.0.based = FALSE)
+#'               species = species_param, genome_version = "GRCm38",
+#'               is_0_based = FALSE)
 #' t$sequence
+#' @importFrom httr content content_type GET
+#' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @export
 get_seq <- function( 
                     regions = c("human", "mouse", "custom"),

@@ -5,12 +5,14 @@
 \title{Import a .mut file}
 \usage{
 import_mut_data(
-  mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+  mut_file =
+    "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
   rsids = F,
   sample_data_file = NULL,
   sd_sep = "\\t",
   mut_sep = "\\t",
-  regions_file = c("human", "mouse", "custom"),
+  vaf_cutoff,
+  regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t"
 )
@@ -29,11 +31,13 @@ Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, 
 
 \item{mut_sep}{The delimiter for importing the .mut file}
 
-\item{regions_file}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
+\item{vaf_cutoff}{Add a column to identify ostensibly germline variants using a cutoff for variant allele fraction (VAF). There is no default value provided, but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this will remove variants that are present at a frequency greater than this value at a given site.}
 
-\item{custom_regions_file}{"filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".}
+\item{regions}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file}
+\item{custom_regions_file}{"filepath". If regions is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".}
+
+\item{rg_sep}{The delimiter for importing the custom_regions_file. Default is tab-delimited.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.

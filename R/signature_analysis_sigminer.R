@@ -1,16 +1,26 @@
 #' Run COSMIC signatures comparison
 #'
-#' After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
+#' After cleaning the mutation data input, runs several Alexandrov Lab tools for 
+#' COSMIC signature analysis (assigns signatures to best explain the input data).
 #' @param mutations A data frame, imported from a .mut or .vcf file
-#' @param project_name The name of the project; used to get mutation data into the required .txt format for SigProfiler
-#' @param project_genome A string describing the reference genome to use; e.g., GRCh38
-#' @param group The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)
+#' @param project_name The name of the project; used to get mutation data into 
+#' the required .txt format for SigProfiler
+#' @param project_genome A string describing the reference genome to use; 
+#' e.g., GRCh38
+#' @param group The column in the mutation data used to aggregate groups 
+#' (e.g., sample ID, tissue, dose)
 #' @param run_bootstrapping TRUE or FALSE. Default FALSE. Determines if the
 #' sig_fit_bootstrap_batch() function should be run. This *should* be done, but
 #' the process is slow, so it's best to confirm that the rest of the analysis is
 #' working as expected first.
+#' @param vaf_cutoff The threshold above which variants are identified as 
+#' ostensibly germline variants using a cutoff for variant allele fraction (VAF). 
+#' There is no default value provided, but generally a value of 0.1 (i.e., 10%) 
+#' is a good starting point. Setting this will remove variants that are present 
+#' at a frequency greater than this value at a given site.
 #' @param ... additional arguments may be supplied
-#' To Do: we need to document the elipsis ... in the parameters of the function in a way that doesn't cause a warning during Check()
+#' To Do: we need to document the elipsis ... in the parameters of the function 
+#' in a way that doesn't cause a warning during Check()
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.
 #'  Suggests: sigminer
 #' @importFrom here here

@@ -1,12 +1,13 @@
 #'Imports the regions file
 #'
+#' A helper function to import the regions metadata file. It is used in import_mut_data and get_seq. 
 #' @param regions "human", "mouse", or "custom". The argument refers to the 
 #' TS Mutagenesis panel of the specified species, or to a custom panel. If custom,
-#'  provide file path in custom_regions_file. TO DO: add rat.
+#' provide file path in custom_regions_file. TO DO: add rat.
 #' @param custom_regions_file "filepath". If regions is set to custom, 
-#' provide the file path for the tab-delimited file containing regions metadata.
-#'  Required columns are "contig", "start", and "end".
-#'  @param rg_sep The delimiter for importing the custom_regions_file
+#' provide the file path for the tab-delimited file containing regions metadata. 
+#' Required columns are "contig", "start", and "end".
+#' @param rg_sep The delimiter for importing the custom_regions_file. The default is tab-delimited
 #' @export
 
 load_regions_file <- function(regions, 
