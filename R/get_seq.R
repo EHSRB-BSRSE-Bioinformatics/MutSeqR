@@ -15,11 +15,14 @@
 #' @param genome_version If a custom regions file is provided, 
 #' indicate the genome assembly version, ex. "GRCm38". 
 #' Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7
-#' @param is_0_based TRUE or FALSE. Indicates whether the target region coordinates 0 based (TRUE) or 1 based (FALSE)
+#' @param is_0_based TRUE or FALSE. Indicates whether the target region 
+#' coordinates 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted
+#' to 1-based.
 #' @param padding An interger value by which the function will extend the range 
 #' of the target sequence on both sides. Modified region ranges will be reported 
 #' in ext_start and ext_end. Default is 1.
-#' @return a GRanges object with sequences and metadata of targeted regions
+#' @return a GRanges object with sequences and metadata of targeted regions. 
+#' Ranges become 1-based.
 #' @examples
 #' t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 
 #'               species = species_param, genome_version = "GRCm38",

@@ -49,6 +49,6 @@ This will create a granges object from the target metadata and import raw nucleo
 \examples{
 t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 
               species = species_param, genome_version = "GRCm38",
-              is.0.based = FALSE)
+              is_0_based = FALSE)
 t$sequence
 }

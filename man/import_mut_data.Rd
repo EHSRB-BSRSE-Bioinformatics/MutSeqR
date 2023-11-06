@@ -21,23 +21,36 @@ import_mut_data(
 \item{mut_file}{The .mut file containing mutation data to be imported. If you
 specify a folder, function will attempt to read all files in the folder and
 combine them into a single data frame.
-Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, context, ref, variation_type, contig, start (Synonymous names are accepted)}
+Columns required are: depth col = (depth & no_calls or total_depth),
+alt_depth, context, ref, variation_type, contig, start
+(Synonymous names are accepted)}
 
-\item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)}
+\item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information
+(existing SNPs)}
 
-\item{sample_data_file}{An optional file containing additional sample metadata (dose, timepoint, etc.)}
+\item{sample_data_file}{An optional file containing additional sample metadata
+(dose, timepoint, etc.)}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables}
 
 \item{mut_sep}{The delimiter for importing the .mut file}
 
-\item{vaf_cutoff}{Add a column to identify ostensibly germline variants using a cutoff for variant allele fraction (VAF). There is no default value provided, but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this will remove variants that are present at a frequency greater than this value at a given site.}
+\item{vaf_cutoff}{Add a column to identify ostensibly germline variants using
+a cutoff for variant allele fraction (VAF). There is no default value provided,
+but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
+will remove variants that are present at a frequency greater than this value
+at a given site.}
 
-\item{regions}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
+\item{regions}{"human", "mouse", or "custom". The argument refers to the
+TS Mutagenesis panel of the specified species, or to a custom panel.
+If custom, provide file path in custom_regions_file. TO DO: add rat.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".}
+\item{custom_regions_file}{"filepath". If regions is set to custom,
+provide the file path for the tab-delimited file containing regions metadata.
+Required columns are "contig", "start", and "end".}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file. Default is tab-delimited.}
+\item{rg_sep}{The delimiter for importing the custom_regions_file.
+Default is tab-delimited.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
