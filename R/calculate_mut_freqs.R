@@ -75,10 +75,21 @@ calculate_mut_freq <- function(data,
   if (inherits(data, "GRanges")) { data <- as.data.frame(data) }
   if (!inherits(data, "data.frame")) { warning("You should probably use a 
                                              data frame as input here.")}
-  # Calculate mutation frequencies
+
+  
+  #############################################################
+  ###  Dealing with Total  Depth and  Duplicated  Rows ####
+  #  ISSUES: Group_by cols_to_group -  if this  is  set  to "dose", then  this 
+  # code will not  work
+  # 1. Take the deletion total_depth
+  # 2. Take the mean of the total_depths (rounded)
+  #  read_vaf will have already made  sure that  all   duplicates have the  same total_depth
+  # import_mut_file allows for different total_depths amongst the duplicates. 
+    # SO  we will need  to implement that code into the import_mut_file function. 
+    # Calculate mutation frequencies
   mut_freq_table <- data %>%
     # Identify duplicate entries prior to depth calculation
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group, cols$chr, cols$start)))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(cols$sample, cols$chr, cols$start)))) %>%
     mutate(num_dups = dplyr::n(), 
            dup_id = dplyr::row_number()) %>% 
     dplyr::ungroup() %>%
@@ -88,13 +99,18 @@ calculate_mut_freq <- function(data,
     dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group, cols$chr, cols$start, cols$total_depth)))) %>%
     mutate(is_depth_duplicated = dplyr::n() > 1) %>%
     dplyr::ungroup() %>%
-    # For sites that share start positions within a group, deduplicate depth.
+    # For sites that share start positions within a group, de-duplicate depth.
     # For duplicated depths, set all instance but one to zero; for
     # indels/svs/mnvs, take the 'no_variant' depth instead.
     mutate(depth_final = ifelse(.data$is_duplicated == TRUE & .data$is_depth_duplicated == FALSE,
                                 ifelse(.data$variation_type == "no_variant", .data[[cols$total_depth]], 0),
-                                ifelse(.data$is_depth_duplicated == TRUE, .data$depth_undupes, .data$total_depth))) %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
+                                ifelse(.data$is_depth_duplicated == TRUE, .data$depth_undupes, .data$total_depth)))
+   
+    
+    #####################################################################
+    
+    
+     dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_clonal") :=
         sum(.data$alt_depth[!.data$variation_type == "no_variant" & .data$VAF < vaf_cutoff])) %>%
     mutate(!!paste0(freq_col_prefix, "_sum_unique") :=

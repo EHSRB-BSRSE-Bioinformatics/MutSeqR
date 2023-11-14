@@ -59,7 +59,7 @@ vaf_cutoff <- 0.1
  
 mutation_data <-
   import_mut_data(mut_file = mut_data,
-                  regions = "mouse",
+                  regions = dupseq_species,
                   rsids = T,
                   vaf_cutoff = vaf_cutoff)
 
