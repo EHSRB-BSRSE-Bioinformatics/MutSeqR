@@ -126,37 +126,9 @@ read_vcf <- function(
   dat <- cbind(dat, info)
   row.names(dat) <- NULL 
 
-  # Check that all required columns are present. 
-  # Change names of columns to default (constants.R op$columns)
- check_and_map_columns <- function(data, column_map, required_columns) {
-   # Map column names using the provided column mapping (case-insensitive)
-   mapped_columns <- names(data)
-   for (col in names(data)) {
-     # Convert column name and mapping key to lowercase for case-insensitive comparison
-     col_lower <- tolower(col)
-     if (col_lower %in% tolower(names(column_map))) {
-       mapped_col_name <- column_map[[tolower(col)]]
-       if (col_lower != tolower(mapped_col_name)) {
-         cat("Expected '", mapped_col_name, "' but found '", col, "', matching columns in input data\n")
-       }
-       mapped_columns[mapped_columns == col] <- mapped_col_name
-     }
-   }
-   names(data) <- mapped_columns
-   
-   # Check if all required columns are present
-   missing_columns <- setdiff(tolower(required_columns), tolower(names(data)))
-   
-   if (length(missing_columns) > 0) {
-     missing_col_names <- paste(missing_columns, collapse = ", ")
-     warning(paste("Some required columns are missing or their synonyms are not found: ", missing_col_names))
-   } 
-   
-   return(data)}
+ dat <- rename_columns(dat)
+ dat <- check_required_columns(dat, op$base_required_mut_cols)
 
-  # Call the function to check and map columns
-  dat <- check_and_map_columns(dat, op$column, op$base_required_mut_cols)
-  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -168,12 +140,6 @@ read_vcf <- function(
   }
   
 # Clean up variation_type column to match .mut
-  # REF --> no_variant
-  # sv subtypes and IUPAC symbols --> symbolic
-  # n(ref) = n(alt) > 1 --> mnv
-  # n(ref) > n(alt) == 1 --> deletion
-  # n(ref) == 1 < n(alt) --> insertion
-  # n(ref) != n(alt) & neither == 1 --> "complex"
 # Create an VARLEN column
   dat <- dat %>%
     dplyr::mutate(

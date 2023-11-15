@@ -33,14 +33,17 @@ ex. "human", "mouse", or "rat"}
 indicate the genome assembly version, ex. "GRCm38".
 Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7}
 
-\item{is_0_based}{TRUE or FALSE. Indicates whether the target region coordinates 0 based (TRUE) or 1 based (FALSE)}
+\item{is_0_based}{TRUE or FALSE. Indicates whether the target region
+coordinates 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted
+to 1-based.}
 
 \item{padding}{An interger value by which the function will extend the range
 of the target sequence on both sides. Modified region ranges will be reported
 in ext_start and ext_end. Default is 1.}
 }
 \value{
-a GRanges object with sequences and metadata of targeted regions
+a GRanges object with sequences and metadata of targeted regions.
+Ranges become 1-based.
 }
 \description{
 To replace get_region_seqs.R for its reliance on importing the entire genomes

@@ -14,7 +14,8 @@ import_mut_data(
   vaf_cutoff,
   regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
-  rg_sep = "\\t"
+  rg_sep = "\\t",
+  depth_calc = "take_del"
 )
 }
 \arguments{
@@ -51,6 +52,15 @@ Required columns are "contig", "start", and "end".}
 
 \item{rg_sep}{The delimiter for importing the custom_regions_file.
 Default is tab-delimited.}
+
+\item{depth_calc}{In the instance when there are two or more calls at the
+same location within a sample, and the depths differ, this parameter chooses
+the method of calculation for the total_depth. take_mean calculates the
+total_depth by taking the mean reference depth and then adding all the alt depths.
+take_del calculates the total_depth by choosing only the reference depth of
+the deletion in the group, or if no deletion is present, the complex variant,
+then adding all alt depths, if there is no deletion or complex variant,
+then it takes the mean of the reference depths. Default is "take_del".}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
