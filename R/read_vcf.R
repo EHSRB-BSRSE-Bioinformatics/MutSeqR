@@ -126,6 +126,7 @@ read_vcf <- function(
   dat <- cbind(dat, info)
   row.names(dat) <- NULL 
 
+# Rename columns to default and check for all required columns before proceeding
  dat <- rename_columns(dat)
  dat <- check_required_columns(dat, op$base_required_mut_cols)
 
