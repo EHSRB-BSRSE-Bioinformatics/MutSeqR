@@ -97,6 +97,8 @@ signature_decomposition <- function(mutations,
   #}
 
   # Clean data into required format for Alexandrov Lab tools...
+  #ID doesn't always exist. 
+  # New F(x) to create MAF/txt input for web sigprofiler
   signature_data <- as.data.frame(mutations) %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
     dplyr::filter(.data$is_germline == FALSE) %>%   
@@ -180,8 +182,10 @@ signature_decomposition <- function(mutations,
    reticulate::source_python(signatures_python_code)
   
   install_genome(project_genome, custom = "False", bash = "False")
-  SigProfilerMatrixGeneratorR::install(project_genome, rsync=FALSE, bash=FALSE, custom = "T")
-  SigProfilerMatrixGeneratorR::install(genome = project_genome, custom = F, rsync=FALSE, bash=FALSE)
+  
+  SigProfilerMatrixGeneratorR::install(project_genome, rsync=TRUE, bash=FALSE, ftp=FALSE)
+  
+  # SigProfilerMatrixGeneratorR::install(genome = project_genome, custom = F, rsync=FALSE, bash=FALSE)
   
   # only do this once as well?
 #  install_genome(project_genome)
