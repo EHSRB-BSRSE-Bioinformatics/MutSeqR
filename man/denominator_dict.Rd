@@ -12,7 +12,7 @@ denominator_dict
 }
 \description{
 These values are used to cross reference base substitution types to their
-appropriate denominators for calculations. That is, for example, the 6 base
+appropriate denominators for calculations. That is", "for example, the 6 base
 substitution frequency should be subsetted based on the normalized_ref
 column which would contain only T or C (i.e., the pyrimidine context for
 base substitutions).

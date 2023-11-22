@@ -4,44 +4,44 @@
 #' @param mut_file The .mut file containing mutation data to be imported. If you
 #' specify a folder, function will attempt to read all files in the folder and
 #' combine them into a single data frame.
-#' Columns required are: depth col = (depth & no_calls or total_depth), 
-#' alt_depth, context, ref, variation_type, contig, start 
-#' (Synonymous names are accepted)
-#' @param rsids TRUE or FALSE; whether or not the .mut file contains rsID information 
-#' (existing SNPs)
+#' Columns required are: depth col = `total_depth` or `depth`, 
+#' `alt_depth`, `context`, `ref`, `variation_type`, `contig`, `start` 
+#' (Synonymous names are accepted).
+#' @param rsids `TRUE` or `FALSE`; whether or not the .mut file contains rsID information 
+#' (existing SNPs).
 #' @param sample_data_file An optional file containing additional sample metadata 
-#' (dose, timepoint, etc.)
-#' @param sd_sep The delimiter for importing sample metadata tables
-#' @param mut_sep The delimiter for importing the .mut file
-#' @param regions "human", "mouse", or "custom". The argument refers to the 
-#' TS Mutagenesis panel of the specified species, or to a custom panel. 
-#' If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions is set to custom, 
-#' provide the file path for the tab-delimited file containing regions metadata. 
-#' Required columns are "contig", "start", and "end".
-#' @param rg_sep The delimiter for importing the custom_regions_file. 
+#' (dose, timepoint, etc.).
+#' @param sd_sep The delimiter for importing sample metadata table. Default is tab-delimited.
+#' @param mut_sep The delimiter for importing the .mut file. Default is tab-delimited.
+#' @param regions Values are `c("human", "mouse", "custom")`. Indicates the target panel used for Duplex Sequencing.
+#' The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. 
+#' If "custom", provide the file path of your regions file in `custom_regions_file`. TO DO: add rat.
+#' @param custom_regions_file "filepath". If `regions` is set to "custom", 
+#' provide the file path for the file containing regions metadata. 
+#' Required columns are `contig`, `start`, and `end`.
+#' @param rg_sep The delimiter for importing the `custom_regions_file`. 
 #' Default is tab-delimited.
-#' @param vaf_cutoff Add a column to identify ostensibly germline variants using 
+#' @param vaf_cutoff Add `is_germline` column that identifies ostensibly germline variants using 
 #' a cutoff for variant allele fraction (VAF). There is no default value provided, 
 #' but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this 
-#' will remove variants that are present at a frequency greater than this value 
+#' flag variants that are present at a frequency greater than this value 
 #' at a given site.
-#' @param depth_calc In the instance when there are two or more calls at the 
-#' same location within a sample, and the depths differ, this parameter chooses 
-#' the method of calculation for the total_depth. take_mean calculates the 
-#' total_depth by taking the mean reference depth and then adding all the alt depths. 
-#' take_del calculates the total_depth by choosing only the reference depth of 
-#' the deletion in the group, or if no deletion is present, the complex variant,
-#'  then adding all alt depths, if there is no deletion or complex variant, 
-#'  then it takes the mean of the reference depths. Default is "take_del".
-#'  @param custom_column_names A list of names to specify the meaning of column
+#' @param depth_calc Values are `c("take_del", "take_mean")`. In the instance when 
+#' there are two or more calls at the same location within a sample, and the 
+#' depths differ, this parameter chooses the method for resolving the difference.
+#' "take_mean" calculates the depth column by taking the mean of all depths in the group. 
+#' "take_del" calculates the depth column by choosing only the depth of 
+#' the deletion in the group, or if no deletion is present, the complex variant. 
+#' If there is no deletion or complex variant, then it takes the mean of the 
+#' depths within the group. Default is "take_del". depth_col = `total_depth` or `depth`.
+#' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
 #'  digest the mutation data table properly. Typical defaults are set, but can
 #'  be substituted in the form of `list(total_depth = "my_custom_depth_name", 
 #'  sample = "my_custom_sample_column_name")`. For a comprehensive list, see 
-#'  examples. You can change one or more of these. The most likely column to
-#'  need changing is the "chromosome name" (contig), which by default is "seqnames"
-#'  but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)
+#'  examples. You can change one or more of these.
+#' @param output_granges `TRUE` or `FALSE`; whether you want the mutation data to
+#'   output as a GRanges object. Default output is as a dataframe. 
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -53,8 +53,8 @@
 #' @export
 
 # To delete later:
-# sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
-# mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
+ sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
+ mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
 # To DO: Total depth vs depth - when checking required columns
 
 import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
@@ -67,7 +67,8 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
                             custom_regions_file = NULL,
                             rg_sep = "\t",
                             depth_calc = "take_del",
-                            custom_column_names = NULL) {
+                            custom_column_names = NULL,
+                            output_granges = FALSE) {
 
   mut_file <- file.path(mut_file)
   
@@ -141,7 +142,7 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
 
   }
 
-  # Rename columns to default and check that all required columns are present.  
+  # Rename columns to default .  
   # Add custom column names to default list
  if(!is.null(custom_column_names)) {
   cols <- modifyList(DupSeqR::op$column, custom_column_names)
@@ -149,87 +150,45 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
  } else {
    dat <- rename_columns(dat) 
  }
+  # Check that all required columns are present
   dat <- check_required_columns(dat, op$base_required_mut_cols)
+  
+  # check that columns are not already created ::
+  #######
 
     # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
 
-#ElenaE_1
 #  #Trim and lowercase column headings
-#  colnames(dat) <- tolower(gsub("\\.+", "", #deals with middle periods
-#                                gsub("(\\.+)?$", "", #deals with trailing periods
-#                                     gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
-#                                          colnames(dat))),
-#                                perl = TRUE))
+    #read.delim check.names = TRUE adds an X
+  colnames(dat) <- tolower(gsub("\\.+", "", #deals with middle periods
+                                gsub("(\\.+)?$", "", #deals with trailing periods
+                                     gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
+                                          colnames(dat))),
+                                perl = TRUE))
 
     sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
                              header = T)
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
   
- # ELENA
-  has_total_depth <- "total_depth" %in% dat_column_names
-  has_depth <- "depth" %in% dat_column_names
-  has_no_calls <- "no_calls" %in% dat_column_names
+
+  # Check for NA values
+  columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
   
-  if (!has_total_depth && !has_depth && !has_no_calls) {
-    missing_columns <- "(depth and no_calls) OR total_depth"
-  }
-  if (!has_depth && has_no_calls) {
-    missing_columns <- "depth"
-  }
-  if (!has_no_calls && has_depth) {
-    missing_columns <- "no_calls"
+  if (length(columns_with_na) > 0) {
+    warning(paste("NA values were found in your input data within the following column(s): ", 
+                  paste(columns_with_na, collapse = ", "), 
+                  ". Please double-check your data before proceeding."))
+  } else {
+    print("No NA values found in any column of the dataframe.")
   }
   
-  if (length(missing_columns) > 0) {
-    missing_columns_str <- paste(missing_columns, collapse = ", ")
-    stop(paste("Required column(s) missing:", missing_columns_str))
-  } 
-  
-  # Deal with data frame values being NA
-  excluded_columns <- c("total_depth", "depth", "no_calls")
-  na_rows <- dat[complete.cases(dat[, !colnames(dat) %in% excluded_columns]), ]
-  
-  if (nrow(dat) != nrow(na_rows)) {
-    warning("Warning: Some rows contained NA values and were removed. You input file/folder may contain incomplete data with missing columns; please double-check your input.")
-    dat <- na_rows
-  }
-  
-  # Uppercase context and subtype columns
-  dat$context <- toupper(dat$context)
-  dat$subtype <- toupper(dat$subtype)
-
-
-
-  # Clean up data:
-  # Get reverse complement of sequence context where mutation is listed on purine context
-  # Change all purine substitutions to pyrimidine substitutions
-  # Make new column with COSMIC-style 96 base context
-  # TO DO - describe better
-
-  # Define substitution dictionary to normalize to pyrimidine context
-  sub_dict <- c(
-    "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
-    "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
-  )
-
-  dat <- dat %>% dplyr::rowwise() %>%
-    mutate(
-      ref_depth = if ("total_depth" %in% colnames(dat) & "depth" %in% colnames(dat)) {
-        if (is.na(total_depth) && !is.na(depth)) {depth - alt_depth}
-        else if (!is.na(total_depth) && is.na(depth)) {total_depth - alt_depth}
-        else stop("Error: Both total_depth and depth have non-NA values. It is unclear which column specifies depth.")
-      } else if ("total_depth" %in% colnames(dat) & !("depth" %in% colnames(dat))) {
-        if (is.na(total_depth)) {stop("Error: The total_depth column in your input data has NA values")}
-        else {total_depth - alt_depth}
-      } else if ("depth" %in% colnames(dat) & !("total_depth" %in% colnames(dat))) {
-        if (is.na(depth)) {stop("Error: The depth column in your input data has NA values")}
-        else {depth - alt_depth}
-      } else {stop("Error: It is unclear which column specifies depth.")}
-    )
-  dat <- as.data.frame(dat)
-  
+# Clean Up Data
+  # Modify variation_type, create VARLEN and subtype columns. 
+    # NOTE: cases may occur where there is an indel and ref or alt are 1 bp, 
+    # but there is a "substitution" as well. Ex GC -> T. Unclear how to define this
+    # Example seen in Jonatan data.  
   dat <- dat %>%
     dplyr::mutate(
       nchar_ref = nchar(ref),
@@ -245,77 +204,39 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
         ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
                ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
                       NA)),
-       ref_depth = .data[[depth_col]] - .data$alt_depth,
       subtype = 
         ifelse(.data$variation_type == "snv",
                paste0(.data$ref, ">", .data$alt),
-               "."),
-      context_with_mutation =
-        ifelse(.data$subtype != ".",
-          paste0(
-            stringr::str_sub(.data$context, 1, 1),
-            "[", .data$subtype, "]",
-            stringr::str_sub(.data$context, 3, 3)
-          ),
-          .data$variation_type
-        ),
-      normalized_context = ifelse(
-        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
-        mapply(function(x) reverseComplement(x, case = "upper"), .data$context),
-        .data$context
-      ),
-      normalized_subtype = ifelse(
-        .data$subtype %in% names(sub_dict),
-        sub_dict[.data$subtype],
-        .data$subtype
-      ),
-      short_ref = substr(.data$ref, 1, 1),
-      normalized_ref = dplyr::case_when(
-        substr(.data$ref, 1, 1) == "A" ~ "T",
-        substr(.data$ref, 1, 1) == "G" ~ "C",
-        substr(.data$ref, 1, 1) == "C" ~ "C",
-        substr(.data$ref, 1, 1) == "T" ~ "T"
-      )
+               "."))
 
-    ) %>%
-    dplyr::mutate(
-      normalized_context_with_mutation =
-        ifelse(.data$subtype != ".",
-          paste0(
-            stringr::str_sub(.data$normalized_context, 1, 1),
-            "[", .data$normalized_subtype, "]",
-            stringr::str_sub(.data$normalized_context, 3, 3)
-          ),
-          .data$variation_type
-        ),
-      gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
-        stringr::str_count(string = .data$context, pattern = "C"))
-      / stringr::str_count(.data$context)
-    ) %>%
-    dplyr::mutate(
-      normalized_subtype = ifelse(
-        .data$normalized_subtype == ".",
-        .data$variation_type,
-        .data$normalized_subtype
-      ),
-      subtype = ifelse(
-        .data$subtype == ".",
-        .data$variation_type,
-        .data$subtype
-      )
-    )
+   # Clean up depth column
+  # Set Depth column as total_depth or depth
+  has_total_depth <- "total_depth" %in% colnames(dat)
+  has_depth <- "depth" %in% colnames(dat)
+  has_no_calls <- "no_calls" %in% colnames(dat)
   
-  dat <- dat %>% dplyr::rowwise() %>%
-    mutate(
-      total_depth = if ("depth" %in% colnames(dat) && 
-                        (!("total_depth" %in% colnames(dat)) || ("total_depth" %in% colnames(dat2) && is.na(total_depth))) ) {
-        depth - no_calls
-      }
-      else {total_depth}
-    )
-  dat <- as.data.frame(dat)
+  if (has_total_depth) {
+    depth_col <- "total_depth" 
+  }
+  if (!has_total_depth && has_no_calls && has_depth) {
+    dat <- dat %>%
+      mutate(total_depth = .data$depth - .data$no_calls)
+    depth_col <- "total_depth"
+  }
+  if (!has_total_depth && !has_no_calls && has_depth) {
+    depth_col <- "depth"
+    warning(" 'total_depth' column was not found and cannot be calculated without the 'no_calls' column. 
+            'Depth_col' will be set as 'depth'. Please review the definitions of each column ~here~ (README)
+            before proceeding")  
+  }
+  if (!has_total_depth && !has_depth && !has_no_calls) {
+    stop("Required columns are missing or could not be determined: depth column ('depth' and 'no_calls' OR 'total_depth')")
+  }
+  if (!has_total_depth && !has_depth && has_no_calls) {
+    stop("Required columns are missing or could not be determined: depth column ('depth' OR 'total_depth')")
+  }
 
-  # Calculate total_depth for the duplicated rows
+  # Calculate depth_col for the duplicated rows
   if (depth_calc == "take_del") {
     # Group by sample, contig, and start
   df_grouped <- dat %>%
@@ -331,20 +252,19 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
       total_depth[1]  # Choose the total_depth of the first row if no deletion or complex
     }
   }
-
   # Apply the function to each group
   dat <- df_grouped %>%
-    dplyr::mutate(new_total_depth = prioritize_depth(variation_type, total_depth)) %>%
+    dplyr::mutate(new_depth_col = prioritize_depth(variation_type, .data[[depth_col]])) %>%
     dplyr::ungroup() %>%
-    dplyr::select(-.data$total_depth) %>%
-    dplyr::rename(total_depth = .data$new_total_depth)
+    dplyr::select(-.data[[depth_col]]) %>% 
+    dplyr::rename(!!depth_col := .data$new_depth_col)
 
    } else if (depth_calc == "take_mean") {
      df_grouped <- dat %>%
        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
        dplyr::filter(n() > 1) %>%
        dplyr::summarize(
-         new_total_depth = round(mean(.data$total_depth, na.rm = TRUE))
+         new_depth_col = round(mean(.data[[depth_col]], na.rm = TRUE))
        ) %>%
        dplyr::ungroup()
 
@@ -352,17 +272,85 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
      dplyr::left_join(df_grouped, by = c("sample", "contig", "start")) 
      
      dat <- dat %>%
-      dplyr::mutate(final_total_depth = ifelse(is.na(new_total_depth), total_depth, new_total_depth)) %>%
-       dplyr::select(-total_depth, -new_total_depth) %>%
-       dplyr::rename(total_depth = final_total_depth)
+      dplyr::mutate(final_depth_col = ifelse(is.na(new_depth_col), .data[[depth_col]], new_depth_col)) %>%
+       dplyr::select(-.data[[depth_col]], -new_depth_col) %>%
+       dplyr::rename(!!depth_col := final_depth_col)
 
    } else {
      stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
    }
 
-  # Create VAF column and is_germline column
-  dat <- dat %>% dplyr::mutate(VAF = .data$alt_depth / .data$total_depth) %>%
-    dplyr::mutate(is_germline = ifelse(.data$VAF < vaf_cutoff, F, T))
+  # Create VAF, is_germline, and ref_depth columns
+  dat <- dat %>% dplyr::mutate(VAF = .data$alt_depth / .data[[depth_col]]) %>%
+    dplyr::mutate(is_germline = ifelse(.data$VAF < vaf_cutoff, F, T),
+                  ref_depth = .data[[depth_col]] - .data$alt_depth)
+    
+  # Define substitution dictionary to normalize to pyrimidine context
+  sub_dict <- c(
+    "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
+    "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
+  )
+
+  # Get reverse complement of sequence context where mutation is listed on purine context
+  # Change all purine substitutions to pyrimidine substitutions
+  # Make new column with COSMIC-style 96 base context
+  # TO DO - describe better
+  dat <- dat %>%
+  dplyr::mutate(
+    context_with_mutation =
+      ifelse(.data$subtype != ".",
+        paste0(
+          stringr::str_sub(.data$context, 1, 1),
+          "[", .data$subtype, "]",
+          stringr::str_sub(.data$context, 3, 3)
+        ),
+        .data$variation_type
+      ),
+    normalized_context = ifelse(
+      stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
+      mapply(function(x) DupSeqR::reverseComplement(x, case = "upper"), .data$context),
+      .data$context
+    ),
+    normalized_subtype = ifelse(
+      .data$subtype %in% names(sub_dict),
+      sub_dict[.data$subtype],
+      .data$subtype
+    ),
+    short_ref = substr(.data$ref, 1, 1),
+    normalized_ref = dplyr::case_when(
+      substr(.data$ref, 1, 1) == "A" ~ "T",
+      substr(.data$ref, 1, 1) == "G" ~ "C",
+      substr(.data$ref, 1, 1) == "C" ~ "C",
+      substr(.data$ref, 1, 1) == "T" ~ "T"
+    )
+  
+  ) %>%
+  dplyr::mutate(
+    normalized_context_with_mutation =
+      ifelse(.data$subtype != ".",
+        paste0(
+          stringr::str_sub(.data$normalized_context, 1, 1),
+          "[", .data$normalized_subtype, "]",
+          stringr::str_sub(.data$normalized_context, 3, 3)
+        ),
+        .data$variation_type
+      ),
+    gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
+      stringr::str_count(string = .data$context, pattern = "C"))
+    / stringr::str_count(.data$context)
+  ) %>%
+  dplyr::mutate(
+    normalized_subtype = ifelse(
+      .data$normalized_subtype == ".",
+      .data$variation_type,
+      .data$normalized_subtype
+    ),
+    subtype = ifelse(
+      .data$subtype == ".",
+      .data$variation_type,
+      .data$subtype
+    )
+  )
 
   # Turn into GRanges
   mut_ranges <- makeGRangesFromDataFrame(
@@ -386,5 +374,11 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
   )
 
   ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
+  
+  if(output_granges) {
   return(ranges_joined)
+  } else {
+    df <- as.data.frame(ranges_joined)
+    return(df)
+  }
 }

@@ -16,59 +16,62 @@ import_mut_data(
   custom_regions_file = NULL,
   rg_sep = "\\t",
   depth_calc = "take_del",
-  custom_column_names = NULL
+  custom_column_names = NULL,
+  output_granges = FALSE
 )
 }
 \arguments{
 \item{mut_file}{The .mut file containing mutation data to be imported. If you
 specify a folder, function will attempt to read all files in the folder and
 combine them into a single data frame.
-Columns required are: depth col = (depth & no_calls or total_depth),
-alt_depth, context, ref, variation_type, contig, start
-(Synonymous names are accepted)}
+Columns required are: depth col = \code{total_depth} or \code{depth},
+\code{alt_depth}, \code{context}, \code{ref}, \code{variation_type}, \code{contig}, \code{start}
+(Synonymous names are accepted).}
 
-\item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information
-(existing SNPs)}
+\item{rsids}{\code{TRUE} or \code{FALSE}; whether or not the .mut file contains rsID information
+(existing SNPs).}
 
 \item{sample_data_file}{An optional file containing additional sample metadata
-(dose, timepoint, etc.)}
+(dose, timepoint, etc.).}
 
-\item{sd_sep}{The delimiter for importing sample metadata tables}
+\item{sd_sep}{The delimiter for importing sample metadata table. Default is tab-delimited.}
 
-\item{mut_sep}{The delimiter for importing the .mut file}
+\item{mut_sep}{The delimiter for importing the .mut file. Default is tab-delimited.}
 
-\item{vaf_cutoff}{Add a column to identify ostensibly germline variants using
+\item{vaf_cutoff}{Add \code{is_germline} column that identifies ostensibly germline variants using
 a cutoff for variant allele fraction (VAF). There is no default value provided,
 but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
-will remove variants that are present at a frequency greater than this value
+flag variants that are present at a frequency greater than this value
 at a given site.}
 
-\item{regions}{"human", "mouse", or "custom". The argument refers to the
-TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide file path in custom_regions_file. TO DO: add rat.}
+\item{regions}{Values are \code{c("human", "mouse", "custom")}. Indicates the target panel used for Duplex Sequencing.
+The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel.
+If "custom", provide the file path of your regions file in \code{custom_regions_file}. TO DO: add rat.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom,
-provide the file path for the tab-delimited file containing regions metadata.
-Required columns are "contig", "start", and "end".}
+\item{custom_regions_file}{"filepath". If \code{regions} is set to "custom",
+provide the file path for the file containing regions metadata.
+Required columns are \code{contig}, \code{start}, and \code{end}.}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file.
+\item{rg_sep}{The delimiter for importing the \code{custom_regions_file}.
 Default is tab-delimited.}
 
-\item{depth_calc}{In the instance when there are two or more calls at the
-same location within a sample, and the depths differ, this parameter chooses
-the method of calculation for the total_depth. take_mean calculates the
-total_depth by taking the mean reference depth and then adding all the alt depths.
-take_del calculates the total_depth by choosing only the reference depth of
-the deletion in the group, or if no deletion is present, the complex variant,
-then adding all alt depths, if there is no deletion or complex variant,
-then it takes the mean of the reference depths. Default is "take_del".
-@param custom_column_names A list of names to specify the meaning of column
+\item{depth_calc}{Values are \code{c("take_del", "take_mean")}. In the instance when
+there are two or more calls at the same location within a sample, and the
+depths differ, this parameter chooses the method for resolving the difference.
+"take_mean" calculates the depth column by taking the mean of all depths in the group.
+"take_del" calculates the depth column by choosing only the depth of
+the deletion in the group, or if no deletion is present, the complex variant.
+If there is no deletion or complex variant, then it takes the mean of the
+depths within the group. Default is "take_del". depth_col = \code{total_depth} or \code{depth}.}
+
+\item{custom_column_names}{A list of names to specify the meaning of column
 headers. Since column names can vary with data, this might be necessary to
 digest the mutation data table properly. Typical defaults are set, but can
 be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
-examples. You can change one or more of these. The most likely column to
-need changing is the "chromosome name" (contig), which by default is "seqnames"
-but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)}
+examples. You can change one or more of these.}
+
+\item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation data to
+output as a GRanges object. Default output is as a dataframe.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
