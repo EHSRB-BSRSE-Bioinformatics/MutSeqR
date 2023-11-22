@@ -1,113 +1,135 @@
 #' Import a vcf file
 #' 
 #' Imports a .vcf file into the R environment and converts it into a dataframe
-#' TO DO: vcf files need to first be modified because they contain different column names...
-#' The last column name is the sample name. This must be removed in order to bind them all together. 
-#' @param vcf_file The .vcf file containing mutation data to be imported.
-#' @param sample_data_file An optional file containing additional sample metadata (dose, timepoint, etc.)
-#' @param sd_sep The delimiter for importing sample metadata tables
-#' @param regions_file "human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.
-#' @param custom_regions_file "filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end"
-#' @param rg_sep The delimiter for importing the custom_regions_file
-#' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
+#' @param vcf_file The path to the .vcf file  to be imported. If you
+#' specify a folder, the function will attempt to read all files in the folder and
+#' combine them into a single data frame. Multisample vcf files are not supported.
+#'  vcf files must contain one sample each.  
+#' @param sample_data_file An optional file containing additional sample metadata 
+#' (dose, timepoint, etc.)
+#' @param sd_sep The delimiter for importing sample metadata tables. Default is tab-delimited
+#' @param regions "human", "mouse", or "custom". The argument refers to the
+#'  TS Mutagenesis panel of the specified species, or to a custom panel. 
+#'  If custom, provide file path in custom_regions_file, the species, and the genome assembly version. 
+#' @param custom_regions_file "filepath". If regions is set to custom,
+#'  provide the file path for the file containing regions metadata. 
+#'  Required columns are "contig", "start", and "end"
+#' @param rg_sep The delimiter for importing the custom_regions_file. Default is tab-delimited
+#' @param species When regions is set to "custom", provide the species of your samples. ex. "mouse", "human". 
+#' @param genome_version When regions is set to "custom", provide the genome assembly version.
+#' It will default to the most current genome assembly version unless specified. 
+#' Human: GRCh38, mouse: GRCm39, rat: mRatBN7.
+#' @param depth_calc In the instance when there are two or more calls at the 
+#' same location within a sample, and the depths differ, this parameter chooses 
+#' the method of calculation for the total_depth. take_mean calculates the 
+#' total_depth by taking the mean reference depth and then adding all the alt depths. 
+#' take_del calculates the total_depth by choosing only the reference depth of 
+#' the deletion in the group, or if no deletion is present, the complex variant,
+#'  then adding all alt depths, if there is no deletion or complex variant, 
+#'  then it takes the mean of the reference depths. Default is "take_del".
+#' @returns A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
-#' @importFrom dplyr mutate select rename
+#' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @importFrom stringr str_sub str_count
 #' @importFrom SummarizedExperiment colData
+#' @importFrom plyranges join_overlap_left mutate select
 #' @export
 #' 
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test
-# /PRC_ST_113.1.consensus.variant-calls.genome.vcf
-
+# /PRC_ST_208.1.consensus.variant-calls.genome.vcf
+# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/test vcfs/vcf_sample_1.vcf
+# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
 read_vcf <- function(
-                      vcf_file,
-                      sample_data_file = NULL,
-                      sd_sep = "\t",
-                      regions_file = c("human", "mouse", "custom"),
-                      custom_regions_file = NULL,
-                      rg_sep = "\t") {
-  
+    vcf_file,
+    sample_data_file = NULL,
+    sd_sep = "\t",
+    regions = c("human", "mouse", "custom"),
+    custom_regions_file = NULL,
+    rg_sep = "\t",
+    species = NULL,
+    genome_version = NULL,
+    depth_calc = "take_del"
+) {
   vcf_file <- file.path(vcf_file)
-  if (file.info(vcf_file)$isdir == T) {
-    vcf_files <- list.files(path = vcf_file, pattern = "\\.vcf$", full.names = T)
+  
+  # Check if a sample identifier is already present in the INFO field
+  check_and_rename_sample <- function(vcf) {
+  
+    # Define possible variations of sample identifier names
+    possible_sample_names <- c("sample","sample_name", "sample_id")
+    
+    # Initialize the sample_info column
+    sample_info <- NULL
+    
+    # Search for variations of sample identifier names
+    for (sample_name_var in possible_sample_names) {
+      sample_name_var <- tolower(sample_name_var)  # Make the comparison case-insensitive
+      if (sample_name_var %in% tolower(names(VariantAnnotation::info(vcf)))) {
+        # If found, rename it to "sample" and break the loop
+        names(VariantAnnotation::info(vcf))[tolower(names(VariantAnnotation::info(vcf))) == sample_name_var] <- "sample"
+        break
+      }
+    }
+    
+    # If "sample" still doesn't exist, create it using colData
+    if (!"sample" %in% colnames(VariantAnnotation::info(vcf))) {
+      sample_info <- rownames(SummarizedExperiment::colData(vcf))
+      VariantAnnotation::info(vcf)$sample <- sample_info
+    }
+    
+    return(vcf)
+  }
+
+  # Read and bind vcfs from folder  
+  if (file.info(vcf_file)$isdir == TRUE) {
+    vcf_files <- list.files(path = vcf_file, pattern = "\\.vcf$", full.names = TRUE)
+    
     # Initialize an empty VCF object to store the combined data
     vcf <- NULL
+    
     # Read and combine VCF files
     for (file in vcf_files) {
-      vcf_list <- VariantAnnotation::readVcf(file)
+      vcf_list <- readVcf(file)
       
-      # Ensure consistent sample names and INFO columns here if needed
-      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample"
-      # Combine the VCF data 
+      # Rename or create the "sample" column in the INFO field
+      vcf_list <- suppressWarnings(check_and_rename_sample(vcf_list))
+      # Ensure consistent column names
+      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info" 
+      # Combine the VCF data
       if (is.null(vcf)) {
         vcf <- vcf_list
       } else {
-        vcf <- VariantAnnotation::rbind(vcf, vcf_list)
+        vcf <- rbind(vcf, vcf_list)
       }
     }
   } else {
-    vcf <- VariantAnnotation::readVcf(vcf_file)
-    rownames(SummarizedExperiment::colData(vcf)) <- "sample"
+
+  # Read a single vcf file
+        vcf <- readVcf(vcf_file)
+    # Rename or create the "sample" column in the INFO field
+        vcf <- suppressWarnings(check_and_rename_sample(vcf))
   }
   
-  # Extract mutation data into a dataframe
-  dat <-data.frame(
-    sample = VariantAnnotation::info(vcf)$SAMPLE,
+   # Extract mutation data into a dataframe
+  dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
-    start = SummarizedExperiment::start(vcf)-1,
-    end = VariantAnnotation::info(vcf)$END,
+    start = SummarizedExperiment::start(vcf),
     ref = VariantAnnotation::ref(vcf),
     alt = VariantAnnotation::alt(vcf),
-    LSEQ = VariantAnnotation::info(vcf)$LSEQ,
-    RSEQ = VariantAnnotation::info(vcf)$RSEQ,
-    qual = VariantAnnotation::info(vcf)$QUAL, #is this the right one?
     depth = VariantAnnotation::geno(vcf)$DP[, c(1)],
-    alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1)],
-    variation_type = VariantAnnotation::info(vcf)$TYPE,
-    SVTYPE = VariantAnnotation::info(vcf)$SVTYPE,
-    SVLEN = VariantAnnotation::info(vcf)$SVLEN
-  )
-  
-#################################
-test <- VariantAnnotation::geno(vcf)$AD  
-test_df <- as.data.frame(do.call(rbind, test))
-colnames(test_df) <- paste0("depth", 1:ncol(test_df))
-test_df <- test_df %>%
-  mutate(total_depth = rowSums(select(., where(is.numeric)), na.rm = TRUE))
+    alt_depth = VariantAnnotation::geno(vcf)$VD[, c(1)]
+    )  
+  # Retain all INFO fields
+  info <- as.data.frame(VariantAnnotation::info(vcf))
+  dat <- cbind(dat, info)
+  row.names(dat) <- NULL 
 
-dat$total_depth <- test_df$total_depth
-dat$ref_depth <- test_df$depth1
-dat$var_depth <- test_df$depth2
+# Rename columns to default and check for all required columns before proceeding
+ dat <- rename_columns(dat)
+ dat <- check_required_columns(dat, op$base_required_mut_cols)
 
-# Option 1, take the average of the depths 
-dat <- dat %>%
-  group_by(sample, contig, start) %>%
-  mutate(
-    total_depth = mean(ref_depth, na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-    no_calls = depth - total_depth
-  )
-
-# Option 2, in mismatches, take the depth of the deletion/complex variant.
-dat <- dat %>%
-  group_by(sample, contig, start, end) %>%
-  mutate(
-    total_depth = case_when(
-      any(variation_type == "Deletion") ~ mean(ifelse(variation_type == "Deletion", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) == 1 & !any(variation_type == "Deletion")) ~ mean(ifelse(variation_type == "Complex", ref_depth, 0), na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      any(variation_type == "Complex" & length(unique(ref_depth[!is.na(ref_depth)])) > 1) ~ mean(ref_depth[!is.na(ref_depth)], na.rm = TRUE) + sum(var_depth, na.rm = TRUE),
-      all(!is.na(ref_depth)) && length(unique(ref_depth[!is.na(ref_depth)])) == 1 ~ mean(ref_depth, na.rm = TRUE),
-      TRUE ~ NA_real_
-    )
-  )
-
-dat <- dat %>%
-  dplyr::mutate(no_calls = depth - total_depth)
-####################################
- 
-  
-  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -118,48 +140,161 @@ dat <- dat %>%
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
   
-  # Clean data
-  #Clean up variation_type column
-# CHANGE AGAIN NOW THAT TS CHANGED THEIR VARIATION COL
+# Clean up variation_type column to match .mut
+# Create an VARLEN column
   dat <- dat %>%
     dplyr::mutate(
       variation_type = tolower(dat$variation_type),
       variation_type = 
         ifelse(.data$variation_type == "ref", "no_variant", 
-         # change in SV call, will include IUPAC symbols - TO DO. 
-                ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus"), "symbolic",
-               .data$variation_type)
-          ),
+          ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
+                                             "cnv:tr", "dup:tandem", "del:me", "ins:me",
+                                      #These ambiguity codes may need to be defined from the alt column instead
+                                             "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
+                 .data$variation_type))) %>%
+    dplyr::mutate(
       nchar_ref = nchar(ref),
-      nchar_alt = nchar(alt.value),
-    # Complex type may refer to mnv or indel/mnv overlap. 
-    # In new mut files, Complex refers to when nref =! nalt & there is a change in nucleotides. 
+      nchar_alt = ifelse(variation_type != "symbolic", nchar(alt), NA),
       variation_type = 
-           ifelse(.data$variation_type == "complex" & .data$nchar_ref == .data$nchar_alt, "mnv",
-                      .data$variation_type),
-      INDELLEN = 
-        ifelse(.data$variation_type == "insertion" | .data$variation_type == "deletion", abs(.data$nchar_ref - .data$nchar_alt), 
-               ".")
+           ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
+            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
+             ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
+              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 &  .data$nchar_ref > 1, "complex",
+                    .data$variation_type)))),
+      VARLEN = 
+        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
+         ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
+               NA))
     )
     
-  #create ref_depth, short_ref, subtype, context 
+  #create ref_depth, short_ref, subtype
   dat <- dat %>%
     dplyr::mutate(
-      ref_depth = .data$depth - .data$alt_depth,
       subtype = 
         ifelse(.data$variation_type == "snv",
-               paste0(.data$ref, ">", .data$alt.value),
+               paste0(.data$ref, ">", .data$alt),
                "."),
-      short_ref = substr(.data$ref, 1, 1),
-      context = 
-        ifelse(.data$variation_type %in% c("snv", "sv") | (.data$variation_type == "insertion"),
-               paste0(stringr::str_sub(.data$LSEQ, -1, -1), ref, stringr::str_sub(.data$RSEQ, 1, 1)), 
-               ifelse(.data$variation_type =="mnv" | .data$variation_type == "deletion" | .data$variation_type == "complex", 
-                      paste0(stringr::str_sub(.data$LSEQ, -1, -1), stringr::str_sub(.data$ref, 1, 2)), 
-                      "."))) %>%
-    dplyr::select(-.data$LSEQ, -.data$RSEQ)
+      short_ref = substr(.data$ref, 1, 1))
   
-  # Define substitution dictionary to normalize to pyrimidine context
+
+# Create total_depth and no_calls columns based on set parameter depth_calc.
+  # Requires AD field in FORMAT of vcf. If this field is missing, we use depth instead of total_depth
+AD <- VariantAnnotation::geno(vcf)$AD  
+
+if (length(AD) == 0) {
+  # Handle the case where AD is missing
+  dat <- dat %>%
+    dplyr::mutate(
+      no_calls = 0,  # Since AD is missing, no calls can't be calculated
+      vaf = .data$alt_depth / .data$depth  # Calculate vaf using depth
+    )
+  cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
+  cat("vaf calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
+  
+} else {  
+AD <- as.data.frame(do.call(rbind, AD))
+colnames(AD) <- paste0("depth", 1:ncol(AD))
+
+dat$ref_depth <- AD$depth1
+dat$var_depth <- AD$depth2
+dat <- dat %>%
+  dplyr::mutate(
+        var_depth = ifelse(is.na(.data$var_depth), 0, .data$var_depth))
+
+# Filter the rows where "sample," "contig," and "start" are duplicated
+duplicated_rows <- dat %>%
+  dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+  dplyr::filter(n() > 1)
+
+# Calculate total_depth for the duplicated rows
+if (depth_calc == "take_del") {
+  total_depth_duplicated <- duplicated_rows %>%
+    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+    dplyr::summarize(
+      total_depth = case_when(
+        any(.data$variation_type == "deletion") & length(unique(.data$ref_depth[!is.na(.data$ref_depth)])) > 1 ~
+          sum(ifelse(.data$variation_type == "deletion", .data$ref_depth, 0), na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE),
+        any(.data$variation_type == "complex" & !any(.data$variation_type == "deletion")) & length(unique(.data$ref_depth[!is.na(.data$ref_depth)])) > 1 ~
+          sum(ifelse(.data$variation_type == "complex", .data$ref_depth, 0), na.rm = TRUE + sum(.data$var_depth, na.rm = TRUE)),
+        TRUE ~ round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
+      )
+    ) %>%
+    dplyr::ungroup()
+  
+} else if (depth_calc == "take_mean") {
+  total_depth_duplicated <- duplicated_rows %>%
+    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+    dplyr::summarize(
+      total_depth = round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
+    ) %>%
+    dplyr::ungroup()
+
+  } else {
+  stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
+}
+
+# Merge the total_depth values for duplicated rows back into the original data frame
+dat <- dat %>%
+  dplyr::left_join(total_depth_duplicated, by = c("sample", "contig", "start"))
+
+# Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
+dat <- dat %>%
+  dplyr::mutate(
+    duplicated = duplicated(dat[, c("sample", "contig", "start")]) | 
+      duplicated(dat[, c("sample", "contig", "start")], fromLast = TRUE),
+    total_depth = ifelse(duplicated, 
+                        .data$total_depth,  .data$ref_depth + .data$var_depth),
+    no_calls = .data$depth - .data$total_depth,
+    vaf = .data$alt_depth / .data$total_depth) %>%
+  dplyr::select(-var_depth, -duplicated)
+}
+
+# Create Context Column using target Sequences
+# Turn dat into a GRanges object.  
+mut_ranges <- makeGRangesFromDataFrame(
+    df = as.data.frame(dat),
+    keep.extra.columns = T,
+    seqnames.field = "contig",
+    start.field = "start",
+    end.field = "end"
+  )
+  
+# load regions ranges and retrieve sequences
+if (regions == "human") {
+  region_ranges <- DupSeqR::get_seq(regions = "human")
+  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCh38\n")
+} else if (regions == "mouse") {
+  region_ranges <- DupSeqR::get_seq(regions = "mouse")
+  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCm38\n")
+} else if (regions == "custom") { 
+    species_param <- species
+    genome_version_param <- genome_version
+  region_ranges <- DupSeqR::get_seq(regions = "custom", 
+                                    custom_regions_file = custom_regions_file,
+                                    rg_sep = rg_sep,
+                                    species = species_param,
+                                    genome_version = genome_version_param
+                                
+  )
+  if (is.null(genome_version)) {
+    cat("Populating context columns with sequences from ensembl.org '", species, "' default assembly version was used\n'" )
+  } else {
+   cat("Populating context columns with sequences from ensembl.org '", species, genome_version, "' assembly was used\n")  
+  }
+ 
+  }
+
+# Join with mutation data
+ ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
+
+# Get no_variant context
+dat <- ranges_joined %>%
+  plyranges::mutate(
+                    start_string = start - ext_start +1,
+                    context = substr(sequence, start_string - 1, start_string + 1)) %>%
+  plyranges::select(-start_string)
+
+# Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
     "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
     "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
@@ -173,166 +308,59 @@ dat <- dat %>%
   
   # Context with mutation
   dat <- dat %>%
-    dplyr::mutate(
+    plyranges::mutate(
       context_with_mutation =
-        ifelse(.data$subtype != ".",
+        ifelse(subtype != ".",
                paste0(
-                 stringr::str_sub(.data$context, 1, 1),
-                 "[", .data$subtype, "]",
-                 stringr::str_sub(.data$context, 3, 3)
+                 stringr::str_sub(context, 1, 1),
+                 "[", subtype, "]",
+                 stringr::str_sub(context, 3, 3)
                ),
-               .data$variation_type
+               variation_type
         ),
-      normalized_context = ifelse(
-        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A", "g", "a"),
-        mapply(function(x) reverseComplement.default(x, case = "upper"), .data$context),
-        .data$context
+       normalized_context = ifelse(
+        stringr::str_sub(context, 2, 2) %in% c("G", "A", "g", "a"),
+        mapply(function(x) reverseComplement.default(x, case = "upper"), context),
+        context
       ),
       normalized_subtype = 
-        ifelse(.data$subtype %in% names(sub_dict),
-               sub_dict[.data$subtype],
-               .data$subtype
+        ifelse(subtype %in% names(sub_dict),
+               sub_dict[subtype],
+               subtype
         ),
       normalized_ref = dplyr::case_when(
-        substr(.data$ref, 1, 1) == "A" ~ "T",
-        substr(.data$ref, 1, 1) == "G" ~ "C",
-        substr(.data$ref, 1, 1) == "C" ~ "C",
-        substr(.data$ref, 1, 1) == "T" ~ "T"
+        substr(ref, 1, 1) == "A" ~ "T",
+        substr(ref, 1, 1) == "G" ~ "C",
+        substr(ref, 1, 1) == "C" ~ "C",
+        substr(ref, 1, 1) == "T" ~ "T"
       ),
       normalized_context_with_mutation =
-        ifelse(.data$normalized_subtype != ".",
+        ifelse(normalized_subtype != ".",
                paste0(
-                 stringr::str_sub(.data$normalized_context, 1, 1),
-                 "[", .data$normalized_subtype, "]",
-                 stringr::str_sub(.data$normalized_context, 3, 3)
+                 stringr::str_sub(normalized_context, 1, 1),
+                 "[", normalized_subtype, "]",
+                 stringr::str_sub(normalized_context, 3, 3)
                ),
-               .data$variation_type
+               variation_type
         ),
-      gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
-                      stringr::str_count(string = .data$context, pattern = "C"))
-      / stringr::str_count(.data$context)
+      gc_content = (stringr::str_count(string = context, pattern = "G") +
+                      stringr::str_count(string = context, pattern = "C"))
+      / stringr::str_count(context)
     ) %>%
-    mutate(
+    plyranges::mutate(
       normalized_subtype = ifelse(
-        .data$normalized_subtype == ".",
-        .data$variation_type,
-        .data$normalized_subtype
+        normalized_subtype == ".",
+        variation_type,
+        normalized_subtype
       ),
       subtype = ifelse(
-        .data$subtype == ".",
-        .data$variation_type,
-        .data$subtype
+        subtype == ".",
+        variation_type,
+        subtype
       )
     )
-  
-  # We don't have a total_depth column yet. 
-  # When we do - we will have to add depth_col 
-  dat <- dat %>% mutate(VAF = .data$alt_depth / .data$depth)
-  
-  mut_ranges <- makeGRangesFromDataFrame(
-    df = as.data.frame(dat),
-    keep.extra.columns = T,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = TRUE
-  )
-  
-  # Annotate the mut file with additional information about genomic regions in the file
-  if (regions_file == "human") {
-    genic_regions <- read.table(system.file("extdata", "genic_regions_hg38.txt", package = "DupSeqR"), header = TRUE)
-  } else if (regions_file == "mouse") {
-    genic_regions <- read.table(system.file("extdata", "genic_regions_mm10.txt", package = "DupSeqR"), header = TRUE)
-  } else if (regions_file == "custom") {
-    if (!is.null(custom_regions_file)) {
-      genic_regions <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)
-    } else {
-      warning("You must provide a file path to custom_regions_file when regions_file is set to 'custom'.")
-    }
-  } else {
-    warning("Invalid regions_file parameter. Choose from 'human', 'mouse', or 'custom'.")
-  }
-#####################################################################################################
-# Retrieve reference sequences
 
-  # Get the genome that was used
-genome_param <- unique(VariantAnnotation::meta(VariantAnnotation::header(vcf))$contig$assembly)
-  #Genome name mapping
-  genome_synonyms <- c(
-    "mm10" = "GRCm38",
-    "GCF_000001635.26" = "GRCm38",
-    "GRCm38" = "GRCm38",
-    "mm39" = "GRCm39",
-    "GCF_000001635.27" = "GRCm39",
-    "GRCm39" = "GRCm39",
-    "hg38" = "GRCh38",
-    "GCF_000001405.40" = "GRCh38",
-    "GRCh38" = "GRCh38",
-    "hg19" = "GRCh37",
-    "GCF_000001405.25" = "GRCh37",
-    "GRCh37" = "GRCh37"
-     )
-  
-  get_genome_param <- function(synonym) {
-    if (synonym %in% names(genome_synonyms)) {
-      return(genome_synonyms[[synonym]])
-    } else {
-      stop("Invalid genome synonym.")
-    }
-  }
-
-genome_param <- get_genome_param(genome_param)
-
-  # Create a mapping of synonyms to parameter values and species
-  genome_info <- list(
-    GRCm38 = list(species = "mouse"),
-    GRCm39 = list(species = "mouse"),
-    GRCh37 = list(species = "human"),
-    GRCh38 = list(species = "human")
-    # Add more genome-specific information as needed
-  )
-
-  #get the species based on the genome  
-  get_species_param <- function(genome_param) {
-    if (genome_param %in% c("GRCm38", "GRCm39")) {
-      return("mouse")
-    } else if (genome_param %in% c("GRCh37", "GRCh38")) {
-      return("human")
-    } else {
-      stop("Invalid genome assembly in contig field")
-    }
-  }
-  
-#retrieve the sequences (GRanges object)
-region_ranges <- DupSeqR::get_seq(regions_df = genic_regions, species = get_species_param(genome_param), genome_version = genome_param)
-  
-#  region_ranges <- makeGRangesFromDataFrame(
-#    df = genic_regions,
-#    keep.extra.columns = T,
-#    seqnames.field = "contig",
-#    start.field = "start",
-#    end.field = "end",
-#    starts.in.df.are.0based = TRUE
-#  )
-###################################################  
-# Add the target start position to the metadata so it is retained after the join
-region_ranges$start_rg <- as.vector(start(region_ranges))
-  
-# Join with mutation data
- ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
-  return(ranges_joined)
-  
-####################################################  
-# Get no_variant context
- 
- # get string position of nucleotide location within reference sequence
-ranges_joined <- plyranges::mutate(ranges_joined, start_string = start - start_rg +1)
- 
- 
-
-########################################################
-  
-
+return(dat)
 }
 
 

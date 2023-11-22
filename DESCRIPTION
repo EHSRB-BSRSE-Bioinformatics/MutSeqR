@@ -33,6 +33,7 @@ Imports:
     rlang,
     S4Vectors,
     stringr,
+    SummarizedExperiment,
     VariantAnnotation
 Suggests:
     BSgenome.Hsapiens.UCSC.hg38,

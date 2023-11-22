@@ -36,10 +36,12 @@ signature_decomposition <- function(mutations,
                                     group = "sample",
                                     python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9", #
                                     python_home = "~/.virtualenvs/r-reticulate") {
-  # if (!requireNamespace(reticulate)) {
-  #   stop("reticulate not installed")
-  # }
-  
+  if (!requireNamespace(reticulate)) {
+    stop("reticulate not installed")
+  }
+  if (!requireNamespace(RCurl)) {
+    stop("RCurl not installed")
+  }
   message("This function requires python to be installed on whichever
           platform you are using and to be available on the command line.
           Note that it will also install several python dependencies using
@@ -47,6 +49,21 @@ signature_decomposition <- function(mutations,
           implications of this. For advanced use, it is suggested to
           use the SigProfiler python tools directly in python as described
           in their respective documentation.")
+  
+  # TODO - only run this once, not ever time function is called
+  # Use an if statement to determine if the dependencies are met already
+  reticulate::install_python(version = "3.9:latest")
+  reticulate::virtualenv_create("DupSeqR", python = "python3.9")
+  reticulate::virtualenv_install("DupSeqR", "SigProfilerAssignment")
+  reticulate::virtualenv_install("DupSeqR", "SigProfilerMatrixGenerator")
+  reticulate::virtualenv_install("DupSeqR", "SigProfilerExtractor")
+  reticulate::use_virtualenv("DupSeqR")
+  
+  
+  #
+  py_config()
+  devtools::install_github("AlexandrovLab/SigProfilerMatrixGeneratorR")
+  SigProfilerMatrixGeneratorR::install('GRCm38', rsync=FALSE, bash=FALSE)
   
   # message(paste0("Creating a folder to store python dependencies at ",
   #                python_home, ". This can be avoided by setting it manually
@@ -80,8 +97,11 @@ signature_decomposition <- function(mutations,
   #}
 
   # Clean data into required format for Alexandrov Lab tools...
+  #ID doesn't always exist. 
+  # New F(x) to create MAF/txt input for web sigprofiler
   signature_data <- as.data.frame(mutations) %>%
-    dplyr::filter(!.data$variation_type %in% "no_variant") %>%
+    dplyr::filter(.data$variation_type %in% "snv") %>%
+    dplyr::filter(.data$is_germline == FALSE) %>%   
     dplyr::select(all_of(group), .data$id, .data$variation_type, seqnames, .data$start, .data$end, .data$ref, .data$alt) %>%
     dplyr::rename(
       "Sample" = group,
@@ -93,7 +113,7 @@ signature_decomposition <- function(mutations,
     ) %>%
     dplyr::mutate(Sample = stringr::str_replace_all(.data$Sample, " ", "_")) %>%
     dplyr::mutate(chrom = stringr::str_replace(.data$chrom, "chr", "")) %>%
-    dplyr::mutate(Project = project_name) %>%
+    dplyr::mutate(Project = project) %>%
     dplyr::mutate(Genome = project_genome) %>%
     dplyr::mutate(Type = "SOMATIC") %>%
     dplyr::relocate(.data$Project) %>%
@@ -119,12 +139,56 @@ signature_decomposition <- function(mutations,
   signatures_python_code <- system.file('extdata', 'signatures.py',
                                         package = "DupSeqR")
   #reticulate::use_python(Sys.which("python"))
-  use_python("C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate/Scripts/python.exe")
-  reticulate::use_virtualenv(
-    "C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate")
+  #use_python("C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate/Scripts/python.exe")
+  #reticulate::use_virtualenv(
+  #  "C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate")
   #reticulate::use_condaenv("myenv")
-  reticulate::source_python(signatures_python_code)
-  install_genome(project_genome)
+  
+  # only do this once as well
+  
+  #local_file_path <- tempdir(check = T)
+  # Find path to venv
+  current_config <- reticulate::py_config()
+  ref_path <- file.path(current_config$virtualenv, "Lib", "site-packages",
+                        "SigProfilerMatrixGenerator","references","chromosomes",
+                        "tsb")
+  
+  # ./references/chromosomes/tsb/GRCh37.tar.gz
+  
+
+  # Define the FTP URL
+  # ftp_url <- "ftp://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/dna/"
+  ftp_url <- "ftp://alexandrovlab-ftp.ucsd.edu/pub/tools/SigProfilerMatrixGenerator/"
+  # Get the directory listing
+  # file_list <- RCurl::getURL(ftp_url, dirlistonly = TRUE)
+  # file_list <- strsplit(file_list, "\r\n")[[1]]  # Split the listing into a vector of file names
+  # file_list <- file_list[file_list != ""]  # Remove any empty elements
+  # file_list <- file_list[[paste0(project_genome,".tar.gz")]] # Select the file you want - this should be done programmatically
+  # Display the list of files
+  #print(file_list)
+  # Download each file
+  #for (file in file_list) {
+  # Construct the file URL
+  file_url <- paste0(ftp_url, project_genome, ".tar.gz")
+  message(file_url)
+  # Define the local file path to save the downloaded file
+  current_file <- file.path(ref_path, paste0(project_genome, ".tar.gz"))
+  # Download the file
+  download.file(file_url, destfile = current_file, method = "curl")
+  cat("Downloaded:", file, "\n")
+  #}
+  untar(current_file, exdir = ref_path)
+ 
+   reticulate::source_python(signatures_python_code)
+  
+  install_genome(project_genome, custom = "False", bash = "False")
+  
+  SigProfilerMatrixGeneratorR::install(project_genome, rsync=TRUE, bash=FALSE, ftp=FALSE)
+  
+  # SigProfilerMatrixGeneratorR::install(genome = project_genome, custom = F, rsync=FALSE, bash=FALSE)
+  
+  # only do this once as well?
+#  install_genome(project_genome)
   signature_matrices <-
     SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
       project = project_name,
@@ -135,14 +199,10 @@ signature_decomposition <- function(mutations,
       cushion = 100
     )
 
-  
-
   cosmic_fit_DupSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
-    output_path = output,
     genome_build="GRCh38",
-    signatures=None,
     cosmic_version=3.3,
     verbose=True,
     exome=False

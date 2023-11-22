@@ -5,35 +5,70 @@
 \title{Import a .mut file}
 \usage{
 import_mut_data(
-  mut_file = "../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt",
+  mut_file =
+    "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
   rsids = F,
   sample_data_file = NULL,
   sd_sep = "\\t",
   mut_sep = "\\t",
-  regions_file = c("human", "mouse", "custom"),
+  vaf_cutoff,
+  regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
-  rg_sep = "\\t"
+  rg_sep = "\\t",
+  depth_calc = "take_del",
+  custom_column_names = NULL
 )
 }
 \arguments{
 \item{mut_file}{The .mut file containing mutation data to be imported. If you
 specify a folder, function will attempt to read all files in the folder and
 combine them into a single data frame.
-Columns required are: depth col = (depth & no_calls or total_depth), alt_depth, subtype, context, ref, variation_type, contig, start, end. (Synonymous names are accepted)}
+Columns required are: depth col = (depth & no_calls or total_depth),
+alt_depth, context, ref, variation_type, contig, start
+(Synonymous names are accepted)}
 
-\item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information (existing SNPs)}
+\item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information
+(existing SNPs)}
 
-\item{sample_data_file}{An optional file containing additional sample metadata (dose, timepoint, etc.)}
+\item{sample_data_file}{An optional file containing additional sample metadata
+(dose, timepoint, etc.)}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables}
 
 \item{mut_sep}{The delimiter for importing the .mut file}
 
-\item{regions_file}{"human", "mouse", or "custom". The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel. If custom, provide file path in custom_regions_file. TO DO: add rat.}
+\item{vaf_cutoff}{Add a column to identify ostensibly germline variants using
+a cutoff for variant allele fraction (VAF). There is no default value provided,
+but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
+will remove variants that are present at a frequency greater than this value
+at a given site.}
 
-\item{custom_regions_file}{"filepath". If regions_file is set to custom, provide the file path for the tab-delimited file containing regions metadata. Required columns are "contig", "start", and "end".}
+\item{regions}{"human", "mouse", or "custom". The argument refers to the
+TS Mutagenesis panel of the specified species, or to a custom panel.
+If custom, provide file path in custom_regions_file. TO DO: add rat.}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file}
+\item{custom_regions_file}{"filepath". If regions is set to custom,
+provide the file path for the tab-delimited file containing regions metadata.
+Required columns are "contig", "start", and "end".}
+
+\item{rg_sep}{The delimiter for importing the custom_regions_file.
+Default is tab-delimited.}
+
+\item{depth_calc}{In the instance when there are two or more calls at the
+same location within a sample, and the depths differ, this parameter chooses
+the method of calculation for the total_depth. take_mean calculates the
+total_depth by taking the mean reference depth and then adding all the alt depths.
+take_del calculates the total_depth by choosing only the reference depth of
+the deletion in the group, or if no deletion is present, the complex variant,
+then adding all alt depths, if there is no deletion or complex variant,
+then it takes the mean of the reference depths. Default is "take_del".
+@param custom_column_names A list of names to specify the meaning of column
+headers. Since column names can vary with data, this might be necessary to
+digest the mutation data table properly. Typical defaults are set, but can
+be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
+examples. You can change one or more of these. The most likely column to
+need changing is the "chromosome name" (contig), which by default is "seqnames"
+but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
