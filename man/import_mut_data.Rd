@@ -15,7 +15,8 @@ import_mut_data(
   regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
-  depth_calc = "take_del"
+  depth_calc = "take_del",
+  custom_column_names = NULL
 )
 }
 \arguments{
@@ -60,7 +61,14 @@ total_depth by taking the mean reference depth and then adding all the alt depth
 take_del calculates the total_depth by choosing only the reference depth of
 the deletion in the group, or if no deletion is present, the complex variant,
 then adding all alt depths, if there is no deletion or complex variant,
-then it takes the mean of the reference depths. Default is "take_del".}
+then it takes the mean of the reference depths. Default is "take_del".
+@param custom_column_names A list of names to specify the meaning of column
+headers. Since column names can vary with data, this might be necessary to
+digest the mutation data table properly. Typical defaults are set, but can
+be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
+examples. You can change one or more of these. The most likely column to
+need changing is the "chromosome name" (contig), which by default is "seqnames"
+but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
