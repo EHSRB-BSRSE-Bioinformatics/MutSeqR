@@ -34,6 +34,14 @@
 #' the deletion in the group, or if no deletion is present, the complex variant,
 #'  then adding all alt depths, if there is no deletion or complex variant, 
 #'  then it takes the mean of the reference depths. Default is "take_del".
+#'  @param custom_column_names A list of names to specify the meaning of column
+#'  headers. Since column names can vary with data, this might be necessary to
+#'  digest the mutation data table properly. Typical defaults are set, but can
+#'  be substituted in the form of `list(total_depth = "my_custom_depth_name", 
+#'  sample = "my_custom_sample_column_name")`. For a comprehensive list, see 
+#'  examples. You can change one or more of these. The most likely column to
+#'  need changing is the "chromosome name" (contig), which by default is "seqnames"
+#'  but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)
 #' @returns A table where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -47,6 +55,9 @@
 # To delete later:
 # sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
 # mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
+
+# To DO: Total depth vs depth - when checking required columns
+
 import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
                             rsids = F,
                             sample_data_file = NULL,
@@ -56,7 +67,8 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
                             regions = c("human", "mouse", "custom"),
                             custom_regions_file = NULL,
                             rg_sep = "\t",
-                            depth_calc = "take_del") {
+                            depth_calc = "take_del",
+                            custom_column_names = NULL) {
 
   mut_file <- file.path(mut_file)
   if (file.info(mut_file)$isdir == T) {
@@ -90,7 +102,17 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
 
   }
 
-  # Read in sample data if it's provided
+  # Rename columns to default and check that all required columns are present.  
+  # Add custom column names to default list
+ if(!is.null(custom_column_names)) {
+  cols <- modifyList(DupSeqR::op$column, custom_column_names)
+  dat <- rename_columns(dat, cols) 
+ } else {
+   dat <- rename_columns(dat) 
+ }
+  dat <- check_required_columns(dat, op$base_required_mut_cols)
+
+    # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
 
     sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
@@ -99,9 +121,7 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
 
   }
 
-# Rename columns to default and check that all required columns are present.  
-  dat <- rename_columns(dat)
-  dat <- check_required_columns(dat, op$base_required_mut_cols)
+
 
   # Clean up data:
   # Get reverse complement of sequence context where mutation is listed on purine context
