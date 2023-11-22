@@ -55,7 +55,6 @@
 # To delete later:
 # sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
 # mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
-
 # To DO: Total depth vs depth - when checking required columns
 
 import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
@@ -71,21 +70,61 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
                             custom_column_names = NULL) {
 
   mut_file <- file.path(mut_file)
-  if (file.info(mut_file)$isdir == T) {
-    mut_files <- list.files(path = mut_file, full.names = T)
-    # Read in the files and bind them together
-    dat <- lapply(mut_files, function(file) {
-      read.table(file,
-        header = TRUE, sep = mut_sep,
-        fileEncoding = "UTF-8-BOM"
+  
+  # Validate file/folder input
+  if (file.exists(mut_file)) {
+    file_info <- file.info(mut_file)
+    
+    if (file_info$isdir == TRUE) {
+      # Handle the case where mut_file exists and is a directory
+      mut_files <- list.files(path = mut_file, full.names = TRUE, no.. = TRUE)
+      
+      if (length(mut_files) == 0) {
+        stop("Error: The folder you've specified is empty")
+      }
+      
+      # Warning/error if any of the files in folder are empty
+      files_info_all <- file.info(mut_files)
+      
+      empty_indices <- is.na(files_info_all$size) | files_info_all$size == 0
+      empty_list <- basename(mut_files[empty_indices])
+      
+      empty_list_str <- paste(empty_list, collapse = ", ")
+      
+      if (length(empty_list) == length(mut_files)) {
+        stop("Error: All the files in the specified directory are empty")
+      }
+      if (length(empty_list) != 0) {
+        warning(paste("Warning: The following files in the specified directory are empty:", empty_list_str))
+      }
+      
+      # Remove empty files from mut_files
+      mut_files <- mut_files[!empty_indices]
+      
+      # Read in the files and bind them together
+      dat <- lapply(mut_files, function(file) {
+        read.table(file,
+                   header = TRUE, sep = mut_sep,
+                   fileEncoding = "UTF-8-BOM"
+        )
+      }) %>% dplyr::bind_rows()
+      
+    } else {
+      # Handle the case where mut_file exists and is not a directory (a file)
+      if (file_info$size == 0 || is.na(file_info$size)) {
+        stop("Error: You are trying to import an empty file")
+      }
+      
+      dat <- read.table(mut_file,
+                        header = T, sep = mut_sep,
+                        fileEncoding = "UTF-8-BOM"
       )
-    }) %>% dplyr::bind_rows()
+    }
   } else {
-    dat <- read.table(mut_file,
-      header = T, sep = mut_sep,
-      fileEncoding = "UTF-8-BOM"
-    )
+    # Handle the case where mut_file does not exist
+    stop("Error: The file path you've specified is invalid")
   }
+  
   if (ncol(dat) <= 1) {
     stop("Your imported data only has one column.
                            You may want to set mut_sep to properly reflect
@@ -115,11 +154,51 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
     # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
 
+#ElenaE_1
+#  #Trim and lowercase column headings
+#  colnames(dat) <- tolower(gsub("\\.+", "", #deals with middle periods
+#                                gsub("(\\.+)?$", "", #deals with trailing periods
+#                                     gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
+#                                          colnames(dat))),
+#                                perl = TRUE))
+
     sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
                              header = T)
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
-
   }
+  
+ # ELENA
+  has_total_depth <- "total_depth" %in% dat_column_names
+  has_depth <- "depth" %in% dat_column_names
+  has_no_calls <- "no_calls" %in% dat_column_names
+  
+  if (!has_total_depth && !has_depth && !has_no_calls) {
+    missing_columns <- "(depth and no_calls) OR total_depth"
+  }
+  if (!has_depth && has_no_calls) {
+    missing_columns <- "depth"
+  }
+  if (!has_no_calls && has_depth) {
+    missing_columns <- "no_calls"
+  }
+  
+  if (length(missing_columns) > 0) {
+    missing_columns_str <- paste(missing_columns, collapse = ", ")
+    stop(paste("Required column(s) missing:", missing_columns_str))
+  } 
+  
+  # Deal with data frame values being NA
+  excluded_columns <- c("total_depth", "depth", "no_calls")
+  na_rows <- dat[complete.cases(dat[, !colnames(dat) %in% excluded_columns]), ]
+  
+  if (nrow(dat) != nrow(na_rows)) {
+    warning("Warning: Some rows contained NA values and were removed. You input file/folder may contain incomplete data with missing columns; please double-check your input.")
+    dat <- na_rows
+  }
+  
+  # Uppercase context and subtype columns
+  dat$context <- toupper(dat$context)
+  dat$subtype <- toupper(dat$subtype)
 
 
 
@@ -135,17 +214,23 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
     "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
   )
 
-  # The column that represents depth might vary
-  depth_col <- ifelse("total_depth" %in% colnames(dat),
-    "total_depth",
-    ifelse("depth" %in% colnames(dat),
-      "depth", stop("Error: I'm not sure which column
-                             specifies depth.")
+  dat <- dat %>% dplyr::rowwise() %>%
+    mutate(
+      ref_depth = if ("total_depth" %in% colnames(dat) & "depth" %in% colnames(dat)) {
+        if (is.na(total_depth) && !is.na(depth)) {depth - alt_depth}
+        else if (!is.na(total_depth) && is.na(depth)) {total_depth - alt_depth}
+        else stop("Error: Both total_depth and depth have non-NA values. It is unclear which column specifies depth.")
+      } else if ("total_depth" %in% colnames(dat) & !("depth" %in% colnames(dat))) {
+        if (is.na(total_depth)) {stop("Error: The total_depth column in your input data has NA values")}
+        else {total_depth - alt_depth}
+      } else if ("depth" %in% colnames(dat) & !("total_depth" %in% colnames(dat))) {
+        if (is.na(depth)) {stop("Error: The depth column in your input data has NA values")}
+        else {depth - alt_depth}
+      } else {stop("Error: It is unclear which column specifies depth.")}
     )
-  )
-
+  dat <- as.data.frame(dat)
+  
   dat <- dat %>%
-
     dplyr::mutate(
       nchar_ref = nchar(ref),
       nchar_alt = ifelse(variation_type != "symbolic" | variation_type != "sv", nchar(alt), NA),
@@ -175,7 +260,7 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
           .data$variation_type
         ),
       normalized_context = ifelse(
-        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A", "g", "a"),
+        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
         mapply(function(x) reverseComplement(x, case = "upper"), .data$context),
         .data$context
       ),
@@ -218,15 +303,17 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
         .data$variation_type,
         .data$subtype
       )
-    ) %>%
-
-    {
-      if ("depth" %in% names(.)) {
-        dplyr::mutate(., total_depth = .data$depth - .data$no_calls)
-      } else {
-        .
+    )
+  
+  dat <- dat %>% dplyr::rowwise() %>%
+    mutate(
+      total_depth = if ("depth" %in% colnames(dat) && 
+                        (!("total_depth" %in% colnames(dat)) || ("total_depth" %in% colnames(dat2) && is.na(total_depth))) ) {
+        depth - no_calls
       }
-    }
+      else {total_depth}
+    )
+  dat <- as.data.frame(dat)
 
   # Calculate total_depth for the duplicated rows
   if (depth_calc == "take_del") {
