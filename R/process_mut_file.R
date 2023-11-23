@@ -230,7 +230,7 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
   dat <- dat %>% dplyr::mutate(VAF = .data$alt_depth / .data$total_depth) %>%
     dplyr::mutate(is_germline = ifelse(.data$VAF < vaf_cutoff, F, T))
 
-  mut_ranges <- makeGRangesFromDataFrame(
+  mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
     df = as.data.frame(dat),
     keep.extra.columns = T,
     seqnames.field = "contig",
@@ -241,7 +241,7 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
 
   regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
 
-  region_ranges <- makeGRangesFromDataFrame(
+  region_ranges <- GenomicRanges::makeGRangesFromDataFrame(
     df = regions_df,
     keep.extra.columns = T,
     seqnames.field = "contig",
