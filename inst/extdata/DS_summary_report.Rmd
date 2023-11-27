@@ -64,19 +64,19 @@ mutation_data <-
                   vaf_cutoff = vaf_cutoff)
 
 six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
-                                       subtype_resolution = "6base",
+                                       subtype_resolution = "base_6",
                                        summary = T)
 
 # six_base_summary_snps <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                        subtype_resolution = "6base",
+#                                        subtype_resolution = "base_6",
 #                                        summary = T,
 #                                        variant_types = "snv")
 # 
-# six_base_full <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = F)
-# six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "6base", summary = T,vaf_cutoff = 0.01)
+# six_base_full <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "base_6", summary = F)
+# six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "base_6", summary = T,vaf_cutoff = 0.01)
 # 
 # six_base_w_description <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                        subtype_resolution = "6base",
+#                                        subtype_resolution = "base_6",
 #                                        summary = T,
 #                                        cols_to_group = c("sample","description"))
 
@@ -86,13 +86,13 @@ six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
 #                                        cols_to_group = c("sample"))
 # 
 # var_types <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                 subtype_resolution = "6base",
+#                                 subtype_resolution = "base_6",
 #                                 summary = T,
 #                                 variant_types = c("snv","indel"),
 #                                 cols_to_group = c("sample"))
 # 
 summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
-                                       subtype_resolution = "96base",
+                                       subtype_resolution = "base_96",
                                        summary = T,
                                        cols_to_group = c("sample"))
 
@@ -159,7 +159,7 @@ n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
 
 # Testing general function for this application...
 cpg_summary_subtype <- calculate_mut_freq(data = as.data.frame(cpg_mutations),
-                                          subtype_resolution = "6base",
+                                          subtype_resolution = "base_6",
                                           summary = T,
                                           cols_to_group = c("sample"))
                                        
@@ -183,7 +183,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
   mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
   mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
 
-cpg_12base_pct <- as.data.frame(mutation_data_cpgs) %>%
+cpg_base_12_pct <- as.data.frame(mutation_data_cpgs) %>%
   group_by(CpG_site, subtype, !!ensym(group_var)) %>%
   tally() %>% 
   ungroup() %>%
@@ -194,7 +194,7 @@ cpg_12base_pct <- as.data.frame(mutation_data_cpgs) %>%
   filter(CpG_site == T) %>%
   dplyr::select(-1)
 
-cpg_6base_pct <- as.data.frame(mutation_data_cpgs) %>%
+cpg_base_6_pct <- as.data.frame(mutation_data_cpgs) %>%
   group_by(CpG_site, normalized_subtype, !!ensym(group_var)) %>%
   tally() %>% 
   ungroup() %>%
@@ -205,7 +205,7 @@ cpg_6base_pct <- as.data.frame(mutation_data_cpgs) %>%
   filter(CpG_site == T) %>%
   dplyr::select(-1)
 
-cpg_96base_pct <- as.data.frame(mutation_data_cpgs) %>%
+cpg_base_96_pct <- as.data.frame(mutation_data_cpgs) %>%
   group_by(CpG_site, context_with_mutation, !!ensym(group_var)) %>%
   tally() %>% 
   ungroup() %>%
@@ -216,9 +216,9 @@ cpg_96base_pct <- as.data.frame(mutation_data_cpgs) %>%
   filter(CpG_site == T) %>%
   dplyr::select(-1)
 
-cpg_tables <- list(CpGs_12base_percentage = cpg_12base_pct,
-                   CpGs_6base_percentage = cpg_6base_pct,
-                   #CpGs_trinucleotide_percentage = cpg_96base_pct, # Data too sparse.
+cpg_tables <- list(CpGs_base_12_percentage = cpg_base_12_pct,
+                   CpGs_base_6_percentage = cpg_base_6_pct,
+                   #CpGs_trinucleotide_percentage = cpg_base_96_pct, # Data too sparse.
                    CpGs_by_subtype = cpg_summary_subtype,
                    CpGs_by_trinucleotide = cpg_summary_context)
 

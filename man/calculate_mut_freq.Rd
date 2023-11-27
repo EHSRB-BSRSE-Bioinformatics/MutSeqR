@@ -7,12 +7,11 @@
 calculate_mut_freq(
   data,
   cols_to_group = "sample",
-  subtype_resolution = "6base",
+  subtype_resolution = "base_6",
   vaf_cutoff = 0.1,
   clonality_cutoff = 0.3,
   summary = TRUE,
-  variant_types = c("snv", "indel", "mnv", "sv"),
-  custom_column_names = list(chr = "seqnames")
+  variant_types = c("snv", "deletion", "insertion", "mnv", "symbolic")
 )
 }
 \arguments{
@@ -26,7 +25,7 @@ the frequency by \code{sample}. Other options might include \code{locus}, or,
 \item{subtype_resolution}{At what resolution should the frequencies be
 calculated? This is an important consideration because the reference bases
 sequencing depth will differ depending on which mutation subtypes are being
-considered. Options are "none", 6base", "12base", "96base", and "192base".
+considered. Options are "none", base_6", "base_12", "base_96", and "base_192".
 Could add 24 base option eventually. By selecting "none", this will use the
 total depth across all the selected metadata columns.}
 
@@ -47,14 +46,6 @@ users.}
 
 \item{variant_types}{Include these variant types. A vector of one or more
 "snv", "indel", "sv", "mnv", "no_variant"}
-
-\item{custom_column_names}{A list of names to specify the meaning of column
-headers. Since column names can vary with data, this might be necessary to
-digest the mutation data table properly. Typical defaults are set, but can
-be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
-examples. You can change one or more of these. The most likely column to
-need changing is the "chromosome name" (chr), which by default is "seqnames"
-but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)}
 }
 \value{
 A data frame with the mutation frequency calculated.

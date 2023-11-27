@@ -64,6 +64,7 @@ op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 #' @export
 subtype_dict <- c(
   "none" = NA,
+  "type" = "variation_type",
   "base_6" = "normalized_subtype",
   "base_12" = "subtype",
   "base_96" = "normalized_context_with_mutation",
@@ -71,6 +72,7 @@ subtype_dict <- c(
 )
 
 subtype_list <- list (
+  type = c("no_variant", "snv", "deletion", "insertion", "complex", "mnv","symbolic"),
   base_6 = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"),
   base_12 = c("A>C", "A>G", "A>T", "C>A", "C>G", "C>T", 
               "G>A", "G>C", "G>T", "T>A", "T>C", "T>G"),
@@ -137,8 +139,9 @@ subtype_list <- list (
 #' @export
 denominator_dict <- c(
   "none" = NA,
-  "6base" = "normalized_ref",
-  "12base" = "short_ref",
-  "96base" = "normalized_context",
-  "192base" = "context"
+  "type" = NA,
+  "base_6" = "normalized_ref",
+  "base_12" = "short_ref",
+  "base_96" = "normalized_context",
+  "base_192" = "context"
 )

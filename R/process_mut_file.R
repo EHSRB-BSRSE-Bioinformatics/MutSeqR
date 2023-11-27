@@ -53,13 +53,13 @@
 #' @export
 
 # To delete later:
- sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
- mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
+# sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
+# mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
 # To DO: Total depth vs depth - when checking required columns
 
 import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
                             rsids = F,
-                            sample_data_file = NULL,
+                            sample_data_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt",
                             sd_sep = "\t",
                             mut_sep = "\t",
                             vaf_cutoff,
@@ -152,9 +152,6 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
  }
   # Check that all required columns are present
   dat <- check_required_columns(dat, op$base_required_mut_cols)
-  
-  # check that columns are not already created ::
-  #######
 
     # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
@@ -174,12 +171,13 @@ import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-AS
   
 
   # Check for NA values
+  # If there are NA values in required columns. stop
   columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
   
   if (length(columns_with_na) > 0) {
     warning(paste("NA values were found in your input data within the following column(s): ", 
                   paste(columns_with_na, collapse = ", "), 
-                  ". Please double-check your data before proceeding."))
+                  ". Please confirm that your data is valid before proceeding."))
   } else {
     print("No NA values found in any column of the dataframe.")
   }
