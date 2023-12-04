@@ -52,14 +52,9 @@
 #' @importFrom rlang .data
 #' @export
 
-# To delete later:
-# sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
-# mut_file <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
-# To DO: Total depth vs depth - when checking required columns
-
-import_mut_data <- function(mut_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
+import_mut_data <- function(mut_file,
                             rsids = F,
-                            sample_data_file = "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt",
+                            sample_data_file = NULL,
                             sd_sep = "\t",
                             mut_sep = "\t",
                             vaf_cutoff,
