@@ -6,12 +6,11 @@
 \usage{
 calculate_mut_freq(
   data,
-  cols_to_group = "sample",
-  subtype_resolution = "base_6",
-  vaf_cutoff = 0.1,
-  clonality_cutoff = 0.3,
+  cols_to_group = c("dose"),
+  subtype_resolution = "base_96",
+  vaf_cutoff = 0.01,
   summary = TRUE,
-  variant_types = c("snv", "deletion", "insertion", "mnv", "symbolic")
+  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic")
 )
 }
 \arguments{
@@ -25,18 +24,12 @@ the frequency by \code{sample}. Other options might include \code{locus}, or,
 \item{subtype_resolution}{At what resolution should the frequencies be
 calculated? This is an important consideration because the reference bases
 sequencing depth will differ depending on which mutation subtypes are being
-considered. Options are "none", base_6", "base_12", "base_96", and "base_192".
+considered. Options are "none", "type", base_6", "base_12", "base_96", and "base_192".
 Could add 24 base option eventually. By selecting "none", this will use the
 total depth across all the selected metadata columns.}
 
 \item{vaf_cutoff}{Exclude rows from frequency calculations
 with a variant allele fraction (VAF) greater than this value. Default is 0.1.}
-
-\item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
-This value determines the fraction of reads that
-is considered a constitutional variant. If a mutation is present at a
-fraction higher than this value, the reference base will be swapped,
-and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
 
 \item{summary}{TRUE or FALSE, whether to return a summary table (i.e., where
 only relevant columns for frequencies and groupings are returned). Setting
@@ -46,6 +39,12 @@ users.}
 
 \item{variant_types}{Include these variant types. A vector of one or more
 "snv", "indel", "sv", "mnv", "no_variant"}
+
+\item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
+This value determines the fraction of reads that
+is considered a constitutional variant. If a mutation is present at a
+fraction higher than this value, the reference base will be swapped,
+and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
 }
 \value{
 A data frame with the mutation frequency calculated.

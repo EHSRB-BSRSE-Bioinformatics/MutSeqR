@@ -8,7 +8,8 @@ import_mut_data(
   mut_file =
     "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
   rsids = F,
-  sample_data_file = NULL,
+  sample_data_file =
+    "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt",
   sd_sep = "\\t",
   mut_sep = "\\t",
   vaf_cutoff,

@@ -45,7 +45,7 @@ calculate_mut_freq <- function(data,
                                vaf_cutoff = 0.1,
                               # clonality_cutoff = 0.3,
                                summary = TRUE,
-                               variant_types = c("snv", "deletion", "insertion", "complex", "mnv","symbolic")) {
+                               variant_types = c("no_variant", "snv", "deletion", "insertion", "complex", "mnv","symbolic")) {
   
   if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192") && !("snv" %in% variant_types)) {
     warning("Please include 'snv' in parameter 'variant_types' to calculate single-nucleotide variant subtype frequencies.")
@@ -128,8 +128,7 @@ calculate_mut_freq <- function(data,
 if(subtype_resolution != "none"){    
   # Create a list of vectors, one for each column in cols_to_group
   col_values <- lapply(cols_to_group, function(col) unique(mut_freq_table[[col]]))
-  # Grab and append list of subtypes
-
+  # Grab and append pre-defined list of subtypes
   if(subtype_resolution != "type"){
     subtype <- list(subtype_list[[subtype_resolution]])  
     subset_type <- subtype_list$type[subtype_list$type %in% variant_types]
@@ -139,24 +138,26 @@ if(subtype_resolution != "none"){
     subtype <- list(subtype_list[[subtype_resolution]]) 
   }
   # Create a dataframe with every combination of subtype_resolution and values from cols_to_group
-  summary_table <- do.call(expand.grid, c(muttype = subtype, col_values))
+  summary_rows <- do.call(expand.grid, c(muttype = subtype, col_values))
   # Set the column names
   col_names <- c(paste(DupSeqR::subtype_dict[[subtype_resolution]]), cols_to_group)
-  colnames(summary_table) <- col_names
+  colnames(summary_rows) <- col_names
+  summary_rows <- summary_rows %>%
+    dplyr::rowwise() %>%
+    mutate(!!paste(denominator_dict[[subtype_resolution]]) := get_ref_of_mut(get(subtype_dict[[subtype_resolution]])))
   } else {
   # Create a list of vectors, one for each column in cols_to_group
   col_values <- lapply(cols_to_group, function(col) unique(mut_freq_table[[col]]))
   # Create a dataframe with every combination of values from cols_to_group
-  summary_table <- do.call(expand.grid, col_values)
+  summary_rows <- do.call(expand.grid, col_values)
   # Set the column names  
   col_names <- paste(cols_to_group)
-  summary_table <- setNames(summary_table, col_names)
+  summary_rows <- setNames(summary_rows, col_names)
   }
     # Define columns of interest for summary table
-    # Note if we want to include the snv depth, than the mnv and indels will be called twice. 
-    # extra filtering afterwards?
   summary_cols <- c(
     numerator_groups,
+    DupSeqR::denominator_dict[[subtype_resolution]],
     paste0(freq_col_prefix, "_sum_unique"),
     paste0(freq_col_prefix, "_sum_clonal"),
     paste0(freq_col_prefix, "_group_depth"),
@@ -165,16 +166,15 @@ if(subtype_resolution != "none"){
     paste0(freq_col_prefix, "_MF_clonal")
   )
 
-  # Make summary table of frequencies
-  # This is also where subtype proportions are calculated
   summary_data <- mut_freq_table %>%
     dplyr::select({{ summary_cols }})  %>%
-    dplyr::distinct(across(all_of(numerator_groups)), .keep_all = TRUE)
+    dplyr::distinct(across(all_of(c(numerator_groups, DupSeqR::denominator_dict[[subtype_resolution]]))), .keep_all = TRUE)
    
  # TO DO:
   # Fill in 0s with their snv depths (mut types that did not appear in the data)
-summary_table <- dplyr::left_join(summary_table, summary_data, by = col_names)
+summary_table <- merge(summary_rows, summary_data, by = c(col_names, DupSeqR::denominator_dict[[subtype_resolution]]), all =  TRUE)
 summary_table[is.na(summary_table)] <- 0
+# Fill in the depths for rows that didn't exist in data.
 summary_table <- summary_table %>% 
   dplyr::group_by(across(all_of(cols_to_group))) %>%
   dplyr::mutate(!!paste0(freq_col_prefix, "_group_depth") :=
@@ -182,8 +182,17 @@ summary_table <- summary_table %>%
                          max(.data[[paste0(freq_col_prefix, "_group_depth")]]), 
                          .data[[paste0(freq_col_prefix, "_group_depth")]])) %>%
   dplyr::ungroup() %>%
-  
-     mutate(freq_clonal =
+  dplyr::group_by(across(all_of(denominator_groups))) %>%
+  dplyr::mutate(!!paste0(freq_col_prefix, "_snv_depth") :=
+                  ifelse(.data[[paste0(freq_col_prefix, "_snv_depth")]] == 0, 
+                         max(.data[[paste0(freq_col_prefix, "_snv_depth")]]), 
+                         .data[[paste0(freq_col_prefix, "_snv_depth")]])) %>%
+  dplyr::ungroup()
+# Remove unwanted rows 
+summary_table <- dplyr::left_join(summary_rows, summary_table)  
+# Create proportion columns
+summary_table <- summary_table %>%
+     dplyr::mutate(freq_clonal =
              .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
              sum(.data[[paste0(freq_col_prefix, "_sum_clonal")]]) /
              .data[[paste0(freq_col_prefix, "_group_depth")]] ) %>%
@@ -193,6 +202,8 @@ summary_table <- summary_table %>%
              sum(.data[[paste0(freq_col_prefix, "_sum_unique")]]) /
              .data[[paste0(freq_col_prefix, "_group_depth")]] ) %>%
     mutate(prop_unique = .data$freq_unique / sum(.data$freq_unique))
+
+
 
   if (!summary) {
     return(mut_freq_table)

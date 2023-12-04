@@ -71,6 +71,8 @@ subtype_dict <- c(
   "base_192" = "context_with_mutation"
 )
 
+#' @format A list with corresponding values
+#' @export
 subtype_list <- list (
   type = c("no_variant", "snv", "deletion", "insertion", "complex", "mnv","symbolic"),
   base_6 = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"),
@@ -134,7 +136,6 @@ subtype_list <- list (
 #' substitution frequency should be subsetted based on the normalized_ref 
 #' column which would contain only T or C (i.e., the pyrimidine context for
 #' base substitutions).
-#'
 #' @format A vector with corresponding values
 #' @export
 denominator_dict <- c(
