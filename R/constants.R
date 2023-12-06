@@ -7,6 +7,7 @@
 op <- list()
 op$column <- list()
 op$column$total_depth <- "total_depth"
+op$column$informative_somatic_depth <- "total_depth"
 op$column$n_depth <- "no_calls"
 op$column$n_calls <- "no_calls"
 op$column$vaf <- "vaf"

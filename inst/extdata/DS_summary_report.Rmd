@@ -1,6 +1,6 @@
 ---
 title: "Duplex Sequencing Summary Report"
-author: "Matthew J. Meier"
+author: "Matthew J. Meier & Annette E. Dodge"
 output:
   html_document:
     toc: yes
@@ -12,20 +12,20 @@ output:
   pdf_document:
     toc: yes
 params:
-  group_var: "sample"
-  vaf_cutoff: 0.1
+  group_var: "dose"
+  vaf_cutoff: 0.01
   species: "mouse"
   project_title: "Mouse Test"
   genome: "mm10"
-  mut_data: "../../from-annette/mutfiles/"
-  regions: "mouse"
+  mut_data: "../../Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
+  sample_data: "../Test Data/PRC_BM_sample_data.txt"
 ---
 
 ```{r load_libraries, warning=F, echo=F}
 set.seed(3135)
 
 library(DupSeqR)
-library(dplyr)
+library(tidyr)
 library(ggplot2)
 theme_set(theme_bw())
 output_dir <- file.path(here::here(),"output")
@@ -35,38 +35,55 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 # Import Data
 
 ```{r import-data}
-#group_var <- "tissue"
-#dupseq_species <- "human"
-#project <- "Axelson_2022"
-#project_genome <- "GRCh38"
-#mut_data <- ../../data/Jonatan_Mutations_in_blood_and_sperm_samples_221021_MM.txt
-#regions "human"
-
-# group_var <- "sample"
-# dupseq_species <- "mouse"
-# project <- "Mouse Test"
-# project_genome = "mm10"
-# mut_data <- "../../data/BaP_BM_C4.1.consensus.variant-calls.genome.mut"
-# regions "mouse"
 
 group_var <- "sample"
-dupseq_species <- "mouse"
-project <- "Mouse Test"
-project_genome <- "mm10"
-mut_data <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files"
+species <- "mouse"
+# project <- "Mouse Test"
+# project_genome <- "mm10"
+mut_data <- "../../../Test Data/mut files"
+sample_data <- "../../../Test Data/PRC_ST_sample_data.txt"
 vaf_cutoff <- 0.1
-#regions "mouse"
  
 mutation_data <-
   import_mut_data(mut_file = mut_data,
-                  regions = dupseq_species,
-                  rsids = T,
-                  vaf_cutoff = vaf_cutoff)
+                  sample_data_file = sample_data,
+                  regions = params$species,
+                  vaf_cutoff = params$vaf_cutoff)
 
-six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
-                                       subtype_resolution = "base_6",
+
+sample_MF_summary <- calculate_mut_freq(data = mutation_data,
+                                       cols_to_group = c("sample"),
+                                       subtype_resolution = "none",
+                                       vaf_cutoff = params$vaf_cutoff,
+                                       summary = T) 
+
+sample_regions_MF_summary <- calculate_mut_freq(data = mutation_data,
+                                       cols_to_group = c("sample", "description"),
+                                       subtype_resolution = "none",
+                                       vaf_cutoff = params$vaf_cutoff,
                                        summary = T)
 
+six_base_summary <- calculate_mut_freq(data = mutation_data,
+                                       cols_to_group = "sample",
+                                       subtype_resolution = "base_6",
+                                       vaf_cutoff = params$vaf_cutoff,
+                                       summary = T)
+
+trinucleotide_frequencies_individual <- calculate_mut_freq(data = mutation_data,
+                                                            cols_to_group = "sample",
+                                                            subtype_resolution = "base_96",
+                                                            vaf_cutoff = params$vaf_cutoff,
+                                                            variant_types = "snv",
+                                                            summary = T
+                                                           )
+
+trinucleotide_frequencies_group <- calculate_mut_freq(data = mutation_data,
+                                                            cols_to_group = params$group_var,
+                                                            subtype_resolution = "base_96",
+                                                            vaf_cutoff = params$vaf_cutoff,
+                                                            variant_types = "snv",
+                                                            summary = T
+                                                           )
 # six_base_summary_snps <- calculate_mut_freq(data = as.data.frame(mutation_data),
 #                                        subtype_resolution = "base_6",
 #                                        summary = T,
@@ -91,10 +108,7 @@ six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
 #                                 variant_types = c("snv","indel"),
 #                                 cols_to_group = c("sample"))
 # 
-summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
-                                       subtype_resolution = "base_96",
-                                       summary = T,
-                                       cols_to_group = c("sample"))
+
 
 ```
 
@@ -106,36 +120,100 @@ summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
 write_VCF_from_mut(mutation_data)
 ```
 
+```{r plot_MF}
+# Unique MF per sample
+ggplot(sample_MF_summary, aes(x = sample, y = sample_MF_unique, fill = dose)) +
+  geom_bar(stat = "identity", alpha = 0.7) +
+  geom_text(aes(y = sample_MF_unique, label = sample_sum_unique), vjust = -0.5) +
+  labs(title = "Min Mutation Frequency per Sample") +
+  ylab("Mutation Frequency (mutations/bp)") +
+  xlab("sample") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Clonal MF per sample
+ggplot(sample_MF_summary, aes(x = sample, y = sample_MF_clonal, fill = dose)) +
+  geom_bar(stat = "identity", alpha = 0.7) +
+  geom_text(aes(y = sample_MF_clonal, label = sample_sum_clonal), vjust = -0.5) +
+  labs(title = "Max Mutation Frequency per Sample") +
+  ylab("Mutation Frequency (mutations/bp)") +
+  xlab("sample") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Average MF by dose for both clonal and unique ## NEED TO ADJUST FOR Y AXIS SCALE
+plot_data <- sample_MF_summary %>%
+  group_by(dose) %>%
+  summarize(unique = mean(sample_MF_unique),
+            std_error_unique = sd(sample_MF_unique)/sqrt(n()),
+            clonal = mean(sample_MF_clonal),
+            std_error_clonal = sd(sample_MF_clonal)/sqrt(n())) %>%
+  ungroup()
+plot_data_long <- plot_data %>%
+  pivot_longer(cols = c(unique, clonal), names_to = "MF_type", values_to = "avg_MF") %>%
+  mutate(std_error = ifelse(grepl("unique", MF_type), std_error_unique, std_error_clonal)) %>%
+  mutate(MF_type = factor(MF_type, levels = c("unique", "clonal")))  # Reorder levels
+max_y_limit <- max(plot_data_long$avg_MF + plot_data_long$std_error)*1.25
+ggplot(plot_data_long, aes(x = factor(dose), y = avg_MF, fill = MF_type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.6), width = 0.5) +
+  scale_y_continuous(expand=c(0,0), limits = c(0, max_y_limit)) +
+ geom_errorbar(aes(ymin = pmax(avg_MF - std_error, 0), ymax = pmin(avg_MF + std_error, max_y_limit)),
+                position = position_dodge(width = 0.6), width = 0.25, color = "black") +
+  labs(title = "Average Mutation Frequency per Dose",
+       y = "Average Mutation Frequency",
+       x = "Dose") +
+  scale_fill_manual(values = c("unique" = "skyblue", "clonal" = "salmon")) +
+  theme_bw()
+
+
+# MF per target (average per dose)
+plot_data <- sample_regions_MF_summary %>%
+  group_by(dose, description) %>%
+  summarize(avg_MF_unique = mean(sample_description_MF_unique),
+            std_error = sd(sample_description_MF_unique)/sqrt(n()))
+ordered_descriptions <- plot_data %>%
+  filter(dose == max(plot_data$dose)) %>%
+  dplyr::arrange(desc(avg_MF_unique)) %>%
+  dplyr::pull(description)
+plot_data$description <- factor(plot_data$description, levels = ordered_descriptions)
+ggplot(plot_data, aes(x = description, y = avg_MF_unique, fill = factor(dose))) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+  geom_errorbar(aes(ymin = avg_MF_unique - std_error, ymax = avg_MF_unique + std_error),
+                position = position_dodge(width = 0.8), width = 0.25) +
+  labs(title = "Average Mutation Frequency per Target and Dose with Standard Error",
+       y = "Average Mutation Frequency (mutations/bp)",
+       x = "Target") +
+  scale_fill_discrete(name = "Dose") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 ```{r exploratory-spectra, warning = F}
-# Look at overall spectrum
-as.data.frame(mutation_data) %>% group_by(subtype) %>% tally()
-as.data.frame(mutation_data) %>% group_by(normalized_subtype) %>% tally()
-as.data.frame(mutation_data) %>% group_by(ref) %>% tally()
-as.data.frame(mutation_data) %>% group_by(short_ref) %>% tally()
-as.data.frame(mutation_data) %>% group_by(normalized_ref) %>% tally()
+# Look at overall spectrum (sum across all groups)
+mutation_data %>% group_by(subtype) %>% tally()
+mutation_data %>% group_by(normalized_subtype) %>% tally()
+mutation_data %>% group_by(ref) %>% tally()
+mutation_data %>% group_by(short_ref) %>% tally()
+mutation_data %>% group_by(normalized_ref) %>% tally()
 # generate frequency tables
-trinucleotide_frequencies_global <- mutation_data %>%
-   group_by(normalized_context, normalized_subtype) %>%
-   summarise(depth_per_trinucleotide = sum(total_depth))
- 
- trinucleotide_frequencies_group <- mutation_data %>%
-   group_by(normalized_context, normalized_subtype, !!sym(group_var)) %>%
-   summarise(depth_per_trinucleotide = sum(total_depth))
- 
- trinucleotide_frequencies_per_individual <- mutation_data %>%
-   group_by(normalized_context, normalized_subtype, sample) %>%
-   summarise(depth_per_trinucleotide = sum(total_depth))
+# trinucleotide_frequencies_global <- mutation_data %>%
+#    group_by(normalized_context, normalized_subtype) %>%
+#    summarise(depth_per_trinucleotide = sum(total_depth))
+#  
+#  trinucleotide_frequencies_group <- mutation_data %>%
+#    group_by(normalized_context, normalized_subtype, !!sym(group_var)) %>%
+#    summarise(depth_per_trinucleotide = sum(total_depth))
+#  
+#  trinucleotide_frequencies_per_individual <- mutation_data %>%
+#    group_by(normalized_context, normalized_subtype, sample) %>%
+#    summarise(depth_per_trinucleotide = sum(total_depth))
 
 ggplot(six_base_summary, aes(x=normalized_subtype, y=sample_MF_unique)) +
   geom_col() +
   facet_grid(sample ~ .)
 
-tvti_plot(mutations = mutation_data, y = NULL)
-tvti_plot(mutations = mutation_data)
-
-
-tvti_plot(mutations = mutation_data, type = "Frequency")
-tvti_plot(mutations = mutation_data, type = "Proportion")
+# tvti_plot(mutations = mutation_data, y = NULL)
+# tvti_plot(mutations = mutation_data)
+# 
+# 
+# tvti_plot(mutations = mutation_data, type = "Frequency")
+# tvti_plot(mutations = mutation_data, type = "Proportion")
 ```
 
 ## CpG Mutations

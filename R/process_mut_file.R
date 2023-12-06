@@ -21,6 +21,8 @@
 #' Required columns are `contig`, `start`, and `end`.
 #' @param rg_sep The delimiter for importing the `custom_regions_file`. 
 #' Default is tab-delimited.
+#' @param is_0_based Indicates whether the target region coordinates are 
+#' 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.
 #' @param vaf_cutoff Add `is_germline` column that identifies ostensibly germline variants using 
 #' a cutoff for variant allele fraction (VAF). There is no default value provided, 
 #' but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this 
@@ -53,14 +55,15 @@
 #' @export
 
 import_mut_data <- function(mut_file,
+                            mut_sep = "\t",
                             rsids = F,
                             sample_data_file = NULL,
                             sd_sep = "\t",
-                            mut_sep = "\t",
                             vaf_cutoff,
                             regions = c("human", "mouse", "custom"),
                             custom_regions_file = NULL,
                             rg_sep = "\t",
+                            is_0_based = TRUE,
                             depth_calc = "take_del",
                             custom_column_names = NULL,
                             output_granges = FALSE) {
@@ -149,22 +152,28 @@ import_mut_data <- function(mut_file,
   dat <- check_required_columns(dat, op$base_required_mut_cols)
 
     # Read in sample data if it's provided
-  if (!is.null(sample_data_file)) {
-
 #  #Trim and lowercase column headings
-    #read.delim check.names = TRUE adds an X
+
+  if (!is.null(sample_data_file)) {
   colnames(dat) <- tolower(gsub("\\.+", "", #deals with middle periods
                                 gsub("(\\.+)?$", "", #deals with trailing periods
                                      gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
                                           colnames(dat))),
                                 perl = TRUE))
-
+    #read.delim check.names = TRUE adds an X
     sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
-                             header = T)
+                             header = T)  
+    
+    sample_data_columns <- setdiff(names(sampledata), names(dat))
+  # Join sampledata with dat  
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
+   
+     for (col in sample_data_columns) {
+      new_col_name <- paste0("sample_data_", col)
+      names(dat)[names(dat) == col] <- new_col_name
+    }
   }
   
-
   # Check for NA values
   # If there are NA values in required columns. stop
   columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
@@ -363,7 +372,7 @@ import_mut_data <- function(mut_file,
     seqnames.field = "contig",
     start.field = "start",
     end.field = "end",
-    starts.in.df.are.0based = TRUE
+    starts.in.df.are.0based = is_0_based
   )
 
   ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
