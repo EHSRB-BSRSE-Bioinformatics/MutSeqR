@@ -153,22 +153,22 @@ import_mut_data <- function(mut_file,
 
     # Read in sample data if it's provided
 #  #Trim and lowercase column headings
-
+    #read.delim check.names = TRUE adds an X
   if (!is.null(sample_data_file)) {
   colnames(dat) <- tolower(gsub("\\.+", "", #deals with middle periods
                                 gsub("(\\.+)?$", "", #deals with trailing periods
                                      gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
                                           colnames(dat))),
                                 perl = TRUE))
-    #read.delim check.names = TRUE adds an X
+
     sampledata <- read.delim(file.path(sample_data_file), sep = sd_sep,
-                             header = T)  
-    
+                             header = T)
+    # Grab the names of the columns that are being added to the data
     sample_data_columns <- setdiff(names(sampledata), names(dat))
-  # Join sampledata with dat  
+    # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
-   
-     for (col in sample_data_columns) {
+    # Add prefix "sample_data_" to the names of the new columns
+    for (col in sample_data_columns) {
       new_col_name <- paste0("sample_data_", col)
       names(dat)[names(dat) == col] <- new_col_name
     }
