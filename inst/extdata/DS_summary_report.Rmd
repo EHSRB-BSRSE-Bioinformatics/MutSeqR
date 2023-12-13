@@ -17,7 +17,7 @@ params:
   species: "mouse"
   project_title: "Mouse Test"
   genome: "mm10"
-  mut_data: "../../Test Data/prj00125_PRC_BM_variany-calls.genome.mut"
+  mut_data: "../Test Data/prj00125_PRC_BM_variant-calls.genome.mut"
   sample_data: "../Test Data/PRC_BM_sample_data.txt"
 ---
 

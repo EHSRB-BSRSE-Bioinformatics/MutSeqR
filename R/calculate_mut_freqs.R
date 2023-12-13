@@ -69,16 +69,20 @@ calculate_mut_freq <- function(data,
  # Rename columns in data to default
    data <- rename_columns(data)
    
-# These steps are to retain sample_data columns in the summary table, if desired.  
+# These steps are to retain sample_data and regions_data columns in the summary table, if desired.  
   # Identify and rename sample_data columns
  columns_with_sample_data_prefix <- grep("^sample_data_", colnames(data), value = TRUE)
- # Remove the prefix "sample_data_" to get the clean column names
+ columns_with_region_data_prefix <- grep("^region_data_", colnames(data), value = TRUE)
+ # Remove the prefixes to get the clean column names
  stripped_sample_data_columns <- sub("^sample_data_", "", columns_with_sample_data_prefix)
+ stripped_region_data_columns <- sub("^region_data_", "", columns_with_region_data_prefix)
  # Apply new column names to data
  colnames(data)[colnames(data) %in% columns_with_sample_data_prefix] <- stripped_sample_data_columns
- # Choose to retain some of these sample_data_columns in summary table TO DO ADD PARAMETER
+ colnames(data)[colnames(data) %in% columns_with_region_data_prefix] <- stripped_region_data_columns
+ # Choose to retain some of these sample_data_columns in summary table 
+ ##### TO DO ADD PARAMETER
  sample_data_cols_retain <- setdiff(stripped_sample_data_columns, cols_to_group)
-
+ region_data_cols_retain <- setdiff(stripped_region_data_columns, cols_to_group)
 
 # Un-duplicating the depth col
   # When there are +1 calls at the same position, modify total_depth such that
@@ -161,7 +165,8 @@ colnames(summary_rows) <- col_names
 summary_data <- mut_freq_table %>%
 dplyr::filter(variation_type %in% subset_type | variation_type == "no_variant") %>%
 dplyr::select({{ summary_cols }},
-              if ("sample" %in% cols_to_group) sample_data_cols_retain) %>%
+              if ("sample" %in% cols_to_group) 
+                c(sample_data_cols_retain, region_data_cols_retain)) %>%
 dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups))), .keep_all = TRUE)
 
 # Merge summary rows and data cols.    
@@ -186,7 +191,8 @@ if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
   dplyr::select(
     {{ summary_cols }},
     DupSeqR::denominator_dict[[subtype_resolution]],
-    if ("sample" %in% cols_to_group) sample_data_cols_retain) %>%
+    if ("sample" %in% cols_to_group) 
+      c(sample_data_cols_retain, region_data_cols_retain)) %>%
   dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups, 
                                   DupSeqR::denominator_dict[[subtype_resolution]]))), 
                   .keep_all = TRUE)

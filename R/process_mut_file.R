@@ -402,7 +402,16 @@ import_mut_data <- function(mut_file,
   )
 
   regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
-
+# Annotate regions metadata columns with prefix "region_data_". 
+# This will allow us to retain these columns in the summary table for calculate_mut_freq. 
+  # Grab the names of the columns that are being added to the data
+  region_data_columns <- setdiff(names(regions_df), names(dat))
+   # Add prefix "sample_data_" to the names of the new columns
+  for (col in region_data_columns) {
+    new_col_name <- paste0("region_data_", col)
+    names(regions_df)[names(regions_df) == col] <- new_col_name
+  }
+  
   region_ranges <- makeGRangesFromDataFrame(
     df = regions_df,
     keep.extra.columns = T,
