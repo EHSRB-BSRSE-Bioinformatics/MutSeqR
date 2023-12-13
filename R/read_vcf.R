@@ -3,7 +3,12 @@
 #' Imports a .vcf file into the R environment and converts it into a dataframe
 #' @param vcf_file The path to the .vcf file  to be imported. If you
 #' specify a folder, the function will attempt to read all files in the folder and
-#' combine them into a single data frame. Multisample vcf files are not supported.
+#' combine them in
+#'  @param vaf_cutoff Add `is_germline` column that identifies ostensibly germline variants using 
+#' a cutoff for variant allele fraction (VAF). There is no default value provided, 
+#' but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this 
+#' flag variants that are present at a frequency greater than this value 
+#' at a given site.to a single data frame. Multisample vcf files are not supported.
 #'  vcf files must contain one sample each.  
 #' @param sample_data_file An optional file containing additional sample metadata 
 #' (dose, timepoint, etc.)
@@ -27,6 +32,8 @@
 #' the deletion in the group, or if no deletion is present, the complex variant,
 #'  then adding all alt depths, if there is no deletion or complex variant, 
 #'  then it takes the mean of the reference depths. Default is "take_del".
+#'  @param output_granges `TRUE` or `FALSE`; whether you want the mutation data to
+#'   output as a GRanges object. Default output is as a dataframe. 
 #' @returns A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
@@ -43,6 +50,7 @@
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
 read_vcf <- function(
     vcf_file,
+    vaf_cutoff,
     sample_data_file = NULL,
     sd_sep = "\t",
     regions = c("human", "mouse", "custom"),
@@ -50,8 +58,8 @@ read_vcf <- function(
     rg_sep = "\t",
     species = NULL,
     genome_version = NULL,
-    depth_calc = "take_del"
-) {
+    depth_calc = "take_del",
+    output_granges = FALSE) {
   vcf_file <- file.path(vcf_file)
   
   # Check if a sample identifier is already present in the INFO field
@@ -186,8 +194,8 @@ if (length(AD) == 0) {
   dat <- dat %>%
     dplyr::mutate(
       no_calls = 0,  # Since AD is missing, no calls can't be calculated
-      vaf = .data$alt_depth / .data$depth  # Calculate vaf using depth
-    )
+      vaf = .data$alt_depth / .data$depth) %>% # Calculate vaf using depth 
+      dplyr::mutate(is_germline = ifelse(.data$VAF < vaf_cutoff, F, T))
   cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
   cat("vaf calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
   
@@ -246,6 +254,7 @@ dat <- dat %>%
                         .data$total_depth,  .data$ref_depth + .data$var_depth),
     no_calls = .data$depth - .data$total_depth,
     vaf = .data$alt_depth / .data$total_depth) %>%
+  dplyr::mutate(is_germline = ifelse(.data$VAF < vaf_cutoff, F, T)) %>%
   dplyr::select(-var_depth, -duplicated)
 }
 
@@ -360,7 +369,12 @@ dat <- ranges_joined %>%
       )
     )
 
-return(dat)
+  if(output_granges) {
+    return(dat)
+  } else {
+    df <- as.data.frame(dat)
+    return(df)
+  }
 }
 
 

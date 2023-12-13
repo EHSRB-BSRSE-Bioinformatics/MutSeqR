@@ -34,7 +34,7 @@ indicate the genome assembly version, ex. "GRCm38".
 Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7}
 
 \item{is_0_based}{TRUE or FALSE. Indicates whether the target region
-coordinates 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted
+coordinates are 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted
 to 1-based.}
 
 \item{padding}{An interger value by which the function will extend the range

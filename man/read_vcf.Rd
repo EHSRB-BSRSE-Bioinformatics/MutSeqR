@@ -6,6 +6,7 @@
 \usage{
 read_vcf(
   vcf_file,
+  vaf_cutoff,
   sample_data_file = NULL,
   sd_sep = "\\t",
   regions = c("human", "mouse", "custom"),
@@ -13,13 +14,19 @@ read_vcf(
   rg_sep = "\\t",
   species = NULL,
   genome_version = NULL,
-  depth_calc = "take_del"
+  depth_calc = "take_del",
+  output_granges = FALSE
 )
 }
 \arguments{
 \item{vcf_file}{The path to the .vcf file  to be imported. If you
 specify a folder, the function will attempt to read all files in the folder and
-combine them into a single data frame. Multisample vcf files are not supported.
+combine them in
+@param vaf_cutoff Add \code{is_germline} column that identifies ostensibly germline variants using
+a cutoff for variant allele fraction (VAF). There is no default value provided,
+but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
+flag variants that are present at a frequency greater than this value
+at a given site.to a single data frame. Multisample vcf files are not supported.
 vcf files must contain one sample each.}
 
 \item{sample_data_file}{An optional file containing additional sample metadata
@@ -50,7 +57,9 @@ total_depth by taking the mean reference depth and then adding all the alt depth
 take_del calculates the total_depth by choosing only the reference depth of
 the deletion in the group, or if no deletion is present, the complex variant,
 then adding all alt depths, if there is no deletion or complex variant,
-then it takes the mean of the reference depths. Default is "take_del".}
+then it takes the mean of the reference depths. Default is "take_del".
+@param output_granges \code{TRUE} or \code{FALSE}; whether you want the mutation data to
+output as a GRanges object. Default output is as a dataframe.}
 }
 \value{
 A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
