@@ -86,9 +86,8 @@ below.
 
 **Table 1.** **Required columns for .mut file import.**
 
-| Column      | Definition                               | Synonyms            |
+| Column Name      | Definition                               | Synonyms            |
 |-------------|------------------------------------------|---------------------|
-| Name        |                                          |                     |
 | contig      | The reference sequence name.              | chr; chromosome; seqnames|
 | start       | The 0-based start position of the feature | position           |
 | end         | The half-open end position of the feature  |                   |
