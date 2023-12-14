@@ -89,27 +89,20 @@ below.
 | Column      | Definition                               | Synonyms            |
 |-------------|------------------------------------------|---------------------|
 | Name        |                                          |                     |
-| contig      | The reference sequence name.              | chr                 |
-|             |                                          | chromosome          |
-|             |                                          |  seqnames           |
-| start       | The 0-based start position of the feature | position            |
-| end         | The half-open end position of the feature  |                     |
-| sample      | The sample name.                          | sample_name         |
-|             |                                          |                     |
+| contig      | The reference sequence name.              | chr; chromosome; seqnames|
+| start       | The 0-based start position of the feature | position           |
+| end         | The half-open end position of the feature  |                   |
+| sample      | The sample name.                          | sample_name; sample_id |
 | ref         | The reference allele at this position.    |                     |
-| alt         | The left-aligned, alternate allele at     | alt.value           |
-|             | this position.                            |                     |
-| alt_depth   | The read depth supporting the alternate   | var_depth           |
-|             | allele.                                  |                     |
+| alt         | The left-aligned, alternate allele at this position. | alt.value|
+| alt_depth   | The read depth supporting the alternate allele.| var_depth      |
 | depth_col   | The total read depth at this position.    | informat            |
 |             | This column can be total_depth (excluding | ive_somatic_depth   |
 |             | N-calls) or depth (including N-calls; if  | = total_depth       |
 |             | total_depth is not available).            |                     |
-| variation_type | The category to which this variant is   | type                |
-|             | assigned.                                |                     |
-| context     | The local reference trinucleotide        | sequence_context   |
-|             | context at this position (e.g. ATC - not  | flanking_sequence  |
-|             | necessarily the transcript codon).         |                     |
+| variation_type | The category to which this variant is assigned.| type; mut_type; variant_type|
+| context     | The local reference trinucleotide context at this position (e.g. ATC - not necessarily the transcript codon).| sequence_context; flanking_sequence   |
+
 
 
 ### Importing .vcf files
