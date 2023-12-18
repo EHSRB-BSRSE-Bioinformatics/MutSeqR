@@ -145,7 +145,15 @@ read_vcf <- function(
                             header = T
                             
     )
+  # Grab the names of the columns that are being added to the data
+  sample_data_columns <- setdiff(names(sampledata), names(dat))
+  # Join the data
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
+    # Add prefix "sample_data_" to the names of the new columns
+    for (col in sample_data_columns) {
+      new_col_name <- paste0("sample_data_", col)
+      names(dat)[names(dat) == col] <- new_col_name
+    }
   }
   
 # Clean up variation_type column to match .mut

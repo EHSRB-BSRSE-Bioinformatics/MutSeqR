@@ -25,6 +25,7 @@ params:
 set.seed(3135)
 
 library(DupSeqR)
+library(stringr)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -39,19 +40,35 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 
 group_var <- "dose"
 species <- "mouse"
-# project <- "Mouse Test"
-# project_genome <- "mm10"
 mut_data <- "../../../Test Data/mut files"
 sample_data <- "../../../Test Data/PRC_ST_sample_data.txt"
-vaf_cutoff <- 0.01
- 
+vaf_cutoff <- 0.1
+project <- "Mouse Test"
+project_genome <- "mm10"
+
+# Example: 
+# Import PRC BM data
+mut_data <- "../../../Test Data/prj00125_PRC_BM_variant-calls.genome.mut"
+sample_data <- "../../../Test Data/PRC_BM_sample_data.txt"
+
 mutation_data <-
   import_mut_data(mut_file = mut_data,
                   sample_data_file = sample_data,
-                  regions = species,
-                  vaf_cutoff = vaf_cutoff)
+                  regions = "mouse",
+                  vaf_cutoff = 0.1)
 
+```
 
+```{r write_ref_and_muts, eval = F}
+# Write a reference FASTA file...
+my_regions <- get_seq(regions = species, padding = 0) # Grab target sequences
+write_reference_fasta(ref_ranges = my_regions) 
+# Write mutation data as a vcf
+write_VCF_from_mut(mutation_data)
+```
+
+## Calculate Mutation Frequencies
+```{r calculate-MF-summaries}
 MF_per_sample <- calculate_mut_freq(data = mutation_data,
                                        cols_to_group = c("sample"),
                                        subtype_resolution = "none",
@@ -70,7 +87,7 @@ six_base_summary <- calculate_mut_freq(data = mutation_data,
                                        vaf_cutoff = vaf_cutoff,
                                        summary = T)
 six_base_summary_group <- calculate_mut_freq(data = mutation_data,
-                                       cols_to_group = group_var,
+                                       cols_to_group = "dose",
                                        subtype_resolution = "base_6",
                                        vaf_cutoff = vaf_cutoff,
                                        variant_types = "snv",
@@ -85,59 +102,26 @@ trinucleotide_frequencies_individual <- calculate_mut_freq(data = mutation_data,
                                                            )
 
 trinucleotide_frequencies_group <- calculate_mut_freq(data = mutation_data,
-                                                            cols_to_group = group_var,
+                                                            cols_to_group = "dose",
                                                             subtype_resolution = "base_96",
                                                             vaf_cutoff = vaf_cutoff,
                                                             variant_types = "snv",
                                                             summary = T
                                                            )
-# six_base_summary_snps <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                        subtype_resolution = "base_6",
-#                                        summary = T,
-#                                        variant_types = "snv")
-# 
-# six_base_full <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "base_6", summary = F)
-# six_base_summary <- calculate_mut_freq(data = as.data.frame(mutation_data), subtype_resolution = "base_6", summary = T,vaf_cutoff = 0.01)
-# 
-# six_base_w_description <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                        subtype_resolution = "base_6",
-#                                        summary = T,
-#                                        cols_to_group = c("sample","description"))
-
-# summary <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                        subtype_resolution = "none",
-#                                        summary = T,
-#                                        cols_to_group = c("sample"))
-# 
-# var_types <- calculate_mut_freq(data = as.data.frame(mutation_data),
-#                                 subtype_resolution = "base_6",
-#                                 summary = T,
-#                                 variant_types = c("snv","indel"),
-#                                 cols_to_group = c("sample"))
-# 
-
-
 ```
 
-```{r write_ref_and_muts, eval = F}
-# Write a reference FASTA file...
-# write_reference_fasta(ref_ranges = get_region_seqs("human"),
-#                       fasta_out = "hg38_duplex_sequencing_targets.fasta")
-
-write_VCF_from_mut(mutation_data)
-```
-
+## Visualize data
 ```{r plot_MF}
 # Unique MF per sample
-ggplot(MF_per_sample, aes(x = sample, y = sample_MF_unique, fill = dose)) +
-  geom_bar(stat = "identity", alpha = 0.7) +
-  geom_text(aes(y = sample_MF_unique, label = sample_sum_unique), vjust = -0.5) +
-  labs(title = "Min Mutation Frequency per Sample") +
-  ylab("Mutation Frequency (mutations/bp)") +
-  xlab("sample") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggplot(MF_per_sample, aes(x = sample, y = sample_MF_unique, fill = factor(dose))) +
+      geom_bar(stat = "identity", alpha = 0.7) +
+      geom_text(aes(y = sample_MF_unique, label = sample_sum_unique), vjust = -0.5) +
+      labs(title = "Min Mutation Frequency per Sample") +
+      ylab("Mutation Frequency (mutations/bp)") +
+      xlab("sample") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
 # Clonal MF per sample
-ggplot(MF_per_sample, aes(x = sample, y = sample_MF_clonal, fill = dose)) +
+ggplot(MF_per_sample, aes(x = sample, y = sample_MF_clonal, fill = factor(dose))) +
   geom_bar(stat = "identity", alpha = 0.7) +
   geom_text(aes(y = sample_MF_clonal, label = sample_sum_clonal), vjust = -0.5) +
   labs(title = "Max Mutation Frequency per Sample") +
@@ -189,21 +173,23 @@ ggplot(plot_data, aes(x = description, y = avg_MF_unique, fill = factor(dose))) 
        x = "Target") +
   scale_fill_discrete(name = "Dose") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Plot MF per target for each sample
-ggplot(MF_per_target, aes(x=description, y=sample_description_MF_unique, fill = factor(dose))) +
-  geom_bar(stat = "identity", alpha = 0.7) +
-  geom_text(aes(y = sample_description_MF_unique, label = sample_description_sum_unique), vjust = -0.5) +
-  labs(title = "Min Mutation Frequency per Target") +
-  ylab("Mutation Frequency (mutations/bp)") +
-  xlab("Target") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        strip.text.y.left = element_text(angle = 0)) +
-  facet_grid(sample ~ ., switch = "y")
 
-# Plot simple Spectra for each sample
-ggplot(six_base_summary, aes(x=normalized_subtype, y=sample_MF_unique)) +
-  geom_col() +
-  facet_grid(sample ~ .)
+# # Plot MF per target for each sample
+# ggplot(MF_per_target, aes(x=description, y=sample_description_MF_unique, fill = factor(dose))) +
+#   geom_bar(stat = "identity", alpha = 0.7) +
+#   geom_text(aes(y = sample_description_MF_unique, label = sample_description_sum_unique), vjust = -0.5) +
+#   labs(title = "Min Mutation Frequency per Target") +
+#   ylab("Mutation Frequency (mutations/bp)") +
+#   xlab("Target") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
+#         strip.text.y.left = element_text(angle = 0)) +
+#   facet_grid(sample ~ ., switch = "y")
+
+# # Plot simple Spectra for each sample
+# ggplot(six_base_summary, aes(x=normalized_subtype, y=sample_MF_unique)) +
+#   geom_col() +
+#   facet_grid(sample ~ .)
+
 # Plot simple spectra averaged across dose
 plot_data <- six_base_summary %>%
   group_by(dose, normalized_subtype) %>%
@@ -227,6 +213,7 @@ ggplot(plot_data, aes(x = normalized_subtype, y = avg_MF, fill = factor(dose))) 
        x = "Variation Type") +
   scale_fill_discrete(name = "Dose") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 # Create subset plot for non-snv
 ggplot(plot_data_subset, aes(x = normalized_subtype, y = avg_MF, fill = factor(dose))) +
   geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
@@ -242,12 +229,60 @@ ggplot(plot_data_subset, aes(x = normalized_subtype, y = avg_MF, fill = factor(d
 ggplot(six_base_summary_group, aes(x = normalized_subtype, y = norm_prop_unique, fill = factor(dose))) +
   geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
   labs(title = "Normalized Proportions of SNV Subtypes per Dose",
+       y = "Normalized proportion",
+       x = "Variation Type") +
+  scale_fill_discrete(name = "Dose") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Plot simple sectra MF by group
+ggplot(six_base_summary_group, aes(x = normalized_subtype, y = dose_MF_unique, fill = factor(dose))) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+  labs(title = "Mutation Frequency of SNV Subtypes per Dose",
        y = "Average Mutation Frequency (mutations/bp)",
        x = "Variation Type") +
   scale_fill_discrete(name = "Dose") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# Plot Trinucleotide Frequency
+
+
+# Plot Trinucleotide Frequency (grouped)
+# Extract mutation type from within normalized_context_with_mutation and remove square brackets
+trinucleotide_frequencies_group$mutation_type <- str_remove_all(str_extract(trinucleotide_frequencies_group$normalized_context_with_mutation, "\\[(.*?)\\]"), "\\[|\\]")
+# Extract context from within normalized_context_with_mutation
+plotdata <- trinucleotide_frequencies_group %>%
+                                    dplyr::rowwise() %>%
+                                    dplyr::mutate(context = get_ref_of_mut(normalized_context_with_mutation))
+
+# Define color mapping for mutation types
+mutation_colors <- c("C>A" = "skyblue", "C>G" = "black", "C>T" = "red", "T>A" = "gray", "T>C" = "green", "T>G" = "pink")
+
+# Reorder the data frame by mutation_type and context
+plotdata <- plotdata %>% 
+  arrange(mutation_type, context)
+
+# Reverse the order of levels for mutation_type
+plotdata$mutation_type <- factor(plotdata$mutation_type, levels = rev(unique(plotdata$mutation_type)))
+
+# Manually specify x-coordinates for labels
+label_positions <- data.frame(
+  mutation_type = unique(plotdata$mutation_type),
+  x_position = c(9, 25, 40, 55, 70, 85) ,
+  y_position = max(plotdata$dose_MF_unique) * 1.1  # Adjust the multiplier based on your desired position above the max y-value
+)
+
+# Calculate upper limit for y-axis
+y_max_limit <- max(plotdata$dose_MF_unique) * 1.5  # Adjust the multiplier based on your desired position above the max y-value
+
+# Create the bar plot with facets arranged vertically, increased x-axis spacing, and color mapping
+ggplot(plotdata, aes(x = reorder(normalized_context_with_mutation, -as.numeric(factor(mutation_type))), y = dose_MF_unique, fill = factor(mutation_type))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(data = label_positions, aes(x = x_position, y = y_position, label = mutation_type), vjust = 0, size = 5, color = "black") +  # Add labels over the bars
+  scale_fill_manual(values = mutation_colors) +  # Apply color mapping
+  facet_wrap(~ dose, scales = "free_y", ncol = 1) +  # Facet by 'dose' with 1 column
+  scale_y_continuous(limits = c(0, y_max_limit)) +  # Set limits for the y-axis
+  theme_minimal() +
+  labs(x = "Normalized Context with Mutation", y = "Dose_MF_Unique") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, margin = margin(b = 10)))  # Adjust the 'margin' parameter for increased spacing
+
 ```
 
 ```{r exploratory-spectra, warning = F}

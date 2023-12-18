@@ -86,6 +86,7 @@ below.
 
 **Table 1.** **Required columns for .mut file import.**
 
+
 +------------+----------------------------------------+-------------------+
 | **Column   | **Definition**                         | **Synonyms**      |
 | Name**     |                                        |                   |

@@ -19,6 +19,9 @@
 #' considered. Options are "none", "type", base_6", "base_12", "base_96", and "base_192".
 #' Could add 24 base option eventually. By selecting "none", this will use the
 #' total depth across all the selected metadata columns.
+#' @param variant_types Include these variant types. A vector of one or more
+#'  "snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
+#'  Default includes all variants. 
 #' @param vaf_cutoff Exclude rows from frequency calculations
 #' with a variant allele fraction (VAF) greater than this value. No default provided.
 #' @param summary TRUE or FALSE, whether to return a summary table (i.e., where
@@ -26,13 +29,15 @@
 #' this to false returns all columns in the original data, which might make
 #' plotting more difficult, but may provide additional flexibility to power
 #' users.
+#' @param keep_metadata TRUE or FALSE. When returning a summary table, whether
+#' to retain sample and regions metadata when grouping by sample or description
+#' respectively. 
 #' @param  clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
 #' This value determines the fraction of reads that
 #' is considered a constitutional variant. If a mutation is present at a 
 #' fraction higher than this value, the reference base will be swapped,
 #' and the alt_depth recalculated. 0.3 (30%) would be a sane default?
-#' @param variant_types Include these variant types. A vector of one or more
-#'  "snv", "deletion", "insertion", "symbolic", "mnv", "no_variant"
+
 #' @returns A data frame with the mutation frequency calculated.
 #' @importFrom dplyr across all_of filter group_by mutate n row_number select distinct ungroup  
 #' @importFrom magrittr %>%
@@ -41,11 +46,13 @@
 #' @export
 calculate_mut_freq <- function(data,
                                cols_to_group = c("sample", "description"),
-                               subtype_resolution = "base_6",
+                               subtype_resolution = "base_96",
+                               variant_types = c("snv", "deletion", "insertion", "complex", "mnv","symbolic"),
                                vaf_cutoff,
-                              # clonality_cutoff = 0.3,
+                              #clonality_cutoff = 0.3,
                                summary = TRUE,
-                               variant_types = c("snv", "deletion", "insertion", "complex", "mnv","symbolic")) {
+                               keep_metadata = TRUE
+                               ) {
   
   if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192") && !("snv" %in% variant_types)) {
     warning("Please include 'snv' in parameter 'variant_types' to calculate single-nucleotide variant subtype frequencies.")
@@ -80,7 +87,6 @@ calculate_mut_freq <- function(data,
  colnames(data)[colnames(data) %in% columns_with_sample_data_prefix] <- stripped_sample_data_columns
  colnames(data)[colnames(data) %in% columns_with_region_data_prefix] <- stripped_region_data_columns
  # Choose to retain some of these sample_data_columns in summary table 
- ##### TO DO ADD PARAMETER
  sample_data_cols_retain <- setdiff(stripped_sample_data_columns, cols_to_group)
  region_data_cols_retain <- setdiff(stripped_region_data_columns, cols_to_group)
 
@@ -165,8 +171,10 @@ colnames(summary_rows) <- col_names
 summary_data <- mut_freq_table %>%
 dplyr::filter(variation_type %in% subset_type | variation_type == "no_variant") %>%
 dplyr::select({{ summary_cols }},
-              if ("sample" %in% cols_to_group) 
-                c(sample_data_cols_retain, region_data_cols_retain)) %>%
+              if (keep_metadata && "sample" %in% cols_to_group) 
+                sample_data_cols_retain,
+              if (keep_metadata && "description" %in% cols_to_group) 
+                region_data_cols_retain) %>%
 dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups))), .keep_all = TRUE)
 
 # Merge summary rows and data cols.    
@@ -191,8 +199,10 @@ if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
   dplyr::select(
     {{ summary_cols }},
     DupSeqR::denominator_dict[[subtype_resolution]],
-    if ("sample" %in% cols_to_group) 
-      c(sample_data_cols_retain, region_data_cols_retain)) %>%
+    if (keep_metadata && "sample" %in% cols_to_group) 
+      sample_data_cols_retain,
+    if (keep_metadata && "description" %in% cols_to_group) 
+      region_data_cols_retain) %>%
   dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups, 
                                   DupSeqR::denominator_dict[[subtype_resolution]]))), 
                   .keep_all = TRUE)
@@ -225,7 +235,10 @@ if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
 summary_table <- summary_table %>% 
   dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
   dplyr::mutate(
-    dplyr::across(dplyr::all_of(sample_data_cols_retain), ~ dplyr::first(na.omit(.))),
+    if (keep_metadata && "sample" %in% cols_to_group){ 
+    dplyr::across(dplyr::all_of(sample_data_cols_retain), ~ dplyr::first(na.omit(.)))},
+    if (keep_metadata && "description" %in% cols_to_group){ 
+      dplyr::across(dplyr::all_of(region_data_cols_retain), ~ dplyr::first(na.omit(.)))},
     dplyr::across(dplyr::all_of(!!paste0(freq_col_prefix, "_group_depth")), ~ dplyr::first(na.omit(.)))
   ) %>%
   dplyr::ungroup() 

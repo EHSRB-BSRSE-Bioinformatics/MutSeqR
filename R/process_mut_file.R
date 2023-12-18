@@ -427,6 +427,8 @@ import_mut_data <- function(mut_file,
   return(ranges_joined)
   } else {
     df <- as.data.frame(ranges_joined)
+    df <- df %>%
+      dplyr::rename(contig = seqnames)
     return(df)
   }
 }

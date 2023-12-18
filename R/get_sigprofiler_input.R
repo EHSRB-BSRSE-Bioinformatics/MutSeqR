@@ -20,20 +20,27 @@ write_mutation_calling_file <- function(mutations,
                                   project_genome = "GRCm38"
                                   ) {
   
- 
-  signature_data <- as.data.frame(mutations) %>%
+  # Check if data is provided as GRanges: if so, convert to data frame.
+  if (inherits(mutations, "GRanges")) { 
+    mutations <- as.data.frame(mutations)
+    mutations <- mutations %>%
+      dplyr::rename(contig = contig)}
+  if (!inherits(mutations, "data.frame")) { warning("You should use a 
+                                             data frame as input here.")}
+  
+  signature_data <- mutations %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
     dplyr::filter(is_germline == FALSE)
 
     
   if ("id" %in% colnames(signature_data)) {
   signature_data <- signature_data %>% 
-    dplyr::select(.data$sample, .data$id, .data$variation_type, seqnames, .data$start, .data$end, .data$ref, .data$alt) %>%
+    dplyr::select(.data$sample, .data$id, .data$variation_type, contig, .data$start, .data$end, .data$ref, .data$alt) %>%
     dplyr::rename(
       "Sample" = "sample",
       "ID" = "id",
       "mut_type" = "variation_type",
-      "chrom" = "seqnames",
+      "chrom" = "contig",
       "pos_start" = "start",
       "pos_end" = "end"
     ) %>%
@@ -46,11 +53,11 @@ write_mutation_calling_file <- function(mutations,
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
   } else {
     signature_data <- signature_data %>% 
-      dplyr::select(.data$sample, .data$variation_type, seqnames, .data$start, .data$end, .data$ref, .data$alt) %>%
+      dplyr::select(.data$sample, .data$variation_type, contig, .data$start, .data$end, .data$ref, .data$alt) %>%
       dplyr::rename(
         "Sample" = sample,
         "mut_type" = "variation_type",
-        "chrom" = "seqnames",
+        "chrom" = "contig",
         "pos_start" = "start",
         "pos_end" = "end"
       ) %>%
@@ -111,8 +118,25 @@ write_mutational_matrix <- function(mutations,
                                     filter = "somatic") {
   
   
-  signature_data <- as.data.frame(mutations) %>%
-    dplyr::filter(.data$variation_type %in% "snv")
+  if (inherits(mutations, "GRanges")) { 
+    mutations <- as.data.frame(mutations)
+    mutations <- mutations %>%
+      dplyr::rename(contig = contig)}
+  if (!inherits(mutations, "data.frame")) { warning("You should use a 
+                                             data frame as input here.")}
+signature_data <- mutations %>%
+  dplyr::filter(.data$variation_type %in% "snv")
+
+# Remove prefix from metadata columns
+# Identify and rename sample_data columns
+columns_with_sample_data_prefix <- grep("^sample_data_", colnames(signature_data), value = TRUE)
+columns_with_region_data_prefix <- grep("^region_data_", colnames(signature_data), value = TRUE)
+# Remove the prefixes to get the clean column names
+stripped_sample_data_columns <- sub("^sample_data_", "", columns_with_sample_data_prefix)
+stripped_region_data_columns <- sub("^region_data_", "", columns_with_region_data_prefix)
+# Apply new column names to signature_data
+colnames(signature_data)[colnames(signature_data) %in% columns_with_sample_data_prefix] <- stripped_sample_data_columns
+colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_prefix] <- stripped_region_data_columns
     
   if (filter == "somatic") {
       signature_data <- filter(signature_data, is_germline == FALSE)
@@ -137,9 +161,13 @@ write_mutational_matrix <- function(mutations,
   col_values <- lapply(group, function(col) unique(signature_data[[col]]))
   # Create a dataframe with every combination of subtype_resolution and values from cols_to_group
   mut_matrix <- do.call(expand.grid, c(subtype = list(subtype_list[[matrices]]), col_values))
+  
   col_names <- c(paste(DupSeqR::subtype_dict[[matrices]]), group)
+  
   colnames(mut_matrix) <- col_names 
+  
   summary_cols <- c(numerator_groups,"mut_count")
+  
   summary_data <- signature_data %>%
     dplyr::select({{ summary_cols }})  %>%
     dplyr::distinct()
