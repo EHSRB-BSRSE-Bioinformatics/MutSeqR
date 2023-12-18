@@ -86,6 +86,7 @@ below.
 
 **Table 1.** **Required columns for .mut file import.**
 
+<<<<<<< HEAD
 
 +------------+----------------------------------------+-------------------+
 | **Column   | **Definition**                         | **Synonyms**      |
@@ -132,73 +133,52 @@ below.
 |            | context at this position (e.g. ATC -   |                   |
 |            | not necessarily the transcript codon). | flanking_sequence |
 +------------+----------------------------------------+-------------------+
+=======
+| Column Name      | Definition                               | Synonyms            |
+|-------------|------------------------------------------|---------------------|
+| contig      | The reference sequence name.              | chr; chromosome; seqnames|
+| start       | The 0-based start position of the feature | position           |
+| end         | The half-open end position of the feature  |                   |
+| sample      | The sample name.                          | sample_name; sample_id |
+| ref         | The reference allele at this position.    |                     |
+| alt         | The left-aligned, alternate allele at this position. | alt.value|
+| alt_depth   | The read depth supporting the alternate allele.| var_depth      |
+| depth_col   | The total read depth at this position. This column can be total_depth (excluding N-calls) or depth (including N-calls; if total_depth is not available).| informative_somatic_depth = total_depth|
+| variation_type | The category to which this variant is assigned.| type; mut_type; variant_type|
+| context     | The local reference trinucleotide context at this position (e.g. ATC - not necessarily the transcript codon).| sequence_context; flanking_sequence   |
+>>>>>>> 341d4116471793204c0c8f1cac9e54214c4a868a
 
 ### Importing .vcf files
 
 Required fields for your `.vcf` file are listed in the table below.
 
-+------------+-----------+---------------------------------------------+
-|            | **Field   | **Definition**                              |
-|            | Name**    |                                             |
-+------------+-----------+---------------------------------------------+
-| **FIXED    | `contig`  | The reference sequence name.                |
-| FIELDS**   |           |                                             |
-+------------+-----------+---------------------------------------------+
-|            | `start`   | The 0-based start position of the feature   |
-|            |           | in contig.                                  |
-+------------+-----------+---------------------------------------------+
-|            | REF       | The reference allele at this position.      |
-+------------+-----------+---------------------------------------------+
-|            | `ALT`     | The left-aligned, alternate allele at this  |
-|            |           | position.                                   |
-+------------+-----------+---------------------------------------------+
-| **FORMAT   | `AD`      | The allelic depths for the reference and    |
-| FIELDS**   |           | alternate alleles in the order listed.      |
-+------------+-----------+---------------------------------------------+
-|            | `DP`      | The total read depth at this position       |
-|            |           | (excluding N-calls). Equivalent to `depth`. |
-+------------+-----------+---------------------------------------------+
-|            | `VD`      | Variant Depth. Equivalent to `alt_depth`.   |
-+------------+-----------+---------------------------------------------+
-| **INFO     | `TYPE`    | The category to which this variant is       |
-| FIELDS**   |           | assigned. Equivalent to `variation_type`.   |
-+------------+-----------+---------------------------------------------+
-|            | `END`     | The half-open end position of the feature   |
-|            |           | in contig.                                  |
-+------------+-----------+---------------------------------------------+
-| *          | sample    | An identifying field for your samples;      |
-| *SUGGESTED |           | either in the INFO field or as the header   |
-| INFO       |           | to the FORMAT field.                        |
-| FIELDS**   |           |                                             |
-+------------+-----------+---------------------------------------------+
-|            | `SVTYPE`  | Structural variant types; INV DUP DEL INS   |
-|            |           | FUS.                                        |
-+------------+-----------+---------------------------------------------+
-|            | SVLEN\`   | Length of the structural variant in base    |
-|            |           | pairs                                       |
-+------------+-----------+---------------------------------------------+
+|              | **Field Name** | **Definition** |
+|--------------|-----------------|-----------------|
+| **FIXED FIELDS** | `contig` | The reference sequence name. |
+|              | `start` | The 0-based start position of the feature in contig. |
+|              | `REF` | The reference allele at this position. |
+|              | `ALT` | The left-aligned, alternate allele at this position. |
+| **FORMAT FIELDS** | `AD` | The allelic depths for the reference and alternate alleles in the order listed. |
+|              | `DP` | The total read depth at this position (excluding N-calls). Equivalent to `depth`. |
+|              | `VD` | Variant Depth. Equivalent to `alt_depth`. |
+| **INFO FIELDS** | `TYPE` | The category to which this variant is assigned. Equivalent to `variation_type`. |
+|              | `END` | The half-open end position of the feature in contig. |
+| *SUGGESTED INFO FIELDS* | `sample` | An identifying field for your samples; either in the INFO field or as the header to the FORMAT field. |
+|              | `SVTYPE` | Structural variant types; INV DUP DEL INS FUS. |
+|              | `SVLEN` | Length of the structural variant in base pairs |
+
 
 The column variation_type/TYPE may contain these values:
+| `variation_type` | Definition                                          |
+|------------------|-----------------------------------------------------|
+| no_variant       | No variation, the null-case.                        |
+| snv              | Single nucleotide variant.                          |
+| mnv              | Multiple nucleotide variant.                        |
+| insertion        | Insertion, length of REF = 1bp.                     |
+| deletion         | Deletion, length of ALT = 1bp.                      |
+| complex          | Length of REF and ALT differ and are both > than 1 bp. |
+| symbolic         | Structural variant or IUPAC ambiguity code.         |
 
-+----------------+-----------------------------------------------------+
-| `v             | Definition                                          |
-| ariation_type` |                                                     |
-+================+=====================================================+
-| no_variant     | No variation, the null-case.                        |
-+----------------+-----------------------------------------------------+
-| snv            | Single nucleotide variant.                          |
-+----------------+-----------------------------------------------------+
-| mnv            | Multiple nucleotide variant.                        |
-+----------------+-----------------------------------------------------+
-| insertion      | Insertion, length of REF = 1bp.                     |
-+----------------+-----------------------------------------------------+
-| deletion       | Deletion, length of ALT = 1bp.                      |
-+----------------+-----------------------------------------------------+
-| complex        | Length of REF and ALT differ and are both \> than 1 |
-|                | bp.                                                 |
-+----------------+-----------------------------------------------------+
-| symbolic       | Structural variant or IUPAC ambiguity code.         |
-+----------------+-----------------------------------------------------+
 
 It is critical that the variant file gets annotated with information
 such as the genomic region from which the mutation originates, some
@@ -216,55 +196,24 @@ significantly easier.
 
 Columns that are added to the resulting data frame are listed below.
 
-+-------------------+--------------------------------------------------+
-| Column Name       | Definition                                       |
-+===================+==================================================+
-| `nchar_ref`       | The length (in bp) of the reference allele.      |
-+-------------------+--------------------------------------------------+
-| `nchar_alt`       | The length (in bp) of the alternate allele.      |
-+-------------------+--------------------------------------------------+
-| `varlen`          | The length (in bp) of the variant.               |
-+-------------------+--------------------------------------------------+
-| `total_depth`     | The total read depth at this position, excluding |
-|                   | N-calls.                                         |
-+-------------------+--------------------------------------------------+
-| `vaf`             | The variant allele fraction. Calculated as       |
-|                   | `alt_depth`/`depth_col` where `depth_col` can be |
-|                   | `total_depth` or `depth`.                        |
-+-------------------+--------------------------------------------------+
-| `is_germline`     | TRUE or FALSE. Flags ostensible germline         |
-|                   | mutations (`vaf` \> `vaf_cutoff`).               |
-+-------------------+--------------------------------------------------+
-| `ref_depth`       | The total read depth at the position calling for |
-|                   | the reference allele. Calculated as              |
-|                   | `depth_col` - `alt_depth` where `depth_col` can  |
-|                   | be `total_depth` or `depth`.                     |
-+-------------------+--------------------------------------------------+
-| `subtype`         | The substitution type for the snv variant        |
-|                   | (12-base spectrum; e.g. A\>C)                    |
-+-------------------+--------------------------------------------------+
-| `short_ref`       | The reference base at this position.             |
-+-------------------+--------------------------------------------------+
-| `no               | The C/T-based substitution type for the snv      |
-| rmalized_subtype` | variant (6-base spectrum; e.g. A\>C -\> T\>G).   |
-+-------------------+--------------------------------------------------+
-| `normalized_ref`  | The reference base in C/T-base notation for this |
-|                   | position (e.g. A -\> T).                         |
-+-------------------+--------------------------------------------------+
-| `conte            | The substitution type fo the snv variant         |
-| xt_with_mutation` | including the two flanking nucleotides           |
-|                   | (192-trinucleotide spectrum; e.g. `T[A>C]G`).    |
-+-------------------+--------------------------------------------------+
-| `normalized_conte | The C/T-based substitution type for the snv      |
-| xt_with_mutation` | variant including the two flanking nucleotides   |
-|                   | (96-base spectrum e.g. `T[A>C]G` -\> `C[T>G]A`). |
-+-------------------+--------------------------------------------------+
-| `no               | The trinucleotide context in C/T base notation   |
-| rmalized_context` | for this position (e.g. TAG -\> CTA).            |
-+-------------------+--------------------------------------------------+
-| `gc_content`      | \% GC of the trinucleotide context at this       |
-|                   | position.                                        |
-+-------------------+--------------------------------------------------+
+| Column Name        | Definition                                        |
+|--------------------|---------------------------------------------------|
+| `nchar_ref`        | The length (in bp) of the reference allele.       |
+| `nchar_alt`        | The length (in bp) of the alternate allele.       |
+| `varlen`           | The length (in bp) of the variant.                |
+| `total_depth`      | The total read depth at this position, excluding N-calls. |
+| `vaf`              | The variant allele fraction. Calculated as `alt_depth`/`depth_col` where `depth_col` can be `total_depth` or `depth`. |
+| `is_germline`      | TRUE or FALSE. Flags ostensible germline mutations (`vaf` > `vaf_cutoff`). |
+| `ref_depth`        | The total read depth at the position calling for the reference allele. Calculated as `depth_col` - `alt_depth` where `depth_col` can be `total_depth` or `depth`. |
+| `subtype`          | The substitution type for the snv variant (12-base spectrum; e.g., A>C). |
+| `short_ref`        | The reference base at this position.              |
+| `normalized_subtype` | The C/T-based substitution type for the snv variant (6-base spectrum; e.g., A>C -> T>G). |
+| `normalized_ref`   | The reference base in C/T-base notation for this position (e.g., A -> T). |
+| `context_with_mutation` | The substitution type for the snv variant including the two flanking nucleotides (192-trinucleotide spectrum; e.g., T[A>C]G). |
+| `normalized_context_with_mutation` | The C/T-based substitution type for the snv variant including the two flanking nucleotides (96-base spectrum e.g., T[A>C]G -> C[T>G]A). |
+| `normalized_context` | The trinucleotide context in C/T base notation for this position (e.g., TAG -> CTA). |
+| `gc_content`       | % GC of the trinucleotide context at this position. |
+
 
 ### Metadata: an important consideration
 
