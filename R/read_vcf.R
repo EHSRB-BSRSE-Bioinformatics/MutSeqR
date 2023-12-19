@@ -3,7 +3,29 @@
 #' Imports a .vcf file into the R environment and converts it into a dataframe
 #' @param vcf_file The path to the .vcf file  to be imported. If you
 #' specify a folder, the function will attempt to read all files in the folder and
-#' combine them into a single data frame. Multisample vcf files are not supported.
+#' combine them.
+#' Required fields are listed below
+#' - FIXED FIELDS: 
+#'  - `CHROM`: The reference sequence name.Equivalent to `contig`
+#'  - `POS`: 0-based start position of the feature in contig.
+#'  - `REF`: The reference allele at this position
+#'  - `ALT`: The left-aligned, normalized, alternate allele at this position.
+#' - FORMAT FIELDS:
+#'  - `AD`: The allelic depths for the reference and alternate alleles in the order listed.
+#'  - `DP`: The total read depth at this position (including N-calls). Equivalent to `depth`.
+#'  - `VD`: Variant Depth. Equivalent to `alt_depth`.
+#' - INFO FIELDS
+#'  - `TYPE`: The category to which this variant is assigned. Equivalent to `variation_type`.
+#'  - `END`: The half-open end position of the feature in contig.
+#' - SUGGESTED INFO FIELDS:
+#'  - `sample`: An identifying field for your samples; either in the INFO field or as the header to the FORMAT field. 
+#'  - `SVTYPE`: Structural variant types; INV DUP DEL INS FUS.
+#'  - `SVLEN`: Length of the structural variant in base pairs.
+#' @param vaf_cutoff Add `is_germline` column that identifies ostensibly germline variants using 
+#' a cutoff for variant allele fraction (VAF). There is no default value provided, 
+#' but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this 
+#' flag variants that are present at a frequency greater than this value 
+#' at a given site.to a single data frame. Multisample vcf files are not supported.
 #'  vcf files must contain one sample each.  
 #' @param sample_data_file An optional file containing additional sample metadata 
 #' (dose, timepoint, etc.)
@@ -27,7 +49,9 @@
 #' the deletion in the group, or if no deletion is present, the complex variant,
 #'  then adding all alt depths, if there is no deletion or complex variant, 
 #'  then it takes the mean of the reference depths. Default is "take_del".
-#' @returns A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
+#' @param output_granges `TRUE` or `FALSE`; whether you want the mutation data to
+#'   output as a GRanges object. Default output is as a dataframe. 
+#' @returns A data frame or a GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind 
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
@@ -43,6 +67,7 @@
 # C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
 read_vcf <- function(
     vcf_file,
+    vaf_cutoff,
     sample_data_file = NULL,
     sd_sep = "\t",
     regions = c("human", "mouse", "custom"),
@@ -50,8 +75,9 @@ read_vcf <- function(
     rg_sep = "\t",
     species = NULL,
     genome_version = NULL,
-    depth_calc = "take_del"
-) {
+    depth_calc = "take_del",
+    output_granges = FALSE) {
+  
   vcf_file <- file.path(vcf_file)
   
   # Check if a sample identifier is already present in the INFO field
@@ -107,7 +133,7 @@ read_vcf <- function(
   } else {
 
   # Read a single vcf file
-        vcf <- readVcf(vcf_file)
+        vcf <- VariantAnnotation::readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
         vcf <- suppressWarnings(check_and_rename_sample(vcf))
   }
@@ -126,37 +152,10 @@ read_vcf <- function(
   dat <- cbind(dat, info)
   row.names(dat) <- NULL 
 
-  # Check that all required columns are present. 
-  # Change names of columns to default (constants.R op$columns)
- check_and_map_columns <- function(data, column_map, required_columns) {
-   # Map column names using the provided column mapping (case-insensitive)
-   mapped_columns <- names(data)
-   for (col in names(data)) {
-     # Convert column name and mapping key to lowercase for case-insensitive comparison
-     col_lower <- tolower(col)
-     if (col_lower %in% tolower(names(column_map))) {
-       mapped_col_name <- column_map[[tolower(col)]]
-       if (col_lower != tolower(mapped_col_name)) {
-         cat("Expected '", mapped_col_name, "' but found '", col, "', matching columns in input data\n")
-       }
-       mapped_columns[mapped_columns == col] <- mapped_col_name
-     }
-   }
-   names(data) <- mapped_columns
-   
-   # Check if all required columns are present
-   missing_columns <- setdiff(tolower(required_columns), tolower(names(data)))
-   
-   if (length(missing_columns) > 0) {
-     missing_col_names <- paste(missing_columns, collapse = ", ")
-     warning(paste("Some required columns are missing or their synonyms are not found: ", missing_col_names))
-   } 
-   
-   return(data)}
+# Rename columns to default and check for all required columns before proceeding
+ dat <- rename_columns(dat)
+ dat <- check_required_columns(dat, op$base_required_mut_cols)
 
-  # Call the function to check and map columns
-  dat <- check_and_map_columns(dat, op$column, op$base_required_mut_cols)
-  
   # Read in sample data if it's provided
   if (!is.null(sample_data_file)) {
     sampledata <- read.delim(file.path(sample_data_file),
@@ -164,17 +163,19 @@ read_vcf <- function(
                             header = T
                             
     )
+  # Grab the names of the columns that are being added to the data
+  sample_data_columns <- setdiff(names(sampledata), names(dat))
+  # Join the data
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
+    # Add prefix "sample_data_" to the names of the new columns
+    for (col in sample_data_columns) {
+      new_col_name <- paste0("sample_data_", col)
+      names(dat)[names(dat) == col] <- new_col_name
+    }
   }
   
 # Clean up variation_type column to match .mut
-  # REF --> no_variant
-  # sv subtypes and IUPAC symbols --> symbolic
-  # n(ref) = n(alt) > 1 --> mnv
-  # n(ref) > n(alt) == 1 --> deletion
-  # n(ref) == 1 < n(alt) --> insertion
-  # n(ref) != n(alt) & neither == 1 --> "complex"
-# Create an VARLEN column
+# Create varlen column
   dat <- dat %>%
     dplyr::mutate(
       variation_type = tolower(dat$variation_type),
@@ -194,7 +195,7 @@ read_vcf <- function(
              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
               ifelse(.data$variation_type != "symbolic" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 &  .data$nchar_ref > 1, "complex",
                     .data$variation_type)))),
-      VARLEN = 
+      varlen = 
         ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
          ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
                NA))
@@ -219,8 +220,8 @@ if (length(AD) == 0) {
   dat <- dat %>%
     dplyr::mutate(
       no_calls = 0,  # Since AD is missing, no calls can't be calculated
-      vaf = .data$alt_depth / .data$depth  # Calculate vaf using depth
-    )
+      vaf = .data$alt_depth / .data$depth) %>% # Calculate vaf using depth 
+      dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, F, T))
   cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
   cat("vaf calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
   
@@ -279,6 +280,7 @@ dat <- dat %>%
                         .data$total_depth,  .data$ref_depth + .data$var_depth),
     no_calls = .data$depth - .data$total_depth,
     vaf = .data$alt_depth / .data$total_depth) %>%
+  dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, F, T)) %>%
   dplyr::select(-var_depth, -duplicated)
 }
 
@@ -316,6 +318,13 @@ if (regions == "human") {
   }
  
   }
+# Adding region_data_ prefix to regions metadata.
+region_colnames <- names(mcols(region_ranges))
+columns_to_remove <- c("ext_start", "ext_end", "sequence")
+region_colnames <- region_colnames[!region_colnames %in% columns_to_remove]
+# Add prefix to specified columns
+new_colnames <- paste0("region_data_", region_colnames)
+names(GenomicRanges::mcols(region_ranges))[names(GenomicRanges::mcols(region_ranges)) %in% region_colnames] <- new_colnames
 
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
@@ -393,7 +402,14 @@ dat <- ranges_joined %>%
       )
     )
 
-return(dat)
+  if(output_granges) {
+    return(dat)
+  } else {
+    df <- as.data.frame(dat)
+    df <- df %>%
+      dplyr::rename(contig = seqnames)
+    return(df)
+  }
 }
 
 

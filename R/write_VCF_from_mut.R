@@ -10,6 +10,19 @@
 #' @export
 write_VCF_from_mut <- function(mutation_data,
                                vcf_out = "./mutation_output.vcf") {
+ 
+   # Check if data is provided as data frame: if so, convert to GRanges.
+  if (inherits(mutation_data, "data.frame")) { 
+   # Turn into GRanges
+      mutation_data <- makeGRangesFromDataFrame(
+        df = mutation_data,
+        keep.extra.columns = T,
+        seqnames.field = "contig",
+        start.field = "start",
+        end.field = "end",
+        starts.in.df.are.0based = FALSE
+      ) }
+  
   muts_for_vcf <-
     VariantAnnotation::makeVRangesFromGRanges(mutation_data,
                                               sampleNames.field = "sample",

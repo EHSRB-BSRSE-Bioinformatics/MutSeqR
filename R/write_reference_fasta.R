@@ -12,6 +12,8 @@
 write_reference_fasta <- function(ref_ranges,
                                   fasta_out = "./reference_output.fasta") {
   ref <- ref_ranges$sequence
+  # Convert to DNAStringSet
+  ref <- Biostrings::DNAStringSet(ref)
   names(ref) <- make.unique(as.vector(seqnames(ref_ranges)))
   Biostrings::writeXStringSet(ref,
                   fasta_out,

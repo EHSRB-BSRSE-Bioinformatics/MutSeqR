@@ -1,56 +1,193 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
 # Duplex Sequencing Analysis
 
 ## Pre-abmle
 
 To do: write a bit about the project, the scope, why it's necessary.
 
-Provide a little background on duplex sequencing, describe the technology
-briefly, and give some context for the type of data we are meant to be
-processing with this package.
+Provide a little background on duplex sequencing, describe the
+technology briefly, and give some context for the type of data we are
+meant to be processing with this package.
+
+## Installation
+
+Install from github with:
+
+```{r}
+# install.packages("devtools")
+devtools::install_github("EHSRB-BSRSE-Bioinformatics/duplex-sequencing", auth_token = "your personal_access_token from github")
+```
 
 ## Data import
 
-The first step is importing data. We have written a function called 
-`import_mut_data` to accomplish this in one line. Since the main goal of this 
-package is to generate summary statistics, visualization, exploratory analysis, 
-and other post-processing tasks such as mutational signature analysis or 
-generalized linear modeling, the main piece of information you want to import is
-the `.mut` file, the schema for which is described here:
+The main goal of this package is to generate summary statistics,
+visualization, exploratory analysis, and other post-processing tasks
+such as mutational signature analysis or generalized linear modeling.
+The main piece of information you want to import is the variant file.
+Your variant file can be imported as either a `.mut` file using the
+function `import_mut_data` or as a `.vcf` file using the function
+`read_vcf`.
 
-(example mut file with columns and their descriptions?)
+### Importing .mut files
 
-It is critical that this .mut file gets annotated with information such as the
-genomic region from which the mutation originates, some information about the 
-sample from which the mutation orignates, and that each row (mutation) recieves
-a calculated group depth and group frequency (of interest for later analyses).
+General usage: Indicate the file path to your .mut file using the
+mut_file parameter. If you have sample metadata, then you can indicate
+the file path to your sample data file using the sample_data_file
+parameter. Set the vaf_cutoff to flag ostensibly germline mutations that
+have a variant allele fraction greater than this parameter. Finally,
+load in the metadata for TwinStrand's Mutagenesis Panel^(TM)^ using the
+regions parameter; "mouse" or "human".
 
-We do this by first importing the `.mut` file as a data frame, and then joining 
-it with that other data (e.g., regions file), and finally converting this to a 
-`granges` object. This facilitates use in other packages and makes doing 'genome
- math' on the ranges significantly easier.
+```{r}
+library(DupSeqR)
+# mut_data <- "file path to .mut file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_mut_data(mut_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "mouse" # Mouse Mutagenesis Panel
+                  )
+```
+
+If you are not using one of TwinStrand's Mutagenesis Panels^(TM)^, then
+you will add your target regions' metadata using a custom_regions_file.
+Use parameters to indicate your file's file path, delimiter, and whether
+the region ranges are 0-based or 1-based.
+
+```{r}
+# mut_data <- "file path to .mut file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_mut_data(mut_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "custom",
+                  custom_regions_file = "file path to your regions file",
+                  rg_sep = "\t", # tab-delimited
+                  is_0_based = FALSE # Ranges are 1-based 
+                 )
+```
+
+Required columns for your `.mut` file are listed in the table below. We
+recognize that column names may differ. Therefore, we have implemented
+some default column name synonyms. If your column name matches one of
+our listed synonyms, it will automatically be changed to match our set
+values. For example, your `contig` column may be named `chr` or
+`chromosome`. After importing your data, this synonymous column name
+will be changed to `contig`. Column names are case-insensitive. A list
+of column name synonyms are listed alongside the column definitions
+below.
+
+**Table 1.** **Required columns for .mut file import.**
+| Column Name      | Definition                               | Synonyms            |
+|-------------|------------------------------------------|---------------------|
+| contig      | The reference sequence name.              | chr; chromosome; seqnames|
+| start       | The 0-based start position of the feature | position           |
+| end         | The half-open end position of the feature  |                   |
+| sample      | The sample name.                          | sample_name; sample_id |
+| ref         | The reference allele at this position.    |                     |
+| alt         | The left-aligned, alternate allele at this position. | alt.value|
+| alt_depth   | The read depth supporting the alternate allele.| var_depth      |
+| depth_col   | The total read depth at this position. This column can be total_depth (excluding N-calls) or depth (including N-calls; if total_depth is not available).| informative_somatic_depth = total_depth|
+| variation_type | The category to which this variant is assigned.| type; mut_type; variant_type|
+| context     | The local reference trinucleotide context at this position (e.g. ATC - not necessarily the transcript codon).| sequence_context; flanking_sequence   |
+
+### Importing .vcf files
+
+Required fields for your `.vcf` file are listed in the table below.
+
+|              | **Field Name** | **Definition** |
+|--------------|-----------------|-----------------|
+| **FIXED FIELDS** | `CHROM` | The reference sequence name. |
+|              | `POS` | The 0-based start position of the feature in contig. |
+|              | `REF` | The reference allele at this position. |
+|              | `ALT` | The left-aligned, alternate allele at this position. |
+| **FORMAT FIELDS** | `AD` | The allelic depths for the reference and alternate alleles in the order listed. |
+|              | `DP` | The total read depth at this position (including N-calls). Equivalent to `depth`. |
+|              | `VD` | Variant Depth. Equivalent to `alt_depth`. |
+| **INFO FIELDS** | `TYPE` | The category to which this variant is assigned. Equivalent to `variation_type`. |
+|              | `END` | The half-open end position of the feature in contig. |
+| *SUGGESTED INFO FIELDS* | `sample` | An identifying field for your samples; either in the INFO field or as the header to the FORMAT field. |
+|              | `SVTYPE` | Structural variant types; INV DUP DEL INS FUS. |
+|              | `SVLEN` | Length of the structural variant in base pairs. |
+
+
+The column variation_type/TYPE may contain these values:
+| `variation_type` | Definition                                          |
+|------------------|-----------------------------------------------------|
+| no_variant       | No variation, the null-case.                        |
+| snv              | Single nucleotide variant.                          |
+| mnv              | Multiple nucleotide variant.                        |
+| insertion        | Insertion, length of REF = 1bp.                     |
+| deletion         | Deletion, length of ALT = 1bp.                      |
+| complex          | Length of REF and ALT differ and are both > than 1 bp. |
+| symbolic         | Structural variant or IUPAC ambiguity code.         |
+
+
+It is critical that the variant file gets annotated with information
+such as the genomic region from which the mutation originates, some
+information about the sample from which the mutation originates, and
+that each row (mutation) receives a calculated group depth and group
+frequency (of interest for later analyses).
+
+We do this by first importing the variant file as a data frame, and then
+joining it with the metadata (e.g., sample_data_file, regions file), and
+creating some columns that will be helpful for calculating frequencies
+in later analyses. Finally, our functions provide the option to convert
+the resulting data frame into a `granges` object. This facilitates use
+in other packages and makes doing 'genome math' on the ranges
+significantly easier.
+
+Columns that are added to the resulting data frame are listed below.
+
+| Column Name        | Definition                                        |
+|--------------------|---------------------------------------------------|
+| `nchar_ref`        | The length (in bp) of the reference allele.       |
+| `nchar_alt`        | The length (in bp) of the alternate allele.       |
+| `varlen`           | The length (in bp) of the variant.                |
+| `total_depth`      | The total read depth at this position, excluding N-calls. |
+| `vaf`              | The variant allele fraction. Calculated as `alt_depth`/`depth_col` where `depth_col` can be `total_depth` or `depth`. |
+| `is_germline`      | TRUE or FALSE. Flags ostensible germline mutations (`vaf` > `vaf_cutoff`). |
+| `ref_depth`        | The total read depth at the position calling for the reference allele. Calculated as `depth_col` - `alt_depth` where `depth_col` can be `total_depth` or `depth`. |
+| `subtype`          | The substitution type for the snv variant (12-base spectrum; e.g., A>C). |
+| `short_ref`        | The reference base at this position.              |
+| `normalized_subtype` | The C/T-based substitution type for the snv variant (6-base spectrum; e.g., A>C -> T>G). |
+| `normalized_ref`   | The reference base in C/T-base notation for this position (e.g., A -> T). |
+| `context_with_mutation` | The substitution type for the snv variant including the two flanking nucleotides (192-trinucleotide spectrum; e.g., T[A>C]G). |
+| `normalized_context_with_mutation` | The C/T-based substitution type for the snv variant including the two flanking nucleotides (96-base spectrum e.g., T[A>C]G -> C[T>G]A). |
+| `normalized_context` | The trinucleotide context in C/T base notation for this position (e.g., TAG -> CTA). |
+| `gc_content`       | % GC of the trinucleotide context at this position. |
+
 
 ### Metadata: an important consideration
 
-The other important component of importing your data for proper use is to assign
- each mutation to a biological sample, and also make sure that some additional 
- information about each sample is present (e.g., a chemical treatment, a dose, 
- etc.). This is done by providing a sample data file (tab delimited, comma 
- delimited, etc.; the choice is up to the user, but the delimiter of the file 
- must be specified as a parameter in the function). Importantly, this is a file
- that would be analogous to "colData", or "column data", a term often used in 
- the `DESeq2` package. Hence, it must contain some information about an existing
- column in your `.mut` file, which is typically going to be sample. So the first
- column in your sample data file should indeed be `sample`. Then, additional 
- columns such as `dose` or `tissue` or `treatment` can be added, and these 
- columns will be joined with your `.mut` file to capture that information and
-  associate it with each mutation.
-  
+The other important component of importing your data for proper use is
+to assign each mutation to a biological sample, and also make sure that
+some additional information about each sample is present (e.g., a
+chemical treatment, a dose, etc.). This is done by providing a sample
+data file (tab delimited, comma delimited, etc.; the choice is up to the
+user, but the delimiter of the file must be specified as a parameter in
+the function). Importantly, this is a file that would be analogous to
+"colData", or "column data", a term often used in the `DESeq2` package.
+Hence, it must contain some information about an existing column in your
+variant file, which is typically going to be sample. So the first column
+in your sample data file should indeed be `sample`. Then, additional
+columns such as `dose` or `tissue` or `treatment` can be added, and
+these columns will be joined with your variant file to capture that
+information and associate it with each mutation.
+
 ### Other Notes
 
-When first importing a `.mut` file, it is preferred to keep non-variant rows.
-This allows the calculuation of mutation frequencies. The data set can be pared
-down later to include only mutations of interest (SNVs, indels, SVs, or any 
-combination).
+When first importing a `.mut` file, it is preferred to keep non-variant
+rows. This allows the calculuation of mutation frequencies. The data set
+can be pared down later to include only mutations of interest (SNVs,
+indels, SVs, or any combination).
 
 To be filled in more...
 
