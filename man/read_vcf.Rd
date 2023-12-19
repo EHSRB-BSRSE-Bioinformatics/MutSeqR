@@ -21,8 +21,28 @@ read_vcf(
 \arguments{
 \item{vcf_file}{The path to the .vcf file  to be imported. If you
 specify a folder, the function will attempt to read all files in the folder and
-combine them in
-@param vaf_cutoff Add \code{is_germline} column that identifies ostensibly germline variants using
+combine them.
+Required fields are listed below
+\itemize{
+\item FIXED FIELDS:
+\item \code{CHROM}: The reference sequence name.Equivalent to \code{contig}
+\item \code{POS}: 0-based start position of the feature in contig.
+\item \code{REF}: The reference allele at this position
+\item \code{ALT}: The left-aligned, normalized, alternate allele at this position.
+\item FORMAT FIELDS:
+\item \code{AD}: The allelic depths for the reference and alternate alleles in the order listed.
+\item \code{DP}: The total read depth at this position (including N-calls). Equivalent to \code{depth}.
+\item \code{VD}: Variant Depth. Equivalent to \code{alt_depth}.
+\item INFO FIELDS
+\item \code{TYPE}: The category to which this variant is assigned. Equivalent to \code{variation_type}.
+\item \code{END}: The half-open end position of the feature in contig.
+\item SUGGESTED INFO FIELDS:
+\item \code{sample}: An identifying field for your samples; either in the INFO field or as the header to the FORMAT field.
+\item \code{SVTYPE}: Structural variant types; INV DUP DEL INS FUS.
+\item \code{SVLEN}: Length of the structural variant in base pairs.
+}}
+
+\item{vaf_cutoff}{Add \code{is_germline} column that identifies ostensibly germline variants using
 a cutoff for variant allele fraction (VAF). There is no default value provided,
 but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
 flag variants that are present at a frequency greater than this value
@@ -57,8 +77,9 @@ total_depth by taking the mean reference depth and then adding all the alt depth
 take_del calculates the total_depth by choosing only the reference depth of
 the deletion in the group, or if no deletion is present, the complex variant,
 then adding all alt depths, if there is no deletion or complex variant,
-then it takes the mean of the reference depths. Default is "take_del".
-@param output_granges \code{TRUE} or \code{FALSE}; whether you want the mutation data to
+then it takes the mean of the reference depths. Default is "take_del".}
+
+\item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation data to
 output as a GRanges object. Default output is as a dataframe.}
 }
 \value{

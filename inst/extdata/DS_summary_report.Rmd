@@ -49,7 +49,9 @@ project_genome <- "mm10"
 # Example: 
 # Import PRC BM data
 mut_data <- "../../../Test Data/prj00125_PRC_BM_variant-calls.genome.mut"
+vcf_data <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test"
 sample_data <- "../../../Test Data/PRC_BM_sample_data.txt"
+sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt"
 
 mutation_data <-
   import_mut_data(mut_file = mut_data,

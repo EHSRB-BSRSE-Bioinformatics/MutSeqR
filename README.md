@@ -85,55 +85,6 @@ of column name synonyms are listed alongside the column definitions
 below.
 
 **Table 1.** **Required columns for .mut file import.**
-
-<<<<<<< HEAD
-
-+------------+----------------------------------------+-------------------+
-| **Column   | **Definition**                         | **Synonyms**      |
-| Name**     |                                        |                   |
-+============+========================================+===================+
-| `contig`   | The reference sequence name.           | chr               |
-|            |                                        |                   |
-|            |                                        | chromosome        |
-|            |                                        |                   |
-|            |                                        | seqnames          |
-+------------+----------------------------------------+-------------------+
-| `start`    | The 0-based start position of the      | position          |
-|            | feature in contig.                     |                   |
-+------------+----------------------------------------+-------------------+
-| `end`      | The half-open end position of the      |                   |
-|            | feature in contig.                     |                   |
-+------------+----------------------------------------+-------------------+
-| `sample`   | The sample name.                       | sample_name       |
-|            |                                        |                   |
-|            |                                        | sample_id         |
-+------------+----------------------------------------+-------------------+
-| `ref`      | The reference allele at this position. |                   |
-+------------+----------------------------------------+-------------------+
-| `alt`      | The left-aligned, alternate allele at  | alt.value         |
-|            | this position.                         |                   |
-+------------+----------------------------------------+-------------------+
-| `          | The read depth supporting the          | var_depth         |
-| alt_depth` | alternate allele.                      |                   |
-|            |                                        | variant_depth     |
-+------------+----------------------------------------+-------------------+
-| depth_col  | The total read depth at this position. | informat          |
-|            | This column can be `total_depth`       | ive_somatic_depth |
-|            | (excluding N-calls) or `depth`         | = total_depth     |
-|            | (including N-calls; if `total_depth`   |                   |
-|            | is not available).                     |                   |
-+------------+----------------------------------------+-------------------+
-| `varia     | The category to which this variant is  | type              |
-| tion_type` | assigned.                              |                   |
-|            |                                        | mutation_type     |
-|            |                                        |                   |
-|            |                                        | variant_type      |
-+------------+----------------------------------------+-------------------+
-| `context`  | The local reference trinucleotide      | sequence_context  |
-|            | context at this position (e.g. ATC -   |                   |
-|            | not necessarily the transcript codon). | flanking_sequence |
-+------------+----------------------------------------+-------------------+
-=======
 | Column Name      | Definition                               | Synonyms            |
 |-------------|------------------------------------------|---------------------|
 | contig      | The reference sequence name.              | chr; chromosome; seqnames|
@@ -146,7 +97,6 @@ below.
 | depth_col   | The total read depth at this position. This column can be total_depth (excluding N-calls) or depth (including N-calls; if total_depth is not available).| informative_somatic_depth = total_depth|
 | variation_type | The category to which this variant is assigned.| type; mut_type; variant_type|
 | context     | The local reference trinucleotide context at this position (e.g. ATC - not necessarily the transcript codon).| sequence_context; flanking_sequence   |
->>>>>>> 341d4116471793204c0c8f1cac9e54214c4a868a
 
 ### Importing .vcf files
 
@@ -154,18 +104,18 @@ Required fields for your `.vcf` file are listed in the table below.
 
 |              | **Field Name** | **Definition** |
 |--------------|-----------------|-----------------|
-| **FIXED FIELDS** | `contig` | The reference sequence name. |
-|              | `start` | The 0-based start position of the feature in contig. |
+| **FIXED FIELDS** | `CHROM` | The reference sequence name. |
+|              | `POS` | The 0-based start position of the feature in contig. |
 |              | `REF` | The reference allele at this position. |
 |              | `ALT` | The left-aligned, alternate allele at this position. |
 | **FORMAT FIELDS** | `AD` | The allelic depths for the reference and alternate alleles in the order listed. |
-|              | `DP` | The total read depth at this position (excluding N-calls). Equivalent to `depth`. |
+|              | `DP` | The total read depth at this position (including N-calls). Equivalent to `depth`. |
 |              | `VD` | Variant Depth. Equivalent to `alt_depth`. |
 | **INFO FIELDS** | `TYPE` | The category to which this variant is assigned. Equivalent to `variation_type`. |
 |              | `END` | The half-open end position of the feature in contig. |
 | *SUGGESTED INFO FIELDS* | `sample` | An identifying field for your samples; either in the INFO field or as the header to the FORMAT field. |
 |              | `SVTYPE` | Structural variant types; INV DUP DEL INS FUS. |
-|              | `SVLEN` | Length of the structural variant in base pairs |
+|              | `SVLEN` | Length of the structural variant in base pairs. |
 
 
 The column variation_type/TYPE may contain these values:

@@ -7,10 +7,11 @@
 calculate_mut_freq(
   data,
   cols_to_group = c("sample", "description"),
-  subtype_resolution = "base_6",
+  subtype_resolution = "base_96",
+  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
   vaf_cutoff,
   summary = TRUE,
-  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic")
+  keep_metadata = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,10 @@ considered. Options are "none", "type", base_6", "base_12", "base_96", and "base
 Could add 24 base option eventually. By selecting "none", this will use the
 total depth across all the selected metadata columns.}
 
+\item{variant_types}{Include these variant types. A vector of one or more
+"snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
+Default includes all variants.}
+
 \item{vaf_cutoff}{Exclude rows from frequency calculations
 with a variant allele fraction (VAF) greater than this value. No default provided.}
 
@@ -37,8 +42,9 @@ this to false returns all columns in the original data, which might make
 plotting more difficult, but may provide additional flexibility to power
 users.}
 
-\item{variant_types}{Include these variant types. A vector of one or more
-"snv", "deletion", "insertion", "symbolic", "mnv", "no_variant"}
+\item{keep_metadata}{TRUE or FALSE. When returning a summary table, whether
+to retain sample and regions metadata when grouping by sample or description
+respectively.}
 
 \item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
 This value determines the fraction of reads that
