@@ -13,12 +13,12 @@ output:
     toc: yes
 params:
   group_var: "dose"
-  vaf_cutoff: 0.01
+  vaf_cutoff: 0.1
   species: "mouse"
   project_title: "Mouse Test"
   genome: "mm10"
-  mut_data: "../Test Data/prj00125_PRC_BM_variant-calls.genome.mut"
-  sample_data: "../Test Data/PRC_BM_sample_data.txt"
+  mut_data: 
+  sample_data: 
 ---
 
 ```{r load_libraries, warning=F, echo=F}
@@ -40,8 +40,6 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 
 group_var <- "dose"
 species <- "mouse"
-mut_data <- "../../../Test Data/mut files"
-sample_data <- "../../../Test Data/PRC_ST_sample_data.txt"
 vaf_cutoff <- 0.1
 project <- "Mouse Test"
 project_genome <- "mm10"
@@ -49,15 +47,13 @@ project_genome <- "mm10"
 # Example: 
 # Import PRC BM data
 mut_data <- "../../../Test Data/prj00125_PRC_BM_variant-calls.genome.mut"
-vcf_data <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test"
 sample_data <- "../../../Test Data/PRC_BM_sample_data.txt"
-sample_dat <- "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt"
 
 mutation_data <-
   import_mut_data(mut_file = mut_data,
                   sample_data_file = sample_data,
-                  regions = "mouse",
-                  vaf_cutoff = 0.1)
+                  regions = species,
+                  vaf_cutoff = vaf_cutoff)
 
 ```
 
