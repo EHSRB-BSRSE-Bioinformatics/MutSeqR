@@ -6,13 +6,12 @@
 \usage{
 calculate_mut_freq(
   data,
-  cols_to_group = "sample",
-  subtype_resolution = "6base",
-  vaf_cutoff = 0.1,
-  clonality_cutoff = 0.3,
+  cols_to_group = c("sample", "description"),
+  subtype_resolution = "base_96",
+  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
+  vaf_cutoff,
   summary = TRUE,
-  variant_types = c("snv", "indel", "mnv", "sv"),
-  custom_column_names = list(chr = "seqnames")
+  keep_metadata = TRUE
 )
 }
 \arguments{
@@ -26,18 +25,16 @@ the frequency by \code{sample}. Other options might include \code{locus}, or,
 \item{subtype_resolution}{At what resolution should the frequencies be
 calculated? This is an important consideration because the reference bases
 sequencing depth will differ depending on which mutation subtypes are being
-considered. Options are "none", 6base", "12base", "96base", and "192base".
+considered. Options are "none", "type", base_6", "base_12", "base_96", and "base_192".
 Could add 24 base option eventually. By selecting "none", this will use the
 total depth across all the selected metadata columns.}
 
-\item{vaf_cutoff}{Exclude rows from frequency calculations
-with a variant allele fraction (VAF) greater than this value. Default is 0.1.}
+\item{variant_types}{Include these variant types. A vector of one or more
+"snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
+Default includes all variants.}
 
-\item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
-This value determines the fraction of reads that
-is considered a constitutional variant. If a mutation is present at a
-fraction higher than this value, the reference base will be swapped,
-and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
+\item{vaf_cutoff}{Exclude rows from frequency calculations
+with a variant allele fraction (VAF) greater than this value. No default provided.}
 
 \item{summary}{TRUE or FALSE, whether to return a summary table (i.e., where
 only relevant columns for frequencies and groupings are returned). Setting
@@ -45,16 +42,15 @@ this to false returns all columns in the original data, which might make
 plotting more difficult, but may provide additional flexibility to power
 users.}
 
-\item{variant_types}{Include these variant types. A vector of one or more
-"snv", "indel", "sv", "mnv", "no_variant"}
+\item{keep_metadata}{TRUE or FALSE. When returning a summary table, whether
+to retain sample and regions metadata when grouping by sample or description
+respectively.}
 
-\item{custom_column_names}{A list of names to specify the meaning of column
-headers. Since column names can vary with data, this might be necessary to
-digest the mutation data table properly. Typical defaults are set, but can
-be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
-examples. You can change one or more of these. The most likely column to
-need changing is the "chromosome name" (chr), which by default is "seqnames"
-but could be "contig", "chr", or others.  (TODO - MAKE EXAMPLES)}
+\item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
+This value determines the fraction of reads that
+is considered a constitutional variant. If a mutation is present at a
+fraction higher than this value, the reference base will be swapped,
+and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
 }
 \value{
 A data frame with the mutation frequency calculated.

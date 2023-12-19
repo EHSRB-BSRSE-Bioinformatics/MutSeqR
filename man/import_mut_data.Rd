@@ -5,55 +5,118 @@
 \title{Import a .mut file}
 \usage{
 import_mut_data(
-  mut_file =
-    "C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/mut files",
+  mut_file,
+  mut_sep = "\\t",
   rsids = F,
   sample_data_file = NULL,
   sd_sep = "\\t",
-  mut_sep = "\\t",
   vaf_cutoff,
   regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
-  rg_sep = "\\t"
+  rg_sep = "\\t",
+  is_0_based = TRUE,
+  depth_calc = "take_del",
+  custom_column_names = NULL,
+  output_granges = FALSE
 )
 }
 \arguments{
-\item{mut_file}{The .mut file containing mutation data to be imported. If you
-specify a folder, function will attempt to read all files in the folder and
+\item{mut_file}{"filepath". The .mut file containing mutation data to be imported. If you
+specify a folder, the function will attempt to read all files in the folder and
 combine them into a single data frame.
-Columns required are: depth col = (depth & no_calls or total_depth),
-alt_depth, context, ref, variation_type, contig, start
-(Synonymous names are accepted)}
+Required columns are listed below. Synonymous names for these columns are accepted.
+\itemize{
+\item \code{contig}: The reference sequence name.
+\item \code{start}: 0-based start position of the feature in contig.
+\item \code{end}: half-open end position of the feature in contig.
+\item \code{sample}: The sample name.
+\item \code{ref}: The reference allele at this position
+\item \code{alt}: The left-aligned, normalized, alternate allele at this position.
+\item \code{alt_depth}: The read depth supporting the alternate allele.
+\item depth col: The total read depth at this position. This column can be
+\code{total_depth} (excluding N-calls) or \code{depth} (including N-calls; if \code{total_depth}
+is not available).
+\item \code{variation_type}: The category to which this variant is assigned.
+\item \code{context}: The local reference trinucleotide context at this position (e.g. ATC - not
+necessarily the transcript codon)
+}}
 
-\item{rsids}{TRUE or FALSE; whether or not the .mut file contains rsID information
-(existing SNPs)}
+\item{mut_sep}{The delimiter for importing the .mut file. Default is tab-delimited.}
 
-\item{sample_data_file}{An optional file containing additional sample metadata
-(dose, timepoint, etc.)}
+\item{rsids}{\code{TRUE} or \code{FALSE}; whether or not the .mut file contains rsID information
+(existing SNPs).}
 
-\item{sd_sep}{The delimiter for importing sample metadata tables}
+\item{sample_data_file}{"filepath". An optional file containing additional sample metadata
+(dose, tissue, timepoint, etc.).}
 
-\item{mut_sep}{The delimiter for importing the .mut file}
+\item{sd_sep}{The delimiter for importing sample metadata table. Default is tab-delimited.}
 
-\item{vaf_cutoff}{Add a column to identify ostensibly germline variants using
+\item{vaf_cutoff}{The funiton will add \code{is_germline} column that identifies ostensibly germline variants using
 a cutoff for variant allele fraction (VAF). There is no default value provided,
-but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
-will remove variants that are present at a frequency greater than this value
+but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this will
+flag variants that are present at a frequency greater than this value
 at a given site.}
 
-\item{regions}{"human", "mouse", or "custom". The argument refers to the
-TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide file path in custom_regions_file. TO DO: add rat.}
+\item{regions}{Values are \code{c("human", "mouse", "custom")}. Indicates the target panel used for Duplex Sequencing.
+The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel.
+If "custom", provide the file path of your regions file in \code{custom_regions_file}. TO DO: add rat.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom,
-provide the file path for the tab-delimited file containing regions metadata.
-Required columns are "contig", "start", and "end".}
+\item{custom_regions_file}{"filepath". If \code{regions} is set to "custom",
+provide the file path for the file containing regions metadata.
+Required columns are \code{contig}, \code{start}, and \code{end}.}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file.
+\item{rg_sep}{The delimiter for importing the \code{custom_regions_file}.
 Default is tab-delimited.}
+
+\item{is_0_based}{Indicates whether the \code{custom_regions_file} target region coordinates are
+0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.}
+
+\item{depth_calc}{Values are \code{c("take_del", "take_mean")}. In the instance when
+there are two or more calls at the same location within a sample, and the
+depths differ, this parameter chooses the method for resolving the difference.
+This occurs when a deletion is called in the data. It will be called alongside a no_variant.
+"take_mean" calculates the depth column by taking the mean of all depths in the group.
+"take_del" calculates the depth column by choosing only the depth of
+the deletion in the group, or if no deletion is present, the complex variant.
+If there is no deletion or complex variant, then it takes the mean of the
+depths within the group. Default is "take_del". depth_col = \code{total_depth} or \code{depth}.}
+
+\item{custom_column_names}{A list of names to specify the meaning of column
+headers. Since column names can vary with data, this might be necessary to
+digest the mutation data table properly. Typical defaults are set, but can
+be substituted in the form of \code{list(total_depth = "my_custom_depth_name",  sample = "my_custom_sample_column_name")}. For a comprehensive list, see
+examples. You can change one or more of these.}
+
+\item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation data to
+output as a GRanges object. Default output is as a dataframe.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the location, type, and other data.
+Output Column Definitions:
+\itemize{
+\item \code{nchar_ref}: The length (in bp) of the reference allele.
+\item \code{nchar_alt}: The length (in bp) of the alternate allele.
+\item \code{varlen}: The length (in bp) of the variant.
+\item \code{total_depth}: The total read depth at this position, excluding N-calls.
+\item \code{vaf}: The variant allele fraction. Calculated as \code{alt_depth}/\code{depth_col}
+where \code{depth_col} can be \code{total_depth} or \code{depth}.
+\item \code{is_germline}: TRUE or FALSE. Flags ostensible germline mutations (\code{vaf} > \code{vaf_cutoff}).
+\item \code{ref_depth}: The total read depth at the position calling for the reference allele.
+Calculated as \code{depth_col} - \code{alt_depth} where \code{depth_col} can be \code{total_depth} or \code{depth}.
+\item \code{subtype}: The substitution type for the snv variant (12-base spectrum; e.g. A>C)
+\item \code{short_ref}: The reference base at this position.
+\item \code{normalized_subtype}: The C/T-based substitution type for the snv variant
+(6-base spectrum; e.g. A>C -> T>G)
+\item \code{normalized_ref}: The reference base in C/T-base notation for this position
+(e.g. A -> T).
+\item \code{context_with_mutation}: The substitution type fo the snv variant including
+the two flanking nucleotides (192-trinucleotide spectrum; e.g. \verb{T[A>C]G})
+\item \code{normalized_context_with_mutation}: The C/T-based substitution type for the
+snv variant including the two flanking nucleotides (96-base spectrum e.g. \verb{T[A>C]G} -> \verb{C[T>G]A})
+\item \code{normalized_context}: The trinucleotide context in C/T base notation for this
+position (e.g. TAG -> CTA).
+\item \code{gc_content}: \% GC of the trinucleotide context at this position.
+}
 }
 \description{
 Imports a .mut file into the local R environment.
