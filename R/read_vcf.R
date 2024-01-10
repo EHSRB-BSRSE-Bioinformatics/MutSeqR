@@ -167,11 +167,6 @@ read_vcf <- function(
   sample_data_columns <- setdiff(names(sampledata), names(dat))
   # Join the data
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
-    # Add prefix "sample_data_" to the names of the new columns
-    for (col in sample_data_columns) {
-      new_col_name <- paste0("sample_data_", col)
-      names(dat)[names(dat) == col] <- new_col_name
-    }
   }
   
 # Clean up variation_type column to match .mut
@@ -318,13 +313,6 @@ if (regions == "human") {
   }
  
   }
-# Adding region_data_ prefix to regions metadata.
-region_colnames <- names(mcols(region_ranges))
-columns_to_remove <- c("ext_start", "ext_end", "sequence")
-region_colnames <- region_colnames[!region_colnames %in% columns_to_remove]
-# Add prefix to specified columns
-new_colnames <- paste0("region_data_", region_colnames)
-names(GenomicRanges::mcols(region_ranges))[names(GenomicRanges::mcols(region_ranges)) %in% region_colnames] <- new_colnames
 
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))

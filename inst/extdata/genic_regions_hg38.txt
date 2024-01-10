@@ -1,4 +1,4 @@
-contig	start	end	coordinates	target_size	description	location_relative_to_genes	gene
+contig	start	end	coordinates	target_size	description	genic_context	gene
 chr11	108510787	108513187	chr11:108510787-108513187	2400	region_1111	genic	EXPH5
 chr13	75803912	75806312	chr13:75803912-75806312	2400	region_1501	genic	LMO7
 chr14	74661755	74664155	chr14:74661755-74664155	2400	region_1725	genic	AREL1
