@@ -8,23 +8,27 @@
 
 rename_columns <- function(data,
                            column_map = op$column) {
+  # Remove dots and replace with underscores
+  colnames(data) <- tolower(gsub("\\.+", "_", #deals with middle periods
+                                gsub("(\\.+)?$", "", #deals with trailing periods
+                                     gsub("^((X\\.+)|(\\.+))?", "", #deals with beginning X. and periods
+                                          colnames(data))),
+                                perl = TRUE))
+
   # Map column names using the provided column mapping (case-insensitive)
-  mapped_columns <- names(data)
-  for (col in names(data)) {
-    # Convert column name and mapping key to lowercase for case-insensitive comparison
-    col_lower <- tolower(col)
-    if (col_lower %in% tolower(names(column_map))) {
-      mapped_col_name <- column_map[[tolower(col)]]
-      if (col_lower != tolower(mapped_col_name)) {
-        cat("Expected '", mapped_col_name, "' but found '", col, "', matching columns in input data\n")
+  for (col in colnames(data)) {
+    if (col %in% names(column_map)) {
+      default_name <- column_map[[col]]
+      
+      if (col != default_name) {
+        cat("Expected '", default_name, "' but found '", col, "', matching columns in input data\n")
+        colnames(data)[colnames(data) == col] <- default_name
       }
-      mapped_columns[mapped_columns == col] <- mapped_col_name
     }
   }
-  names(data) <- mapped_columns
   
-  return(data)}
-
+  return(data)
+}
 
 #' Check that all required columns are present before proceeding with the function
 #' 
