@@ -71,7 +71,7 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 if(params$mut_file_type == "mut") {
 mutation_data <-
   import_mut_data(mut_file = params$mut_data,
-                  sample_data_file = params$sample_data,
+                  sample_data_file = sample_data,
                   regions = params$regions,
                   custom_regions_file = params$custom_regions_file,
                   is_0_based = params$is_0_based,
@@ -348,14 +348,14 @@ cpg_summary_subtype <- calculate_mut_freq(data = as.data.frame(cpg_mutations),
                                        
 
 # Mutations at CpG sites...
-# cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
-#   add_count(!!ensym(params$group_var), alt_depth, name = "total_muts_per_group") %>%
-#   ungroup() %>%
-#   group_by(subtype, !!ensym(params$group_var), total_muts_per_group) %>%
-#   tally() %>%
-#   mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
-#   mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
-# 
+cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
+  add_count(dose, alt_depth, name = "total_muts_per_group") %>%
+  ungroup()#%>%
+  group_by(subtype, !!ensym(params$group_var), total_muts_per_group) %>%
+  tally() %>%
+  mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
+  mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
+
 # # Mutations at CpG sites, broken down by trinucleotide mutation context
 # cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   group_by(!!ensym(group_var)) %>%

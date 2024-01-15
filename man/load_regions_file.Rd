@@ -7,9 +7,9 @@
 load_regions_file(regions, custom_regions_file = NULL, rg_sep = "\\t")
 }
 \arguments{
-\item{regions}{"human", "mouse", or "custom". The argument refers to the
+\item{regions}{"human", "mouse", 'rat', or "custom". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel. If custom,
-provide file path in custom_regions_file. TO DO: add rat.}
+provide file path in custom_regions_file.}
 
 \item{custom_regions_file}{"filepath". If regions is set to custom,
 provide the file path for the tab-delimited file containing regions metadata.
