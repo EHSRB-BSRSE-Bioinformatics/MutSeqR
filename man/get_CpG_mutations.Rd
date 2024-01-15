@@ -7,17 +7,23 @@
 get_CpG_mutations(
   regions,
   mut_data,
-  variant_types = c("snv", "indel", "mnv", "sv"),
+  variant_types = c("snv", "insertion", "deletion", "mnv", "symbolic"),
   include_no_variants = T,
   motif = "CG"
 )
 }
 \arguments{
-\item{regions}{A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.}
+\item{regions}{A GRanges object containing the genomic regions of interest
+in which to look for CpG sites. Must have the metadata column "sequence"
+populated with the raw nucleotide sequence to search for CpGs. This object can be
+obtained using the get_seq.R function.}
 
-\item{mut_data}{A GRanges object containing the mutation data to be interrogated.}
+\item{mut_data}{A dataframe or GRanges object containing the mutation data to
+be interrogated.}
 
-\item{variant_types}{TODO Copy in info}
+\item{variant_types}{Include these variant types. A vector of one or more
+"snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
+Default includes all variants.}
 
 \item{include_no_variants}{TRUE or FALSE to indicate whether the table should
 include CpG sites with no variants. Useful if you want to know how many of
@@ -27,8 +33,10 @@ the potential sites were mutated.}
 an arbitrary string to look at different motifs. Use with caution.}
 }
 \value{
-A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
+A GRanges object where each range is a mutation at a CpG site
+(a subset of mutations from the larger object provided to the function).
 }
 \description{
-Subset the mutations provided and return only mutations that are found at CpG sites.
+Subset the mutation data provided and return only mutations that are found
+at CpG sites.
 }

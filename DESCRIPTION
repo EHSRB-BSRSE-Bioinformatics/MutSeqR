@@ -34,7 +34,8 @@ Imports:
     S4Vectors,
     stringr,
     SummarizedExperiment,
-    VariantAnnotation
+    VariantAnnotation,
+    xml2
 Suggests:
     BSgenome.Hsapiens.UCSC.hg38,
     BSgenome.Mmusculus.UCSC.mm10,

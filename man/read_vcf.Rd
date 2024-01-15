@@ -83,7 +83,7 @@ then it takes the mean of the reference depths. Default is "take_del".}
 output as a GRanges object. Default output is as a dataframe.}
 }
 \value{
-A GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
+A data frame or a GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
 }
 \description{
 Imports a .vcf file into the R environment and converts it into a dataframe
