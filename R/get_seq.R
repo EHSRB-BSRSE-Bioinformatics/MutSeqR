@@ -19,7 +19,7 @@
 #' to 1-based.
 #' @param padding An integer value by which the function will extend the range 
 #' of the target sequence on both sides. Modified region ranges will be reported 
-#' in ext_start and ext_end. Default is 0.
+#' in seq_start and seq_end. Default is 0.
 #' @return a GRanges object with sequences and metadata of targeted regions. 
 #' Region ranges coordinates will become 1-based.
 #' @examples
@@ -54,8 +54,8 @@ get_seq <- function(
   regions_df$start <- regions_df$start + 1
 }
 
-regions_df$ext_start <- regions_df$start - padding
-regions_df$ext_end <- regions_df$end + padding
+regions_df$seq_start <- regions_df$start - padding
+regions_df$seq_end <- regions_df$end + padding
 
 # Define the API base URL
   # Function to retrieve sequence for a given region
@@ -81,6 +81,12 @@ regions_df$ext_end <- regions_df$end + padding
   }
 
   # Apply the function to each row of the dataframe
-  regions_df$sequence <- mapply(get_sequence_for_region, regions_df$contig, regions_df$ext_start, regions_df$ext_end)
-  return(regions_df)
+  regions_df$sequence <- mapply(get_sequence_for_region, regions_df$contig, regions_df$seq_start, regions_df$seq_end)
+  
+  regions_gr <- GenomicRanges::makeGRangesFromDataFrame(df = as.data.frame(regions_df),
+                                                        keep.extra.columns = T,
+                                                        seqnames.field = "contig",
+                                                        start.field = "start",
+                                                        end.field = "end")
+  return(regions_gr)
 }

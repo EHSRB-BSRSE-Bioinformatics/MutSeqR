@@ -94,8 +94,7 @@ mutation_data <-
 # Write a reference FASTA file...
 my_regions <- get_seq(regions = params$regions,
                    custom_regions_file = params$custom_regions_file,
-                   species = params$species, 
-                   genome_version = params$genome,
+                   genome = params$genome,
                    padding = 0) # Grab target sequences
 write_reference_fasta(ref_ranges = my_regions) 
 # Write mutation data as a vcf
