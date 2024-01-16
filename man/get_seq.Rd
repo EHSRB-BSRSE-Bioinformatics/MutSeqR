@@ -36,7 +36,7 @@ to 1-based.}
 
 \item{padding}{An integer value by which the function will extend the range
 of the target sequence on both sides. Modified region ranges will be reported
-in ext_start and ext_end. Default is 0.}
+in seq_start and seq_end. Default is 0.}
 }
 \value{
 a GRanges object with sequences and metadata of targeted regions.

@@ -12,8 +12,7 @@ read_vcf(
   regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
-  species = NULL,
-  genome_version = NULL,
+  genome = NULL,
   depth_calc = "take_del",
   output_granges = FALSE
 )
@@ -21,7 +20,8 @@ read_vcf(
 \arguments{
 \item{vcf_file}{The path to the .vcf file  to be imported. If you
 specify a folder, the function will attempt to read all files in the folder and
-combine them.
+combine them into on dataset. Multisample vcf files are not supported;
+vcf files must contain one sample each.
 Required fields are listed below
 \itemize{
 \item FIXED FIELDS:
@@ -46,17 +46,16 @@ Required fields are listed below
 a cutoff for variant allele fraction (VAF). There is no default value provided,
 but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
 flag variants that are present at a frequency greater than this value
-at a given site.to a single data frame. Multisample vcf files are not supported.
-vcf files must contain one sample each.}
+at a given site.}
 
 \item{sample_data_file}{An optional file containing additional sample metadata
 (dose, timepoint, etc.)}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables. Default is tab-delimited}
 
-\item{regions}{"human", "mouse", or "custom". The argument refers to the
+\item{regions}{"human", "mouse", "rat" , or "custom". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide file path in custom_regions_file, the species, and the genome assembly version.}
+If custom, provide the file path in custom_regions_file and the genome assembly version.}
 
 \item{custom_regions_file}{"filepath". If regions is set to custom,
 provide the file path for the file containing regions metadata.
@@ -64,11 +63,10 @@ Required columns are "contig", "start", and "end"}
 
 \item{rg_sep}{The delimiter for importing the custom_regions_file. Default is tab-delimited}
 
-\item{species}{When regions is set to "custom", provide the species of your samples. ex. "mouse", "human".}
-
-\item{genome_version}{When regions is set to "custom", provide the genome assembly version.
-It will default to the most current genome assembly version unless specified.
-Human: GRCh38, mouse: GRCm39, rat: mRatBN7.}
+\item{genome}{If a custom regions file is provided, indicate the genome
+assembly. For a complete list, refer to https://genome.ucsc.edu
+Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
+Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
 \item{depth_calc}{In the instance when there are two or more calls at the
 same location within a sample, and the depths differ, this parameter chooses
@@ -76,8 +74,8 @@ the method of calculation for the total_depth. take_mean calculates the
 total_depth by taking the mean reference depth and then adding all the alt depths.
 take_del calculates the total_depth by choosing only the reference depth of
 the deletion in the group, or if no deletion is present, the complex variant,
-then adding all alt depths, if there is no deletion or complex variant,
-then it takes the mean of the reference depths. Default is "take_del".}
+then adding all alt depths. If there is no deletion or complex variant,
+it takes the mean of the reference depths. Default is "take_del".}
 
 \item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation data to
 output as a GRanges object. Default output is as a dataframe.}

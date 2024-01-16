@@ -286,20 +286,20 @@ mut_ranges <- makeGRangesFromDataFrame(
   
 # load regions ranges and retrieve sequences with +1 padding
 if (regions == "human") {
-  region_ranges <- DupSeqR::get_seq(regions = "human", padding = 1)
+  region_ranges <- DupSeqR::get_seq(regions = "human", padding = 500)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38. Imported sequences have padding = 1")
 } else if (regions == "mouse") {
-  region_ranges <- DupSeqR::get_seq(regions = "mouse", padding = 1)
+  region_ranges <- DupSeqR::get_seq(regions = "mouse", padding = 500)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10. Imported sequences have padding = 1")
 } else if (regions == "rat") {
-  region_ranges <- DupSeqR::get_seq(regions = "rat", padding = 1)
+  region_ranges <- DupSeqR::get_seq(regions = "rat", padding = 500)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6. Imported sequences have padding = 1")
   } else if (regions == "custom") { 
   region_ranges <- DupSeqR::get_seq(regions = "custom", 
                                     custom_regions_file = custom_regions_file,
                                     rg_sep = rg_sep,
                                     genome = genome,
-                                    padding = 1
+                                    padding = 500
   )
   if (is.null(genome)) {
     error("Please supply a genome assembly using the 'genome' parameter. For options, refer to https://genome.ucsc.edu" )
@@ -310,7 +310,7 @@ if (regions == "human") {
   }
 
 # Join with mutation data
- ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
+ ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = 500 , suffix = c("_mut", "_regions"))
 
 # Get no_variant context
 dat <- ranges_joined %>%
@@ -318,6 +318,10 @@ dat <- ranges_joined %>%
                     start_string = start - seq_start +1,
                     context = substr(sequence, start_string - 1, start_string + 1)) %>%
   plyranges::select(-start_string)
+
+ranges_outside_regions <- as.data.frame(dat) %>%
+  dplyr::filter(is.na(context) | nchar(context)!=3) #%>%
+  #dplyr::select(sample, seqnames, start, end, ref, alt)
 
 # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
@@ -342,12 +346,14 @@ dat <- ranges_joined %>%
                  stringr::str_sub(context, 3, 3)
                ),
                variation_type
-        ),
-       normalized_context = ifelse(
-        stringr::str_sub(context, 2, 2) %in% c("G", "A", "g", "a"),
-        mapply(function(x) reverseComplement.default(x, case = "upper"), context),
-        context
-      ),
+        ))
+  dat <- dat %>%
+    plyranges::mutate(     
+  normalized_context = ifelse(
+        stringr::str_sub(dat$context, 2, 2) %in% c("G", "A", "g", "a"),
+        mapply(function(x) DupSeqR::reverseComplement(x, case = "upper"), dat$context),
+        dat$context
+      ))
       normalized_subtype = 
         ifelse(subtype %in% names(sub_dict),
                sub_dict[subtype],
