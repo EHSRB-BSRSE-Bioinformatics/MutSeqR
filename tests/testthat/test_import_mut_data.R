@@ -262,7 +262,6 @@ test_that("import_mut_data function fails to import mutation data from an incomp
   unlink(tmpfileC)
   unlink(tmpfileD)
   unlink(tmpfileE)
-  unlink(tmpfileF)
   unlink(tmpfile2)
 })
 
