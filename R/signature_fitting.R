@@ -27,6 +27,7 @@ signature_fitting <- function(mutations,
                               project_name = "Default",
                               project_genome = "GRCh38",
                               group = "sample",
+                              output_path = NULL,
                               python_version = "3.11:latest", # We should test with other versions
                               python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9"
                               python_home = "~/.virtualenvs/r-reticulate") {
@@ -90,13 +91,21 @@ signature_fitting <- function(mutations,
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
   
   message("Generating output path string...")
-  output_path <- file.path(
-    here::here(),
-    "output",
-    "SigProfiler",
-    group
-  )
-  
+  if (!is.null(output_path)) {
+    output_path <- file.path(
+      here::here(),
+      "output",
+      "SigProfiler",
+      group
+    )
+  } else {
+    output_path <- file.path(
+      output_path,
+      "SigProfiler",
+      group
+    )
+  }
+
   message(paste0("Creating directory ", output_path))
   if (!dir.exists(file.path(output_path, "matrices"))) {
     dir.create(file.path(output_path, "matrices"), recursive = T)
