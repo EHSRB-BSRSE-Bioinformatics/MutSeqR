@@ -39,7 +39,7 @@ params:
     input: checkbox
     value: TRUE
   species: "mouse"
-  genome: "GRCm38"
+  genome: "mm10"
   project_title: "Mouse Test"
   mut_data: 
     label: "Enter the file path to your mutation data"
@@ -411,6 +411,21 @@ cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
 ```
 
 ## Signature Decomposition
+
+```{r cosmic-signatures - SigProfiler, eval=FALSE}
+# Need to have a think about how this will work in Rmd - may be problematic. 
+# May grab the key outputs to put in the report
+signature_fitting(mutations = mutation_data,
+                              project_name = "HESI GTTC",
+                              project_genome = "rn6",
+                              env_name = "DupSeqR",
+                              group = "sample",
+                              output_path = NULL,
+                              python_version = "3.9.13",
+                              python_path = "doesn't matter", 
+                              python_home = "not implemented")
+```
+
 
 ```{r cosmic-signatures-sigminer, eval=FALSE}
 # Aggregate by sample

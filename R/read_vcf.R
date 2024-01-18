@@ -64,6 +64,7 @@
 read_vcf <- function(
     vcf_file,
     vaf_cutoff,
+    range_buffer = 1,
     sample_data_file = NULL,
     sd_sep = "\t",
     regions = c("human", "mouse", "custom"),
@@ -286,42 +287,53 @@ mut_ranges <- makeGRangesFromDataFrame(
   
 # load regions ranges and retrieve sequences with +1 padding
 if (regions == "human") {
-  region_ranges <- DupSeqR::get_seq(regions = "human", padding = 500)
-  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38. Imported sequences have padding = 1")
+  region_ranges <- DupSeqR::get_seq(regions = "human", padding = range_buffer)
+  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
 } else if (regions == "mouse") {
-  region_ranges <- DupSeqR::get_seq(regions = "mouse", padding = 500)
-  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10. Imported sequences have padding = 1")
+  region_ranges <- DupSeqR::get_seq(regions = "mouse", padding = range_buffer)
+  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.")
 } else if (regions == "rat") {
-  region_ranges <- DupSeqR::get_seq(regions = "rat", padding = 500)
-  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6. Imported sequences have padding = 1")
+  region_ranges <- DupSeqR::get_seq(regions = "rat", padding = range_buffer)
+  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6.")
   } else if (regions == "custom") { 
   region_ranges <- DupSeqR::get_seq(regions = "custom", 
                                     custom_regions_file = custom_regions_file,
                                     rg_sep = rg_sep,
                                     genome = genome,
-                                    padding = 500
+                                    padding = range_buffer
   )
   if (is.null(genome)) {
     error("Please supply a genome assembly using the 'genome' parameter. For options, refer to https://genome.ucsc.edu" )
   } else {
-   cat("Populating context columns with sequences from https://genome.ucsc.edu;", genome, "' assembly was used. Imported sequences have padding = 1")  
+   cat("Populating context columns with sequences from https://genome.ucsc.edu;", genome, "' assembly was used")  
   }
  
   }
 
 # Join with mutation data
- ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = 500 , suffix = c("_mut", "_regions"))
+ ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = range_buffer , suffix = c("_mut", "_regions"))
 
 # Get no_variant context
 dat <- ranges_joined %>%
-  plyranges::mutate(
-                    start_string = start - seq_start +1,
+  plyranges::mutate(start_string = start - seq_start +1,
                     context = substr(sequence, start_string - 1, start_string + 1)) %>%
-  plyranges::select(-start_string)
+  plyranges::select(-start_string, -sequence)
 
+# Variants that occur outside of the regions (+ the defined buffer range) will 
+# not have a context associated with them and thus must be removed
 ranges_outside_regions <- as.data.frame(dat) %>%
-  dplyr::filter(is.na(context) | nchar(context)!=3) #%>%
-  #dplyr::select(sample, seqnames, start, end, ref, alt)
+  dplyr::filter(is.na(context) | nchar(context)!=3) %>%
+  dplyr::select(sample, seqnames, start, end, ref, alt)
+
+# Display the ranges that were filtered out of the data
+if(nrow(ranges_outside_regions) > 0) {
+print("Subset of data outside specified regions:")
+print(ranges_outside_regions)
+}
+# Filter the ranges out of the data
+  # TO DO: check how this is going to affect the total depth. 
+dat <- dat %>%
+  plyranges::filter(!is.na(context) | nchar(context) == 3)
 
 # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
@@ -353,12 +365,12 @@ ranges_outside_regions <- as.data.frame(dat) %>%
         stringr::str_sub(dat$context, 2, 2) %in% c("G", "A", "g", "a"),
         mapply(function(x) DupSeqR::reverseComplement(x, case = "upper"), dat$context),
         dat$context
-      ))
+      ),
       normalized_subtype = 
         ifelse(subtype %in% names(sub_dict),
                sub_dict[subtype],
                subtype
-        ),
+      ),
       normalized_ref = dplyr::case_when(
         substr(ref, 1, 1) == "A" ~ "T",
         substr(ref, 1, 1) == "G" ~ "C",
