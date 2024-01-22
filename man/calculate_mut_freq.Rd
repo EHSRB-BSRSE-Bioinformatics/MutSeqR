@@ -11,7 +11,7 @@ calculate_mut_freq(
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
   vaf_cutoff,
   summary = TRUE,
-  keep_metadata = TRUE
+  retain_metadata_cols = NULL
 )
 }
 \arguments{
@@ -42,9 +42,8 @@ this to false returns all columns in the original data, which might make
 plotting more difficult, but may provide additional flexibility to power
 users.}
 
-\item{keep_metadata}{TRUE or FALSE. When returning a summary table, whether
-to retain sample and regions metadata when grouping by sample or description
-respectively.}
+\item{retain_metadata_cols}{list the metadata columns that you would like to
+retain in the summary table. This may be useful for plotting your summary data.}
 
 \item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
 This value determines the fraction of reads that

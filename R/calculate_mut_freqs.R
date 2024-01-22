@@ -29,9 +29,8 @@
 #' this to false returns all columns in the original data, which might make
 #' plotting more difficult, but may provide additional flexibility to power
 #' users.
-#' @param keep_metadata TRUE or FALSE. When returning a summary table, whether
-#' to retain sample and regions metadata when grouping by sample or description
-#' respectively. 
+#' @param retain_metadata_cols list the metadata columns that you would like to 
+#' retain in the summary table. This may be useful for plotting your summary data.
 #' @param  clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
 #' This value determines the fraction of reads that
 #' is considered a constitutional variant. If a mutation is present at a 
@@ -51,7 +50,7 @@ calculate_mut_freq <- function(data,
                                vaf_cutoff,
                               #clonality_cutoff = 0.3,
                                summary = TRUE,
-                               keep_metadata = TRUE
+                               retain_metadata_cols = NULL
                                ) {
   
   if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192") && !("snv" %in% variant_types)) {
@@ -75,20 +74,6 @@ calculate_mut_freq <- function(data,
                                              data frame as input here.")}
  # Rename columns in data to default
    data <- rename_columns(data)
-   
-# These steps are to retain sample_data and regions_data columns in the summary table, if desired.  
-  # Identify and rename sample_data columns
- columns_with_sample_data_prefix <- grep("^sample_data_", colnames(data), value = TRUE)
- columns_with_region_data_prefix <- grep("^region_data_", colnames(data), value = TRUE)
- # Remove the prefixes to get the clean column names
- stripped_sample_data_columns <- sub("^sample_data_", "", columns_with_sample_data_prefix)
- stripped_region_data_columns <- sub("^region_data_", "", columns_with_region_data_prefix)
- # Apply new column names to data
- colnames(data)[colnames(data) %in% columns_with_sample_data_prefix] <- stripped_sample_data_columns
- colnames(data)[colnames(data) %in% columns_with_region_data_prefix] <- stripped_region_data_columns
- # Choose to retain some of these sample_data_columns in summary table 
- sample_data_cols_retain <- setdiff(stripped_sample_data_columns, cols_to_group)
- region_data_cols_retain <- setdiff(stripped_region_data_columns, cols_to_group)
 
 # Un-duplicating the depth col
   # When there are +1 calls at the same position, modify total_depth such that
@@ -171,10 +156,9 @@ colnames(summary_rows) <- col_names
 summary_data <- mut_freq_table %>%
 dplyr::filter(variation_type %in% subset_type | variation_type == "no_variant") %>%
 dplyr::select({{ summary_cols }},
-              if (keep_metadata && "sample" %in% cols_to_group) 
-                sample_data_cols_retain,
-              if (keep_metadata && "description" %in% cols_to_group) 
-                region_data_cols_retain) %>%
+              if(!is.null(retain_metadata_cols))
+               retain_metadata_cols
+              ) %>%
 dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups))), .keep_all = TRUE)
 
 # Merge summary rows and data cols.    
@@ -193,16 +177,16 @@ if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
     dplyr::rowwise() %>%
     dplyr::mutate(!!paste(denominator_dict[[subtype_resolution]]) := 
              get_ref_of_mut(get(subtype_dict[[subtype_resolution]])))
-# Grab the data and filter for snvs + no_variant  
+
+  # Grab the data and filter for snvs + no_variant  
   summary_data_snv <- mut_freq_table %>%
   dplyr::filter(variation_type == "snv" | variation_type == "no_variant") %>%
   dplyr::select(
     {{ summary_cols }},
     DupSeqR::denominator_dict[[subtype_resolution]],
-    if (keep_metadata && "sample" %in% cols_to_group) 
-      sample_data_cols_retain,
-    if (keep_metadata && "description" %in% cols_to_group) 
-      region_data_cols_retain) %>%
+    if(!is.null(retain_metadata_cols))
+      retain_metadata_cols
+  ) %>%
   dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups, 
                                   DupSeqR::denominator_dict[[subtype_resolution]]))), 
                   .keep_all = TRUE)
@@ -225,9 +209,12 @@ if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
     # match snv dataframes & enable binding
    summary_rows <- summary_rows %>%
      dplyr::mutate(!!paste0(DupSeqR::denominator_dict[[subtype_resolution]]) := "N")
+   
    summary_table <- summary_table %>%
      dplyr::mutate(!!paste0(DupSeqR::denominator_dict[[subtype_resolution]]) := "N")
+   
    summary_rows <- rbind(summary_rows, summary_rows_snv)
+   
    summary_table <- rbind(summary_table, summary_table_snv)
 }  
 
@@ -235,10 +222,8 @@ if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
 summary_table <- summary_table %>% 
   dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
   dplyr::mutate(
-    if (keep_metadata && "sample" %in% cols_to_group){ 
-    dplyr::across(dplyr::all_of(sample_data_cols_retain), ~ dplyr::first(na.omit(.)))},
-    if (keep_metadata && "description" %in% cols_to_group){ 
-      dplyr::across(dplyr::all_of(region_data_cols_retain), ~ dplyr::first(na.omit(.)))},
+    if (!is.null(retain_metadata_cols)) { 
+    dplyr::across(dplyr::all_of(retain_metadata_cols), ~ dplyr::first(na.omit(.)))},
     dplyr::across(dplyr::all_of(!!paste0(freq_col_prefix, "_group_depth")), ~ dplyr::first(na.omit(.)))
   ) %>%
   dplyr::ungroup() 

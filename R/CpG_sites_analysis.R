@@ -1,15 +1,23 @@
 #' Get mutations at CpG sites
 #'
-#' Subset the mutations provided and return only mutations that are found at CpG sites.
-#' @param regions A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.
-#' @param mut_data A GRanges object containing the mutation data to be interrogated.
-#' @param variant_types TODO Copy in info
+#' Subset the mutation data provided and return only mutations that are found 
+#' at CpG sites.
+#' @param regions A GRanges object containing the genomic regions of interest 
+#' in which to look for CpG sites. Must have the metadata column "sequence" 
+#' populated with the raw nucleotide sequence to search for CpGs. This object can be 
+#' obtained using the get_seq.R function.
+#' @param mut_data A dataframe or GRanges object containing the mutation data to 
+#' be interrogated.
+#' @param variant_types Include these variant types. A vector of one or more
+#'  "snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
+#'  Default includes all variants. 
 #' @param include_no_variants TRUE or FALSE to indicate whether the table should
 #' include CpG sites with no variants. Useful if you want to know how many of 
 #' the potential sites were mutated.
 #' @param motif Default "CG", which returns CpG sites. You could in theory use
 #' an arbitrary string to look at different motifs. Use with caution.
-#' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
+#' @returns A GRanges object where each range is a mutation at a CpG site 
+#' (a subset of mutations from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges start end
 #' @importFrom IRanges IRanges ranges
@@ -19,7 +27,7 @@
 #' @importFrom rlang .data
 #' @export
 get_CpG_mutations <- function(regions, mut_data,
-                              variant_types = c("snv","indel","mnv","sv"),
+                              variant_types = c("snv","insertion", "deletion", "mnv","symbolic"),
                               include_no_variants = T,
                               motif = "CG") {
   # Step 3 - find all the CpG sites within those regions identified
@@ -40,6 +48,16 @@ get_CpG_mutations <- function(regions, mut_data,
   }
   CpGs_combined <- do.call("c", all_CpGs)
   # Step 4 - join mutation data with CpG sites
+
+  if (inherits(mut_data, "data.frame")) { 
+    mut_data <- GenomicRanges::makeGRangesFromDataFrame(
+      df = mut_data,
+      keep.extra.columns = T,
+      seqnames.field = "contig",
+      start.field = "start",
+      end.field = "end"
+    )}
+  
   CpGs_in_data <- plyranges::find_overlaps(mut_data, CpGs_combined) %>%
     as.data.frame %>%
     dplyr::filter(.data$variation_type %in% variant_types)
@@ -50,20 +68,24 @@ get_CpG_mutations <- function(regions, mut_data,
   }
 }
 
-#' Get the coordinates of CpG sites
+#' Get the coordinates of the CpG sites within your genomic regions
 #'
-#' Imports package data to find target regions and some associated information, and further extends the table by getting raw nucleotide sequences for each region of the genome. Note that the way this is written, currently, the default genomes are hg38 and mm10 for human and mouse, respectively.
-#' @param regions A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.
+#' Filters the ranges of your genomic regions to find a positions with a 
+#' specific motif. The default is CpG sites, but can be customizable. 
+#' @param regions A GRanges object containing the genomic regions of interest in 
+#' which to look for CpG sites. Must have the metadata column "sequence" populated 
+#' with the raw nucleotide sequence to search for CpGs. This object can be 
+#' obtained using the get_seq.R function.
 #' @param motif Default "CG", which returns CpG sites. You could in theory use
 #' an arbitrary string to look at different motifs. Use with caution.
-#' @returns A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
+#' @returns A GRanges object where each range is a CpG site (a subset of ranges 
+#' from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom IRanges IRanges ranges
 #' @export
 get_CpG_regions <- function(regions, motif = "CG") {
-  # Similar to the above function but instead returns all the sites where CpGs are found in the reference (instead of the mutation data)
   all_CpGs <- list()
   for (i in seq_along(regions)) {
     CpG_sites <- Biostrings::matchPattern(
@@ -85,15 +107,19 @@ get_CpG_regions <- function(regions, motif = "CG") {
 
 #' Annotate CpG sites
 #'
-#' A simple method to test whether your trinucleotide context contains a CpG site. Vectorized version of Biostrings::vcountPattern is used.
-#' @param mut_data A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.
+#' A simple method to test whether your trinucleotide context contains a CpG site. 
+#' Vectorized version of Biostrings::vcountPattern is used.
+#' @param mut_data A dataframe or GRanges object containing the genomic regions 
+#' of interest in which to look for CpG sites. 
 #' @param motif Default "CG", which returns CpG sites. You could in theory use
 #' an arbitrary string to look at different motifs. Use with caution. In this 
 #' case the pattern being searched must be a column in the mutation data.
 #' @param column_query Default "context" but can be any column  in the mutation
 #' data that you wish to look for a motif in.
 #' @param ... Additional arguments to vcountPattern()
-#' @returns A data frame with the same number of rows as there were ranges in the input, but with an additional metadata column indicating CpG sites in the target sequence of the mutation.
+#' @returns A data frame with the same number of rows as there were ranges in the 
+#' input, but with an additional metadata column indicating CpG sites in the 
+#' target sequence of the mutation.
 #' @importFrom Biostrings vcountPattern
 #' @importFrom rlang .data
 #' @export

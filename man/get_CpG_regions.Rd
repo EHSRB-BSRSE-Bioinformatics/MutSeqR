@@ -2,19 +2,24 @@
 % Please edit documentation in R/CpG_sites_analysis.R
 \name{get_CpG_regions}
 \alias{get_CpG_regions}
-\title{Get the coordinates of CpG sites}
+\title{Get the coordinates of the CpG sites within your genomic regions}
 \usage{
 get_CpG_regions(regions, motif = "CG")
 }
 \arguments{
-\item{regions}{A GRanges object containing the genomic regions of interest in which to look for CpG sites. Must have the metadata column "sequence" populated with the raw nucleotide sequence to search for CpGs.}
+\item{regions}{A GRanges object containing the genomic regions of interest in
+which to look for CpG sites. Must have the metadata column "sequence" populated
+with the raw nucleotide sequence to search for CpGs. This object can be
+obtained using the get_seq.R function.}
 
 \item{motif}{Default "CG", which returns CpG sites. You could in theory use
 an arbitrary string to look at different motifs. Use with caution.}
 }
 \value{
-A GRanges object where each range is a mutation at a CpG site (a subset of mutations from the larger object provided to the function).
+A GRanges object where each range is a CpG site (a subset of ranges
+from the larger object provided to the function).
 }
 \description{
-Imports package data to find target regions and some associated information, and further extends the table by getting raw nucleotide sequences for each region of the genome. Note that the way this is written, currently, the default genomes are hg38 and mm10 for human and mouse, respectively.
+Filters the ranges of your genomic regions to find a positions with a
+specific motif. The default is CpG sites, but can be customizable.
 }

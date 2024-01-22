@@ -95,6 +95,7 @@ import_mut_data <- function(mut_file,
                             sample_data_file = NULL,
                             sd_sep = "\t",
                             vaf_cutoff,
+                            range_buffer = 0,
                             regions = c("human", "mouse", "custom"),
                             custom_regions_file = NULL,
                             rg_sep = "\t",
@@ -216,11 +217,6 @@ import_mut_data <- function(mut_file,
     sample_data_columns <- setdiff(names(sampledata), names(dat))
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
-    # Add prefix "sample_data_" to the names of the new columns
-    for (col in sample_data_columns) {
-      new_col_name <- paste0("sample_data_", col)
-      names(dat)[names(dat) == col] <- new_col_name
-    }
   }
   
 # Clean Up Data
@@ -401,27 +397,49 @@ import_mut_data <- function(mut_file,
   )
 
   regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
-    
-# Annotate regions metadata columns with prefix "region_data_". 
-# This will allow us to retain these columns in the summary table for calculate_mut_freq. 
-  # Grab the names of the columns that are being added to the data
-  region_data_columns <- setdiff(names(regions_df), names(dat))
-   # Add prefix "sample_data_" to the names of the new columns
-  for (col in region_data_columns) {
-    new_col_name <- paste0("region_data_", col)
-    names(regions_df)[names(regions_df) == col] <- new_col_name
+
+  regions_df <- regions_df %>%
+    dplyr::mutate(regions_start_buffered = as.numeric(paste0(.data$start)) - range_buffer)
+     
+  if(regions %in% c("mouse", "human", "rat")) {
+    is_0_based = TRUE
   }
-  
+      
+  if(is_0_based) {
+    regions_df$regions_start_buffered <- regions_df$regions_start_buffered + 1
+      }
+    
   region_ranges <- GenomicRanges::makeGRangesFromDataFrame(
     df = regions_df,
     keep.extra.columns = T,
     seqnames.field = "contig",
     start.field = "start",
     end.field = "end",
-    starts.in.df.are.0based = ifelse(regions %in% c("mouse", "human"), TRUE, is_0_based)
+    starts.in.df.are.0based =  is_0_based
   )
 
-  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges)
+  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = range_buffer, suffix = c("_mut", "_regions"))
+  
+  ranges_joined <- ranges_joined %>%
+    plyranges::mutate(bp_outside_rg = regions_start_buffered - start)
+  
+  # If the position is outside of the range_buffer, the regions will not be added; 
+  #   regions_start_buffered = NA: is.na(bp_outside_rg) 
+  # If the position overlaps with the regions, but starts outside of it, 
+  #   position start will be smaller than regions start:  bp_outside_rg > 0
+  ranges_outside_regions <- as.data.frame(ranges_joined) %>%
+  dplyr::filter(is.na(bp_outside_rg) | bp_outside_rg > 0) %>%
+  dplyr::select(sample, seqnames, start, end, ref, alt)
+
+# Display the ranges that were filtered out of the data
+if(nrow(ranges_outside_regions) > 0) {
+print("Subset of data is outside specified regions:")
+print(ranges_outside_regions)
+}
+
+  ranges_joined <- ranges_joined %>%
+   plyranges::filter(!is.na(bp_outside_rg) & bp_outside_rg <= 0)  %>%
+    plyranges::select(-regions_start_buffered, -bp_outside_rg)
   
   if(output_granges) {
   return(ranges_joined)

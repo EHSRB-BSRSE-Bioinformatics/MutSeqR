@@ -5,19 +5,18 @@
 \title{Get sequence of Duplex Sequencing target regions}
 \usage{
 get_seq(
-  regions = c("human", "mouse", "custom"),
+  regions = c("human", "mouse", "rat", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
-  species = NULL,
-  genome_version = NULL,
+  genome = NULL,
   is_0_based = TRUE,
-  padding = 1
+  padding = 0
 )
 }
 \arguments{
-\item{regions}{"human", "mouse", or "custom". The argument refers to the
+\item{regions}{"human", "mouse", "rat, or "custom". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide file path in custom_regions_file. TO DO: add rat.}
+If custom, provide file path in custom_regions_file.}
 
 \item{custom_regions_file}{"filepath". If regions is set to custom,
 provide the file path for the tab-delimited file containing regions metadata.
@@ -26,28 +25,26 @@ Required columns are "contig", "start", and "end".}
 \item{rg_sep}{The delimiter for importing the custom_regions_file.
 The default is tab-delimited.}
 
-\item{species}{If a custom regions file is provided, indicate the species:
-ex. "human", "mouse", or "rat"}
-
-\item{genome_version}{If a custom regions file is provided,
-indicate the genome assembly version, ex. "GRCm38".
-Default is human = GRCh38, mouse = GRCm39, rat = mRatBN7}
+\item{genome}{If a custom regions file is provided, indicate the genome
+assembly. Please refer to the UCSC genomes.
+Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
+Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
 \item{is_0_based}{TRUE or FALSE. Indicates whether the target region
 coordinates are 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted
 to 1-based.}
 
-\item{padding}{An interger value by which the function will extend the range
+\item{padding}{An integer value by which the function will extend the range
 of the target sequence on both sides. Modified region ranges will be reported
-in ext_start and ext_end. Default is 1.}
+in seq_start and seq_end. Default is 0.}
 }
 \value{
 a GRanges object with sequences and metadata of targeted regions.
-Ranges become 1-based.
+Region ranges coordinates will become 1-based.
 }
 \description{
-To replace get_region_seqs.R for its reliance on importing the entire genomes
-This will create a granges object from the target metadata and import raw nucleotide sequences from ensembl.org
+Create a GRanges object from the target metadata and import raw nucleotide
+sequences from the UCSC database. https://genome.ucsc.edu
 }
 \examples{
 t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 

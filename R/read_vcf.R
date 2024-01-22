@@ -3,7 +3,8 @@
 #' Imports a .vcf file into the R environment and converts it into a dataframe
 #' @param vcf_file The path to the .vcf file  to be imported. If you
 #' specify a folder, the function will attempt to read all files in the folder and
-#' combine them.
+#' combine them into on dataset. Multisample vcf files are not supported;
+#'  vcf files must contain one sample each.
 #' Required fields are listed below
 #' - FIXED FIELDS: 
 #'  - `CHROM`: The reference sequence name.Equivalent to `contig`
@@ -25,30 +26,29 @@
 #' a cutoff for variant allele fraction (VAF). There is no default value provided, 
 #' but generally a value of 0.1 (i.e., 10%) is a good starting point. Setting this 
 #' flag variants that are present at a frequency greater than this value 
-#' at a given site.to a single data frame. Multisample vcf files are not supported.
-#'  vcf files must contain one sample each.  
+#' at a given site.   
 #' @param sample_data_file An optional file containing additional sample metadata 
 #' (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables. Default is tab-delimited
-#' @param regions "human", "mouse", or "custom". The argument refers to the
+#' @param regions "human", "mouse", "rat" , or "custom". The argument refers to the
 #'  TS Mutagenesis panel of the specified species, or to a custom panel. 
-#'  If custom, provide file path in custom_regions_file, the species, and the genome assembly version. 
+#'  If custom, provide the file path in custom_regions_file and the genome assembly version. 
 #' @param custom_regions_file "filepath". If regions is set to custom,
 #'  provide the file path for the file containing regions metadata. 
 #'  Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file. Default is tab-delimited
-#' @param species When regions is set to "custom", provide the species of your samples. ex. "mouse", "human". 
-#' @param genome_version When regions is set to "custom", provide the genome assembly version.
-#' It will default to the most current genome assembly version unless specified. 
-#' Human: GRCh38, mouse: GRCm39, rat: mRatBN7.
+#' @param genome If a custom regions file is provided, indicate the genome 
+#' assembly. For a complete list, refer to https://genome.ucsc.edu 
+#' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 | 
+#' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
 #' @param depth_calc In the instance when there are two or more calls at the 
 #' same location within a sample, and the depths differ, this parameter chooses 
 #' the method of calculation for the total_depth. take_mean calculates the 
 #' total_depth by taking the mean reference depth and then adding all the alt depths. 
 #' take_del calculates the total_depth by choosing only the reference depth of 
 #' the deletion in the group, or if no deletion is present, the complex variant,
-#'  then adding all alt depths, if there is no deletion or complex variant, 
-#'  then it takes the mean of the reference depths. Default is "take_del".
+#' then adding all alt depths. If there is no deletion or complex variant, 
+#' it takes the mean of the reference depths. Default is "take_del".
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation data to
 #'   output as a GRanges object. Default output is as a dataframe. 
 #' @returns A data frame or a GRanges object where each row is a mutation, and columns indicate the location, type, and other data.
@@ -61,20 +61,16 @@
 #' @importFrom plyranges join_overlap_left mutate select
 #' @export
 #' 
-# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/Small test
-# /PRC_ST_208.1.consensus.variant-calls.genome.vcf
-# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/vcf files/test vcfs/vcf_sample_1.vcf
-# C:/Users/ADODGE/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_ST_sample_data.txt
 read_vcf <- function(
     vcf_file,
     vaf_cutoff,
+    range_buffer = 1,
     sample_data_file = NULL,
     sd_sep = "\t",
     regions = c("human", "mouse", "custom"),
     custom_regions_file = NULL,
     rg_sep = "\t",
-    species = NULL,
-    genome_version = NULL,
+    genome = NULL,
     depth_calc = "take_del",
     output_granges = FALSE) {
   
@@ -167,11 +163,6 @@ read_vcf <- function(
   sample_data_columns <- setdiff(names(sampledata), names(dat))
   # Join the data
     dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
-    # Add prefix "sample_data_" to the names of the new columns
-    for (col in sample_data_columns) {
-      new_col_name <- paste0("sample_data_", col)
-      names(dat)[names(dat) == col] <- new_col_name
-    }
   }
   
 # Clean up variation_type column to match .mut
@@ -294,47 +285,57 @@ mut_ranges <- makeGRangesFromDataFrame(
     end.field = "end"
   )
   
-# load regions ranges and retrieve sequences
+# load regions ranges and retrieve sequences with padding
 if (regions == "human") {
-  region_ranges <- DupSeqR::get_seq(regions = "human")
-  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCh38\n")
+  region_ranges <- DupSeqR::get_seq(regions = "human", padding = range_buffer)
+  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
 } else if (regions == "mouse") {
-  region_ranges <- DupSeqR::get_seq(regions = "mouse")
-  cat("Populating context columns with sequences from ensembl.org Genome assembly GRCm38\n")
-} else if (regions == "custom") { 
-    species_param <- species
-    genome_version_param <- genome_version
+  region_ranges <- DupSeqR::get_seq(regions = "mouse", padding = range_buffer)
+  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.")
+} else if (regions == "rat") {
+  region_ranges <- DupSeqR::get_seq(regions = "rat", padding = range_buffer)
+  cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6.")
+  } else if (regions == "custom") { 
   region_ranges <- DupSeqR::get_seq(regions = "custom", 
                                     custom_regions_file = custom_regions_file,
                                     rg_sep = rg_sep,
-                                    species = species_param,
-                                    genome_version = genome_version_param
-                                
+                                    genome = genome,
+                                    padding = range_buffer
   )
-  if (is.null(genome_version)) {
-    cat("Populating context columns with sequences from ensembl.org '", species, "' default assembly version was used\n'" )
+  if (is.null(genome)) {
+    error("Please supply a genome assembly using the 'genome' parameter. For options, refer to https://genome.ucsc.edu" )
   } else {
-   cat("Populating context columns with sequences from ensembl.org '", species, genome_version, "' assembly was used\n")  
+   cat("Populating context columns with sequences from https://genome.ucsc.edu;", genome, "' assembly was used")  
   }
  
   }
-# Adding region_data_ prefix to regions metadata.
-region_colnames <- names(mcols(region_ranges))
-columns_to_remove <- c("ext_start", "ext_end", "sequence")
-region_colnames <- region_colnames[!region_colnames %in% columns_to_remove]
-# Add prefix to specified columns
-new_colnames <- paste0("region_data_", region_colnames)
-names(GenomicRanges::mcols(region_ranges))[names(GenomicRanges::mcols(region_ranges)) %in% region_colnames] <- new_colnames
 
 # Join with mutation data
- ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, suffix = c("_mut", "_regions"))
+ ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = range_buffer , suffix = c("_mut", "_regions"))
 
 # Get no_variant context
 dat <- ranges_joined %>%
-  plyranges::mutate(
-                    start_string = start - ext_start +1,
+  plyranges::mutate(start_string = start - seq_start +1,
                     context = substr(sequence, start_string - 1, start_string + 1)) %>%
-  plyranges::select(-start_string)
+  plyranges::select(-start_string, -sequence) %>%
+  plyranges::mutate(bp_outside_rg = seq_start - start)
+
+# Variants that occur outside of the regions (+ the defined buffer range) will 
+# not have a context associated with them and thus must be removed
+ranges_outside_regions <- as.data.frame(dat) %>%
+  dplyr::filter(is.na(bp_outside_rg) | bp_outside_rg > 0) %>%
+  dplyr::select(sample, seqnames, start, end, ref, alt)
+
+# Display the ranges that were filtered out of the data
+if(nrow(ranges_outside_regions) > 0) {
+print("Subset of data is outside specified regions:")
+print(ranges_outside_regions)
+}
+# Filter the ranges out of the data
+  # TO DO: check how this is going to affect the total depth. 
+dat <- dat %>%
+  plyranges::filter(!is.na(bp_outside_rg) & bp_outside_rg <= 0)  %>%
+  plyranges::select(-seq_start, -seq_end, -bp_outside_rg)
 
 # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
@@ -359,17 +360,19 @@ dat <- ranges_joined %>%
                  stringr::str_sub(context, 3, 3)
                ),
                variation_type
-        ),
-       normalized_context = ifelse(
-        stringr::str_sub(context, 2, 2) %in% c("G", "A", "g", "a"),
-        mapply(function(x) reverseComplement.default(x, case = "upper"), context),
-        context
+        ))
+  dat <- dat %>%
+    plyranges::mutate(     
+  normalized_context = ifelse(
+        stringr::str_sub(dat$context, 2, 2) %in% c("G", "A", "g", "a"),
+        mapply(function(x) DupSeqR::reverseComplement(x, case = "upper"), dat$context),
+        dat$context
       ),
       normalized_subtype = 
         ifelse(subtype %in% names(sub_dict),
                sub_dict[subtype],
                subtype
-        ),
+      ),
       normalized_ref = dplyr::case_when(
         substr(ref, 1, 1) == "A" ~ "T",
         substr(ref, 1, 1) == "G" ~ "C",
