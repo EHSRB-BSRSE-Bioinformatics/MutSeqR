@@ -285,7 +285,7 @@ mut_ranges <- makeGRangesFromDataFrame(
     end.field = "end"
   )
   
-# load regions ranges and retrieve sequences with +1 padding
+# load regions ranges and retrieve sequences with padding
 if (regions == "human") {
   region_ranges <- DupSeqR::get_seq(regions = "human", padding = range_buffer)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
@@ -317,23 +317,25 @@ if (regions == "human") {
 dat <- ranges_joined %>%
   plyranges::mutate(start_string = start - seq_start +1,
                     context = substr(sequence, start_string - 1, start_string + 1)) %>%
-  plyranges::select(-start_string, -sequence)
+  plyranges::select(-start_string, -sequence) %>%
+  plyranges::mutate(bp_outside_rg = seq_start - start)
 
 # Variants that occur outside of the regions (+ the defined buffer range) will 
 # not have a context associated with them and thus must be removed
 ranges_outside_regions <- as.data.frame(dat) %>%
-  dplyr::filter(is.na(context) | nchar(context)!=3) %>%
+  dplyr::filter(is.na(bp_outside_rg) | bp_outside_rg > 0) %>%
   dplyr::select(sample, seqnames, start, end, ref, alt)
 
 # Display the ranges that were filtered out of the data
 if(nrow(ranges_outside_regions) > 0) {
-print("Subset of data outside specified regions:")
+print("Subset of data is outside specified regions:")
 print(ranges_outside_regions)
 }
 # Filter the ranges out of the data
   # TO DO: check how this is going to affect the total depth. 
 dat <- dat %>%
-  plyranges::filter(!is.na(context) | nchar(context) == 3)
+  plyranges::filter(!is.na(bp_outside_rg) & bp_outside_rg <= 0)  %>%
+  plyranges::select(-seq_start, -seq_end, -bp_outside_rg)
 
 # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
