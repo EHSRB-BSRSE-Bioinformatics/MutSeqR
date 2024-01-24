@@ -1,11 +1,19 @@
 #' Perform General Linear Modelling on DupSeq Mutation Frequency
+#'
+#' Some notes: 
+#' GLM fixed effect ex. dose, tissue
+#' GLMM: fixed effect(s) + random effects ex. sample
+#' If you have repeated measures for the same sample, use glmm w sample as a random effect. 
+#' Ex. MF ~ dose*target + (1|sample) (multiple targets per sample = random effect)
+#' Ex. MF ~ dose*tissue = glm since each sample is only in one of each group
+#' 
 #' 
 #' @param mf_data The data frame containing the mutation frequency data.
 #' Mutation counts and total_depth should be summarized per sample alongside a
 #' column for your factor of interest. 
 #' This data can be obtained using the calculate_mut_freq(summary = TRUE). 
 #' @param factor This should be the name of the column that will act as the 
-#' factor for modelling mutation frequency. Only one factor can be analysed within 
+#' factor/fixed effect for modelling mutation frequency. Only one factor can be analysed within 
 #' the general linear model. Ex. "dose", or "time_point".
 #' @param reference_level Refers to one of the levels within your factor. 
 #' Remaining levels will be contrasted against the reference_level.
@@ -13,21 +21,39 @@
 #' negative control dose. 
 #' @param muts The column containing the mutation count per sample.
 #' @param total_count The column containing the sequencing depth per sample.
-#' @param contrast_table a .txt file that will provide the information necessary 
-#' to make comparisons between samples. The first column must be a level within
-#' your factor and the second column must be the level within your factor that
-#' it will be compared to. The names must correspond to entries in your mf_data
-#' factor column. For example, if your factor is "dose" with dose groups 
-#' 0, 25, 50, 100, then the first column would contain the treated groups 
-#' (25, 50, 100), while the second column would be 0, thus comparing each treated
-#' group to the control group. The contrast table for this example would be: 
+#' @param contrast_table_file a filepath to a tab-delimited .txt file that will 
+#' provide the information necessary to make comparisons between samples. 
+#' The first column must be a level within your factor and the second column 
+#' must be the level within your factor that it will be compared to. The names 
+#' must correspond to entries in your mf_data factor column. Put the factor that
+#' you expect to have the higher mutation frequency in the 1st column and the 
+#' factor level that you expect to have a lower mutation frequency in the second 
+#' column. For example, if your factor is "dose" with dose groups 0, 25, 50, 100, 
+#' then the first column would contain the treated groups (25, 50, 100), while 
+#' the second column would be 0, thus comparing each treated group to the 
+#' control group. The contrast table for this example would be: 
 #' 
 #' 25 0 
 #' 
 #' 50 0 
 #' 
 #' 100 0 
-#' @returns A data frame with the model estimates and pairwise comparisons
+#' 
+#' Alternatively, if you would like to compare mutation frequency between treated
+#' dose groups, than the contrast table would look as follows, with the lower
+#' dose always in the second column, as we expect it to have a lower mutation 
+#' frequency.
+#' 
+#' 100 25
+#' 
+#' 100 50
+#' 
+#' 50 25
+#' 
+#' 
+#' 
+#' 
+#' @returns A data frame with the model estimates and specified pairwise comparisons
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom dplyr bind_rows
@@ -37,16 +63,18 @@ glm_mf_by_factor <- function(mf_data,
                              reference_level = 0,
                              muts = "sample_sum_unique",
                              total_count = "sample_group_depth",
-                             contrast_table =  rbind(c(6.25, 0),
-                                                    c(12.5, 0),
-                                                    c(25, 0),
-                                                    c(12.5, 6.25),
-                                                    c(25, 6.25),
-                                                    c(25, 12.5))) {
+                             contrast_table_file =  NULL) {
   
   mf_data[[factor]] <- as.factor(mf_data[[factor]])
   # Extract unique levels of the factor
   factor_levels <- unique(mf_data[[factor]])
+  # Check that the reference level is a level of the factor
+  reference_valid <- reference_level %in% factor_levels
+  if (!reference_valid) {
+    stop(paste(reference_level, "is not a valid reference_level. Please ensure that your 
+                  reference_level corresponds to a level of your factor column"))
+  }
+  
   # Set the reference_level; reorders the factor levels with reference_level first
   mf_data[[factor]] <- relevel(mf_data[[factor]], ref = as.character(reference_level))
   
@@ -83,10 +111,12 @@ glm_mf_by_factor <- function(mf_data,
   
  # Plot the residuals
   hist_res <- hist(mf_data$glm_residuals, main = "Residuals", col = "yellow")
+  cat(" \n Printing histogram of model residuals: \n")
   print(hist_res)
 
   qqnorm_res <- qqnorm(mf_data$glm_residuals, main = "QQ Plot of Residuals")
   qqline_res <- qqline(mf_data$glm_residuals, col = "red")
+  cat(" \n Printing qq plot for model residuals  \n")
   print(qqnorm_res)
   print(qqline_res)    
   
@@ -123,6 +153,25 @@ glm_mf_by_factor <- function(mf_data,
   
 ##################################################################
   # Contrast matrix for the pairwise comparisons
+  
+  # load  and do checks
+  if (!is.null(contrast_table_file)) {
+    contrast_table <- read.delim(file.path(contrast_table_file), sep = "\t",
+                             header = F)
+  } else {
+    cat("Please supply the file path to your contrast table")
+  }
+  if (ncol(contrast_table) <= 1) {
+    stop("Your contrast_table only has one column. Make sure your file is tab-delimited.")
+  }
+  contrast_table <- as.matrix(contrast_table)
+  all_valid <- all(contrast_table %in% factor_levels)
+  if (!all_valid) {
+    invalid_values <- contrast_table[!(contrast_table %in% factor_levels)]
+    stop(paste("Invalid values in contrast_table:", paste(invalid_values, collapse = ","), 
+                  ". Please ensure that values in the contrast_table correspond to values in your factor column."))
+  }
+  
   # Identify the index of the reference level in factor_levels
   ref_level_index <- match(reference_level, factor_levels)
   
@@ -188,5 +237,218 @@ glm_mf_by_factor <- function(mf_data,
   glm_output <- dplyr::bind_rows(model_estimates, pairwise_comparisons)
   return(glm_output)
     
+}
+
+########################################################################
+########################################################################
+
+#' Perform General Linear Mixed Modelling on DupSeq Mutation Frequency based on
+#' fixed and random effects
+#' 
+#' @param mf_data The data frame containing the mutation frequency data.
+#' Mutation counts and total_depth should be summarized per sample alongside a
+#' columns for your fixed effects. 
+#' This data can be obtained using the calculate_mut_freq(summary = TRUE). 
+#' @param fixed_effects This should be the name of the columns that will act as the 
+#' factor/fixed effect for modelling mutation frequency. Fixed effects encapsulate 
+#' the tendencies/trends that are consistent at the levels of primary interest. 
+#' These effects are considered fixed because they are non-random and assumed to 
+#' be constant for the samples being studied. Ex. 'fixed_effects = c("dose", "target")'.
+#' @param test_interaction TRUE or FALSE. Whether or not your model should test 
+#' the interaction between fixed_effects on top of the effect of each factor.
+#' @param random_effects This should be the name of the column to be analysed as 
+#' a random effect in the model. Random effects introduce statistical variability 
+#' at different levels of the data hierarchy. These account for the unmeasured 
+#' sources of variance that affect certain groups in the data. Ex. If your model
+#' uses repeated measures of sample, 'random_effects = "sample"'. 
+#' @param reference_level Refers to one of the levels within your fixed_effects. 
+#' Remaining levels will be contrasted against the reference_level.
+#' Ex. if my factor was a dose column, then my reference_level would refer to my
+#' negative control dose. 
+#' @param muts The column containing the mutation count per sample.
+#' @param total_count The column containing the sequencing depth per sample.
+#' @param contrast_table_file a filepath to a tab-delimited .txt file that will 
+#' provide the information necessary to make comparisons between samples. 
+#' The first column must be a level within your factor and the second column 
+#' must be the level within your factor that it will be compared to. The names 
+#' must correspond to entries in your mf_data factor column. Put the factor that
+#' you expect to have the higher mutation frequency in the 1st column and the 
+#' factor level that you expect to have a lower mutation frequency in the second 
+#' column. For example, if your factor is "dose" with dose groups 0, 25, 50, 100, 
+#' then the first column would contain the treated groups (25, 50, 100), while 
+#' the second column would be 0, thus comparing each treated group to the 
+#' control group. The contrast table for this example would be: 
+#' 
+#' 25 0 
+#' 
+#' 50 0 
+#' 
+#' 100 0 
+#' 
+#' Alternatively, if you would like to compare mutation frequency between treated
+#' dose groups, than the contrast table would look as follows, with the lower
+#' dose always in the second column, as we expect it to have a lower mutation 
+#' frequency.
+#' 
+#' 100 25
+#' 
+#' 100 50
+#' 
+#' 50 25
+#' 
+#' 
+#' 
+#' 
+#' @returns A data frame with the model estimates and specified pairwise comparisons
+#' @importFrom magrittr %>%
+#' @importFrom doBy esticon
+#' @importFrom dplyr bind_rows
+#' @import lme4 glmer
+#' @import HLMdiag
+#' @import Cairo
+#' @import robustlmm
+#' @import DHARMA
+#' @import car Anova
+#' @import multcomp
+
+
+glmm_mf <- function(mf_data,
+                    fixed_effects = c("dose", "label"),
+                    test_interaction = TRUE,
+                    random_effects = "sample",
+                    reference_level = 0,
+                    muts = "sample_label_sum_unique",
+                    total_count = "sample_label_group_depth",
+                    contrast_table_file =  NULL) {
+  
+  # Convert specified columns to factors
+  mf_data[, fixed_effects] <- lapply(mf_data[, fixed_effects], as.factor) 
+  
+  # Extract unique levels from each factor and combine them
+  factor_levels <- unique(unlist(lapply(fixed_effects, function(factor_name) {
+    factor_variable <- mf_data[[factor_name]]
+    levels(factor_variable)
+  })))
+  
+  # Check that the reference level is a level of the factor
+  reference_valid <- reference_level %in% factor_levels
+  if (!reference_valid) {
+    stop(paste(reference_level, "is not a valid reference_level. Please ensure that your 
+                  reference_level corresponds to a level of your factor column"))
+  }
+  
+  
+  # Set the reference_level; reorders the factor levels with reference_level first
+  # mf_data[[factor]] <- relevel(mf_data[[factor]], ref = as.character(reference_level))
+  
+  # Construct the formula
+  if(test_interaction){
+    formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "*"))
+  } else {
+    formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "+"))
+  }
+  
+  # Add random effects to the formula
+  if (length(random_effects) > 0) {
+    random_formula <- paste(paste("(1|", random_effects, ")", collapse = "+"))
+    formula_str <- paste(formula_str, "+", random_formula)
+  }
+  
+  # Convert the string formula to an actual formula object
+  glmm_formula <- as.formula(formula_str)
+  
+  model <- lme4::glmer(glmm_formula, 
+                 family = "binomial", 
+                 data = mf_data, 
+                 control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", 
+                                                                  tol = 3e-3, 
+                                                                  relTol = NULL)))
+  
+  summary(model)
+  
+  car::Anova(model)
+ #################################
+  # Check residuals
+  mf_data$Resid <- residuals(model)
+  # Print the entire row with the maximum residual
+  cat("The row with the maximum residual is:\n")
+  mf_data[abs(residuals(model)) == max(abs(residuals(model))),]
+  
+  ## TO DO: Do we have an advisory for users as what is too high for a residual?
+  
+  # Create a data frame with the variables needed for the boxplot
+  plot_data <- mf_data %>%
+    dplyr::mutate(mutation_frequency = plot_data[[muts]] / plot_data[[total_count]])
+  
+  # Create a boxplot to visualise data
+  # Constructing formula for boxplot
+  plot_formula <- paste("mutation_frequency ~", paste(fixed_effects, collapse = "*"))
+  plot_formula <- as.formula(plot_formula)
+  par(las = 2)
+  boxplot(plot_formula,
+          data = plot_data,
+          main = "Mutation Frequency by Fixed Effects",
+          xlab = paste(fixed_effects[1],"x", fixed_effects[2]),
+          ylab = "Mutation Frequency")
+  
+  
+  
+  hist <- hist(residuals(model), main = "Residuals")
+  cat(" \n Printing histogram of model residuals: \n")
+  print(hist)
+  
+  qqnorm(residuals(model))
+  abline(h = -3, col = "red", lwd = 2)
+  abline(h = 3, col = "red", lwd = 2)
+
+  #########################################  
+  # Point Estimates By Fixed Effects
+  
+  # nCoef <- length(names(coef(model)$sample))
+  # a <- c(1, rep(0, nCoef - 1))
+  # lambda <- NULL
+  # 
+  # d <- paste("dose", unique(mf_data$dose), sep = "")
+  # r <- paste("label", unique(mf_data$label), sep = "")
+  # indx <- 0
+  # 
+  # for(k in 1:length(d)){
+  #   for(j in 1:length(r)){
+  #     b <- a
+  #     #Dose
+  #     flag <- names(coef(model)$sample) == d[k]
+  #     if(length(b[flag]) > 0){
+  #       b[flag] <- 1
+  #     }
+  #     #label
+  #     flag <- names(coef(model)$sample) == r[j]
+  #     if(length(b[flag]) > 0){
+  #       b[flag] <- 1
+  #     }
+  #     #Interaction
+  #     flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":")
+  #     if(length(b[flag]) > 0){
+  #       b[flag] <- 1
+  #     }
+  #     
+  #     lambda <- rbind(lambda, b)
+  #     indx <- indx + 1
+  #     row.names(lambda)[indx] <- paste(d[k], r[j], sep = ":")
+  #   }
+  # }
+  # colnames(lambda) <- names(coef(model)$sample) 
+  # 
+  # 
+  # model_estimates <-esticon(m,lambda)
+  # 
+  # model_estimates <- as.data.frame(model_estimates)
+  # model_estimates$estimate <- exp(model_estimates$estimate)
+  # delta <- model_estimates$estimate^2
+  # model_estimates$lwr <- exp(model_estimates$lwr)
+  # model_estimates$upr <- exp(model_estimates$upr)
+  # model_estimates$std.error <- sqrt(delta*model_estimates$std.error^2)
+  # model_estimates <- model_estimates[,-c(3,4,5,6)]
+  # colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
+      
 }
   

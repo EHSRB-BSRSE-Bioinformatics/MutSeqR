@@ -10,7 +10,8 @@ glm_mf_by_factor(
   reference_level = 0,
   muts = "sample_sum_unique",
   total_count = "sample_group_depth",
-  contrast_table = rbind(c(6.25, 0), c(12.5, 0), c(25, 0))
+  contrast_table = rbind(c(6.25, 0), c(12.5, 0), c(25, 0), c(12.5, 6.25), c(25, 6.25),
+    c(25, 12.5))
 )
 }
 \arguments{
@@ -36,16 +37,29 @@ negative control dose.}
 to make comparisons between samples. The first column must be a level within
 your factor and the second column must be the level within your factor that
 it will be compared to. The names must correspond to entries in your mf_data
-factor column. For example, if your factor is "dose" with dose groups
-0, 25, 50, 100, then the first column would contain the treated groups
-(25, 50, 100), while the second column would be 0, thus comparing each treated
-group to the control group. The contrast table for this example would be:
+factor column. Put the factor that you expect to have the higher mutation
+frequency in the 1st column and the factor level that you expect to have a
+lower mutation frequency in the second column. For example, if your factor
+is "dose" with dose groups 0, 25, 50, 100, then the first column would
+contain the treated groups (25, 50, 100), while the second column would be 0,
+thus comparing each treated group to the control group.
+The contrast table for this example would be:
 
 25 0
 
 50 0
 
-100 0}
+100 0
+
+Alternatively, if you would like to compare mutation frequency between treated
+dose groups, than the contrast table would look as follows, with the lower
+dose always in the second column.
+
+100 25
+
+100 50
+
+50 25}
 }
 \value{
 A data frame with the model estimates and pairwise comparisons
