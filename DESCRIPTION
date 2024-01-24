@@ -19,6 +19,7 @@ Imports:
     binom,
     Biostrings,
     data.table,
+    doBy,
     dplyr,
     GenomeInfoDb,
     GenomicRanges,

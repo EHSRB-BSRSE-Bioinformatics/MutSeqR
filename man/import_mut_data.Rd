@@ -11,6 +11,7 @@ import_mut_data(
   sample_data_file = NULL,
   sd_sep = "\\t",
   vaf_cutoff,
+  range_buffer = 0,
   regions = c("human", "mouse", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
