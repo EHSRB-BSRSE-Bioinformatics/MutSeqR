@@ -22,11 +22,6 @@
 #' in seq_start and seq_end. Default is 0.
 #' @return a GRanges object with sequences and metadata of targeted regions. 
 #' Region ranges coordinates will become 1-based.
-#' @examples
-#' t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 
-#'               species = species_param, genome_version = "GRCm38",
-#'               is_0_based = FALSE)
-#' t$sequence
 #' @importFrom httr content content_type GET
 #' @importFrom xml2 read_xml xml_text xml_find_first
 #' @importFrom GenomicRanges makeGRangesFromDataFrame

@@ -94,7 +94,7 @@ glm_mf_by_factor <- function(mf_data,
   # Check if the subset is not empty
   if (nrow(subset_df) > 0) {
     # Print message and subset
-    cat("It is advised to remove observations with residuals greater than 4 in absolute value.",
+    message("It is advised to remove observations with residuals greater than 4 in absolute value.",
         "The following observations have abs(glm_residuals) > 4:\n")
     print(subset_df)
   } else {
@@ -104,19 +104,19 @@ glm_mf_by_factor <- function(mf_data,
     max_residual_row <- mf_data[max_residual_index, ]
     
     # Print the entire row with the maximum residual
-    cat("The row with the maximum residual is:\n")
+    message("The row with the maximum residual is:\n")
     print(max_residual_row)
     
   }
   
  # Plot the residuals
   hist_res <- hist(mf_data$glm_residuals, main = "Residuals", col = "yellow")
-  cat(" \n Printing histogram of model residuals: \n")
+  message(" \n Printing histogram of model residuals: \n")
   print(hist_res)
 
   qqnorm_res <- qqnorm(mf_data$glm_residuals, main = "QQ Plot of Residuals")
   qqline_res <- qqline(mf_data$glm_residuals, col = "red")
-  cat(" \n Printing qq plot for model residuals  \n")
+  message(" \n Printing qq plot for model residuals  \n")
   print(qqnorm_res)
   print(qqline_res)    
   
@@ -237,6 +237,8 @@ glm_mf_by_factor <- function(mf_data,
   glm_output <- dplyr::bind_rows(model_estimates, pairwise_comparisons)
   return(glm_output)
     
+## To DO:  Results as list
+    
 }
 
 ########################################################################
@@ -303,7 +305,7 @@ glm_mf_by_factor <- function(mf_data,
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom dplyr bind_rows
-#' @import lme4 glmer
+#' @import lme4 glmer fixef
 #' @import HLMdiag
 #' @import Cairo
 #' @import robustlmm
@@ -337,6 +339,12 @@ glmm_mf <- function(mf_data,
                   reference_level corresponds to a level of your factor column"))
   }
   
+  # factor_level <- lapply(fixed_effects, function(factor_name) {
+  #  if(reference_level %in% levels(mf_data[[factor_name]])){
+  #    mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = as.character(reference_level))
+  #  }
+  #  levels(mf_data[[factor_name]])
+  # })
   
   # Set the reference_level; reorders the factor levels with reference_level first
   # mf_data[[factor]] <- relevel(mf_data[[factor]], ref = as.character(reference_level))
@@ -357,6 +365,7 @@ glmm_mf <- function(mf_data,
   # Convert the string formula to an actual formula object
   glmm_formula <- as.formula(formula_str)
   
+  # We should have a think about the control and how it can be made flexible. 
   model <- lme4::glmer(glmm_formula, 
                  family = "binomial", 
                  data = mf_data, 
@@ -364,9 +373,9 @@ glmm_mf <- function(mf_data,
                                                                   tol = 3e-3, 
                                                                   relTol = NULL)))
   
-  summary(model)
+  model_summary <- summary(model)
   
-  car::Anova(model)
+  model_anova <-car::Anova(model)
  #################################
   # Check residuals
   mf_data$Resid <- residuals(model)
@@ -374,11 +383,11 @@ glmm_mf <- function(mf_data,
   cat("The row with the maximum residual is:\n")
   mf_data[abs(residuals(model)) == max(abs(residuals(model))),]
   
-  ## TO DO: Do we have an advisory for users as what is too high for a residual?
+  ## TO DO: Let's walk users through what the residuals should look like and give advice on them
   
   # Create a data frame with the variables needed for the boxplot
   plot_data <- mf_data %>%
-    dplyr::mutate(mutation_frequency = plot_data[[muts]] / plot_data[[total_count]])
+    dplyr::mutate(mutation_frequency = mf_data[[muts]] / mf_data[[total_count]])
   
   # Create a boxplot to visualise data
   # Constructing formula for boxplot
@@ -392,7 +401,7 @@ glmm_mf <- function(mf_data,
           ylab = "Mutation Frequency")
   
   
-  
+  par(las = 1)
   hist <- hist(residuals(model), main = "Residuals")
   cat(" \n Printing histogram of model residuals: \n")
   print(hist)
@@ -400,55 +409,43 @@ glmm_mf <- function(mf_data,
   qqnorm(residuals(model))
   abline(h = -3, col = "red", lwd = 2)
   abline(h = 3, col = "red", lwd = 2)
-
+  
+## TO DO: Have a message about what these should look like. 
+  
   #########################################  
   # Point Estimates By Fixed Effects
+  ###########################################################
+  # Define your levels for each factor
+  fixed_effects_levels <- lapply(fixed_effects, function(factor) levels(mf_data[[factor]]))
   
-  # nCoef <- length(names(coef(model)$sample))
-  # a <- c(1, rep(0, nCoef - 1))
-  # lambda <- NULL
-  # 
-  # d <- paste("dose", unique(mf_data$dose), sep = "")
-  # r <- paste("label", unique(mf_data$label), sep = "")
-  # indx <- 0
-  # 
-  # for(k in 1:length(d)){
-  #   for(j in 1:length(r)){
-  #     b <- a
-  #     #Dose
-  #     flag <- names(coef(model)$sample) == d[k]
-  #     if(length(b[flag]) > 0){
-  #       b[flag] <- 1
-  #     }
-  #     #label
-  #     flag <- names(coef(model)$sample) == r[j]
-  #     if(length(b[flag]) > 0){
-  #       b[flag] <- 1
-  #     }
-  #     #Interaction
-  #     flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":")
-  #     if(length(b[flag]) > 0){
-  #       b[flag] <- 1
-  #     }
-  #     
-  #     lambda <- rbind(lambda, b)
-  #     indx <- indx + 1
-  #     row.names(lambda)[indx] <- paste(d[k], r[j], sep = ":")
-  #   }
-  # }
-  # colnames(lambda) <- names(coef(model)$sample) 
-  # 
-  # 
-  # model_estimates <-esticon(m,lambda)
-  # 
-  # model_estimates <- as.data.frame(model_estimates)
-  # model_estimates$estimate <- exp(model_estimates$estimate)
-  # delta <- model_estimates$estimate^2
-  # model_estimates$lwr <- exp(model_estimates$lwr)
-  # model_estimates$upr <- exp(model_estimates$upr)
-  # model_estimates$std.error <- sqrt(delta*model_estimates$std.error^2)
-  # model_estimates <- model_estimates[,-c(3,4,5,6)]
-  # colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
-      
+  # Define all combinations of each factor
+  design_matrix <- do.call(expand.grid, fixed_effects_levels)
+  colnames(design_matrix) <- fixed_effects
+  
+   # Create simplified model formula
+  if(test_interaction){
+    fixed_effect_formula <- as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
+  } else {
+    fixed_effect_formula <- as.formula(paste(" ~ ", paste(fixed_effects, collapse = "+")))
+  }
+  
+  # Create the model matrix using model.matrix  
+  model_matrix <- model.matrix(fixed_effect_formula, data = design_matrix)
+  row_names <- apply(design_matrix, 1, paste, collapse = ":")
+  rownames(model_matrix) <- row_names 
+  
+  # Computed estimates
+  model_estimates <-esticon(model,lambda)
+
+  model_estimates <- as.data.frame(model_estimates)
+  model_estimates$estimate <- exp(model_estimates$estimate)
+  delta <- model_estimates$estimate^2
+  model_estimates$lwr <- exp(model_estimates$lwr)
+  model_estimates$upr <- exp(model_estimates$upr)
+  model_estimates$std.error <- sqrt(delta*model_estimates$std.error^2)
+  # Clean data
+  model_estimates <- model_estimates[,-c(3,4,5,6)]
+  colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
+
 }
   
