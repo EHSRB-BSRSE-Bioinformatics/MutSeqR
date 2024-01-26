@@ -111,14 +111,9 @@ glm_mf_by_factor <- function(mf_data,
   
  # Plot the residuals
   hist_res <- hist(mf_data$glm_residuals, main = "Residuals", col = "yellow")
-  message(" \n Printing histogram of model residuals: \n")
-  print(hist_res)
 
   qqnorm_res <- qqnorm(mf_data$glm_residuals, main = "QQ Plot of Residuals")
   qqline_res <- qqline(mf_data$glm_residuals, col = "red")
-  message(" \n Printing qq plot for model residuals  \n")
-  print(qqnorm_res)
-  print(qqline_res)    
   
   ##################################################################
   # Contrast matrix for the point estimates
@@ -132,7 +127,7 @@ glm_mf_by_factor <- function(mf_data,
   }
   # Set the first column to all 1s
   contrast_matrix[, 1] <- 1
-  
+  point_estimates_matrix <- contrast_matrix
   #esticon Contrasts for glm. Computes weighted sums of the estimated regression parameters
   model_estimates <- doBy::esticon(obj = model,L = contrast_matrix)
   
@@ -234,10 +229,16 @@ glm_mf_by_factor <- function(mf_data,
 
  ############################################### 
   # Return output file
-  glm_output <- dplyr::bind_rows(model_estimates, pairwise_comparisons)
-  return(glm_output)
-    
-## To DO:  Results as list
+    # Create a list to store outputs
+    glm_results <- list(model_data = mf_data, 
+                        GLM_formula = glm_formula,
+                        Residuals_histogram = hist_res,
+                        Residuals_QQ_plot = qqnorm_res,
+                        point_estimates_matrix = point_estimates_matrix,
+                        model_estimates = model_estimates,
+                        pairwise_comparisons_matrix = contrast_matrix,
+                        pairwise_comparisons = pairwise_comparisons)
+  return(glm_results)
     
 }
 
