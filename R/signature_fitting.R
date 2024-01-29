@@ -10,7 +10,10 @@
 #' @param project_genome A string describing the reference genome to use; 
 #' e.g. GRCh37, GRCH38, mm10, mm9, rn6
 #' output_path The directory where output results should be written. *not a parameter of the function
+#' @param env_name The name of the virtual environment. This will be created on first use. 
 #' @param group The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)
+#' @param output_path The filepath to thedirectory in which the output folder will be created to store results.
+#' @param python_version The version of python to be used. 
 #' @param python_path The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.
 #' @param python_home The path to the conda virtual environment that contains the required python dependencies
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.

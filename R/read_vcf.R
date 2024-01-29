@@ -41,6 +41,11 @@
 #' assembly. For a complete list, refer to https://genome.ucsc.edu 
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 | 
 #' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
+#' @param range_buffer An integer >= 0. Variants that occur outside of the 
+#' defined regions' ranges will be filtered out. Use the range-buffer to extend
+#' the range within which a variant can occur. The default is 1 nucleotide 
+#' outside of region ranges. Ex. Structural variants and indels may start outside
+#' of the regions. Adjust the range_buffer to include these variants. 
 #' @param depth_calc In the instance when there are two or more calls at the 
 #' same location within a sample, and the depths differ, this parameter chooses 
 #' the method of calculation for the total_depth. take_mean calculates the 

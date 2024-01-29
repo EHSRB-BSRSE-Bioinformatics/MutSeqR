@@ -57,6 +57,8 @@
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom dplyr bind_rows
+#' @importFrom graphics boxplot hist par
+#' @importFrom stats as.formula glm qqline qqnorm relevel
 
 glm_mf_by_factor <- function(mf_data,
                              factor = "dose",
@@ -76,13 +78,13 @@ glm_mf_by_factor <- function(mf_data,
   }
   
   # Set the reference_level; reorders the factor levels with reference_level first
-  mf_data[[factor]] <- relevel(mf_data[[factor]], ref = as.character(reference_level))
+  mf_data[[factor]] <- stats::relevel(mf_data[[factor]], ref = as.character(reference_level))
   
   # Construct glm formula 
-  glm_formula <- as.formula(sprintf("cbind(%s, %s) ~ %s", muts, total_count, factor))
+  glm_formula <- stats::as.formula(sprintf("cbind(%s, %s) ~ %s", muts, total_count, factor))
   
   # quasibinomial in order to account for over dispersion
-  model <- glm(glm_formula,
+  model <- stats::glm(glm_formula,
            family = "quasibinomial", data = mf_data,
            weights = get(total_count))
   
@@ -112,8 +114,8 @@ glm_mf_by_factor <- function(mf_data,
  # Plot the residuals
   hist_res <- hist(mf_data$glm_residuals, main = "Residuals", col = "yellow")
 
-  qqnorm_res <- qqnorm(mf_data$glm_residuals, main = "QQ Plot of Residuals")
-  qqline_res <- qqline(mf_data$glm_residuals, col = "red")
+  qqnorm_res <- stats::qqnorm(mf_data$glm_residuals, main = "QQ Plot of Residuals")
+  qqline_res <- stats::qqline(mf_data$glm_residuals, col = "red")
   
   ##################################################################
   # Contrast matrix for the point estimates
@@ -305,14 +307,10 @@ glm_mf_by_factor <- function(mf_data,
 #' @returns A data frame with the model estimates and specified pairwise comparisons
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
-#' @importFrom dplyr bind_rows
-#' @import lme4 glmer fixef
-#' @import HLMdiag
-#' @import Cairo
-#' @import robustlmm
-#' @import DHARMA
-#' @import car Anova
-#' @import multcomp
+#' @importFrom lme4 glmer
+#' @importFrom car Anova
+#' @importFrom graphics abline boxplot hist par
+#' @importFrom stats as.formula model.matrix qqnorm relevel residuals
 
 
 glmm_mf <- function(mf_data,
@@ -342,13 +340,13 @@ glmm_mf <- function(mf_data,
   
   # factor_level <- lapply(fixed_effects, function(factor_name) {
   #  if(reference_level %in% levels(mf_data[[factor_name]])){
-  #    mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = as.character(reference_level))
+  #    mf_data[[factor_name]] <- stats::relevel(mf_data[[factor_name]], ref = as.character(reference_level))
   #  }
   #  levels(mf_data[[factor_name]])
   # })
   
   # Set the reference_level; reorders the factor levels with reference_level first
-  # mf_data[[factor]] <- relevel(mf_data[[factor]], ref = as.character(reference_level))
+  # mf_data[[factor]] <- stats::relevel(mf_data[[factor]], ref = as.character(reference_level))
   
   # Construct the formula
   if(test_interaction){
@@ -364,7 +362,7 @@ glmm_mf <- function(mf_data,
   }
   
   # Convert the string formula to an actual formula object
-  glmm_formula <- as.formula(formula_str)
+  glmm_formula <- stats::as.formula(formula_str)
   
   # We should have a think about the control and how it can be made flexible. 
   model <- lme4::glmer(glmm_formula, 
@@ -379,10 +377,10 @@ glmm_mf <- function(mf_data,
   model_anova <-car::Anova(model)
  #################################
   # Check residuals
-  mf_data$Resid <- residuals(model)
+  mf_data$Resid <- stats::residuals(model)
   # Print the entire row with the maximum residual
   cat("The row with the maximum residual is:\n")
-  mf_data[abs(residuals(model)) == max(abs(residuals(model))),]
+  mf_data[abs(stats::residuals(model)) == max(abs(stats::residuals(model))),]
   
   ## TO DO: Let's walk users through what the residuals should look like and give advice on them
   
@@ -393,7 +391,7 @@ glmm_mf <- function(mf_data,
   # Create a boxplot to visualise data
   # Constructing formula for boxplot
   plot_formula <- paste("mutation_frequency ~", paste(fixed_effects, collapse = "*"))
-  plot_formula <- as.formula(plot_formula)
+  plot_formula <- stats::as.formula(plot_formula)
   par(las = 2)
   boxplot(plot_formula,
           data = plot_data,
@@ -403,11 +401,11 @@ glmm_mf <- function(mf_data,
   
   
   par(las = 1)
-  hist <- hist(residuals(model), main = "Residuals")
+  hist <- hist(stats::residuals(model), main = "Residuals")
   cat(" \n Printing histogram of model residuals: \n")
   print(hist)
   
-  qqnorm(residuals(model))
+  stats::qqnorm(stats::residuals(model))
   abline(h = -3, col = "red", lwd = 2)
   abline(h = 3, col = "red", lwd = 2)
   
@@ -425,13 +423,13 @@ glmm_mf <- function(mf_data,
   
    # Create simplified model formula
   if(test_interaction){
-    fixed_effect_formula <- as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
+    fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
   } else {
-    fixed_effect_formula <- as.formula(paste(" ~ ", paste(fixed_effects, collapse = "+")))
+    fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "+")))
   }
   
   # Create the model matrix using model.matrix  
-  model_matrix <- model.matrix(fixed_effect_formula, data = design_matrix)
+  model_matrix <- stats::model.matrix(fixed_effect_formula, data = design_matrix)
   row_names <- apply(design_matrix, 1, paste, collapse = ":")
   rownames(model_matrix) <- row_names 
   

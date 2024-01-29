@@ -58,6 +58,12 @@ but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
 flag variants that are present at a frequency greater than this value
 at a given site.}
 
+\item{range_buffer}{An integer >= 0. Variants that occur outside of the
+defined regions' ranges will be filtered out. Use the range-buffer to extend
+the range within which a variant can occur. The default is 1 nucleotide
+outside of region ranges. Ex. Structural variants and indels may start outside
+of the regions. Adjust the range_buffer to include these variants.}
+
 \item{regions}{Values are \code{c("human", "mouse", "custom")}. Indicates the target panel used for Duplex Sequencing.
 The argument refers to the TS Mutagenesis panel of the specified species, or to a custom panel.
 If "custom", provide the file path of your regions file in \code{custom_regions_file}. TO DO: add rat.}

@@ -141,7 +141,7 @@ calculate_mut_freq <- function(data,
   )
 summary_rows <- do.call(expand.grid, col_values)
 
-subset_type <- subtype_list$type[subtype_list$type %in% variant_types] 
+subset_type <- DupSeqR::subtype_list$type[DupSeqR::subtype_list$type %in% variant_types] 
 
 if(subtype_resolution != "none"){
 summary_rows  <- merge(subset_type, summary_rows)
@@ -169,7 +169,7 @@ summary_table <- merge(summary_rows, summary_data, by = c(col_names), all =  TRU
 if(!is.na(DupSeqR::denominator_dict[[subtype_resolution]])){
   
   # Create a list of all snv subtypes at resolution for each group
-  snv_subtype <- list(subtype_list[[subtype_resolution]]) 
+  snv_subtype <- list(DupSeqR::subtype_list[[subtype_resolution]]) 
   summary_rows_snv <- do.call(expand.grid, c(snv_subtype, col_values))
   colnames(summary_rows_snv) <- col_names
  # Add in the denominator reference column 

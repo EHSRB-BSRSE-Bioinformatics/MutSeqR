@@ -28,8 +28,10 @@ If FALSE, any mutation occuring more than once in a single sample will only be c
 TO DO: clonality cut_off?}
 
 \item{filter}{Parameter allows you to choose to filter for only somatic or germline mutations.
-Values = c("somatic", "germline", "none). "none" will leave the data unfiltered.
-#' @returns a .txt file that can be uploaded to the sigprofiler web application as "Mutational Matrix"}
+Values = c("somatic", "germline", "none). "none" will leave the data unfiltered.}
+}
+\value{
+a .txt file that can be uploaded to the sigprofiler web application as "Mutational Matrix"
 }
 \description{
 Creates a .txt file from mutation data that can be used for mutational signatures

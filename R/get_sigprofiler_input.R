@@ -13,6 +13,9 @@
 #' @returns a .txt file that can be uploaded to the sigprofiler web application
 #' as "Mutational calling file"
 #' Filters out ostensibly germline mutations identified in mutaiton data.. 
+#' @importFrom dplyr rename filter select mutate relocate 
+#' @importFrom here here
+#' @importFrom utils write.table
 #' @export
 
 write_mutation_calling_file <- function(mutations,
@@ -83,7 +86,7 @@ write_mutation_calling_file <- function(mutations,
     dir.create(file.path(output_path, "matrices"), recursive = T)
   }
   
-  write.table(signature_data,
+  utils::write.table(signature_data,
               file = file.path(output_path, "matrices", "mutation_calling_file.txt"),
               sep = "\t", row.names = F, quote = F
   )
@@ -108,7 +111,10 @@ write_mutation_calling_file <- function(mutations,
 #' TO DO: clonality cut_off? 
 #' @param filter Parameter allows you to choose to filter for only somatic or germline mutations. 
 #' Values = c("somatic", "germline", "none). "none" will leave the data unfiltered. 
-#' #' @returns a .txt file that can be uploaded to the sigprofiler web application as "Mutational Matrix"
+#' @returns a .txt file that can be uploaded to the sigprofiler web application as "Mutational Matrix"
+#' @importFrom stats reshape
+#' @importFrom dplyr rename filter group_by mutate ungroup select distinct
+#' @importFrom here here
 #' @export
 #' 
 write_mutational_matrix <- function(mutations,  
@@ -139,9 +145,9 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_sample_data_
 colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_prefix] <- stripped_region_data_columns
     
   if (filter == "somatic") {
-      signature_data <- filter(signature_data, is_germline == FALSE)
+      signature_data <- dplyr::filter(signature_data, is_germline == FALSE)
     } else if (filter == "germline") {
-      signature_data <- filter(signature_data, is_germline == TRUE)
+      signature_data <- dplyr::filter(signature_data, is_germline == TRUE)
     } else if (filter == "none") {
        signature_data <- signature_data
       }
@@ -152,7 +158,7 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
   
   signature_data <- signature_data %>% 
     dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
-    mutate(mut_count = ifelse(include_clonal, 
+    dplyr::mutate(mut_count = ifelse(include_clonal, 
                         sum(.data$alt_depth), 
                         length(.data$alt_depth))) %>%
     dplyr::ungroup()
@@ -160,7 +166,7 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
   # Create a list of vectors, one for each column in cols_to_group
   col_values <- lapply(group, function(col) unique(signature_data[[col]]))
   # Create a dataframe with every combination of subtype_resolution and values from cols_to_group
-  mut_matrix <- do.call(expand.grid, c(subtype = list(subtype_list[[matrices]]), col_values))
+  mut_matrix <- do.call(expand.grid, c(subtype = list(DupSeqR::subtype_list[[matrices]]), col_values))
   
   col_names <- c(paste(DupSeqR::subtype_dict[[matrices]]), group)
   
@@ -173,7 +179,7 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
     dplyr::distinct()
   mut_matrix <- merge(mut_matrix, summary_data, by = col_names, all = TRUE)
   mut_matrix$mut_count[is.na(mut_matrix$mut_count)] <- 0
-  mut_matrix_wide <- reshape(mut_matrix, idvar = paste(DupSeqR::subtype_dict[[matrices]]), timevar = paste(group), direction = "wide")
+  mut_matrix_wide <- stats::reshape(mut_matrix, idvar = paste(DupSeqR::subtype_dict[[matrices]]), timevar = paste(group), direction = "wide")
   colnames(mut_matrix_wide) <- gsub("mut_count.", "", colnames(mut_matrix_wide)) 
   colnames(mut_matrix_wide)[1] <- "MutationType"
    output_path <- file.path(
@@ -187,7 +193,7 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
     dir.create(file.path(output_path, "matrices"), recursive = T)
   }
   
-  write.table(mut_matrix_wide,
+  utils::write.table(mut_matrix_wide,
               file = file.path(output_path, "matrices", "mutational_matrix.txt"),
               sep = "\t", row.names = F, quote = F
   )  
