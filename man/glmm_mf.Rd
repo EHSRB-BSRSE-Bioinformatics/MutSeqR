@@ -10,7 +10,7 @@ glmm_mf(
   fixed_effects = c("dose", "label"),
   test_interaction = TRUE,
   random_effects = "sample",
-  reference_level = 0,
+  reference_level = c(0, "chr1"),
   muts = "sample_label_sum_unique",
   total_count = "sample_label_group_depth",
   contrast_table_file = NULL
