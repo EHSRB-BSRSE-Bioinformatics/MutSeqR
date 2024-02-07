@@ -49,6 +49,12 @@ params:
     input: file
     accept: [.txt, .csv, .xlsx]
     value: NULL
+  contrasts:
+    label: "Select your contrasts table"
+    input: file
+    accept: [.txt]
+    value: NULL
+    
 ---
 
 ```{r load_libraries, warning=F, echo=F}
@@ -303,6 +309,28 @@ ggplot(plotdata, aes(x = reorder(normalized_context_with_mutation, -as.numeric(f
   theme_minimal() +
   labs(x = "Normalized Context with Mutation", y = "Dose_MF_Unique") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, margin = margin(b = 10)))  # Adjust the 'margin' parameter for increased spacing
+
+```
+
+```{r linear modelling of mutation frequency}
+# Model MF by dose
+model_by_dose <- model_mf(mf_data = MF_per_sample,
+                          fixed_effects = "dose",
+                          random_effects = NULL,
+                          reference_level = 0,
+                          muts = "sample_sum_unique",
+                          total_count = "sample_group_depth",
+                          contrast_table_file = contrasts)
+
+# Model MF by dose and genomic_target
+model_by_target <- model_mf(mf_data = MF_per_target,
+                fixed_effects = c("dose", "label"),
+                test_interaction = TRUE,
+                random_effects = "sample",
+                reference_level = c(0, "chr1"),
+                muts = "sample_label_sum_unique",
+                total_count = "sample_label_group_depth",
+                contrast_table_file = contrasts)
 
 ```
 

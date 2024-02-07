@@ -7,77 +7,125 @@ fixed and random effects}
 \usage{
 model_mf(
   mf_data,
-  fixed_effects = c("dose", "label"),
+  fixed_effects = c("dose"),
   test_interaction = TRUE,
-  random_effects = "sample",
-  reference_level = c(0, "chr1"),
-  muts = "sample_label_sum_unique",
-  total_count = "sample_label_group_depth",
-  contrast_table_file = NULL
+  random_effects = NULL,
+  reference_level = c(0),
+  muts = "sample_sum_unique",
+  total_count = "sample_group_depth",
+  family = NULL,
+  contrast_table_file = NULL,
+  cont_sep = "\\t",
+  ...
 )
 }
 \arguments{
 \item{mf_data}{The data frame containing the mutation frequency data.
 Mutation counts and total sequencing depth should be summarized per sample
 alongside columns for your fixed effects.
-This data can be obtained using \code{calculate_mut_freq( summary = TRUE)}.}
+This data can be obtained using \code{calculate_mut_freq(summary=TRUE)}.}
 
 \item{fixed_effects}{The name(s) of the column(s) that will act as the
-fixed effect (factor/independent variable) for modelling mutation frequency.
-Fixed effects are variables that have a direct and constant effect on the
-dependent variable (ie mutation frequency).They are typically the experimental
-factors or covariates of interest for their impact on the dependent variable.
-One or more fixed effect may be provided. If you are providing more than one
-fixed effect, avoid using correlated variables; each fixed effect must
-independently predict the dependent variable.
+fixed_effects (factor/independent variable) for modelling mutation frequency.}
 
-Ex. \code{fixed_effects = c("dose", "genomic_target", "tissue", "age", etc)}.}
-
-\item{test_interaction}{\code{TRUE} or \code{FALSE}. Whether or not your model should include
-the interaction between the fixed_effects. Interaction terms enable you to
-examine whether the relationship between the dependent and independent
-variable changes based on the value of another independent variable.
-In other words, if an interaction is significant, then the relationship
-between the fixed effects is not constant across all levels of each variable.
-
-Ex. Consider investigating the effect of dose group and tissue on mutation
-frequency. An interaction between dose and tissue would capture whether the
-dose response differs between tissues.}
+\item{test_interaction}{a logical value. Whether or not your model should include
+the interaction between the \code{fixed_effects}.}
 
 \item{random_effects}{The name of the column(s) to be analysed as a
 random effect in the model. Providing this effect will cause the function to
-fit a generalized linear mixed-effects model. Random effects account for the
-unmeasured sources of statistical variance that affect certain groups in the
-data. They help account for unobserved heterogeneity or correlation within groups.
-
-Ex. If your model uses repeated measures within a sample, \code{random_effects = "sample"}.}
+fit a generalized linear mixed-effects model.}
 
 \item{reference_level}{Refers to one of the levels within each of your
 fixed_effects. The coefficient for the reference level will represent the
 baseline effect. The coefficients of the other levels will be interpreted in
-relation to the reference_level as deviations from the baseline effect.
-Setting a reference level for your fixed effects enhances the interpretability
-of the model.
-
-Ex. Consider a fixed effect "dose" with levels 0, 25, 50, and 100 mg/kg.
-Intuitively, the reference_level would refer to the  negative control dose, "0"
-since we are interested in testing how the treatment might change mutation
-frequency relative to the control.}
+relation to the reference_level as deviations from the baseline effect.}
 
 \item{muts}{The column containing the mutation count per sample.}
 
 \item{total_count}{The column containing the sequencing depth per sample.}
 
+\item{family}{a description of the error distribution and link function to be
+used in the model. The default is "quasibinomial" for generalized linear models
+and "binomial" for generalized linear mixed-models. See \link[stats]{glm}
+for more details.}
+
 \item{contrast_table_file}{a filepath to a tab-delimited \code{.txt} file that will
-provide the information necessary to make pariwise comparisons between groups.
+provide the information necessary to make pairwise comparisons between groups.
 The table must consist of two columns. The first column will be a group within
 your fixed_effects and the second column must be the group that it will be
 compared to.  The values must correspond to entries in your
 mf_data column for each fixed effect. Put the group that you expect to have the higher
 mutation frequency in the 1st column and the group that you expect to have a
-lower mutation frequency in the second column.
+lower mutation frequency in the second column. For multiple fixed effects,
+separate the levels of each \code{fixed_effect} of a group with a colon. Ensure
+that all \code{fixed_effects} are represented in each entry for the table.
+See \code{details} for examples.}
 
-For example, if you have a fixed effect "dose" with dose groups 0, 25, 50, 100,
+\item{cont_sep}{The delimiter for importing the contrast table file. Default is tab-delimited.}
+
+\item{...}{Extra arguments for \link[stats]{glm}  or \link[lme4]{glmer}. The
+\code{glmer} function is used when a \code{random_effect} is supplied, otherwise, the
+model uses the \code{glm} function.}
+}
+\value{
+Model results are output as a list. Included are:
+\itemize{
+\item model_data: the supplied mf_data with added column for model residuals.
+\item summary: the summary of the model.
+\item anova: the analysis of variance for models with two or more effects. \link[car]{Anova}\code{(model) }
+\item residuals_histogram: the model residuals plotted as a histogram. This is
+used to check whether the variance is normally distributed. A symmetric
+bell-shaped histogram, evenly distributed around zero indicates that the
+normality assumption is likely to be true.
+\item residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
+For a normal distribution, we expect points to roughly follow the y=x line.
+\item point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects.
+\item point_estimates: the point estimates for the fixed effects.
+\item pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the \code{contrast_table_file}.
+\item pairwise_comparisons: the results of pairwise comparisons specified in the \code{contrast_table_file}.
+}
+}
+\description{
+\code{model_mf} will fit a linear model to analyse the effect(s) of given factor(s)
+on mutation frequency and perform specified pairwise comparisons. This function
+will fit either a generalized linear model (\link[stats]{glm}) or, if supplied
+random effects, a generalized linear mixed-effects model (\link[lme4]{glmer}) .
+Pairwise comparisons are conducted using the doBy library (\link[doBy]{esticon})
+and estimates are then back-transformed. The delta method is  employed to
+approximate the  back-transformed standard-errors. A Holm-Sidak  correction
+is applied to adjust p-values for multiple comparisons.
+}
+\details{
+\code{fixed_effects} are variables that have a direct and constant effect on the
+dependent variable (ie mutation frequency).They are typically the experimental
+factors or covariates of interest for their impact on the dependent variable.
+One or more fixed_effect may be provided. If you are providing more than one
+fixed effect, avoid using correlated variables; each fixed effect must
+independently predict the dependent variable.
+Ex. \code{fixed_effects = c("dose", "genomic_target", "tissue", "age", etc)}.
+
+Interaction terms enable you to examine whether the relationship between the
+dependent and independent variable changes based on the value of another
+independent variable. In other words, if an interaction is significant, then
+the relationship between the fixed effects is not constant across all levels
+of each variable. Ex. Consider investigating the effect of dose group and tissue
+on mutation frequency. An interaction between dose and tissue would capture
+whether the dose response differs between tissues.
+
+\code{random_effects} account for the unmeasured sources of statistical variance that
+affect certain groups in the data. They help account for unobserved
+heterogeneity or correlation within groups. Ex. If your model uses repeated
+measures within a sample, \code{random_effects = "sample"}.
+
+Setting a \code{reference_level} for your fixed effects enhances the interpretability
+of the model. Ex. Consider a \code{fixed_effect} "dose" with levels 0, 25, 50, and 100 mg/kg.
+Intuitively, the reference_level would refer to the  negative control dose, "0"
+since we are interested in testing how the treatment might change mutation
+frequency relative to the control.
+
+Examples of \code{contrast_table_file}:
+
+If you have a \code{fixed_effect} "dose" with dose groups 0, 25, 50, 100,
 then the first column would contain the treated groups (25, 50, 100), while
 the second column would be 0, thus comparing each treated group to the control group.
 
@@ -90,7 +138,10 @@ the second column would be 0, thus comparing each treated group to the control g
 Alternatively, if you would like to compare mutation frequency between treated
 dose groups, then the contrast table would look as follows, with the lower
 dose always in the second column, as we expect it to have a lower mutation
-frequency.
+frequency. Keeping this format aids in interpretability of the estimates for
+the pairwise comparisons. Should the columns be reversed, with the higher
+group in the second column, then the model will compute the fold-decrease
+instead of the fold-increase.
 
 100 25
 
@@ -98,41 +149,27 @@ frequency.
 
 50 25
 
-For multiple fixed effects, separate the levels of each fixed-effect
-of a group with a colon. Ensure that all fixed_effects are represented in
-each entry for the table. Consider the scenario where the fixed effects
+Ex. Consider the scenario where the \code{fixed_effects }
 are "dose" (0, 25, 50, 100) and "genomic_target" ("chr1", "chr2"). To compare
-the three treated dose groups to the control for each genomic target, then the
+the three treated dose groups to the control for each genomic target, the
 contrast table would look like:
 
-25:chr1    0:chr1
+25:chr1	0:chr1
 
-50:chr1    0:chr1
+50:chr1	0:chr1
 
-100:chr1    0:chr1
+100:chr1	0:chr1
 
-25:chr2    0:chr2
+25:chr2	0:chr2
 
-50:chr2    0:chr2
+50:chr2	0:chr2
 
-100:chr2    0:chr2}
-}
-\value{
-Model results are output as a list. Included are:
-\itemize{
-\item model_data: the supplied mf_data with added column for model residuals.
-\item summary: the summary of the model.
-\item anova: the results of Anova(model).
-\item residuals_histogram: the model residuals plotted as a histogram.
-\item residuals_qq_plot: the model residuals plotted in a qq-plot.
-\item point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects.
-\item point_estimates: the point estimates for the fixed effects.
-\item pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the \code{contrast_table_file}.
-\item pairwise_comparisons: the results of pairwise comparisons specified in the \code{contrast_table_file}.
-}
-}
-\description{
-\code{model_mf} will fit a generalized linear model or a generalized linear
-mixed-effects model to analyse the effect(s) of given factor(s) on
-mutation frequency.
+100:chr2	0:chr2
+
+Troubleshooting: If you are having issues with convergence for your generalized linear mixed-
+effects model, it may be advisable to increase the tolerance level for convergence
+checking during model fitting. This is done through the \code{control} argument for
+the \code{lme4::glmer} function. The default tolerance is tol = 0.002. Add this
+argument as an extra argument in the \code{model_mf} function.
+Ex. \code{control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",  tol = 3e-3, relTol = NULL))}
 }

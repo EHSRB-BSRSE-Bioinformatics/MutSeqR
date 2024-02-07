@@ -56,11 +56,11 @@ head(dat)
 #6 dna00978         1    25082020 3.99e-08   chr1   D0
 length(table(dat$sample))
 
-m <- glmer(cbind(mut_depth,total_depth) ~ dose*Region + (1|sample), family = "binomial", data = dat, control = glmerControl(check.conv.grad = .makeCC("warning", tol = 3e-3, relTol = NULL)))
+model <- glmer(cbind(mut_depth,total_depth) ~ dose*Region + (1|sample), family = "binomial", data = dat, control = glmerControl(check.conv.grad = .makeCC("warning", tol = 3e-3, relTol = NULL)))
 
-summary(m)
+summary(model)
 
-Anova(m)
+Anova(model)
 
 #Analysis of Deviance Table (Type II Wald chisquare tests)
 #Response: cbind(mut_depth, total_depth)
@@ -71,8 +71,8 @@ Anova(m)
 #---
 #Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-dat$Resid <- residuals(m)
-dat[abs(residuals(m)) == max(abs(residuals(m))),]
+dat$Resid <- residuals(model)
+dat[abs(residuals(model)) == max(abs(residuals(model))),]
 
 
 X11()
@@ -80,13 +80,13 @@ par(las = 2)
 
 boxplot(dat$mut_freq ~ as.factor(paste(dat$dose, dat$Region)), col = "yellow", xlab = "")
 
-hist(residuals(m), main = "Residuals")
-qqnorm(residuals(m))
+hist(residuals(model), main = "Residuals")
+qqnorm(residuals(model))
 abline(h = -3, col = "red", lwd = 2)
 abline(h = 3, col = "red", lwd = 2)
 
 #####Point Estimates By Dose and By Target####################################
-nCoef <- length(names(coef(m)$sample))
+nCoef <- length(names(coef(model)$sample))
 a <- c(1, rep(0, nCoef - 1))
 lambda <- NULL
 
@@ -98,17 +98,17 @@ for(k in 1:length(d)){
   for(j in 1:length(r)){
     b <- a
     #Dose
-    flag <- names(coef(m)$sample) == d[k]
+    flag <- names(coef(model)$sample) == d[k]
     if(length(b[flag]) > 0){
       b[flag] <- 1
     }
     #Region
-    flag <- names(coef(m)$sample) == r[j]
+    flag <- names(coef(model)$sample) == r[j]
     if(length(b[flag]) > 0){
       b[flag] <- 1
     }
     #Interaction
-    flag <- names(coef(m)$sample) == paste(d[k], r[j], sep = ":")
+    flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":")
     if(length(b[flag]) > 0){
       b[flag] <- 1
     }
@@ -118,10 +118,10 @@ for(k in 1:length(d)){
     row.names(lambda)[indx] <- paste(d[k], r[j], sep = ":")
   }
 }
-colnames(lambda) <- names(coef(m)$sample) 
+colnames(lambda) <- names(coef(model)$sample) 
 
 
-A <-esticon(m,lambda)
+A <-esticon(model,lambda)
 
 A <- as.data.frame(A)
 A$estimate <- exp(A$estimate)
@@ -136,7 +136,7 @@ write_xlsx(A, "MF_estimates_by_dose_target_2.xlsx")
 
 #######################################################
 ##########Comparisons between dose by target###########
-nCoef <- length(names(coef(m)$sample))
+nCoef <- length(names(coef(model)$sample))
 a <- rep(0, nCoef)
 lambda <- NULL
 
@@ -150,13 +150,13 @@ for(j in 1:length(r)){
   for(k in 1:length(d)){
     b <- a
     #Dose
-    flag <- names(coef(m)$sample) == d[k]
+    flag <- names(coef(model)$sample) == d[k]
     if(length(b[flag]) > 0){
       b[flag] <- 1
     }
     
     #Interaction
-    flag <- names(coef(m)$sample) == paste(d[k], r[j], sep = ":")
+    flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":")
     if(length(b[flag]) > 0){
       b[flag] <- 1
     }
@@ -166,9 +166,9 @@ for(j in 1:length(r)){
     row.names(lambda)[indx] <- paste(d[k], "vsD0", r[j], sep = ":")
   }
 }
-colnames(lambda) <- names(coef(m)$sample) 
+colnames(lambda) <- names(coef(model)$sample) 
 
-B <-esticon(m,lambda)
+B <-esticon(model,lambda)
 
 B <- as.data.frame(B)
 B$estimate <- exp(B$estimate)
@@ -207,19 +207,19 @@ a <- c(1, rep(0, nCoef - 1))
 
 lambda <- NULL
 
-d <- paste("dose", unique(dat$dose), sep = "")
-r <- paste("Region", unique(dat$Region), sep = "")
+d <- paste("dose", unique(mf_data$dose), sep = "")
+r <- paste("Region", unique(mf_data$label), sep = "")
 
 for(k in 1:length(d)){
   b <- a
   #Dose
-  flag <- names(coef(m)$sample) == d[k]
+  flag <- names(coef(model)$sample) == d[k]
   if(length(b[flag]) > 0){
     b[flag] <- 1
   }
   #Region
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == r[j] & r[j] %in% g
+    flag <- names(coef(model)$sample) == r[j] & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ng
     }
@@ -227,7 +227,7 @@ for(k in 1:length(d)){
   
   #Interaction
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
+    flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ng
     }
@@ -245,13 +245,13 @@ g <- c("Regionchr1", "Regionchr2", "Regionchr4", "Regionchr5", "Regionchr8", "Re
 for(k in 1:length(d)){
   b <- a
   #Dose
-  flag <- names(coef(m)$sample) == d[k]
+  flag <- names(coef(model)$sample) == d[k]
   if(length(b[flag]) > 0){
     b[flag] <- 1
   }
   #Region
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == r[j] & r[j] %in% g
+    flag <- names(coef(model)$sample) == r[j] & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ni
     }
@@ -259,7 +259,7 @@ for(k in 1:length(d)){
   
   #Interaction
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
+    flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ni
     }
@@ -269,7 +269,7 @@ for(k in 1:length(d)){
   
 }
 
-A <-esticon(m,lambda)
+A <-esticon(model,lambda)
 
 A <- as.data.frame(A)
 A$estimate <- exp(A$estimate)
@@ -289,7 +289,7 @@ d2 <- lambda[7,] - lambda[3,]
 d3 <- lambda[8,] - lambda[4,]
 lambda <- rbind(d0, d1, d2, d3)
 
-B <-esticon(m,lambda)
+B <-esticon(model,lambda)
 
 B <- as.data.frame(B)
 B$estimate <- exp(B$estimate)
@@ -318,19 +318,19 @@ a <- c(1, rep(0, nCoef - 1))
 
 lambda <- NULL
 
-d <- paste("dose", unique(dat$dose), sep = "")
-r <- paste("Region", unique(dat$Region), sep = "")
+d <- paste("dose", unique(mf_data$dose), sep = "")
+r <- paste("Region", unique(mf_data$Region), sep = "")
 
 for(k in 1:length(d)){
   b <- a
   #Dose
-  flag <- names(coef(m)$sample) == d[k]
+  flag <- names(coef(model)$sample) == d[k]
   if(length(b[flag]) > 0){
     b[flag] <- 1
   }
   #Region
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == r[j] & r[j] %in% g
+    flag <- names(coef(model)$sample) == r[j] & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ng
     }
@@ -338,7 +338,7 @@ for(k in 1:length(d)){
   
   #Interaction
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
+    flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ng
     }
@@ -355,13 +355,13 @@ g <- c("Regionchr1.2", "Regionchr2", "Regionchr11", "Regionchr12", "Regionchr14"
 for(k in 1:length(d)){
   b <- a
   #Dose
-  flag <- names(coef(m)$sample) == d[k]
+  flag <- names(coef(model)$sample) == d[k]
   if(length(b[flag]) > 0){
     b[flag] <- 1
   }
   #Region
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == r[j] & r[j] %in% g
+    flag <- names(coef(model)$sample) == r[j] & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ni
     }
@@ -369,7 +369,7 @@ for(k in 1:length(d)){
   
   #Interaction
   for(j in 1:length(r)){
-    flag <- names(coef(m)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
+    flag <- names(coef(model)$sample) == paste(d[k], r[j], sep = ":") & r[j] %in% g
     if(length(b[flag]) > 0){
       b[flag] <- 1/ni
     }
@@ -379,7 +379,7 @@ for(k in 1:length(d)){
   
 }
 
-A <-esticon(m,lambda)
+A <-esticon(model,lambda)
 
 A <- as.data.frame(A)
 A$estimate <- exp(A$estimate)
@@ -398,7 +398,7 @@ d2 <- lambda[7,] - lambda[3,]
 d3 <- lambda[8,] - lambda[4,]
 lambda <- rbind(d0, d1, d2, d3)
 
-B <-esticon(m,lambda)
+B <-esticon(model,lambda)
 
 B <- as.data.frame(B)
 B$estimate <- exp(B$estimate)
