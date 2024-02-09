@@ -57,7 +57,7 @@
    # p1j + p2j + ... + prj = 1.0 (ie the proportion of subtypes (R) in each group (Tj) should equal 1)
     # H0 = pi1 = pi2 = ... = piT (ie the proportion of each subtype (Ri) is the same across groups T)
 # To test the H0, use the likelihood ratio statistic:
-  # G2 = 2 E(R; i=1)E(T; j=1)Yij * log{Yij/Eij}
+  # G2 = 2 Ep(R; i=1)Ep(T; j=1)Yij * log{Yij/Eij}
   # df = (R - 1)(T - 1)
 # When the test-stat > a chi2 table value w df, reject H0
 # When ALL treatment groups have a subtype count as 0, you can remove it to reduce the df and increase the sensitivity of the test stat.
@@ -66,7 +66,7 @@
   # When TRUE; randomly generate a large number of R x T tables with the 
   # same row and column totals as observed in R x T table. Each random table is compared
   # to the original observed table to determine if the random table exhibits greater
-  # departure from H0. The proportion of andomly generated tables that exhibits this
+  # departure from H0. The proportion of randomly generated tables that exhibits this
   # departure is an estimate of the "exact" P-value. 
   # recomended when R x T table becomes too large (when N > 5df)
 # G2 exhibits high false positive rates in small samples when referred to with a chi2 distribution. 
