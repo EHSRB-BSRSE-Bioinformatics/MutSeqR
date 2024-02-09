@@ -7,6 +7,7 @@
 read_vcf(
   vcf_file,
   vaf_cutoff,
+  range_buffer = 1,
   sample_data_file = NULL,
   sd_sep = "\\t",
   regions = c("human", "mouse", "custom"),
