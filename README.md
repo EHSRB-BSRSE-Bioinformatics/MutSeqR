@@ -1,9 +1,8 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
 
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
+  <!-- badges: end -->
+  
 # Duplex Sequencing Analysis
 
 ## Pre-abmle
