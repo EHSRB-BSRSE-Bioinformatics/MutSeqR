@@ -10,7 +10,7 @@ spectra_comparison(
   subtype_col = "normalized_subtype",
   group = c("dose", "tissue"),
   contrast_table_file,
-  cont_sep = "/t"
+  cont_sep = "\\t"
 )
 }
 \arguments{
