@@ -162,6 +162,7 @@ trinucleotide_frequencies_group <- calculate_mut_freq(data = mutation_data,
 ## Linear Modelling
 ```{r model-mutation-frequencies}
 # Model MF by dose
+### changes
 model_by_dose <- model_mf(mf_data = MF_per_sample,
                           fixed_effects = "dose",
                           random_effects = NULL,
