@@ -109,6 +109,7 @@ spectra_comparison <- function(mf_data,
   }
   # Convert the matrix to a data frame
   pivoted_mut <- as.data.frame(pivoted_matrix)
+  pivoted_mut <- replace(pivoted_mut, is.na(pivoted_mut), 0)
   
   #G2 Statistic - Likelihood Ratio Statistic
   g2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234) {
@@ -130,8 +131,10 @@ spectra_comparison <- function(mf_data,
     if (monte.carlo == FALSE) {
       if (n / r > 20) {
         p.value <- 1 - pchisq(g2, df)
+        message("Using chi-squared distribution to compute p-value")
       } else {
         p.value <- 1 - pf(g2 / r, r, n - df)
+        message("Using F-distribution to compute p-value")
       }
     data.frame(g2 = g2, p.value = p.value)
     } else {
