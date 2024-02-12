@@ -7,7 +7,7 @@
 get_ref_of_mut(mut_string)
 }
 \arguments{
-\item{mut_string}{the mutation. Ex. T>C, A\link{G>T}C}
+\item{mut_string}{the mutation. Ex. T>C, \verb{A[G>T]C}}
 }
 \description{
 A utility function that will return the reference context of a mutation

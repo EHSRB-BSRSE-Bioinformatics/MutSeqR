@@ -49,6 +49,12 @@ but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this
 flag variants that are present at a frequency greater than this value
 at a given site.}
 
+\item{range_buffer}{An integer >= 0. Variants that occur outside of the
+defined regions' ranges will be filtered out. Use the range-buffer to extend
+the range within which a variant can occur. The default is 1 nucleotide
+outside of region ranges. Ex. Structural variants and indels may start outside
+of the regions. Adjust the range_buffer to include these variants.}
+
 \item{sample_data_file}{An optional file containing additional sample metadata
 (dose, timepoint, etc.)}
 

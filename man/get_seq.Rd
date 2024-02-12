@@ -46,9 +46,3 @@ Region ranges coordinates will become 1-based.
 Create a GRanges object from the target metadata and import raw nucleotide
 sequences from the UCSC database. https://genome.ucsc.edu
 }
-\examples{
-t <- get_seq(regions = "custom", custom_regions_file = file.path(regions_df.txt), 
-              species = species_param, genome_version = "GRCm38",
-              is_0_based = FALSE)
-t$sequence
-}

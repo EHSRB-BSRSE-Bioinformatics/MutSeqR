@@ -10,7 +10,7 @@
 print_ascii_art <- function() {
   cat("
 
-                      .OMMo                   '0MWc                      
+                    .OMMo                     '0MWc                      
                      .kMMd                   ,KMN:                      
                       oWMXxooooooooooooooooooOWM0'                      
                       'OMMMWWWWWWWWWWWWWWWWWMMMNl                       
@@ -39,20 +39,24 @@ print_ascii_art <- function() {
                       :NMWNXXXXXXXXXXXXXXXXXXNMMk.                      
                      .xMMk,..................lXMX;                      
                      .OMMo                   ,KMWc                      
-                     .OMWo                   '0MWc                                          
-
- ██████████                         █████████                     ███████████  
-░░███░░░░███                       ███░░░░░███                   ░░███░░░░░███ 
- ░███   ░░███ █████ ████ ████████ ░███    ░░░   ██████   ████████ ░███    ░███ 
- ░███    ░███░░███ ░███ ░░███░░███░░█████████  ███░░███ ███░░███  ░██████████  
- ░███    ░███ ░███ ░███  ░███ ░███ ░░░░░░░░███░███████ ░███ ░███  ░███░░░░░███ 
- ░███    ███  ░███ ░███  ░███ ░███ ███    ░███░███░░░  ░███ ░███  ░███    ░███ 
- ██████████   ░░████████ ░███████ ░░█████████ ░░██████ ░░███████  █████   █████
-░░░░░░░░░░     ░░░░░░░░  ░███░░░   ░░░░░░░░░   ░░░░░░   ░░░░░███ ░░░░░   ░░░░░ 
-                         ░███                               ░███               
-                         █████                              █████ version.version             
-                        ░░░░░                              ░░░░░               
-                                                               
-      ")
+                     .OMWo                   '0MWc  
+                     
+                     
+                     
+ .S_sSSs     .S       S.    .S_sSSs      sSSs    sSSs    sSSs_sSSs     .S_sSSs    
+.SS~YS%%b   .SS       SS.  .SS~YS%%b    d%%SP   d%%SP   d%%SP~YS%%b   .SS~YS%%b   
+S%S   `S%b  S%S       S%S  S%S   `S%b  d%S'    d%S'    d%S'     `S%b  S%S   `S%b  
+S%S    S%S  S%S       S%S  S%S    S%S  S%|     S%S     S%S       S%S  S%S    S%S  
+S%S    S&S  S&S       S&S  S%S    d*S  S&S     S&S     S&S       S&S  S%S    d*S  
+S&S    S&S  S&S       S&S  S&S   .S*S  Y&Ss    S&S_Ss  S&S       S&S  S&S   .S*S  
+S&S    S&S  S&S       S&S  S&S_sdSSS   `S&&S   S&S~SP  S&S       S&S  S&S_sdSSS   
+S&S    S&S  S&S       S&S  S&S~YSSY      `S*S  S&S     S&S       S&S  S&S~YSY%b   
+S*S    d*S  S*b       d*S  S*S            l*S  S*b     S*b       d*S  S*S   `S%b  
+S*S   .S*S  S*S.     .S*S  S*S           .S*P  S*S.    S*S.     .S*S  S*S    S%S  
+S*S_sdSSS    SSSbs_sdSSS   S*S         sSS*S    SSSbs   SSSbs_sdSSSS  S*S    S&S  
+SSS~YSSY      YSSP~YSSY    S*S         YSS'      YSSP    YSSP~YSSSSS  S*S    SSS  
+                           SP                                         SP          
+                           Y                                          Y             
+")
 }
 

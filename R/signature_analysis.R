@@ -25,7 +25,7 @@
 #'  SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate 
-#' @importFrom utils write.table
+#' @importFrom utils write.table untar download.file
 #' @importFrom rlang .data
 #' @import reticulate
 #' @import stringr

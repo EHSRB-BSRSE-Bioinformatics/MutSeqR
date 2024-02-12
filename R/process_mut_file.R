@@ -39,6 +39,11 @@
 #' Default is tab-delimited.
 #' @param is_0_based Indicates whether the `custom_regions_file` target region coordinates are 
 #' 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.
+#' @param range_buffer An integer >= 0. Variants that occur outside of the 
+#' defined regions' ranges will be filtered out. Use the range-buffer to extend
+#' the range within which a variant can occur. The default is 1 nucleotide 
+#' outside of region ranges. Ex. Structural variants and indels may start outside
+#' of the regions. Adjust the range_buffer to include these variants. 
 #' @param depth_calc Values are `c("take_del", "take_mean")`. In the instance when 
 #' there are two or more calls at the same location within a sample, and the 
 #' depths differ, this parameter chooses the method for resolving the difference.
