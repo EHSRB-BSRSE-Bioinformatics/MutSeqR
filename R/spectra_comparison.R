@@ -93,22 +93,16 @@ spectra_comparison <- function(mf_data,
                                cont_sep = "\t"){
   
   mut_spectra <- mf_data %>%
-    dplyr::select(subtype_col,
-                  muts,
-                  group
-                  )
-  
+    dplyr::select(dplyr::all_of(c(subtype_col, muts, group)))
   mut_spectra <- mut_spectra %>%
-    mutate(group_col = do.call(paste, c(select(., all_of(group)), sep = ":"))) %>%
-    select(-all_of(group))
-  
- # pivot wider 
-  
+    dplyr::mutate(group_col = do.call(paste, c(dplyr::select(mut_spectra, dplyr::all_of(group)), sep = ":"))) %>%
+    dplyr::select(-all_of(group))
+ # pivot wider
   pivoted_matrix <- matrix(nrow = length(unique(mut_spectra$group_col)), ncol = length(unique(mut_spectra[[subtype_col]])))
   rownames(pivoted_matrix) <- unique(mut_spectra$group_col)
   colnames(pivoted_matrix) <- unique(mut_spectra[[subtype_col]])
   # Fill in the matrix with the values from the original data frame
-  for (i in 1:nrow(mut_spectra)) {
+  for (i in seq_len(nrow(mut_spectra))) {
     row_index <- which(rownames(pivoted_matrix) == mut_spectra$group_col[i])
     col_index <- which(colnames(pivoted_matrix) == mut_spectra[[subtype_col]][i])
     pivoted_matrix[row_index, col_index] <- mut_spectra[[muts]][i]
@@ -117,58 +111,56 @@ spectra_comparison <- function(mf_data,
   pivoted_mut <- as.data.frame(pivoted_matrix)
   
   #G2 Statistic - Likelihood Ratio Statistic
-  G2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234){
-    N <- sum(x) # total mut sum
+  g2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234) {
+    n <- sum(x) # total mut sum
     r <- apply(x, 1, sum) # mut sum of each subtype
     c <- apply(x, 2, sum) # mut sum for each group
-    e <- r %*% t(c)/N # matrix multiplication/total
+    e <- r %*% t(c) / n # matrix multiplication/total
     
-    G2 <- 0
-    for(k in 1:ncol(x)){
-      flag <- x[,k] > 0 # flag rows in k that are < 0; do not perform operations on these rows.
-      G2 <- G2 + t(x[flag,k]) %*% log(x[flag,k]/e[flag,k])	
+    g2 <- 0
+    for (k in seq_len(ncol(x))) {
+      flag <- x[, k] > 0 # flag rows in k that are < 0; do not perform operations on these rows.
+      g2 <- g2 + t(x[flag, k]) %*% log(x[flag, k] / e[flag, k])
     }
-    G2 <- 2*G2
+    g2 <- 2 * g2
     
-    R <- nrow(x)-1
-    df <- R * (ncol(x)-1)
+    r <- nrow(x) - 1
+    df <- r * (ncol(x) - 1)
     
-    if(monte.carlo == FALSE){
-      if(N/R > 20){
-        p.value <- 1-pchisq(G2, df)
-      } else{
-        p.value <- 1-pf(G2/R, R, N-df)
+    if (monte.carlo == FALSE) {
+      if (n / r > 20) {
+        p.value <- 1 - pchisq(g2, df)
+      } else {
+        p.value <- 1 - pf(g2 / r, r, n - df)
       }
+    data.frame(g2 = g2, p.value = p.value)
     } else {
-      #Monte Carlo 
-      #Generate random rxc tables
+      # Monte Carlo
+      # Generate random rxc tables
       set.seed(seed)
-      r <- apply(x, 1, sum) 
+      r <- apply(x, 1, sum)
       c <- apply(x, 2, sum)
-      rtbl <- r2dtable(1, r, c)
-      
+
       ref.dist <- rep(0, n.sim)
-      for(k in 1:length(ref.dist)){
+      for (k in seq_along(ref.dist)) {
         x <- r2dtable(1, r, c)[[1]]
-        N <- sum(x)
+        n <- sum(x)
         r <- apply(x, 1, sum)
         c <- apply(x, 2, sum)
-        e <- r %*% t(c)/N
+        e <- r %*% t(c) / n
         
-        G2.t <- 0
-        for(j in 1:ncol(x)){
-          flag <- x[,j] > 0
-          G2.t <- G2.t + t(x[flag,j]) %*% log(x[flag,j]/e[flag,j])	
+        g2.t <- 0
+        for (j in seq_len(ncol(x))) {
+          flag <- x[, j] > 0
+          g2.t <- g2.t + t(x[flag, j]) %*% log(x[flag, j] / e[flag, j])
         }
         
-        ref.dist[k] <- 2*G2.t
-      } 
-      flag <- ref.dist >= G2[1,1]
-      p.value <- length(ref.dist[flag])/10000
+        ref.dist[k] <- 2 * g2.t
+      }
+      flag <- ref.dist >= g2[1, 1]
+      p.value <- length(ref.dist[flag]) / 10000
+      data.frame(g2 = g2.t, p.value = p.value)
     }
-    
-    
-    data.frame(G2 = G2, p.value = p.value)
   }
 
  
@@ -187,7 +179,7 @@ spectra_comparison <- function(mf_data,
   results_list <- list()
   
   # Iterate over each row of the contrast table
-  for (i in 1:nrow(contrast_table)) {
+  for (i in seq_len(nrow(contrast_table))) {
     # Extract the row names from the contrast table
     rowname1 <- rownames(pivoted_mut)[match(contrast_table[i, "V1"], rownames(pivoted_mut))]
     rowname2 <- rownames(pivoted_mut)[match(contrast_table[i, "V2"], rownames(pivoted_mut))]
@@ -197,7 +189,7 @@ spectra_comparison <- function(mf_data,
     data_subset_t <- t(data_subset)
     
     # Apply the G2 function to compare the two rows
-    result <- G2(data_subset_t)
+    result <- g2(data_subset_t)
     
     # Store the result
     results_list[[i]] <- result
@@ -210,14 +202,13 @@ spectra_comparison <- function(mf_data,
   results_df$adj_p.value <- DupSeqR::my.holm.sidak(results_df$p.value)
   
   return(results_df)
+ }
 ##############################
   # G2ab
    # x = mut count
   # R = rows of counts w each row representing a different mutant site (subtype)
   # T = number of treatment groups under study (dose)
   # N = column totals? Total sample size?
-
-  
   # G2ab <- function(x, R, T, N, monte.carlo = FALSE, n.sim = 10000, seed = 1234){
   # 
   #   flag <- x > 0
@@ -265,31 +256,4 @@ spectra_comparison <- function(mf_data,
   #   }
   # 
   #   data.frame(G2ab = G2ab, p.value = p.value)
-  # } 
-  # 
-  # 
-  # 
-  # 
-  # 
-  # 
-  # # Create an empty list to store the results
-  # results_list <- list()
-  # 
-  # # Iterate over each row of the contrast table
-  # for (i in 1:nrow(contrast_table)) {
-  #   # Extract the row names from the contrast table
-  #   rowname1 <- rownames(pivoted_mut)[match(contrast_table[i, "V1"], rownames(pivoted_mut))]
-  #   rowname2 <- rownames(pivoted_mut)[match(contrast_table[i, "V2"], rownames(pivoted_mut))]
-  #   
-  #   # Extract the corresponding rows from the dataframe
-  #   data_subset <- pivoted_mut[c(rowname1, rowname2), ]
-  #   data_subset_t <- t(data_subset)
-  #   
-  #   # Apply the G2 function to compare the two rows
-  #   result_ab <- G2ab(data_subset_t)
-  #   
-  #   # Store the result
-  #   results_list[[i]] <- result_ab  
   # }
-  # 
-}

@@ -49,6 +49,12 @@ params:
     input: file
     accept: [.txt, .csv, .xlsx]
     value: NULL
+  contrasts_files:
+    label: "Select your contrasts table(s)"
+    input: file
+    accept: [.txt]
+    multiple: true
+    value: []
   contrasts:
     label: "Select your contrasts table"
     input: file
@@ -91,7 +97,7 @@ mutation_data <-
             is_0_based = params$is_0_based,
             species = params$species,
             genome_version = params$genome,
-            vaf_cutoff = params$vaf_cutoff )
+            vaf_cutoff = params$vaf_cutoff)
 }
 
 ```
@@ -110,18 +116,18 @@ write_VCF_from_mut(mutation_data)
 ## Calculate Mutation Frequencies
 ```{r calculate-MF-summaries}
 MF_per_sample <- calculate_mut_freq(data = mutation_data,
-                                       cols_to_group = c("sample"),
-                                       subtype_resolution = "none",
-                                       vaf_cutoff = params$vaf_cutoff,
-                                       summary = T,
-                                      retain_metadata_cols = params$group_var) 
+                                    cols_to_group = c("sample"),
+                                    subtype_resolution = "none",
+                                    vaf_cutoff = params$vaf_cutoff,
+                                    summary = T,
+                                    retain_metadata_cols = params$group_var) 
 
 MF_per_target <- calculate_mut_freq(data = mutation_data,
-                                       cols_to_group = c("sample", "label"),
-                                       subtype_resolution = "none",
-                                       vaf_cutoff = params$vaf_cutoff,
-                                       summary = T,
-                                       retain_metadata_cols = c("genic_context", "dose"))
+                                    cols_to_group = c("sample", "label"),
+                                    subtype_resolution = "none",
+                                    vaf_cutoff = params$vaf_cutoff,
+                                    summary = T,
+                                    retain_metadata_cols = c("genic_context", "dose"))
 
 six_base_summary <- calculate_mut_freq(data = mutation_data,
                                        cols_to_group = "sample",
@@ -130,12 +136,12 @@ six_base_summary <- calculate_mut_freq(data = mutation_data,
                                        summary = T,
                                        retain_metadata_cols = params$group_var)
 
-six_base_summary_group <- calculate_mut_freq(data = mutation_data,
-                                       cols_to_group = params$group_var,
-                                       subtype_resolution = "base_6",
-                                       vaf_cutoff = params$vaf_cutoff,
-                                       variant_types = "snv",
-                                       summary = T)
+six_base_summary_dose <- calculate_mut_freq(data = mutation_data,
+                                            cols_to_group = "dose",
+                                            subtype_resolution = "base_6",
+                                            vaf_cutoff = params$vaf_cutoff,
+                                            variant_types = "snv",
+                                            summary = T)
 
 trinucleotide_frequencies_individual <- calculate_mut_freq(data = mutation_data,
                                                             cols_to_group = "sample",
@@ -146,12 +152,42 @@ trinucleotide_frequencies_individual <- calculate_mut_freq(data = mutation_data,
                                                            )
 
 trinucleotide_frequencies_group <- calculate_mut_freq(data = mutation_data,
-                                                            cols_to_group = params$group_var,
-                                                            subtype_resolution = "base_96",
-                                                            vaf_cutoff = params$vaf_cutoff,
-                                                            variant_types = "snv",
-                                                            summary = T
-                                                           )
+                                                      cols_to_group = params$group_var,
+                                                      subtype_resolution = "base_96",
+                                                      vaf_cutoff = params$vaf_cutoff,
+                                                      variant_types = "snv",
+                                                      summary = T
+                                                      )
+```
+## Linear Modelling
+```{r model-mutation-frequencies}
+# Model MF by dose
+model_by_dose <- model_mf(mf_data = MF_per_sample,
+                          fixed_effects = "dose",
+                          random_effects = NULL,
+                          reference_level = 0,
+                          muts = "sample_sum_unique",
+                          total_count = "sample_group_depth",
+                          contrast_table_file = contrasts)
+
+# Model MF by dose and genomic_target
+model_by_target <- model_mf(mf_data = MF_per_target,
+                fixed_effects = c("dose", "label"),
+                test_interaction = TRUE,
+                random_effects = "sample",
+                reference_level = c(0, "chr1"),
+                muts = "sample_label_sum_unique",
+                total_count = "sample_label_group_depth",
+                contrast_table_file = contrasts)
+
+# Compare simple Mutation Spectra by dose
+base_6_comp <- spectra_comparison(mf_data = six_base_summary_dose,
+                                  muts = "dose_sum_unique",
+                                  subtype_col = "normalized_subtype",
+                                  group = "dose",
+                                  contrast_table_file = contrasts,
+                                  cont_sep = "\t")
+
 ```
 
 ## Visualize data

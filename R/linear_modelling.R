@@ -1,29 +1,29 @@
-#' Perform linear modelling on mutation frequency for given 
+#' Perform linear modelling on mutation frequency for given
 #' fixed and random effects
-#' 
+#'
 #' `model_mf` will fit a linear model to analyse the effect(s) of given factor(s) 
 #' on mutation frequency and perform specified pairwise comparisons. This function
 #' will fit either a generalized linear model (\link[stats]{glm}) or, if supplied 
 #' random effects, a generalized linear mixed-effects model (\link[lme4]{glmer}) . 
 #' Pairwise comparisons are conducted using the doBy library (\link[doBy]{esticon}) 
-#' and estimates are then back-transformed. The delta method is  employed to 
-#' approximate the  back-transformed standard-errors. A Holm-Sidak  correction 
-#' is applied to adjust p-values for multiple comparisons. 
+#' and estimates are then back-transformed. The delta method is  employed to
+#' approximate the  back-transformed standard-errors. A Holm-Sidak  correction
+#' is applied to adjust p-values for multiple comparisons.
 #' @param mf_data The data frame containing the mutation frequency data.
 #' Mutation counts and total sequencing depth should be summarized per sample
-#' alongside columns for your fixed effects. 
-#' This data can be obtained using `calculate_mut_freq(summary=TRUE)`. 
-#' @param fixed_effects The name(s) of the column(s) that will act as the 
+#' alongside columns for your fixed effects.
+#' This data can be obtained using `calculate_mut_freq(summary=TRUE)`.
+#' @param fixed_effects The name(s) of the column(s) that will act as the
 #' fixed_effects (factor/independent variable) for modelling mutation frequency.
 #' @param test_interaction a logical value. Whether or not your model should include 
-#' the interaction between the `fixed_effects`. 
-#' @param random_effects The name of the column(s) to be analysed as a 
-#' random effect in the model. Providing this effect will cause the function to 
+#' the interaction between the `fixed_effects`.
+#' @param random_effects The name of the column(s) to be analysed as a
+#' random effect in the model. Providing this effect will cause the function to
 #' fit a generalized linear mixed-effects model.
-#' @param reference_level Refers to one of the levels within each of your 
-#' fixed_effects. The coefficient for the reference level will represent the 
-#' baseline effect. The coefficients of the other levels will be interpreted in 
-#' relation to the reference_level as deviations from the baseline effect. 
+#' @param reference_level Refers to one of the levels within each of your
+#' fixed_effects. The coefficient for the reference level will represent the
+#' baseline effect. The coefficients of the other levels will be interpreted in
+#' relation to the reference_level as deviations from the baseline effect.
 #' @param muts The column containing the mutation count per sample.
 #' @param total_count The column containing the sequencing depth per sample.
 #' @param family a description of the error distribution and link function to be
@@ -124,22 +124,22 @@
 #' effects model, it may be advisable to increase the tolerance level for convergence
 #' checking during model fitting. This is done through the `control` argument for 
 #' the `lme4::glmer` function. The default tolerance is tol = 0.002. Add this
-#' argument as an extra argument in the `model_mf` function. 
-#' Ex. `control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", 
+#' argument as an extra argument in the `model_mf` function.
+#' Ex. `control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
 #'                                                              tol = 3e-3,
 #'                                                              relTol = NULL))`
 #' @returns Model results are output as a list. Included are:
 #' - model_data: the supplied mf_data with added column for model residuals.
 #' - summary: the summary of the model.
 #' - anova: the analysis of variance for models with two or more effects. \link[car]{Anova}`(model) `
-#' - residuals_histogram: the model residuals plotted as a histogram. This is 
-#' used to check whether the variance is normally distributed. A symmetric 
-#' bell-shaped histogram, evenly distributed around zero indicates that the 
-#' normality assumption is likely to be true. 
+#' - residuals_histogram: the model residuals plotted as a histogram. This is
+#' used to check whether the variance is normally distributed. A symmetric
+#' bell-shaped histogram, evenly distributed around zero indicates that the
+#' normality assumption is likely to be true.
 #' - residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
 #'  For a normal distribution, we expect points to roughly follow the y=x line.  
 #' - point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
-#' - point_estimates: the point estimates for the fixed effects. 
+#' - point_estimates: the point estimates for the fixed effects.
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrast_table_file`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrast_table_file`.
 
@@ -159,35 +159,29 @@ model_mf <- function(mf_data,
                     muts = "sample_sum_unique",
                     total_count = "sample_group_depth",
                     family = NULL,
-                    contrast_table_file = NULL, # Option to not do any comparisons?
+                    contrast_table_file = NULL, 
                     cont_sep = "\t",
                     ...
                     ) {
   
   # Convert specified columns to factors
   mf_data[, fixed_effects] <- lapply(mf_data[, fixed_effects, drop = FALSE], as.factor)
-  
-  
-    # Check that the reference levels are valid levels of the factors
-  reference_valid <- all(sapply(seq_along(fixed_effects), function(i) {
-    factor_name <- fixed_effects[i]
-    factor_levels <- levels(mf_data[[factor_name]])
-    invalid_levels <- reference_level[i][!reference_level[i] %in% factor_levels]
-    
-    if (length(invalid_levels) > 0) {
-      stop(paste("Invalid reference level(s) for factor", factor_name, ":", paste(invalid_levels, collapse = ", ")))
-    }
-    return(TRUE)
-  }))
 
-  # Set the reference level for each factor in fixed_effects
-  
-  if(length(fixed_effects) == 1) {
-  
-    mf_data[[fixed_effects]] <- stats::relevel(mf_data[[fixed_effects]], ref = as.character(reference_level))
-  
+    # Check that the reference levels are valid levels of the factors
+for (factor_name in fixed_effects) {
+  factor_levels <- levels(mf_data[[factor_name]])
+  reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
+  invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
+  if (length(invalid_levels) > 0) {
+    stop(paste("Invalid reference level(s) for factor", factor_name, ":", paste(invalid_levels, collapse = ", ")))
   } else {
- 
+    message(paste("Reference level for factor", factor_name, ":", reference_level_char))
+  }
+}
+  # Set the reference level for each factor in fixed_effects
+  if(length(fixed_effects) == 1) {
+    mf_data[[fixed_effects]] <- stats::relevel(mf_data[[fixed_effects]], ref = as.character(reference_level))
+  } else {
      for (factor_name in as.list(fixed_effects)) {
     reference_level_for_factor <- reference_level[match(factor_name, fixed_effects)]
     mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = reference_level_for_factor)
@@ -292,7 +286,7 @@ model_mf <- function(mf_data,
   rownames(model_matrix) <- row_names 
   
   # Computed estimates
-  model_estimates <-esticon(obj = model, L = model_matrix)
+  model_estimates <- doBy::esticon(obj = model, L = model_matrix)
 
   model_estimates <- as.data.frame(model_estimates)
   model_estimates$estimate <- exp(model_estimates$estimate)
@@ -329,7 +323,7 @@ model_mf <- function(mf_data,
   result_list <- list()
   
   # Loop through each row in contrast_table
-  for (i in 1:nrow(contrast_table)) {
+  for (i in seq_len(nrow(contrast_table))) {
     
     # Get the model_row values
     V1 <- as.character(contrast_table[i, 1])
@@ -345,7 +339,7 @@ model_mf <- function(mf_data,
   rownames(result_matrix) <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
   
  # Perform comparisons
-  pairwise_comparisons <-esticon(obj = model, L = result_matrix)
+  pairwise_comparisons <- doBy::esticon(obj = model, L = result_matrix)
 
   # Clean results  
   pairwise_comparisons <- as.data.frame(pairwise_comparisons)
