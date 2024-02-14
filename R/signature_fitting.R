@@ -31,7 +31,7 @@
 signature_fitting <- function(mutations,
                               project_name = "Default",
                               project_genome = "GRCh38",
-                              env_name = "DupSeqR",
+                              env_name = "MutSeqR",
                               group = "sample",
                               output_path = NULL,
                               python_version = "3.11", # We should test with other versions
@@ -55,7 +55,7 @@ signature_fitting <- function(mutations,
   #python_version <- "3.11:latest
   
   installed_envs <- reticulate::virtualenv_list()
-  # Check if DupSeqR virtualenv already exists
+  # Check if MutSeqR virtualenv already exists
   if (env_name %in% installed_envs) {
     # Virtualenv exists, use it
     reticulate::use_virtualenv(env_name)
@@ -84,7 +84,7 @@ signature_fitting <- function(mutations,
   # This will only install the genome if it's not found in the current env
   SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file('extdata', 'signatures.py',
-                                        package = "DupSeqR")
+                                        package = "MutSeqR")
   reticulate::source_python(signatures_python_code)
   
   message("Creating cleaned data for input into SigProfiler...")
@@ -166,7 +166,7 @@ signature_fitting <- function(mutations,
     )
   
   message("Running COSMIC fitting...")
-  cosmic_fit_DupSeqR(
+  cosmic_fit_MutSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
     output = file.path(output_path, "matrices", "output"),

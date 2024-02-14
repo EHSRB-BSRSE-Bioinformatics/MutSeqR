@@ -16,7 +16,8 @@
 #' must correspond to entries in your `group` column. For more than one `group` 
 #' variable, separate the levels of the each group with a colon. Ensure that all 
 #' `groups` are represented in each entry for the table. See details
-#' for examples
+#' for examples.
+#' @param cont_sep The delimiter used in the contrast_table_file. Default is tab.
 #' @returns the log-likelihood statistic G2 for the specified comparisons with
 #' the p-value adjusted for multiple-comparisons. 
 #' @export
@@ -46,7 +47,8 @@
 #' 
 #' 100:bone_marrow 100:liver
 #' 
-#' @importFrom dplyr select mutate 
+#' @importFrom dplyr select mutate
+#' @importFrom stats pchisq pf r2dtable 
 
 # Piergorsch & Bailer, 1993
   # R x T
@@ -130,10 +132,10 @@ spectra_comparison <- function(mf_data,
     
     if (monte.carlo == FALSE) {
       if (n / r > 20) {
-        p.value <- 1 - pchisq(g2, df)
+        p.value <- 1 - stats::pchisq(g2, df)
         message("Using chi-squared distribution to compute p-value")
       } else {
-        p.value <- 1 - pf(g2 / r, r, n - df)
+        p.value <- 1 - stats::pf(g2 / r, r, n - df)
         message("Using F-distribution to compute p-value")
       }
     data.frame(g2 = g2, p.value = p.value)
@@ -146,7 +148,7 @@ spectra_comparison <- function(mf_data,
 
       ref.dist <- rep(0, n.sim)
       for (k in seq_along(ref.dist)) {
-        x <- r2dtable(1, r, c)[[1]]
+        x <- stats::r2dtable(1, r, c)[[1]]
         n <- sum(x)
         r <- apply(x, 1, sum)
         c <- apply(x, 2, sum)
@@ -202,7 +204,7 @@ spectra_comparison <- function(mf_data,
   results_df <- do.call(rbind, results_list)
   rownames(results_df) <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
  # adjust p-values for multiple-comparisons 
-  results_df$adj_p.value <- DupSeqR::my.holm.sidak(results_df$p.value)
+  results_df$adj_p.value <- MutSeqR::my.holm.sidak(results_df$p.value)
   
   return(results_df)
  }
@@ -230,9 +232,9 @@ spectra_comparison <- function(mf_data,
   #   if(monte.carlo == FALSE){
   # 
   #     if(N/R > 20){
-  #       p.value <- 1-pchisq(G2ab, df)
+  #       p.value <- 1-stats::pchisq(G2ab, df)
   #     } else{
-  #       p.value <- 1-pf(G2ab/df, df, N-df)
+  #       p.value <- 1-stats::pf(G2ab/df, df, N-df)
   #     }
   #   } else {
   #     #Monte Carlo
@@ -240,11 +242,11 @@ spectra_comparison <- function(mf_data,
   #     set.seed(seed)
   #     r <- apply(x, 1, sum)
   #     c <- apply(x, 2, sum)
-  #     rtbl <- r2dtable(1, r, c)
+  #     rtbl <- stats::r2dtable(1, r, c)
   # 
   #     ref.dist <- rep(0, n.sim)
   #     for(k in 1:length(ref.dist)){
-  #       x <- r2dtable(1, r, c)[[1]]
+  #       x <- stats::r2dtable(1, r, c)[[1]]
   #       flag <- x > 0
   #       S1 <- t(x[flag]) %*% log(x[flag])
   #       S2 <- sum(apply(x, 1, sum) * log(apply(x, 1, sum)))

@@ -4,12 +4,12 @@
 \alias{migrate_mut}
 \title{Validate a mut file}
 \usage{
-migrate_mut(mut_table, op = DupSeqR::op)
+migrate_mut(mut_table, op = MutSeqR::op)
 }
 \arguments{
 \item{mut_table}{mutation data}
 
-\item{op}{Default is DupSeqR::op, a list of options (see also, op, TODO)}
+\item{op}{Default is MutSeqR::op, a list of options (see also, op, TODO)}
 }
 \description{
 Not tested yet. TODO! Could avoid data.table dependency here I think.

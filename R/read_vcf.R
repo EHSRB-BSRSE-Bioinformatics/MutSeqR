@@ -292,16 +292,16 @@ mut_ranges <- makeGRangesFromDataFrame(
   
 # load regions ranges and retrieve sequences with padding
 if (regions == "human") {
-  region_ranges <- DupSeqR::get_seq(regions = "human", padding = range_buffer)
+  region_ranges <- MutSeqR::get_seq(regions = "human", padding = range_buffer)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
 } else if (regions == "mouse") {
-  region_ranges <- DupSeqR::get_seq(regions = "mouse", padding = range_buffer)
+  region_ranges <- MutSeqR::get_seq(regions = "mouse", padding = range_buffer)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.")
 } else if (regions == "rat") {
-  region_ranges <- DupSeqR::get_seq(regions = "rat", padding = range_buffer)
+  region_ranges <- MutSeqR::get_seq(regions = "rat", padding = range_buffer)
   cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6.")
   } else if (regions == "custom") { 
-  region_ranges <- DupSeqR::get_seq(regions = "custom", 
+  region_ranges <- MutSeqR::get_seq(regions = "custom", 
                                     custom_regions_file = custom_regions_file,
                                     rg_sep = rg_sep,
                                     genome = genome,
@@ -370,7 +370,7 @@ dat <- dat %>%
     plyranges::mutate(     
   normalized_context = ifelse(
         stringr::str_sub(dat$context, 2, 2) %in% c("G", "A", "g", "a"),
-        mapply(function(x) DupSeqR::reverseComplement(x, case = "upper"), dat$context),
+        mapply(function(x) MutSeqR::reverseComplement(x, case = "upper"), dat$context),
         dat$context
       ),
       normalized_subtype = 

@@ -153,7 +153,7 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
       }
   
   # Numerator groups
-  numerator_groups <- c(group, DupSeqR::subtype_dict[[matrices]])
+  numerator_groups <- c(group, MutSeqR::subtype_dict[[matrices]])
   numerator_groups <- numerator_groups[!is.na(numerator_groups)]
   
   signature_data <- signature_data %>% 
@@ -166,9 +166,9 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
   # Create a list of vectors, one for each column in cols_to_group
   col_values <- lapply(group, function(col) unique(signature_data[[col]]))
   # Create a dataframe with every combination of subtype_resolution and values from cols_to_group
-  mut_matrix <- do.call(expand.grid, c(subtype = list(DupSeqR::subtype_list[[matrices]]), col_values))
+  mut_matrix <- do.call(expand.grid, c(subtype = list(MutSeqR::subtype_list[[matrices]]), col_values))
   
-  col_names <- c(paste(DupSeqR::subtype_dict[[matrices]]), group)
+  col_names <- c(paste(MutSeqR::subtype_dict[[matrices]]), group)
   
   colnames(mut_matrix) <- col_names 
   
@@ -179,7 +179,7 @@ colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_
     dplyr::distinct()
   mut_matrix <- merge(mut_matrix, summary_data, by = col_names, all = TRUE)
   mut_matrix$mut_count[is.na(mut_matrix$mut_count)] <- 0
-  mut_matrix_wide <- stats::reshape(mut_matrix, idvar = paste(DupSeqR::subtype_dict[[matrices]]), timevar = paste(group), direction = "wide")
+  mut_matrix_wide <- stats::reshape(mut_matrix, idvar = paste(MutSeqR::subtype_dict[[matrices]]), timevar = paste(group), direction = "wide")
   colnames(mut_matrix_wide) <- gsub("mut_count.", "", colnames(mut_matrix_wide)) 
   colnames(mut_matrix_wide)[1] <- "MutationType"
    output_path <- file.path(

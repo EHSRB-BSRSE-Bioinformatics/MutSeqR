@@ -6,8 +6,8 @@
 \usage{
 calculate_mut_freq(
   data,
-  cols_to_group = c("sample", "description"),
-  subtype_resolution = "base_96",
+  cols_to_group = c("sample", "label"),
+  subtype_resolution = "base_6",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
   vaf_cutoff,
   summary = TRUE,

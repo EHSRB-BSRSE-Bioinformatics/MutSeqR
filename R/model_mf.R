@@ -351,7 +351,7 @@ for (factor_name in fixed_effects) {
   pairwise_comparisons <- pairwise_comparisons[,-5]
   colnames(pairwise_comparisons) <- c("Estimate", "Std.Err", "Obs.T", "p.value", "df", "Lower", "Upper")
   
-  pairwise_comparisons$adj_p.value <- DupSeqR::my.holm.sidak(pairwise_comparisons$p.value)
+  pairwise_comparisons$adj_p.value <- MutSeqR::my.holm.sidak(pairwise_comparisons$p.value)
   
   }
   

@@ -15,11 +15,11 @@ load_regions_file <- function(regions,
                               rg_sep = "\t") {
   # Annotate the mut file with additional information about genomic regions in the file
   if (regions == "human") {
-    regions_df <- read.table(system.file("extdata", "human_mutagenesis_panel_hg38.txt", package = "DupSeqR"), header = TRUE)
+    regions_df <- read.table(system.file("extdata", "human_mutagenesis_panel_hg38.txt", package = "MutSeqR"), header = TRUE)
   } else if (regions == "mouse") {
-    regions_df <- read.table(system.file("extdata", "mouse_mutagenesis_panel_mm10.txt", package = "DupSeqR"), header = TRUE)
+    regions_df <- read.table(system.file("extdata", "mouse_mutagenesis_panel_mm10.txt", package = "MutSeqR"), header = TRUE)
   } else if (regions == "rat") {
-    regions_df <- read.table(system.file("extdata", "rat_mutagenesis_panel_rn6.txt", package = "DupSeqR"), header = TRUE)
+    regions_df <- read.table(system.file("extdata", "rat_mutagenesis_panel_rn6.txt", package = "MutSeqR"), header = TRUE)
   } else if (regions == "custom") {
     if (!is.null(custom_regions_file)) {
       regions_df <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)

@@ -3,7 +3,7 @@
   [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
   <!-- badges: end -->
   
-# Duplex Sequencing Analysis
+# ecNGS Analysis For Mutagenicity Assessment
 
 ## Pre-abmle
 
@@ -19,7 +19,7 @@ Install from github with:
 
 ```{r}
 # install.packages("devtools")
-devtools::install_github("EHSRB-BSRSE-Bioinformatics/duplex-sequencing", auth_token = "your personal_access_token from github")
+devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR", auth_token = "your personal_access_token from github")
 ```
 
 ## Data import
@@ -43,7 +43,7 @@ load in the metadata for TwinStrand's Mutagenesis Panel^(TM)^ using the
 regions parameter; "mouse" or "human".
 
 ```{r}
-library(DupSeqR)
+library(MutSeqR)
 # mut_data <- "file path to .mut file"
 # sample_data <- "file path to sample meta data"
 mutation_data <-

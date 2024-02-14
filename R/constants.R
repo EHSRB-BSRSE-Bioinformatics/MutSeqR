@@ -81,6 +81,7 @@ subtype_dict <- c(
   "base_192" = "context_with_mutation"
 )
 
+#' A list of mutation subtypes at different resolutions
 #' @format A list with corresponding values
 #' @export
 subtype_list <- list (

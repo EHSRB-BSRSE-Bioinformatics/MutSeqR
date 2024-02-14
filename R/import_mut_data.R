@@ -184,7 +184,7 @@ import_mut_data <- function(mut_file,
   # Rename columns to default .  
   # Add custom column names to default list
  if(!is.null(custom_column_names)) {
-  cols <- modifyList(DupSeqR::op$column, custom_column_names)
+  cols <- modifyList(MutSeqR::op$column, custom_column_names)
   dat <- rename_columns(dat, cols) 
  } else {
    dat <- rename_columns(dat) 
@@ -196,7 +196,7 @@ import_mut_data <- function(mut_file,
   # If there are NA values in required columns. stop
   columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
   # Check if there are any NA columns in base_required_mut_cols
-  na_columns_required <- intersect(columns_with_na, c(DupSeqR::op$base_required_mut_cols, "context"))
+  na_columns_required <- intersect(columns_with_na, c(MutSeqR::op$base_required_mut_cols, "context"))
   
   if (length(na_columns_required) > 0) {
     stop(paste("Function stopped: NA values were found within the following required column(s): ", 
@@ -235,7 +235,7 @@ import_mut_data <- function(mut_file,
       nchar_alt = ifelse(variation_type != "symbolic" | variation_type != "sv", nchar(alt), NA),
       variation_type = tolower(dat$variation_type),
       variation_type = 
-        ifelse(.data$variation_type == "sv" , "symbolic",
+        ifelse(.data$variation_type == "sv", "symbolic",
           ifelse(.data$variation_type == "indel" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
             ifelse(.data$variation_type == "indel" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion",
                    ifelse(.data$variation_type == "indel" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 & .data$nchar_ref > 1, "complex",
@@ -296,8 +296,8 @@ import_mut_data <- function(mut_file,
   dat <- df_grouped %>%
     dplyr::mutate(new_depth_col = prioritize_depth(variation_type, .data[[depth_col]])) %>%
     dplyr::ungroup() %>%
-    dplyr::select(-.data[[depth_col]]) %>% 
-    dplyr::rename(!!depth_col := .data$new_depth_col)
+    dplyr::select(-{{depth_col}}) %>% 
+    dplyr::rename(!!depth_col := "new_depth_col")
 
    } else if (depth_calc == "take_mean") {
      df_grouped <- dat %>%
@@ -313,8 +313,8 @@ import_mut_data <- function(mut_file,
      
      dat <- dat %>%
       dplyr::mutate(final_depth_col = ifelse(is.na(new_depth_col), .data[[depth_col]], new_depth_col)) %>%
-       dplyr::select(-.data[[depth_col]], -new_depth_col) %>%
-       dplyr::rename(!!depth_col := final_depth_col)
+       dplyr::select(-{{depth_col}}, -{{new_depth_col}}) %>%
+       dplyr::rename(!!depth_col := "final_depth_col")
    } else {
      stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
    }
@@ -347,7 +347,7 @@ import_mut_data <- function(mut_file,
       ),
     normalized_context = ifelse(
       stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
-      mapply(function(x) DupSeqR::reverseComplement(x, case = "upper"), .data$context),
+      mapply(function(x) MutSeqR::reverseComplement(x, case = "upper"), .data$context),
       .data$context
     ),
     normalized_subtype = ifelse(
@@ -425,16 +425,18 @@ import_mut_data <- function(mut_file,
 
   ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = range_buffer, suffix = c("_mut", "_regions"))
   
-  ranges_joined <- ranges_joined %>%
-    plyranges::mutate(bp_outside_rg = regions_start_buffered - start)
+  dat <- as.data.frame(ranges_joined)
+
+  dat <- dat %>%
+    dplyr::mutate(bp_outside_rg = .data$regions_start_buffered - .data$start)
   
   # If the position is outside of the range_buffer, the regions will not be added; 
   #   regions_start_buffered = NA: is.na(bp_outside_rg) 
   # If the position overlaps with the regions, but starts outside of it, 
   #   position start will be smaller than regions start:  bp_outside_rg > 0
-  ranges_outside_regions <- as.data.frame(ranges_joined) %>%
-  dplyr::filter(is.na(bp_outside_rg) | bp_outside_rg > 0) %>%
-  dplyr::select(sample, seqnames, start, end, ref, alt)
+  ranges_outside_regions <- dat %>%
+  dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0) %>%
+  dplyr::select("sample", "seqnames", "start", "end", "ref", "alt")
 
 # Display the ranges that were filtered out of the data
 if(nrow(ranges_outside_regions) > 0) {
@@ -442,16 +444,23 @@ print("Subset of data is outside specified regions:")
 print(ranges_outside_regions)
 }
 
-  ranges_joined <- ranges_joined %>%
-   plyranges::filter(!is.na(bp_outside_rg) & bp_outside_rg <= 0)  %>%
-    plyranges::select(-regions_start_buffered, -bp_outside_rg)
+  dat <- dat %>%
+   dplyr::filter(!is.na(.data$bp_outside_rg) & .data$bp_outside_rg <= 0)  %>%
+    plyranges::select(-"regions_start_buffered", -"bp_outside_rg")
   
   if(output_granges) {
-  return(ranges_joined)
+  gr <-  GenomicRanges::makeGRangesFromDataFrame(
+    df = dat,
+    keep.extra.columns = T,
+    seqnames.field = "seqnames",
+    start.field = "start",
+    end.field = "end",
+    starts.in.df.are.0based =  FALSE)
+  
+  return(gr)
   } else {
-    df <- as.data.frame(ranges_joined)
-    df <- df %>%
-      dplyr::rename(contig = seqnames)
-    return(df)
+    dat <- dat %>%
+      dplyr::rename(contig = "seqnames")
+    return(dat)
   }
 }

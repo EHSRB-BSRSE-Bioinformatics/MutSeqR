@@ -66,7 +66,7 @@ params:
 ```{r load_libraries, warning=F, echo=F}
 set.seed(3135)
 
-library(DupSeqR)
+library(MutSeqR)
 library(stringr)
 library(tidyr)
 library(dplyr)
@@ -482,7 +482,7 @@ cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
 signature_fitting(mutations = mutation_data,
                               project_name = "HESI GTTC",
                               project_genome = "rn6",
-                              env_name = "DupSeqR",
+                              env_name = "MutSeqR",
                               group = "sample",
                               output_path = NULL,
                               python_version = "3.9.13",

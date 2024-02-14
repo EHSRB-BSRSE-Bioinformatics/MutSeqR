@@ -3,6 +3,7 @@
 S3method(reverseComplement,SeqFastadna)
 S3method(reverseComplement,default)
 S3method(reverseComplement,list)
+export("%>%")
 export(add_binom_conf_intervals)
 export(annotate_CpG_sites)
 export(calculate_mut_freq)

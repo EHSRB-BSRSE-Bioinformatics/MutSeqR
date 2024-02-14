@@ -1,7 +1,7 @@
 import sys
 from SigProfilerAssignment import Analyzer as Analyze
  
-def cosmic_fit_DupSeqR(samples,
+def cosmic_fit_MutSeqR(samples,
                        output,
                        genome_build="GRCh38",
                        signatures=None,

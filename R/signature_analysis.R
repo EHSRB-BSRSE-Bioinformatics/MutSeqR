@@ -53,11 +53,11 @@ signature_decomposition <- function(mutations,
   # TODO - only run this once, not ever time function is called
   # Use an if statement to determine if the dependencies are met already
   reticulate::install_python(version = "3.9:latest")
-  reticulate::virtualenv_create("DupSeqR", python = "python3.9")
-  reticulate::virtualenv_install("DupSeqR", "SigProfilerAssignment")
-  reticulate::virtualenv_install("DupSeqR", "SigProfilerMatrixGenerator")
-  reticulate::virtualenv_install("DupSeqR", "SigProfilerExtractor")
-  reticulate::use_virtualenv("DupSeqR")
+  reticulate::virtualenv_create("MutSeqR", python = "python3.9")
+  reticulate::virtualenv_install("MutSeqR", "SigProfilerAssignment")
+  reticulate::virtualenv_install("MutSeqR", "SigProfilerMatrixGenerator")
+  reticulate::virtualenv_install("MutSeqR", "SigProfilerExtractor")
+  reticulate::use_virtualenv("MutSeqR")
   
   
   #
@@ -137,7 +137,7 @@ signature_decomposition <- function(mutations,
   )
   
   signatures_python_code <- system.file('extdata', 'signatures.py',
-                                        package = "DupSeqR")
+                                        package = "MutSeqR")
   #reticulate::use_python(Sys.which("python"))
   #use_python("C:/Users/MAMEIER/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate/Scripts/python.exe")
   #reticulate::use_virtualenv(
@@ -199,7 +199,7 @@ signature_decomposition <- function(mutations,
       cushion = 100
     )
 
-  cosmic_fit_DupSeqR(
+  cosmic_fit_MutSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
     genome_build="GRCh38",

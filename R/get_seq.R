@@ -35,10 +35,10 @@ get_seq <- function(
     padding = 0) {
 
   if (regions %in% c("human", "mouse", "rat")) {
-    regions_df <- DupSeqR::load_regions_file(regions = regions) 
+    regions_df <- MutSeqR::load_regions_file(regions = regions) 
   } else if (regions == "custom") {
   
-  regions_df <- DupSeqR::load_regions_file(regions = "custom",
+  regions_df <- MutSeqR::load_regions_file(regions = "custom",
                                          custom_regions_file = custom_regions_file,
                                          rg_sep = rg_sep) 
   } else {

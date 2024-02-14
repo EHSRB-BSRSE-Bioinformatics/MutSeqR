@@ -42,21 +42,22 @@ print_ascii_art <- function() {
                      .OMWo                   '0MWc  
                      
                      
-                     
- .S_sSSs     .S       S.    .S_sSSs      sSSs    sSSs    sSSs_sSSs     .S_sSSs    
-.SS~YS%%b   .SS       SS.  .SS~YS%%b    d%%SP   d%%SP   d%%SP~YS%%b   .SS~YS%%b   
-S%S   `S%b  S%S       S%S  S%S   `S%b  d%S'    d%S'    d%S'     `S%b  S%S   `S%b  
-S%S    S%S  S%S       S%S  S%S    S%S  S%|     S%S     S%S       S%S  S%S    S%S  
-S%S    S&S  S&S       S&S  S%S    d*S  S&S     S&S     S&S       S&S  S%S    d*S  
-S&S    S&S  S&S       S&S  S&S   .S*S  Y&Ss    S&S_Ss  S&S       S&S  S&S   .S*S  
-S&S    S&S  S&S       S&S  S&S_sdSSS   `S&&S   S&S~SP  S&S       S&S  S&S_sdSSS   
-S&S    S&S  S&S       S&S  S&S~YSSY      `S*S  S&S     S&S       S&S  S&S~YSY%b   
-S*S    d*S  S*b       d*S  S*S            l*S  S*b     S*b       d*S  S*S   `S%b  
-S*S   .S*S  S*S.     .S*S  S*S           .S*P  S*S.    S*S.     .S*S  S*S    S%S  
-S*S_sdSSS    SSSbs_sdSSS   S*S         sSS*S    SSSbs   SSSbs_sdSSSS  S*S    S&S  
-SSS~YSSY      YSSP~YSSY    S*S         YSS'      YSSP    YSSP~YSSSSS  S*S    SSS  
-                           SP                                         SP          
-                           Y                                          Y             
+ ,ggg, ,ggg,_,ggg,                            ,gg,                       ,ggggggggggg,   
+dP  Y8dP  Y88P  Y8b                I8        i8  8i                     dP   88      Y8, 
+Yb, `88'  `88'  `88                I8        `8,,8'                     Yb,  88      `8b 
+ `   88    88    88             88888888      `88'                       `   88      ,8P 
+     88    88    88                I8         dP 8,                          88aaaad8P   
+     88    88    88  gg      gg    I8        dP' `8a   ,ggg,     ,gggg,gg    88    Yb,   
+     88    88    88  I8      II    I8       dP'   `Yb i8   8i   dP    Y8I    88      8b  
+     88    88    88  I8,    ,8I   ,I8,  _ ,dP'     I8 I8, ,8I  i8'    ,8I    88      `8i 
+     88    88    Y8,,d8b,  ,d8b, ,d88b,  888,,____,dP `YbadP' ,d8,   ,d8b    88       Yb,
+     88    88    `Y88P' Y88P `Y888P  Y88a8P Y88888P  888P Y888P Y8888P 88d   88        Y8
+                                                                       I8P               
+                                                                       I8'               
+                                                                       I8                
+                                                                       I8                
+                                                                       I8                                    
+
 ")
 }
 

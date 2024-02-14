@@ -8,7 +8,7 @@ signature_fitting(
   mutations,
   project_name = "Default",
   project_genome = "GRCh38",
-  env_name = "DupSeqR",
+  env_name = "MutSeqR",
   group = "sample",
   output_path = NULL,
   python_version = "3.11",
