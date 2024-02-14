@@ -43,9 +43,9 @@ plotting more difficult, but may provide additional flexibility to power
 users.}
 
 \item{retain_metadata_cols}{list the metadata columns that you would like to
-retain in the summary table. This may be useful for plotting your summary data.}
+retain in the summary table. This may be useful for plotting your summary data.
 
-\item{clonality_cutoff}{NOT CURRENTLY IMPLEMENTED! Up for consideration.
+clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
 This value determines the fraction of reads that
 is considered a constitutional variant. If a mutation is present at a
 fraction higher than this value, the reference base will be swapped,

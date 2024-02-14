@@ -177,7 +177,7 @@ import_mut_data <- function(mut_file,
     }
     # If we have rs IDs, add a column indicating whether the mutation is a known SNP
 
-    dat <- dat %>% dplyr::mutate(is_known = ifelse(!id == ".", "Y", "N"))
+    dat <- dat %>% dplyr::mutate(is_known = ifelse(!.data$id == ".", "Y", "N"))
 
   }
 
@@ -232,7 +232,7 @@ import_mut_data <- function(mut_file,
   dat <- dat %>%
     dplyr::mutate(
       nchar_ref = nchar(ref),
-      nchar_alt = ifelse(variation_type != "symbolic" | variation_type != "sv", nchar(alt), NA),
+      nchar_alt = ifelse(.data$variation_type != "symbolic" | .data$variation_type != "sv", nchar(alt), NA),
       variation_type = tolower(dat$variation_type),
       variation_type = 
         ifelse(.data$variation_type == "sv", "symbolic",
@@ -312,7 +312,7 @@ import_mut_data <- function(mut_file,
      dplyr::left_join(df_grouped, by = c("sample", "contig", "start")) 
      
      dat <- dat %>%
-      dplyr::mutate(final_depth_col = ifelse(is.na(new_depth_col), .data[[depth_col]], new_depth_col)) %>%
+      dplyr::mutate(final_depth_col = ifelse(is.na(.data$new_depth_col), .data[[depth_col]], .data$new_depth_col)) %>%
        dplyr::select(-{{depth_col}}, -{{new_depth_col}}) %>%
        dplyr::rename(!!depth_col := "final_depth_col")
    } else {

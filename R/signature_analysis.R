@@ -62,7 +62,6 @@ signature_decomposition <- function(mutations,
   
   #
   py_config()
-  devtools::install_github("AlexandrovLab/SigProfilerMatrixGeneratorR")
   SigProfilerMatrixGeneratorR::install('GRCm38', rsync=FALSE, bash=FALSE)
   
   # message(paste0("Creating a folder to store python dependencies at ",

@@ -27,18 +27,18 @@ write_mutation_calling_file <- function(mutations,
   if (inherits(mutations, "GRanges")) { 
     mutations <- as.data.frame(mutations)
     mutations <- mutations %>%
-      dplyr::rename(contig = contig)}
+      dplyr::rename(contig = "seqnames")}
   if (!inherits(mutations, "data.frame")) { warning("You should use a 
                                              data frame as input here.")}
   
   signature_data <- mutations %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
-    dplyr::filter(is_germline == FALSE)
+    dplyr::filter(.data$is_germline == FALSE)
 
     
   if ("id" %in% colnames(signature_data)) {
   signature_data <- signature_data %>% 
-    dplyr::select(.data$sample, .data$id, .data$variation_type, contig, .data$start, .data$end, .data$ref, .data$alt) %>%
+    dplyr::select("sample", "id", "variation_type", "contig", "start", "end", "ref", "alt") %>%
     dplyr::rename(
       "Sample" = "sample",
       "ID" = "id",
@@ -56,9 +56,9 @@ write_mutation_calling_file <- function(mutations,
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
   } else {
     signature_data <- signature_data %>% 
-      dplyr::select(.data$sample, .data$variation_type, contig, .data$start, .data$end, .data$ref, .data$alt) %>%
+      dplyr::select("sample", "variation_type", "contig", "start", "end", "ref", "alt") %>%
       dplyr::rename(
-        "Sample" = sample,
+        "Sample" = "sample",
         "mut_type" = "variation_type",
         "chrom" = "contig",
         "pos_start" = "start",
@@ -117,7 +117,7 @@ write_mutation_calling_file <- function(mutations,
 #' @importFrom here here
 #' @export
 #' 
-write_mutational_matrix <- function(mutations,  
+write_mutational_matrix <- function(mutations,
                                     group = "dose",
                                     matrices = "base_96",
                                     include_clonal = FALSE,
@@ -127,27 +127,16 @@ write_mutational_matrix <- function(mutations,
   if (inherits(mutations, "GRanges")) { 
     mutations <- as.data.frame(mutations)
     mutations <- mutations %>%
-      dplyr::rename(contig = contig)}
+      dplyr::rename(contig = "seqnames")}
   if (!inherits(mutations, "data.frame")) { warning("You should use a 
                                              data frame as input here.")}
 signature_data <- mutations %>%
   dplyr::filter(.data$variation_type %in% "snv")
-
-# Remove prefix from metadata columns
-# Identify and rename sample_data columns
-columns_with_sample_data_prefix <- grep("^sample_data_", colnames(signature_data), value = TRUE)
-columns_with_region_data_prefix <- grep("^region_data_", colnames(signature_data), value = TRUE)
-# Remove the prefixes to get the clean column names
-stripped_sample_data_columns <- sub("^sample_data_", "", columns_with_sample_data_prefix)
-stripped_region_data_columns <- sub("^region_data_", "", columns_with_region_data_prefix)
-# Apply new column names to signature_data
-colnames(signature_data)[colnames(signature_data) %in% columns_with_sample_data_prefix] <- stripped_sample_data_columns
-colnames(signature_data)[colnames(signature_data) %in% columns_with_region_data_prefix] <- stripped_region_data_columns
     
   if (filter == "somatic") {
-      signature_data <- dplyr::filter(signature_data, is_germline == FALSE)
+      signature_data <- dplyr::filter(signature_data, .data$is_germline == FALSE)
     } else if (filter == "germline") {
-      signature_data <- dplyr::filter(signature_data, is_germline == TRUE)
+      signature_data <- dplyr::filter(signature_data, .data$is_germline == TRUE)
     } else if (filter == "none") {
        signature_data <- signature_data
       }

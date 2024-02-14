@@ -33,7 +33,9 @@ second column must be the group level that it will be compared to. All values
 must correspond to entries in your \code{group} column. For more than one \code{group}
 variable, separate the levels of the each group with a colon. Ensure that all
 \code{groups} are represented in each entry for the table. See details
-for examples}
+for examples.}
+
+\item{cont_sep}{The delimiter used in the contrast_table_file. Default is tab.}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with

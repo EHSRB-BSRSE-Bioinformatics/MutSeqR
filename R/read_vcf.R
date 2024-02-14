@@ -63,7 +63,7 @@
 #' @importFrom rlang .data
 #' @importFrom stringr str_sub str_count
 #' @importFrom SummarizedExperiment colData
-#' @importFrom plyranges join_overlap_left mutate select
+#' @importFrom plyranges join_overlap_left
 #' @export
 #' 
 read_vcf <- function(
@@ -204,7 +204,7 @@ read_vcf <- function(
         ifelse(.data$variation_type == "snv",
                paste0(.data$ref, ">", .data$alt),
                "."),
-      short_ref = substr(.data$ref, 1, 1))
+      short_ref = substr(dat$ref, 1, 1))
   
 
 # Create total_depth and no_calls columns based on set parameter depth_calc.
@@ -277,7 +277,7 @@ dat <- dat %>%
     no_calls = .data$depth - .data$total_depth,
     vaf = .data$alt_depth / .data$total_depth) %>%
   dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, F, T)) %>%
-  dplyr::select(-var_depth, -duplicated)
+  dplyr::select(-"var_depth", -"duplicated")
 }
 
 # Create Context Column using target Sequences
@@ -318,18 +318,19 @@ if (regions == "human") {
 # Join with mutation data
  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = range_buffer , suffix = c("_mut", "_regions"))
 
+dat <- as.data.frame(ranges_joined)
 # Get no_variant context
-dat <- ranges_joined %>%
-  plyranges::mutate(start_string = start - seq_start +1,
+dat <- dat %>%
+  dplyr::mutate(start_string = .data$start - .data$seq_start +1,
                     context = substr(sequence, start_string - 1, start_string + 1)) %>%
-  plyranges::select(-start_string, -sequence) %>%
-  plyranges::mutate(bp_outside_rg = seq_start - start)
+  dplyr::select(-"start_string", -"sequence") %>%
+  dplyr::mutate(bp_outside_rg = .data$seq_start - .data$start)
 
 # Variants that occur outside of the regions (+ the defined buffer range) will 
 # not have a context associated with them and thus must be removed
-ranges_outside_regions <- as.data.frame(dat) %>%
-  dplyr::filter(is.na(bp_outside_rg) | bp_outside_rg > 0) %>%
-  dplyr::select(sample, seqnames, start, end, ref, alt)
+ranges_outside_regions <- dat %>%
+  dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0) %>%
+  dplyr::select("sample", "seqnames", "start", "end", "ref", "alt")
 
 # Display the ranges that were filtered out of the data
 if(nrow(ranges_outside_regions) > 0) {
@@ -339,8 +340,8 @@ print(ranges_outside_regions)
 # Filter the ranges out of the data
   # TO DO: check how this is going to affect the total depth. 
 dat <- dat %>%
-  plyranges::filter(!is.na(bp_outside_rg) & bp_outside_rg <= 0)  %>%
-  plyranges::select(-seq_start, -seq_end, -bp_outside_rg)
+  dplyr::filter(!is.na(.data$bp_outside_rg) & .data$bp_outside_rg <= 0)  %>%
+  dplyr::select(-"seq_start", -"seq_end", -"bp_outside_rg")
 
 # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
@@ -356,27 +357,27 @@ dat <- dat %>%
   
   # Context with mutation
   dat <- dat %>%
-    plyranges::mutate(
+    dplyr::mutate(
       context_with_mutation =
-        ifelse(subtype != ".",
+        ifelse(.data$subtype != ".",
                paste0(
-                 stringr::str_sub(context, 1, 1),
-                 "[", subtype, "]",
-                 stringr::str_sub(context, 3, 3)
+                 stringr::str_sub(.data$context, 1, 1),
+                 "[", .data$subtype, "]",
+                 stringr::str_sub(.data$context, 3, 3)
                ),
-               variation_type
+               .data$variation_type
         ))
   dat <- dat %>%
-    plyranges::mutate(     
+    dplyr::mutate(     
   normalized_context = ifelse(
         stringr::str_sub(dat$context, 2, 2) %in% c("G", "A", "g", "a"),
         mapply(function(x) MutSeqR::reverseComplement(x, case = "upper"), dat$context),
         dat$context
       ),
       normalized_subtype = 
-        ifelse(subtype %in% names(sub_dict),
+        ifelse(.data$subtype %in% names(sub_dict),
                sub_dict[subtype],
-               subtype
+               .data$subtype
       ),
       normalized_ref = dplyr::case_when(
         substr(ref, 1, 1) == "A" ~ "T",
@@ -385,38 +386,44 @@ dat <- dat %>%
         substr(ref, 1, 1) == "T" ~ "T"
       ),
       normalized_context_with_mutation =
-        ifelse(normalized_subtype != ".",
+        ifelse(.data$normalized_subtype != ".",
                paste0(
-                 stringr::str_sub(normalized_context, 1, 1),
-                 "[", normalized_subtype, "]",
-                 stringr::str_sub(normalized_context, 3, 3)
+                 stringr::str_sub(.data$normalized_context, 1, 1),
+                 "[", .data$normalized_subtype, "]",
+                 stringr::str_sub(.data$normalized_context, 3, 3)
                ),
-               variation_type
+               .data$variation_type
         ),
-      gc_content = (stringr::str_count(string = context, pattern = "G") +
-                      stringr::str_count(string = context, pattern = "C"))
-      / stringr::str_count(context)
+      gc_content = (stringr::str_count(string = dat$context, pattern = "G") +
+                      stringr::str_count(string = dat$context, pattern = "C"))
+      / stringr::str_count(dat$context)
     ) %>%
-    plyranges::mutate(
+    dplyr::mutate(
       normalized_subtype = ifelse(
-        normalized_subtype == ".",
-        variation_type,
-        normalized_subtype
+        .data$normalized_subtype == ".",
+        .data$variation_type,
+        .data$normalized_subtype
       ),
       subtype = ifelse(
-        subtype == ".",
-        variation_type,
-        subtype
+        .data$subtype == ".",
+        .data$variation_type,
+        .data$subtype
       )
     )
 
   if(output_granges) {
-    return(dat)
+  gr <-  GenomicRanges::makeGRangesFromDataFrame(
+    df = dat,
+    keep.extra.columns = TRUE,
+    seqnames.field = "seqnames",
+    start.field = "start",
+    end.field = "end",
+    starts.in.df.are.0based =  FALSE)
+    return(gr)
   } else {
-    df <- as.data.frame(dat)
-    df <- df %>%
-      dplyr::rename(contig = seqnames)
-    return(df)
+    dat <- dat %>%
+      dplyr::rename(contig = "seqnames")
+    return(dat)
   }
 }
 
