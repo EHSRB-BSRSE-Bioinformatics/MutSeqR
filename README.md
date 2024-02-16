@@ -38,7 +38,7 @@ mut_file parameter. If you have sample metadata, then you can indicate
 the file path to your sample data file using the sample_data_file
 parameter. Set the vaf_cutoff to flag ostensibly germline mutations that
 have a variant allele fraction greater than this parameter. Finally,
-load in the metadata for TwinStrand's DuplexSeq :tm: Mutagenesis Panel using the
+load in the metadata for TwinStrand's DuplexSeq™ Mutagenesis Panel using the
 regions parameter; "mouse" or "human".
 
 ```{r}
@@ -53,7 +53,7 @@ mutation_data <-
                   )
 ```
 
-If you are not using one of TwinStrand's DuplexSeq :tm: Mutagenesis Panels, then
+If you are not using one of TwinStrand's DuplexSeq™ Mutagenesis Panels, then
 you will add your target regions' metadata using a custom_regions_file.
 Use parameters to indicate your file's file path, delimiter, and whether
 the region ranges are 0-based or 1-based.
