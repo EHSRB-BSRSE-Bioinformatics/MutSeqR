@@ -6,24 +6,44 @@
 \usage{
 bmd_ma(
   mf_data,
-  response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+  data_type = c("individual", "summary"),
   dose_col = "dose",
+  response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+  sd_col = NULL,
+  n_col = NULL,
   bmr_type = "rel",
   bmr = 0.5,
   fit = "laplace",
-  alpha = 0.025,
+  a = 0.025,
   ...
 )
 }
 \arguments{
 \item{mf_data}{A data frame containing the dose-response data. Data may
-be individual for each sample or averaged over dose groups.}
+be individual for each sample or averaged over dose groups.
+Required columns for individual data are "dose" and "response".
+Multiple response columns are allowed. Required columns for summarised
+data are "dose", "mean response", "sample size", and "standard deviation".
+Only one response column is allowed for summarised data.}
 
-\item{response_cols}{A character vector specifying the columns in mf_data
-containing the response data.}
+\item{data_type}{A string specifying the type of response data.
+Data may be response per individual or summarised across dose groups.
+("individual", "summary").}
 
 \item{dose_col}{A character string specifying the column in mf_data
 containing the dose data.}
+
+\item{response_cols}{A character vector specifying the columns in mf_data
+containing the response data. For summarised data types, this should be
+the mean response for each dose group.}
+
+\item{sd_col}{A character string specifying the column in mf_data containing
+the standard deviation of the response data. This is only required for
+summarised data types.}
+
+\item{n_col}{A character string specifying the column in mf_data containing
+the sample size of each dose group. This is only required for summarised
+data types.}
 
 \item{bmr_type}{A string specifying the type of benchmark response.
 For continuous models, there are four types of BMD definitions that
@@ -52,10 +72,13 @@ That is the BMD is the dose that solves the equation
 \eqn{\mid f(dose) - f(0) \mid = BMR}.
 }}
 
+\item{bmr}{A numeric value specifying the benchmark response. The BMR is
+defined in relation to the calculation requested in bmr_type. Default is 0.5.}
+
 \item{fit}{A string specifying the method used to fit the model.
 Options are ("laplace", "mle", or "mcmc"). Default is "laplace".}
 
-\item{alpha}{The specified nominal coverage rate for computation of
+\item{a}{The specified nominal coverage rate for computation of
 the lower bound on the BMDL and BMDU, i.e., one computes a
 \eqn{100\times(1-\alpha)\%} confidence interval.  For the
 interval (BMDL,BMDU) this is a \eqn{100\times(1-2\alpha)\% }.
@@ -63,12 +86,29 @@ By default, it is set to 0.025 for a CI of 95\%.}
 
 \item{...}{Additional arguments to be passed to the model fitting function.
 See \link[ToxicR]{ma_continuous_fit} for details.}
-
-\item{BMR}{A numeric value specifying the benchmark response. The BMR is
-defined in relation to the calculation requested in bmr_type. Default is 0.5.}
 }
 \value{
 A list with the following components:
+\itemize{
+\item BMD: A data frame containing the BMD values and
+the \eqn{100\times(1-2\alpha)\% } confidence intervals
+for each response column.
+\item summary: A list containing the summary statistics for each
+repsonse column.
+\item model_plots: A list containing the model plots for each
+response column.
+\item cleveland_plots: A list containing the Cleveland
+plots for each response column.
+\item models: A list containing the model fit values for
+each response column. Values include:
+\itemize {
+\item Individual_Model_X: Individual model fits for each model,
+X, used for model averaging. See \link[ToxicR]{single_continuous_fit}
+for details on the model object class structure.
+\item ma_bmd: The CDF of the model averaged BMD distribution.
+\item posterior_probs: the posterior probabilities used in the
+model averaging.
+}}
 }
 \description{
 This function fits a model averaged continuous BMD model

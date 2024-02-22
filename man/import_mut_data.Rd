@@ -52,7 +52,7 @@ necessarily the transcript codon)
 
 \item{sd_sep}{The delimiter for importing sample metadata table. Default is tab-delimited.}
 
-\item{vaf_cutoff}{The funiton will add \code{is_germline} column that identifies ostensibly germline variants using
+\item{vaf_cutoff}{The function will add \code{is_germline} column that identifies ostensibly germline variants using
 a cutoff for variant allele fraction (VAF). There is no default value provided,
 but generally a value of 0.1 (i.e., 10\%) is a good starting point. Setting this will
 flag variants that are present at a frequency greater than this value

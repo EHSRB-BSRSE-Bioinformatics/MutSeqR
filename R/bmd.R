@@ -60,10 +60,24 @@ mf_bmd <- function(mf_data,
 #' to dose-response data for mutation frequency.
 #' @param mf_data A data frame containing the dose-response data. Data may
 #' be individual for each sample or averaged over dose groups.
-#' @param response_cols A character vector specifying the columns in mf_data
-#' containing the response data.
+#' Required columns for individual data are "dose" and "response".
+#' Multiple response columns are allowed. Required columns for summarised
+#' data are "dose", "mean response", "sample size", and "standard deviation".
+#' Only one response column is allowed for summarised data.
+#' @param data_type A string specifying the type of response data.
+#' Data may be response per individual or summarised across dose groups.
+#' ("individual", "summary").
 #' @param dose_col A character string specifying the column in mf_data
 #' containing the dose data.
+#' @param response_cols A character vector specifying the columns in mf_data
+#' containing the response data. For summarised data types, this should be
+#' the mean response for each dose group. 
+#' @param sd_col A character string specifying the column in mf_data containing
+#' the standard deviation of the response data. This is only required for
+#' summarised data types.
+#' @param n_col A character string specifying the column in mf_data containing
+#' the sample size of each dose group. This is only required for summarised
+#' data types.
 #' @param bmr_type A string specifying the type of benchmark response.
 #' For continuous models, there are four types of BMD definitions that
 #' are commonly used:
@@ -90,11 +104,11 @@ mf_bmd <- function(mf_data,
 #' That is the BMD is the dose that solves the equation
 #' \eqn{\mid f(dose) - f(0) \mid = BMR}.
 #'    }
-#' @param BMR A numeric value specifying the benchmark response. The BMR is
+#' @param bmr A numeric value specifying the benchmark response. The BMR is
 #' defined in relation to the calculation requested in bmr_type. Default is 0.5.
 #' @param fit A string specifying the method used to fit the model.
 #' Options are ("laplace", "mle", or "mcmc"). Default is "laplace".
-#' @param alpha The specified nominal coverage rate for computation of
+#' @param a The specified nominal coverage rate for computation of
 #' the lower bound on the BMDL and BMDU, i.e., one computes a
 #' \eqn{100\times(1-\alpha)\%} confidence interval.  For the
 #' interval (BMDL,BMDU) this is a \eqn{100\times(1-2\alpha)\% }.
@@ -139,15 +153,21 @@ mf_bmd <- function(mf_data,
 #' \item posterior_probs: the posterior probabilities used in the
 #' model averaging.
 #' }}
-#' @importFrom ToxicR single_continuous_fit
+#' @importFrom ToxicR ma_continuous_fit cleveland_plot
+#' @importFrom dplyr select rename
+#' @import ggplot2
 bmd_ma <- function(mf_data,
-                  response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+                  data_type = c("individual", "summary"),
                   dose_col = "dose",
+                  response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+                  sd_col = NULL,
+                  n_col = NULL,
                   bmr_type = "rel",
                   bmr = 0.5,
                   fit = "laplace",
-                  alpha = 0.025,
+                  a = 0.025,
                   ...) {
+if(data_type == "individual"){
 # Initialize empty lists to store results
 results_bmd <- list()
 results_summary <- list()
@@ -162,7 +182,7 @@ for (i in seq_along(response_cols)) {
                                      fit_type = fit,
                                      BMR_TYPE = bmr_type,
                                      BMR = bmr,
-                                     alpha = alpha,
+                                     alpha = a,
                                      ...
                                      )
   # Grab results
@@ -173,35 +193,63 @@ for (i in seq_along(response_cols)) {
   results_model_plots[[response_cols[i]]] <- plot(model)
   results_cleveland_plots[[response_cols[i]]] <- ToxicR::cleveland_plot(model)
 }
+
 # Combine all summaries into one dataframe
 results_bmd_df <- do.call(rbind, results_bmd)
-results_list <- list(BMD = results_bmd_df, 
+} else if(data_type == "summary") {
+  # Response matrix
+  Y <- mf_data %>%
+    dplyr::select({{response_cols}}, {{n_col}}, {{sd_col}})
+  Y <- Y %>% rename(Mean = {{response_cols}},
+                    N = {{n_col}},
+                    SD = {{sd_col}})
+  Y <- as.matrix(Y)
+
+  # Fit model
+  model <- ToxicR::ma_continuous_fit(D = mf_data[, dose_col],
+                                     Y = Y,
+                                     fit_type = fit,
+                                     BMR_TYPE = bmr_type,
+                                     BMR = bmr,
+                                     alpha = a,
+                                     ...)
+  # Grab results
+  results_bmd <- summary(model)$BMD
+  results_bmd_df <- data.frame(BMDL = results_bmd[1],
+                               BMD = results_bmd[2],
+                               BMDU = results_bmd[3])
+  row.names(results_bmd_df) <- response_cols
+  results_summary <- summary(model)
+  results_model <- model
+  # Create plot
+  results_model_plots <- plot(model)
+  results_cleveland_plots <- ToxicR::cleveland_plot(model)
+}
+
+results_bmd_df <- as.data.frame(results_bmd_df) %>%
+  dplyr::mutate(response = row.names(results_bmd_df))
+
+CI <- 100*(1-2*a)
+
+#' @importFrom dplyr select
+g <- ggplot2::ggplot(results_bmd_df, ggplot2::aes(x = response, y = BMD)) +
+  ggplot2::geom_point(size = 5) +  # BMD points
+  ggplot2::geom_errorbar(ggplot2::aes(ymin = BMDL, ymax = BMDU), width = 0.2) +  # Error bars for confidence intervals
+  ggplot2::labs(x = "Response", y = "BMD",
+                title = paste0("BMD with ", CI, "% Confidence Intervals")) +  # Labels
+  ggplot2::theme_minimal() +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),  # Rotate x-axis labels
+                 axis.line = ggplot2::element_line(colour = "black"),  # Add solid lines for x and y axes
+                 plot.title = ggplot2::element_text(hjust = 0.5))  # Center the title
+
+results_list <- list(BMD = results_bmd_df,
+                     BMD_plot = g,
                      summary = results_summary,
                      model_plots = results_model_plots,
                      cleveland_plots = results_cleveland_plots,
                      models = results_model)
 
 # TO DO:
- # plot all BMDs with ggplot
  # calculate some kind of goodness of fit for models
-                     
-#g <- ggplot2::ggplot(mf_dat, ggplot2::aes(x = Response, y = BMD)) +
-#  ggplot2::geom_point() +  # BMD points
-#  ggplot2::geom_errorbar(ggplot2::aes(ggplot2::ymin = BMDL, ggplot2::ymax = BMDU), ggplot2::width = 0.2) +  # Error bars for confidence intervals
-#  ggplot2::labs(x = "Response", y = "BMD", title = "BMD with Confidence Intervals") +  # Labels
-#  ggplot2::theme_minimal()   +  # Minimal theme
-#  ggplot2::theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  # Rotate x-axis labels
-
-
 return(results_list)
 }
-#results_list$BMD
-#results_list$plots$sample_MF_unique
-#results_list$plots$sample_MF_clonal
-#results_list$summary$sample_MF_unique
-#results_list$models$sample_MF_unique$`Indiv_exp-aerts_normal`$maximum
-
-
-
-                          
-
