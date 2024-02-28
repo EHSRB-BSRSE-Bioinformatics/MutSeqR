@@ -108,7 +108,7 @@ my_regions <- get_seq(regions = params$regions,
                    custom_regions_file = params$custom_regions_file,
                    genome = params$genome,
                    padding = 0) # Grab target sequences
-write_reference_fasta(ref_ranges = my_regions) 
+write_reference_fasta(ref_ranges = my_regions)
 # Write mutation data as a vcf
 write_VCF_from_mut(mutation_data)
 ```
@@ -118,46 +118,34 @@ write_VCF_from_mut(mutation_data)
 MF_per_sample <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = c("sample"),
                                     subtype_resolution = "none",
-                                    vaf_cutoff = params$vaf_cutoff,
-                                    summary = T,
                                     retain_metadata_cols = params$group_var) 
 
 MF_per_target <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = c("sample", "label"),
                                     subtype_resolution = "none",
-                                    vaf_cutoff = params$vaf_cutoff,
-                                    summary = T,
                                     retain_metadata_cols = c("genic_context", "dose"))
 
 six_base_summary <- calculate_mut_freq(data = mutation_data,
                                        cols_to_group = "sample",
                                        subtype_resolution = "base_6",
-                                       vaf_cutoff = params$vaf_cutoff,
-                                       summary = T,
-                                       retain_metadata_cols = params$group_var)
+                                       retain_metadata_cols = "dose")
 
 six_base_summary_dose <- calculate_mut_freq(data = mutation_data,
                                             cols_to_group = "dose",
                                             subtype_resolution = "base_6",
-                                            vaf_cutoff = params$vaf_cutoff,
-                                            variant_types = "snv",
-                                            summary = T)
+                                            variant_types = "snv")
 
-trinucleotide_frequencies_individual <- calculate_mut_freq(data = mutation_data,
-                                                            cols_to_group = "sample",
-                                                            subtype_resolution = "base_96",
-                                                            vaf_cutoff = params$vaf_cutoff,
-                                                            variant_types = "snv",
-                                                            summary = T
-                                                           )
+trinuc__indiv <- calculate_mut_freq(data = mutation_data,
+                                    cols_to_group = "sample",
+                                    subtype_resolution = "base_96",
+                                    variant_types = "snv"
+                                    )
 
-trinucleotide_frequencies_group <- calculate_mut_freq(data = mutation_data,
-                                                      cols_to_group = params$group_var,
-                                                      subtype_resolution = "base_96",
-                                                      vaf_cutoff = params$vaf_cutoff,
-                                                      variant_types = "snv",
-                                                      summary = T
-                                                      )
+trinuc_group <- calculate_mut_freq(data = mutation_data,
+                                  cols_to_group = params$group_var,
+                                  subtype_resolution = "base_96",
+                                  variant_types = "snv"
+                                  )
 ```
 ## Linear Modelling
 ```{r model-mutation-frequencies}
@@ -169,6 +157,18 @@ model_by_dose <- model_mf(mf_data = MF_per_sample,
                           muts = "sample_sum_unique",
                           total_count = "sample_group_depth",
                           contrast_table_file = contrasts)
+model_by_dose$point_estimates
+model_by_dose$pairwise_comparisons
+model_by_dose$residuals_histogram
+
+# BMD modelling by Dose
+ma <- bmd_ma(mf_data = MF_per_sample,
+  data_type = "individual",
+  response_col = c("sample_MF_unique", "sample_MF_clonal")
+)
+ma$BMD
+ma$model_plots$sample_MF_unique
+ma$BMD_plot
 
 # Model MF by dose and genomic_target
 model_by_target <- model_mf(mf_data = MF_per_target,
@@ -179,11 +179,20 @@ model_by_target <- model_mf(mf_data = MF_per_target,
                 muts = "sample_label_sum_unique",
                 total_count = "sample_label_group_depth",
                 contrast_table_file = contrasts)
+model_by_target$point_estimates
+model_by_target$pairwise_comparisons
+model_by_target$residuals_histogram
 
-# Compare simple Mutation Spectra by dose
+# Compare Mutation Spectra by dose
 base_6_comp <- spectra_comparison(mf_data = six_base_summary_dose,
                                   muts = "dose_sum_unique",
                                   subtype_col = "normalized_subtype",
+                                  group = "dose",
+                                  contrast_table_file = contrasts,
+                                  cont_sep = "\t")
+trinuc_comp <- spectra_comparison(mf_data = trinuc_group,
+                                  muts = "dose_sum_unique",
+                                  subtype_col = "normalized_context_with_mutation",
                                   group = "dose",
                                   contrast_table_file = contrasts,
                                   cont_sep = "\t")
@@ -191,7 +200,7 @@ base_6_comp <- spectra_comparison(mf_data = six_base_summary_dose,
 ```
 
 ## Visualize data
-```{r plot_MF}
+```{r plot_MF, eval=FALSE}
 # Unique MF per sample
 ggplot(MF_per_sample, aes(x = sample, y = sample_MF_unique, fill = factor(dose))) +
       geom_bar(stat = "identity", alpha = 0.7) +
@@ -309,9 +318,9 @@ ggplot(six_base_summary_group, aes(x = normalized_subtype, y = dose_MF_unique, f
 
 # Plot Trinucleotide Frequency (grouped)
 # Extract mutation type from within normalized_context_with_mutation and remove square brackets
-trinucleotide_frequencies_group$mutation_type <- str_remove_all(str_extract(trinucleotide_frequencies_group$normalized_context_with_mutation, "\\[(.*?)\\]"), "\\[|\\]")
+trinuc_group$mutation_type <- str_remove_all(str_extract(trinuc_group$normalized_context_with_mutation, "\\[(.*?)\\]"), "\\[|\\]")
 # Extract context from within normalized_context_with_mutation
-plotdata <- trinucleotide_frequencies_group %>%
+plotdata <- trinuc_group %>%
                                     dplyr::rowwise() %>%
                                     dplyr::mutate(context = get_ref_of_mut(normalized_context_with_mutation))
 
@@ -347,29 +356,6 @@ ggplot(plotdata, aes(x = reorder(normalized_context_with_mutation, -as.numeric(f
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, margin = margin(b = 10)))  # Adjust the 'margin' parameter for increased spacing
 
 ```
-
-```{r linear modelling of mutation frequency}
-# Model MF by dose
-model_by_dose <- model_mf(mf_data = MF_per_sample,
-                          fixed_effects = "dose",
-                          random_effects = NULL,
-                          reference_level = 0,
-                          muts = "sample_sum_unique",
-                          total_count = "sample_group_depth",
-                          contrast_table_file = contrasts)
-
-# Model MF by dose and genomic_target
-model_by_target <- model_mf(mf_data = MF_per_target,
-                fixed_effects = c("dose", "label"),
-                test_interaction = TRUE,
-                random_effects = "sample",
-                reference_level = c(0, "chr1"),
-                muts = "sample_label_sum_unique",
-                total_count = "sample_label_group_depth",
-                contrast_table_file = contrasts)
-
-```
-
 ```{r exploratory-spectra, warning=FALSE}
 # Look at overall spectrum (sum across all groups)
 mutation_data %>% group_by(subtype) %>% tally()
