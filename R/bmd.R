@@ -9,17 +9,19 @@
 #' Default is 0.5.
 #' @param model_avg A logical value specifying whether to
 #' average the model fits. Default is TRUE.
-#' 
 #' @return A list with the following components:
 #' @importFrom ToxicR single_continuous_fit
 mf_bmd <- function(mf_data,
                    dose_col = "dose",
                    response_col = c("sample_MF_unique", "sample_MF_clonal"),
-                   model_types = c("hill", "exp-3", "exp-5", "power", "polynomial"),
+                   model_types = c("hill",
+                                   "exp-3",
+                                   "exp-5",
+                                   "power",
+                                   "polynomial"),
                    BMR = 0.5) {
 
-  result_list <- list() # Initialize a list to store the fit results for each response
-
+  result_list <- list()
   # Run the function for each response column
   for (response in response_col) {
     fit_results <- list() # Initialize a list to store the fit results
@@ -27,12 +29,13 @@ mf_bmd <- function(mf_data,
 
     # Run the function for each model type
     for (model_type in model_types) {
-      fit_results[[model_type]] <- ToxicR::single_continuous_fit(mf_data[, dose_col],
-                                                                 mf_data[, response],
-                                                                 model_type = model_type, 
-                                                                 BMR = BMR, 
-                                                                 BMR_TYPE = "rel",
-                                                                 fit_type = "laplace")
+      fit_results[[model_type]] <-
+        ToxicR::single_continuous_fit(mf_data[, dose_col],
+                                      mf_data[, response],
+                                      model_type = model_type,
+                                      BMR = BMR,
+                                      BMR_TYPE = "rel",
+                                      fit_type = "laplace")
 
       # Plot the model
       plot_list[[model_type]] <- plot(fit_results[[model_type]])
@@ -40,19 +43,18 @@ mf_bmd <- function(mf_data,
 
     # Extract the bmd values
     bmd_values <- lapply(fit_results, function(x) x$bmd)
-  
     # Create a dataframe from the list and add a column for the names
     result_df <- dplyr::bind_rows(bmd_values, .id = "dataset")
 
     # Store the result_df and plot_list in the result_list
     result_list[[response]] <- list(data = result_df, plots = plot_list)
-  } 
+  }
 # Calculate the AIC for each model and add it to the fit_results_df
   return(result_list)
 
-  # AIC <- model max + 2 x DF
+# AIC <- model max + 2 x DF
 # AIC<- -model_indiv$maximum + 2*summary(model_indiv)$GOF[1,2]
-# AIC
+
 }
 
 #' Fit a model averaged continuous BMD model
@@ -71,7 +73,7 @@ mf_bmd <- function(mf_data,
 #' containing the dose data.
 #' @param response_cols A character vector specifying the columns in mf_data
 #' containing the response data. For summarised data types, this should be
-#' the mean response for each dose group. 
+#' the mean response for each dose group.
 #' @param sd_col A character string specifying the column in mf_data containing
 #' the standard deviation of the response data. This is only required for
 #' summarised data types.
@@ -120,14 +122,18 @@ mf_bmd <- function(mf_data,
 #' in The European Food Safety Authority's (2022) Guidance on the use
 #' of the benchmark dose approach in risk assessment. These models are:
 #'  \itemize{
-#'      \item \code{"exp-aerts"}:         \eqn{f(x) = a(1 + (c-1)(1-\exp(-bx^{d}))) }
-#'      \item \code{"invexp-aerts"}:      \eqn{f(x) = a(1 + (c-1)(\exp(-bx^{-d})))}
-#'      \item \code{"hill-aerts"}:        \eqn{f(x) = a(1 + (c-1)(1-\frac{b^d}{b^d + x^d}))}
-#'      \item \code{"lognormal-aerts"}:   \eqn{f(x) = a\left\{1 + (c-1)\left(\Phi( \ln(b) + d\times \ln(x))\right) \right\}}
-#'      \item \code{"gamma-efsa"}:        \eqn{f(x) = a(1 + (c-1)(\Gamma(bx; d))) }
-#'      \item \code{"LMS"}:               \eqn{f(x) = a(1 + (c-1)(1 - \exp(-bx - dx^2))) }
-#'      \item \code{"probit-aerts"}:      \eqn{f(x) = c\left(\Phi(a + b\times x^d)\right) }
-#'      \item \code{"logistic-aerts"}:    \eqn{f(x) = \frac{c}{1 + \exp(-a - b\times x^d)} }
+#'      \item \code{"exp-aerts"}: \eqn{f(x) = a(1 + (c-1)(1-\exp(-bx^{d}))) }
+#'      \item \code{"invexp-aerts"}: \eqn{f(x) = a(1 + (c-1)(\exp(-bx^{-d})))}
+#'      \item \code{"hill-aerts"}:
+#' \eqn{f(x) = a(1 + (c-1)(1-\frac{b^d}{b^d + x^d}))}
+#'      \item \code{"lognormal-aerts"}:
+#' \eqn{f(x) = a\left\{1 + (c-1)\left(\Phi( \ln(b) + d\times \ln(x))\right) \right\}}
+#'      \item \code{"gamma-efsa"}: \eqn{f(x) = a(1 + (c-1)(\Gamma(bx; d))) }
+#'      \item \code{"LMS"}: \eqn{f(x) = a(1 + (c-1)(1 - \exp(-bx - dx^2))) }
+#'      \item \code{"probit-aerts"}:
+#' \eqn{f(x) = c\left(\Phi(a + b\times x^d)\right) }
+#'      \item \code{"logistic-aerts"}:
+#' \eqn{f(x) = \frac{c}{1 + \exp(-a - b\times x^d)} }
 #'    }
 #'   Here: \eqn{\Phi(\cdot)} is the standard normal distribution and
 #'         \eqn{\Phi_{SN}(\cdot;\cdot)} is the skew-normal distribution
@@ -157,97 +163,95 @@ mf_bmd <- function(mf_data,
 #' @importFrom dplyr select rename
 #' @import ggplot2
 bmd_ma <- function(mf_data,
-                  data_type = c("individual", "summary"),
-                  dose_col = "dose",
-                  response_cols = c("sample_MF_unique", "sample_MF_clonal"),
-                  sd_col = NULL,
-                  n_col = NULL,
-                  bmr_type = "rel",
-                  bmr = 0.5,
-                  fit = "laplace",
-                  a = 0.025,
-                  ...) {
-if(data_type == "individual"){
-# Initialize empty lists to store results
-results_bmd <- list()
-results_summary <- list()
-results_model <- list()
-results_model_plots <- list()
-results_cleveland_plots <- list()
-# Loop over response columns
-for (i in seq_along(response_cols)) {
-  # Fit model
-  model <- ToxicR::ma_continuous_fit(D = mf_data[, dose_col],
-                                     Y = mf_data[, response_cols[i]],
-                                     fit_type = fit,
-                                     BMR_TYPE = bmr_type,
-                                     BMR = bmr,
-                                     alpha = a,
-                                     ...
-                                     )
-  # Grab results
-  results_bmd[[response_cols[i]]] <- summary(model)$BMD
-  results_summary[[response_cols[i]]] <- summary(model)
-  results_model[[response_cols[i]]] <- model
-  # Create plot
-  results_model_plots[[response_cols[i]]] <- plot(model)
-  results_cleveland_plots[[response_cols[i]]] <- ToxicR::cleveland_plot(model)
-}
+                   data_type = c("individual", "summary"),
+                   dose_col = "dose",
+                   response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+                   sd_col = NULL,
+                   n_col = NULL,
+                   bmr_type = "rel",
+                   bmr = 0.5,
+                   fit = "laplace",
+                   a = 0.025,
+                   ...) {
+  if (data_type == "individual") {
+    # Initialize empty lists to store results
+    results_bmd <- list()
+    results_summary <- list()
+    results_model <- list()
+    results_model_plots <- list()
+    results_cleveland_plots <- list()
 
-# Combine all summaries into one dataframe
-results_bmd_df <- do.call(rbind, results_bmd)
-} else if(data_type == "summary") {
-  # Response matrix
-  Y <- mf_data %>%
-    dplyr::select({{response_cols}}, {{n_col}}, {{sd_col}})
-  Y <- Y %>% rename(Mean = {{response_cols}},
-                    N = {{n_col}},
-                    SD = {{sd_col}})
-  Y <- as.matrix(Y)
+    for (i in seq_along(response_cols)) {
+      model <- ToxicR::ma_continuous_fit(D = mf_data[, dose_col],
+                                         Y = mf_data[, response_cols[i]],
+                                         fit_type = fit,
+                                         BMR_TYPE = bmr_type,
+                                         BMR = bmr,
+                                         alpha = a,
+                                         ...
+                                         )
 
-  # Fit model
-  model <- ToxicR::ma_continuous_fit(D = mf_data[, dose_col],
-                                     Y = Y,
-                                     fit_type = fit,
-                                     BMR_TYPE = bmr_type,
-                                     BMR = bmr,
-                                     alpha = a,
-                                     ...)
-  # Grab results
-  results_bmd <- summary(model)$BMD
-  results_bmd_df <- data.frame(BMDL = results_bmd[1],
-                               BMD = results_bmd[2],
-                               BMDU = results_bmd[3])
-  row.names(results_bmd_df) <- response_cols
-  results_summary <- summary(model)
-  results_model <- model
-  # Create plot
-  results_model_plots <- plot(model)
-  results_cleveland_plots <- ToxicR::cleveland_plot(model)
-}
+      results_bmd[[response_cols[i]]] <- summary(model)$BMD
+      results_summary[[response_cols[i]]] <- summary(model)
+      results_model[[response_cols[i]]] <- model
+      results_model_plots[[response_cols[i]]] <- plot(model)
+      results_cleveland_plots[[response_cols[i]]] <- ToxicR::cleveland_plot(model)
+    }
+    results_bmd_df <- do.call(rbind, results_bmd)
+  } else if (data_type == "summary") {
+    response_mat <- mf_data %>%
+      dplyr::select({{response_cols}}, {{n_col}}, {{sd_col}})
+    response_mat <- response_mat %>% rename(Mean = {{response_cols}},
+                                            N = {{n_col}},
+                                            SD = {{sd_col}})
+    response_mat <- as.matrix(response_mat)
 
-results_bmd_df <- as.data.frame(results_bmd_df) %>%
-  dplyr::mutate(response = row.names(results_bmd_df))
+    model <- ToxicR::ma_continuous_fit(D = mf_data[, dose_col],
+                                       response_mat = response_mat,
+                                       fit_type = fit,
+                                       BMR_TYPE = bmr_type,
+                                       BMR = bmr,
+                                       alpha = a,
+                                       ...)
+    results_bmd <- summary(model)$BMD
+    results_bmd_df <- data.frame(BMDL = results_bmd[1],
+                                 BMD = results_bmd[2],
+                                 BMDU = results_bmd[3])
+    row.names(results_bmd_df) <- response_cols
+    results_summary <- summary(model)
+    results_model <- model
+    results_model_plots <- plot(model)
+    results_cleveland_plots <- ToxicR::cleveland_plot(model)
+  }
 
-CI <- 100*(1-2*a)
+  results_bmd_df <- as.data.frame(results_bmd_df) %>%
+    dplyr::mutate(response = row.names(results_bmd_df))
 
-#' @importFrom dplyr select
-g <- ggplot2::ggplot(results_bmd_df, ggplot2::aes(x = response, y = BMD)) +
-  ggplot2::geom_point(size = 5) +  # BMD points
-  ggplot2::geom_errorbar(ggplot2::aes(ymin = BMDL, ymax = BMDU), width = 0.2) +  # Error bars for confidence intervals
-  ggplot2::labs(x = "Response", y = "BMD",
-                title = paste0("BMD with ", CI, "% Confidence Intervals")) +  # Labels
-  ggplot2::theme_minimal() +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),  # Rotate x-axis labels
-                 axis.line = ggplot2::element_line(colour = "black"),  # Add solid lines for x and y axes
-                 plot.title = ggplot2::element_text(hjust = 0.5))  # Center the title
+  conf_int <- 100 * (1 - 2 * a)
+  g <- ggplot2::ggplot(results_bmd_df,
+                        ggplot2::aes(x = results_bmd_df$response,
+                                     y = results_bmd_df$BMD)) +
+    ggplot2::geom_point(size = 5) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = results_bmd_df$BMDL,
+                                        ymax = results_bmd_df$BMDU),
+                           width = 0.2) +
+    ggplot2::labs(x = "Response", y = "BMD",
+                  title = paste0("BMD with ",
+                                 conf_int,
+                                 "% Confidence Intervals")) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
+                                                       vjust = 0.5,
+                                                       hjust = 1),
+                   axis.line = ggplot2::element_line(colour = "black"),
+                   plot.title = ggplot2::element_text(hjust = 0.5))
 
-results_list <- list(BMD = results_bmd_df,
-                     BMD_plot = g,
-                     summary = results_summary,
-                     model_plots = results_model_plots,
-                     cleveland_plots = results_cleveland_plots,
-                     models = results_model)
+  results_list <- list(BMD = results_bmd_df,
+                       BMD_plot = g,
+                       summary = results_summary,
+                       model_plots = results_model_plots,
+                       cleveland_plots = results_cleveland_plots,
+                       models = results_model)
 
 # TO DO:
  # calculate some kind of goodness of fit for models

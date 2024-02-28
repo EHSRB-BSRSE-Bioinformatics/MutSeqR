@@ -9,7 +9,6 @@ calculate_mut_freq(
   cols_to_group = c("sample", "label"),
   subtype_resolution = "base_6",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
-  vaf_cutoff,
   summary = TRUE,
   retain_metadata_cols = NULL
 )
@@ -33,9 +32,6 @@ total depth across all the selected metadata columns.}
 "snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
 Default includes all variants.}
 
-\item{vaf_cutoff}{Exclude rows from frequency calculations
-with a variant allele fraction (VAF) greater than this value. No default provided.}
-
 \item{summary}{TRUE or FALSE, whether to return a summary table (i.e., where
 only relevant columns for frequencies and groupings are returned). Setting
 this to false returns all columns in the original data, which might make
@@ -50,6 +46,9 @@ This value determines the fraction of reads that
 is considered a constitutional variant. If a mutation is present at a
 fraction higher than this value, the reference base will be swapped,
 and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
+
+\item{filter_germ}{A logical value. If TRUE, exclude rows from frequency calculations
+flagged as germline mutations in 'is_germline'. Default is TRUE.}
 }
 \value{
 A data frame with the mutation frequency calculated.

@@ -558,3 +558,4 @@ test_that("import_mut_data function correctly imports mutation data from a folde
   unlink(test_folder, recursive = TRUE)
   unlink(tmpfile2)
 })
+
