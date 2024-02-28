@@ -26,23 +26,25 @@ interest. This data can be obtained using \code{calculate_mut_freq(summary=TRUE)
 of interest across which you want to compare mutation spectra.
 Ex. c("dose", "tissue")}
 
-\item{contrast_table_file}{a filepath to a tab-delimited \code{.txt} file that will
-specify the comparisons to be made between groups. The table must consist of
-two columns. The first column will be a level within your group column and the
-second column must be the group level that it will be compared to. All values
-must correspond to entries in your \code{group} column. For more than one \code{group}
-variable, separate the levels of the each group with a colon. Ensure that all
-\code{groups} are represented in each entry for the table. See details
-for examples.}
+\item{contrast_table_file}{a filepath to a tab-delimited \code{.txt} file that
+will specify the comparisons to be made between groups. The table must
+consist of two columns. The first column will be a level within your group
+column and the second column must be the group level that it will be
+compared to. All values must correspond to entries in your \code{group}
+column. For more than one \code{group} variable, separate the levels of the
+each group with a colon. Ensure that all \code{groups} are represented in each
+entry for the table. See details for examples.}
 
-\item{cont_sep}{The delimiter used in the contrast_table_file. Default is tab.}
+\item{cont_sep}{The delimiter used in the contrast_table_file.
+Default is tab.}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with
 the p-value adjusted for multiple-comparisons.
 }
 \description{
-spectra_comparison compares the mutation spectra of groups using a modified contingency table approach
+spectra_comparison compares the mutation spectra of groups using a
+modified contingency table approach.
 }
 \details{
 Examples of \code{contrast_table_file}:
@@ -56,10 +58,10 @@ column would be 0, thus comparing each treated group to the control group.
 
 100 0
 
-Ex. Consider two grouping variables \code{group = c("dose", "tissue")}; with levels
-dose(0, 25, 50, 100) and tissue("bone_marrow", "liver"). To compare
-the mutation spectra between tissues for each dose group, the
-contrast table would look like:
+Ex. Consider two grouping variables \code{group = c("dose", "tissue")};
+with levels dose (0, 25, 50, 100) and tissue("bone_marrow", "liver").
+To compare the mutation spectra between tissues for each dose group,
+the contrast table would look like:
 
 0:bone_marrow	0:liver
 

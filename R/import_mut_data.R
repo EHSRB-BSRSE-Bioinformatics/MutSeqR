@@ -232,7 +232,7 @@ import_mut_data <- function(mut_file,
                                       "context"))
 
   if (length(na_columns_required) > 0) {
-    stop(paste(
+    stop(paste0(
       "Function stopped: NA values were found within the following required
       column(s): ",
       paste(na_columns_required, collapse = ", "),
@@ -321,18 +321,21 @@ import_mut_data <- function(mut_file,
   }
   if (!has_total_depth && !has_no_calls && has_depth) {
     depth_col <- "depth"
-    warning(" 'total_depth' column was not found and cannot be
+    warning <- paste0(" 'total_depth' column was not found and cannot be
             calculated without the 'no_calls' column.'Depth_col'
             will be set as 'depth'. Please review the definitions
             of each column ~here~ (README) before proceeding")
+    warning(warning)
   }
   if (!has_total_depth && !has_depth && !has_no_calls) {
-    stop("Required columns are missing or could not be determined:
-          depth column ('depth' and 'no_calls' OR 'total_depth')")
+    error <- paste0("Required columns are missing or could not be determined:
+              depth column ('depth' and 'no_calls' OR 'total_depth')")
+    stop(error)
   }
   if (!has_total_depth && !has_depth && has_no_calls) {
-    stop("Required columns are missing or could not be determined:
+    error <- paste0("Required columns are missing or could not be determined:
           depth column ('depth' OR 'total_depth')")
+    stop(error)
   }
 
   # Calculate depth_col for the duplicated rows
@@ -381,7 +384,7 @@ import_mut_data <- function(mut_file,
       dplyr::select(-{{ depth_col }}, -"new_depth_col") %>%
       dplyr::rename(!!depth_col := "final_depth_col")
   } else {
-    stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
+    stop(paste0("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'."))
   }
 
   # Create VAF, is_germline, and ref_depth columns

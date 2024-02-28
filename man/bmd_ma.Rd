@@ -119,14 +119,18 @@ Model averaging is done over the default models described
 in The European Food Safety Authority's (2022) Guidance on the use
 of the benchmark dose approach in risk assessment. These models are:
 \itemize{
-\item \code{"exp-aerts"}:         \eqn{f(x) = a(1 + (c-1)(1-\exp(-bx^{d}))) }
-\item \code{"invexp-aerts"}:      \eqn{f(x) = a(1 + (c-1)(\exp(-bx^{-d})))}
-\item \code{"hill-aerts"}:        \eqn{f(x) = a(1 + (c-1)(1-\frac{b^d}{b^d + x^d}))}
-\item \code{"lognormal-aerts"}:   \eqn{f(x) = a\left\{1 + (c-1)\left(\Phi( \ln(b) + d\times \ln(x))\right) \right\}}
-\item \code{"gamma-efsa"}:        \eqn{f(x) = a(1 + (c-1)(\Gamma(bx; d))) }
-\item \code{"LMS"}:               \eqn{f(x) = a(1 + (c-1)(1 - \exp(-bx - dx^2))) }
-\item \code{"probit-aerts"}:      \eqn{f(x) = c\left(\Phi(a + b\times x^d)\right) }
-\item \code{"logistic-aerts"}:    \eqn{f(x) = \frac{c}{1 + \exp(-a - b\times x^d)} }
+\item \code{"exp-aerts"}: \eqn{f(x) = a(1 + (c-1)(1-\exp(-bx^{d}))) }
+\item \code{"invexp-aerts"}: \eqn{f(x) = a(1 + (c-1)(\exp(-bx^{-d})))}
+\item \code{"hill-aerts"}:
+\eqn{f(x) = a(1 + (c-1)(1-\frac{b^d}{b^d + x^d}))}
+\item \code{"lognormal-aerts"}:
+\eqn{f(x) = a\left\{1 + (c-1)\left(\Phi( \ln(b) + d\times \ln(x))\right) \right\}}
+\item \code{"gamma-efsa"}: \eqn{f(x) = a(1 + (c-1)(\Gamma(bx; d))) }
+\item \code{"LMS"}: \eqn{f(x) = a(1 + (c-1)(1 - \exp(-bx - dx^2))) }
+\item \code{"probit-aerts"}:
+\eqn{f(x) = c\left(\Phi(a + b\times x^d)\right) }
+\item \code{"logistic-aerts"}:
+\eqn{f(x) = \frac{c}{1 + \exp(-a - b\times x^d)} }
 }
 Here: \eqn{\Phi(\cdot)} is the standard normal distribution and
 \eqn{\Phi_{SN}(\cdot;\cdot)} is the skew-normal distribution

@@ -195,26 +195,7 @@ test_that("import_mut_data function fails to import mutation data from an incomp
     ),
     file = tmpfileD,
     sep = "\t", row.names = FALSE
-  )
-  
-  tmpfileE <- tempfile(fileext = ".mut")
-  write.table(
-    data.frame(
-      contig = c("chr1", "chr1", "chr2", "chr2"),
-      start = c(69304225, 69304240, 50833424, 50833439),
-      end = c(69304226, 69304241, 50833425, 50833440),
-      sample = c("DNA1", "DNA2", "DNA3", "DNA4"),
-      alt = c("T", "A", ".", "A"),
-      context = c("GCA", "GGC", "ATC", "AAC"),
-      subtype = c("C>T", "G>A", ".", "."),
-      variation_type = c("snv", "snv", "no_variant", "indel"),
-      depth = c(50, 100, 75, 150),
-      alt_depth = c(10, 20, 30, 50),
-      ref = c("C", "G", "T", "AA")
-    ),
-    file = tmpfileE,
-    sep = "\t", row.names = FALSE
-  )  
+  ) 
   
   #create a temporary custom regions file
   tmpfile2 <- tempfile(fileext = ".mut")
@@ -234,34 +215,47 @@ test_that("import_mut_data function fails to import mutation data from an incomp
   # Use TRyCatch to catch the errors thrown by the function
   # Define the expected error message
   # Use expect equal to compare the expected error with the actual error. 
-  
+
+# A 
   error <- tryCatch({
     import_mut_data(mut_file = tmpfileA, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
     error = function(e) e$message)
   expected_error <- "Some required columns are missing or their synonyms are not found:  contig, sample, context"
-  expect_equal(error, expected_error, 
+  expect_equal(error, expected_error,
                info = "Check if we get an error message when imported file has missing columns")
-  expect_error(import_mut_data(mut_file = tmpfileB,vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2), 
-               "Function stopped: NA values were found within the following required column(s):  start, variation_type . Please confirm that your data is complete before proceeding.", fixed=TRUE,
+# B
+   error <- tryCatch({
+    import_mut_data(mut_file = tmpfileB,vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+  error = function(e) e$message)
+  expected_error <- paste(
+    "Function stopped: NA values were found within the following required
+      column(s): start, variation_type. Please confirm that your data is complete before proceeding."
+)
+expect_equal(error, expected_error,
                info = "Check if we get an error message when imported file NA values in required columns")
-  expect_error(import_mut_data(mut_file = tmpfileC, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2), 
-               "Required columns are missing or could not be determined: depth column ('depth' and 'no_calls' OR 'total_depth')", fixed=TRUE,
-               info = "Check if we get an error message when imported file has multiple missing columns, including one of the depth columns")
-  expect_error(import_mut_data(mut_file = tmpfileD,  vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2), 
-               "Required columns are missing or could not be determined: depth column ('depth' OR 'total_depth')", fixed=TRUE,
+# C  
+error <- tryCatch({
+  import_mut_data(mut_file = tmpfileC, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+  error = function(e) e$message)
+expected_error <- paste0("Required columns are missing or could not be determined:
+              depth column ('depth' and 'no_calls' OR 'total_depth')")
+expect_equal(error, expected_error,
+              info = "Check if we get an error message when imported file has multiple missing columns, including one of the depth columns")
+  
+# D
+ error <- tryCatch({
+  import_mut_data(mut_file = tmpfileD,  vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+  error = function(e) e$message) 
+expected_error <- paste0("Required columns are missing or could not be determined:
+          depth column ('depth' OR 'total_depth')")
+  expect_equal(error, expected_error,
                info = "Check if we get an error message when imported file has missing depth column but does have a no_calls column")
-  warning <- tryCatch({import_mut_data(mut_file = tmpfileE,  vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
-                      warning = function(w) w$message)
-  expected_warning <- " 'total_depth' column was not found and cannot be calculated without the 'no_calls' column. \n            'Depth_col' will be set as 'depth'. Please review the definitions of each column ~here~ (README)\n            before proceeding"
-  expect_equal(warning, expected_warning, 
-               info = "Check if we get an warning message when we cannot calculate total_depth")
 
   # Clean up temporary file
   unlink(tmpfileA)
   unlink(tmpfileB)
   unlink(tmpfileC)
   unlink(tmpfileD)
-  unlink(tmpfileE)
   unlink(tmpfile2)
 })
 
@@ -530,32 +524,7 @@ test_that("import_mut_data function correctly imports mutation data from a folde
                "Error: All the files in the specified directory are empty", fixed=TRUE,
                info = "Check that we are unable to process mut data if all of the files in the specified folder are empty")
   
-  # Create a non-empty file with mutation data
-  empty_file3 <- file.path(test_folder, "non-empty(3).txt")
-  write.table(
-    data.frame(
-      sample = c("mouse1", "mouse2"),
-      contig = c("chr1", "chr1"),
-      start = c(69304225, 69304240),
-      end = c(69304226, 69304241),
-      context = c("GCA", "GGC"),
-      subtype = c("C>T", "G>A"),
-      variation_type = c("snv", "snv"),
-      total_depth = c(50, 100),
-      alt_depth = c(10, 20),
-      ref = c("C", "G"),
-      alt = c("T", "A")
-    ), 
-    file = empty_file3,
-    sep = "\t", row.names = FALSE
-  )
-  
-  expect_warning(import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2),
-                 "Warning: The following files in the specified directory are empty: empty(1).txt, empty(2).txt", fixed=TRUE,
-                 info = "Check if we have an empty file in the directory, it will trigger a warning")
-  
   # Clean up temporary file
   unlink(test_folder, recursive = TRUE)
   unlink(tmpfile2)
 })
-

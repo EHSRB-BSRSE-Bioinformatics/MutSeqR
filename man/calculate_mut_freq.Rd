@@ -9,6 +9,7 @@ calculate_mut_freq(
   cols_to_group = c("sample", "label"),
   subtype_resolution = "base_6",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
+  filter_germ = TRUE,
   summary = TRUE,
   retain_metadata_cols = NULL
 )
@@ -16,39 +17,60 @@ calculate_mut_freq(
 \arguments{
 \item{data}{The data frame to be processed containing mutation data.}
 
-\item{cols_to_group}{A vector of grouping variables: this should be the groups
-of interest that you want to calculate a frequency for. For instance, getting
-the frequency by \code{sample}. Other options might include \code{locus}, or,
-\code{c("sample","locus")}. Must be a column in the mutation data table.}
+\item{cols_to_group}{A vector of grouping variables: this should be the
+groups of interest that you want to calculate a frequency for.
+For instance, getting the frequency by \code{sample}. Other options might
+include \code{locus}, or, \code{c("sample","locus")}. Must be a column in the
+mutation data table.}
 
-\item{subtype_resolution}{At what resolution should the frequencies be
-calculated? This is an important consideration because the reference bases
-sequencing depth will differ depending on which mutation subtypes are being
-considered. Options are "none", "type", base_6", "base_12", "base_96", and "base_192".
-Could add 24 base option eventually. By selecting "none", this will use the
-total depth across all the selected metadata columns.}
+\item{subtype_resolution}{The resolution at which the frequencies are
+calculated. Options are
+\itemized{
+\item "none" calculates mutation frequencies across all selected
+metadata columns
+\item "type" calculates mutation frequencies across all selected
+metadata columns for each \code{variation_type} seperately.
+\item "base_6" calculates mutation frequencies across all selected
+metadata columns for each variation_type with snv mutations separated by
+\code{normalized_subtype}; C>A, C>G, C>T, T>A, T>C, T>G.
+\item "base_12" calculates mutation frequencies across all
+selected metadata columns for each variation_type with snv mutations
+separated by \code{subtype}; A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T,
+T>A, T>C, T>G.
+\item "base_96" calculates mutation frequencies across all
+selected metadata columns for each variation_type with snv mutations
+separated by \code{normalized_context_with_mutation}, i.e. the 96-base
+trinucleotide context. Ex. A\link{C>T}A.
+\item "base_192" calculates mutation frequencies across all
+selected metadata columns for each variation_type with snv mutations
+separated by \code{context_with_mutation}, i.e. the 192-base trinucleotide
+context. Ex A\link{G>A}A.
+}}
 
-\item{variant_types}{Include these variant types. A vector of one or more
+\item{variant_types}{Include these variant types in mutation counts.
+A vector of one or more variation_types. Options are:
 "snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
 Default includes all variants.}
 
-\item{summary}{TRUE or FALSE, whether to return a summary table (i.e., where
-only relevant columns for frequencies and groupings are returned). Setting
-this to false returns all columns in the original data, which might make
-plotting more difficult, but may provide additional flexibility to power
-users.}
+\item{filter_germ}{A logical variable. If TRUE, exclude rows from the
+mutation count that were flagged as germline mutations in \code{is_germline}.
+Default is TRUE.}
+
+\item{summary}{TA logical variable, whether to return a summary table
+(i.e., where only relevant columns for frequencies and groupings are
+returned). Setting this to false returns all columns in the original
+data, which might make plotting more difficult, but may provide additional
+flexibility to power users.}
 
 \item{retain_metadata_cols}{list the metadata columns that you would like to
-retain in the summary table. This may be useful for plotting your summary data.
+retain in the summary table. This may be useful for plotting your
+summary data. Ex. retain the "dose" column when summarising by "sample".
 
 clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
 This value determines the fraction of reads that
 is considered a constitutional variant. If a mutation is present at a
 fraction higher than this value, the reference base will be swapped,
 and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
-
-\item{filter_germ}{A logical value. If TRUE, exclude rows from frequency calculations
-flagged as germline mutations in 'is_germline'. Default is TRUE.}
 }
 \value{
 A data frame with the mutation frequency calculated.

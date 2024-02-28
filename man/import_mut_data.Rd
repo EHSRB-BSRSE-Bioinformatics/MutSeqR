@@ -7,7 +7,7 @@
 import_mut_data(
   mut_file,
   mut_sep = "\\t",
-  rsids = F,
+  rsids = FALSE,
   sample_data_file = NULL,
   sd_sep = "\\t",
   vaf_cutoff,
@@ -119,8 +119,9 @@ list. The first element will be the mutation data called \code{mut_dat} and
 the second element will be the rows that were filtered from the data called
 \code{rows_outside_regions}. If no rows are filtered out, the results will be
 returned as a single dataframe or GRanges object.
+
 Output Column Definitions:
-#' \itemize{
+\itemize{
 \item \code{nchar_ref}: The length (in bp) of the reference allele.
 \item \code{nchar_alt}: The length (in bp) of the alternate allele.
 \item \code{varlen}: The length (in bp) of the variant.

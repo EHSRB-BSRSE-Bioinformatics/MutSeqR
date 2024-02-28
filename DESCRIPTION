@@ -25,6 +25,7 @@ Imports:
     dplyr,
     GenomeInfoDb,
     GenomicRanges,
+    ggplot2,
     here,
     httr,
     IRanges,
@@ -37,6 +38,7 @@ Imports:
     S4Vectors,
     stringr,
     SummarizedExperiment,
+    ToxicR,
     VariantAnnotation,
     xml2
 Suggests:
