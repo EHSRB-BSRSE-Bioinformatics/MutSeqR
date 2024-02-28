@@ -33,7 +33,7 @@ test_that("spectra_comparison works as expected", {
   expect_equal(class(result), "data.frame", info = "Check if the result is a data frame")
   
   # Check if the result has the expected columns
-  expect_true(all(c("g2", "p.value", "adj_p.value") %in% names(result)), info = "Check if the result has the expected columns")
+  expect_true(all(c("g2", "p_value", "adj_p_value") %in% names(result)), info = "Check if the result has the expected columns")
   
   # Check if the result has the correct number of rows
   expect_equal(nrow(result), 4, info = "Check if the result has the correct number of rows")
@@ -41,12 +41,12 @@ test_that("spectra_comparison works as expected", {
   # Check if the p-value is within the expected range
   for(i in seq_len(nrow(result))) {
     # Check if the p.value is within the expected range
-    expect_true(result$p.value[i] >= 0 && result$p.value[i] <= 1,
+    expect_true(result$p_value[i] >= 0 && result$p_value[i] <= 1,
                 info = paste("Check if the p-value in row", i, "is within the expected range"))
   }
   
   for(i in seq_len(nrow(result))) {
     # Check if the p.value is within the expected range
-    expect_true(result$adj_p.value[i] >= 0 && result$adj_p.value[i] <= 1,
+    expect_true(result$adj_p_value[i] >= 0 && result$adj_p_value[i] <= 1,
                 info = paste("Check if the p-value in row", i, "is within the expected range"))
   }})
