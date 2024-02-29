@@ -10,7 +10,6 @@
 #' @param model_avg A logical value specifying whether to
 #' average the model fits. Default is TRUE.
 #' @return A list with the following components:
-#' @importFrom ToxicR single_continuous_fit
 mf_bmd <- function(mf_data,
                    dose_col = "dose",
                    response_col = c("sample_MF_unique", "sample_MF_clonal"),
@@ -21,6 +20,9 @@ mf_bmd <- function(mf_data,
                                    "polynomial"),
                    BMR = 0.5) {
 
+  if (!requireNamespace("ToxicR")) {
+    stop("ToxicR is not installed. Please install from https://github.com/NIEHS/ToxicR")
+  }
   result_list <- list()
   # Run the function for each response column
   for (response in response_col) {
@@ -159,7 +161,6 @@ mf_bmd <- function(mf_data,
 #' \item posterior_probs: the posterior probabilities used in the
 #' model averaging.
 #' }}
-#' @importFrom ToxicR ma_continuous_fit cleveland_plot
 #' @importFrom dplyr select rename
 #' @import ggplot2
 bmd_ma <- function(mf_data,
@@ -173,6 +174,10 @@ bmd_ma <- function(mf_data,
                    fit = "laplace",
                    a = 0.025,
                    ...) {
+ if (!requireNamespace("ToxicR")) {
+    stop("ToxicR is not installed. Please install from https://github.com/NIEHS/ToxicR")
+  }
+
   if (data_type == "individual") {
     # Initialize empty lists to store results
     results_bmd <- list()
