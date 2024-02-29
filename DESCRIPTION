@@ -38,7 +38,6 @@ Imports:
     S4Vectors,
     stringr,
     SummarizedExperiment,
-    ToxicR,
     VariantAnnotation,
     xml2
 Suggests:
@@ -52,6 +51,7 @@ Suggests:
     SigProfilerExtractorR,
     SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
+    ToxicR,
     trackViewer,
     fs
 Remotes:
