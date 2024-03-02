@@ -1,6 +1,3 @@
-#library(ggplot2)
-#library(tidyverse)
-
 #' Create a heatmap plot
 #'
 #' This function creates a heatmap plot using the provided data file.
