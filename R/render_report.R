@@ -14,7 +14,8 @@
 #' @import yaml
 #' @import rmarkdown
 #' @importFrom utils install.packages
-read_config_and_render <- function(config_filepath, output_file) {
+#' @export
+render_report <- function(config_filepath, output_file) {
   config_filepath <- "./config.yml"
   output_file <- "./output.html"
   # Check if yaml package is available, install if not
@@ -25,6 +26,11 @@ read_config_and_render <- function(config_filepath, output_file) {
   # Check if rmarkdown package is available, install if not
   if (!requireNamespace("rmarkdown", quietly = TRUE)) {
     install.packages("rmarkdown")
+  }
+
+  # Check if MutSeqR package is available, install if not
+  if (!requireNamespace("MutSeqR", quietly = TRUE)) {
+    install.packages("MutSeqR")
   }
   
   # take config_filepath and make sure it is a valid file, convert to path if needed
