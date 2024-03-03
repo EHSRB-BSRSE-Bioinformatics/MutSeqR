@@ -43,24 +43,23 @@ params:
   project_title: "Mouse Test"
   mut_data: 
     label: "Enter the file path to your mutation data"
-    value: "../../../DupSeq R Package Building/Test Data/mut files"
+    value: "../../data/prj00125_PRC_BM_variant-calls.genome.mut"
   sample_data:
     label: "Select your Sample Data File"
     input: file
     accept: [.txt, .csv, .xlsx]
-    value: NULL
+    value: "../../data/PRC_BM_sample_data.txt"
   contrasts_files:
     label: "Select your contrasts table(s)"
     input: file
     accept: [.txt]
     multiple: true
-    value: []
+    value: "../../data/Annette Dodge 2023/dose_contrast_table.txt"
   contrasts:
     label: "Select your contrasts table"
     input: file
     accept: [.txt]
-    value: NULL
-    
+    value: "../../data/Annette Dodge 2023/dose_contrast_table.txt"
 ---
 
 ```{r load_libraries, warning=F, echo=F}
@@ -79,11 +78,10 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 # Import Data
 
 ```{r import-data}
-
 if(params$mut_file_type == "mut") {
 mutation_data <-
   import_mut_data(mut_file = params$mut_data,
-                  sample_data_file = sample_data,
+                  sample_data_file = params$sample_data,
                   regions = params$regions,
                   custom_regions_file = params$custom_regions_file,
                   is_0_based = params$is_0_based,
@@ -114,6 +112,7 @@ write_VCF_from_mut(mutation_data)
 ```
 
 ## Calculate Mutation Frequencies
+
 ```{r calculate-MF-summaries}
 MF_per_sample <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = c("sample"),
@@ -148,6 +147,7 @@ trinuc_group <- calculate_mut_freq(data = mutation_data,
                                   )
 ```
 ## Linear Modelling
+
 ```{r model-mutation-frequencies}
 # Model MF by dose
 model_by_dose <- model_mf(mf_data = MF_per_sample,
@@ -156,7 +156,7 @@ model_by_dose <- model_mf(mf_data = MF_per_sample,
                           reference_level = 0,
                           muts = "sample_sum_unique",
                           total_count = "sample_group_depth",
-                          contrast_table_file = contrasts)
+                          contrast_table_file = params$contrasts)
 model_by_dose$point_estimates
 model_by_dose$pairwise_comparisons
 model_by_dose$residuals_histogram
@@ -178,7 +178,7 @@ model_by_target <- model_mf(mf_data = MF_per_target,
                 reference_level = c(0, "chr1"),
                 muts = "sample_label_sum_unique",
                 total_count = "sample_label_group_depth",
-                contrast_table_file = contrasts)
+                contrast_table_file = params$contrasts)
 model_by_target$point_estimates
 model_by_target$pairwise_comparisons
 model_by_target$residuals_histogram
@@ -188,18 +188,19 @@ base_6_comp <- spectra_comparison(mf_data = six_base_summary_dose,
                                   muts = "dose_sum_unique",
                                   subtype_col = "normalized_subtype",
                                   group = "dose",
-                                  contrast_table_file = contrasts,
+                                  contrast_table_file = params$contrasts,
                                   cont_sep = "\t")
 trinuc_comp <- spectra_comparison(mf_data = trinuc_group,
                                   muts = "dose_sum_unique",
                                   subtype_col = "normalized_context_with_mutation",
                                   group = "dose",
-                                  contrast_table_file = contrasts,
+                                  contrast_table_file = params$contrasts,
                                   cont_sep = "\t")
 
 ```
 
 ## Visualize data
+
 ```{r plot_MF, eval=FALSE}
 # Unique MF per sample
 ggplot(MF_per_sample, aes(x = sample, y = sample_MF_unique, fill = factor(dose))) +
@@ -515,7 +516,7 @@ sigminer::show_catalogue(t(sigminer_results$fitting_results$nmf_matrix), style =
 
 ## Recurring mutations
 
-Are any mutations observed in more than one individual?
+Are any mutations observed in more than one sample?
 
 ```{r, eval=FALSE}
 
