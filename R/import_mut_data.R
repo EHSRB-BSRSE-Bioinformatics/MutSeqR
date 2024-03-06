@@ -316,7 +316,7 @@ import_mut_data <- function(mut_file,
   }
   if (!has_total_depth && has_no_calls && has_depth) {
     dat <- dat %>%
-      mutate(total_depth = .data$depth - .data$no_calls)
+      dplyr::mutate(total_depth = .data$depth - .data$no_calls)
     depth_col <- "total_depth"
   }
   if (!has_total_depth && !has_no_calls && has_depth) {
