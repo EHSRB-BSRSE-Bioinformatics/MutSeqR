@@ -45,6 +45,7 @@
 #' @param ... Extra arguments for \link[stats]{glm}  or \link[lme4]{glmer}. The 
 #' `glmer` function is used when a `random_effect` is supplied, otherwise, the 
 #' model uses the `glm` function.
+#' @export
 #' 
 #' @details 
 #' 
