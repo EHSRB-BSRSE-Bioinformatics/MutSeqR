@@ -192,7 +192,7 @@ calculate_mut_freq <- function(data,
                                               variant_types]
 
   if (subtype_resolution != "none") {
-    summary_rows <- merge(subset_type, summary_rows)
+    summary_rows <- base::merge(as.data.frame(subset_type), summary_rows)
     col_names <- c(paste(MutSeqR::subtype_dict[[subtype_resolution]]),
                    cols_to_group)
   } else {

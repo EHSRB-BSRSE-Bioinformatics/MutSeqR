@@ -10,6 +10,8 @@
 #' @param model_avg A logical value specifying whether to
 #' average the model fits. Default is TRUE.
 #' @return A list with the following components:
+#' @importFrom ToxicR single_continuous_fit
+#' @export
 mf_bmd <- function(mf_data,
                    dose_col = "dose",
                    response_col = c("sample_MF_unique", "sample_MF_clonal"),
@@ -163,6 +165,7 @@ mf_bmd <- function(mf_data,
 #' }}
 #' @importFrom dplyr select rename
 #' @import ggplot2
+#' @export
 bmd_ma <- function(mf_data,
                    data_type = c("individual", "summary"),
                    dose_col = "dose",

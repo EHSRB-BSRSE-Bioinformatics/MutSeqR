@@ -143,15 +143,13 @@
 #' - point_estimates: the point estimates for the fixed effects.
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrast_table_file`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrast_table_file`.
-
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom lme4 glmer
 #' @importFrom car Anova
 #' @importFrom graphics abline boxplot hist par
 #' @importFrom stats as.formula model.matrix qqnorm relevel residuals
-
-
+#' @export
 model_mf <- function(mf_data,
                     fixed_effects = c("dose"),
                     test_interaction = TRUE,
