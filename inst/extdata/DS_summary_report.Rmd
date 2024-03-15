@@ -300,7 +300,7 @@ ggplot(plot_data_subset, aes(x = normalized_subtype, y = avg_MF, fill = factor(d
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Plot simple sectra normalized proportions
-ggplot(six_base_summary_group, aes(x = normalized_subtype, y = norm_prop_unique, fill = factor(dose))) +
+ggplot(six_base_summary_group, aes(x = normalized_subtype, y = proportion_unique, fill = factor(dose))) +
   geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
   labs(title = "Normalized Proportions of SNV Subtypes per Dose",
        y = "Normalized proportion",
@@ -466,15 +466,16 @@ cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
 ```{r cosmic-signatures - SigProfiler, eval=FALSE}
 # Need to have a think about how this will work in Rmd - may be problematic. 
 # May grab the key outputs to put in the report
-signature_fitting(mutations = mutation_data,
-                              project_name = "HESI GTTC",
-                              project_genome = "rn6",
-                              env_name = "MutSeqR",
-                              group = "sample",
-                              output_path = NULL,
+signature_fitting(mutations = mut_dat,
+                              project_name = "Bbf_liver",
+                              project_genome = "mm10",
+                              env_name = "DupSeqR",
+                              group = "dose",
+                              output_path = "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq External Analyses/DSCHUSTER_2024_Bbf_Liv_BM/output4",
                               python_version = "3.9.13",
                               python_path = "doesn't matter", 
                               python_home = "not implemented")
+
 ```
 
 

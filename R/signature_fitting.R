@@ -108,16 +108,16 @@ signature_fitting <- function(mutations,
   signature_data <- signature_data %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
     dplyr::filter(.data$is_germline == FALSE) %>%   
-    dplyr::select(all_of(group), .data$id, .data$variation_type, contig, .data$start, .data$end, .data$ref, .data$alt) %>%
+    dplyr::select(all_of(group), "id", "variation_type", "contig", "start", "end", "ref", "alt") %>%
     dplyr::rename(
-      "Sample" = group,
+      "Samples" = all_of(group),
       "ID" = "id",
       "mut_type" = "variation_type",
       "chrom" = "contig",
       "pos_start" = "start",
       "pos_end" = "end"
     ) %>%
-    dplyr::mutate(Sample = stringr::str_replace_all(.data$Sample, " ", "_")) %>%
+    dplyr::mutate(Samples = stringr::str_replace_all(.data$Samples, " ", "_")) %>%
     dplyr::mutate(chrom = stringr::str_replace(.data$chrom, "chr", "")) %>%
     dplyr::mutate(Project = project_name) %>%
     dplyr::mutate(Genome = project_genome) %>%
@@ -126,6 +126,11 @@ signature_fitting <- function(mutations,
     dplyr::relocate(.data$Genome, .after = .data$ID) %>%
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
   
+# Make sure Samples column is NOT numeric
+# Note that the values will be class character, but even if so, number values will cause an issue
+signature_data <- signature_data %>% 
+  dplyr::mutate(Samples = paste0(!!group, "_", Samples))
+
   message("Generating output path string...")
   if (is.null(output_path)) {
     output_path <- file.path(
@@ -170,10 +175,18 @@ signature_fitting <- function(mutations,
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
     output = file.path(output_path, "matrices", "output"),
-    genome_build=project_genome,
+    input_type="matrix", # "vcf", "seg:TYPE", "matrix"
+    context_type="96", # Required for vcf input
     cosmic_version=3.3,
-    verbose=TRUE,
-    exome=FALSE
+    exome = FALSE,
+    genome_build = project_genome,
+    signature_database= NULL, #tab delimited file of signatures
+    exclude_signature_subgroups= NULL,
+    export_probabilities = TRUE,
+    export_probabilities_per_mutation = FALSE, # Only for vcf input
+    make_plots = TRUE,
+    sample_reconstruction_plots = "png",
+    verbose = TRUE
   )
   
   # Errors here that I haven't been able to troubleshoot; maybe this shoudl be
