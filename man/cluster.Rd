@@ -7,7 +7,7 @@
 cluster(
   mf_data = mf_data,
   sample_col = "sample",
-  response_col = "norm_prop_unique",
+  response_col = "proportion_unique",
   subtype_col = "normalized_subtype",
   dist = "cosine",
   cluster_method = "ward.D"
