@@ -25,17 +25,21 @@ Imports:
     dplyr,
     GenomeInfoDb,
     GenomicRanges,
+    ggh4x,
     ggplot2,
+    gtools,
     here,
     httr,
     IRanges,
     lme4,
     magrittr,
     openxlsx,
+    patchwork,
     plyranges,
     reticulate,
     rlang,
     S4Vectors,
+    scales,
     stringr,
     SummarizedExperiment,
     VariantAnnotation,
@@ -53,7 +57,8 @@ Suggests:
     testthat (>= 3.0.0),
     ToxicR,
     trackViewer,
-    fs
+    fs,
+    yaml
 Config/reticulate: list( packages = list( list(package =
     "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),
     list(package = "SigProfilerMatrixGenerator") ) )

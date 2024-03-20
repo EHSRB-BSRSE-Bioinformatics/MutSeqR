@@ -5,20 +5,25 @@
 \title{Create a heatmap plot}
 \usage{
 spectra_comparison_heatmap(
-  data,
-  group_var,
+  mf_data,
+  group_var = "dose",
+  mf_type = "unique",
   mut_proportion_scale = "turbo",
   max = 0.2,
-  rescale_data = TRUE,
+  rescale_data = FALSE,
   condensed = FALSE
 )
 }
 \arguments{
-\item{data}{The path to the data file.}
+\item{mf_data}{The data file}
 
 \item{group_var}{The variable to group by.}
 
-\item{mut_proportion_scale}{The scale option for the mutation proportion. Options are passed to viridis::scale_fill_viridis_c. One of # inferno, magma, plasma, viridis, cividis, turbo, mako, or rocket. We highly reccomend the default for its ability to disciminate hard to see patterns. (Default: "turbo")}
+\item{mf_type}{The type of mutation frequency to plot. Options are "unique" or "clonal". (Default: "unique")}
+
+\item{mut_proportion_scale}{The scale option for the mutation proportion. Options are passed to viridis::scale_fill_viridis_c.
+One of # inferno, magma, plasma, viridis, cividis, turbo, mako, or rocket. We highly reccomend the default for its ability to
+disciminate hard to see patterns. (Default: "turbo")}
 
 \item{max}{Maximum value used for plotting the relative contributions.
 Contributions that are higher will have the maximum colour. (Default: 0.2)}
@@ -35,4 +40,5 @@ This function creates a heatmap plot using the provided data file.
 }
 \examples{
 create_heatmap(mutation_data, dose, "inferno")
+
 }

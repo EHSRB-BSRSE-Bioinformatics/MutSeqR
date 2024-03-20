@@ -15,7 +15,7 @@
 #' mutation subtypes.
 #' @param sample_order The method for ordering the samples within the plot.
 #' Options include:
-#' \itemized {
+#' \itemize{
 #'   \item `none`: No ordering is performed. Default.
 #'   \item `smart`: Samples are ordered based on the sample names.
 #'   \item `arranged`: Samples are ordered based on one or more factor column(s)
@@ -45,7 +45,7 @@
 #' data. The default is a set of colors from the RColorBrewer package.
 #' @import patchwork
 #' @importFrom ggh4x scale_x_dendrogram
-#' @importFrom ggplot2 
+#' @import ggplot2 
 #' @importFrom dplyr select arrange across all_of
 #' @importFrom gtools mixedsort
 #' @export
@@ -90,7 +90,7 @@ plot_spectra <- function(mf_data = mf_data,
                                      levels = sample_order_input)
   } else if (sample_order == "clustered") {
     # Cluster the samples
-    hc <- cluster(mf_data = plot_data,
+    hc <- cluster_spectra(mf_data = plot_data,
                   sample_col = sample_col,
                   response_col = response_col,
                   subtype_col = subtype_col,
@@ -192,7 +192,7 @@ plot_spectra <- function(mf_data = mf_data,
 #' This equation calculates the cosine dissimilarity between two vectors A and B. 
 #' @return A dendrogram object representing the hierarchical clustering of the
 #' samples.
-cluster <- function(mf_data = mf_data,
+cluster_spectra <- function(mf_data = mf_data,
                     sample_col = "sample",
                     response_col = "proportion_unique",
                     subtype_col = "normalized_subtype",

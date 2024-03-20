@@ -4,7 +4,7 @@
 #' @param mut_file "filepath". The .mut file containing mutation
 #' data to be imported. If you specify a folder, the function will
 #' attempt to read all files in the folder and combine them into
-#' a single data frame.Required columns are listed below.
+#' a single data frame. Required columns are listed below.
 #' Synonymous names for these columns are accepted.
 #' \itemize{
 #'      \item `contig`: The reference sequence name.
@@ -159,8 +159,10 @@ import_mut_data <- function(mut_file,
   if (!depth_calc %in% c("take_del", "take_mean")) {
     stop("Error: depth_calc must be 'take_del' or 'take_mean'")
   }
-  if (custom_column_names != NULL && !is.list(custom_column_names)) {
+  if (!is.null(custom_column_names)) {
+    if (!is.list(custom_column_names)) {
     stop("Error: custom_column_names must be a list")
+    }
   }
   if (!is.logical(output_granges)) {
     stop("Error: output_granges must be a logical variable")

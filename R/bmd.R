@@ -155,20 +155,21 @@ mf_bmd <- function(mf_data,
 #' plots for each response column.
 #' \item models: A list containing the model fit values for
 #' each response column. Values include:
-#' \itemize {
+#' \itemize{
 #' \item Individual_Model_X: Individual model fits for each model,
 #' X, used for model averaging. See \link[ToxicR]{single_continuous_fit}
 #' for details on the model object class structure.
 #' \item ma_bmd: The CDF of the model averaged BMD distribution.
 #' \item posterior_probs: the posterior probabilities used in the
 #' model averaging.
-#' }}
+#' }
+#' }
 #' @importFrom dplyr select rename
 #' @import ggplot2
 #' @export
 bmd_ma <- function(mf_data,
                    data_type = c("individual", "summary"),
-                   dose_col = "dose",
+                   dose_col,
                    response_cols = c("sample_MF_unique", "sample_MF_clonal"),
                    sd_col = NULL,
                    n_col = NULL,
@@ -177,9 +178,11 @@ bmd_ma <- function(mf_data,
                    fit = "laplace",
                    a = 0.025,
                    ...) {
- if (!requireNamespace("ToxicR")) {
+
+  if (!requireNamespace("ToxicR", quietly = TRUE)) {
     stop("ToxicR is not installed. Please install from https://github.com/NIEHS/ToxicR")
   }
+
 
   if (data_type == "individual") {
     # Initialize empty lists to store results

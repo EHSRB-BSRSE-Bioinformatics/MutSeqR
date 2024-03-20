@@ -30,7 +30,7 @@
 #' used in the model. The default is "quasibinomial" for generalized linear models
 #' and "binomial" for generalized linear mixed-models. See \link[stats]{glm} 
 #' for more details. 
-#' @param contrast_table_file a filepath to a tab-delimited `.txt` file that will 
+#' @param contrasts a filepath to a tab-delimited `.txt` file that will 
 #' provide the information necessary to make pairwise comparisons between groups. 
 #' The table must consist of two columns. The first column will be a group within 
 #' your fixed_effects and the second column must be the group that it will be 
@@ -76,7 +76,7 @@
 #' since we are interested in testing how the treatment might change mutation 
 #' frequency relative to the control.
 #' 
-#' Examples of `contrast_table_file`:
+#' Examples of `contrasts`:
 #' 
 #' If you have a `fixed_effect` "dose" with dose groups 0, 25, 50, 100, 
 #' then the first column would contain the treated groups (25, 50, 100), while 
@@ -141,8 +141,8 @@
 #'  For a normal distribution, we expect points to roughly follow the y=x line.  
 #' - point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
 #' - point_estimates: the point estimates for the fixed effects.
-#' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrast_table_file`.
-#' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrast_table_file`.
+#' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
+#' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom lme4 glmer
@@ -158,7 +158,7 @@ model_mf <- function(mf_data,
                     muts = "sample_sum_unique",
                     total_count = "sample_group_depth",
                     family = NULL,
-                    contrast_table_file = NULL, 
+                    contrasts = NULL, 
                     cont_sep = "\t",
                     ...
                     ) {
@@ -301,20 +301,15 @@ for (factor_name in fixed_effects) {
  # Pairwise Comparisons  
  ##################################################################
   # load contrast table file and do checks
-  if (!is.null(contrast_table_file)) {
-    contrast_table <- read.delim(file.path(contrast_table_file), sep = cont_sep,
-                                 header = F)
-  if (ncol(contrast_table) <= 1) {
-    stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+  if (!is.null(contrasts)) {
+    if (is.data.frame(contrasts)) {
+        contrast_table <- contrasts
+    } else {
+        contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
+    if (ncol(contrast_table) <= 1) {
+      stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+    }
   }
-  
-  # all_valid <- all(contrast_table %in% fixed_effects_levels)
-  # if (!all_valid) {
-  #   invalid_values <- contrast_table[!(contrast_table %in% fixed_effects_levels)]
-  #   stop(paste("Invalid values in contrast_table:", paste(invalid_values, collapse = ","), 
-  #              ". Please ensure that values in the contrast_table correspond to values in your factor column."))
-  # }
-  
   model_matrix <- as.data.frame(model_matrix)
   contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
   
@@ -351,7 +346,15 @@ for (factor_name in fixed_effects) {
   colnames(pairwise_comparisons) <- c("Estimate", "Std.Err", "Obs.T", "p.value", "df", "Lower", "Upper")
   
   pairwise_comparisons$adj_p.value <- MutSeqR::my.holm.sidak(pairwise_comparisons$p.value)
-  
+  pairwise_comparisons <- pairwise_comparisons %>%
+  dplyr::mutate(
+    Significance = case_when(
+      adj_p.value <= 0.001 ~ "***",
+      adj_p.value <= 0.01 ~ "**",
+      adj_p.value <= 0.05 ~ "*",
+      TRUE ~ ""
+    )
+  )
   }
   
   model_results <- list(model_data = mf_data, 
@@ -364,7 +367,7 @@ for (factor_name in fixed_effects) {
   if (length(fixed_effects) > 1) {
     model_results$anova <- model_anova
   }
-  if(!is.null(contrast_table_file)){
+  if(!is.null(contrasts)){
     model_results$pairwise_comparisons_matrix <- result_matrix
     model_results$pairwise_comparisons <- pairwise_comparisons
   }

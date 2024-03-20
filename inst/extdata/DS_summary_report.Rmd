@@ -12,18 +12,27 @@ output:
   pdf_document:
     toc: yes
 params:
+  project_title: "Mouse Test"
+  species: "mouse"
+  genome: "mm10"
   mut_file_type:
     label: "file_type"
     input: select
     value: "mut"
     choices: ["mut", "vcf"]
-  group_var: "dose"
-  vaf_cutoff: 
+  mut_data: 
+    label: "Enter the file path to your mutation data"
+    value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/prj00125_PRC_BM_variant-calls.genome.mut"
+  mut_sep: 
+    label: "Please indicate the delimiter used for you mutation file(s)"
+    input: text
+    value: "\t"
+vaf_cutoff: 
     label: "VAF cutoff value"
     input: numeric
     step: 0.01
     min: 0
-    value: 0.1
+    value: 0.01
   regions: 
     label: "Select a mutagenesis panel"
     input: select
@@ -33,45 +42,76 @@ params:
     label: "If you are using a custom panel, please supply a regions file"
     input: file
     value: NULL
-    accept: [.txt, .csv, .xlsx]
+    accept: [.txt, .csv]
+  rg_sep: 
+    label: "If you are using a custom panel, please specify the separator"
+    input: text
+    value: "\t"
   is_0_based: 
     label: "The coordinates for my custom panel are 0-based. Disregard if not applicable"
     input: checkbox
     value: TRUE
-  species: "mouse"
-  genome: "mm10"
-  project_title: "Mouse Test"
-  mut_data: 
-    label: "Enter the file path to your mutation data"
-    value: "../../data/prj00125_PRC_BM_variant-calls.genome.mut"
   sample_data:
     label: "Select your Sample Data File"
     input: file
-    accept: [.txt, .csv, .xlsx]
-    value: "../../data/PRC_BM_sample_data.txt"
-  contrasts_files:
+    accept: [.txt, .csv]
+    value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/PRC_BM_sample_data.txt"
+  sd_sep: 
+    label: "Please indicate the delimiter used for your sample data file"
+    input: text
+    value: "\t"
+  control_dose:
+    label: "Input the control dose for your experiment"
+    input: text
+    value: "0"
+  contrast_variable:
+    label: "Input the variable(s) to be used for contrasts (e.g. "dose", "tissue", c("dose", "contig"), etc.)"
+    input: text
+    value: "dose"
+  reference_level:
+    label: "Input the reference level for your contrasts"
+    input: text
+    value: "0"
+  contrasts_file:
     label: "Select your contrasts table(s)"
     input: file
     accept: [.txt]
     multiple: true
-    value: "../../data/Annette Dodge 2023/dose_contrast_table.txt"
-  contrasts:
+    value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/dose_contrast_table.txt"
+  contrasts_variable_2:
+    label: "Input the variable(s) to be used for contrasts (e.g. "dose", "tissue", c("dose", "contig"), etc.)"
+    input: text
+    value: c("dose", "label")
+  reference_level_2:
+    label: "Input the reference level for your contrasts"
+    input: text
+    value: c(0, "chr1")  
+  contrast_file_2:
     label: "Select your contrasts table"
     input: file
     accept: [.txt]
-    value: "../../data/Annette Dodge 2023/dose_contrast_table.txt"
+    value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/dose_target_contrast_table.txt"
+output_path:
+  label: "Select the output directory"
+  input: file
+  value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/Output"
 ---
 
 ```{r load_libraries, warning=F, echo=F}
 set.seed(3135)
-
 library(MutSeqR)
 library(stringr)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(gtools)
 theme_set(theme_bw())
+
+if (is.null(params$output_path)) {
 output_dir <- file.path(here::here(),"output")
+} else {
+   output_dir <- file.path(params$output_path)
+}
 if (!dir.exists(output_dir)) { dir.create(output_dir)}
 ```
 
@@ -81,21 +121,32 @@ if (!dir.exists(output_dir)) { dir.create(output_dir)}
 if(params$mut_file_type == "mut") {
 mutation_data <-
   import_mut_data(mut_file = params$mut_data,
+                  mut_sep = params$mut_sep,
                   sample_data_file = params$sample_data,
+                  sd_sep = params$sd_sep,
                   regions = params$regions,
                   custom_regions_file = params$custom_regions_file,
+                  rg_sep = params$rg_sep,
                   is_0_based = params$is_0_based,
                   vaf_cutoff = params$vaf_cutoff)
 } else if (params$mut_file_type == "vcf") {
   mutation_data <- 
     read_vcf(vcf_file = params$mut_data,
+            mut_sep = params$mut_sep,
             sample_data_file = params$sample_data,
+            sd_sep = params$sd_sep,
             regions = params$regions,
             custom_regions_file = params$custom_regions_file,
+            rg_sep = params$rg_sep,
             is_0_based = params$is_0_based,
             species = params$species,
             genome_version = params$genome,
             vaf_cutoff = params$vaf_cutoff)
+}
+
+if(class(mutation_data) == "list") {
+  mutation_data <- mutation_data$mut_dat
+  filtered_regions <- mutation_data$rows_outside_regions
 }
 
 ```
@@ -103,146 +154,205 @@ mutation_data <-
 ```{r write_ref_and_muts}
 # Write a reference FASTA file...
 my_regions <- get_seq(regions = params$regions,
-                   custom_regions_file = params$custom_regions_file,
-                   genome = params$genome,
-                   padding = 0) # Grab target sequences
-write_reference_fasta(ref_ranges = my_regions)
+                      custom_regions_file = params$custom_regions_file,
+                      genome = params$genome,
+                      padding = 0)
+write_reference_fasta(ref_ranges = my_regions, fasta_out = file.path(output_dir, "reference.fasta"))
 # Write mutation data as a vcf
-write_VCF_from_mut(mutation_data)
+write_VCF_from_mut(mutation_data, vcf_out = file.path(output_dir, "mutations.vcf"))
 ```
 
 ## Calculate Mutation Frequencies
 
-```{r calculate-MF-summaries}
+```{r calculate-and-model-MF-by-dose, eval=TRUE}
 MF_per_sample <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = c("sample"),
                                     subtype_resolution = "none",
-                                    retain_metadata_cols = params$group_var) 
+                                    retain_metadata_cols = "dose")
+MF_per_sample
+# Plot mutation frequency by sample
+plot_mf(mf_data = MF_per_sample,
+        sample_col = "sample",
+        mf_type = "unique",
+        fill_col = "dose",
+        sample_order = "arranged",
+        sample_order_input = "dose",
+        labels = "count"
+)
+# Plot mutation frequency by sample clonal
+plot_mf(mf_data = MF_per_sample,
+        sample_col = "sample",
+        mf_type = "clonal",
+        fill_col = "dose",
+        sample_order = "arranged",
+        sample_order_input = "dose",
+        labels = "count"
+)
+# Create a contrast table for modelling dose
+dose_levels <- unique(MF_per_sample$dose[MF_per_sample$dose != params$control_dose])
+contrasts <- data.frame(dose_levels, params$control_dose, stringsAsFactors = FALSE)
+# Model MF by dose
+model<- model_mf(mf_data = MF_per_sample,
+                 fixed_effects = "dose",
+                 random_effects = NULL,
+                 reference_level = 0,
+                 muts = "sample_sum_unique",
+                 total_count = "sample_group_depth",
+                 contrasts = contrasts)
+# Model results
+model$summary
+model$model_formula
+model$residuals_histogram
+model$residuals_qq_plot
+model$point_estimates
+model$pairwise_comparisons
+# Plot model results
+  # prepare plot data
+model$pairwise_comparisons <- model$pairwise_comparisons %>%
+  dplyr::mutate(dose = str_extract(rownames(model$pairwise_comparisons), "^[^ ]+"))
+model$point_estimates <- model$point_estimates %>%
+  dplyr::mutate(dose = rownames(model$point_estimates))
+plot_data <- left_join(model$point_estimates, model$pairwise_comparisons, by = "dose")
+order <- gtools::mixedsort(as.vector(unique(plot_data$dose)))
+plot_data$dose <- factor(plot_data$dose, levels = order)
+  #plot
+plot_model <- ggplot2::ggplot(plot_data, aes(x = dose, y = Estimate.x)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_errorbar(aes(ymin = Estimate.x - Std.Err.x, ymax = Estimate.x + Std.Err.x), width = 0.2) +
+  geom_text(aes(label = Significance), vjust = -1.5, size = 6) +
+  labs(title = "Unique Mutation Frequency by Dose",
+       y = "Mutation Frequency (mutations/bp)",
+       x = "Dose") +
+  ylim(0, max(plot_data$Estimate.x + plot_data$Std.Err.x) * 1.1) +
+  theme_bw()
+plot_model
+
+```
+
+```{r model-mutation-frequencies-by-target, eval=TRUE}
 
 MF_per_target <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = c("sample", "label"),
                                     subtype_resolution = "none",
-                                    retain_metadata_cols = c("genic_context", "dose"))
+                                    retain_metadata_cols = "dose")
+MF_per_target
+# Create a contrast table
+dose_levels <- unique(MF_per_target$dose[MF_per_target$dose != params$control_dose])
+targets <- unique(MF_per_target$label)
+combinations <- expand.grid(Dose = dose_levels, Target = targets)
+combinations$Dose <- paste(combinations$Dose, combinations$Target, sep = ":")
+combinations$Control_Dose <- paste(params$control_dose, combinations$Target, sep = ":")
+combinations$Target <- NULL
 
-six_base_summary <- calculate_mut_freq(data = mutation_data,
-                                       cols_to_group = "sample",
-                                       subtype_resolution = "base_6",
-                                       retain_metadata_cols = "dose")
+# Model MF by dose and genomic_target
+model_by_target <- model_mf(mf_data = MF_per_target,
+                fixed_effects = c(params$contrast_variable, "label"),
+                test_interaction = TRUE,
+                random_effects = "sample",
+                reference_level = c(params$control_dose, "chr1"),
+                muts = "sample_label_sum_unique",
+                total_count = "sample_label_group_depth",
+                contrasts = combinations,
+                control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
+                                                               tol = 3e-3,
+                                                               relTol = NULL)))
+# Model Results
+model_by_target$anova
+model_by_target$summary
+model_by_target$model_formula
+model_by_target$residuals_histogram
+model_by_target$residuals_qq_plot
+model_by_target$point_estimates
+model_by_target$pairwise_comparisons
+# Plot Model Results
+  # prepare plot data
+model_by_target$point_estimates$dose <- sapply(strsplit(rownames(model_by_target$point_estimates), ":"), "[", 1)
+model_by_target$point_estimates$target <- sapply(strsplit(rownames(model_by_target$point_estimates), ":"), "[", 2)
+model_by_target$pairwise_comparisons <- model_by_target$pairwise_comparisons %>%
+  dplyr::mutate(group = str_extract(rownames(model_by_target$pairwise_comparisons), "^[^ ]+"))
+model_by_target$pairwise_comparisons$dose <- sapply(strsplit(model_by_target$pairwise_comparisons$group, ":"), "[", 1)
+model_by_target$pairwise_comparisons$target <- sapply(strsplit(model_by_target$pairwise_comparisons$group, ":"), "[", 2)
+plot_data <- left_join(model_by_target$point_estimates, model_by_target$pairwise_comparisons, by = c("dose", "target"))
+ordered_dose <- gtools::mixedsort(as.vector(unique(plot_data$dose)))
+plot_data$dose <- factor(plot_data$dose, levels = ordered_dose)
+final_dose <- levels(plot_data$dose)[length(levels(plot_data$dose))]
+ordered_targets <- plot_data %>% 
+  filter(dose == final_dose) %>%
+  arrange(desc(Estimate.x)) %>%
+  pull(target)
+plot_data$target <- factor(plot_data$target, levels = ordered_targets)
+plot_data$Significance <- gsub("\\*+", "*", plot_data$Significance)
 
-six_base_summary_dose <- calculate_mut_freq(data = mutation_data,
-                                            cols_to_group = "dose",
-                                            subtype_resolution = "base_6",
-                                            variant_types = "snv")
+  # plot
+palette <- c("#fdffb5", "#daf9e3", "#97ebdb", "#91d897", "#005582")
+palette2 <-c("#ffece6", "#ffdcc1", "#c7f6e8", "#b8d9ea", "#fff7c5")
+# Use the defined color palette
+ggplot(plot_data, aes(x = target, y = Estimate.x, fill = dose)) +
+  geom_bar(stat = "identity", position = position_dodge(), color = "black") +
+  geom_errorbar(aes(ymin = Estimate.x - Std.Err.x, ymax = Estimate.x + Std.Err.x), 
+                width = 0.2, 
+                position = position_dodge(width = 0.9)) +
+  geom_text(aes(label = Significance, y = Estimate.x + 0.05 * diff(range(Estimate.x))), 
+            vjust = -1.5, size = 6, position = position_dodge(width = 0.9)) +
+  ylim(0, max(plot_data$Estimate.x + plot_data$Std.Err.x) * 1.1) +
+  scale_fill_manual(values = palette2) + 
+  labs(title = "Estimate by Dose and Target",
+       x = "Target",
+       y = "Estimate") +
+  theme_minimal()
 
-trinuc__indiv <- calculate_mut_freq(data = mutation_data,
+```
+
+```{r mutation-spectra}
+simple_spectra <- calculate_mut_freq(data = mutation_data,
+                                     cols_to_group = "sample",
+                                     subtype_resolution = "base_6",
+                                     retain_metadata_cols = params$contrast_variable)
+simple_spectra                        
+
+trinuc_spectra <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = "sample",
                                     subtype_resolution = "base_96",
                                     variant_types = "snv"
                                     )
-
-trinuc_group <- calculate_mut_freq(data = mutation_data,
-                                  cols_to_group = params$group_var,
-                                  subtype_resolution = "base_96",
-                                  variant_types = "snv"
-                                  )
-```
-## Linear Modelling
-
-```{r model-mutation-frequencies}
-# Model MF by dose
-model_by_dose <- model_mf(mf_data = MF_per_sample,
-                          fixed_effects = "dose",
-                          random_effects = NULL,
-                          reference_level = 0,
-                          muts = "sample_sum_unique",
-                          total_count = "sample_group_depth",
-                          contrast_table_file = params$contrasts)
-model_by_dose$point_estimates
-model_by_dose$pairwise_comparisons
-model_by_dose$residuals_histogram
-
-# BMD modelling by Dose
-ma <- bmd_ma(mf_data = MF_per_sample,
-  data_type = "individual",
-  response_col = c("sample_MF_unique", "sample_MF_clonal")
-)
-ma$BMD
-ma$model_plots$sample_MF_unique
-ma$BMD_plot
-
-# Model MF by dose and genomic_target
-model_by_target <- model_mf(mf_data = MF_per_target,
-                fixed_effects = c("dose", "label"),
-                test_interaction = TRUE,
-                random_effects = "sample",
-                reference_level = c(0, "chr1"),
-                muts = "sample_label_sum_unique",
-                total_count = "sample_label_group_depth",
-                contrast_table_file = params$contrasts)
-model_by_target$point_estimates
-model_by_target$pairwise_comparisons
-model_by_target$residuals_histogram
-
+trinuc_spectra
 # Compare Mutation Spectra by dose
 base_6_comp <- spectra_comparison(mf_data = six_base_summary_dose,
                                   muts = "dose_sum_unique",
                                   subtype_col = "normalized_subtype",
                                   group = "dose",
-                                  contrast_table_file = params$contrasts,
+                                  contrasts = params$contrasts,
                                   cont_sep = "\t")
 trinuc_comp <- spectra_comparison(mf_data = trinuc_group,
                                   muts = "dose_sum_unique",
                                   subtype_col = "normalized_context_with_mutation",
                                   group = "dose",
-                                  contrast_table_file = params$contrasts,
+                                  contrasts = params$contrasts,
                                   cont_sep = "\t")
 
+```
+```{r benchmark-dose modelling, eval=TRUE}
+if (!requireNamespace("ToxicR", quietly = TRUE)) {
+  message("ToxicR is not installed. Cannot run the bmd analysis. Please install ToxicR to run the bmd analysis.")
+} else {
+ma <- bmd_ma(mf_data = MF_per_sample,
+             data_type = "individual",
+             dose_col = "dose",
+             response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+             bmr_type = "rel",
+             bmr = 0.5,
+             fit = "laplace",
+             a = 0.025,
+)
+ma$BMD
+ma$model_plots$sample_MF_unique
+ma$BMD_plot
+}
 ```
 
 ## Visualize data
 
 ```{r plot_MF, eval=FALSE}
-# Unique MF per sample
-ggplot(MF_per_sample, aes(x = sample, y = sample_MF_unique, fill = factor(dose))) +
-      geom_bar(stat = "identity", alpha = 0.7) +
-      geom_text(aes(y = sample_MF_unique, label = sample_sum_unique), vjust = -0.5) +
-      labs(title = "Min Mutation Frequency per Sample") +
-      ylab("Mutation Frequency (mutations/bp)") +
-      xlab("sample") +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Clonal MF per sample
-ggplot(MF_per_sample, aes(x = sample, y = sample_MF_clonal, fill = factor(dose))) +
-  geom_bar(stat = "identity", alpha = 0.7) +
-  geom_text(aes(y = sample_MF_clonal, label = sample_sum_clonal), vjust = -0.5) +
-  labs(title = "Max Mutation Frequency per Sample") +
-  ylab("Mutation Frequency (mutations/bp)") +
-  xlab("sample") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# Average MF by dose for both clonal and unique 
-plot_data <- MF_per_sample %>%
-  group_by(dose) %>%
-  summarize(unique = mean(sample_MF_unique),
-            std_error_unique = sd(sample_MF_unique)/sqrt(n()),
-            clonal = mean(sample_MF_clonal),
-            std_error_clonal = sd(sample_MF_clonal)/sqrt(n())) %>%
-  ungroup()
-plot_data_long <- plot_data %>%
-  pivot_longer(cols = c(unique, clonal), names_to = "MF_type", values_to = "avg_MF") %>%
-  mutate(std_error = ifelse(grepl("unique", MF_type), std_error_unique, std_error_clonal)) %>%
-  mutate(MF_type = factor(MF_type, levels = c("unique", "clonal")))  # Reorder levels
-max_y_limit <- max(plot_data_long$avg_MF + plot_data_long$std_error)*1.25
-ggplot(plot_data_long, aes(x = factor(dose), y = avg_MF, fill = MF_type)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.6), width = 0.5) +
-  scale_y_continuous(expand=c(0,0), limits = c(0, max_y_limit)) +
- geom_errorbar(aes(ymin = pmax(avg_MF - std_error, 0), ymax = pmin(avg_MF + std_error, max_y_limit)),
-                position = position_dodge(width = 0.6), width = 0.25, color = "black") +
-  labs(title = "Average Mutation Frequency per Dose",
-       y = "Average Mutation Frequency",
-       x = "Dose") +
-  scale_fill_manual(values = c("unique" = "skyblue", "clonal" = "salmon")) +
-  theme_bw()
-
 
 # MF per target (average per dose)
 plot_data <- MF_per_target %>%
@@ -265,7 +375,7 @@ ggplot(plot_data, aes(x = label, y = avg_MF_unique, fill = factor(dose))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Plot simple spectra averaged across dose
-plot_data <- six_base_summary %>%
+plot_data <- simple_spectra %>%
   group_by(dose, normalized_subtype) %>%
   summarize(avg_MF = mean(sample_MF_unique),
             std_error = sd(sample_MF_unique)/sqrt(n())) %>%

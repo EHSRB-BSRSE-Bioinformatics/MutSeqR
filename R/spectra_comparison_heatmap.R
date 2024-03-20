@@ -31,7 +31,7 @@ spectra_comparison_heatmap <- function(mf_data,
                                        rescale_data = FALSE,
                                        condensed = FALSE) {
 
-mf_data <- rename_columns(mf_data)
+mf_data <- MutSeqR::rename_columns(mf_data)
 # Check for sample colum
 sample_col <- c("sample", "sample_id", "sample_name")
 if (!"sample" %in% colnames(mf_data)) {

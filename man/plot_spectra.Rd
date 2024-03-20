@@ -9,8 +9,9 @@ plot_spectra(
   sample_col = "sample",
   response_col = "proportion_unique",
   subtype_col = "normalized_subtype",
-  sample_order = c("NULL", "smart", "custom", "clustered"),
+  sample_order = "none",
   sample_order_input = NULL,
+  dist = "cosine",
   cluster_method = "ward.D",
   palette = NULL,
   x_lab = NULL,
@@ -35,7 +36,39 @@ proportion, or count.}
 mutation subtypes.}
 
 \item{sample_order}{The method for ordering the samples within the plot.
-Options include:}
+Options include:
+\itemize{
+\item \code{none}: No ordering is performed. Default.
+\item \code{smart}: Samples are ordered based on the sample names.
+\item \code{arranged}: Samples are ordered based on one or more factor column(s)
+in mf_data. Column names are passed to the function using the
+\code{sample_order_input}.
+\item \code{custom}: Samples are ordered based on a custom vector of sample
+names. The custom vector is passed to the function using the
+\code{sample_order_input}.
+\item \code{clustered}: Samples are ordered based on hierarchical clustering. The
+dissimilarity matrix can be specified using the \code{dist} argument. The
+agglomeration method can be specified using the \code{cluster_method} argument.
+}}
+
+\item{sample_order_input}{A character vector specifying details for the
+sample order method. If \code{sample_order} is \code{arranged}, \code{sample_order_input}
+should contain the column name(s) to be used for ordering the samples. If
+\code{sample_order} is \code{custom}, \code{sample_order_input} should contain the custom
+vector of sample names.}
+
+\item{dist}{The dissimilarity matrix for hierarchical clustering. Options
+are \code{cosine}, \code{euclidean}, \code{maximum}, \code{manhattan}, \code{canberra}, \code{binary} or
+\code{minkowski}. The default is \code{cosine}. See \link[stats]{dist} for details.}
+
+\item{cluster_method}{The agglomeration method for hierarchical clustering.
+Options are \code{ward.D}, \code{ward.D2}, \code{single}, \code{complete}, \code{average} (= UPGMA),
+\code{mcquitty} (= WPGMA), \code{median} (= WPGMC) or \code{centroid} (= UPGMC). The default
+is \code{Ward.D}. See \link[stats]{hclust} for details.}
+
+\item{palette}{A named vector of colors to be used for the mutation subtypes.
+The names of the vector should correspond to the mutation subtypes in the
+data. The default is a set of colors from the RColorBrewer package.}
 }
 \description{
 Given a data frame construct a plot displaying the
