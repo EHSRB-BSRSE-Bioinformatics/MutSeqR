@@ -330,6 +330,119 @@ MF_per_target <- calculate_mut_freq(data = mutation_data,
 
 ```
 
+```{r calculate-and-model-mutation-frequencies-custom-experimental-variable, eval = !is.null(params$contrast_variable) && !is.null(params$dose_column)}
+# This assumes that there is a dose column
+# contrast_variable <- c("dose_column", "experimental_variable")
+
+# Calculate mutation frequency per sample
+group_cols <- c(params$contrast_variable, params$dose_column)
+MF_per_sample <- calculate_mut_freq(data = mutation_data,
+                                    cols_to_group = c("sample"),
+                                    subtype_resolution = "none",
+                                    retain_metadata_cols = group_cols)                                  
+write.table(MF_per_sample, file.path(output_dir, "mutation_frequency_by_sample.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Plot mutation frequency by sample
+plot_unique_mf <- plot_mf(mf_data = MF_per_sample,
+  sample_col = "sample",
+  mf_type = "unique",
+  fill_col = params$dose_column,
+  sample_order = "arranged",
+  sample_order_input = group_cols,
+  labels = "count",
+  palette <- c("#fff9f0", "#bad6eb", "#7096d1", "#334eac", "#081f5c")
+  )
+plot_unique_mf
+# Plot both clonal and unique MF, stacked
+plot_clonal_mf <- plot_mf(mf_data = MF_per_sample,
+  sample_col = "sample",
+  mf_type = "stacked",
+  fill_col = params$dose_column,
+  sample_order = "arranged",
+  sample_order_input = group_cols,
+  labels = "count",
+  palette <- c("#fff9f0", "#e4e2df", "#cedeeb", "#bad6eb",  "#7096d1", "#6081b4", "#334eac", "#2c4396")
+  )
+plot_clonal_mf
+
+# Model MF by the contrast_variable, based on a supplied contrasts_file
+# I want to upload a file that will contain all the parameters they want to run for this
+  # analysis. 
+model <- model_mf(mf_data = MF_per_sample,
+                  fixed_effects = group_cols,
+                  random_effects = NULL, # may be needed, depending on the experimental design
+                  reference_level = c(params$reference_level, params$control_dose),
+                  muts = "sample_sum_unique",
+                  total_count = "sample_group_depth",
+                  contrasts = params$contrasts_file)
+# Write the model results
+write.table(model$anova, file.path(output_dir, paste0("mutation_frequency_", paste0(params$contrast_variable, collapse = "_"), "_anova_results.txt")), sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(model$point_estimates, file.path(output_dir, "mutation_frequency_", paste0(params$contrast_variable, collapse = "_"), "_model_estimates.txt"), sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(model$pairwise_comparisons, file.path(output_dir, "mutation_frequency_", paste0(params$contrast_variable, collapse = "_"), "_pairwise_comparisons.txt"), sep = "\t", quote = FALSE, row.names = TRUE)
+model$summary
+model$anova
+model$model_formula
+model$residuals_histogram
+model$residuals_qq_plot
+
+# Plot model results
+# Extract contrast variables from point_estimates
+# Split the string into individual characters
+chars <- strsplit(group_cols, " ")
+# Count the characters
+count <- length(unlist(chars))
+for (i in seq_along(chars)) {
+  # Assign each element to a separate variable in the global environment
+  assign(paste("var", i, sep = ""), chars[[i]])
+}
+    # Extract rownames into a column for each contrast variable
+for (i in 1:count) {
+    var_i <- get(paste0("var", i))
+    model$point_estimates[[var_i]] <- sapply(strsplit(rownames(model$point_estimates), ":"), "[", i)
+}
+# Extract contrast variables from pairwise_comparisons
+# Assuming that all contrasts are against 0 dose, holding the other constant.
+model$pairwise_comparisons$col1 <- sapply(strsplit(rownames(model$pairwise_comparisons), " vs "), "[", 1)
+model$pairwise_comparisons$col2 <- sapply(strsplit(rownames(model$pairwise_comparisons), " vs "), "[", 2)
+for (i in 1:count) {
+    var_i <- get(paste0("var", i))
+    model$pairwise_comparisons[[var_i]] <- sapply(strsplit(model$pairwise_comparisons$col1, ":"), "[", i)
+}
+# Join the point estimates and the comparisons into a single dataframe
+plot_data <- left_join(model$point_estimates, model$pairwise_comparisons, by = group_cols, suffix = c(".point", ".pairwise"))
+
+# Order dose column from smallest to largest
+order <- gtools::mixedsort(as.vector(unique(plot_data[[params$dose_col]])))
+plot_data[[params$dose_col]] <- factor(plot_data[[params$dose_col]], levels = order)
+x_lab <- paste(params$dose_column)
+
+# Rename dynamic columns before plotting
+plot_data <- plot_data %>%
+
+  #plot
+  #### STILL NEEDS TO BE GENERALISED 
+plot_model <- ggplot2::ggplot(plot_data, aes(x = dose, y = Estimate.point, fill = sampling_time)) +
+  geom_bar(stat = "identity", position = "dodge", color = "gray") +
+  geom_errorbar(aes(ymin = Estimate.point - Std.Err.point, ymax = Estimate.point + Std.Err.point), width = 0.2, position = position_dodge(width = 0.9)) +
+  geom_text(aes(label = Significance), vjust = -1.5, size = 6, position = position_dodge(width = 0.9)) +
+  labs(title = "Unique Mutation Frequency by Dose",
+       y = "Mutation Frequency (mutations/bp)",
+       x = x_lab) +
+  ylim(0, max(plot_data$Estimate.point + plot_data$Std.Err.point) * 1.1) +
+  theme_bw() +
+  scale_fill_manual(values = c("#fff9f0", "#bad6eb", "#7096d1", "#334eac", "#081f5c"))
+plot_model  
+
+
+
+#########################
+# Plot data by target
+#########################
+
+
+
+```
+
 ```{r model-mutation-frequencies-per-sample, eval=is.null(params$dose_column)}
 MF_per_sample <- calculate_mut_freq(data = mutation_data,
                                     cols_to_group = c("sample"),
