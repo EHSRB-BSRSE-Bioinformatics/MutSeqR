@@ -357,7 +357,8 @@ for (factor_name in fixed_effects) {
   )
   }
   
-  model_results <- list(model_data = mf_data, 
+  model_results <- list(model = model,
+                        model_data = mf_data,
                         model_formula = model_formula,
                         summary = model_summary,
                         residuals_histogram = hist,
