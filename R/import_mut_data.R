@@ -558,8 +558,7 @@ import_mut_data <- function(mut_file,
   dat <- dat %>%
     dplyr::mutate(bp_outside_rg = .data$regions_start_buffered - .data$start)
   ranges_outside_regions <- dat %>%
-    dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0) %>%
-    dplyr::select("sample", "seqnames", "start", "end", "ref", "alt")
+    dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0)
 
   # Display the ranges that were filtered out of the data
   if (nrow(ranges_outside_regions) > 0) {
