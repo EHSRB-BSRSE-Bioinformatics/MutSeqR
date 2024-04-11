@@ -50,7 +50,7 @@
 #' @importFrom gtools mixedsort
 #' @export
 
-plot_spectra <- function(mf_data = mf_data,
+plot_spectra <- function(mf_data,
                          sample_col = "sample",
                          response_col = "proportion_unique",
                          subtype_col = "normalized_subtype",
