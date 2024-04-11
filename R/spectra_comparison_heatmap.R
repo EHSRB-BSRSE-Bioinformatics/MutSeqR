@@ -135,7 +135,7 @@ if (length(found_context_cols) == 1) {
   } else if (context_size == 3) {
     axis_size <- 4
   } else {
-    axis_size <- 3
+    axis_size <- 4
   }
 
     # Change plotting parameters based on whether plot should be condensed.
@@ -234,7 +234,7 @@ fig <- ggplot(df, aes(
             theme_minimal() +
             labs(x = x_label, y = y_label) +
             theme(
-                axis.text.y = element_text(size = axis_size),
+                axis.text.y = element_text(size = 6),
                 axis.text.x = element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
                 panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                 panel.spacing.x = unit(spacing, "lines"),
@@ -247,17 +247,20 @@ fig <- ggplot(df, aes(
 if(plot_context & is.null(group_var)) {
   figfx <- fig +
     facet_grid(cols = vars(subtype_labels), scales = "free_x",
-               labeller = labeller(subtype_labels = facet_labs_x))
+               labeller = labeller(subtype_labels = facet_labs_x)) +
+    theme(strip.text = element_text(size = 8))
   return(figfx)
 } else if (plot_context == FALSE & !is.null(group_var)) {
   figfy <- fig +
     facet_grid(rows = vars(Group), scales = "free_y",
-               labeller = labeller(Group = facet_labs_y))
+               labeller = labeller(Group = facet_labs_y)) +
+    theme(strip.text = element_text(size = 8))
   return(figfy)
 } else if (plot_context & !is.null(group_var)) {
     figfxy <- fig +
-      facet_grid(Group ~ subtype_labels, scales = "free",
-      labeller = labeller(Group = facet_labs_y, subtype_labels = facet_labs_x))
+    facet_grid(Group ~ subtype_labels, scales = "free",
+               labeller = labeller(Group = facet_labs_y, subtype_labels = facet_labs_x)) +
+    theme(strip.text = element_text(size = 8))
     return(figfxy)
 } else {
     return(fig)
