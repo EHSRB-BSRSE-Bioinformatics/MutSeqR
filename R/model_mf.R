@@ -297,6 +297,21 @@ for (factor_name in fixed_effects) {
   model_estimates <- model_estimates[,-c(3,4,5,6)]
   colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
 
+# Split the string into individual characters
+chars <- strsplit(fixed_effects, " ")
+# Count the characters
+count <- length(unlist(chars))
+for (i in seq_along(chars)) {
+  # Assign each element to a separate variable in the global environment
+  assign(paste("var", i, sep = ""), chars[[i]])
+}
+    # Extract rownames into a column for each contrast variable
+for (i in 1:count) {
+    var_i <- get(paste0("var", i))
+    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+}
+
+
   ##############################################################
  # Pairwise Comparisons  
  ##################################################################
@@ -343,7 +358,7 @@ for (factor_name in fixed_effects) {
   pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
   pairwise_comparisons$std.error <- sqrt(delta*pairwise_comparisons$std.error^2)
   pairwise_comparisons <- pairwise_comparisons[,-5]
-  colnames(pairwise_comparisons) <- c("Estimate", "Std.Err", "Obs.T", "p.value", "df", "Lower", "Upper")
+  colnames(pairwise_comparisons) <- c("Fold.Change", "FC.Std.Err", "Obs.T", "p.value", "df", "FC.Lower", "FC.Upper")
   
   pairwise_comparisons$adj_p.value <- MutSeqR::my.holm.sidak(pairwise_comparisons$p.value)
   pairwise_comparisons <- pairwise_comparisons %>%
@@ -355,6 +370,16 @@ for (factor_name in fixed_effects) {
       TRUE ~ ""
     )
   )
+
+pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
+pairwise_comparisons$contrast_group2 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 2)
+for (i in 1:count) {
+    var_i <- get(paste0("var", i))
+    pairwise_comparisons[[paste0(var_i, "_1")]] <- sapply(strsplit(pairwise_comparisons$contrast_group1, ":"), "[", i)
+    pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
+}
+pairwise_comparisons <- pairwise_comparisons %>%
+  dplyr::select(-contrast_group1, -contrast_group2)
   }
   
   model_results <- list(model = model,
@@ -362,7 +387,7 @@ for (factor_name in fixed_effects) {
                         model_formula = model_formula,
                         summary = model_summary,
                         residuals_histogram = hist,
-                        residuals_qq_plot = qqplot,
+residuals_qq_plot = qqplot,
                         point_estimates_matrix = model_matrix,
                         point_estimates = model_estimates)
   if (length(fixed_effects) > 1) {
