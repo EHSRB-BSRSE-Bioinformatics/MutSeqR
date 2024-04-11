@@ -5,7 +5,7 @@
 #' Run COSMIC signatures comparison
 #'
 #' After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
-#' @param mutations A data frame, imported from a .mut file
+#' @param mutation_data A data frame, imported from a .mut file
 #' @param project_name The name of the project; used to get mutation data into the required .txt format for SigProfiler
 #' @param project_genome A string describing the reference genome to use; 
 #' e.g. GRCh37, GRCH38, mm10, mm9, rn6
@@ -28,7 +28,7 @@
 #' @import stringr
 #' @export
 #' 
-signature_fitting <- function(mutations,
+signature_fitting <- function(mutation_data,
                               project_name = "Default",
                               project_genome = "GRCh38",
                               env_name = "MutSeqR",
@@ -91,7 +91,7 @@ signature_fitting <- function(mutations,
   # Clean data into required format for Alexandrov Lab tools...
   #ID doesn't always exist. 
   # New F(x) to create MAF/txt input for web sigprofiler
-  signature_data <- as.data.frame(mutations) 
+  signature_data <- as.data.frame(mutation_data) 
   
   # Check if "id" column exists
   if (!"id" %in% colnames(signature_data)) {
@@ -154,7 +154,7 @@ signature_data <- signature_data %>%
   
   message("Writing mutation matrix to use as input to SigProfiler...")
   write.table(signature_data,
-              file = file.path(output_path, "matrices", "mutations.txt"),
+              file = file.path(output_path, "matrices", "mutation_data.txt"),
               sep = "\t", row.names = F, quote = F
   )
   

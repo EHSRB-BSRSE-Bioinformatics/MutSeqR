@@ -1,13 +1,13 @@
 #' Plot the trinucleotide spectrum
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
 #' a given group based on the mutation data. All plots are exported. 
-#' @param mut_dat A data frame containing mutation data. This can be obtained
+#' @param mutation_data A data frame containing mutation data. This can be obtained
 #' using the 'import_mut_data' or 'read_vcf' functions.
 #' @param response A character string specifying the type of response to plot.
 #' Must be one of 'frequency', 'proportion', or 'sum'.
 #' @param mf_type A character string specifying the mutation count method to
 #' plot. Must be one of 'unique' or 'clonal'. Default is 'unique'.
-#' @param group_col A character string specifying the column(s) in 'mut_dat'
+#' @param group_col A character string specifying the column(s) in 'mutation_data'
 #' to group the data by. Default is 'sample'. The sum, proportion, or frequency
 #' will be calculated and a plot will be generated for all unique levels of this
 #' group. You can specify more than one column to group by.
@@ -34,7 +34,7 @@
 #' ^ should just explain this in calculate mutation freq and refer to that function.
 #' @export
 
-plot_trinucleotide <- function(mut_dat,
+plot_trinucleotide <- function(mutation_data,
                                response = c("frequency", "proportion", "sum"),
                                mf_type = "unique",
                                group_col = "dose",
@@ -53,7 +53,7 @@ plot_trinucleotide <- function(mut_dat,
   }
 
   # Calculate mutation frequency
-  mf_96 <- MutSeqR::calculate_mut_freq(data = mut_dat,
+  mf_96 <- MutSeqR::calculate_mut_freq(data = mutation_data,
                                        cols_to_group = group_col,
                                        subtype_resolution = "base_96",
                                        variant_types = "snv")

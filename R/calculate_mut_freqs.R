@@ -8,7 +8,7 @@
 #'
 #' Additionally, the operation is run by default using clonally expanded as well
 #' as unique mutations.
-#' @param data The data frame to be processed containing mutation data.
+#' @param mutation_data The data frame to be processed containing mutation data.
 #' Required columns are listed below.
 #' Synonymous names for these columns are accepted.
 #' \itemize{
@@ -32,7 +32,7 @@
 #' groups of interest that you want to calculate a frequency for.
 #' For instance, getting the frequency by `sample`. Other options might
 #' include `dose`, `locus`, or, `c("sample","locus")`. All listed variables
-#' must be a column in the data.
+#' must be a column in the mutation_data.
 #' @param subtype_resolution The resolution at which the frequencies are
 #' calculated. Options are
 #'  \itemize{
@@ -68,7 +68,7 @@
 #' @param summary A logical variable, whether to return a summary table
 #' (i.e., where only relevant columns for frequencies and groupings are
 #' returned). Setting this to false returns all columns in the original
-#' data, which might make plotting more difficult, but may provide additional
+#' mutation_data, which might make plotting more difficult, but may provide additional
 #' flexibility to power users.
 #' @param retain_metadata_cols a character vector that contains the the
 #' metadata columns that you would like to retain in the summary table.
@@ -83,8 +83,8 @@
 #'
 #' @returns A data frame with the mutation frequency calculated. If summary
 #' is set to TRUE, the data frame will be a summary table with the mutation
-#' frequency calculated for each group. If summary is set to FALSE, the data
-#' mutation frequency will be appended to each row of the original data.
+#' frequency calculated for each group. If summary is set to FALSE, the
+#' mutation frequency will be appended to each row of the original mutation_data.
 #'  \itemize{
 #'       \item `_MF_unique`: The mutation frequency calculated using the "min"
 #' method for mutation counting. All identical mutations within a samples are
@@ -111,7 +111,7 @@
 #' @importFrom utils modifyList
 #' @importFrom stats na.omit
 #' @export
-calculate_mut_freq <- function(data,
+calculate_mut_freq <- function(mutation_data,
                                cols_to_group = "dose",
                                subtype_resolution = "type",
                                variant_types = c("snv",
@@ -125,10 +125,10 @@ calculate_mut_freq <- function(data,
                                retain_metadata_cols = NULL) {
 # Validate Parameters
   # Check if data is provided as GRanges: if so, convert to data frame.
-  if (inherits(data, "GRanges")) {
-    data <- as.data.frame(data)
+  if (inherits(mutation_data, "GRanges")) {
+    mutation_data <- as.data.frame(mutation_data)
   }
-  if (!inherits(data, "data.frame")) {
+  if (!inherits(mutation_data, "data.frame")) {
     warning("You should use a data frame as input here.")
   }
   if (!subtype_resolution %in% names(MutSeqR::subtype_dict)) {
@@ -151,8 +151,8 @@ calculate_mut_freq <- function(data,
   if (!is.null(retain_metadata_cols) && !is.character(retain_metadata_cols)) {
     stop("retain_metadata_cols must be a character vector.")
   }
-  # Rename columns in data to default
-  data <- MutSeqR::rename_columns(data)
+  # Rename columns in mutation_data to default
+  mutation_data <- MutSeqR::rename_columns(mutation_data)
   # Check for all required columns
   required_columns <- c("sample",
                         "alt_depth", 
@@ -166,7 +166,7 @@ calculate_mut_freq <- function(data,
 if (!is.null(retain_metadata_cols)) {
   required_columns <- c(required_columns, retain_metadata_cols)
 }
-  data <- MutSeqR::check_required_columns(data, required_columns)
+  mutation_data <- MutSeqR::check_required_columns(mutation_data, required_columns)
   
   if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")
       && !("snv" %in% variant_types)) {
@@ -186,7 +186,7 @@ if (!is.null(retain_metadata_cols)) {
   # Un-duplicating the depth col
   # When there are +1 calls at the same position, modify total_depth such that
   # 1st call retains value, all other duplicates have total_depth = 0.
-  mut_freq_table <- data %>%
+  mut_freq_table <- mutation_data %>%
     dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
     dplyr::mutate(dup_id = dplyr::row_number()) %>%
     dplyr::ungroup() %>%
