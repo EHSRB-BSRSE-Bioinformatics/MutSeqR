@@ -154,7 +154,7 @@ signature_data <- signature_data %>%
   
   message("Writing mutation matrix to use as input to SigProfiler...")
   write.table(signature_data,
-              file = file.path(output_path, "matrices", "mutation_data.txt"),
+              file = file.path(output_path, "matrices", "mutations.txt"),
               sep = "\t", row.names = F, quote = F
   )
   
