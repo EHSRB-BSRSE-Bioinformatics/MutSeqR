@@ -53,7 +53,7 @@ plot_trinucleotide <- function(mutation_data,
   }
 
   # Calculate mutation frequency
-  mf_96 <- MutSeqR::calculate_mut_freq(data = mutation_data,
+  mf_96 <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
                                        cols_to_group = group_col,
                                        subtype_resolution = "base_96",
                                        variant_types = "snv")
