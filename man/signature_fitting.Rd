@@ -5,7 +5,7 @@
 \title{Run COSMIC signatures comparison}
 \usage{
 signature_fitting(
-  mutations,
+  mutation_data,
   project_name = "Default",
   project_genome = "GRCh38",
   env_name = "MutSeqR",
@@ -18,7 +18,7 @@ signature_fitting(
 )
 }
 \arguments{
-\item{mutations}{A data frame, imported from a .mut file}
+\item{mutation_data}{A data frame, imported from a .mut file}
 
 \item{project_name}{The name of the project; used to get mutation data into the required .txt format for SigProfiler}
 

@@ -41,7 +41,7 @@
 plot_mf <- function(mf_data,
                     sample_col,
                     mf_type = c("unique", "clonal", "both", "stacked"),
-                    fill_col = "dose",
+                    fill_col = NULL,
                     custom_palette = NULL,
                     sample_order = c("none", "smart", "arranged", "custom"),
                     sample_order_input = NULL,

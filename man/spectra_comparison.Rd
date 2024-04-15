@@ -5,15 +5,28 @@
 \title{Compare the overall mutation spectra between groups}
 \usage{
 spectra_comparison(
-  mf_data,
-  muts = "dose_sum_unique",
-  subtype_col = "normalized_subtype",
-  group = c("dose", "tissue"),
-  contrast_table_file,
+  mutation_data,
+  cols_to_group,
+  subtype_resolution = "base_6",
+  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
+  mf_type = "unique",
+  contrasts,
   cont_sep = "\\t"
 )
 }
 \arguments{
+\item{contrasts}{a filepath to a tab-delimited \code{.txt} file that
+will specify the comparisons to be made between groups. The table must
+consist of two columns. The first column will be a level within your group
+column and the second column must be the group level that it will be
+compared to. All values must correspond to entries in your \code{group}
+column. For more than one \code{group} variable, separate the levels of the
+each group with a colon. Ensure that all \code{groups} are represented in each
+entry for the table. See details for examples.}
+
+\item{cont_sep}{The delimiter used in the contrasts.
+Default is tab.}
+
 \item{mf_data}{The data frame containing the mutation count data.
 Mutation counts should be summarized per group for each mutation subtype of
 interest. This data can be obtained using \code{calculate_mut_freq(summary=TRUE)}.}
@@ -25,18 +38,6 @@ interest. This data can be obtained using \code{calculate_mut_freq(summary=TRUE)
 \item{group}{A vector of grouping variables: this should be the groups
 of interest across which you want to compare mutation spectra.
 Ex. c("dose", "tissue")}
-
-\item{contrast_table_file}{a filepath to a tab-delimited \code{.txt} file that
-will specify the comparisons to be made between groups. The table must
-consist of two columns. The first column will be a level within your group
-column and the second column must be the group level that it will be
-compared to. All values must correspond to entries in your \code{group}
-column. For more than one \code{group} variable, separate the levels of the
-each group with a colon. Ensure that all \code{groups} are represented in each
-entry for the table. See details for examples.}
-
-\item{cont_sep}{The delimiter used in the contrast_table_file.
-Default is tab.}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with
@@ -47,7 +48,7 @@ spectra_comparison compares the mutation spectra of groups using a
 modified contingency table approach.
 }
 \details{
-Examples of \code{contrast_table_file}:
+Examples of \code{contrasts}:
 If you have \code{group = "dose"} with dose groups 0, 25, 50, 100. The first
 column would contain the treated groups (25, 50, 100), while the second
 column would be 0, thus comparing each treated group to the control group.

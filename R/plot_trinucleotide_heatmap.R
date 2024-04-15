@@ -13,8 +13,10 @@
 #' @param rescale_data Logical value indicating whether to rescale the mutation proportions to increase the dynamic range of colors shown on the plot. (Default: TRUE)
 #' @param condensed More condensed plotting format. Default = F.
 #' @import ggplot2
-#' @importFrom dplyr %>% group_by summarise mutate
+#' @importFrom dplyr group_by summarise mutate rename all_of 
 #' @importFrom scales rescale
+#' @importFrom stringr str_length str_extract str_c
+#' @importFrom magrittr %>% 
 #' @return A ggplot object representing the heatmap plot.
 #' @export
 #' @examples
@@ -23,7 +25,7 @@
 # Some options for data format:
     # mf_data: single column with mutation subtype, context, and proportion. May have variant types mixed in. 
     # A data set with context and subtype seperated into different columns, simple spectrum  
-spectra_comparison_heatmap <- function(mf_data,
+plot_trinucleotide_heatmap <- function(mf_data,
                                        group_var = "dose",
                                        mf_type = "unique",
                                        mut_proportion_scale = "turbo",
@@ -192,7 +194,7 @@ if (!is.null(group_var)) {
  }
   y_label <- paste(group_var)
   mf_data <- mf_data %>%
-    rename(Group = !!ensym(group_var)) 
+    dplyr::rename(Group = !!ensym(group_var)) 
   mf_data$Group <- as.factor(mf_data$Group)
 } else {
   y_label <- "Sample"
@@ -227,7 +229,7 @@ fig <- ggplot(df, aes(
             y = sample,
             fill = ProportionPlot)) +
             geom_raster() +
-            scale_fill_viridis_c(
+            viridis::scale_fill_viridis_c(
                 name = "Relative proportion", limits = c(0, max),
                 option = mut_proportion_scale,
                 na.value = "white") +

@@ -7,7 +7,7 @@
 bmd_ma(
   mf_data,
   data_type = c("individual", "summary"),
-  dose_col = "dose",
+  dose_col,
   response_cols = c("sample_MF_unique", "sample_MF_clonal"),
   sd_col = NULL,
   n_col = NULL,

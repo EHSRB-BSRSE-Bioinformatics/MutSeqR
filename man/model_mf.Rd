@@ -14,7 +14,7 @@ model_mf(
   muts = "sample_sum_unique",
   total_count = "sample_group_depth",
   family = NULL,
-  contrast_table_file = NULL,
+  contrasts = NULL,
   cont_sep = "\\t",
   ...
 )
@@ -49,7 +49,7 @@ used in the model. The default is "quasibinomial" for generalized linear models
 and "binomial" for generalized linear mixed-models. See \link[stats]{glm}
 for more details.}
 
-\item{contrast_table_file}{a filepath to a tab-delimited \code{.txt} file that will
+\item{contrasts}{a filepath to a tab-delimited \code{.txt} file that will
 provide the information necessary to make pairwise comparisons between groups.
 The table must consist of two columns. The first column will be a group within
 your fixed_effects and the second column must be the group that it will be
@@ -81,8 +81,8 @@ normality assumption is likely to be true.
 For a normal distribution, we expect points to roughly follow the y=x line.
 \item point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects.
 \item point_estimates: the point estimates for the fixed effects.
-\item pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the \code{contrast_table_file}.
-\item pairwise_comparisons: the results of pairwise comparisons specified in the \code{contrast_table_file}.
+\item pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the \code{contrasts}.
+\item pairwise_comparisons: the results of pairwise comparisons specified in the \code{contrasts}.
 }
 }
 \description{
@@ -123,7 +123,7 @@ Intuitively, the reference_level would refer to the  negative control dose, "0"
 since we are interested in testing how the treatment might change mutation
 frequency relative to the control.
 
-Examples of \code{contrast_table_file}:
+Examples of \code{contrasts}:
 
 If you have a \code{fixed_effect} "dose" with dose groups 0, 25, 50, 100,
 then the first column would contain the treated groups (25, 50, 100), while

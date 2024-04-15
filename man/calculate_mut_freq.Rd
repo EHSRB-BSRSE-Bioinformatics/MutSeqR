@@ -5,7 +5,7 @@
 \title{Calculate mutation frequency}
 \usage{
 calculate_mut_freq(
-  data,
+  mutation_data,
   cols_to_group = "dose",
   subtype_resolution = "type",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
@@ -15,7 +15,7 @@ calculate_mut_freq(
 )
 }
 \arguments{
-\item{data}{The data frame to be processed containing mutation data.
+\item{mutation_data}{The data frame to be processed containing mutation data.
 Required columns are listed below.
 Synonymous names for these columns are accepted.
 \itemize{
@@ -40,7 +40,7 @@ in cols_to_group.
 groups of interest that you want to calculate a frequency for.
 For instance, getting the frequency by \code{sample}. Other options might
 include \code{dose}, \code{locus}, or, \code{c("sample","locus")}. All listed variables
-must be a column in the data.}
+must be a column in the mutation_data.}
 
 \item{subtype_resolution}{The resolution at which the frequencies are
 calculated. Options are
@@ -80,7 +80,7 @@ Default is TRUE.}
 \item{summary}{A logical variable, whether to return a summary table
 (i.e., where only relevant columns for frequencies and groupings are
 returned). Setting this to false returns all columns in the original
-data, which might make plotting more difficult, but may provide additional
+mutation_data, which might make plotting more difficult, but may provide additional
 flexibility to power users.}
 
 \item{retain_metadata_cols}{a character vector that contains the the
@@ -97,8 +97,8 @@ and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
 \value{
 A data frame with the mutation frequency calculated. If summary
 is set to TRUE, the data frame will be a summary table with the mutation
-frequency calculated for each group. If summary is set to FALSE, the data
-mutation frequency will be appended to each row of the original data.
+frequency calculated for each group. If summary is set to FALSE, the
+mutation frequency will be appended to each row of the original mutation_data.
 \itemize{
 \item \verb{_MF_unique}: The mutation frequency calculated using the "min"
 method for mutation counting. All identical mutations within a samples are

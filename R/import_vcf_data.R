@@ -66,7 +66,7 @@
 #' @importFrom plyranges join_overlap_left
 #' @export
 #' 
-read_vcf <- function(
+import_vcf_data <- function(
     vcf_file,
     vaf_cutoff,
     range_buffer = 1,
@@ -333,10 +333,15 @@ ranges_outside_regions <- dat %>%
   dplyr::select("sample", "seqnames", "start", "end", "ref", "alt")
 
 # Display the ranges that were filtered out of the data
-if(nrow(ranges_outside_regions) > 0) {
-print("Subset of data is outside specified regions:")
-print(ranges_outside_regions)
-}
+  # Display the ranges that were filtered out of the data
+  if (nrow(ranges_outside_regions) > 0) {
+    print(paste(
+      nrow(ranges_outside_regions),
+      "rows of data were outside specified regions and were filtered out of the mutation data.
+      The function will return a list of two dataframes. Mutation data will be stored
+      in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
+    ))
+  }
 # Filter the ranges out of the data
   # TO DO: check how this is going to affect the total depth. 
 dat <- dat %>%
@@ -419,11 +424,29 @@ dat <- dat %>%
     start.field = "start",
     end.field = "end",
     starts.in.df.are.0based =  FALSE)
-    return(gr)
+    
+    if (nrow(ranges_outside_regions) > 0) {
+      ls <- list(
+        mut_dat = gr,
+        rows_outside_regions = ranges_outside_regions
+      )
+      return(ls) # return both mutation data and filtered regions
+    } else {
+      return(gr)  # no filtered regions: return mutation data
+    }
   } else {
     dat <- dat %>%
       dplyr::rename(contig = "seqnames")
-    return(dat)
+
+    if (nrow(ranges_outside_regions) > 0) {
+      ls <- list(
+        mut_dat = dat,
+        rows_outside_regions = ranges_outside_regions
+      )
+      return(ls) # return both mutation data and filtered regions
+    } else {
+      return(dat) # no filtered regions: return mutation data
+    }
   }
 }
 

@@ -564,9 +564,9 @@ import_mut_data <- function(mut_file,
   if (nrow(ranges_outside_regions) > 0) {
     print(paste(
       nrow(ranges_outside_regions),
-      "rows of data were outside specified regions and were filtered out.
-      Mutation data and filtered rows will be returned in seperate
-      data frames."
+      "rows of data were outside specified regions and were filtered out of the mutation data.
+      The function will return a list of two dataframes. Mutation data will be stored
+      in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
     ))
   }
 

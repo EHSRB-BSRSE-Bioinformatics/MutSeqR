@@ -49,6 +49,7 @@ Suggests:
     BSgenome.Mmusculus.UCSC.mm10,
     GenVisR,
     knitr,
+    packcircles,
     rmarkdown,
     sigminer,
     SigProfilerAssignmentR,

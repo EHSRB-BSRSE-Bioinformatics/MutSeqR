@@ -2,10 +2,10 @@
 % Please edit documentation in R/plot_spectra.R
 \name{plot_spectra}
 \alias{plot_spectra}
-\title{GenVisR Transition-transversion plot}
+\title{Transition-transversion plot}
 \usage{
 plot_spectra(
-  mf_data = mf_data,
+  mf_data,
   sample_col = "sample",
   response_col = "proportion_unique",
   subtype_col = "normalized_subtype",
