@@ -208,7 +208,7 @@ plot_trinucleotide <- function(mutation_data,
       beside = TRUE,
       las = 2, # make labels perpendicular to axis
       border = NA,
-      space = 0.2,
+      space = 2,
       cex.main = cex.axistext * 2
       )
 
@@ -224,7 +224,7 @@ plot_trinucleotide <- function(mutation_data,
                   col = rearr.colours,
                   beside = TRUE,
                   border = NA,
-                  space = 0.2,
+                  space = 2,
                   add = TRUE,
                   axes = FALSE)
 
@@ -248,15 +248,15 @@ plot_trinucleotide <- function(mutation_data,
          col = "gray",
          col.axis = "black",
          pos = min(bp[,1]) - 1.2,
-         cex.axis = cex.axistext * 2,
+         cex.axis = cex.axistext,
          las = 1)
 
-    # Add subtype labels in coloured rectangles
+    # Add subtype labels and coloured rectangles
     par(xpd = TRUE) # allow plotting outside the plot region
-    usr <- par("usr")
+    usr <- par("usr") # plot region dimensions
     rect_top_relative <- 1.05
     rect_top <- usr[4] * rect_top_relative
-    text_y <- rect_top * 1.03
+    text_y <- rect_top * 1.02
     rect(xleft = bp[1], ybottom = usr[4], xright = bp[16], ytop = rect_top, col = plotcolours[1], border = NA)
     rect(xleft = bp[17], ybottom = usr[4], xright = bp[32], ytop = rect_top, col = plotcolours[2], border = NA)
     rect(xleft = bp[33], ybottom = usr[4], xright = bp[48], ytop = rect_top, col = plotcolours[3], border = NA)
@@ -265,12 +265,12 @@ plot_trinucleotide <- function(mutation_data,
     rect(xleft = bp[81], ybottom = usr[4], xright = bp[96], ytop = rect_top, col = plotcolours[6], border = NA)
 
     # Add text to the rectangles
-    text(bp[8], text_y , labels[1], cex = cex.axistext*2, col = "black", font = 2)
-    text(bp[24], text_y, labels[2], cex = cex.axistext*2, col = "black", font = 2)
-    text(bp[40], text_y, labels[3], cex = cex.axistext*2, col = "black", font = 2)
-    text(bp[56], text_y, labels[4], cex = cex.axistext*2, col = "black", font = 2)
-    text(bp[72], text_y, labels[5], cex = cex.axistext*2, col = "black", font = 2)
-    text(bp[88], text_y, labels[6], cex = cex.axistext*2, col = "black", font = 2)
+    text(bp[8], text_y, labels[1], cex = cex.axistext*1.2, col = "black", font = 2)
+    text(bp[24], text_y, labels[2], cex = cex.axistext*1.2, col = "black", font = 2)
+    text(bp[40], text_y, labels[3], cex = cex.axistext*1.2, col = "black", font = 2)
+    text(bp[56], text_y, labels[4], cex = cex.axistext*1.2, col = "black", font = 2)
+    text(bp[72], text_y, labels[5], cex = cex.axistext*1.2, col = "black", font = 2)
+    text(bp[88], text_y, labels[6], cex = cex.axistext*1.2, col = "black", font = 2)
 
     dev.off()
   }
