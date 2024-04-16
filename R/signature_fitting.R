@@ -71,7 +71,8 @@ signature_fitting <- function(mutation_data,
       # Virtualenv doesn't exist, set it up
       reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
       # Install required packages
-      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator", "SigProfilerAssignment", "SigProfilerExtractor"))
+        # Patched version of pandas and scipy to avoid dependency errors: binom_test
+      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator", "SigProfilerAssignment", "SigProfilerExtractor", "pandas==1.5.3", "scipy==1.11.4"))
     } else {
       # User chose not to install the packages
       cat("Installation aborted by the user.\n")
