@@ -1,4 +1,4 @@
-#' GenVisR Transition-transversion plot
+#' Transition-transversion plot
 #' @description Given a data frame construct a plot displaying the
 #' mutation subtypes observed in a cohort.
 #' @param mf_data A data frame containing the mutation data. This data must
@@ -6,33 +6,33 @@
 #' the sample/cohort names, and a column containing the response variable.
 #' Typical response variables can be the subtype frequency, proportion, or
 #' count.
-#' @param sample_col The name of the column in data that contains the
+#' @param group_col The name of the column in data that contains the
 #' sample/cohort names.
 #' @param response_col The name of the column in data that contains the
 #' response variable. Typical response variables can be the subtype frequency,
 #' proportion, or count.
 #' @param subtype_col The name of the column in data that contains the
 #' mutation subtypes.
-#' @param sample_order The method for ordering the samples within the plot.
+#' @param group_order The method for ordering the samples within the plot.
 #' Options include:
 #' \itemize{
 #'   \item `none`: No ordering is performed. Default.
-#'   \item `smart`: Samples are ordered based on the sample names.
-#'   \item `arranged`: Samples are ordered based on one or more factor column(s)
+#'   \item `smart`: Groups are ordered based on the group names.
+#'   \item `arranged`: Groups are ordered based on one or more factor column(s)
 #' in mf_data. Column names are passed to the function using the
-#' `sample_order_input`.
-#'  \item `custom`: Samples are ordered based on a custom vector of sample
+#' `group_order_input`.
+#'  \item `custom`: Groups are ordered based on a custom vector of group
 #' names. The custom vector is passed to the function using the
-#' `sample_order_input`.
-#' \item `clustered`: Samples are ordered based on hierarchical clustering. The
+#' `group_order_input`.
+#' \item `clustered`: Groups are ordered based on hierarchical clustering. The
 #' dissimilarity matrix can be specified using the `dist` argument. The
 #' agglomeration method can be specified using the `cluster_method` argument.
 #' }
-#' @param sample_order_input A character vector specifying details for the
-#' sample order method. If `sample_order` is `arranged`, `sample_order_input`
+#' @param group_order_input A character vector specifying details for the
+#' group order method. If `group_order` is `arranged`, `group_order_input`
 #' should contain the column name(s) to be used for ordering the samples. If
-#' `sample_order` is `custom`, `sample_order_input` should contain the custom
-#' vector of sample names.
+#' `group_order` is `custom`, `group_order_input` should contain the custom
+#' vector of group names.
 #' @param dist  The dissimilarity matrix for hierarchical clustering. Options
 #' are `cosine`, `euclidean`, `maximum`, `manhattan`, `canberra`, `binary` or
 #' `minkowski`. The default is `cosine`. See \link[stats]{dist} for details.
@@ -50,67 +50,104 @@
 #' @importFrom gtools mixedsort
 #' @export
 
-plot_spectra <- function(mf_data,
-                         sample_col = "sample",
-                         response_col = "proportion_unique",
-                         subtype_col = "normalized_subtype",
-                         sample_order = "none",
-                         sample_order_input = NULL,
+plot_spectra <- function(mutation_data,
+                         group_col = "sample",
+                         subtype_resolution = "base_6",
+                         response = c("frequency", "proportion", "sum"),
+                         mf_type = c("unique", "clonal"),
+                         variant_types = c("snv",
+                                                 "deletion",
+                                                 "insertion",
+                                                 "complex",
+                                                 "mnv",
+                                                 "symbolic"),
+                         group_order = "none",
+                         group_order_input = NULL,
                          dist = "cosine",
                          cluster_method = "ward.D",
                          palette = NULL,
                          x_lab = NULL,
                          y_lab = NULL) {
+  
+ retain_metadata_cols <- NULL
+if (group_order == "arranged") {
+  retain_metadata_cols <- group_order_input
+}
+  mf_data <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
+                                       cols_to_group = group_col,
+                                       subtype_resolution = subtype_resolution,
+                                       variant_types = variant_types,
+                                       retain_metadata_cols = retain_metadata_cols)
 
+  group_col_prefix <- paste(group_col, collapse = "_")
+
+  # Desginate the response column
+  if (response == "proportion") {
+    response_col <- paste0("proportion_", mf_type)
+  } else if (response == "frequency") {
+    response_col <- paste0(group_col_prefix, "_MF_", mf_type)
+  } else if (response == "sum") {
+    response_col <- paste0(group_col_prefix, "_sum_", mf_type)
+  } else {
+    stop("response must be one of 'frequency', 'proportion', or 'sum'")
+  }
+  # concatenate multiple group columns into one
+  if (length(group_col) > 1) {
+    mf_data$group <- apply(mf_data[group_col], 1, paste, collapse = "_")
+  } else {
+    mf_data$group <- mf_data[[group_col]]
+  }
+  # Select and rename required columns
   plot_data <- mf_data %>%
-    dplyr::select({{sample_col}}, {{subtype_col}}, {{response_col}})
+    dplyr::select("group",
+                  dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
+                  dplyr::all_of(response_col)) %>%
+    dplyr::rename(
+      subtype = dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
+      response = dplyr::all_of(response_col)
+    )
 
-  if (sample_order == "none") {
-    order <- as.vector(unique(plot_data[[sample_col]]))
-    mf_data[[sample_col]] <- factor(mf_data[[sample_col]])
-  } else if (sample_order == "smart") {
-    order <- as.vector(unique(mf_data[[sample_col]]))
+  if (group_order == "none") {
+    order <- as.vector(unique(plot_data$group))
+    plot_data$group <- factor(plot_data$group, levels = order)
+  } else if (group_order == "smart") {
+    order <- as.vector(unique(plot_data$group))
     order <- gtools::mixedsort(order)
-    mf_data[[sample_col]] <- factor(mf_data[[sample_col]], levels = order)
-  } else if (sample_order == "arranged") {
-    plot_data <- mf_data %>%
-      dplyr::select({{sample_col}},
-                    {{subtype_col}},
-                    {{response_col}},
-                    {{sample_order_input}}) %>%
-      dplyr::arrange(dplyr::across(dplyr::all_of({{sample_order_input}})))
-    order <- as.vector(unique(plot_data[[sample_col]]))
-    plot_data[[sample_col]] <- factor(plot_data[[sample_col]], levels = order)
+    plot_data$group <- factor(plot_data$group, levels = order)
+  } else if (group_order == "arranged") {
+    plot_data$group_order <- mf_data[[group_order_input]]
     plot_data <- plot_data %>%
-      dplyr::select({{sample_col}},
-                    {{subtype_col}},
-                    {{response_col}})
-  } else if (sample_order == "custom") {
-    plot_data[[sample_col]] <- factor(plot_data[[sample_col]],
-                                     levels = sample_order_input)
-  } else if (sample_order == "clustered") {
+      dplyr::arrange(group_order)
+    order <- as.vector(unique(plot_data$group))
+    plot_data$group <- factor(plot_data$group, levels = order)
+  } else if (group_order == "custom") {
+    plot_data$group <- factor(plot_data$group,
+                                     levels = group_order_input)
+  } else if (group_order == "clustered") {
     # Cluster the samples
     hc <- cluster_spectra(mf_data = plot_data,
-                  sample_col = sample_col,
-                  response_col = response_col,
-                  subtype_col = subtype_col,
+                  group_col = "group",
+                  response_col = "response",
+                  subtype_col = "subtype",
                   dist = dist,
                   cluster_method = cluster_method)
     # Reorder the samples based on hierarchical clustering
     order <- hc$labels[hc$order]
     # Reorder the levels of the sample variable in your data frame
-    plot_data[[sample_col]] <- factor(plot_data[[sample_col]],
+    plot_data$group <- factor(plot_data$group,
                                       levels = order)
   }
-
-  subtype_order <- c("symbolic", "complex", "insertion",
-                     "deletion", "mnv", "T>G", "T>C",
-                     "T>A", "C>T", "C>G", "C>A")
-
-  plot_data[[subtype_col]] <- factor(plot_data[[subtype_col]],
-                                     levels = subtype_order)
+  if (subtype_resolution != "type") {
+  subtype_order <- c(MutSeqR::subtype_list$type, rev(MutSeqR::subtype_list[[subtype_resolution]]))
+  } else {
+    subtype_order <- c(MutSeqR::subtype_list$type)
+  }
+  plot_data$subtype <- factor(plot_data$subtype,
+                              levels = subtype_order)
 
   if (is.null(palette)) {
+    if(subtype_resolution == "base_6") {
+      # Standard palette for simple spectra
     palette <- c("C>A" = "#3288BD",
                  "C>G" = "#99D594",
                  "C>T" = "#E6F598",
@@ -121,11 +158,42 @@ plot_spectra <- function(mf_data,
                  "deletion" = "black",
                  "insertion" = "grey",
                  "symbolic" = "purple")
+    } else if (subtype_resolution == "base_12") {
+      # Sanger colours for 12 base spectra
+      palette <- c(
+                 "A>C" = "limegreen",
+                 "A>G" = "forestgreen",
+                 "A>T" = "darkgreen",
+                 "C>A" = "skyblue1",
+                 "C>G" = "dodgerblue2",
+                 "C>T" = "darkblue",
+                 "G>A" = "grey28",
+                 "G>C" = "grey25",
+                 "G>T" = "grey0",
+                 "T>A" = "red2",
+                 "T>C" = "red3",
+                 "T>G" = "red4",
+                 "mnv" = "hotpink",
+                 "deletion" = "white",
+                 "insertion" = "azure2",
+                 "symbolic" = "purple")
+    } else if (subtype_resolution == "base_96") {
+      base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
+      palette <- colorRampPalette(base_colors)(101)
+    } else if (subtype_resolution == "base_192") {
+      base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
+      palette <- colorRampPalette(base_colors)(297)
+    } else if( subtype_resolution == "type") {
+      palette <- c("mnv" = "pink",
+                 "deletion" = "black",
+                 "insertion" = "grey",
+                 "symbolic" = "purple",
+                 "snv" = "blue")
+    }
   }
-
   # Axis labels
   if (is.null(x_lab)) {
-    x_lab <- sample_col
+    x_lab <- group_col
   }
   if (is.null(y_lab)) {
     y_lab <- response_col
@@ -133,9 +201,9 @@ plot_spectra <- function(mf_data,
   axis_labels <- ggplot2::labs(x = x_lab, y = y_lab)
 
   # bar plot
-  bar <- ggplot(plot_data, aes(x = .data[[sample_col]],
-                               y = .data[[response_col]],
-                               fill = .data[[subtype_col]],
+  bar <- ggplot(plot_data, aes(x = .data$group,
+                               y = .data$response,
+                               fill = .data$subtype,
                                add = FALSE)) +
     geom_bar(stat = "identity") +
     scale_fill_manual(values = palette) +
@@ -145,12 +213,12 @@ plot_spectra <- function(mf_data,
           axis.text.x = element_text(angle = 90)) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01)))
 
-  if (sample_order == "clustered") {
+  if (group_order == "clustered") {
     plot <-  bar +
       ggh4x::scale_x_dendrogram(hclust = hc, position = "top", labels = NULL,
       ) +
       theme(axis.ticks.length.x = unit(10, "pt"))
-    x_axis <- ggplot(plot_data, aes(x = .data[[sample_col]])) +
+    x_axis <- ggplot(plot_data, aes(x = .data$group)) +
       theme_minimal() +
       labs(x = x_lab) +
       theme(axis.text.x = element_text(angle = 90),
@@ -171,7 +239,7 @@ plot_spectra <- function(mf_data,
 #' @param mf_data A data frame containing the mutation data. This data must
 #' include a column containing the mutation subtypes, a column containing
 #' the sample/cohort names, and a column containing the response variable.
-#' @param sample_col The name of the column in data that contains the
+#' @param group_col The name of the column in data that contains the
 #' sample/cohort names.
 #' @param response_col The name of the column in data that contains the
 #' response variable. Typical response variables can be the subtype frequency,
@@ -193,21 +261,21 @@ plot_spectra <- function(mf_data,
 #' @return A dendrogram object representing the hierarchical clustering of the
 #' samples.
 cluster_spectra <- function(mf_data = mf_data,
-                    sample_col = "sample",
+                    group_col = "sample",
                     response_col = "proportion_unique",
                     subtype_col = "normalized_subtype",
                     dist = "cosine",
                     cluster_method = "ward.D") {
 
 # Get unique samples and subtypes
-unique_samples <- unique(mf_data[[sample_col]])
+unique_samples <- unique(mf_data[[group_col]])
 unique_subtypes <- unique(mf_data[[subtype_col]])
 # Pivot Wide
 mat <- matrix(0, nrow = length(unique_samples),
               ncol = length(unique_subtypes),
               dimnames = list(unique_samples, unique_subtypes))
 for (i in seq_len(nrow(mf_data))) {
-  mat[mf_data[[sample_col]][i], mf_data[[subtype_col]][i]] <- mf_data[[response_col]][i]
+  mat[mf_data[[group_col]][i], mf_data[[subtype_col]][i]] <- mf_data[[response_col]][i]
 }
 
 if (dist == "cosine") {
