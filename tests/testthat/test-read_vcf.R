@@ -1,14 +1,14 @@
 library(testthat)
 
 # Define a test case for import_mut_data function
-test_that("read_vcf function correctly imports vcf files", {
+test_that("import_vcf_datafunction correctly imports vcf files", {
   # Create temporary test file with example mutation data
  
 test_file <- system.file("extdata", "vcf_sample.vcf", package = "MutSeqR")
 
 
   # Call the import_mut_data function on the test data
-  mut_data <- read_vcf(vcf_file = test_file, vaf_cutoff = 0.1, regions = "mouse", output_granges = TRUE)
+  mut_data <- import_vcf_data(vcf_file = test_file, vaf_cutoff = 0.1, regions = "mouse", output_granges = TRUE)
   
   expect_true(is(mut_data, "GRanges"), info = "Check if the resulting object is a granges object")
   
@@ -75,7 +75,7 @@ test_file <- system.file("extdata", "vcf_sample.vcf", package = "MutSeqR")
                                                      0, 10814/11601, 11180/11584, 
                                                      403/11584, 11561/11564, 1/21569), 
                info = "Check that the vaf column is created correctly using the take_del method")
-   mut_data_take_mean <- read_vcf(vcf_file = test_file, vaf_cutoff = 0.1, regions = "mouse", depth_calc = "take_mean", output_granges = TRUE)
+   mut_data_take_mean <- import_vcf_data(vcf_file = test_file, vaf_cutoff = 0.1, regions = "mouse", depth_calc = "take_mean", output_granges = TRUE)
   expect_equal(GenomicRanges::mcols(mut_data_take_mean)$total_depth, c(4123, 3491, 3524, 
                                                                       4268, 21306, 22110, 
                                                                       22110, 11601, 11584, 11584, 

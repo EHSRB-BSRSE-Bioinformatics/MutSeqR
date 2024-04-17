@@ -30,7 +30,7 @@
 #' used in the model. The default is "quasibinomial" for generalized linear models
 #' and "binomial" for generalized linear mixed-models. See \link[stats]{glm} 
 #' for more details. 
-#' @param contrast_table_file a filepath to a tab-delimited `.txt` file that will 
+#' @param contrasts a filepath to a tab-delimited `.txt` file that will 
 #' provide the information necessary to make pairwise comparisons between groups. 
 #' The table must consist of two columns. The first column will be a group within 
 #' your fixed_effects and the second column must be the group that it will be 
@@ -76,7 +76,7 @@
 #' since we are interested in testing how the treatment might change mutation 
 #' frequency relative to the control.
 #' 
-#' Examples of `contrast_table_file`:
+#' Examples of `contrasts`:
 #' 
 #' If you have a `fixed_effect` "dose" with dose groups 0, 25, 50, 100, 
 #' then the first column would contain the treated groups (25, 50, 100), while 
@@ -141,8 +141,8 @@
 #'  For a normal distribution, we expect points to roughly follow the y=x line.  
 #' - point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
 #' - point_estimates: the point estimates for the fixed effects.
-#' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrast_table_file`.
-#' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrast_table_file`.
+#' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
+#' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom lme4 glmer
@@ -158,7 +158,7 @@ model_mf <- function(mf_data,
                     muts = "sample_sum_unique",
                     total_count = "sample_group_depth",
                     family = NULL,
-                    contrast_table_file = NULL, 
+                    contrasts = NULL, 
                     cont_sep = "\t",
                     ...
                     ) {
@@ -297,24 +297,34 @@ for (factor_name in fixed_effects) {
   model_estimates <- model_estimates[,-c(3,4,5,6)]
   colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
 
+# Split the string into individual characters
+chars <- strsplit(fixed_effects, " ")
+# Count the characters
+count <- length(unlist(chars))
+for (i in seq_along(chars)) {
+  # Assign each element to a separate variable in the global environment
+  assign(paste("var", i, sep = ""), chars[[i]])
+}
+    # Extract rownames into a column for each contrast variable
+for (i in 1:count) {
+    var_i <- get(paste0("var", i))
+    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+}
+
+
   ##############################################################
  # Pairwise Comparisons  
  ##################################################################
   # load contrast table file and do checks
-  if (!is.null(contrast_table_file)) {
-    contrast_table <- read.delim(file.path(contrast_table_file), sep = cont_sep,
-                                 header = F)
-  if (ncol(contrast_table) <= 1) {
-    stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+  if (!is.null(contrasts)) {
+    if (is.data.frame(contrasts)) {
+        contrast_table <- contrasts
+    } else {
+        contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
+    if (ncol(contrast_table) <= 1) {
+      stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+    }
   }
-  
-  # all_valid <- all(contrast_table %in% fixed_effects_levels)
-  # if (!all_valid) {
-  #   invalid_values <- contrast_table[!(contrast_table %in% fixed_effects_levels)]
-  #   stop(paste("Invalid values in contrast_table:", paste(invalid_values, collapse = ","), 
-  #              ". Please ensure that values in the contrast_table correspond to values in your factor column."))
-  # }
-  
   model_matrix <- as.data.frame(model_matrix)
   contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
   
@@ -348,23 +358,42 @@ for (factor_name in fixed_effects) {
   pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
   pairwise_comparisons$std.error <- sqrt(delta*pairwise_comparisons$std.error^2)
   pairwise_comparisons <- pairwise_comparisons[,-5]
-  colnames(pairwise_comparisons) <- c("Estimate", "Std.Err", "Obs.T", "p.value", "df", "Lower", "Upper")
+  colnames(pairwise_comparisons) <- c("Fold.Change", "FC.Std.Err", "Obs.T", "p.value", "df", "FC.Lower", "FC.Upper")
   
-  pairwise_comparisons$adj_p.value <- MutSeqR::my.holm.sidak(pairwise_comparisons$p.value)
-  
+  pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
+  pairwise_comparisons <- pairwise_comparisons %>%
+  dplyr::mutate(
+    Significance = case_when(
+      adj_p.value <= 0.001 ~ "***",
+      adj_p.value <= 0.01 ~ "**",
+      adj_p.value <= 0.05 ~ "*",
+      TRUE ~ ""
+    )
+  )
+
+pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
+pairwise_comparisons$contrast_group2 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 2)
+for (i in 1:count) {
+    var_i <- get(paste0("var", i))
+    pairwise_comparisons[[paste0(var_i, "_1")]] <- sapply(strsplit(pairwise_comparisons$contrast_group1, ":"), "[", i)
+    pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
+}
+pairwise_comparisons <- pairwise_comparisons %>%
+  dplyr::select(-contrast_group1, -contrast_group2)
   }
   
-  model_results <- list(model_data = mf_data, 
+  model_results <- list(model = model,
+                        model_data = mf_data,
                         model_formula = model_formula,
                         summary = model_summary,
                         residuals_histogram = hist,
-                        residuals_qq_plot = qqplot,
+residuals_qq_plot = qqplot,
                         point_estimates_matrix = model_matrix,
                         point_estimates = model_estimates)
   if (length(fixed_effects) > 1) {
     model_results$anova <- model_anova
   }
-  if(!is.null(contrast_table_file)){
+  if(!is.null(contrasts)){
     model_results$pairwise_comparisons_matrix <- result_matrix
     model_results$pairwise_comparisons <- pairwise_comparisons
   }

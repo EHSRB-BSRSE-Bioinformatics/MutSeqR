@@ -4,7 +4,7 @@
 #' @param mut_file "filepath". The .mut file containing mutation
 #' data to be imported. If you specify a folder, the function will
 #' attempt to read all files in the folder and combine them into
-#' a single data frame.Required columns are listed below.
+#' a single data frame. Required columns are listed below.
 #' Synonymous names for these columns are accepted.
 #' \itemize{
 #'      \item `contig`: The reference sequence name.
@@ -133,13 +133,41 @@ import_mut_data <- function(mut_file,
                             sd_sep = "\t",
                             vaf_cutoff,
                             range_buffer = 0,
-                            regions = c("human", "mouse", "custom"),
+                            regions = c("human", "mouse", "rat", "custom"),
                             custom_regions_file = NULL,
                             rg_sep = "\t",
                             is_0_based = TRUE,
                             depth_calc = "take_del",
                             custom_column_names = NULL,
                             output_granges = FALSE) {
+  # Validate parameters
+  if (!is.logical(rsids)) {
+    stop("Error: rsids must be a logical variable")
+  }
+  if (vaf_cutoff < 0 || vaf_cutoff > 1) {
+  stop("Error: The VAF cutoff must be between 0 and 1")
+  }
+  if (!is.numeric(range_buffer) || range_buffer < 0) {
+    stop("Error: The range buffer must be a non-negative number")
+  }
+  if (!regions %in% c("human", "mouse", "rat", "custom")) {
+    stop("Error: regions must be 'human', 'mouse', 'rat', or 'custom'")
+  }
+  if (!is.logical(is_0_based)) {
+    stop("Error: is_0_based must be a logical variable")
+  }
+  if (!depth_calc %in% c("take_del", "take_mean")) {
+    stop("Error: depth_calc must be 'take_del' or 'take_mean'")
+  }
+  if (!is.null(custom_column_names)) {
+    if (!is.list(custom_column_names)) {
+    stop("Error: custom_column_names must be a list")
+    }
+  }
+  if (!is.logical(output_granges)) {
+    stop("Error: output_granges must be a logical variable")
+  }
+
   mut_file <- file.path(mut_file)
 
   # Validate file/folder input
@@ -167,7 +195,7 @@ import_mut_data <- function(mut_file,
       }
       if (length(empty_list) != 0) {
         warning(paste("Warning: The following files in the specified
-                        directory are empty:", empty_list_str))
+                        directory are empty and will be removed:", empty_list_str))
       }
 
       # Remove empty files from mut_files
@@ -201,14 +229,49 @@ import_mut_data <- function(mut_file,
                            You may want to set mut_sep to properly reflect
                            the delimiter used for the data you are importing.")
   }
+    # Validate and join sample data file if provided
+    if (!is.null(sample_data_file)) {
+    sample_file <- file.path(sample_data_file)
+    if (!file.exists(sample_file)) {
+      stop("Error: The sample data file path you've specified is invalid")
+    }
+    if (file.info(sample_file)$size == 0) {
+      stop("Error: You are trying to import an empty sample data file")
+    }
+    sampledata <- read.delim(file.path(sample_data_file),
+                             sep = sd_sep,
+                             header = TRUE)
+    if (ncol(sampledata) <= 1) {
+      stop("Your imported sample data only has one column.
+                           You may want to set sd_sep to properly reflect
+                           the delimiter used for the data you are importing.")
+    }
+    # Join
+    dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
+  }
+
+  # Validate custom regions file if regions is set to "custom"
+  if (regions == "custom") {
+    if (is.null(custom_regions_file)) {
+      stop("Error: You have set regions to 'custom', but have not
+      provided a custom regions file!")
+    }
+    rg_file <- file.path(custom_regions_file)
+    if (!file.exists(rg_file)) {
+      stop("Error: The custom regions file path you've specified is invalid")
+    }
+    if (file.info(rg_file)$size == 0) {
+      stop("Error: You are trying to import an empty custom regions file")
+    }
+  }
+
+  # Validate ID column if rsids is TRUE
+  # Add is_known column if rsids is TRUE
   if (rsids == TRUE) {
     if (!"id" %in% colnames(dat)) {
       stop("Error: you have set rsids to TRUE,
       but there is no id column in the mut file!")
     }
-    # If we have rs IDs, add a column indicating whether the mutation
-    # is a known SNP
-
     dat <- dat %>% dplyr::mutate(is_known = ifelse(!.data$id == ".", "Y", "N"))
   }
 
@@ -241,29 +304,19 @@ import_mut_data <- function(mut_file,
   } else {
     print("Data checked for NA values in required columns: PASS")
   }
-
-  # Read in sample data if it's provided
-  #  #Trim and lowercase column headings
-  # read.delim check.names = TRUE adds an X
-  if (!is.null(sample_data_file)) {
-    colnames(dat) <- tolower(gsub("\\.+", "", # deals with middle periods
-      gsub(
-        "(\\.+)?$", "", # deals with trailing periods
-        gsub(
-          "^((X\\.+)|(\\.+))?", "", # deals with beginning X. and periods
-          colnames(dat)
-        )
-      ),
-      perl = TRUE
-    ))
-
-    sampledata <- read.delim(file.path(sample_data_file),
-      sep = sd_sep,
-      header = TRUE
+  
+#  #Trim and lowercase column headings
+  colnames(dat) <- tolower(gsub("\\.+", "", # deals with middle periods
+  gsub(
+    "(\\.+)?$", "", # deals with trailing periods
+    gsub(
+      "^((X\\.+)|(\\.+))?", "", # deals with beginning X. and periods
+      colnames(dat)
     )
-    # Join
-    dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
-  }
+  ),
+  perl = TRUE
+))
+
   # Clean Up Data
   # Modify variation_type, create varlen and subtype columns.
   # NOTE: cases may occur where there is an indel and ref or alt are 1 bp,
@@ -316,7 +369,7 @@ import_mut_data <- function(mut_file,
   }
   if (!has_total_depth && has_no_calls && has_depth) {
     dat <- dat %>%
-      mutate(total_depth = .data$depth - .data$no_calls)
+      dplyr::mutate(total_depth = .data$depth - .data$no_calls)
     depth_col <- "total_depth"
   }
   if (!has_total_depth && !has_no_calls && has_depth) {
@@ -505,16 +558,15 @@ import_mut_data <- function(mut_file,
   dat <- dat %>%
     dplyr::mutate(bp_outside_rg = .data$regions_start_buffered - .data$start)
   ranges_outside_regions <- dat %>%
-    dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0) %>%
-    dplyr::select("sample", "seqnames", "start", "end", "ref", "alt")
+    dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0)
 
   # Display the ranges that were filtered out of the data
   if (nrow(ranges_outside_regions) > 0) {
     print(paste(
       nrow(ranges_outside_regions),
-      "rows of data were outside specified regions and were filtered out.
-      Mutation data and filtered rows will be returned in seperate
-      data frames."
+      "rows of data were outside specified regions and were filtered out of the mutation data.
+      The function will return a list of two dataframes. Mutation data will be stored
+      in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
     ))
   }
 

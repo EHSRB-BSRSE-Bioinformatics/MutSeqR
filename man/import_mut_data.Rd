@@ -12,7 +12,7 @@ import_mut_data(
   sd_sep = "\\t",
   vaf_cutoff,
   range_buffer = 0,
-  regions = c("human", "mouse", "custom"),
+  regions = c("human", "mouse", "rat", "custom"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
   is_0_based = TRUE,
@@ -25,7 +25,7 @@ import_mut_data(
 \item{mut_file}{"filepath". The .mut file containing mutation
 data to be imported. If you specify a folder, the function will
 attempt to read all files in the folder and combine them into
-a single data frame.Required columns are listed below.
+a single data frame. Required columns are listed below.
 Synonymous names for these columns are accepted.
 \itemize{
 \item \code{contig}: The reference sequence name.

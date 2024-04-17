@@ -5,9 +5,9 @@
 \title{Calculate mutation frequency}
 \usage{
 calculate_mut_freq(
-  data,
-  cols_to_group = c("sample", "label"),
-  subtype_resolution = "base_6",
+  mutation_data,
+  cols_to_group = "dose",
+  subtype_resolution = "type",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
   filter_germ = TRUE,
   summary = TRUE,
@@ -15,36 +15,57 @@ calculate_mut_freq(
 )
 }
 \arguments{
-\item{data}{The data frame to be processed containing mutation data.}
+\item{mutation_data}{The data frame to be processed containing mutation data.
+Required columns are listed below.
+Synonymous names for these columns are accepted.
+\itemize{
+\item \code{contig}: The reference sequence name.
+\item \code{start}: 0-based start position of the feature in contig.
+\item \code{sample}: The sample name.
+\item \code{alt_depth}: The read depth supporting the alternate allele.
+\item total_depth: The total read depth at this position (excluding N-calls).
+\item \code{is_germline}: A logical variable indicating whether the mutation
+is a germline mutation.
+\item \code{variation_type}: The category to which this variant is assigned.
+\item subtype_col: The column containing the mutation subtype. This
+column depends on the \code{subtype_resolution} parameter.
+\item reference_col: The column containing the referene base(s) for the
+mutation. This column depends on the \code{subtype_resolution} parameter.
+\item metadata_cols for grouping: all columns across which you want to calculate
+the mutation frequency. Ex. \code{c("tissue", "dose")}. These columns should be listed
+in cols_to_group.
+}}
 
 \item{cols_to_group}{A vector of grouping variables: this should be the
 groups of interest that you want to calculate a frequency for.
 For instance, getting the frequency by \code{sample}. Other options might
-include \code{locus}, or, \code{c("sample","locus")}. Must be a column in the
-mutation data table.}
+include \code{dose}, \code{locus}, or, \code{c("sample","locus")}. All listed variables
+must be a column in the mutation_data.}
 
 \item{subtype_resolution}{The resolution at which the frequencies are
 calculated. Options are
-\itemized{
+\itemize{
 \item "none" calculates mutation frequencies across all selected
-metadata columns
+grouping columns.  The reference_col is not needed.
 \item "type" calculates mutation frequencies across all selected
-metadata columns for each \code{variation_type} seperately.
+grouping columns for each \code{variation_type} seperately; snv, mnv, deletion,
+insertion, complex, symbolic. The reference_col is not needed.
 \item "base_6" calculates mutation frequencies across all selected
-metadata columns for each variation_type with snv mutations separated by
-\code{normalized_subtype}; C>A, C>G, C>T, T>A, T>C, T>G.
+grouping columns for each variation_type with snv mutations separated by
+\code{normalized_subtype}; C>A, C>G, C>T, T>A, T>C, T>G. The reference_col is
+\code{normalized_ref}.
 \item "base_12" calculates mutation frequencies across all
-selected metadata columns for each variation_type with snv mutations
+selected grouping columns for each variation_type with snv mutations
 separated by \code{subtype}; A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T,
-T>A, T>C, T>G.
+T>A, T>C, T>G. The reference_col is \code{short_ref}.
 \item "base_96" calculates mutation frequencies across all
-selected metadata columns for each variation_type with snv mutations
+selected grouping columns for each variation_type with snv mutations
 separated by \code{normalized_context_with_mutation}, i.e. the 96-base
-trinucleotide context. Ex. A\link{C>T}A.
+trinucleotide context. Ex. A\link{C>T}A. The reference_col is \code{normalized_context}.
 \item "base_192" calculates mutation frequencies across all
-selected metadata columns for each variation_type with snv mutations
+selected grouping columns for each variation_type with snv mutations
 separated by \code{context_with_mutation}, i.e. the 192-base trinucleotide
-context. Ex A\link{G>A}A.
+context. Ex A\link{G>A}A. The reference_col is \code{context}.
 }}
 
 \item{variant_types}{Include these variant types in mutation counts.
@@ -56,15 +77,16 @@ Default includes all variants.}
 mutation count that were flagged as germline mutations in \code{is_germline}.
 Default is TRUE.}
 
-\item{summary}{TA logical variable, whether to return a summary table
+\item{summary}{A logical variable, whether to return a summary table
 (i.e., where only relevant columns for frequencies and groupings are
 returned). Setting this to false returns all columns in the original
-data, which might make plotting more difficult, but may provide additional
+mutation_data, which might make plotting more difficult, but may provide additional
 flexibility to power users.}
 
-\item{retain_metadata_cols}{list the metadata columns that you would like to
-retain in the summary table. This may be useful for plotting your
-summary data. Ex. retain the "dose" column when summarising by "sample".
+\item{retain_metadata_cols}{a character vector that contains the the
+metadata columns that you would like to retain in the summary table.
+This may be useful for plotting your summary data. Ex. retain the "dose"
+column when summarising by "sample".
 
 clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
 This value determines the fraction of reads that
@@ -73,7 +95,29 @@ fraction higher than this value, the reference base will be swapped,
 and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
 }
 \value{
-A data frame with the mutation frequency calculated.
+A data frame with the mutation frequency calculated. If summary
+is set to TRUE, the data frame will be a summary table with the mutation
+frequency calculated for each group. If summary is set to FALSE, the
+mutation frequency will be appended to each row of the original mutation_data.
+\itemize{
+\item \verb{_MF_unique}: The mutation frequency calculated using the "min"
+method for mutation counting. All identical mutations within a samples are
+assumed to be the result of clonal expansion and are thus only counted
+once.
+\item \verb{_MF_clonal}: The mutation frequency calculated using the "max"
+method for mutaiton counting. All identical mutations within a sample are
+assumed to be idenpendant mutational evens and are included in the
+mutation frequency calculation. Note that this does not apply for germline
+variants.
+\item \code{proportion_unique}: The proportion of each mutation
+subtype within the group, normalized to its read depth. Calculated
+using the "min" method. This is only calculated if \code{subtype_resolution}
+is not "none".
+\item \code{proportion_clonal}: The proportion of each mutation
+subtype within the group, normalized to its read depth. Calculated
+using the "max" method. This is only calculated if \code{subtype_resolution}
+is not "none".
+}
 }
 \description{
 Calculates the mutation frequency for arbitrary groupings and creates a new

@@ -7,7 +7,7 @@
 bmd_ma(
   mf_data,
   data_type = c("individual", "summary"),
-  dose_col = "dose",
+  dose_col,
   response_cols = c("sample_MF_unique", "sample_MF_clonal"),
   sd_col = NULL,
   n_col = NULL,
@@ -101,14 +101,15 @@ response column.
 plots for each response column.
 \item models: A list containing the model fit values for
 each response column. Values include:
-\itemize {
+\itemize{
 \item Individual_Model_X: Individual model fits for each model,
 X, used for model averaging. See \link[ToxicR]{single_continuous_fit}
 for details on the model object class structure.
 \item ma_bmd: The CDF of the model averaged BMD distribution.
 \item posterior_probs: the posterior probabilities used in the
 model averaging.
-}}
+}
+}
 }
 \description{
 This function fits a model averaged continuous BMD model
