@@ -42,22 +42,18 @@ Imports:
     scales,
     stringr,
     SummarizedExperiment,
+    tidyr,
     VariantAnnotation,
     xml2
 Suggests:
-    BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome.Mmusculus.UCSC.mm10,
-    GenVisR,
     knitr,
     packcircles,
     rmarkdown,
     sigminer,
-    SigProfilerAssignmentR,
-    SigProfilerExtractorR,
-    SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
     ToxicR,
     trackViewer,
+    fmsb,
     fs,
     yaml
 Config/reticulate: list( packages = list( list(package =
