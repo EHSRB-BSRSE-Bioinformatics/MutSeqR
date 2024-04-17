@@ -1,5 +1,13 @@
 #' Create a radar plot
+#' @description Create a radar plot
+#' @param mf_data A data frame with the data to plot
+#' @param response_col The column with the response values
+#' @param label_col The column with the labels for the radar plot.
+#' @param facet_col The column with the group to facet the radar plots.
 #' @importFrom tidyr pivot_wider
+#' @importFrom dplyr select filter
+#' 
+#' @return A radar plot
 
 
 # radar chart
@@ -24,7 +32,7 @@ radar_plot <- function(mf_data,
   n_plots <- length(facet_levels)
   n_cols <- 2  # Number of columns in the grid
   n_rows <- ceiling(n_plots / n_cols)  # Number of rows needed
-  layout(matrix(1:n_plots, nrow = n_rows, ncol = n_cols, byrow = TRUE))
+  graphics::layout(matrix(1:n_plots, nrow = n_rows, ncol = n_cols, byrow = TRUE))
 
   for (i in seq_along(facet_levels)) {
     facet <- facet_levels[i]
@@ -58,6 +66,6 @@ radar_plot <- function(mf_data,
                 cglty = 1,
                 cglwd = 0.7)
     }
-layout(1)
-dev.off()
+  graphics::layout(1)
+  grDevices::dev.off()
 }

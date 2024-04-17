@@ -11,9 +11,9 @@
 #' 
 #' @return A ggplot object with the bubble plot, facetted if specified.
 #' 
-#' @import dplyr
+#' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
-#' @import packcircles
+#' @importFrom packcircles circleProgressiveLayout circleLayoutVertices
 #' @export
 generate_bubble_plots <- function(mutation_data,
                                   facet_col = "dose",
@@ -53,8 +53,8 @@ generate_bubble_plots <- function(mutation_data,
   #mutation_data <- readRDS("./Bbf_BM_mut_dat.RDS")
   
   x <- mutation_data %>%
-    dplyr::filter(!variation_type %in% "no_variant" &
-                    is_germline == FALSE) %>%
+    dplyr::filter(!.data$variation_type %in% "no_variant" &
+                    .data$is_germline == FALSE) %>%
     dplyr::arrange(!!rlang::sym(color_by))
   
   data <- data.frame(group = paste0(x$sample, "_",
@@ -78,50 +78,50 @@ generate_bubble_plots <- function(mutation_data,
     facet_levels <- levels(data[[facet_col]])
     # Loop through facets
     circles <- lapply(
-      seq_along(facet_levels), 
-      function(i) {
-        facet_level <- facet_levels[[i]]
-        # Filter data for the current facet_level
-        filtered_data <- data %>% filter(.[[facet_col]] == facet_level)
-        
-        # Generate the layout for the filtered data with scaled alt_depth
-        circles <- circleProgressiveLayout(filtered_data,
-                                           sizecol = "alt_depth", sizetype = 'area')
-        circles$radius <- circle_spacing * circles$radius
-        data2 <- cbind(filtered_data, circles)
-        return(list(data2 = data2))
-      })
+                      seq_along(facet_levels),
+                      function(i) {
+                        facet_level <- facet_levels[[i]]
+                        # Filter data for the current facet_level
+                        filtered_data <- data %>% filter(.[[facet_col]] == facet_level)
+                        
+                        # Generate the layout for the filtered data with scaled alt_depth
+                        circles <- packcircles::circleProgressiveLayout(filtered_data,
+                                                          sizecol = "alt_depth", sizetype = 'area')
+                        circles$radius <- circle_spacing * circles$radius
+                        data2 <- cbind(filtered_data, circles)
+                        return(list(data2 = data2))
+                      })
     data2 <- do.call(rbind, lapply(circles, `[[`, "data2"))
     
   } else {
 
     # Generate the layout for the filtered data with scaled alt_depth
-    circles <- circleProgressiveLayout(data,
+    circles <- packcircles::circleProgressiveLayout(data,
                                        sizecol = "alt_depth", sizetype = 'area')
     circles$radius <- circle_spacing * circles$radius
     data2 <- cbind(data, circles)
   }
 
   # Select the specified columns from data2 for vertices
-  vertices <- circleLayoutVertices(data2, npoints = circle_resolution, idcol = "group",
-                                   xysizecols = (ncol(data2)-2):(ncol(data2)))
+  vertices <- packcircles::circleLayoutVertices(data2, npoints = circle_resolution, idcol = "group",
+                                   xysizecols = (ncol(data2) - 2):(ncol(data2)))
   
   # Perform the left join with the suffixes to handle different x and y columns
   plot_data <- left_join(vertices, data2, by = c("id" = "group"),
                          suffix = c(".circle_coords", ".circle_centres"))
   
   # Create the plot
-  p <- ggplot() + 
+  p <- ggplot() +
     geom_polygon(data = plot_data,
-                 aes(x = x.circle_coords, y = y.circle_coords,
-                     group = id,
+                 aes(x = plot_data$x.circle_coords, y = plot_data$y.circle_coords,
+                     group = plot_data$id,
                      fill = !!rlang::sym(color_by)),
                  colour = if(is.null(circle_outline) || circle_outline == "none") NA else circle_outline) +
     scale_fill_manual(values = plotcolors,
                       breaks = names(plotcolors)) +
-    theme_void() + 
+    theme_void() +
     labs(fill = "Mutation type") +
-    theme(legend.position = "right") + 
+    theme(legend.position = "right") +
     coord_equal()
   
   if (!is.null(facet_col)) {

@@ -4,7 +4,19 @@
 \alias{radar_plot}
 \title{Create a radar plot}
 \usage{
-radar_plot(data, group)
+radar_plot(mf_data, response_col, label_col, facet_col)
+}
+\arguments{
+\item{mf_data}{A data frame with the data to plot}
+
+\item{response_col}{The column with the response values}
+
+\item{label_col}{The column with the labels for the radar plot.}
+
+\item{facet_col}{The column with the group to facet the radar plots.}
+}
+\value{
+A radar plot
 }
 \description{
 Create a radar plot

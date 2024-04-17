@@ -6,7 +6,7 @@
 \usage{
 cluster_spectra(
   mf_data = mf_data,
-  sample_col = "sample",
+  group_col = "sample",
   response_col = "proportion_unique",
   subtype_col = "normalized_subtype",
   dist = "cosine",
@@ -18,7 +18,7 @@ cluster_spectra(
 include a column containing the mutation subtypes, a column containing
 the sample/cohort names, and a column containing the response variable.}
 
-\item{sample_col}{The name of the column in data that contains the
+\item{group_col}{The name of the column in data that contains the
 sample/cohort names.}
 
 \item{response_col}{The name of the column in data that contains the

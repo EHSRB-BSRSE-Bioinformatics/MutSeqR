@@ -21,6 +21,9 @@
 #' directory.
 #' @param output_type A character string specifying the type of output file.
 #' Options are  'jpeg', 'pdf', 'png', 'svg', or 'tiff'. Default is 'svg'.
+#' @importFrom dplyr arrange group_by mutate summarise
+#' @importFrom stringr str_extract str_c
+
 #' @details The function calculates the mutation frequency and plots the trinucleotide
 #' spectrum for all levels of a given group based on the mutation data.
 #' The function calculates the mutation frequency using the 'calculate_mut_freq'
@@ -49,7 +52,7 @@ plot_trinucleotide <- function(mutation_data,
     output_dir <- file.path(output_path)
   }
   if (!dir.exists(output_dir)) {
-    dir.create(output_dir)
+    utils::dir.create(output_dir)
   }
 
   # Calculate mutation frequency
@@ -131,12 +134,12 @@ plot_trinucleotide <- function(mutation_data,
       names(labels) <- mut_counts$mutation
     }
 
-    plotcolours <- c(rgb(5, 195, 239, maxColorValue = 255),
-      rgb(0, 0, 0, maxColorValue = 255),
-      rgb(230, 47, 41, maxColorValue = 255),
-      rgb(208, 207, 207, maxColorValue = 255),
-      rgb(169, 212, 108, maxColorValue = 255),
-      rgb(238, 205, 204, maxColorValue = 255)
+    plotcolours <- c(grDevices::rgb(5, 195, 239, maxColorValue = 255),
+      grDevices::rgb(0, 0, 0, maxColorValue = 255),
+      grDevices::rgb(230, 47, 41, maxColorValue = 255),
+      grDevices::rgb(208, 207, 207, maxColorValue = 255),
+      grDevices::rgb(169, 212, 108, maxColorValue = 255),
+      grDevices::rgb(238, 205, 204, maxColorValue = 255)
     )
 
     rearr.colours <- c(rep(plotcolours[1], 16),
@@ -181,23 +184,23 @@ plot_trinucleotide <- function(mutation_data,
     filename <- paste0(output_dir, "/plot_", group_levels[i], "_trinucleotide_", response)
     if (output_type == "jpeg") {
       filename <- paste0(filename, ".jpeg")
-      jpeg(filename, width = 7, height = 3.5, units = "in", res = 300)
+      grDevices::jpeg(filename, width = 7, height = 3.5, units = "in", res = 300)
     } else if (output_type == "pdf") {
       filename <- paste0(filename, ".pdf")
-      pdf(filename, width = 7, height = 3.5)
+      grDevices::pdf(filename, width = 7, height = 3.5)
     } else if (output_type == "png") {
       filename <- paste0(filename, ".png")
-      png(filename, width = 7, height = 3.5, units = "in", res = 300)
+      grDevices::png(filename, width = 7, height = 3.5, units = "in", res = 300)
     } else if (output_type == "tiff") {
       filename <- paste0(filename, ".tiff")
-      tiff(filename, width = 7, height = 3.5, units = "in", res = 300)
+      grDevices::tiff(filename, width = 7, height = 3.5, units = "in", res = 300)
     } else if (output_type == "svg") {
       filename <- paste0(filename, ".svg")
-      svg(filename, width = 7, height = 3.5)
+      grDevices::svg(filename, width = 7, height = 3.5)
     }
 
     # Create the plot
-    bp <- barplot(plot_data$response, # height of bars
+    bp <- graphics::barplot(plot_data$response, # height of bars
       main = title,
       names.arg = NULL,
       xlab = "Mutation Type",
@@ -213,14 +216,14 @@ plot_trinucleotide <- function(mutation_data,
       )
 
     # Add horizontal gridlines
-    xlim <- par("usr")[1:2]
+    xlim <- graphics::par("usr")[1:2]
     gridlines <- y_axis_labels
     for (j in gridlines) {
-      lines(x = xlim, y = c(j, j), col = "#f3eeeea4", lty = "solid")
+      graphics::lines(x = xlim, y = c(j, j), col = "#f3eeeea4", lty = "solid")
     }
 
     # Now draw the bars over the gridlines
-    bp <- barplot(plot_data$response,
+    bp <- graphics::barplot(plot_data$response,
                   col = rearr.colours,
                   beside = TRUE,
                   border = NA,
@@ -229,7 +232,7 @@ plot_trinucleotide <- function(mutation_data,
                   axes = FALSE)
 
     # Add x-labels manually so they are closer to the bars
-    text(x = bp,
+    graphics::text(x = bp,
          y = par("usr")[3] * 0.90,
          labels = xlabels,
          srt = 90, adj = 1,
@@ -237,13 +240,13 @@ plot_trinucleotide <- function(mutation_data,
          cex = cex.axistext,
          family = "mono")
     # Add x-axis line
-    lines(x = c(min(bp[,1]) - 1.2, max(bp[length(bp), ]) + 0.3),
+    graphics::lines(x = c(min(bp[,1]) - 1.2, max(bp[length(bp), ]) + 0.3),
           y = c(par("usr")[3], par("usr")[3]),
           lwd = 1,
           col = "gray")
 
     # Draw custom y-axis
-    axis(side = 2,
+    graphics::axis(side = 2,
          at = y_axis_labels,
          col = "gray",
          col.axis = "black",
@@ -252,26 +255,26 @@ plot_trinucleotide <- function(mutation_data,
          las = 1)
 
     # Add subtype labels and coloured rectangles
-    par(xpd = TRUE) # allow plotting outside the plot region
-    usr <- par("usr") # plot region dimensions
+    graphics::par(xpd = TRUE) # allow plotting outside the plot region
+    usr <- graphics::par("usr") # plot region dimensions
     rect_top_relative <- 1.05
     rect_top <- usr[4] * rect_top_relative
     text_y <- rect_top * 1.02
-    rect(xleft = bp[1], ybottom = usr[4], xright = bp[16], ytop = rect_top, col = plotcolours[1], border = NA)
-    rect(xleft = bp[17], ybottom = usr[4], xright = bp[32], ytop = rect_top, col = plotcolours[2], border = NA)
-    rect(xleft = bp[33], ybottom = usr[4], xright = bp[48], ytop = rect_top, col = plotcolours[3], border = NA)
-    rect(xleft = bp[49], ybottom = usr[4], xright = bp[64], ytop = rect_top, col = plotcolours[4], border = NA)
-    rect(xleft = bp[65], ybottom = usr[4], xright = bp[80], ytop = rect_top, col = plotcolours[5], border = NA)
-    rect(xleft = bp[81], ybottom = usr[4], xright = bp[96], ytop = rect_top, col = plotcolours[6], border = NA)
+    graphics::rect(xleft = bp[1], ybottom = usr[4], xright = bp[16], ytop = rect_top, col = plotcolours[1], border = NA)
+    graphics::rect(xleft = bp[17], ybottom = usr[4], xright = bp[32], ytop = rect_top, col = plotcolours[2], border = NA)
+    graphics::rect(xleft = bp[33], ybottom = usr[4], xright = bp[48], ytop = rect_top, col = plotcolours[3], border = NA)
+    graphics::rect(xleft = bp[49], ybottom = usr[4], xright = bp[64], ytop = rect_top, col = plotcolours[4], border = NA)
+    graphics::rect(xleft = bp[65], ybottom = usr[4], xright = bp[80], ytop = rect_top, col = plotcolours[5], border = NA)
+    graphics::rect(xleft = bp[81], ybottom = usr[4], xright = bp[96], ytop = rect_top, col = plotcolours[6], border = NA)
 
     # Add text to the rectangles
-    text(bp[8], text_y, labels[1], cex = cex.axistext*1.2, col = "black", font = 2)
-    text(bp[24], text_y, labels[2], cex = cex.axistext*1.2, col = "black", font = 2)
-    text(bp[40], text_y, labels[3], cex = cex.axistext*1.2, col = "black", font = 2)
-    text(bp[56], text_y, labels[4], cex = cex.axistext*1.2, col = "black", font = 2)
-    text(bp[72], text_y, labels[5], cex = cex.axistext*1.2, col = "black", font = 2)
-    text(bp[88], text_y, labels[6], cex = cex.axistext*1.2, col = "black", font = 2)
+    graphics::text(bp[8], text_y, labels[1], cex = cex.axistext*1.2, col = "black", font = 2)
+    graphics::text(bp[24], text_y, labels[2], cex = cex.axistext*1.2, col = "black", font = 2)
+    graphics::text(bp[40], text_y, labels[3], cex = cex.axistext*1.2, col = "black", font = 2)
+    graphics::text(bp[56], text_y, labels[4], cex = cex.axistext*1.2, col = "black", font = 2)
+    graphics::text(bp[72], text_y, labels[5], cex = cex.axistext*1.2, col = "black", font = 2)
+    graphics::text(bp[88], text_y, labels[6], cex = cex.axistext*1.2, col = "black", font = 2)
 
-    dev.off()
+    grDevices::dev.off()
   }
 }

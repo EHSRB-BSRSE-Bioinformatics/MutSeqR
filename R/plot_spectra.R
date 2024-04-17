@@ -45,7 +45,7 @@
 #' data. The default is a set of colors from the RColorBrewer package.
 #' @import patchwork
 #' @importFrom ggh4x scale_x_dendrogram
-#' @import ggplot2 
+#' @import ggplot2
 #' @importFrom dplyr select arrange across all_of
 #' @importFrom gtools mixedsort
 #' @export
@@ -252,6 +252,7 @@ if (group_order == "arranged") {
 #' \link[stats]{dist} for details.
 #' @param cluster_method The agglomeration method to be used. See
 #' \link[stats]{hclust} for details.
+#' @importFrom stats hclust dist as.dist
 #' @details The cosine distance measure represents the inverted cosine
 #' similarity between samples:
 #' 
@@ -288,11 +289,11 @@ rownames(cos_sim) <- colnames(cos_sim) <- unique_samples
     cos_sim[i, j] <- sum(mat[i, ] * mat[j, ]) / (sqrt(sum(mat[i, ]^2)) * sqrt(sum(mat[j, ]^2)))
   }
 }
-  d <- as.dist(1 - cos_sim)
+  d <- stats::as.dist(1 - cos_sim)
 } else {
-    d <- dist(mat, method = dist)
+    d <- stats::dist(mat, method = dist)
 } 
 # Perform hierarchical clustering
-hc <- hclust(d, method = cluster_method)
+hc <- stats::hclust(d, method = cluster_method)
 return(hc)
 }

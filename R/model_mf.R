@@ -360,7 +360,7 @@ for (i in 1:count) {
   pairwise_comparisons <- pairwise_comparisons[,-5]
   colnames(pairwise_comparisons) <- c("Fold.Change", "FC.Std.Err", "Obs.T", "p.value", "df", "FC.Lower", "FC.Upper")
   
-  pairwise_comparisons$adj_p.value <- MutSeqR::my.holm.sidak(pairwise_comparisons$p.value)
+  pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
   pairwise_comparisons <- pairwise_comparisons %>%
   dplyr::mutate(
     Significance = case_when(
