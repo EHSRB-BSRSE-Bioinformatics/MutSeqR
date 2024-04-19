@@ -199,7 +199,7 @@ bmd_ma <- function(mf_data,
                                          BMR_TYPE = bmr_type,
                                          BMR = bmr,
                                          alpha = a,
-                                         #...
+                                         ...
                                          )
 
       results_bmd[[response_cols[i]]] <- summary(model)$BMD
