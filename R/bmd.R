@@ -163,7 +163,7 @@ mf_bmd <- function(mf_data,
 #' model averaging.
 #' }
 #' }
-#' @importFrom dplyr select rename
+#' @importFrom dplyr select rename if_else
 #' @import ggplot2
 #' @export
 bmd_ma <- function(mf_data,
@@ -250,23 +250,24 @@ bmd_ma <- function(mf_data,
     nudge_value <- 0.6
     
     g <- ggplot(results_bmd_df_plot, aes(x = value, y = response, color = name)) +
-      geom_line(aes(group=response), color="#E7E7E7", linewidth=3.5) + 
-      geom_point(size=3) +
+      geom_line(aes(group = response), color = "#b8b8b8", linewidth = 3.5) + 
+      geom_point(size = 3) +
       theme_minimal() +
       theme(legend.position = "bottom",
-            axis.text.y = element_text(color="black"),
-            axis.text.x = element_text(color="#989898"),
+            axis.text.y = element_text(color = "black"),
+            axis.text.x = element_text(color = "#000000"),
+            panel.border = element_rect(colour = "black", fill=NA, size=1)
             #panel.grid = element_blank()
       ) +
       scale_color_manual(values=c("black","#BF2F24", "#436685"))+
       scale_x_continuous() +
-      geom_text(aes(label=value, color=name),
-                size=3.25,
-                nudge_x=if_else(
+      geom_text(aes(label = value, color = name),
+                size = 3.25,
+                nudge_x = dplyr::if_else(
                   results_bmd_df_plot$value == results_bmd_df_plot$max, # if it's the larger value...
                   nudge_value,   # move it to the right of the point
                   -nudge_value), # otherwise, move it to the left of the point
-                hjust=if_else(
+                hjust = dplyr::if_else(
                   results_bmd_df_plot$value==results_bmd_df_plot$max, #if it's the larger value
                   0, # left justify
                   1),# otherwise, right justify      
