@@ -50,6 +50,7 @@ Suggests:
     packcircles,
     rmarkdown,
     sigminer,
+    SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
     ToxicR,
     trackViewer,
