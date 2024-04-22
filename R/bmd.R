@@ -238,23 +238,48 @@ bmd_ma <- function(mf_data,
     dplyr::mutate(response = row.names(results_bmd_df))
 
   conf_int <- 100 * (1 - 2 * a)
-  g <- ggplot2::ggplot(results_bmd_df,
-                        ggplot2::aes(x = results_bmd_df$response,
-                                     y = results_bmd_df$BMD)) +
-    ggplot2::geom_point(size = 5) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = results_bmd_df$BMDL,
-                                        ymax = results_bmd_df$BMDU),
-                           width = 0.2) +
-    ggplot2::labs(x = "Response", y = "BMD",
-                  title = paste0("BMD with ",
-                                 conf_int,
-                                 "% Confidence Intervals")) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
-                                                       vjust = 0.5,
-                                                       hjust = 1),
-                   axis.line = ggplot2::element_line(colour = "black"),
-                   plot.title = ggplot2::element_text(hjust = 0.5))
+    # the mutate across call is deprecated, should update
+    
+    results_bmd_df_plot <- results_bmd_df %>%
+      dplyr::group_by(response) %>%
+      dplyr::mutate(max = BMDU) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(across(where(is.numeric), round, 1)) %>%
+      tidyr::pivot_longer(cols = c("BMD","BMDL","BMDU"))
+      
+    nudge_value <- 0.6
+    
+    g <- ggplot(results_bmd_df_plot, aes(x = value, y = response, color = name)) +
+      geom_line(aes(group=response), color="#E7E7E7", linewidth=3.5) + 
+      geom_point(size=3) +
+      theme_minimal() +
+      theme(legend.position = "bottom",
+            axis.text.y = element_text(color="black"),
+            axis.text.x = element_text(color="#989898"),
+            #panel.grid = element_blank()
+      ) +
+      scale_color_manual(values=c("black","#BF2F24", "#436685"))+
+      scale_x_continuous() +
+      geom_text(aes(label=value, color=name),
+                size=3.25,
+                nudge_x=if_else(
+                  results_bmd_df_plot$value == results_bmd_df_plot$max, # if it's the larger value...
+                  nudge_value,   # move it to the right of the point
+                  -nudge_value), # otherwise, move it to the left of the point
+                hjust=if_else(
+                  results_bmd_df_plot$value==results_bmd_df_plot$max, #if it's the larger value
+                  0, # left justify
+                  1),# otherwise, right justify      
+      ) +
+      ggplot2::labs(x = "BMD", y = "Response",
+                    title = paste0("BMD with ",
+                                   conf_int,
+                                   "% Confidence Intervals"),
+                    color = NULL) +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
+                                                         vjust = 0.5,
+                                                         hjust = 1),
+                     plot.title = ggplot2::element_text(hjust = 0.5))
 
   results_list <- list(BMD = results_bmd_df,
                        BMD_plot = g,
