@@ -13,7 +13,6 @@
 #' 
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
-#' @importFrom packcircles circleProgressiveLayout circleLayoutVertices
 #' @export
 generate_bubble_plots <- function(mutation_data,
                                   facet_col = "dose",
