@@ -113,8 +113,8 @@ generate_bubble_plots <- function(mutation_data,
   # Create the plot
   p <- ggplot() +
     geom_polygon(data = plot_data,
-                 aes(x = plot_data$x.circle_coords, y = plot_data$y.circle_coords,
-                     group = plot_data$id,
+                 aes(x = x.circle_coords, y = y.circle_coords,
+                     group = id,
                      fill = !!rlang::sym(color_by)),
                  colour = if(is.null(circle_outline) || circle_outline == "none") NA else circle_outline) +
     scale_fill_manual(values = plotcolors,

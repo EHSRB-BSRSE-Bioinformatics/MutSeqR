@@ -10,7 +10,6 @@
 #' @param model_avg A logical value specifying whether to
 #' average the model fits. Default is TRUE.
 #' @return A list with the following components:
-#' @importFrom ToxicR single_continuous_fit
 #' @export
 mf_bmd <- function(mf_data,
                    dose_col = "dose",
@@ -263,8 +262,5 @@ bmd_ma <- function(mf_data,
                        model_plots = results_model_plots,
                        cleveland_plots = results_cleveland_plots,
                        models = results_model)
-
-# TO DO:
- # calculate some kind of goodness of fit for models
 return(results_list)
 }

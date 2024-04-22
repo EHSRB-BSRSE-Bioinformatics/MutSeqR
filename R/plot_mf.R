@@ -219,7 +219,7 @@ plot_mf <- function(mf_data,
     geom_text(aes(y = plot_data$mf_col, label = label),
               position = label_position,
               vjust = -0.5,
-              size = 2,
+              size = 4,
               color = "black") +
     yscale +
     labs(title = title,
