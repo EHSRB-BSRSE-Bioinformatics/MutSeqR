@@ -27,7 +27,7 @@ params:
     label: "Please indicate the delimiter used for you mutation file(s)"
     input: text
     value: "\t"
-vaf_cutoff: 
+  vaf_cutoff: 
     label: "VAF cutoff value"
     input: numeric
     step: 0.01
@@ -69,7 +69,7 @@ vaf_cutoff:
     input: text
     value: "0"
   contrast_variable:
-    label: "Input the variable(s) to be used for contrasts (e.g. "dose", "tissue", c("dose", "contig"), etc.)"
+    label: "Input the variable(s) to be used for contrasts (e.g. 'dose', 'tissue', c('dose', 'contig'), etc.)"
     input: text
     value: "dose"
   reference_level:
@@ -83,13 +83,17 @@ vaf_cutoff:
     multiple: true
     value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Test Data/dose_contrast_table.txt"
   contrasts_variable_2:
-    label: "Input the variable(s) to be used for contrasts (e.g. "dose", "tissue", c("dose", "contig"), etc.)"
+    label: "Input the variable(s) to be used for contrasts (e.g. 'dose', 'tissue', c('dose', 'contig'), etc.)"
     input: text
-    value: c("dose", "label")
+    value:
+      - "dose"
+      - "label"
   reference_level_2:
     label: "Input the reference level for your contrasts"
     input: text
-    value: c(0, "chr1")  
+    value:
+      - 0
+      - "chr1"
   contrast_file_2:
     label: "Select your contrasts table"
     input: file
@@ -169,7 +173,7 @@ write_VCF_from_mut(mutation_data, vcf_out = file.path(output_dir, "mutations.vcf
 
 ## Calculate Mutation Frequencies
 ```{r Dose analysis, eval=!is.null(params$dose_column)}
-MF_per_sample <- calculate_mut_freq(data = mutation_data,
+MF_per_sample <- calculate_mut_freq(mutation_data = mutation_data,
                                     cols_to_group = c("sample"),
                                     subtype_resolution = "none",
                                     retain_metadata_cols = params$dose_column)

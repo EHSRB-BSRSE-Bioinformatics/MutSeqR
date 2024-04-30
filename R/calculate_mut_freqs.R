@@ -52,11 +52,11 @@
 #'           \item "base_96" calculates mutation frequencies across all
 #' selected grouping columns for each variation_type with snv mutations
 #' separated by `normalized_context_with_mutation`, i.e. the 96-base
-#' trinucleotide context. Ex. A[C>T]A. The reference_col is `normalized_context`.
+#' trinucleotide context. Ex. A\\[C>T\\]A. The reference_col is `normalized_context`.
 #'           \item "base_192" calculates mutation frequencies across all
 #' selected grouping columns for each variation_type with snv mutations
 #' separated by `context_with_mutation`, i.e. the 192-base trinucleotide
-#' context. Ex A[G>A]A. The reference_col is `context`.
+#' context. Ex A\\[G>A\\]A. The reference_col is `context`.
 #'  }
 #' @param variant_types Include these variant types in mutation counts.
 #' A vector of one or more variation_types. Options are:

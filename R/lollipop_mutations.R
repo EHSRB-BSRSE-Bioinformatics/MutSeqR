@@ -15,6 +15,9 @@ lollipop_mutations <- function(species = "human",
                                mutations,
                                ...
                                ) {
+ if (!requireNamespace("trackViewer", quietly = TRUE)) {
+    stop("trackViewer is not installed. Please install trackViewer to use this function")
+  }
   if (!inherits(mutations, "GRanges")) { stop("Please supply a GRanges 
                                                 object for the `mutations`
                                                 parameter.")}

@@ -83,6 +83,9 @@ signature_fitting <- function(mutation_data,
   reticulate::use_virtualenv(env_name)
   
   # This will only install the genome if it's not found in the current env
+   if (!requireNamespace("SigProfilerMatrixGeneratorR")) {
+    stop("SigProfilerMatrixGeneratorR not installed: you need this to run SigProfiler tools in R. Install using devtools::install_github('AlexandrovLab/SigProfilerMatrixGeneratorR')")
+  }
   SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file('extdata', 'signatures.py',
                                         package = "MutSeqR")

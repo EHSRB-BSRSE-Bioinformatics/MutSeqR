@@ -7,7 +7,7 @@
 #' random effects, a generalized linear mixed-effects model (\link[lme4]{glmer}) . 
 #' Pairwise comparisons are conducted using the doBy library (\link[doBy]{esticon}) 
 #' and estimates are then back-transformed. The delta method is  employed to
-#' approximate the  back-transformed standard-errors. A Holm-Sidak  correction
+#' approximate the  back-transformed standard-errors. A Sidak  correction
 #' is applied to adjust p-values for multiple comparisons.
 #' @param mf_data The data frame containing the mutation frequency data.
 #' Mutation counts and total sequencing depth should be summarized per sample

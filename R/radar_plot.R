@@ -8,6 +8,7 @@
 #' @importFrom dplyr select filter
 #' 
 #' @return A radar plot
+#' @export
 
 
 # radar chart

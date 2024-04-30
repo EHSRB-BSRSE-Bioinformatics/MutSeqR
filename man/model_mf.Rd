@@ -92,7 +92,7 @@ will fit either a generalized linear model (\link[stats]{glm}) or, if supplied
 random effects, a generalized linear mixed-effects model (\link[lme4]{glmer}) .
 Pairwise comparisons are conducted using the doBy library (\link[doBy]{esticon})
 and estimates are then back-transformed. The delta method is  employed to
-approximate the  back-transformed standard-errors. A Holm-Sidak  correction
+approximate the  back-transformed standard-errors. A Sidak  correction
 is applied to adjust p-values for multiple comparisons.
 }
 \details{

@@ -22,6 +22,7 @@
 #' are represented in each entry for the table. See details for examples.
 #' @param cont_sep The delimiter used to import the contrasts table.
 #' Default is tab.
+#' @param mf_type The type of mutation frequency to use. Default is "unique".
 #' @returns the log-likelihood statistic G2 for the specified comparisons with
 #' the p-value adjusted for multiple-comparisons.
 #' @export

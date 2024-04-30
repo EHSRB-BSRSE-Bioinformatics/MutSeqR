@@ -21,8 +21,24 @@ plot_spectra(
 )
 }
 \arguments{
+\item{mutation_data}{A data frame containing the mutation data. This data must
+include a column containing the mutation subtypes, a column containing
+the sample/cohort names, and a column containing the response variable.
+Typical response variables can be the subtype frequency, proportion, or
+count.}
+
 \item{group_col}{The name of the column in data that contains the
 sample/cohort names.}
+
+\item{subtype_resolution}{The resolution of the mutation spectra. Default is \code{base_6}.}
+
+\item{response}{The name of the column in data that contains the
+response variable. Typical response variables can be the subtype frequency,
+proportion, or count.}
+
+\item{mf_type}{The type of mutation frequency to use. Default is \code{unique}.}
+
+\item{variant_types}{A character vector of the mutation types to include.}
 
 \item{group_order}{The method for ordering the samples within the plot.
 Options include:
@@ -59,18 +75,9 @@ is \code{Ward.D}. See \link[stats]{hclust} for details.}
 The names of the vector should correspond to the mutation subtypes in the
 data. The default is a set of colors from the RColorBrewer package.}
 
-\item{mf_data}{A data frame containing the mutation data. This data must
-include a column containing the mutation subtypes, a column containing
-the sample/cohort names, and a column containing the response variable.
-Typical response variables can be the subtype frequency, proportion, or
-count.}
+\item{x_lab}{The label for the x-axis. Default is the value of \code{group_col}.}
 
-\item{response_col}{The name of the column in data that contains the
-response variable. Typical response variables can be the subtype frequency,
-proportion, or count.}
-
-\item{subtype_col}{The name of the column in data that contains the
-mutation subtypes.}
+\item{y_lab}{The label for the y-axis. Default is the value of \code{response_col}.}
 }
 \description{
 Given a data frame construct a plot displaying the
