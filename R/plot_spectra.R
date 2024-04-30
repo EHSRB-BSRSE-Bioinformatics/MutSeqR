@@ -46,7 +46,6 @@
 #' @param mf_type The type of mutation frequency to use. Default is `unique`.
 #' @param variant_types A character vector of the mutation types to include.
 #' @param subtype_resolution The resolution of the mutation spectra. Default is `base_6`.
-#' @param 
 #' @import patchwork
 #' @importFrom ggh4x scale_x_dendrogram
 #' @import ggplot2
