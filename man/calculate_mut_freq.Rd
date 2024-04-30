@@ -61,11 +61,11 @@ T>A, T>C, T>G. The reference_col is \code{short_ref}.
 \item "base_96" calculates mutation frequencies across all
 selected grouping columns for each variation_type with snv mutations
 separated by \code{normalized_context_with_mutation}, i.e. the 96-base
-trinucleotide context. Ex. A\link{C>T}A. The reference_col is \code{normalized_context}.
+trinucleotide context. Ex. A\[C>T\]A. The reference_col is \code{normalized_context}.
 \item "base_192" calculates mutation frequencies across all
 selected grouping columns for each variation_type with snv mutations
 separated by \code{context_with_mutation}, i.e. the 192-base trinucleotide
-context. Ex A\link{G>A}A. The reference_col is \code{context}.
+context. Ex A\[G>A\]A. The reference_col is \code{context}.
 }}
 
 \item{variant_types}{Include these variant types in mutation counts.

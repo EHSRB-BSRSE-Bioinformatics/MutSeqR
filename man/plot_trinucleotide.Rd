@@ -36,6 +36,8 @@ value for each level of the group independently of the others. 'group' will set 
 maximum y-axis value based on the entire dataset such that all plots will have the
 same scale. Default is 'group'.}
 
+\item{sum_totals}{A logical value specifying whether to sum the total mutations.}
+
 \item{output_path}{A character string specifying the path to save the output plot.
 Default is NULL. This will create an output directory in the current working
 directory.}

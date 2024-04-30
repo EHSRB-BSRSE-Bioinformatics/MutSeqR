@@ -29,6 +29,8 @@ See calculate_mut_freq for more details.}
 \item{variant_types}{A character vector of the mutation types to include
 in the comparison. Default is all types of mutations.}
 
+\item{mf_type}{The type of mutation frequency to use. Default is "unique".}
+
 \item{contrasts}{a filepath to a tab-delimited \code{.txt} file OR a dataframe that
 will specify the comparisons to be made between groups. The table must
 consist of two columns. The first column will be a level within your group
