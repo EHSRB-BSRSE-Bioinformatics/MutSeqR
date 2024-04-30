@@ -8,6 +8,7 @@
 #' @param circle_spacing Numerical value to adjust the spacing between circles.
 #' @param color_by Character vector specifying how to color the mutations. Accepted values are "normalized_subtype", "subtype", and "trinucleotide_subtype". NOT FULLY IMPLEMENTED.
 #' @param circle_outline Color for the circle outline. Default is "none", resulting in no outline color. Other accepted values are colors in the R language.
+#' @param circle_resolution Number of points to use for the circle resolution. Default is 50.
 #' 
 #' @return A ggplot object with the bubble plot, facetted if specified.
 #' 

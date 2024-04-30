@@ -3,12 +3,12 @@
 #' @description This function fits a continuous BMD model to
 #' dose-response data for mutation frequency.
 #' @param mf_data A data frame with columns "dose" and "MFmin"
-#' @param model_type A string specifying the model type.
+#' @param model_types A string specifying the model type.
 #' Options are "hill", "exp-3","exp-5", "power", "polynomial"
 #' @param BMR A numeric value specifying the benchmark response.
 #' Default is 0.5.
-#' @param model_avg A logical value specifying whether to
-#' average the model fits. Default is TRUE.
+#' @param dose_col A character string specifying the column in data to be used to identify dose.
+#' @param response_col A character string specifying the column in data to be used to identify response.
 #' @return A list with the following components:
 #' @export
 mf_bmd <- function(mf_data,

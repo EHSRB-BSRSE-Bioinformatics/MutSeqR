@@ -1,18 +1,16 @@
 #' Transition-transversion plot
 #' @description Given a data frame construct a plot displaying the
 #' mutation subtypes observed in a cohort.
-#' @param mf_data A data frame containing the mutation data. This data must
+#' @param mutation_data A data frame containing the mutation data. This data must
 #' include a column containing the mutation subtypes, a column containing
 #' the sample/cohort names, and a column containing the response variable.
 #' Typical response variables can be the subtype frequency, proportion, or
 #' count.
 #' @param group_col The name of the column in data that contains the
 #' sample/cohort names.
-#' @param response_col The name of the column in data that contains the
+#' @param response The name of the column in data that contains the
 #' response variable. Typical response variables can be the subtype frequency,
 #' proportion, or count.
-#' @param subtype_col The name of the column in data that contains the
-#' mutation subtypes.
 #' @param group_order The method for ordering the samples within the plot.
 #' Options include:
 #' \itemize{
@@ -43,6 +41,12 @@
 #' @param palette A named vector of colors to be used for the mutation subtypes.
 #' The names of the vector should correspond to the mutation subtypes in the
 #' data. The default is a set of colors from the RColorBrewer package.
+#' @param x_lab The label for the x-axis. Default is the value of `group_col`.
+#' @param y_lab The label for the y-axis. Default is the value of `response_col`.
+#' @param mf_type The type of mutation frequency to use. Default is `unique`.
+#' @param variant_types A character vector of the mutation types to include.
+#' @param subtype_resolution The resolution of the mutation spectra. Default is `base_6`.
+#' @param 
 #' @import patchwork
 #' @importFrom ggh4x scale_x_dendrogram
 #' @import ggplot2
