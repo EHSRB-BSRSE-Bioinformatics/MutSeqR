@@ -15,29 +15,31 @@ spectra_comparison(
 )
 }
 \arguments{
-\item{contrasts}{a filepath to a tab-delimited \code{.txt} file that
+\item{mutation_data}{A data frame containing the mutation data. This
+is the output from import_mut_data or import_vcf_data.}
+
+\item{cols_to_group}{A character vector of the column names in the mutation
+data that you want to group by. Ex. c("dose", "tissue"). This
+function will sum the mutations across groups before running the comparison.}
+
+\item{subtype_resolution}{The resolution of the mutation spectra to be
+compared. Options include "base_6", "base_12", "base_96", and "base_192" and "type".
+See calculate_mut_freq for more details.}
+
+\item{variant_types}{A character vector of the mutation types to include
+in the comparison. Default is all types of mutations.}
+
+\item{contrasts}{a filepath to a tab-delimited \code{.txt} file OR a dataframe that
 will specify the comparisons to be made between groups. The table must
 consist of two columns. The first column will be a level within your group
 column and the second column must be the group level that it will be
-compared to. All values must correspond to entries in your \code{group}
-column. For more than one \code{group} variable, separate the levels of the
-each group with a colon. Ensure that all \code{groups} are represented in each
-entry for the table. See details for examples.}
+compared to. All values must correspond to entries in your \code{cols_to_group}
+column. For more than one \code{group} variable, separate the levels of
+each group with a colon. Ensure that all \code{groups} listed in cols_to_group
+are represented in each entry for the table. See details for examples.}
 
-\item{cont_sep}{The delimiter used in the contrasts.
+\item{cont_sep}{The delimiter used to import the contrasts table.
 Default is tab.}
-
-\item{mf_data}{The data frame containing the mutation count data.
-Mutation counts should be summarized per group for each mutation subtype of
-interest. This data can be obtained using \code{calculate_mut_freq(summary=TRUE)}.}
-
-\item{muts}{The column in mf_data containing the mutation count per group.}
-
-\item{subtype_col}{The column in mf_data listing the mutation subtypes.}
-
-\item{group}{A vector of grouping variables: this should be the groups
-of interest across which you want to compare mutation spectra.
-Ex. c("dose", "tissue")}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with

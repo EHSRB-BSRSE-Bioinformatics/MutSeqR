@@ -11,8 +11,6 @@
 #' @examples
 #' read_config_and_render("config.yaml", "output.html")
 #'
-#' @import yaml
-#' @import rmarkdown
 #' @importFrom utils install.packages
 #' @export
 render_report <- function(config_filepath, output_file) {

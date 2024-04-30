@@ -13,7 +13,6 @@
 #' 
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
-#' @importFrom packcircles circleProgressiveLayout circleLayoutVertices
 #' @export
 generate_bubble_plots <- function(mutation_data,
                                   facet_col = "dose",
@@ -21,7 +20,9 @@ generate_bubble_plots <- function(mutation_data,
                                   color_by = "normalized_subtype",
                                   circle_outline = "none",
                                   circle_resolution = 50) {
-  
+  if (!requireNamespace("fmsb")) {
+    stop("You need the package fmsb to run this function.")
+  }
   # I haven't fully implemented the color_by option
   # ideally it would conditionally build the color pallet depending on the value of this variable
   if (color_by == "normalized_subtype") {

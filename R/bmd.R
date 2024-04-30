@@ -10,7 +10,6 @@
 #' @param model_avg A logical value specifying whether to
 #' average the model fits. Default is TRUE.
 #' @return A list with the following components:
-#' @importFrom ToxicR single_continuous_fit
 #' @export
 mf_bmd <- function(mf_data,
                    dose_col = "dose",
