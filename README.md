@@ -2,15 +2,19 @@
   [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
   <!-- badges: end -->
   
-# ecNGS Analysis For Mutagenicity Assessment
+# MutSeqR: Error-corrected Next-Generation Sequencing (ecNGS) Analysis For Mutagenicity Assessment
 
-## Pre-abmle
+## What is ecNGS?
 
-To do: write a bit about the project, the scope, why it's necessary.
+Error-corrected next-generation sequencing (ecNGS) uses various methods to combine multiple independent raw sequence reads derived from an original starting molecule, thereby subtracting out artifacts introduced during sequencing or library preparation. This results in a highly accurate representation of the original molecule. ecNGS is particularly useful for detecting rare somatic mutations (or mutations in germ cells), such as those that arise from mutagen exposure or other sources of DNA damage. ecNGS is a powerful tool for assessing the mutagenicity of chemicals, drugs, or other agents, and can be used to identify the mutational signatures of these agents. ecNGS can also be used to detect rare mutations in cancer or other diseases, and to track the clonal evolution of these diseases over time.
 
-Provide a little background on duplex sequencing, describe the
-technology briefly, and give some context for the type of data we are
-meant to be processing with this package.
+For more background on how ecNGS works and its context in regulatory toxicology testing and genetic toxicology, see the following articles:
+- [Brash et al., 2023](10.1016/j.mrrev.2023.108471)
+- [Marchetti et al., 2023a](https://doi.org/10.1038/d41573-023-00014-y)
+- [Marchetti et al., 2023b](https://doi.org/10.1016/j.mrrev.2023.108466)
+- [Kennedy et al., 2014](https://doi.org/10.1038/nprot.2014.170)
+
+This R package is meant to facilitate the import, cleaning, and analysis of ecNGS data, beginning with a table of variant calls or a variant call file (VCF). The package is designed to be flexible and enable users to perform common statistical analyses and visualisations. Currently, it  has been tested primarily with TwinStrand Biosciences' Duplex Sequencing data, but it should be adaptable to other ecNGS methods as well.
 
 ## Installation
 
@@ -18,7 +22,7 @@ Install from github with:
 
 ```{r}
 # install.packages("devtools")
-devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR", auth_token = "your personal_access_token from github")
+devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR", auth_token = "your personal_access_token from GitHub")
 ```
 
 ## Data import
@@ -186,9 +190,3 @@ When first importing a `.mut` file, it is preferred to keep non-variant
 rows. This allows the calculuation of mutation frequencies. The data set
 can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination).
-
-To be filled in more...
-
-## Step 2
-
-## Step 3

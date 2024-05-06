@@ -21,6 +21,7 @@
 #' directory.
 #' @param output_type A character string specifying the type of output file.
 #' Options are  'jpeg', 'pdf', 'png', 'svg', or 'tiff'. Default is 'svg'.
+#' @param sum_totals A logical value specifying whether to sum the total mutations.
 #' @importFrom dplyr arrange group_by mutate summarise
 #' @importFrom stringr str_extract str_c
 

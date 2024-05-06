@@ -15,14 +15,15 @@ mf_bmd(
 \arguments{
 \item{mf_data}{A data frame with columns "dose" and "MFmin"}
 
-\item{BMR}{A numeric value specifying the benchmark response.
-Default is 0.5.}
+\item{dose_col}{A character string specifying the column in data to be used to identify dose.}
 
-\item{model_type}{A string specifying the model type.
+\item{response_col}{A character string specifying the column in data to be used to identify response.}
+
+\item{model_types}{A string specifying the model type.
 Options are "hill", "exp-3","exp-5", "power", "polynomial"}
 
-\item{model_avg}{A logical value specifying whether to
-average the model fits. Default is TRUE.}
+\item{BMR}{A numeric value specifying the benchmark response.
+Default is 0.5.}
 }
 \value{
 A list with the following components:

@@ -8,6 +8,7 @@
 #' @param circle_spacing Numerical value to adjust the spacing between circles.
 #' @param color_by Character vector specifying how to color the mutations. Accepted values are "normalized_subtype", "subtype", and "trinucleotide_subtype". NOT FULLY IMPLEMENTED.
 #' @param circle_outline Color for the circle outline. Default is "none", resulting in no outline color. Other accepted values are colors in the R language.
+#' @param circle_resolution Number of points to use for the circle resolution. Default is 50.
 #' 
 #' @return A ggplot object with the bubble plot, facetted if specified.
 #' 
@@ -20,7 +21,9 @@ generate_bubble_plots <- function(mutation_data,
                                   color_by = "normalized_subtype",
                                   circle_outline = "none",
                                   circle_resolution = 50) {
-  
+  if (!requireNamespace("fmsb")) {
+    stop("You need the package fmsb to run this function.")
+  }
   # I haven't fully implemented the color_by option
   # ideally it would conditionally build the color pallet depending on the value of this variable
   if (color_by == "normalized_subtype") {
