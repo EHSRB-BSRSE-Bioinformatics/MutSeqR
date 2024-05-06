@@ -5,26 +5,29 @@
 \title{Write the mutation calling file to input into the sigprofiler web application}
 \usage{
 write_mutation_calling_file(
-  mutations,
+  mutation_data,
   project_name = "test",
-  project_genome = "GRCm38"
+  project_genome = "GRCm38",
+  output_path = NULL
 )
 }
 \arguments{
-\item{mutations}{The GRanges object containing the mutation data.
+\item{mutation_data}{The GRanges object containing the mutation data.
 The output of import_mut_data() or read_vcf().}
 
 \item{project_name}{The name of the project; used to get mutation data
 into the required .txt format for SigProfiler}
 
 \item{project_genome}{A string describing the reference genome to use
-(e.g., GRCh38, GRCm38)
+(e.g., GRCh38, GRCm38)}
+
+\item{output_path}{The path to save the output file. Default is NULL.
 See import_mut_data() or read_vcf() for more details.}
 }
 \value{
 a .txt file that can be uploaded to the sigprofiler web application
 as "Mutational calling file"
-Filters out ostensibly germline mutations identified in mutaiton data..
+Filters out ostensibly germline mutations identified in mutation data.
 }
 \description{
 Creates a .txt file from mutation data that can be used for mutational signatures
