@@ -69,15 +69,17 @@ plot_spectra <- function(mutation_data,
                          x_lab = NULL,
                          y_lab = NULL) {
   
- retain_metadata_cols <- NULL
+ metadata_cols <- NULL
 if (group_order == "arranged") {
-  retain_metadata_cols <- group_order_input
+ # retain columns to arrange the data.
+ # If the group_order_input contains the group_col, remove it.
+ metadata_cols <- group_order_input[!group_order_input %in% group_col]
 }
   mf_data <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
-                                       cols_to_group = group_col,
-                                       subtype_resolution = subtype_resolution,
-                                       variant_types = variant_types,
-                                       retain_metadata_cols = retain_metadata_cols)
+                                          cols_to_group = group_col,
+                                          subtype_resolution = subtype_resolution,
+                                          variant_types = variant_types,
+                                          retain_metadata = metadata_cols)
 
   group_col_prefix <- paste(group_col, collapse = "_")
 
@@ -115,9 +117,9 @@ if (group_order == "arranged") {
     order <- gtools::mixedsort(order)
     plot_data$group <- factor(plot_data$group, levels = order)
   } else if (group_order == "arranged") {
-    plot_data$group_order <- mf_data[[group_order_input]]
-    plot_data <- plot_data %>%
-      dplyr::arrange(group_order)
+   plot_data <- cbind(plot_data, mf_data[group_order_input])
+  plot_data <- plot_data %>%
+      dplyr::arrange(!!!rlang::syms(group_order_input))
     order <- as.vector(unique(plot_data$group))
     plot_data$group <- factor(plot_data$group, levels = order)
   } else if (group_order == "custom") {
