@@ -133,7 +133,7 @@ import_mut_data <- function(mut_file,
                             sd_sep = "\t",
                             vaf_cutoff,
                             range_buffer = 0,
-                            regions = c("human", "mouse", "rat", "custom"),
+                            regions = c("human", "mouse", "rat", "custom", "none"),
                             custom_regions_file = NULL,
                             rg_sep = "\t",
                             is_0_based = TRUE,
@@ -147,11 +147,12 @@ import_mut_data <- function(mut_file,
   if (vaf_cutoff < 0 || vaf_cutoff > 1) {
   stop("Error: The VAF cutoff must be between 0 and 1")
   }
+
   if (!is.numeric(range_buffer) || range_buffer < 0) {
     stop("Error: The range buffer must be a non-negative number")
   }
-  if (!regions %in% c("human", "mouse", "rat", "custom")) {
-    stop("Error: regions must be 'human', 'mouse', 'rat', or 'custom'")
+  if (!regions %in% c("human", "mouse", "rat", "custom", "none")) {
+    stop("Error: regions must be 'human', 'mouse', 'rat', 'custom' or 'none")
   }
   if (!is.logical(is_0_based)) {
     stop("Error: is_0_based must be a logical variable")
@@ -516,63 +517,73 @@ import_mut_data <- function(mut_file,
       )
     )
 
-  # Turn into GRanges
-  mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-    df = as.data.frame(dat),
-    keep.extra.columns = TRUE,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = TRUE
-  )
 
-  regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
+  if (regions != "none") {
+    # load regions file
+    regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
+    # adjust regions start based on range_buffer
+    regions_df <- regions_df %>%
+      dplyr::mutate(regions_start_buffered =
+                      as.numeric(paste0(.data$start)) - range_buffer)
+    
+    # adjust start position to be 1-based
+    if (regions %in% c("mouse", "human", "rat")) {
+      is_0_based <- TRUE
+    }
+    if (is_0_based) {
+      regions_df$regions_start_buffered <- regions_df$regions_start_buffered + 1
+    }
+    # Turn region data into GRanges
+    region_ranges <- GenomicRanges::makeGRangesFromDataFrame(
+      df = regions_df,
+      keep.extra.columns = TRUE,
+      seqnames.field = "contig",
+      start.field = "start",
+      end.field = "end",
+      starts.in.df.are.0based = is_0_based
+    )
 
-  regions_df <- regions_df %>%
-    dplyr::mutate(regions_start_buffered =
-                    as.numeric(paste0(.data$start)) - range_buffer)
+    # Turn mutation data into GRanges
+    mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
+      df = as.data.frame(dat),
+      keep.extra.columns = TRUE,
+      seqnames.field = "contig",
+      start.field = "start",
+      end.field = "end",
+      starts.in.df.are.0based = TRUE
+    )
+    # Join mutation data and region data using overlap
+    ranges_joined <- plyranges::join_overlap_left(mut_ranges,
+      region_ranges,
+      maxgap = range_buffer,
+      suffix = c("_mut", "_regions")
+    )
+    # Turn data back into a dataframe
+    dat <- as.data.frame(ranges_joined)
+    # Add a column that shows how far the mutation is from the region
+    dat <- dat %>%
+      dplyr::mutate(bp_outside_rg = .data$regions_start_buffered - .data$start)
+    # Create a seperate dataframe for the ranges that are outside the regions
+    ranges_outside_regions <- dat %>%
+      dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0)
 
-  if (regions %in% c("mouse", "human", "rat")) {
-    is_0_based <- TRUE
+    # Tell users that some variants were filtered
+    if (nrow(ranges_outside_regions) > 0) {
+      print(paste(
+        nrow(ranges_outside_regions),
+        "rows of data were outside specified regions and were filtered out of the mutation data.
+        The function will return a list of two dataframes. Mutation data will be stored
+        in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
+      ))
+    }
+
+    dat <- dat %>%
+      dplyr::filter(!is.na(.data$bp_outside_rg) & .data$bp_outside_rg <= 0) %>%
+      plyranges::select(-"regions_start_buffered", -"bp_outside_rg")
+  } else {
+    dat <- dplyr::rename(dat, seqnames = "contig")
+    ranges_outside_regions <- data.frame()
   }
-
-  if (is_0_based) {
-    regions_df$regions_start_buffered <- regions_df$regions_start_buffered + 1
-  }
-
-  region_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-    df = regions_df,
-    keep.extra.columns = TRUE,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = is_0_based
-  )
-
-  ranges_joined <- plyranges::join_overlap_left(mut_ranges,
-    region_ranges,
-    maxgap = range_buffer,
-    suffix = c("_mut", "_regions")
-  )
-  dat <- as.data.frame(ranges_joined)
-  dat <- dat %>%
-    dplyr::mutate(bp_outside_rg = .data$regions_start_buffered - .data$start)
-  ranges_outside_regions <- dat %>%
-    dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0)
-
-  # Display the ranges that were filtered out of the data
-  if (nrow(ranges_outside_regions) > 0) {
-    print(paste(
-      nrow(ranges_outside_regions),
-      "rows of data were outside specified regions and were filtered out of the mutation data.
-      The function will return a list of two dataframes. Mutation data will be stored
-      in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
-    ))
-  }
-
-  dat <- dat %>%
-    dplyr::filter(!is.na(.data$bp_outside_rg) & .data$bp_outside_rg <= 0) %>%
-    plyranges::select(-"regions_start_buffered", -"bp_outside_rg")
 
   if (output_granges) {
     gr <- GenomicRanges::makeGRangesFromDataFrame(
@@ -593,8 +604,7 @@ import_mut_data <- function(mut_file,
       return(gr)
     }
   } else {
-    dat <- dat %>%
-      dplyr::rename(contig = "seqnames")
+    dat <- dplyr::rename(dat, contig = "seqnames")
 
     if (nrow(ranges_outside_regions) > 0) {
       ls <- list(
