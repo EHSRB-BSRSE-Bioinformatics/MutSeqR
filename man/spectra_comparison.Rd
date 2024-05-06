@@ -9,7 +9,7 @@ spectra_comparison(
   cols_to_group,
   subtype_resolution = "base_6",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
-  mf_type = "unique",
+  mf_type = "min",
   contrasts,
   cont_sep = "\\t"
 )
@@ -28,6 +28,8 @@ See calculate_mut_freq for more details.}
 
 \item{variant_types}{A character vector of the mutation types to include
 in the comparison. Default is all types of mutations.}
+
+\item{mf_type}{The type of mutation frequency to use. Default is "min".}
 
 \item{contrasts}{a filepath to a tab-delimited \code{.txt} file OR a dataframe that
 will specify the comparisons to be made between groups. The table must

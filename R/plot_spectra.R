@@ -43,7 +43,7 @@
 #' data. The default is a set of colors from the RColorBrewer package.
 #' @param x_lab The label for the x-axis. Default is the value of `group_col`.
 #' @param y_lab The label for the y-axis. Default is the value of `response_col`.
-#' @param mf_type The type of mutation frequency to use. Default is `unique`.
+#' @param mf_type The type of mutation frequency to use. Default is `min`.
 #' @param variant_types A character vector of the mutation types to include.
 #' @param subtype_resolution The resolution of the mutation spectra. Default is `base_6`.
 #' @import patchwork
@@ -57,7 +57,7 @@ plot_spectra <- function(mutation_data,
                          group_col = "sample",
                          subtype_resolution = "base_6",
                          response = c("frequency", "proportion", "sum"),
-                         mf_type = c("unique", "clonal"),
+                         mf_type = c("min", "max"),
                          variant_types = c("snv",
                                                  "deletion",
                                                  "insertion",
@@ -268,7 +268,7 @@ if (group_order == "arranged") {
 #' samples.
 cluster_spectra <- function(mf_data = mf_data,
                     group_col = "sample",
-                    response_col = "proportion_unique",
+                    response_col = "proportion_min",
                     subtype_col = "normalized_subtype",
                     dist = "cosine",
                     cluster_method = "ward.D") {

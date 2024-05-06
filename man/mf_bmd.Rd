@@ -7,7 +7,7 @@
 mf_bmd(
   mf_data,
   dose_col = "dose",
-  response_col = c("sample_MF_unique", "sample_MF_clonal"),
+  response_col = c("sample_MF_min", "sample_MF_max"),
   model_types = c("hill", "exp-3", "exp-5", "power", "polynomial"),
   BMR = 0.5
 )

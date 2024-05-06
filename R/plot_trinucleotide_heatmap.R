@@ -4,7 +4,7 @@
 #'
 #' @param mf_data The data file
 #' @param group_var The variable to group by.
-#' @param mf_type The type of mutation frequency to plot. Options are "unique" or "clonal". (Default: "unique")
+#' @param mf_type The type of mutation frequency to plot. Options are "min" or "max". (Default: "min")
 #' @param mut_proportion_scale The scale option for the mutation proportion. Options are passed to viridis::scale_fill_viridis_c.
 #'  One of # inferno, magma, plasma, viridis, cividis, turbo, mako, or rocket. We highly reccomend the default for its ability to
 #' disciminate hard to see patterns. (Default: "turbo")
@@ -13,7 +13,7 @@
 #' @param rescale_data Logical value indicating whether to rescale the mutation proportions to increase the dynamic range of colors shown on the plot. (Default: TRUE)
 #' @param condensed More condensed plotting format. Default = F.
 #' @import ggplot2
-#' @importFrom dplyr group_by summarise mutate rename all_of 
+#' @importFrom dplyr group_by summarise mutate rename all_of
 #' @importFrom scales rescale
 #' @importFrom stringr str_length str_extract str_c
 #' @importFrom magrittr %>% 
@@ -27,7 +27,7 @@
     # A data set with context and subtype seperated into different columns, simple spectrum  
 plot_trinucleotide_heatmap <- function(mf_data,
                                        group_var = "dose",
-                                       mf_type = "unique",
+                                       mf_type = "min",
                                        mut_proportion_scale = "turbo",
                                        max = 0.2,
                                        rescale_data = FALSE,

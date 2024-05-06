@@ -5,7 +5,7 @@ test_that("model_mf works as expected ", {
   mf_data <- data.frame(
     dose = c(0, 25, 50, 100, 0, 25, 50, 100),
     genomic_target = c("chr1", "chr2", "chr1", "chr2", "chr1", "chr2", "chr1", "chr2"),
-    sample_sum_unique = c(10, 20, 30, 40, 50, 60, 70, 80),
+    sample_sum_min = c(10, 20, 30, 40, 50, 60, 70, 80),
     sample_group_depth = c(100, 200, 300, 400, 500, 600, 700, 800)
   )
   

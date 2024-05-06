@@ -3,11 +3,11 @@
 #' @param mf_data A data frame containing the mutation frequency data. This is
 #' obtained from the calculate_mut_freq function with SUMMARY = TRUE.
 #' @param sample_col The name of the column containing the sample names.
-#' @param mf_type The type of mutation frequency to plot. Options are "unique",
-#' "clonal", "both", or "stacked". If "both", the unique and clonal mutation
+#' @param mf_type The type of mutation frequency to plot. Options are "min",
+#' "max", "both", or "stacked". If "both", the min and max mutation
 #' frequencies are plotted side by side. If "stacked", the difference between
-#' the unique and clonal MF is stacked on top of the unique MF such that the
-#' total height of both bars represent the clonal MF.
+#' the min and max MF is stacked on top of the min MF such that the
+#' total height of both bars represent the max MF.
 #' @param fill_col The name of the column containing the fill variable.
 #' @param custom_palette A character vector of colour codes to use for the plot.
 #' If NULL, a default palette is used
@@ -40,7 +40,7 @@
 #' @export
 plot_mf <- function(mf_data,
                     sample_col,
-                    mf_type = c("unique", "clonal", "both", "stacked"),
+                    mf_type = c("min", "max", "both", "stacked"),
                     fill_col = NULL,
                     custom_palette = NULL,
                     sample_order = c("none", "smart", "arranged", "custom"),
@@ -80,7 +80,7 @@ plot_mf <- function(mf_data,
   }
 
 
-  if (mf_type %in% c("unique", "clonal")) {
+  if (mf_type %in% c("min", "max")) {
     # response column
     MF_column_pattern <- paste0(".*(_MF_", mf_type, ")$")
     response_col <- names(mf_data)[grepl(MF_column_pattern, names(mf_data))]
@@ -96,43 +96,43 @@ plot_mf <- function(mf_data,
     max_y <- max(plot_data$mf_col) * 1.1
   } else {
     # response columns
-    MF_unique_column_pattern <- paste0(".*(_MF_unique", ")$")
-    unique_mf_col <- names(mf_data)[grepl(MF_unique_column_pattern, names(mf_data))]
-    MF_clonal_column_pattern <- paste0(".*(_MF_clonal", ")$")
-    clonal_mf_col <- names(mf_data)[grepl(MF_clonal_column_pattern, names(mf_data))]
+    MF_min_column_pattern <- paste0(".*(_MF_min", ")$")
+    min_mf_col <- names(mf_data)[grepl(MF_min_column_pattern, names(mf_data))]
+    MF_max_column_pattern <- paste0(".*(_MF_max", ")$")
+    max_mf_col <- names(mf_data)[grepl(MF_max_column_pattern, names(mf_data))]
 
     # sum columns
-    sum_unique_column_pattern <- paste0(".*(_sum_unique", ")$")
-    unique_count_col <- names(mf_data)[grepl(sum_unique_column_pattern, names(mf_data))]
-    sum_clonal_column_pattern <- paste0(".*(_sum_clonal", ")$")
-    clonal_count_col <- names(mf_data)[grepl(sum_clonal_column_pattern, names(mf_data))]
+    sum_min_column_pattern <- paste0(".*(_sum_min", ")$")
+    min_count_col <- names(mf_data)[grepl(sum_min_column_pattern, names(mf_data))]
+    sum_max_column_pattern <- paste0(".*(_sum_max", ")$")
+    max_count_col <- names(mf_data)[grepl(sum_max_column_pattern, names(mf_data))]
 
     plot_data <- mf_data %>%
       dplyr::rename(sample_col = dplyr::all_of(sample_col)) %>%
-      dplyr::rename(mf_unique = dplyr::all_of(unique_mf_col)) %>%
-      dplyr::rename(mf_clonal = dplyr::all_of(clonal_mf_col)) %>%
-      dplyr::rename(sum_unique = dplyr::all_of(unique_count_col)) %>%
-      dplyr::rename(sum_clonal = dplyr::all_of(clonal_count_col))
+      dplyr::rename(mf_min = dplyr::all_of(min_mf_col)) %>%
+      dplyr::rename(mf_max = dplyr::all_of(max_mf_col)) %>%
+      dplyr::rename(sum_min = dplyr::all_of(min_count_col)) %>%
+      dplyr::rename(sum_max = dplyr::all_of(max_count_col))
 
     if (mf_type == "stacked") {
-      plot_data <- transform(plot_data, mf_clonal = plot_data$mf_clonal - plot_data$mf_unique)
-      max_y <- max(plot_data$mf_unique + plot_data$mf_clonal) * 1.1
+      plot_data <- transform(plot_data, mf_max = plot_data$mf_max - plot_data$mf_min)
+      max_y <- max(plot_data$mf_min + plot_data$mf_max) * 1.1
     } else {
-      max_y <- max(plot_data$mf_clonal) * 1.1
+      max_y <- max(plot_data$mf_max) * 1.1
     }
     # pivot long
     plot_data <- reshape(plot_data,
-                         varying = list(c("sum_unique", "sum_clonal"),
-                                        c("mf_unique", "mf_clonal")),
+                         varying = list(c("sum_min", "sum_max"),
+                                        c("mf_min", "mf_max")),
                          v.names = c("sum_col", "mf_col"),
-                         times = c("unique", "clonal"),
+                         times = c("min", "max"),
                          timevar = "mf_type",
                          direction = "long")
     if (mf_type == "both") {
-      plot_data$mf_type <- factor(plot_data$mf_type, levels = c("unique", "clonal"))
+      plot_data$mf_type <- factor(plot_data$mf_type, levels = c("min", "max"))
     }
     if (mf_type == "stacked") {
-      plot_data$mf_type <- factor(plot_data$mf_type, levels = c("clonal", "unique"))
+      plot_data$mf_type <- factor(plot_data$mf_type, levels = c("max", "min"))
     }
   }
 
@@ -187,8 +187,8 @@ plot_mf <- function(mf_data,
 
   # Title
   if (mf_type %in% c("stacked", "both")) {
-    title <- paste0("Unique and Clonal Mutation frequency per ", sample_col)
-  } else if (mf_type %in% c("unique", "clonal")){
+    title <- paste0("Mininimum and Maximum Mutation frequency per ", sample_col)
+  } else if (mf_type %in% c("min", "max")){
     title <- paste0(mf_type, " mutation frequency per ", sample_col)
   }
 
@@ -196,7 +196,7 @@ plot_mf <- function(mf_data,
   if (is.null(custom_palette)) {
     if (mf_type %in% c("both", "stacked")) {
       n_colors <- length(unique(plot_data$fill_col)) * 2
-    } else if (mf_type %in% c("unique", "clonal")) {
+    } else if (mf_type %in% c("min", "max")) {
       n_colors <- length(unique(plot_data$fill_col))
     }
     gradient <- colorRampPalette(colors = c("#c5e5fc",

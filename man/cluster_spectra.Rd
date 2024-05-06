@@ -7,7 +7,7 @@
 cluster_spectra(
   mf_data = mf_data,
   group_col = "sample",
-  response_col = "proportion_unique",
+  response_col = "proportion_min",
   subtype_col = "normalized_subtype",
   dist = "cosine",
   cluster_method = "ward.D"

@@ -7,7 +7,7 @@
 plot_trinucleotide_heatmap(
   mf_data,
   group_var = "dose",
-  mf_type = "unique",
+  mf_type = "min",
   mut_proportion_scale = "turbo",
   max = 0.2,
   rescale_data = FALSE,
@@ -19,7 +19,7 @@ plot_trinucleotide_heatmap(
 
 \item{group_var}{The variable to group by.}
 
-\item{mf_type}{The type of mutation frequency to plot. Options are "unique" or "clonal". (Default: "unique")}
+\item{mf_type}{The type of mutation frequency to plot. Options are "min" or "max". (Default: "min")}
 
 \item{mut_proportion_scale}{The scale option for the mutation proportion. Options are passed to viridis::scale_fill_viridis_c.
 One of # inferno, magma, plasma, viridis, cividis, turbo, mako, or rocket. We highly reccomend the default for its ability to

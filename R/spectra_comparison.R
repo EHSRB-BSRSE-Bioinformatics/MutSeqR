@@ -22,7 +22,7 @@
 #' are represented in each entry for the table. See details for examples.
 #' @param cont_sep The delimiter used to import the contrasts table.
 #' Default is tab.
-#' @param mf_type The type of mutation frequency to use. Default is "unique".
+#' @param mf_type The type of mutation frequency to use. Default is "min".
 #' @returns the log-likelihood statistic G2 for the specified comparisons with
 #' the p-value adjusted for multiple-comparisons.
 #' @export
@@ -64,7 +64,7 @@ spectra_comparison <- function(mutation_data,
                                                  "complex",
                                                  "mnv",
                                                  "symbolic"),
-                               mf_type = "unique",
+                               mf_type = "min",
                                contrasts,
                                cont_sep = "\t") {
   

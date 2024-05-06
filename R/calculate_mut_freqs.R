@@ -6,8 +6,8 @@
 #' case, it is necessary to change the denominator of total bases to reflect
 #' the sequencing depth at the proper reference bases under consideration.
 #'
-#' Additionally, the operation is run by default using clonally expanded as well
-#' as unique mutations.
+#' Additionally, by default, the operation is run by default using both the minimum 
+#' and maximum independent methods for counting mutations.
 #' @param mutation_data The data frame to be processed containing mutation data.
 #' Required columns are listed below.
 #' Synonymous names for these columns are accepted.
@@ -86,20 +86,20 @@
 #' frequency calculated for each group. If summary is set to FALSE, the
 #' mutation frequency will be appended to each row of the original mutation_data.
 #'  \itemize{
-#'       \item `_MF_unique`: The mutation frequency calculated using the "min"
+#'       \item `_MF_min`: The mutation frequency calculated using the "min"
 #' method for mutation counting. All identical mutations within a samples are
 #' assumed to be the result of clonal expansion and are thus only counted
 #' once.
-#'        \item `_MF_clonal`: The mutation frequency calculated using the "max"
+#'        \item `_MF_max`: The mutation frequency calculated using the "max"
 #' method for mutaiton counting. All identical mutations within a sample are
 #' assumed to be idenpendant mutational evens and are included in the
 #' mutation frequency calculation. Note that this does not apply for germline
 #' variants. 
-#'     \item `proportion_unique`: The proportion of each mutation
+#'     \item `proportion_min`: The proportion of each mutation
 #' subtype within the group, normalized to its read depth. Calculated
 #' using the "min" method. This is only calculated if `subtype_resolution`
 #' is not "none".
-#'     \item `proportion_clonal`: The proportion of each mutation
+#'     \item `proportion_max`: The proportion of each mutation
 #' subtype within the group, normalized to its read depth. Calculated
 #' using the "max" method. This is only calculated if `subtype_resolution`
 #' is not "none".
@@ -200,16 +200,16 @@ if (!is.null(retain_metadata_cols)) {
   # Calculate denominator Numerator groups
   mut_freq_table <- mut_freq_table %>%
     dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_sum_clonal") :=
+    dplyr::mutate(!!paste0(freq_col_prefix, "_sum_max") :=
                     sum(.data$alt_depth[.data$variation_type %in% variant_types
                                         & .data$is_germline == FALSE])) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_sum_unique") :=
+    dplyr::mutate(!!paste0(freq_col_prefix, "_sum_min") :=
                     length(.data$alt_depth[.data$variation_type %in%
                                              variant_types &
                                              .data$is_germline == FALSE])) %>%
     dplyr::ungroup()
 
-  # Calculate denominator (same for clonal and unique mutations)
+  # Calculate denominator (same for max and min mutations)
   # snv depth: depth across groups and snv subtype resolution
   # group depth: depth across groups.
   mut_freq_table <- mut_freq_table %>%
@@ -223,18 +223,18 @@ if (!is.null(retain_metadata_cols)) {
 
   # Calculate frequencies
   mut_freq_table <- mut_freq_table %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_MF_clonal") :=
+    dplyr::mutate(!!paste0(freq_col_prefix, "_MF_max") :=
                     ifelse(.data$variation_type == "snv",
-                      .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
+                      .data[[paste0(freq_col_prefix, "_sum_max")]] /
                         .data[[paste0(freq_col_prefix, "_snv_depth")]],
-                      .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
+                      .data[[paste0(freq_col_prefix, "_sum_max")]] /
                         .data[[paste0(freq_col_prefix, "_group_depth")]]
                     )) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_MF_unique") :=
+    dplyr::mutate(!!paste0(freq_col_prefix, "_MF_min") :=
                     ifelse(.data$variation_type == "snv",
-                      .data[[paste0(freq_col_prefix, "_sum_unique")]] /
+                      .data[[paste0(freq_col_prefix, "_sum_min")]] /
                         .data[[paste0(freq_col_prefix, "_snv_depth")]],
-                      .data[[paste0(freq_col_prefix, "_sum_unique")]] /
+                      .data[[paste0(freq_col_prefix, "_sum_min")]] /
                         .data[[paste0(freq_col_prefix, "_group_depth")]]
                     )) %>%
     dplyr::ungroup()
@@ -243,19 +243,19 @@ if (!is.null(retain_metadata_cols)) {
   # Create a summary table
   ######################################
 
-  # Grab all unique cols_to_group
+  # Grab all cols_to_group
   col_values <- lapply(cols_to_group, 
                        function(col) unique(mut_freq_table[[col]]))
 
   # Summary Data
   summary_cols <- c(
     numerator_groups,
-    paste0(freq_col_prefix, "_sum_unique"),
-    paste0(freq_col_prefix, "_sum_clonal"),
+    paste0(freq_col_prefix, "_sum_min"),
+    paste0(freq_col_prefix, "_sum_max"),
     paste0(freq_col_prefix, "_group_depth"),
     paste0(freq_col_prefix, "_snv_depth"),
-    paste0(freq_col_prefix, "_MF_unique"),
-    paste0(freq_col_prefix, "_MF_clonal")
+    paste0(freq_col_prefix, "_MF_min"),
+    paste0(freq_col_prefix, "_MF_max")
   )
   summary_rows <- do.call(expand.grid, col_values)
 
@@ -395,35 +395,35 @@ if (!is.null(retain_metadata_cols)) {
       dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group)))) %>%
       dplyr::mutate(
         # Get sum of mutations across groups
-        total_group_mut_sum_unique =
-          sum(.data[[paste0(freq_col_prefix, "_sum_unique")]]),
-        total_group_mut_sum_clonal =
-          sum(.data[[paste0(freq_col_prefix, "_sum_clonal")]])
+        total_group_mut_sum_min =
+          sum(.data[[paste0(freq_col_prefix, "_sum_min")]]),
+        total_group_mut_sum_max =
+          sum(.data[[paste0(freq_col_prefix, "_sum_max")]])
       ) %>%
       dplyr::ungroup()
-# freq = mut_sum / total_mut_sum / depth : unique
+# freq = mut_sum / total_mut_sum / depth : min
     proportions <- proportions %>%
       dplyr::mutate(
-        freq_unique =
+        freq_min =
           ifelse(is.na(.data[[paste0(freq_col_prefix, "_snv_depth")]]), # non-snv subtypes divide by group depth
-            .data[[paste0(freq_col_prefix, "_sum_unique")]] /
-              .data$total_group_mut_sum_unique /
+            .data[[paste0(freq_col_prefix, "_sum_min")]] /
+              .data$total_group_mut_sum_min /
               .data[[paste0(freq_col_prefix, "_group_depth")]],
-            .data[[paste0(freq_col_prefix, "_sum_unique")]] / # snv subtypes divide by snv depth
-              .data$total_group_mut_sum_unique /
+            .data[[paste0(freq_col_prefix, "_sum_min")]] / # snv subtypes divide by snv depth
+              .data$total_group_mut_sum_min /
               .data[[paste0(freq_col_prefix, "_snv_depth")]]
           )
       )
-# freq = mut_sum / total_mut_sum / depth : clonal
+# freq = mut_sum / total_mut_sum / depth : max
     proportions <- proportions %>%
       dplyr::mutate(
-        freq_clonal =
+        freq_max =
           ifelse(is.na(.data[[paste0(freq_col_prefix, "_snv_depth")]]), # non-snv subtypes divide by group depth
-            .data[[paste0(freq_col_prefix, "_sum_clonal")]] /
-              .data$total_group_mut_sum_clonal /
+            .data[[paste0(freq_col_prefix, "_sum_max")]] /
+              .data$total_group_mut_sum_max /
               .data[[paste0(freq_col_prefix, "_group_depth")]], 
-            .data[[paste0(freq_col_prefix, "_sum_clonal")]] / # snv subtypes divide by snv depth
-              .data$total_group_mut_sum_clonal /
+            .data[[paste0(freq_col_prefix, "_sum_max")]] / # snv subtypes divide by snv depth
+              .data$total_group_mut_sum_max /
               .data[[paste0(freq_col_prefix, "_snv_depth")]] 
           )
       )
@@ -431,18 +431,18 @@ if (!is.null(retain_metadata_cols)) {
     summary_table <- proportions %>%
       dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group)))) %>%
       dplyr::mutate(
-        total_freq_unique = sum(.data$freq_unique),
-        total_freq_clonal = sum(.data$freq_clonal)
+        total_freq_min = sum(.data$freq_min),
+        total_freq_max = sum(.data$freq_max)
       ) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(
-        proportion_unique = .data$freq_unique / .data$total_freq_unique,
-        proportion_clonal = .data$freq_clonal / .data$total_freq_clonal
+        proportion_min = .data$freq_min / .data$total_freq_min,
+        proportion_max = .data$freq_max / .data$total_freq_max
       ) %>% # Remove extra columns
       dplyr::select(
-        -"total_group_mut_sum_unique", -"total_freq_unique",
-        -"total_group_mut_sum_clonal", -"total_freq_clonal",
-        -"freq_unique", -"freq_clonal"
+        -"total_group_mut_sum_min", -"total_freq_min",
+        -"total_group_mut_sum_max", -"total_freq_max",
+        -"freq_min", -"freq_max"
       )
   }
 # Remove the snv_depth column if we are not using it

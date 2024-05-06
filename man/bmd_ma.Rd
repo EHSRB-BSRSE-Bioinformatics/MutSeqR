@@ -8,7 +8,7 @@ bmd_ma(
   mf_data,
   data_type = c("individual", "summary"),
   dose_col,
-  response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+  response_cols = c("sample_MF_min", "sample_MF_max"),
   sd_col = NULL,
   n_col = NULL,
   bmr_type = "rel",

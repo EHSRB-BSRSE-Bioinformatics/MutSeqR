@@ -6,7 +6,7 @@
 #' @param response A character string specifying the type of response to plot.
 #' Must be one of 'frequency', 'proportion', or 'sum'.
 #' @param mf_type A character string specifying the mutation count method to
-#' plot. Must be one of 'unique' or 'clonal'. Default is 'unique'.
+#' plot. Must be one of 'min' or 'max'. Default is 'min'.
 #' @param group_col A character string specifying the column(s) in 'mutation_data'
 #' to group the data by. Default is 'sample'. The sum, proportion, or frequency
 #' will be calculated and a plot will be generated for all unique levels of this
@@ -40,7 +40,7 @@
 
 plot_trinucleotide <- function(mutation_data,
                                response = c("frequency", "proportion", "sum"),
-                               mf_type = "unique",
+                               mf_type = "min",
                                group_col = "dose",
                                max_y = c("individual", "group"),
                                sum_totals = TRUE,

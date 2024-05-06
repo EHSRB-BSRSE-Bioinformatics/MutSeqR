@@ -7,7 +7,7 @@ test_that("spectra_comparison works as expected", {
     dose = c(0, 25, 50, 100, 0, 25, 50, 100),
     tissue = c("bone_marrow", "bone_marrow", "bone_marrow", "bone_marrow", "liver", "liver", "liver", "liver"),
     normalized_subtype = c("subtype1", "subtype2", "subtype1", "subtype2", "subtype1", "subtype2", "subtype1", "subtype2"),
-    dose_sum_unique = c(10, 20, 30, 40, 50, 60, 70, 80)
+    dose_sum_min = c(10, 20, 30, 40, 50, 60, 70, 80)
   )
   
   # Create a contrast table file
@@ -24,7 +24,7 @@ test_that("spectra_comparison works as expected", {
   
   # Call the spectra_comparison function on the sample data
   result <- spectra_comparison(mf_data = mf_data,
-                               muts = "dose_sum_unique",
+                               muts = "dose_sum_min",
                                subtype_col = "normalized_subtype",
                                group = c("dose", "tissue"),
                                contrast_table_file = contrast_table_file)

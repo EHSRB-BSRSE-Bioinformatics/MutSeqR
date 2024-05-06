@@ -9,7 +9,7 @@ plot_spectra(
   group_col = "sample",
   subtype_resolution = "base_6",
   response = c("frequency", "proportion", "sum"),
-  mf_type = c("unique", "clonal"),
+  mf_type = c("min", "max"),
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
   group_order = "none",
   group_order_input = NULL,
@@ -36,7 +36,7 @@ sample/cohort names.}
 response variable. Typical response variables can be the subtype frequency,
 proportion, or count.}
 
-\item{mf_type}{The type of mutation frequency to use. Default is \code{unique}.}
+\item{mf_type}{The type of mutation frequency to use. Default is \code{min}.}
 
 \item{variant_types}{A character vector of the mutation types to include.}
 

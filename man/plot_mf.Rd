@@ -7,7 +7,7 @@
 plot_mf(
   mf_data,
   sample_col,
-  mf_type = c("unique", "clonal", "both", "stacked"),
+  mf_type = c("min", "max", "both", "stacked"),
   fill_col = NULL,
   custom_palette = NULL,
   sample_order = c("none", "smart", "arranged", "custom"),
@@ -24,11 +24,11 @@ obtained from the calculate_mut_freq function with SUMMARY = TRUE.}
 
 \item{sample_col}{The name of the column containing the sample names.}
 
-\item{mf_type}{The type of mutation frequency to plot. Options are "unique",
-"clonal", "both", or "stacked". If "both", the unique and clonal mutation
+\item{mf_type}{The type of mutation frequency to plot. Options are "min",
+"max", "both", or "stacked". If "both", the min and max mutation
 frequencies are plotted side by side. If "stacked", the difference between
-the unique and clonal MF is stacked on top of the unique MF such that the
-total height of both bars represent the clonal MF.}
+the min and max MF is stacked on top of the min MF such that the
+total height of both bars represent the max MF.}
 
 \item{fill_col}{The name of the column containing the fill variable.}
 

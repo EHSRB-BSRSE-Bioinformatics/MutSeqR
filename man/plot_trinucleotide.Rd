@@ -7,7 +7,7 @@
 plot_trinucleotide(
   mutation_data,
   response = c("frequency", "proportion", "sum"),
-  mf_type = "unique",
+  mf_type = "min",
   group_col = "dose",
   max_y = c("individual", "group"),
   sum_totals = TRUE,
@@ -23,7 +23,7 @@ using the 'import_mut_data' or 'read_vcf' functions.}
 Must be one of 'frequency', 'proportion', or 'sum'.}
 
 \item{mf_type}{A character string specifying the mutation count method to
-plot. Must be one of 'unique' or 'clonal'. Default is 'unique'.}
+plot. Must be one of 'min' or 'max'. Default is 'min'.}
 
 \item{group_col}{A character string specifying the column(s) in 'mutation_data'
 to group the data by. Default is 'sample'. The sum, proportion, or frequency

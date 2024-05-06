@@ -179,17 +179,17 @@ MF_per_sample <- calculate_mut_freq(mutation_data = mutation_data,
                                     retain_metadata_cols = params$dose_column)
 write.table(MF_per_sample, file.path(output_dir, "mutation_frequency_by_sample.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 # Plot mutation frequency by sample
-plot_unique_mf <- plot_mf(mf_data = MF_per_sample,
+plot_min_mf <- plot_mf(mf_data = MF_per_sample,
                           sample_col = "sample",
-                          mf_type = "unique",
+                          mf_type = "min",
                           fill_col = params$dose_column,
                           sample_order = "arranged",
                           sample_order_input = params$dose_column,
                           labels = "count"
                           )
-plot_unique_mf
-# Plot both clonal and unique MF, stacked
-plot_clonal_mf <- plot_mf(mf_data = MF_per_sample,
+plot_min_mf
+# Plot both max and min MF, stacked
+plot_max_mf <- plot_mf(mf_data = MF_per_sample,
                           sample_col = "sample",
                           mf_type = "stacked",
                           fill_col = params$dose_column,
@@ -197,7 +197,7 @@ plot_clonal_mf <- plot_mf(mf_data = MF_per_sample,
                           sample_order_input = params$dose_column,
                           labels = "count"
                           )
-plot_clonal_mf
+plot_max_mf
 # Create a contrast table for modelling dose
 dose_levels <- unique(MF_per_sample[[params$dose_column]][MF_per_sample[[params$dose_column]] != params$control_dose])
 dose_contrasts <- data.frame(dose_levels, params$control_dose, stringsAsFactors = FALSE)
@@ -206,7 +206,7 @@ model<- model_mf(mf_data = MF_per_sample,
                  fixed_effects = params$dose_column,
                  random_effects = NULL,
                  reference_level = params$control_dose,
-                 muts = "sample_sum_unique",
+                 muts = "sample_sum_min",
                  total_count = "sample_group_depth",
                  contrasts = dose_contrasts)
 # Model results
@@ -231,7 +231,7 @@ plot_model <- ggplot2::ggplot(plot_data, aes(x = dose, y = Estimate.x)) +
   geom_bar(stat = "identity", fill = "skyblue") +
   geom_errorbar(aes(ymin = Estimate.x - Std.Err.x, ymax = Estimate.x + Std.Err.x), width = 0.2) +
   geom_text(aes(label = Significance), vjust = -1.5, size = 6) +
-  labs(title = "Unique Mutation Frequency by Dose",
+  labs(title = "Min Mutation Frequency by Dose",
        y = "Mutation Frequency (mutations/bp)",
        x = x_lab) +
   ylim(0, max(plot_data$Estimate.x + plot_data$Std.Err.x) * 1.1) +
@@ -245,14 +245,14 @@ if (!requireNamespace("ToxicR", quietly = TRUE)) {
 ma <- bmd_ma(mf_data = MF_per_sample,
              data_type = "individual",
              dose_col = params$dose_column,
-             response_cols = c("sample_MF_unique", "sample_MF_clonal"),
+             response_cols = c("sample_MF_min", "sample_MF_max"),
              bmr_type = "rel",
              bmr = 0.5,
              fit = "laplace",
              a = 0.025,
 )
 ma$BMD
-ma$model_plots$sample_MF_unique
+ma$model_plots$sample_MF_min
 ma$BMD_plot
 }
 # MF per target Analysis
@@ -276,7 +276,7 @@ MF_per_target <- calculate_mut_freq(data = mutation_data,
                   test_interaction = TRUE,
                   random_effects = "sample",
                   reference_level = c(params$control_dose, ref),
-                  muts = "sample_label_sum_unique",
+                  muts = "sample_label_sum_min",
                   total_count = "sample_label_group_depth",
                   contrasts = combinations,
                   control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
@@ -347,18 +347,18 @@ MF_per_sample <- calculate_mut_freq(data = mutation_data,
 write.table(MF_per_sample, file.path(output_dir, "mutation_frequency_by_sample.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Plot mutation frequency by sample
-plot_unique_mf <- plot_mf(mf_data = MF_per_sample,
+plot_min_mf <- plot_mf(mf_data = MF_per_sample,
   sample_col = "sample",
-  mf_type = "unique",
+  mf_type = "min",
   fill_col = params$dose_column,
   sample_order = "arranged",
   sample_order_input = group_cols,
   labels = "count",
   palette <- c("#fff9f0", "#bad6eb", "#7096d1", "#334eac", "#081f5c")
   )
-plot_unique_mf
-# Plot both clonal and unique MF, stacked
-plot_clonal_mf <- plot_mf(mf_data = MF_per_sample,
+plot_min_mf
+# Plot both max and min MF, stacked
+plot_max_mf <- plot_mf(mf_data = MF_per_sample,
   sample_col = "sample",
   mf_type = "stacked",
   fill_col = params$dose_column,
@@ -367,7 +367,7 @@ plot_clonal_mf <- plot_mf(mf_data = MF_per_sample,
   labels = "count",
   palette <- c("#fff9f0", "#e4e2df", "#cedeeb", "#bad6eb",  "#7096d1", "#6081b4", "#334eac", "#2c4396")
   )
-plot_clonal_mf
+plot_max_mf
 
 # Model MF by the contrast_variable, based on a supplied contrasts_file
 # I want to upload a file that will contain all the parameters they want to run for this
@@ -376,7 +376,7 @@ model <- model_mf(mf_data = MF_per_sample,
                   fixed_effects = group_cols,
                   random_effects = NULL, # may be needed, depending on the experimental design
                   reference_level = c(params$reference_level, params$control_dose),
-                  muts = "sample_sum_unique",
+                  muts = "sample_sum_min",
                   total_count = "sample_group_depth",
                   contrasts = params$contrasts_file)
 # Write the model results
@@ -429,7 +429,7 @@ plot_model <- ggplot2::ggplot(plot_data, aes(x = dose, y = Estimate.point, fill 
   geom_bar(stat = "identity", position = "dodge", color = "gray") +
   geom_errorbar(aes(ymin = Estimate.point - Std.Err.point, ymax = Estimate.point + Std.Err.point), width = 0.2, position = position_dodge(width = 0.9)) +
   geom_text(aes(label = Significance), vjust = -1.5, size = 6, position = position_dodge(width = 0.9)) +
-  labs(title = "Unique Mutation Frequency by Dose",
+  labs(title = "Minimum Mutation Frequency by Dose",
        y = "Mutation Frequency (mutations/bp)",
        x = x_lab) +
   ylim(0, max(plot_data$Estimate.point + plot_data$Std.Err.point) * 1.1) +
@@ -455,7 +455,7 @@ write.table(MF_per_sample, file.path(output_dir, "mutation_frequency_by_sample.t
 # Plot mutation frequency by sample
 plot_mf(mf_data = MF_per_sample,
         sample_col = "sample",
-        mf_type = "unique",
+        mf_type = "min",
         fill_col = NULL,
         sample_order = "smart",
         labels = "count"
@@ -476,7 +476,7 @@ plot_mf(mf_data = MF_per_sample,
                               test_interaction = TRUE,
                               random_effects = "sample",
                               reference_level = ref,
-                              muts = "sample_label_sum_unique",
+                              muts = "sample_label_sum_min",
                               total_count = "sample_label_group_depth",
                               contrasts = NULL,
                               control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
@@ -530,12 +530,12 @@ if ("dose" %in% colnames(mutation_data)) {
   simple_spectra                        
   # Compare Mutation Spectra by dose
   base_6_comp <- spectra_comparison(mf_data = six_base_summary_dose,
-                                    muts = "dose_sum_unique",
+                                    muts = "dose_sum_min",
                                     subtype_col = "normalized_subtype",
                                     group = "dose",
                                     contrasts = dose_contrasts)
   trinuc_comp <- spectra_comparison(mf_data = trinuc_group,
-                                    muts = "dose_sum_unique",
+                                    muts = "dose_sum_min",
                                     subtype_col = "normalized_context_with_mutation",
                                     group = "dose",
                                     contrasts = dose_contrasts)
@@ -555,8 +555,8 @@ if ("dose" %in% colnames(mutation_data)) {
 # Plot simple spectra averaged across dose
 plot_data <- simple_spectra %>%
   group_by(dose, normalized_subtype) %>%
-  summarize(avg_MF = mean(sample_MF_unique),
-            std_error = sd(sample_MF_unique)/sqrt(n())) %>%
+  summarize(avg_MF = mean(sample_MF_min),
+            std_error = sd(sample_MF_min)/sqrt(n())) %>%
   ungroup()
   # Create subset to view low freq non-snvs
 plot_data_subset <- plot_data %>%
@@ -588,7 +588,7 @@ ggplot(plot_data_subset, aes(x = normalized_subtype, y = avg_MF, fill = factor(d
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Plot simple sectra normalized proportions
-ggplot(six_base_summary_group, aes(x = normalized_subtype, y = proportion_unique, fill = factor(dose))) +
+ggplot(six_base_summary_group, aes(x = normalized_subtype, y = proportion_min, fill = factor(dose))) +
   geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
   labs(title = "Normalized Proportions of SNV Subtypes per Dose",
        y = "Normalized proportion",
@@ -596,7 +596,7 @@ ggplot(six_base_summary_group, aes(x = normalized_subtype, y = proportion_unique
   scale_fill_discrete(name = "Dose") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 # Plot simple sectra MF by group
-ggplot(six_base_summary_group, aes(x = normalized_subtype, y = dose_MF_unique, fill = factor(dose))) +
+ggplot(six_base_summary_group, aes(x = normalized_subtype, y = dose_MF_min, fill = factor(dose))) +
   geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
   labs(title = "Mutation Frequency of SNV Subtypes per Dose",
        y = "Average Mutation Frequency (mutations/bp)",
@@ -627,14 +627,14 @@ plotdata$mutation_type <- factor(plotdata$mutation_type, levels = rev(unique(plo
 label_positions <- data.frame(
   mutation_type = unique(plotdata$mutation_type),
   x_position = c(9, 25, 40, 55, 70, 85) ,
-  y_position = max(plotdata$dose_MF_unique) * 1.1  # Adjust the multiplier based on your desired position above the max y-value
+  y_position = max(plotdata$dose_MF_min) * 1.1  # Adjust the multiplier based on your desired position above the max y-value
 )
 
 # Calculate upper limit for y-axis
-y_max_limit <- max(plotdata$dose_MF_unique) * 1.5  # Adjust the multiplier based on your desired position above the max y-value
+y_max_limit <- max(plotdata$dose_MF_min) * 1.5  # Adjust the multiplier based on your desired position above the max y-value
 
 # Create the bar plot with facets arranged vertically, increased x-axis spacing, and color mapping
-ggplot(plotdata, aes(x = reorder(normalized_context_with_mutation, -as.numeric(factor(mutation_type))), y = dose_MF_unique, fill = factor(mutation_type))) +
+ggplot(plotdata, aes(x = reorder(normalized_context_with_mutation, -as.numeric(factor(mutation_type))), y = dose_MF_min, fill = factor(mutation_type))) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(data = label_positions, aes(x = x_position, y = y_position, label = mutation_type), vjust = 0, size = 5, color = "black") +  # Add labels over the bars
   scale_fill_manual(values = mutation_colors) +  # Apply color mapping

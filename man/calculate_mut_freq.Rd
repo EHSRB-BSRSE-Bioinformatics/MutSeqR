@@ -100,20 +100,20 @@ is set to TRUE, the data frame will be a summary table with the mutation
 frequency calculated for each group. If summary is set to FALSE, the
 mutation frequency will be appended to each row of the original mutation_data.
 \itemize{
-\item \verb{_MF_unique}: The mutation frequency calculated using the "min"
+\item \verb{_MF_min}: The mutation frequency calculated using the "min"
 method for mutation counting. All identical mutations within a samples are
 assumed to be the result of clonal expansion and are thus only counted
 once.
-\item \verb{_MF_clonal}: The mutation frequency calculated using the "max"
+\item \verb{_MF_max}: The mutation frequency calculated using the "max"
 method for mutaiton counting. All identical mutations within a sample are
 assumed to be idenpendant mutational evens and are included in the
 mutation frequency calculation. Note that this does not apply for germline
 variants.
-\item \code{proportion_unique}: The proportion of each mutation
+\item \code{proportion_min}: The proportion of each mutation
 subtype within the group, normalized to its read depth. Calculated
 using the "min" method. This is only calculated if \code{subtype_resolution}
 is not "none".
-\item \code{proportion_clonal}: The proportion of each mutation
+\item \code{proportion_max}: The proportion of each mutation
 subtype within the group, normalized to its read depth. Calculated
 using the "max" method. This is only calculated if \code{subtype_resolution}
 is not "none".
@@ -127,6 +127,6 @@ case, it is necessary to change the denominator of total bases to reflect
 the sequencing depth at the proper reference bases under consideration.
 }
 \details{
-Additionally, the operation is run by default using clonally expanded as well
-as unique mutations.
+Additionally, by default, the operation is run by default using both the minimum
+and maximum independent methods for counting mutations.
 }
