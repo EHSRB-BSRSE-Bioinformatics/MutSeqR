@@ -229,7 +229,7 @@ fig <- ggplot(df, aes(
             y = sample,
             fill = ProportionPlot)) +
             geom_raster() +
-            viridis::scale_fill_viridis_c(
+            scale_fill_viridis_c(
                 name = "Relative proportion", limits = c(0, max),
                 option = mut_proportion_scale,
                 na.value = "white") +
