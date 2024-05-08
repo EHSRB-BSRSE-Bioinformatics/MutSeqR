@@ -164,6 +164,7 @@ mf_bmd <- function(mf_data,
 #' }
 #' }
 #' @importFrom dplyr select rename if_else
+#' @importFrom tidyr pivot_longer
 #' @import ggplot2
 #' @export
 bmd_ma <- function(mf_data,

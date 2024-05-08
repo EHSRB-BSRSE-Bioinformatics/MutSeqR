@@ -2,7 +2,7 @@
 #' @description This function creates a bar plot of the mutation frequency
 #' @param mf_data A data frame containing the mutation frequency data. This is
 #' obtained from the calculate_mut_freq function with SUMMARY = TRUE.
-#' @param sample_col The name of the column containing the sample names.
+#' @param group_col The name of the column containing the sample/group names.
 #' @param mf_type The type of mutation frequency to plot. Options are "min",
 #' "max", "both", or "stacked". If "both", the min and max mutation
 #' frequencies are plotted side by side. If "stacked", the difference between
@@ -11,20 +11,20 @@
 #' @param fill_col The name of the column containing the fill variable.
 #' @param custom_palette A character vector of colour codes to use for the plot.
 #' If NULL, a default palette is used
-#' @param sample_order The order of the samples.
+#' @param group_order The order of the samples.
 #' ' Options include:
 #' \itemize{
 #'   \item `none`: No ordering is performed. Default.
 #'   \item `smart`: Samples are ordered based on the sample names.
 #'   \item `arranged`: Samples are ordered based on one or more factor column(s)
 #' in mf_data. Column names are passed to the function using the
-#' `sample_order_input`.
+#' `group_order_input`.
 #'  \item `custom`: Samples are ordered based on a custom vector of sample
 #' names. The custom vector is passed to the function using the
-#' `sample_order_input`.
+#' `group_order_input`.
 #' }
-#' @param sample_order_input The order of the samples if sample_order is
-#' "custom". The column name by which to arrange samples if sample_order
+#' @param group_order_input The order of the samples if group_order is
+#' "custom". The column name by which to arrange samples if group_order
 #' is "arranged"
 #' @param labels The labels to use for the bars. Either "count", "MF", or
 #' "none". Count labels display the number of mutations, MF labels display
@@ -35,25 +35,29 @@
 #' @return A ggplot object
 #' @import ggplot2
 #' @importFrom dplyr arrange across all_of rename
-#' @importFrom gtools mixedsort
-#' 
 #' @export
 plot_mf <- function(mf_data,
-                    sample_col,
+                    group_col,
                     mf_type = c("min", "max", "both", "stacked"),
                     fill_col = NULL,
                     custom_palette = NULL,
-                    sample_order = c("none", "smart", "arranged", "custom"),
-                    sample_order_input = NULL,
+                    group_order = c("none", "smart", "arranged", "custom"),
+                    group_order_input = NULL,
                     labels = c("count", "MF", "none"),
                     scale_y_axis = "linear",
                     x_lab = NULL,
                     y_lab = NULL) {
+  
+  if (group_order == "smart") {
+    if (!requireNamespace("gtools", quietly = TRUE)) {
+      stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
+    }
+  }
   # axis_labels
   if (!is.null(x_lab)) {
     x_lab <- x_lab
   } else {
-    x_lab <- sample_col
+    x_lab <- group_col
   }
   if (!is.null(y_lab)) {
      y_lab <- y_lab
@@ -62,21 +66,21 @@ plot_mf <- function(mf_data,
   }
 
   # Sample order
-  if (sample_order == "none") {
-    order <- as.vector(unique(mf_data[[sample_col]]))
-    mf_data[[sample_col]] <- factor(mf_data[[sample_col]])
-  } else if (sample_order == "smart") {
-    order <- as.vector(unique(mf_data[[sample_col]]))
+  if (group_order == "none") {
+    order <- as.vector(unique(mf_data[[group_col]]))
+    mf_data[[group_col]] <- factor(mf_data[[group_col]])
+  } else if (group_order == "smart") {
+    order <- as.vector(unique(mf_data[[group_col]]))
     order <- gtools::mixedsort(order)
-    mf_data[[sample_col]] <- factor(mf_data[[sample_col]], levels = order)
-  } else if (sample_order == "arranged") {
+    mf_data[[group_col]] <- factor(mf_data[[group_col]], levels = order)
+  } else if (group_order == "arranged") {
     mf_data <- mf_data %>%
-      dplyr::arrange(dplyr::across(dplyr::all_of({{sample_order_input}})))
-    order <- as.vector(unique(mf_data[[sample_col]]))
-    mf_data[[sample_col]] <- factor(mf_data[[sample_col]], levels = order)
-  } else if (sample_order == "custom") {
-    mf_data[[sample_col]] <- factor(mf_data[[sample_col]],
-                                    levels = sample_order_input)
+      dplyr::arrange(dplyr::across(dplyr::all_of({{group_order_input}})))
+    order <- as.vector(unique(mf_data[[group_col]]))
+    mf_data[[group_col]] <- factor(mf_data[[group_col]], levels = order)
+  } else if (group_order == "custom") {
+    mf_data[[group_col]] <- factor(mf_data[[group_col]],
+                                    levels = group_order_input)
   }
 
 
@@ -90,7 +94,7 @@ plot_mf <- function(mf_data,
     found_count_col <- names(mf_data)[grepl(sum_column_pattern, names(mf_data))]
 
     plot_data <- mf_data %>%
-      dplyr::rename(sample_col = dplyr::all_of(sample_col)) %>%
+      dplyr::rename(group_col = dplyr::all_of(group_col)) %>%
       dplyr::rename(mf_col = dplyr::all_of(response_col)) %>%
       dplyr::rename(sum_col = dplyr::all_of(found_count_col))
     max_y <- max(plot_data$mf_col) * 1.1
@@ -108,7 +112,7 @@ plot_mf <- function(mf_data,
     max_count_col <- names(mf_data)[grepl(sum_max_column_pattern, names(mf_data))]
 
     plot_data <- mf_data %>%
-      dplyr::rename(sample_col = dplyr::all_of(sample_col)) %>%
+      dplyr::rename(group_col = dplyr::all_of(group_col)) %>%
       dplyr::rename(mf_min = dplyr::all_of(min_mf_col)) %>%
       dplyr::rename(mf_max = dplyr::all_of(max_mf_col)) %>%
       dplyr::rename(sum_min = dplyr::all_of(min_count_col)) %>%
@@ -187,9 +191,9 @@ plot_mf <- function(mf_data,
 
   # Title
   if (mf_type %in% c("stacked", "both")) {
-    title <- paste0("Mininimum and Maximum Mutation frequency per ", sample_col)
+    title <- paste0("Mininimum and Maximum Mutation frequency per ", group_col)
   } else if (mf_type %in% c("min", "max")){
-    title <- paste0(mf_type, " mutation frequency per ", sample_col)
+    title <- paste0(mf_type, " mutation frequency per ", group_col)
   }
 
   # palette
@@ -212,7 +216,7 @@ plot_mf <- function(mf_data,
     palette <- custom_palette
   }
 
-  plot <- ggplot(plot_data, aes(x = plot_data$sample_col,
+  plot <- ggplot(plot_data, aes(x = plot_data$group_col,
                                 y = plot_data$mf_col,
                                 fill = factor(fill))) +
     geom_bar(stat = "identity", position = position, color = "darkgrey") +

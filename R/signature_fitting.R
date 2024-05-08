@@ -17,8 +17,6 @@
 #' @param python_path The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.
 #' @param python_home The path to the conda virtual environment that contains the required python dependencies
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.
-#'  SigProfilerAssignmentR cosmic_fit
-#'  SigProfilerExtractorR sigprofilerextractor
 #'  SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate 
@@ -192,12 +190,4 @@ signature_data <- signature_data %>%
     sample_reconstruction_plots = "png",
     verbose = TRUE
   )
-  
-  # Errors here that I haven't been able to troubleshoot; maybe this shoudl be
-  # a totally separate function anyway, putting on the backburner for now.
-  # SigProfilerExtractorR::sigprofilerextractor(
-  #   file.path(output_path, "matrices", "output", "SBS", paste0(project_name, ".SBS96.all")),
-  #   file.path(output_path, "SigProfilerExtractor"),
-  #   project_genome
-  # )
 }

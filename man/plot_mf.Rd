@@ -6,12 +6,12 @@
 \usage{
 plot_mf(
   mf_data,
-  sample_col,
+  group_col,
   mf_type = c("min", "max", "both", "stacked"),
   fill_col = NULL,
   custom_palette = NULL,
-  sample_order = c("none", "smart", "arranged", "custom"),
-  sample_order_input = NULL,
+  group_order = c("none", "smart", "arranged", "custom"),
+  group_order_input = NULL,
   labels = c("count", "MF", "none"),
   scale_y_axis = "linear",
   x_lab = NULL,
@@ -22,7 +22,7 @@ plot_mf(
 \item{mf_data}{A data frame containing the mutation frequency data. This is
 obtained from the calculate_mut_freq function with SUMMARY = TRUE.}
 
-\item{sample_col}{The name of the column containing the sample names.}
+\item{group_col}{The name of the column containing the sample/group names.}
 
 \item{mf_type}{The type of mutation frequency to plot. Options are "min",
 "max", "both", or "stacked". If "both", the min and max mutation
@@ -35,21 +35,21 @@ total height of both bars represent the max MF.}
 \item{custom_palette}{A character vector of colour codes to use for the plot.
 If NULL, a default palette is used}
 
-\item{sample_order}{The order of the samples.
+\item{group_order}{The order of the samples.
 ' Options include:
 \itemize{
 \item \code{none}: No ordering is performed. Default.
 \item \code{smart}: Samples are ordered based on the sample names.
 \item \code{arranged}: Samples are ordered based on one or more factor column(s)
 in mf_data. Column names are passed to the function using the
-\code{sample_order_input}.
+\code{group_order_input}.
 \item \code{custom}: Samples are ordered based on a custom vector of sample
 names. The custom vector is passed to the function using the
-\code{sample_order_input}.
+\code{group_order_input}.
 }}
 
-\item{sample_order_input}{The order of the samples if sample_order is
-"custom". The column name by which to arrange samples if sample_order
+\item{group_order_input}{The order of the samples if group_order is
+"custom". The column name by which to arrange samples if group_order
 is "arranged"}
 
 \item{labels}{The labels to use for the bars. Either "count", "MF", or

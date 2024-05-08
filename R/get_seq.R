@@ -40,7 +40,7 @@ get_seq <- function(
   
   regions_df <- MutSeqR::load_regions_file(regions = "custom",
                                          custom_regions_file = custom_regions_file,
-                                         rg_sep = rg_sep) 
+                                         rg_sep = rg_sep)
   } else {
     warning("Invalid regions parameter. Choose from 'human', 'mouse', 'rat', or 'custom'.")
   }

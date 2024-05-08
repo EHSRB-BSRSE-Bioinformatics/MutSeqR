@@ -47,10 +47,8 @@
 #' @param variant_types A character vector of the mutation types to include.
 #' @param subtype_resolution The resolution of the mutation spectra. Default is `base_6`.
 #' @import patchwork
-#' @importFrom ggh4x scale_x_dendrogram
 #' @import ggplot2
 #' @importFrom dplyr select arrange across all_of
-#' @importFrom gtools mixedsort
 #' @export
 
 plot_spectra <- function(mutation_data,
@@ -59,11 +57,11 @@ plot_spectra <- function(mutation_data,
                          response = c("frequency", "proportion", "sum"),
                          mf_type = c("min", "max"),
                          variant_types = c("snv",
-                                                 "deletion",
-                                                 "insertion",
-                                                 "complex",
-                                                 "mnv",
-                                                 "symbolic"),
+                                           "deletion",
+                                           "insertion",
+                                           "complex",
+                                           "mnv",
+                                           "symbolic"),
                          group_order = "none",
                          group_order_input = NULL,
                          dist = "cosine",
@@ -72,6 +70,17 @@ plot_spectra <- function(mutation_data,
                          x_lab = NULL,
                          y_lab = NULL) {
   
+ # check package dependencies
+  if (group_order == "clustered") {
+      if (!requireNamespace("ggh4x", quietly = TRUE)) {
+      stop("Package ggh4x is required when using the 'clustered' group_order option. Please install the package using 'install.packages('ggh4x')'")
+    }
+  } else if (group_order == "smart") {
+    if (!requireNamespace("gtools", quietly = TRUE)) {
+      stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
+    }
+  }
+
  metadata_cols <- NULL
 if (group_order == "arranged") {
  # retain columns to arrange the data.
@@ -79,10 +88,10 @@ if (group_order == "arranged") {
  metadata_cols <- group_order_input[!group_order_input %in% group_col]
 }
   mf_data <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
-                                          cols_to_group = group_col,
-                                          subtype_resolution = subtype_resolution,
-                                          variant_types = variant_types,
-                                          retain_metadata = metadata_cols)
+                                         cols_to_group = group_col,
+                                         subtype_resolution = subtype_resolution,
+                                         variant_types = variant_types,
+                                         retain_metadata = metadata_cols)
 
   group_col_prefix <- paste(group_col, collapse = "_")
 
@@ -120,8 +129,8 @@ if (group_order == "arranged") {
     order <- gtools::mixedsort(order)
     plot_data$group <- factor(plot_data$group, levels = order)
   } else if (group_order == "arranged") {
-   plot_data <- cbind(plot_data, mf_data[group_order_input])
-  plot_data <- plot_data %>%
+    plot_data <- cbind(plot_data, mf_data[group_order_input])
+    plot_data <- plot_data %>%
       dplyr::arrange(!!!rlang::syms(group_order_input))
     order <- as.vector(unique(plot_data$group))
     plot_data$group <- factor(plot_data$group, levels = order)
@@ -166,34 +175,34 @@ if (group_order == "arranged") {
     } else if (subtype_resolution == "base_12") {
       # Sanger colours for 12 base spectra
       palette <- c(
-                 "A>C" = "limegreen",
-                 "A>G" = "forestgreen",
-                 "A>T" = "darkgreen",
-                 "C>A" = "skyblue1",
-                 "C>G" = "dodgerblue2",
-                 "C>T" = "darkblue",
-                 "G>A" = "grey28",
-                 "G>C" = "grey25",
-                 "G>T" = "grey0",
-                 "T>A" = "red2",
-                 "T>C" = "red3",
-                 "T>G" = "red4",
-                 "mnv" = "hotpink",
-                 "deletion" = "white",
-                 "insertion" = "azure2",
-                 "symbolic" = "purple")
+                    "A>C" = "limegreen",
+                    "A>G" = "forestgreen",
+                    "A>T" = "darkgreen",
+                    "C>A" = "skyblue1",
+                    "C>G" = "dodgerblue2",
+                    "C>T" = "darkblue",
+                    "G>A" = "grey28",
+                    "G>C" = "grey25",
+                    "G>T" = "grey0",
+                    "T>A" = "red2",
+                    "T>C" = "red3",
+                    "T>G" = "red4",
+                    "mnv" = "hotpink",
+                    "deletion" = "white",
+                    "insertion" = "azure2",
+                    "symbolic" = "purple")
     } else if (subtype_resolution == "base_96") {
       base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
       palette <- colorRampPalette(base_colors)(101)
     } else if (subtype_resolution == "base_192") {
       base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
       palette <- colorRampPalette(base_colors)(297)
-    } else if( subtype_resolution == "type") {
+    } else if(subtype_resolution == "type") {
       palette <- c("mnv" = "pink",
-                 "deletion" = "black",
-                 "insertion" = "grey",
-                 "symbolic" = "purple",
-                 "snv" = "blue")
+                   "deletion" = "black",
+                   "insertion" = "grey",
+                   "symbolic" = "purple",
+                   "snv" = "blue")
     }
   }
   # Axis labels

@@ -14,9 +14,8 @@
 #' @param condensed More condensed plotting format. Default = F.
 #' @import ggplot2
 #' @importFrom dplyr group_by summarise mutate rename all_of
-#' @importFrom scales rescale
 #' @importFrom stringr str_length str_extract str_c
-#' @importFrom magrittr %>% 
+#' @importFrom magrittr %>%
 #' @return A ggplot object representing the heatmap plot.
 #' @export
 #' @examples
@@ -32,7 +31,11 @@ plot_trinucleotide_heatmap <- function(mf_data,
                                        max = 0.2,
                                        rescale_data = FALSE,
                                        condensed = FALSE) {
-
+if (rescale_data) {
+    if (!requireNamespace("scales", quietly = TRUE)) {
+      stop("Package scales is required when using the rescale_data option. Please install the package using 'install.packages('scales')'")
+    }
+  }
 mf_data <- MutSeqR::rename_columns(mf_data)
 # Check for sample colum
 sample_col <- c("sample", "sample_id", "sample_name")
@@ -223,7 +226,7 @@ if (!is.null(group_var)) {
         df$ProportionPlot <- mf_data$proportion
     }
 
- # General figure, no facetting   
+ # General figure, no facetting
 fig <- ggplot(df, aes(
             x = x_variable,
             y = sample,
