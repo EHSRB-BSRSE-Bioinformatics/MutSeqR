@@ -42,8 +42,8 @@ mut_file parameter. If you have sample metadata, then you can indicate
 the file path to your sample data file using the sample_data_file
 parameter. Set the vaf_cutoff to flag ostensibly germline mutations that
 have a variant allele fraction greater than this parameter. Finally,
-load in the metadata for TwinStrand's DuplexSeq™ Mutagenesis Panel using the
-regions parameter; "mouse" or "human".
+load in the metadata for an interval list of genomic target regions 
+using the regions parameter. 
 
 ```{r}
 library(MutSeqR)
@@ -53,27 +53,28 @@ mutation_data <-
   import_mut_data(mut_file = mut_data,
                   sample_data_file = sample_data,
                   vaf_cutoff = 0.1,
-                  regions = "mouse" # Mouse Mutagenesis Panel
+                  regions = "TSpanel_mouse" # Twinstand's Mouse Mutagenesis Panel
                   )
 ```
 
 If you are not using one of TwinStrand's DuplexSeq™ Mutagenesis Panels, then
 you will add your target regions' metadata using a custom_regions_file.
 Use parameters to indicate your file's file path, delimiter, and whether
-the region ranges are 0-based or 1-based.
+the region ranges coordinates are 0-based or 1-based. Mutation data and
+region coordinates will be converted to 1-based.
 
 ```{r}
-# mut_data <- "file path to .mut file"
+# mut <- "file path to .mut file"
 # sample_data <- "file path to sample meta data"
-mutation_data <-
-  import_mut_data(mut_file = mut_data,
-                  sample_data_file = sample_data,
-                  vaf_cutoff = 0.1,
-                  regions = "custom",
-                  custom_regions_file = "file path to your regions file",
-                  rg_sep = "\t", # tab-delimited
-                  is_0_based = FALSE # Ranges are 1-based 
-                 )
+mut_data <- import_mut_data(
+              mut_file = mut,
+              sample_data_file = sample_data,
+              vaf_cutoff = 0.1,
+              regions = "custom_interval",
+              custom_regions_file = "file path to your regions file",
+              rg_sep = "\t", # tab-delimited
+              is_0_based = FALSE # Ranges are 1-based 
+              )
 ```
 
 Required columns for your `.mut` file are listed in the table below. We
@@ -190,3 +191,234 @@ When first importing a `.mut` file, it is preferred to keep non-variant
 rows. This allows the calculuation of mutation frequencies. The data set
 can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination).
+
+## Calculating Mutation Frequencies
+The function calculate_mut_freq() summarises the mutation counts
+across arbitrary groupings within the mutation data. Mutations
+can be summarised across samples, experimental groups, and mutation
+subtypes for later statistical analyses. Mutation frequency is calculated
+by dividing the number of mutations by the total number of sequenced bases
+in each group. The units for mutation frequency are mutations/bp.
+
+### Grouping Mutations
+Mutation counts and total sequenced bases are summed within
+groups that can be designated using the cols_to_group parameter.
+This parameter can be set to one or more columns in the mutation data
+that represents experimental variables of interest. 
+
+The following will return mutation counts and frequencies summed
+across samples.
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none"
+            )
+```
+
+Alternatively, you can sum mutations by experimental groups
+such as 'dose' or 'tissue', or both at the same time. Counts
+and frequencies will be returned for every level of the designated
+groups.
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = c("dose", "tissue"),
+            subtype_resolution = "none"
+            )
+```
+
+### Mutation Subtypes
+Mutations can also be grouped by mutation subtype at varying
+degrees of resolution using the 'subtype_resolution' parameter.
+Mutations and total sequenced bases will be summed across groups
+for each mutation subtype. The total number of sequenced bases
+is calculated based on the sequence context in which a mutation
+subtype occurs. For instance, C>T mutations will only occur
+at positions with a C reference. Therefore,
+the mutation frequency for C>T mutations is calculated as
+the total number of C>T mutations divided by the total number
+bases sequenced at a C reference position for a particular sample/group.
+
+The function will also calculate the the proportion
+of mutations for each subtype. The proportion
+of mutations is calculated by dividing the number of mutations for
+each subtype by the total number of mutations within a sample or group.
+Proportions are then normalized to the sequencing depth. First proportions
+are divided by the context-dependent number of sequenced bases for that sample/group.
+Values are then divided by the sum of all values for that sample/group.
+
+Subtype resolutions: 
+1. type: the variation type. "snv", "mnv", "insertion", "deletion", "complex", and "symbolic" variants.
+2.  base_6: the simple snv spectrum. The snv subtypes are normalized to their pyrimidine context. C>A, C>G, C>T, T>A, T>C, T>G.
+3. base_12: The non-normalized snv subtypes. A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G.
+4. base_96: the trinculeotide spectrum. The snv subtypes are reported in their pyrimidine context alongside their two flanking nucleotides. Ex. A[C>T]A.
+5. base_192: The non-normalized snv subtypes are reported alongside their two flanking nucleotides. Ex. A[G>T]A.
+
+Ex. The following code will return the simple mutation spectra for all samples. 
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "base_6"
+            )
+```
+
+This function will also calculate mutation frequencies and proportions
+on a specific subset of variation types, which can be set using
+the 'variant_types' parameter. The 'variant_types' parameter can be
+set to a character string of "types" values that the user wants included
+in the mutation counts. By default the function will calculate
+summary values based on all mutation types.
+
+Ex. The following code will calculate mutation frequencies per sample
+for only insertion and deletion mutations. 
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none",
+            variant_types = c("insertion", "deletion")
+            )
+```
+Alternatively, the following code will return the mutation frequencies 
+and proportions for single-nucleotide variants (snv) only, differentiated
+into their trinucleotide spectra.
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "base_96",
+            variant_types = "snv"
+            )
+```
+### Mutation Counting Methods
+ Mutations are counted based on two opposing assumptions. Frequencies and
+ proportions are returned for both options.
+
+The Minimum Independent (min) Mutation Counting Method counts each mutation
+once, regardless of the number of reads that contain the non-reference
+allele. This method assumes that multiple instances of the same 
+mutation within a sample/library are the result of clonal expansion of a
+single mutational event. This is likely an undercount of mutations 
+because we expect some mutations to recur in mutation hotspot regions.
+
+The Maximum Independent (max) Mutation Counting Method counts multiple
+identical mutations at the same position within a sample/library as
+independent mutation events. This is likely an overcount of mutations
+since we do expect some recurrent mutations to arise through clonal
+expansion. 
+
+The Minimum Independent counting method is generally recommended
+for characterising rare somatic mutations because the Maximum
+Independent method tends to increase the sample variance of mutation
+frequencies by a significant degree. 
+
+### Variant Filtering
+By default, germline variants will not be included the sumarised mutation counts, frequencies, or 
+proportions. Germline mutations are identified in the mutation data using the
+is_germline column. Users may choose to include them in their mutation counts
+by setting the 'filter_germ' parameter to FALSE.
+
+### Summary Table
+The function will output the resulting mf_data as a data frame with the mutation frequency and proportion
+calculated. If the 'summary' parameter is set to TRUE, the data frame will be a
+summary table with the mutation frequency calculated for each group. If summary
+is set to FALSE, the mutation frequency will be appended to each row of the original
+mutation_data.
+
+The summary table will include:
+- cols_to__group: all columns used to group the data.
+- _sum_: the min/max mutation counts for the group.
+-_MF_: the min/max mutation frequency for the group.
+_proportion_: the min/max proportion for the group.
+
+Additional columns from the orginal mutation data can be retained using the 
+'retain_metadata_cols' parameter. Retaining higher-order experimental groups
+may be useful for later statistical analyses or plotting.
+
+Ex. The following code will calculate the mutation frequencies for each sample
+and retain the dose column for each sample to use in later analyes.
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none",
+            retain_metadata_cols = "dose"
+            )
+```
+
+## Linear Modelling
+The 'model_mf' function will fit a linear model to analyse the effect(s) of given factor(s) 
+on mutation frequency and perform specified pairwise comparisons. Mutation data should first
+be summarised by sample using the calculate_mut_freq function. The mf_data should be output as
+a summary table. Be sure to retain the columns for experimental variables of interest using the
+'retain_metadata_cols' parameter.
+
+Users may specify factors and covariates for their model using the
+'fixed_effects' and 'random_effects' parameters respectively. If more
+than one fixed_effect is supplied, then users may specify whether they wish
+to test the interaction between their fixed_effects using the
+test_interaction parameter. 
+
+Users must specify the columns in their mf_data that contain
+the mutation counts and the total sequenced bases per sample using
+the 'muts' and 'total_counts' parameters respectively. 
+
+By default, the function will fit a generalized linear model with
+a quasibinomial distribution. If a random effect is provided then the model
+will fit a general linear mixed model with a binomial distribution. The 
+dispersion family for the model can be customized using the 'family'
+parameter.
+
+Ex. The following code will fit a generalized linear model to study the
+effect of dose on mutation frequency.
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none",
+            summary = TRUE,
+            retain_metadata_cols = "dose"
+            )
+
+model_by_dose <- model_mf(mf_data = mf_data,
+                          fixed_effects = "dose",
+                          muts = "sample_sum_min",
+                          total_count = "sample_group_depth"
+                          )
+```
+
+Additional arguments can be passed to the model to further customize it to
+the user's needs. Details on the arguments for the generalized linear
+model can be found here \link[stats]{glm} and for the general linear mixed
+model here \link[lme4]{glmer}. 
+
+Ex. We can study the effects of dose on mutation frequency for individual
+genomic loci from a panel of targets.
+
+First, we summarise mutations by sample and by genomic target.
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = c("sample", "target")
+            subtype_resolution = "none",
+            summary = TRUE,
+            retain_metadata_cols = "dose"
+            )
+```
+We will then fit a general linear mixed model of mutation frequencies
+using dose and target as fixed effects and sample as the random effect.
+For more complicated models, we can increase the ____ to improve convergence. # Ask Andrew to explain better. 
+```{r}
+model_by_target <- model_mf(mf_data = mf_data,
+  fixed_effects = c("dose", "target"),
+  test_interaction = TRUE,
+  random_effects = "sample",
+  muts = "sample_target_sum_min",
+  total_count = "sample_target_group_depth",
+  control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
+                                                               tol = 3e-3,
+                                                               relTol = NULL))
+  )
+```

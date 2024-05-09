@@ -43,25 +43,27 @@
 #' metadata (dose, timepoint, etc.)
 #' @param sd_sep The delimiter for importing sample metadata tables.
 #' Default is tab-delimited
-#' @param regions "human", "mouse", "rat" , "custom" or "none". The
-#' argument refers to the TS Mutagenesis panel of the specified species,
-#' or to a custom regions interval file. If set to 'custom', please provide
-#' the file path in custom_regions_file and the genome assembly version of
-#' the reference genome using the 'genome' parameter.
-#' If you are not using a targeted approach, set regions to none, and supply
-#' the species and genome assembly of the reference genome using the
-#' 'species' and 'genome' parameters respectively. ### rework these paramters: regions = custom interval, TS panel, or none. Then species is always required. 
-#' @param custom_regions_file "filepath". If regions is set to custom,
+#' @param regions "TSpanel_human", "TSpanel_mouse", "TSpanel_rat" ,
+#' "custom_interval" or "none". The 'TSpanel_' argument refers to the TS
+#' Mutagenesis panel of the specified species, or to a custom regions
+#' interval file. If set to 'custom_interval', please provide the file path in
+#' custom_regions_file and the genome assembly version of the reference
+#' genome using the 'genome' parameter. If you are not using a targeted
+#' approach, set regions to none, and supply the species and genome
+#' assembly of the reference genome using the 'species' and 'genome'
+#' parameters respectively.
+#' @param custom_regions_file "filepath". If regions is set to custom_interval,
 #'  provide the file path for the file containing regions metadata.
 #'  Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file.
 #' Default is tab-delimited
-#' @param genome The genome assembly of the reference genome. For a
+#' @param genome The genome assembly of the reference genome. For a ########
 #' complete list, refer to https://genome.ucsc.edu.
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 #' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
 #' @param species The species of the reference genome. Required if
-#' regions is set to none.
+#' regions is set to none. The value can be the common name of the species
+#' or the scientific name. Ex. "human" or "Homo sapiens".
 #' @param range_buffer An integer >= 0 .Required if using a targetted
 #' approach.  Variants that occur outside of the defined regions' ranges
 #' will be filtered out. Use the range-buffer to extend the range outside
@@ -99,7 +101,7 @@ import_vcf_data <- function(
     range_buffer = 1,
     sample_data_file = NULL,
     sd_sep = "\t",
-    regions = c("human", "mouse", "rat", "custom", "none"),
+    regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
     custom_regions_file = NULL,
     rg_sep = "\t",
     genome = NULL,
@@ -308,17 +310,17 @@ mut_ranges <- makeGRangesFromDataFrame(
   )
 # load regions ranges and retrieve sequences with padding
 if(regions != "none") {
-  if (regions == "human") {
-    region_ranges <- MutSeqR::get_seq(regions = "human", padding = range_buffer)
+  if (regions == "TSpanel_human") {
+    region_ranges <- MutSeqR::get_seq(regions = "TSpanel_human", padding = range_buffer)
     cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
-  } else if (regions == "mouse") {
-    region_ranges <- MutSeqR::get_seq(regions = "mouse", padding = range_buffer)
+  } else if (regions == "TSpanel_mouse") {
+    region_ranges <- MutSeqR::get_seq(regions = "TSpanel_mouse", padding = range_buffer)
     cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.")
-  } else if (regions == "rat") {
-    region_ranges <- MutSeqR::get_seq(regions = "rat", padding = range_buffer)
+  } else if (regions == "TSpanel_rat") {
+    region_ranges <- MutSeqR::get_seq(regions = "TSpanel_rat", padding = range_buffer)
     cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6.")
-    } else if (regions == "custom") { 
-    region_ranges <- MutSeqR::get_seq(regions = "custom", 
+    } else if (regions == "custom_interval") { 
+    region_ranges <- MutSeqR::get_seq(regions = "custom_interval",
                                       custom_regions_file = custom_regions_file,
                                       rg_sep = rg_sep,
                                       genome = genome,

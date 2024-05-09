@@ -36,13 +36,13 @@
 #' provided, but generally a value of 0.1 (i.e., 10%) is a good
 #' starting point. Setting this will flag variants that are
 #' present at a frequency greater than this value at a given site.
-#' @param regions Values are `c("human", "mouse", "custom")`.
+#' @param regions Values are `c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom_interval", "none")`.
 #' Indicates the target panel used for Duplex Sequencing.
 #' The argument refers to the TS Mutagenesis panel of the
 #' specified species, or to a custom panel. If "custom",
 #' provide the file path of your regions file in
 #' `custom_regions_file`.
-#' @param custom_regions_file "filepath". If `regions` is set to "custom",
+#' @param custom_regions_file "filepath". If `regions` is set to "custom_interval",
 #' provide the file path for the file containing regions metadata.
 #' Required columns are `contig`, `start`, and `end`.
 #' @param rg_sep The delimiter for importing the `custom_regions_file`.
@@ -133,7 +133,7 @@ import_mut_data <- function(mut_file,
                             sd_sep = "\t",
                             vaf_cutoff,
                             range_buffer = 0,
-                            regions = c("human", "mouse", "rat", "custom", "none"),
+                            regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
                             custom_regions_file = NULL,
                             rg_sep = "\t",
                             is_0_based = TRUE,
@@ -151,8 +151,8 @@ import_mut_data <- function(mut_file,
   if (!is.numeric(range_buffer) || range_buffer < 0) {
     stop("Error: The range buffer must be a non-negative number")
   }
-  if (!regions %in% c("human", "mouse", "rat", "custom", "none")) {
-    stop("Error: regions must be 'human', 'mouse', 'rat', 'custom' or 'none")
+  if (!regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none")) {
+    stop("Error: regions must be 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', 'custom_interval' or 'none")
   }
   if (!is.logical(is_0_based)) {
     stop("Error: is_0_based must be a logical variable")
@@ -252,9 +252,9 @@ import_mut_data <- function(mut_file,
   }
 
   # Validate custom regions file if regions is set to "custom"
-  if (regions == "custom") {
+  if (regions == "custom_interval") {
     if (is.null(custom_regions_file)) {
-      stop("Error: You have set regions to 'custom', but have not
+      stop("Error: You have set regions to 'custom_interval', but have not
       provided a custom regions file!")
     }
     rg_file <- file.path(custom_regions_file)
@@ -527,7 +527,7 @@ import_mut_data <- function(mut_file,
                       as.numeric(paste0(.data$start)) - range_buffer)
     
     # adjust start position to be 1-based
-    if (regions %in% c("mouse", "human", "rat")) {
+    if (regions %in% c("TSpanel_mouse", "TSpanel_human", "TSpanel_rat")) {
       is_0_based <- TRUE
     }
     if (is_0_based) {

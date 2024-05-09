@@ -1,4 +1,4 @@
----
+human---
 title: "Duplex Sequencing Summary Report"
 author: "Matthew J. Meier & Annette E. Dodge"
 output:
@@ -36,8 +36,8 @@ params:
   regions: 
     label: "Select a mutagenesis panel"
     input: select
-    value: "mouse"
-    choices: ["mouse", "human", "rat", "custom"]
+    value: "TSpanel_mouse"
+    choices: ["TSpanel_mouse", "TSpanel_human", "TSpanel_rat", "custom_interval", "none"]
   custom_regions_file:
     label: "If you are using a custom panel, please supply a regions file"
     input: file
