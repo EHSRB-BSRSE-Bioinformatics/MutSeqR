@@ -29,8 +29,8 @@
 #' @param family a description of the error distribution and link function to be
 #' used in the model. The default is "quasibinomial" for generalized linear models
 #' and "binomial" for generalized linear mixed-models. See \link[stats]{glm} 
-#' for more details. 
-#' @param contrasts a filepath to a tab-delimited `.txt` file that will 
+#' for more details.
+#' @param contrasts a data frame or a  filepath to a file that will
 #' provide the information necessary to make pairwise comparisons between groups. 
 #' The table must consist of two columns. The first column will be a group within 
 #' your fixed_effects and the second column must be the group that it will be 

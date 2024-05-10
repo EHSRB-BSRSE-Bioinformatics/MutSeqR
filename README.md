@@ -348,8 +348,8 @@ mf_data <- calculate_mut_freq(
             )
 ```
 
-## Linear Modelling
-The 'model_mf' function will fit a linear model to analyse the effect(s) of given factor(s) 
+## Generalized Linear Modelling
+The 'model_mf' function will fit a generalized linear model to analyse the effect(s) of given factor(s) 
 on mutation frequency and perform specified pairwise comparisons. Mutation data should first
 be summarised by sample using the calculate_mut_freq function. The mf_data should be output as
 a summary table. Be sure to retain the columns for experimental variables of interest using the
@@ -359,14 +359,14 @@ Users may specify factors and covariates for their model using the
 'fixed_effects' and 'random_effects' parameters respectively. If more
 than one fixed_effect is supplied, then users may specify whether they wish
 to test the interaction between their fixed_effects using the
-test_interaction parameter. 
+'test_interaction' parameter. 
 
 Users must specify the columns in their mf_data that contain
 the mutation counts and the total sequenced bases per sample using
 the 'muts' and 'total_counts' parameters respectively. 
 
 By default, the function will fit a generalized linear model with
-a quasibinomial distribution. If a random effect is provided then the model
+a quasibinomial distribution. If a random effect is provided than the model
 will fit a general linear mixed model with a binomial distribution. The 
 dispersion family for the model can be customized using the 'family'
 parameter.
@@ -409,7 +409,11 @@ mf_data <- calculate_mut_freq(
 ```
 We will then fit a general linear mixed model of mutation frequencies
 using dose and target as fixed effects and sample as the random effect.
-For more complicated models, we can increase the ____ to improve convergence. # Ask Andrew to explain better. 
+We set 'test_interaction' to TRUE to study how the dose response might
+change between the different targets.
+For more complicated models such as this, we can increase the ____ to
+improve convergence by supplying extra arguments directly to the
+lme4::glmer function. # Ask Andrew to explain better. 
 ```{r}
 model_by_target <- model_mf(mf_data = mf_data,
   fixed_effects = c("dose", "target"),
@@ -422,3 +426,85 @@ model_by_target <- model_mf(mf_data = mf_data,
                                                                relTol = NULL))
   )
 ```
+
+The function will provide model estimates for all levels of the fixed_effects
+
+### Goodness of Fit
+The model_mf function will output the model residuals appended to the mf_data.
+Additionally, model residuals will be plotted as a histogram and a QQ-plot
+so users can ensure a good model fit. We assume that residuals will follow a
+normal distribution with a mean of 0.
+
+### Pairwise Comparisons
+The model_mf() function will also run specified pairwise comparisons
+between the levels of the fixed_effects. The user must supply a constrast
+table using the 'contrasts' parameter. This can either be a data frame 
+or a file path to a text file. The table must consist of two columns,
+each containing groups within the fixed_effects. The group in the first
+column will be compared to the group in the second column. Users should
+also provide the reference level for each fixed effect using the reference
+level parameter. If the user specifies multiple pariwise comparisons, then
+the p-values will be corrected using the Sidak method. 
+
+Ex. Going back to our example in which we model the effect
+of dose on mutation frequency; let's assume that we have four
+dose groups: D1, D2, D3, and a vehicle control D0. The 'reference_level'
+will be D0. Using the contrast table, we can specify pairwise comparisons
+between each of the doses and the vehicle control (D1 vs. D0, D2 vs. D0, D3 vs. D0).
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none",
+            summary = TRUE,
+            retain_metadata_cols = "dose"
+            )
+contrasts_table <- data.frame(col1 = c(D1, D2, D3),
+                              col2 = c(D0, D0, D0))
+model_by_dose <- model_mf(mf_data = mf_data,
+                          fixed_effects = "dose",
+                          muts = "sample_sum_min",
+                          total_count = "sample_group_depth",
+                          reference_level = "D0",
+                          contrasts = contrasts_table
+                          )
+```
+
+For multiple fixed effects, the user must include levels for all fixed_effects
+in each value of the contrasts table. Within each value, the levels of the different
+fixed_effects should be seperated by a colon.
+
+Ex. Let's go back to our example modelling the effect of dose across multiple
+genomic targets. We will define the levels of dose as D0, D1, D2, and D3, with D0
+as the reference level. The genomic target factor will have levels chr1 and chr2, 
+representing two genomic targets. We will arbitrarily set the reference level as
+chr1 for this factor. We will create a contrasts table that compares each dose group to
+the control dose D0 for both of the genomic targets. The order in which values occur
+for both the reference level and the contrasts should match the order in which
+the fixed_effects are listed. In this example "dose" levels will always preceed
+"target" levels. 
+```{r}
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = c("sample", "target")
+            subtype_resolution = "none",
+            summary = TRUE,
+            retain_metadata_cols = "dose"
+            )
+contrast_table <- data.frame(col1 = c("D1:chr1", D2:chr1, "D3:chr1", "D1:chr2", "D2:chr2", "D3:chr2"),
+                             col2 = c("D0:chr1", "D0:chr1", "D0:chr1", "D0:chr2", "D0:chr2", "D0:chr2"))
+model_by_target <- model_mf(mf_data = mf_data,
+  fixed_effects = c("dose", "target"),
+  test_interaction = TRUE,
+  random_effects = "sample",
+  muts = "sample_target_sum_min",
+  total_count = "sample_target_group_depth",
+  reference_level = c("D0", "chr1"),
+  contrasts = contrast_table,
+  control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
+                                                               tol = 3e-3,
+                                                               relTol = NULL))
+  )
+```
+
+### Output
