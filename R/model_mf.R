@@ -151,14 +151,14 @@
 #' @importFrom stats as.formula model.matrix qqnorm relevel residuals
 #' @export
 model_mf <- function(mf_data,
-                    fixed_effects = c("dose"),
+                    fixed_effects,
                     test_interaction = TRUE,
                     random_effects = NULL,
-                    reference_level = c(0),
+                    reference_level,
                     muts = "sample_sum_min",
                     total_count = "sample_group_depth",
                     family = NULL,
-                    contrasts = NULL, 
+                    contrasts = NULL,
                     cont_sep = "\t",
                     ...
                     ) {

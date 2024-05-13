@@ -112,8 +112,8 @@
 #' @importFrom stats na.omit
 #' @export
 calculate_mut_freq <- function(mutation_data,
-                               cols_to_group = "dose",
-                               subtype_resolution = "type",
+                               cols_to_group = "sample",
+                               subtype_resolution = "none",
                                variant_types = c("snv",
                                                  "deletion",
                                                  "insertion",
