@@ -30,10 +30,60 @@ devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR", auth_token = "you
 The main goal of this package is to generate summary statistics,
 visualization, exploratory analysis, and other post-processing tasks
 such as mutational signature analysis or generalized linear modeling.
-The main piece of information you want to import is the variant file.
+The main piece of information you want to import is the genome variant file.
 Your variant file can be imported as either a `.mut` file using the
 function `import_mut_data` or as a `.vcf` file using the function
 `read_vcf`.
+
+When first importing a variant file, it is preferred to keep non-variant
+rows. This allows the calculuation of mutation frequencies. The data set
+can be pared down later to include only mutations of interest (SNVs,
+indels, SVs, or any combination). Genome mut and genome vcf files will
+provide a row for every position in the interval range, regardless of
+whether or not a mutation call was made.
+
+### Variant Filtering
+#### Germline Variants
+Set the vaf_cutoff to flag ostensibly germline mutations that
+have a variant allele fraction greater than this parameter.
+The variant allele fraction (VAF) is the fraction of haploid genomes in the
+original sample that harbor a specific mutation at a specific base-pair
+coordinate of the reference genome. Specifically, is it calculated
+by dividing the number of variant reads by the total sequencing depth
+at a specific base pair coordinate. The VAF is a good indicator of the
+zygosity of a variant. In a typical diploid cell, a homozygous germline
+variant will appear on both alleles, in every cell. As such, we expect this
+variant to occur on every read - giving us a VAF = 1. A heterozygous
+germline variant occurs on one of the two alleles in every cell, as such
+we expect this variant to occur on about half of the reads, giving a VAF = 0.5.
+Rare somatic variants occur in only a small portion of the cells, thus we 
+expect them to appear in only a small percentage of the reads. Typical
+VAF values for somatic variants will be less than 0.01 - 0.1. Setting the
+vaf_cutoff parameter to 0.01 or 0.1 will flag all variants that have a VAF
+greater than this value as germline within the is.germline column. Germline
+variants are not included in the mutation counts when calculating mutation
+frequencies.
+
+#### Variants within target regions
+Supply a regions interval list of genomic ranges of interest and filter
+out mutations occuring outside of these regions. If users are targetting or are
+interested in a known range of genomic regions, these regions may be specified using
+the 'regions' parameter. Any variant that occurs outside of the specified
+range will be filtered out of the variant file and returned to the users in
+a seperate data frame. This includes variants that partially extend outside of
+the regions such as large insertions/deletions or structural variants. Users may
+choose to retain some or all of these variants using the 'range_buffer' parameter.
+Setting this parameter to an integer will extend the range of the genomic regions
+in which a variant can occur by the specified number of base-pairs.
+
+The 'regions' parameter can be set to one of TwinStrand's DuplexSeq™
+Mutagenesis Panels; "TSpanel_mouse", "TSpanel_human", or "TSpanel_rat". If you
+are using an alternative panel then you may set the 'regions' parameter to 
+"custom_interval" and  you will add your target regions' metadata using a custom_regions_file.
+Use parameters to indicate your file's file path, delimiter, and whether
+the region ranges coordinates are 0-based or 1-based. Mutation data and
+region coordinates will be converted to 1-based. If you do not wish to specify
+a regions list, then set the 'regions' parameter to "none".
 
 ### Importing .mut files
 
@@ -53,15 +103,16 @@ mutation_data <-
   import_mut_data(mut_file = mut_data,
                   sample_data_file = sample_data,
                   vaf_cutoff = 0.1,
-                  regions = "TSpanel_mouse" # Twinstand's Mouse Mutagenesis Panel
+                  regions = "TSpanel_mouse", # Twinstand's Mouse Mutagenesis Panel
+                  range_buffer = 500 # Retain variants that extend 500 bp outside of the Mouse Mutageneis Panel's target ranges.
                   )
 ```
 
-If you are not using one of TwinStrand's DuplexSeq™ Mutagenesis Panels, then
-you will add your target regions' metadata using a custom_regions_file.
-Use parameters to indicate your file's file path, delimiter, and whether
-the region ranges coordinates are 0-based or 1-based. Mutation data and
-region coordinates will be converted to 1-based.
+If you are using a custom target panel, provide the filepath
+to the interval list of region ranges. This can be saved as any file type,
+but be sure to specify the proper delimiter using the rg_sep parameter.
+Required columns for a custom_regions_file are "contig", "start", and "end".
+
 
 ```{r}
 # mut <- "file path to .mut file"
@@ -85,7 +136,25 @@ values. For example, your `contig` column may be named `chr` or
 `chromosome`. After importing your data, this synonymous column name
 will be changed to `contig`. Column names are case-insensitive. A list
 of column name synonyms are listed alongside the column definitions
-below.
+below. If your data contains a column that is synonymous to one of the
+required columns, but the name is not included in our synonyms list,
+your column name may be substituted using the 'custom_column_names'
+parameter. Provide this parameter with a list of names to specify the meaning
+of column headers.
+```{r}
+library(MutSeqR)
+# mut_data <- "file path to .mut file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_mut_data(mut_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "TSpanel_mouse", # Twinstand's Mouse Mutagenesis Panel
+                  custom_column_names = list(total_depth = "my_custom_depth_name",
+                                             sample = "my_custom_sample_column_name")
+                  )
+```
+
 
 **Table 1.** **Required columns for .mut file import.**
 | Column Name      | Definition                               | Synonyms            |
@@ -102,6 +171,75 @@ below.
 | context     | The local reference trinucleotide context at this position (e.g. ATC - not necessarily the transcript codon).| sequence_context; flanking_sequence   |
 
 ### Importing .vcf files
+General usage is the same as for import_mut_file:
+Indicate the file path to your .vcf file using the
+mut_file parameter. If you have sample metadata, then you can indicate
+the file path to your sample data file using the sample_data_file
+parameter. Set the vaf_cutoff to flag ostensibly germline mutations that
+have a variant allele fraction greater than this parameter. Finally,
+load in the metadata for an interval list of genomic target regions 
+using the regions parameter. 
+
+```{r}
+library(MutSeqR)
+# mut_data <- "file path to .vcf file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "TSpanel_mouse", # Twinstand's Mouse Mutagenesis Panel
+                  range_buffer = 500 # Retain variants that extend 500 bp outside of the Mouse Mutageneis Panel's target ranges.
+                  )
+```
+
+When importing data using a vcf file, the function will retrieve the sequence context information for
+each position called in the variant file. The sequence context includes the reference base at the
+specified base pair coordinate alongside its two flanking bases. Ex. ACT. If a user specifies a regions
+interval file, then the function will retrieve the sequences of the specified genomic intervals from the
+USCS database. When using one of TwinStrand's DuplexSeq™ Mutagenesis Panels, the reference genomes are
+pre-set to human: GRCh38, mouse: mm10, rat" rn6. If you are supplying a custom_regions_file, then
+you must supply the reference genome for your target regions using the 'genome' paramater. This
+ensures that the function retrieves the proper sequences to populate the context column.
+```{r}
+library(MutSeqR)
+# mut_data <- "file path to .vcf file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "custom_interval", 
+                  custom_regions_file = "file path to your regions file",
+                  rg_sep = "\t", # tab-delimited
+                  is_0_based = FALSE, # Ranges are 1-based 
+                  genome = "mm10" # Will download target sequences from the mm10 reference genome
+                  )
+```
+
+If you choose not to supply an interval list of target regions, then you must supply
+both the species and the genome assembly version for your reference genome using the
+'species' and 'genome' parameters respectively. The function will browse BSgenome
+\link[BSgenome]{available.genomes} for the appropriate reference genome and install
+the corresponding package. Context information will be extracted from the installed
+BSgenome object. BSgenome offers genomes with masked sequences. If you wish to use
+the masked version of the genome, set 'masked_BS_genome' to TRUE.
+
+```{r}
+library(MutSeqR)
+# mut_data <- "file path to .vcf file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "none", 
+                  species = "mouse" # Common name or scientific name is acceptable
+                  genome = "mm10", # assembly version
+                  masked_BS_genome = FALSE # download the non-masked version of the genome.
+                  )
+# the function will install BSgenome.Mmusculus.UCSC.mm10 from BioConductor.
+```
 
 Required fields for your `.vcf` file are listed in the table below.
 
@@ -120,6 +258,14 @@ Required fields for your `.vcf` file are listed in the table below.
 |              | `SVTYPE` | Structural variant types; INV DUP DEL INS FUS. |
 |              | `SVLEN` | Length of the structural variant in base pairs. |
 
+### mutation_data output
+The functions will import the variant file(s) as a dataframe, join
+it with the metadata, and create some columns that will be helpful
+for calculating frequencies in later analyses. A list of the new columns
+and their definitions can be found below. The functions will also
+make some adjustments to the variation_type column. The following table
+displays the categories for the different variation types. Some adjustments
+may include, changing "indel" to "insertion" or "deletion".
 
 The column variation_type/TYPE may contain these values:
 | `variation_type` | Definition                                          |
@@ -133,16 +279,7 @@ The column variation_type/TYPE may contain these values:
 | symbolic         | Structural variant or IUPAC ambiguity code.         |
 
 
-It is critical that the variant file gets annotated with information
-such as the genomic region from which the mutation originates, some
-information about the sample from which the mutation originates, and
-that each row (mutation) receives a calculated group depth and group
-frequency (of interest for later analyses).
-
-We do this by first importing the variant file as a data frame, and then
-joining it with the metadata (e.g., sample_data_file, regions file), and
-creating some columns that will be helpful for calculating frequencies
-in later analyses. Finally, our functions provide the option to convert
+Finally, our functions provide the option to convert
 the resulting data frame into a `granges` object. This facilitates use
 in other packages and makes doing 'genome math' on the ranges
 significantly easier.
@@ -169,7 +306,6 @@ Columns that are added to the resulting data frame are listed below.
 
 
 ### Metadata: an important consideration
-
 The other important component of importing your data for proper use is
 to assign each mutation to a biological sample, and also make sure that
 some additional information about each sample is present (e.g., a
@@ -185,12 +321,12 @@ columns such as `dose` or `tissue` or `treatment` can be added, and
 these columns will be joined with your variant file to capture that
 information and associate it with each mutation.
 
-### Other Notes
-
-When first importing a `.mut` file, it is preferred to keep non-variant
-rows. This allows the calculuation of mutation frequencies. The data set
-can be pared down later to include only mutations of interest (SNVs,
-indels, SVs, or any combination).
+Similarly, if the user is using a target panel, they may supply
+additional metadata columns in their custom_regions_file that
+will be appended to the variant file. Metadata for the
+TwinStrand's DuplexSeq™ Mutagenesis Panels include:
+genic context, region chromatin state, region GC content, and
+the regions' genes.
 
 ## Calculating Mutation Frequencies
 The function calculate_mut_freq() summarises the mutation counts
@@ -349,11 +485,16 @@ mf_data <- calculate_mut_freq(
 ```
 
 ## Generalized Linear Modelling
-The 'model_mf' function will fit a generalized linear model to analyse the effect(s) of given factor(s) 
-on mutation frequency and perform specified pairwise comparisons. Mutation data should first
-be summarised by sample using the calculate_mut_freq function. The mf_data should be output as
-a summary table. Be sure to retain the columns for experimental variables of interest using the
-'retain_metadata_cols' parameter.
+An important component of analysing mutagencity data is
+how mutation frequency changes based on experimental variables.
+
+The 'model_mf' function will fit a generalized linear model to
+analyse the effect(s) of given factor(s) on mutation frequency
+and perform specified pairwise comparisons between levels of your
+factors. Mutation data should first be summarised by sample using
+the calculate_mut_freq function. The mf_data should be output as
+a summary table. Be sure to retain the columns for experimental
+variables of interest using the 'retain_metadata_cols' parameter.
 
 Users may specify factors and covariates for their model using the
 'fixed_effects' and 'random_effects' parameters respectively. If more
@@ -508,3 +649,48 @@ model_by_target <- model_mf(mf_data = mf_data,
 ```
 
 ### Output
+The function will output a list of results.
+- model_data: the supplied mf_data with added column for model residuals.
+- summary: the summary of the model.
+- anova: the analysis of variance for models with two or more effects. \link[car]{Anova}`(model) `
+- residuals_histogram: the model residuals plotted as a histogram. This is
+used to check whether the variance is normally distributed. A symmetric
+bell-shaped histogram, evenly distributed around zero indicates that the
+normality assumption is likely to be true.
+- residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
+ For a normal distribution, we expect points to roughly follow the y=x line.  
+- point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
+- point_estimates: the point estimates for the fixed effects.
+- pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
+- pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
+
+## Benchmark Dose Modelling
+A benchmark dose (BMD) is a dose or concentration that produces a predetermined
+change in the response rate of an adverse effect. This predetermined change in
+response is called the benchmark response (BMR). In chemical risk assessment
+the BMD can be used as point of departure (POD) to derive human health-based guidance 
+value such as reference dose (RfD) or derived no-effect level (DNEL) or acceptable 
+daily intake (ADI).
+
+The BMD is also a useful for potency comparisons between substances...
+
+The BMD is estimated by applying various mathmatical models to fit the dose-response data.
+Some requirements that must be met before modelling the BMD. There must be a clear
+dose-response trend in the mutaiton frequency data. We suggest using the 'model-mf'
+function to test for significant increases in MF with dose prior to running a BMD analysis.
+In general, studies with more dose groups and a graded monotonic response with dose will be
+more useful for BMD analysis. A minimum of three dose groups + 1 control group is suggested.
+Datasets in which a response is only observed at the high dose are usually not suitable for BMD modeling.
+However, if the one elevated response is near the BMR, adequate BMD computation may result. For a better
+estimate of the BMD, it is preferable to have studies with one or more doses near the level of the BMR.
+
+
+Individual vs Summary data
+# https://www.epa.gov/sites/default/files/2015-01/documents/benchmark_dose_guidance.pdf
+It is preferable to provide information on individual subjects however, it is also possible to 
+use summary information (mean + SD) concerning the measured effect, especially for continuous response variables such as mutation frequency.
+
+
+The BMD is reported alonside its upper and lower confidence intervals; the BMDU and BMDL.
+The BMDL is typically used to derive human health-based guidance values.
+
