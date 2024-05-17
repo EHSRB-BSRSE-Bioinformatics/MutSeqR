@@ -40,8 +40,6 @@ output_path The directory where output results should be written. *not a paramet
 }
 \value{
 Creates a subfolder in the output directory with SigProfiler tools results.
-SigProfilerAssignmentR cosmic_fit
-SigProfilerExtractorR sigprofilerextractor
 SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 }
 \description{

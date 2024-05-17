@@ -33,7 +33,7 @@ get_region_seqs <- function(species) {
     # library(org.Mm.eg.db) # May be useful...
     regions_file <- system.file("extdata",
                                 "genic_regions_mm10.txt",
-                                package="MutSeqR")
+                                package = "MutSeqR")
   }
   
   regions <- read.delim(regions_file)

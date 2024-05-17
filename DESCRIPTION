@@ -18,7 +18,9 @@ Depends:
 biocViews:
 Imports:
     binom,
+    BiocManager,
     Biostrings,
+    BSgenome,
     car,
     data.table,
     doBy,
@@ -32,12 +34,14 @@ Imports:
     lme4,
     magrittr,
     openxlsx,
+    patchwork,
     plyranges,
     reticulate,
     rlang,
     S4Vectors,
     stringr,
     SummarizedExperiment,
+    tidyr,
     VariantAnnotation,
     xml2
 Suggests:
@@ -48,8 +52,6 @@ Suggests:
     packcircles,
     rmarkdown,
     sigminer,
-    SigProfilerAssignmentR,
-    SigProfilerExtractorR,
     SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
     ToxicR,

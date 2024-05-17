@@ -6,8 +6,8 @@
 \usage{
 bmd_ma(
   mf_data,
-  data_type = c("individual", "summary"),
-  dose_col,
+  data_type = "individual",
+  dose_col = "dose",
   response_cols = c("sample_MF_min", "sample_MF_max"),
   sd_col = NULL,
   n_col = NULL,

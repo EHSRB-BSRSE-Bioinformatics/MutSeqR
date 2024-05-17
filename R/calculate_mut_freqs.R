@@ -70,7 +70,7 @@
 #' returned). Setting this to false returns all columns in the original
 #' mutation_data, which might make plotting more difficult, but may provide additional
 #' flexibility to power users.
-#' @param retain_metadata_cols a character vector that contains the the
+#' @param retain_metadata_cols a character vector that contains the names of the
 #' metadata columns that you would like to retain in the summary table.
 #' This may be useful for plotting your summary data. Ex. retain the "dose"
 #' column when summarising by "sample".
@@ -112,8 +112,8 @@
 #' @importFrom stats na.omit
 #' @export
 calculate_mut_freq <- function(mutation_data,
-                               cols_to_group = "dose",
-                               subtype_resolution = "type",
+                               cols_to_group = "sample",
+                               subtype_resolution = "none",
                                variant_types = c("snv",
                                                  "deletion",
                                                  "insertion",
@@ -421,10 +421,10 @@ if (!is.null(retain_metadata_cols)) {
           ifelse(is.na(.data[[paste0(freq_col_prefix, "_snv_depth")]]), # non-snv subtypes divide by group depth
             .data[[paste0(freq_col_prefix, "_sum_max")]] /
               .data$total_group_mut_sum_max /
-              .data[[paste0(freq_col_prefix, "_group_depth")]], 
+              .data[[paste0(freq_col_prefix, "_group_depth")]],
             .data[[paste0(freq_col_prefix, "_sum_max")]] / # snv subtypes divide by snv depth
               .data$total_group_mut_sum_max /
-              .data[[paste0(freq_col_prefix, "_snv_depth")]] 
+              .data[[paste0(freq_col_prefix, "_snv_depth")]]
           )
       )
  # proportion = freq / total_freq   

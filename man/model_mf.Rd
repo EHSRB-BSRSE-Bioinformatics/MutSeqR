@@ -7,10 +7,10 @@ fixed and random effects}
 \usage{
 model_mf(
   mf_data,
-  fixed_effects = c("dose"),
+  fixed_effects,
   test_interaction = TRUE,
   random_effects = NULL,
-  reference_level = c(0),
+  reference_level,
   muts = "sample_sum_min",
   total_count = "sample_group_depth",
   family = NULL,
@@ -49,7 +49,7 @@ used in the model. The default is "quasibinomial" for generalized linear models
 and "binomial" for generalized linear mixed-models. See \link[stats]{glm}
 for more details.}
 
-\item{contrasts}{a filepath to a tab-delimited \code{.txt} file that will
+\item{contrasts}{a data frame or a  filepath to a file that will
 provide the information necessary to make pairwise comparisons between groups.
 The table must consist of two columns. The first column will be a group within
 your fixed_effects and the second column must be the group that it will be

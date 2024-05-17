@@ -1,17 +1,17 @@
-#' Get sequence of Duplex Sequencing target regions
+#' Get sequence of genomic target regions
 #'
 #' Create a GRanges object from the target metadata and import raw nucleotide 
 #' sequences from the UCSC database. https://genome.ucsc.edu
-#' @param regions "human", "mouse", "rat, or "custom". The argument refers to the 
+#' @param regions "TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom_interval". The argument refers to the 
 #' TS Mutagenesis panel of the specified species, or to a custom panel. 
 #' If custom, provide file path in custom_regions_file.
-#' @param custom_regions_file "filepath". If regions is set to custom, 
+#' @param custom_regions_file "filepath". If regions is set to custom_interval, 
 #' provide the file path for the tab-delimited file containing regions metadata. 
 #' Required columns are "contig", "start", and "end".
 #' @param rg_sep The delimiter for importing the custom_regions_file. 
 #' The default is tab-delimited.
 #' @param genome If a custom regions file is provided, indicate the genome 
-#' assembly. Please refer to the UCSC genomes. 
+#' assembly for the reference genome. Please refer to the UCSC genomes. 
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 | 
 #' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
 #' @param is_0_based TRUE or FALSE. Indicates whether the target region 
@@ -27,22 +27,22 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @export
 get_seq <- function( 
-    regions = c("human", "mouse", "rat", "custom"),
+    regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval"),
     custom_regions_file = NULL,
     rg_sep = "\t",
     genome= NULL, 
     is_0_based = TRUE,
     padding = 0) {
 
-  if (regions %in% c("human", "mouse", "rat")) {
+  if (regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat")) {
     regions_df <- MutSeqR::load_regions_file(regions = regions) 
-  } else if (regions == "custom") {
+  } else if (regions == "custom_interval") {
   
-  regions_df <- MutSeqR::load_regions_file(regions = "custom",
+  regions_df <- MutSeqR::load_regions_file(regions = "custom_interval",
                                          custom_regions_file = custom_regions_file,
-                                         rg_sep = rg_sep) 
+                                         rg_sep = rg_sep)
   } else {
-    warning("Invalid regions parameter. Choose from 'human', 'mouse', 'rat', or 'custom'.")
+    warning("Invalid regions parameter. Choose from 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', or 'custom_interval'.")
   }
 
   if (is_0_based) {
@@ -56,13 +56,13 @@ regions_df$seq_end <- regions_df$end + padding
   # Function to retrieve sequence for a given region
   get_sequence_for_region <- function(contig, start, end) {
     # Specify the genome to be searched
-    if (regions == "human") {
+    if (regions == "TSpanel_human") {
       genome <- "hg38"
-    } else if (regions == "mouse") {
+    } else if (regions == "TSpanel_mouse") {
       genome <- "mm10"
-    } else if (regions == "rat") {
+    } else if (regions == "TSpanel_rat") {
       genome <- "rn6"
-    } else if (regions == "custom") {
+    } else if (regions == "custom_interval") {
       genome <- genome
       }
     

@@ -5,15 +5,16 @@
 \title{Write a Mutational Matrix to input into the sigprofiler web application}
 \usage{
 write_mutational_matrix(
-  mutations,
+  mutation_data,
   group = "dose",
   matrices = "base_96",
-  include_clonal = FALSE,
-  filter = "somatic"
+  mf_type = "min",
+  filter = "somatic",
+  output_path = NULL
 )
 }
 \arguments{
-\item{mutations}{The GRanges object containing the mutation data.
+\item{mutation_data}{The GRanges object containing the mutation data.
 The output of import_mut_data() or read_vcf().}
 
 \item{group}{The column in the mutation data used to aggregate groups
@@ -23,15 +24,25 @@ The output of import_mut_data() or read_vcf().}
 calculated? Options are "base_96", 1536?, 384?, 6144?, DINUC? 6, 24, INDEL
 TO DO: add more matrices options.}
 
-\item{include_clonal}{Should the mutational matrix include possibly clonally expanded mutations.
-If FALSE, any mutation occuring more than once in a single sample will only be counted once.
+\item{mf_type}{Mutation counting method. Options are "min" or "max".
+Minimum Independent Frequency (min): All identical mutations within a
+sample are assumed to be the result of clonal expansion and are thus
+only counted once. Maximum Independent Frequency (max): All identical
+mutations within a sample are assumed to be idenpendant mutational evens
+and are included in the mutation frequency calculation. Note that this
+does not apply for germline variants. Default is "min".
 TO DO: clonality cut_off?}
 
-\item{filter}{Parameter allows you to choose to filter for only somatic or germline mutations.
+\item{filter}{Parameter allows you to choose to filter for only somatic
+or germline mutations.}
+
+\item{output_path}{The path to save the output file. Default is NULL,
+which will save the file in the current working directory.
 Values = c("somatic", "germline", "none). "none" will leave the data unfiltered.}
 }
 \value{
-a .txt file that can be uploaded to the sigprofiler web application as "Mutational Matrix"
+a .txt file that can be uploaded to the sigprofiler web application
+as "Mutational Matrix"
 }
 \description{
 Creates a .txt file from mutation data that can be used for mutational signatures

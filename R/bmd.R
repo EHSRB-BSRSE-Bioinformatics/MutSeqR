@@ -164,11 +164,12 @@ mf_bmd <- function(mf_data,
 #' }
 #' }
 #' @importFrom dplyr select rename if_else
+#' @importFrom tidyr pivot_longer
 #' @import ggplot2
 #' @export
 bmd_ma <- function(mf_data,
-                   data_type = c("individual", "summary"),
-                   dose_col,
+                   data_type = "individual",
+                   dose_col = "dose",
                    response_cols = c("sample_MF_min", "sample_MF_max"),
                    sd_col = NULL,
                    n_col = NULL,
