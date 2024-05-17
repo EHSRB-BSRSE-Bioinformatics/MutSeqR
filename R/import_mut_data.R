@@ -2,7 +2,8 @@
 #'
 #' Imports a .mut file into the local R environment.
 #' @param mut_file "filepath". The .mut file containing mutation
-#' data to be imported. If you specify a folder, the function will
+#' data to be imported. This can be either a data frame object or a filepath
+#' to a file or directory. If you specify a folder, the function will
 #' attempt to read all files in the folder and combine them into
 #' a single data frame. Required columns are listed below.
 #' Synonymous names for these columns are accepted.
@@ -26,8 +27,9 @@
 #' Default is tab-delimited.
 #' @param rsids A logical variable; whether or not the .mut file
 #' contains rsID information (existing SNPs).
-#' @param sample_data_file "filepath". An optional file containing
+#' @param sample_data_file An optional file containing
 #' additional sample metadata (dose, tissue, timepoint, etc.).
+#' This can be either a data frame object or a file path to a file.
 #' @param sd_sep The delimiter for importing sample metadata table.
 #' Default is tab-delimited.
 #' @param vaf_cutoff The function will add `is_germline` column
@@ -36,15 +38,17 @@
 #' provided, but generally a value of 0.1 (i.e., 10%) is a good
 #' starting point. Setting this will flag variants that are
 #' present at a frequency greater than this value at a given site.
-#' @param regions Values are `c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom_interval", "none")`.
+#' @param regions Values are `c("TSpanel_human", "TSpanel_mouse",
+#' "TSpanel_rat" "custom_interval", "none")`.
 #' Indicates the target panel used for Duplex Sequencing.
 #' The argument refers to the TS Mutagenesis panel of the
 #' specified species, or to a custom panel. If "custom",
 #' provide the file path of your regions file in
 #' `custom_regions_file`.
 #' @param custom_regions_file "filepath". If `regions` is set to "custom_interval",
-#' provide the file path for the file containing regions metadata.
+#' provide  the file containing regions metadata.
 #' Required columns are `contig`, `start`, and `end`.
+#' This can be either a data frame object or a file path to a file.
 #' @param rg_sep The delimiter for importing the `custom_regions_file`.
 #' Default is tab-delimited.
 #' @param is_0_based A logical variable. Indicates whether the
@@ -147,7 +151,6 @@ import_mut_data <- function(mut_file,
   if (vaf_cutoff < 0 || vaf_cutoff > 1) {
   stop("Error: The VAF cutoff must be between 0 and 1")
   }
-
   if (!is.numeric(range_buffer) || range_buffer < 0) {
     stop("Error: The range buffer must be a non-negative number")
   }
@@ -168,84 +171,100 @@ import_mut_data <- function(mut_file,
   if (!is.logical(output_granges)) {
     stop("Error: output_granges must be a logical variable")
   }
+  # Import the mut files: data frame or file path
+  if (is.data.frame(mut_file)) {
+    dat <- mut_file
+    if (nrow(dat) == 0) {
+      stop("Error: The data frame you've provided is empty")
+    }
+  } else if (is.character(mut_file)) {
+    mut_file <- file.path(mut_file)
+    # Validate file/folder input
+    if (file.exists(mut_file)) {
+      file_info <- file.info(mut_file)
 
-  mut_file <- file.path(mut_file)
+      if (file_info$isdir == TRUE) {
+        # Handle the case where mut_file exists and is a directory
+        mut_files <- list.files(path = mut_file, full.names = TRUE, no.. = TRUE)
 
-  # Validate file/folder input
-  if (file.exists(mut_file)) {
-    file_info <- file.info(mut_file)
+        if (length(mut_files) == 0) {
+          stop("Error: The folder you've specified is empty")
+        }
 
-    if (file_info$isdir == TRUE) {
-      # Handle the case where mut_file exists and is a directory
-      mut_files <- list.files(path = mut_file, full.names = TRUE, no.. = TRUE)
+        # Warning/error if any of the files in folder are empty
+        files_info_all <- file.info(mut_files)
 
-      if (length(mut_files) == 0) {
-        stop("Error: The folder you've specified is empty")
-      }
+        empty_indices <- is.na(files_info_all$size) | files_info_all$size == 0
+        empty_list <- basename(mut_files[empty_indices])
 
-      # Warning/error if any of the files in folder are empty
-      files_info_all <- file.info(mut_files)
+        empty_list_str <- paste(empty_list, collapse = ", ")
 
-      empty_indices <- is.na(files_info_all$size) | files_info_all$size == 0
-      empty_list <- basename(mut_files[empty_indices])
+        if (length(empty_list) == length(mut_files)) {
+          stop("Error: All the files in the specified directory are empty")
+        }
+        if (length(empty_list) != 0) {
+          warning(paste("Warning: The following files in the specified
+                          directory are empty and will be removed:", empty_list_str))
+        }
 
-      empty_list_str <- paste(empty_list, collapse = ", ")
+        # Remove empty files from mut_files
+        mut_files <- mut_files[!empty_indices]
 
-      if (length(empty_list) == length(mut_files)) {
-        stop("Error: All the files in the specified directory are empty")
-      }
-      if (length(empty_list) != 0) {
-        warning(paste("Warning: The following files in the specified
-                        directory are empty and will be removed:", empty_list_str))
-      }
-
-      # Remove empty files from mut_files
-      mut_files <- mut_files[!empty_indices]
-
-      # Read in the files and bind them together
-      dat <- lapply(mut_files, function(file) {
-        read.table(file,
+        # Read in the files and bind them together
+        dat <- lapply(mut_files, function(file) {
+          read.table(file,
+            header = TRUE, sep = mut_sep,
+            fileEncoding = "UTF-8-BOM"
+          )
+        }) %>% dplyr::bind_rows()
+      } else {
+        # Handle the case where mut_file exists and is not a directory (a file)
+        if (file_info$size == 0 || is.na(file_info$size)) {
+          stop("Error: You are trying to import an empty file")
+        }
+        dat <- read.table(mut_file,
           header = TRUE, sep = mut_sep,
           fileEncoding = "UTF-8-BOM"
         )
-      }) %>% dplyr::bind_rows()
-    } else {
-      # Handle the case where mut_file exists and is not a directory (a file)
-      if (file_info$size == 0 || is.na(file_info$size)) {
-        stop("Error: You are trying to import an empty file")
       }
-
-      dat <- read.table(mut_file,
-        header = TRUE, sep = mut_sep,
-        fileEncoding = "UTF-8-BOM"
-      )
+    } else {
+      # Handle the case where mut_file does not exist
+      stop("Error: The file path you've specified is invalid")
+    }
+    if (ncol(dat) <= 1) {
+      stop("Your imported data only has one column.
+                            You may want to set mut_sep to properly reflect
+                            the delimiter used for the data you are importing.")
     }
   } else {
-    # Handle the case where mut_file does not exist
-    stop("Error: The file path you've specified is invalid")
+    stop("Error: mut_file must be a character string or a data frame")
   }
-
-  if (ncol(dat) <= 1) {
-    stop("Your imported data only has one column.
-                           You may want to set mut_sep to properly reflect
-                           the delimiter used for the data you are importing.")
-  }
+  ## Sample Data File
     # Validate and join sample data file if provided
-    if (!is.null(sample_data_file)) {
-    sample_file <- file.path(sample_data_file)
-    if (!file.exists(sample_file)) {
-      stop("Error: The sample data file path you've specified is invalid")
-    }
-    if (file.info(sample_file)$size == 0) {
-      stop("Error: You are trying to import an empty sample data file")
-    }
-    sampledata <- read.delim(file.path(sample_data_file),
-                             sep = sd_sep,
-                             header = TRUE)
-    if (ncol(sampledata) <= 1) {
-      stop("Your imported sample data only has one column.
-                           You may want to set sd_sep to properly reflect
-                           the delimiter used for the data you are importing.")
+  if (!is.null(sample_data_file)) {
+    if (is.data.frame(sample_data_file)){
+      sampledata <- sample_data_file
+      if (nrow(sampledata) == 0) {
+        stop("Error: The sample data frame you've provided is empty")
+      }
+    } else if (is.character(sample_data_file)) {
+      sample_file <- file.path(sample_data_file)
+      if (!file.exists(sample_file)) {
+        stop("Error: The sample data file path you've specified is invalid")
+      }
+      if (file.info(sample_file)$size == 0) {
+        stop("Error: You are trying to import an empty sample data file")
+      }
+      sampledata <- read.delim(file.path(sample_data_file),
+                              sep = sd_sep,
+                              header = TRUE)
+      if (ncol(sampledata) <= 1) {
+        stop("Your imported sample data only has one column.
+                            You may want to set sd_sep to properly reflect
+                            the delimiter used for the data you are importing.")
+      }
+    } else {
+      stop("Error: sample_data_file must be a character string or a data frame")
     }
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
@@ -257,12 +276,14 @@ import_mut_data <- function(mut_file,
       stop("Error: You have set regions to 'custom_interval', but have not
       provided a custom regions file!")
     }
-    rg_file <- file.path(custom_regions_file)
-    if (!file.exists(rg_file)) {
-      stop("Error: The custom regions file path you've specified is invalid")
-    }
-    if (file.info(rg_file)$size == 0) {
-      stop("Error: You are trying to import an empty custom regions file")
+    if (is.character(custom_regions_file)) {
+      rg_file <- file.path(custom_regions_file)
+      if (!file.exists(rg_file)) {
+        stop("Error: The custom regions file path you've specified is invalid")
+      }
+      if (file.info(rg_file)$size == 0) {
+        stop("Error: You are trying to import an empty custom regions file")
+      }
     }
   }
 
@@ -519,8 +540,12 @@ import_mut_data <- function(mut_file,
 
 
   if (regions != "none") {
+    
     # load regions file
     regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
+    
+    
+    
     # adjust regions start based on range_buffer
     regions_df <- regions_df %>%
       dplyr::mutate(regions_start_buffered =

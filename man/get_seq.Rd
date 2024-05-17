@@ -2,10 +2,10 @@
 % Please edit documentation in R/get_seq.R
 \name{get_seq}
 \alias{get_seq}
-\title{Get sequence of Duplex Sequencing target regions}
+\title{Get sequence of genomic target regions}
 \usage{
 get_seq(
-  regions = c("human", "mouse", "rat", "custom"),
+  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
   genome = NULL,
@@ -14,11 +14,11 @@ get_seq(
 )
 }
 \arguments{
-\item{regions}{"human", "mouse", "rat, or "custom". The argument refers to the
+\item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom_interval". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel.
 If custom, provide file path in custom_regions_file.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom,
+\item{custom_regions_file}{"filepath". If regions is set to custom_interval,
 provide the file path for the tab-delimited file containing regions metadata.
 Required columns are "contig", "start", and "end".}
 
@@ -26,7 +26,7 @@ Required columns are "contig", "start", and "end".}
 The default is tab-delimited.}
 
 \item{genome}{If a custom regions file is provided, indicate the genome
-assembly. Please refer to the UCSC genomes.
+assembly for the reference genome. Please refer to the UCSC genomes.
 Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 

@@ -6,8 +6,8 @@
 \usage{
 calculate_mut_freq(
   mutation_data,
-  cols_to_group = "dose",
-  subtype_resolution = "type",
+  cols_to_group = "sample",
+  subtype_resolution = "none",
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
   filter_germ = TRUE,
   summary = TRUE,
@@ -83,7 +83,7 @@ returned). Setting this to false returns all columns in the original
 mutation_data, which might make plotting more difficult, but may provide additional
 flexibility to power users.}
 
-\item{retain_metadata_cols}{a character vector that contains the the
+\item{retain_metadata_cols}{a character vector that contains the names of the
 metadata columns that you would like to retain in the summary table.
 This may be useful for plotting your summary data. Ex. retain the "dose"
 column when summarising by "sample".

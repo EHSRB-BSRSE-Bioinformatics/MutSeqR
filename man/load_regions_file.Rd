@@ -7,11 +7,11 @@
 load_regions_file(regions, custom_regions_file = NULL, rg_sep = "\\t")
 }
 \arguments{
-\item{regions}{"human", "mouse", 'rat', or "custom". The argument refers to the
+\item{regions}{"TSpanel_human", "TSpanel_mouse", 'TSpanel_rat', or "custom_interval". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel. If custom,
 provide file path in custom_regions_file.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom,
+\item{custom_regions_file}{"filepath". If regions is set to 'custom_interval',
 provide the file path for the tab-delimited file containing regions metadata.
 Required columns are "contig", "start", and "end".}
 

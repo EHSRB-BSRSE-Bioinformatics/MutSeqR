@@ -21,10 +21,15 @@ load_regions_file <- function(regions,
   } else if (regions == "TSpanel_rat") {
     regions_df <- read.table(system.file("extdata", "rat_mutagenesis_panel_rn6.txt", package = "MutSeqR"), header = TRUE)
   } else if (regions == "custom_interval") {
+    
     if (!is.null(custom_regions_file)) {
-      regions_df <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)
+      if (is.data.frame(custom_regions_file)) {
+        regions_df <- custom_regions_file
+      } else {
+        regions_df <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)
+      }
     } else {
-      warning("You must provide a file path to custom_regions_file when regions is set to 'custom_interval'.")
+      warning("You must provide either a data frame or a filepath to custom_regions_file when regions is set to 'custom_interval'.")
     }
   } else {
     warning("Invalid regions parameter. Choose from 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', or 'custom_interval'.")

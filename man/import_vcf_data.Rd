@@ -10,7 +10,7 @@ import_vcf_data(
   range_buffer = 1,
   sample_data_file = NULL,
   sd_sep = "\\t",
-  regions = c("human", "mouse", "rat", "custom", "none"),
+  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
   genome = NULL,
@@ -71,29 +71,31 @@ metadata (dose, timepoint, etc.)}
 \item{sd_sep}{The delimiter for importing sample metadata tables.
 Default is tab-delimited}
 
-\item{regions}{"human", "mouse", "rat" , "custom" or "none". The
-argument refers to the TS Mutagenesis panel of the specified species,
-or to a custom regions interval file. If set to 'custom', please provide
-the file path in custom_regions_file and the genome assembly version of
-the reference genome using the 'genome' parameter.
-If you are not using a targeted approach, set regions to none, and supply
-the species and genome assembly of the reference genome using the
-'species' and 'genome' parameters respectively. ### rework these paramters: regions = custom interval, TS panel, or none. Then species is always required.}
+\item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat" ,
+"custom_interval" or "none". The 'TSpanel_' argument refers to the TS
+Mutagenesis panel of the specified species, or to a custom regions
+interval file. If set to 'custom_interval', please provide the file path in
+custom_regions_file and the genome assembly version of the reference
+genome using the 'genome' parameter. If you are not using a targeted
+approach, set regions to none, and supply the species and genome
+assembly of the reference genome using the 'species' and 'genome'
+parameters respectively.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom,
+\item{custom_regions_file}{"filepath". If regions is set to custom_interval,
 provide the file path for the file containing regions metadata.
 Required columns are "contig", "start", and "end"}
 
 \item{rg_sep}{The delimiter for importing the custom_regions_file.
 Default is tab-delimited}
 
-\item{genome}{The genome assembly of the reference genome. For a
+\item{genome}{The genome assembly of the reference genome. For a ########
 complete list, refer to https://genome.ucsc.edu.
 Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
 \item{species}{The species of the reference genome. Required if
-regions is set to none.}
+regions is set to none. The value can be the common name of the species
+or the scientific name. Ex. "human" or "Homo sapiens".}
 
 \item{depth_calc}{In the instance when there are two or more calls at the
 same location within a sample, and the depths differ, this parameter chooses

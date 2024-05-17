@@ -12,7 +12,7 @@ import_mut_data(
   sd_sep = "\\t",
   vaf_cutoff,
   range_buffer = 0,
-  regions = c("human", "mouse", "rat", "custom", "none"),
+  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
   is_0_based = TRUE,
@@ -23,7 +23,8 @@ import_mut_data(
 }
 \arguments{
 \item{mut_file}{"filepath". The .mut file containing mutation
-data to be imported. If you specify a folder, the function will
+data to be imported. This can be either a data frame object or a filepath
+to a file or directory. If you specify a folder, the function will
 attempt to read all files in the folder and combine them into
 a single data frame. Required columns are listed below.
 Synonymous names for these columns are accepted.
@@ -50,8 +51,9 @@ Default is tab-delimited.}
 \item{rsids}{A logical variable; whether or not the .mut file
 contains rsID information (existing SNPs).}
 
-\item{sample_data_file}{"filepath". An optional file containing
-additional sample metadata (dose, tissue, timepoint, etc.).}
+\item{sample_data_file}{An optional file containing
+additional sample metadata (dose, tissue, timepoint, etc.).
+This can be either a data frame object or a file path to a file.}
 
 \item{sd_sep}{The delimiter for importing sample metadata table.
 Default is tab-delimited.}
@@ -71,16 +73,17 @@ indels may start outside of the regions. Adjust the range_buffer to
 include these variants. Rows that were filtered out of the mutation
 data will be returned in a separate data frame.}
 
-\item{regions}{Values are \code{c("human", "mouse", "custom")}.
+\item{regions}{Values are \verb{c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom_interval", "none")}.
 Indicates the target panel used for Duplex Sequencing.
 The argument refers to the TS Mutagenesis panel of the
 specified species, or to a custom panel. If "custom",
 provide the file path of your regions file in
 \code{custom_regions_file}.}
 
-\item{custom_regions_file}{"filepath". If \code{regions} is set to "custom",
-provide the file path for the file containing regions metadata.
-Required columns are \code{contig}, \code{start}, and \code{end}.}
+\item{custom_regions_file}{"filepath". If \code{regions} is set to "custom_interval",
+provide  the file containing regions metadata.
+Required columns are \code{contig}, \code{start}, and \code{end}.
+This can be either a data frame object or a file path to a file.}
 
 \item{rg_sep}{The delimiter for importing the \code{custom_regions_file}.
 Default is tab-delimited.}
