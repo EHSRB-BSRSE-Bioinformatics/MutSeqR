@@ -785,13 +785,14 @@ The mutation spectra is the proportion of mutation subtypes within a sample or g
 
 We can compare the mutation spectra between experimental groups using the 'spectra_comparison' function. This function will compare the proportion of mutation subtypes at any resolution between specified groups using a modified contingency table approach that utilises the G2 log-likelihood ratio statistic (Piegorsch and Bailer, 1994). The function will output the G2 statistic and p-value for each comparison. P-values are adjusted for multiple comparison using the Sidak method.
 
-R X T contingenct table; R = rows of counts, T = treatments or groups
+In the general R X T contingency table; R is the number of subtypes, T is the number of groups. We represent data counts as variables Y_{ij} (i = 1, ..., R) (j = 1, ..., T). The E_{ij} are the *expected* coubts under the null hypothesis
 The statistical hypoethesis of homogeneity is that the proportion of each mutation subtype equals that of the other group.
 To test the significance of the homogeneity hypothesis, the G2 likelihood ratio statistic: 
 
-$$G^{2} = 2 \sum_{i=1}^{R} \sum_{j=1}^{T} Y_{ij} log(\frac{Y_{ij}}{E_{ij}})$$
+$$G^{2} = 2\, \sum_{i=1}^{R}\, \sum_{j=1}^{T}\, Y_{ij}\, log(\frac{Y_{ij}}{E_{ij}})$$
 
-This multinomial model assumes independance among the observations. Each tabled observation represents a sum of independent contributions to the total mutant count. We assume independance is valid for mutants derived from a  mixed population, however, mutants that are derived clonally from a single progenitor cell would violate this assumption. As such, it is recomended to use the MFmin method of mutation counting for spectral analyses  to ensure that all mutation counts are independant. In those cases where the independence may be invalid, and where additional, extra-multinomial sources of variability are present, more complex, hierarchical statistical models are required. This is currently outside the scope of this package.
+
+This multinomial model assumes independance among the observations. Each tabled observation represents a sum of independent contributions to the total mutant count. We assume independance is valid for mutants derived from a  mixed population, however, mutants that are derived clonally from a single progenitor cell would violate this assumption. As such, it is recommended to use the MFmin method of mutation counting for spectral analyses  to ensure that all mutation counts are independant. In those cases where the independence may be invalid, and where additional, extra-multinomial sources of variability are present, more complex, hierarchical statistical models are required. This is currently outside the scope of this package.
 
 This function takes the imported mutation data. It will use the calculate_mut_freq function to calculate the proportion of mutation subtypes of specified groups. Comparisons between groups are made based on an inputted contrasts table.
 ```{r}
