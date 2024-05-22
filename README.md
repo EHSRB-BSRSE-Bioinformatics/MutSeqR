@@ -650,29 +650,25 @@ model_by_target <- model_mf(mf_data = mf_data,
 
 ### Output
 The function will output a list of results.
-- model_data: the supplied mf_data with added column for model residuals.
-- summary: the summary of the model.
-- anova: the analysis of variance for models with two or more effects. \link[car]{Anova}`(model) `
-- residuals_histogram: the model residuals plotted as a histogram. This is
+
+* model_data: the supplied mf_data with added column for model residuals.
+* summary: the summary of the model.
+* anova: the analysis of variance for models with two or more effects. \link[car]{Anova}`(model) `
+* residuals_histogram: the model residuals plotted as a histogram. This is
 used to check whether the variance is normally distributed. A symmetric
 bell-shaped histogram, evenly distributed around zero indicates that the
 normality assumption is likely to be true.
-- residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
+* residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
  For a normal distribution, we expect points to roughly follow the y=x line.  
-- point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
-- point_estimates: the point estimates for the fixed effects.
-- pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
-- pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
+* point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
+* point_estimates: the point estimates for the fixed effects.
+* pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
+* pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 
 ## Benchmark Dose Modelling
-A benchmark dose (BMD) is a dose or concentration that produces a predetermined
-change in the response rate of an adverse effect. This predetermined change in
-response is called the benchmark response (BMR). In chemical risk assessment
-the BMD can be used as point of departure (POD) to derive human health-based guidance 
-value such as reference dose (RfD) or derived no-effect level (DNEL) or acceptable 
+A benchmark dose (BMD) is a dose or concentration that produces a predetermined change in the response rate of an adverse effect. This predetermined change in response is called the benchmark response (BMR). In chemical risk assessment the BMD can be used as a point of departure (POD) to derive human health-based guidance 
+values such as the reference dose (RfD), the derived no-effect level (DNEL) or the acceptable 
 daily intake (ADI).
-
-The BMD is also a useful for potency comparisons between substances...
 
 The BMD is estimated by applying various mathmatical models to fit the dose-response data.
 Some requirements that must be met before modelling the BMD. There must be a clear
@@ -680,17 +676,145 @@ dose-response trend in the mutaiton frequency data. We suggest using the 'model-
 function to test for significant increases in MF with dose prior to running a BMD analysis.
 In general, studies with more dose groups and a graded monotonic response with dose will be
 more useful for BMD analysis. A minimum of three dose groups + 1 control group is suggested.
-Datasets in which a response is only observed at the high dose are usually not suitable for BMD modeling.
-However, if the one elevated response is near the BMR, adequate BMD computation may result. For a better
-estimate of the BMD, it is preferable to have studies with one or more doses near the level of the BMR.
+Datasets in which a response is only observed at the high dose are usually not suitable for BMD modeling. However, if the one elevated response is near the BMR, adequate BMD computation may result. For a better estimate of the BMD, it is preferable to have studies with one or more doses near the level of the BMR.
 
+MutSeqR can perform benchmark dose modeling of mutation frequencies using the ToxicR package, available on Github.
+https://github.com/NIEHS/ToxicR. See ToxicR repository on github for more information on installing the package.
 
-Individual vs Summary data
-# https://www.epa.gov/sites/default/files/2015-01/documents/benchmark_dose_guidance.pdf
-It is preferable to provide information on individual subjects however, it is also possible to 
-use summary information (mean + SD) concerning the measured effect, especially for continuous response variables such as mutation frequency.
+To install this package, use the following code:
+``` {r}
+library(devtools)
+install_github("NIEHS/ToxicR")
+```
 
+We have two functions available to users:
 
+mf_bmd() will fit a single continuous BMD model to the mutation frequency data.
+
+bmd_ma() will fit a model average continuous BMD to the mutation frequency data. 
+Protection and safety authorities recommend the use of model averaging to determine the benchmark dose. Model averaging incorporates information across multiple models to acount for model uncertainty. In most cases, this allos the BMD to be more accurately estimated.
+
+### Choosing your BMR
+One of the most important considerations for BMD modeling is choosing the appropriate benchmark response (BMR). The BMD will be estimated as the dose at which the BMR occurs. 
+Selecting a BMR involves making judgements about the statistical and biological characteristics of the dataset and about the applications for which the resuling BMDs will be used. There are several different definitions of the BMR. Our functions offer several options  that are commonly used for continuous data:
+
+* Relative deviation (rel): the BMD represents the dose that changes the mean mutation frequency a certain percentage from the background dose. 
+* Standard deviation (sd): the BMD represents the dose associated with the mean mutation frequency changing a specified number of standard deviations from the background mean. 
+* Absolute deviation (abs): the  BMD represents the dose associated with a specified absolute deviation from the background mean. 
+* Hybrid deviation (hybrid): the  BMD represents the dose that changes the probability of an adverse event by a specified amount. 
+
+One of these options can be specified using the 'bmr_type' parameter. The 'bmr' parameter is set to a numeric value specifying the benchmark response, defined in relation to the calculation requested in bmr_type.
+
+```{r}
+# summarise mutation frequencies by sample
+# retain the dose column in the summary table
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none",
+            summary = TRUE,
+            retain_metadata_cols = "dose"
+            )
+# Fit a model-averaged BMD to the mutation frequency data.
+bmd <- bmd_ma(mf_data,
+  # specify the name of your dose column
+              dose_col = "dose", 
+  # specify the name of your response column(s)
+              response_cols = c("sample_MF_min", "sample_MF_max"),
+  # BMR is specified as a 50% relative increase from the background mean
+              bmr_type = "rel",
+              bmr = 0.5,
+              ...)
+```
+
+Ideally, the BMR would be based on a consensus scientific definition of what  minimal level of change in mutation frequency is biologically significant. Currently, the default provided by this package calculates the BMD at a 50% relative increase in mutation frequency from the background. This BMR was selected based on previous recommendations for genotoxicity assessment by White et al., 2020.
+
+### Models
+Model averaging highly depends on the set of candidate models used. A sufficiently large set of models is needed to ensure that a well-fitting model is included in the averaging. The bmd_ma function uses the default EFSA models to average. These models are (normal then lognormal for each model): exp-aerts, invexp-aerts, hill-aerts, lognormal-aerts, gamma-efsa, LMS, probit-aerts, and logistic-aerts.
+
+When using the mf_bmd function, the 'model_type' parameter specifies the model that will be fit to the data. All EFSA models can be specified. Additionally, legacy continuous models based upon US EPA BMDS software can be specified: hill, exp-3, exp-5, power, polynomial. See \link[ToxicR]{single_continuous_fit} for more details.
+
+### Data Type
+For both functions, dose-response data can be provided for individual subjects, or as a summary across dose groups. It is preferable to provide information on individual subjects however, in the case where this information is not available, summary data may be used.
+
+Ex. Individual data
+```{r}
+# summarise mutation frequencies by sample
+mf_data <- calculate_mut_freq(
+            mutation_data = mut_data,
+            cols_to_group = "sample",
+            subtype_resolution = "none",
+            summary = TRUE,
+            retain_metadata_cols = "dose"
+            )
+# Fit a model-averaged BMD to the mutation frequency data.
+bmd <- bmd_ma(mf_data,
+              data_type = "individual"
+              dose_col = "dose", 
+              response_cols = c("sample_MF_min", "sample_MF_max"),n
+              bmr_type = "rel",
+              bmr = 0.5,
+              ...)
+```
+
+Ex. Summary data. mf_data should be a data frame containing the mean mutation frequency per dose. For each dose group, you must also provide the standard deviation and the sample size. Indicate the names of these four columns (mean response, dose, standard deviation, and sample size) using the response_cols, dose_col, sd_col, and n_col parameters respectively. 
+```{r}
+mf_data <- data.frame(
+  dose = c("control", "D1", "D2", "D3"),
+  mean_mf = c(1.3E-07, 3.3E-07, 6.8E-07, 1.0E-06),
+  standard_deviation = c(1.0E-08, 1.6E-08, 2.3E-08, 2.8E-08),
+  sample_size = c(6, 6, 6, 6))
+
+bmd <- bmd_ma(mf_data,
+              data_type = "summary"
+              dose_col = "dose", 
+              response_cols = "mean_mf",
+              sd_col = "standard_deviation",
+              n_col = "sample_size",
+              bmr_type = "rel",
+              bmr = 0.5,
+              ...)
+```
+
+### Output
 The BMD is reported alonside its upper and lower confidence intervals; the BMDU and BMDL.
 The BMDL is typically used to derive human health-based guidance values.
+The functions will also output several plots to visualise the results.
+
+## Mutation Spectra Analysis
+The mutation spectra is the proportion of mutation subtypes within a sample or group. The mutation spectra can inform on the mechanisms involved in mutagenesis.
+
+We can compare the mutation spectra between experimental groups using the 'spectra_comparison' function. This function will compare the proportion of mutation subtypes at any resolution between specified groups using a modified contingency table approach that utilises the G2 log-likelihood ratio statistic (Piegorsch and Bailer, 1994). The function will output the G2 statistic and p-value for each comparison. P-values are adjusted for multiple comparison using the Sidak method.
+
+R X T contingenct table; R = rows of counts, T = treatments or groups
+The statistical hypoethesis of homogeneity is that the proportion of each mutation subtype equals that of the other group.
+To test the significance of the homogeneity hypoethesis, the G2 likelihood ratio statistic: 
+
+$G^2^ = 2 
+
+This multinomial model assumes independance among the observations. Each tabled observation represents a sum of independent contributions to the total mutant count. We assume independance is valid for mutants derived from a  mixed population, however, mutants that are derived clonally from a single progenitor cell would violate this assumption. As such, it is recomended to use the MFmin method of mutation counting for spectral analyses  to ensure that all mutation counts are independant. In those cases where the independence may be invalid, and where additional, extra-multinomial sources of variability are present, more complex, hierarchical statistical models are required. This is currently outside the scope of this package.
+
+This function takes the imported mutation data. It will use the calculate_mut_freq function to calculate the proportion of mutation subtypes of specified groups. Comparisons between groups are made based on an inputted contrasts table.
+```{r}
+contrasts_table <- data.frame(col1 = c(D1, D2, D3),
+                              col2 = c(D0, D0, D0))
+simple_spectra <- spectra_comparison(mutation_data,
+                                     cols_to_group = "dose",
+                                     subtype_resolution = "base_6",
+                                     variant_types =  c("snv",
+                                                        "deletion",
+                                                        "insertion",
+                                                        "complex",
+                                                        "mnv",
+                                                        "symbolic"),
+                                     mf_type = "min",
+                                     contrasts = contrasts_table)
+```
+
+# References
+Piegorsch WW, Bailer AJ. Statistical approaches for analyzing mutational spectra: some recommendations for categorical data. Genetics. 1994 Jan;136(1):403-16. doi: 10.1093/genetics/136.1.403. PMID: 8138174; PMCID: PMC1205789.
+
+
+
+
 
