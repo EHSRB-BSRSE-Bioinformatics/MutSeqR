@@ -217,13 +217,7 @@ mutation_data <-
                   )
 ```
 
-If you choose not to supply an interval list of target regions, then you must supply
-both the species and the genome assembly version for your reference genome using the
-'species' and 'genome' parameters respectively. The function will browse BSgenome
-\link[BSgenome]{available.genomes} for the appropriate reference genome and install
-the corresponding package. Context information will be extracted from the installed
-BSgenome object. BSgenome offers genomes with masked sequences. If you wish to use
-the masked version of the genome, set 'masked_BS_genome' to TRUE.
+If you choose not to supply an interval list of target regions, then you must supply both the species and the genome assembly version for your reference genome using the 'species' and 'genome' parameters respectively. The function will browse BSgenome [BSgenome::available.genomes](https://www.rdocumentation.org/packages/BSgenome/versions/1.40.1/topics/available.genomes) for the appropriate reference genome and install the corresponding package. Context information will be extracted from the installed BSgenome object. BSgenome offers genomes with masked sequences. If you wish to use the masked version of the genome, set 'masked_BS_genome' to TRUE.
 
 ```{r}
 library(MutSeqR)
@@ -658,7 +652,7 @@ The function will output a list of results.
 
 * model_data: the supplied mf_data with added column for model residuals.
 * summary: the summary of the model.
-* anova: the analysis of variance for models with two or more effects. \link[car]{Anova}`(model) `
+* anova: the analysis of variance for models with two or more effects. [car::Anova](https://www.rdocumentation.org/packages/car/versions/1.0-9/topics/Anova)
 * residuals_histogram: the model residuals plotted as a histogram. This is
 used to check whether the variance is normally distributed. A symmetric
 bell-shaped histogram, evenly distributed around zero indicates that the
@@ -737,7 +731,7 @@ Ideally, the BMR would be based on a consensus scientific definition of what  mi
 ### Models
 Model averaging highly depends on the set of candidate models used. A sufficiently large set of models is needed to ensure that a well-fitting model is included in the averaging. The bmd_ma function uses the default EFSA models to average. These models are (normal then lognormal for each model): exp-aerts, invexp-aerts, hill-aerts, lognormal-aerts, gamma-efsa, LMS, probit-aerts, and logistic-aerts.
 
-When using the mf_bmd function, the 'model_type' parameter specifies the model that will be fit to the data. All EFSA models can be specified. Additionally, legacy continuous models based upon US EPA BMDS software can be specified: hill, exp-3, exp-5, power, polynomial. See \link[ToxicR]{single_continuous_fit} for more details.
+When using the mf_bmd function, the 'model_type' parameter specifies the model that will be fit to the data. All EFSA models can be specified. Additionally, legacy continuous models based upon US EPA BMDS software can be specified: hill, exp-3, exp-5, power, polynomial. See R documentation ?ToxicR::single_continuous_fit for more details.
 
 ### Data Type
 For both functions, dose-response data can be provided for individual subjects, or as a summary across dose groups. It is preferable to provide information on individual subjects however, in the case where this information is not available, summary data may be used.
@@ -793,9 +787,9 @@ We can compare the mutation spectra between experimental groups using the 'spect
 
 R X T contingenct table; R = rows of counts, T = treatments or groups
 The statistical hypoethesis of homogeneity is that the proportion of each mutation subtype equals that of the other group.
-To test the significance of the homogeneity hypoethesis, the G2 likelihood ratio statistic: 
+To test the significance of the homogeneity hypothesis, the G2 likelihood ratio statistic: 
 
-$G^2^ = 2 
+$$G^{2} = 2 \sum_{i=1}^{R} \sum_{j=1}^{T} Y_{ij} log(\frac{Y_{ij}}{E_{ij}})$$
 
 This multinomial model assumes independance among the observations. Each tabled observation represents a sum of independent contributions to the total mutant count. We assume independance is valid for mutants derived from a  mixed population, however, mutants that are derived clonally from a single progenitor cell would violate this assumption. As such, it is recomended to use the MFmin method of mutation counting for spectral analyses  to ensure that all mutation counts are independant. In those cases where the independence may be invalid, and where additional, extra-multinomial sources of variability are present, more complex, hierarchical statistical models are required. This is currently outside the scope of this package.
 
