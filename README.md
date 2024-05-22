@@ -385,11 +385,17 @@ are divided by the context-dependent number of sequenced bases for that sample/g
 Values are then divided by the sum of all values for that sample/group.
 
 Subtype resolutions: 
-1. type: the variation type. "snv", "mnv", "insertion", "deletion", "complex", and "symbolic" variants.
-2.  base_6: the simple snv spectrum. The snv subtypes are normalized to their pyrimidine context. C>A, C>G, C>T, T>A, T>C, T>G.
-3. base_12: The non-normalized snv subtypes. A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G.
-4. base_96: the trinculeotide spectrum. The snv subtypes are reported in their pyrimidine context alongside their two flanking nucleotides. Ex. A[C>T]A.
-5. base_192: The non-normalized snv subtypes are reported alongside their two flanking nucleotides. Ex. A[G>T]A.
+
+* type: the variation type.
+    + "snv", "mnv", "insertion", "deletion", "complex", and "symbolic" variants.
+*  base_6: the simple snv spectrum. The snv subtypes are normalized to their pyrimidine context.
+    + C>A, C>G, C>T, T>A, T>C, T>G.
+* base_12: The non-normalized snv subtypes.
+    + A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G.
+* base_96: the trinculeotide spectrum. The snv subtypes are reported in their pyrimidine context alongside their two flanking nucleotides.
+    + Ex. A[C>T]A.
+* base_192: The non-normalized snv subtypes are reported alongside their two flanking nucleotides.
+    + Ex. A[G>T]A.
 
 Ex. The following code will return the simple mutation spectra for all samples. 
 ```{r}
@@ -532,8 +538,7 @@ model_by_dose <- model_mf(mf_data = mf_data,
 
 Additional arguments can be passed to the model to further customize it to
 the user's needs. Details on the arguments for the generalized linear
-model can be found here \link[stats]{glm} and for the general linear mixed
-model here \link[lme4]{glmer}. 
+model can be found here [stats::glm](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm) and for the general linear mixed model here [lme4::glmer](https://www.rdocumentation.org/packages/lme4/versions/1.1-35.3/topics/glmer). 
 
 Ex. We can study the effects of dose on mutation frequency for individual
 genomic loci from a panel of targets.
