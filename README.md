@@ -653,7 +653,7 @@ A single base substitution (SBS) is a mutation in which a single DNA base-pair i
 Generated matrices are described below. *Matrices are stored as `.all` files which can be viewed in a text-editor like notepad.*
 | File                    |                                                                                                       |
 |-------------------------|-------------------------------------------------------------------------------------------------------|
-|*project_name.SBS6.all*  | 6-base. The 6 pyrimidine single-nucleotide variants. C > {A, G, or T} and T > {A, G, or C} = 6        |
+|*project_name.SBS6.all*  | 6-base. The 6 pyrimidine single-nucleotide variants. *C>A, C>G, C>T, T>A, T>C, or T>G*                |
 |*project_name.SBS18.all* | 6-base. The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).|
 |*project_name.SBS24.all* | 6-base. The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N).|
 |**project_name.SBS96.all**  | 96-base. The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A[C>G]T*|
@@ -663,10 +663,12 @@ Generated matrices are described below. *Matrices are stored as `.all` files whi
 |*project_name.SBS4608.all* | 1536-base. The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).|
 |*project_name.SBS6144.all* | 1536-base. The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).|
 
-DBS Matrices
+###### DBS Matrices
+
 A doublet-base substitution (DBS) is a somatic mutation in which a set of two adjacent DNA base-pairs is *simultaneously* substituted with another set of two adjacent DNA base-pairs. **We do not recommend using the DBS matrices generated using `signature_fitting` for further analysis.** The `signature_fitting` function that we provide is designed to handle only the SBS mutations. All true multi-nucleotide variants, including doublets, are filtered out of the `mutation_data` prior to MatrixGeneration. However, the tool will still attempt to identify DBSs and will occasionally find two independent SBSs occuring next to each other simply by chance. If you wish to use DBS mutations in your signature analysis, please refer directly to the SigProfiler tools.
 
-Other Usages
+###### Other Usages
+
 SigProfilerMatrix Generator also supports small indels, structural variants, and copy-number variants. `signature_fitting` will not generate these matrices. If you wish to utilise these features, please refer directly to the SigProfiler tools.
 
 Barplots of the mutation matrices for all individual samples/groups can be found in the Plots folder. The number of mutations are plotted for each individual sample/group at the various subtype resolutions
@@ -674,30 +676,29 @@ Barplots of the mutation matrices for all individual samples/groups can be found
 ##### Transcription Strand Bias (TSB)
 SBS mutations will be tested for [transcription strand bias](https://osf.io/s93d5/wiki/5.%20Output%20-%20TSB/). These results will be stored in the `TSB` folder.
 
-It is not possible to distinguish which of the two DNA strands a mutation originated on. However, one expects that mutations from the same type will be equally distributed across the two DNA strands. In other words, we expect mutations to occur at the same proportion as their reverse complement. For example, given a mutational process that causes purely C>G:T:A mutations, and a long repetitive sequence 5'- CGCGCGCGCGCGCGCGCGCGCG-3' on the reference genome, one would expect to see an equal number of C>T and G>A mutations. However, in many cases, an asymteric number of mutations are observed due to one of the strands having a higher propensity for being either damaged or repaired. A common example of this is transcription strand bias where the transcribed strand is subjected to higher rates of DNA repair as part of the transcriptional process compared to the untranscribed strand.
+It is not possible to distinguish which of the two DNA strands a mutation originated on. However, one expects that mutations from the same type will be equally distributed across the two DNA strands. In other words, we expect mutations to occur at the same proportion as their reverse complement. For example, given a mutational process that causes purely **C>G:T:A** mutations, and a long repetitive sequence **5'- CGCGCGCGCGCGCGCGCGCGCG-3'** on the reference genome, one would expect to see an equal number of **C>T** and **G>A** mutations. However, in many cases, an asymteric number of mutations are observed due to one of the strands having a higher propensity for being either damaged or repaired. A common example of this is transcription strand bias where the transcribed strand is subjected to higher rates of DNA repair as part of the transcriptional process compared to the untranscribed strand.
 
-SigProfilerMatrixGenerator evaluates the transcriptional strand classificaiton of mutations within well-annotated protein coding genes of a reference genome. Mutations that occur outside of coding regions are classified as Non-transcribed (N). Mutations that occur within coding regions are classified as one of; transcribed (T), un-transcribed (U), bi-directional (B), or unknown. In order to classify mutations within coding regions, mutations are oriented based on the reference strand and their pyrimidine context. 
+`SigProfilerMatrixGenerator` evaluates the transcriptional strand classification of mutations within well-annotated protein coding genes of a reference genome. Mutations that occur outside of coding regions are classified as *Non-transcribed* (N). Mutations that occur within coding regions are classified as one of; *transcribed* (T), *un-transcribed* (U), *bi-directional* (B), or unknown. In order to classify mutations within coding regions, mutations are oriented based on the reference strand and their pyrimidine context. 
 
-For example, consider that our reference sequence contains the coding sequence of a gene i.e. it is the coding/UN-transcribed DNA strand. A T>C mutation called on this reference sequence would be referred to as an untranscribed T>C (**U:T>C**). However, if instead an A>G mutation is called on this reference sequence, it would be referred to as a transcribed T>C (**T:T>C**). Purine-based mutations called from the reference sequence are converted to their pyrimidine context and this includes swapping to the complementary DNA strand. In this case, the reverse  complement of untranscribed A>G is transcribed T>C.
+For example, consider that our reference sequence contains the coding sequence of a gene i.e. it is the coding/UN-transcribed DNA strand. A **T>C** mutation called on this reference sequence would be referred to as an untranscribed **T>C** (**U:T>C**). However, if instead an **A>G** mutation is called on this reference sequence, it would be referred to as a transcribed **T>C** (**T:T>C**). Purine-based mutations called from the reference sequence are converted to their pyrimidine context and this includes swapping to the complementary DNA strand. In this case, the reverse  complement of untranscribed **A>G** is transcribed **T>C**.
 
-In rare cases, both strands of a genomic region code for a gene. Such mutations are annotated as bidirectional based on their pyrimidine context. For example, both T:A>C:G and A:T>G:C mutations in regions of bidirectional transcription will be annotated as bidirectional T>C (**B:T>C**) mutations. 
+In rare cases, both strands of a genomic region code for a gene. Such mutations are annotated as bidirectional based on their pyrimidine context. For example, both **T:A>C:G** and **A:T>G:C** mutations in regions of bidirectional transcription will be annotated as bidirectional **T>C** (**B:T>C**) mutations. 
 
 All SBS mutations will be classified within the four transcriptional bias categories:
-* Transcribed (T)
-    + The variant is on the transcribed (template) strand.
-* Untranscribed (U)
-    + The variant is on the untranscribed (coding) strand.
-* Bidirectional (B)
-    + The variant is on both strands and is transcribed either way.
-* Nontranscribed (N)
-    + The variant is in a non-coding region and is untranslated. 
+| Transcribed (T) | The variant is on the transcribed (template) strand.  |
+| Untranscribed (U)| The variant is on the untranscribed (coding) strand.  |
+| Bidirectional (B) | The variant is on both strands and is transcribed either way. |
+| Nontranscribed (N)  | The variant is in a non-coding region and is untranslated. |
 
-The tool will then perform a transcription strand bias test which compares the number of transcribed and untranscribed mutations for each mutation type. For example, it will compare the number of transcribed T>C to untranscribed T>C mutations. Should there be a significant difference, it would indicate that T:A>C:G mutations are occuring at a higher rate on one of the strands compared to the other. Transcription strand bias tests will be included for the 6-base, 96-base and 288-base SBS mutation contexts. The output files contain the following information:
+The tool will then perform a transcription strand bias test which compares the number of transcribed and untranscribed mutations for each mutation type. For example, it will compare the number of transcribed T>C to untranscribed T>C mutations. Should there be a significant difference, it would indicate that T:A>C:G mutations are occuring at a higher rate on one of the strands compared to the other. Transcription strand bias tests will be included for the 6-base, 96-base and 288-base SBS mutation contexts. 
+
+The output files contain the following information:
 * the `group`
 * the mutation type
 * the enrichment value (# Transcribed / # untranscribed)
 * the p-value, corrected for multiple comparisons using the false discrover rate method
 * the false discovery rate q-value
+
 
 Files include:
 * *strandBiasTes_24.txt*: stats of the SBS6 variants
