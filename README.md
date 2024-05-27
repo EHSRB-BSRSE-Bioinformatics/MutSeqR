@@ -596,15 +596,15 @@ simple_spectra <- spectra_comparison(mutation_data,
 ```
 
 ### Mutational Signatures Analysis
-Mutational processes generate characteristic pattern of mutations, known as a mutational signatures. Distinct mutational signatures have been extracted from various cancer types and normal somatic tissues and deposited in the  Catalogue of Somatic Mutations in Cancer, or [COSMIC database](https://cancer.sanger.ac.uk/signatures/). These include signatures of single base substitutions (SBSs), doublet base substitutions (DBSs), small insertions and deletions (IDs) and copy number alterations (CNs). It is possible to assign mutational signatures to individual samples or groups using the `signature_fitting` function. This analysis provides the opportunity to identify the mutational processes involved in somatic mutagenesis within specific samples/groups. In the long run, it can provide evidence supporting the contribution of environmental mutagens to the mutation spectrum observed in human cancers. 
+Mutational processes generate characteristic patterns of mutations, known as a mutational signatures. Distinct mutational signatures have been extracted from various cancer types and normal somatic tissues and deposited in the  Catalogue of Somatic Mutations in Cancer, or [COSMIC database](https://cancer.sanger.ac.uk/signatures/). These include signatures of single base substitutions (SBSs), doublet base substitutions (DBSs), small insertions and deletions (IDs) and copy number alterations (CNs). It is possible to assign mutational signatures to individual samples or groups using the `signature_fitting` function. This analysis provides the opportunity to identify the mutational processes involved in somatic mutagenesis within specific samples/groups. In the long run, it can provide evidence supporting the contribution of environmental mutagens to the mutation spectrum observed in human cancers. 
 
-The `signature_fitting` function utilizes the [SigProfiler](https://github.com/AlexandrovLab) suite of tools developped by the Alexandrov lab. This function will create a virtual environment using reticulate to run python, which is required for the SigProfiler tools. Python version 3.8 or newer is required. It will also install several python dependencies using a conda virtual environment on first use, as well as the FASTA files for all chromosomes for your specified reference genome. As a result ~3Gb of storage must be available for the downloads of each genome. 
+The `signature_fitting` function utilizes the [SigProfiler](https://github.com/AlexandrovLab) suite of tools developped by the Alexandrov lab. This function will create a virtual environment using reticulate to run python, which is required for the SigProfiler tools. It will also install several python dependencies using a conda virtual environment on first use, as well as the FASTA files for all chromosomes for your specified reference genome. As a result ~3Gb of storage must be available for the downloads of each genome. 
 
-Somatic mutations in their 96-base trinucleotide context are first summed across samples or experimental groups of interest to create a mutation count matrix. Mutational signatures are then assigned to each sample/group using refitting methods (Díaz-Gay et al., 2023). Signature refitting (also known as signature fitting or signature assignment) quantifies the contribution of a set of signatures to the mutational profile of a sample/group. The process is a numerical optimization approach that finds the combination of mutational signatures that most closely reconstructs the mutation count matrix. To quantify the number of mutations imprinted by each signature, the tool uses a custom implementation of the forward stagewise algorithm and it applies nonnegative least squares, based on the Lawson-Hanson method. 
+Somatic mutations in their 96-base trinucleotide context are summed across samples or experimental groups of interest to create a mutation count matrix. Mutational signatures are then assigned to each sample/group using refitting methods (Díaz-Gay et al., 2023). Signature refitting (also known as signature fitting or signature assignment) quantifies the contribution of a set of signatures to the mutational profile of a sample/group. The process is a numerical optimization approach that finds the combination of mutational signatures that most closely reconstructs the mutation count matrix. To quantify the number of mutations imprinted by each signature, the tool uses a custom implementation of the forward stagewise algorithm and it applies nonnegative least squares, based on the Lawson-Hanson method. 
 
-Currently, `signature_fitting` offers fitting of COSMIC version 3.3 SBS signatures. For advanced use, including using a custom set of reference signatures, or fitting the DBS, ID, or CN signatures, it is suggested to use the SigProfiler python tools directly in python as described in their respective documentation [here](https://github.com/AlexandrovLab).
+Currently, `signature_fitting` offers fitting of COSMIC version 3.3 SBS signatures to the SBS96 matrix of any sample/group. For advanced use, including using a custom set of reference signatures, or fitting the DBS, ID, or CN signatures, it is suggested to use the SigProfiler python tools directly in python as described in their respective documentation [here](https://github.com/AlexandrovLab).
 
-`signature_fitting` requires the installation of reticulate and [SigProfilerMatricGeneratorR](https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR).
+`signature_fitting` requires the installation of reticulate and [SigProfilerMatricGeneratorR](https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR) as well as a version of python 3.8 or newer.
 ```{r}
 # Install reticulate
 install.packages("reticulate")
@@ -635,18 +635,22 @@ signature_fitting(mutation_data,
                   )
 ```
 
-Results from matrix generation and signature refitting will be stored in an output folder, which can be designated using the `output_path` parameter.  If null, the output will be stored within your working directory. Results will be organized into subfolders based on the `group` parameter. The output structure is divided into three folders: input, output, and logs. 
+#### Mutation Signatures Output
+Results from the `signature_fitting` will be stored in an output folder. A filepath to a specific output directory can be designated using the `output_path` parameter.  If null, the output will be stored within your working directory. Results will be organized into subfolders based on the `group` parameter. The output structure is divided into three folders: input, output, and logs. 
 
-The input folder contains copies of the `mutation_data`, following processing steps to make it compatible with the SigProfiler tools. It consists of a list of all the snv variants in each group alongside their genomic positions. This data serves as input for matrix generation.
+The input folder contains copies of the `mutation_data`, following processing steps to make it compatible with the SigProfiler tools. It consists of a list of all the snv variants in each `group` alongside their genomic positions. This data serves as input for matrix generation.
 
 The log folder contains the error and the log files for SigProfilerMatrixGeneration.
 
-The output folder contains the results from matrix generation and signature refitting. 
+The output folder contains the results from matrix generation and signature refitting desribed in detail below. 
 
-Mutation matrices are created for DBS and SBS at various resolutions and stored in their respective folders. Only the SBS96 matrix is used for refitting. We do not recommend using the DBS matrices generated using this function for further analysis. The `signature_fitting` function that we provide is designed to handle only the SBS mutations. All true multi-nucleotide variants, including doublets, are filtered out of the mutation_data prior to MatrixGeneration. However, the tool will still attempt to identify doublet-base substitutions and will occasionally find consecutive single-base substitutions. If you wish to use DBS mutations in your signature analysis, please refer directly to the SigProfiler tools.
+##### Matrix Generation
+`signature_fitting` uses [SigProfilerMatrixGenerator](https://osf.io/s93d5/wiki/home/) to create mutational matrices (Bergstrom et al., 2019). Mutation matrices are created for single-base substitutions (SBS) and doublet-base substitutions (DBS), including matrices with extended sequence context and transcriptional strand bias. SBS and DBS matrices are stored in their respective folders in the output directory. **Only the SBS96 matrix is used for refitting**. 
 
 **Single-Base Substitution Matrices:**
-*`.all` files can be viewed in a text-editor like notepad.*
+A single base substitution (SBS) is a mutation in which a single DNA base-pair is substituted with another single DNA base-pair. The most basic classfication catalogues SBSs into six distinct categories; C:G>A:T, C:G>G:C, C:G>T:A, T:A>A:T, T:A>C:G, T:A>G:C. However, it is common practice to report these mutations using the pyrimidine base of the Watson-Crick base-pair: C>A, C>G, C>T, T>A, T>C, T>G. These 6 mutation types can be further extended to include sequence context and strand information. The SBS-96, which includes the 6 mutations alongside their flanking nucleotides, is particularly useful for analysis of sequencing data. This classification is both simple enough to allow for visual inspection of mutational patterns and yet sufficiently complicated for seperating different sources of the same type of an SBS. The context can be further extended to include the flanking dinucleotides giving 1536 possible mutation classifications. However, use of the SBS-1536 requires a large number of somatic mutations, such as from the whole-sequencing of cancer samples with high mutational burden (> 2 mutations/Mb).
+
+Generated matrices are described below. *Matrices are stored as `.all` files which can be viewed in a text-editor like notepad.*
 * project_name.SBS6.all
     + 6-base
     + The 6 pyrimidine single-nucleotide variants.
@@ -681,7 +685,26 @@ Mutation matrices are created for DBS and SBS at various resolutions and stored 
     + 6144-base:
     + The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).
 
-**Transcriptional Strand Bias Categories**
+DBS Matrices
+A doublet-base substitution (DBS) is a somatic mutation in which a set of two adjacent DNA base-pairs is *simultaneously* substituted with another set of two adjacent DNA base-pairs. **We do not recommend using the DBS matrices generated using `signature_fitting` for further analysis.** The `signature_fitting` function that we provide is designed to handle only the SBS mutations. All true multi-nucleotide variants, including doublets, are filtered out of the `mutation_data` prior to MatrixGeneration. However, the tool will still attempt to identify DBSs and will occasionally find two independent SBSs occuring next to each other simply by chance. If you wish to use DBS mutations in your signature analysis, please refer directly to the SigProfiler tools.
+
+Other Usages
+SigProfilerMatrix Generator also supports small indels, structural variants, and copy-number variants. `signature_fitting` will not generate these matrices. If you wish to utilise these features, please refer directly to the SigProfiler tools.
+
+Barplots of the mutation matrices for all individual samples/groups can be found in the Plots folder. The number of mutations are plotted for each individual sample/group at the various subtype resolutions
+ 
+##### Transcription Strand Bias (TSB)
+SBS mutations will be tested for [transcription strand bias](https://osf.io/s93d5/wiki/5.%20Output%20-%20TSB/). These results will be stored in the `TSB` folder.
+
+It is not possible to distinguish which of the two DNA strands a mutation originated on. However, one expects that mutations from the same type will be equally distributed across the two DNA strands. In other words, we expect mutations to occur at the same proportion as their reverse complement. For example, given a mutational process that causes purely C>G:T:A mutations, and a long repetitive sequence 5'- CGCGCGCGCGCGCGCGCGCGCG-3' on the reference genome, one would expect to see an equal number of C>T and G>A mutations. However, in many cases, an asymteric number of mutations are observed due to one of the strands having a higher propensity for being either damaged or repaired. A common example of this is transcription strand bias where the transcribed strand is subjected to higher rates of DNA repair as part of the transcriptional process compared to the untranscribed strand.
+
+SigProfilerMatrixGenerator evaluates the transcriptional strand classificaiton of mutations within well-annotated protein coding genes of a reference genome. Mutations that occur outside of coding regions are classified as Non-transcribed (N). Mutations that occur within coding regions are classified as one of; transcribed (T), un-transcribed (U), bi-directional (B), or unknown. In order to classify mutations within coding regions, mutations are oriented based on the reference strand and their pyrimidine context. 
+
+For example, consider that our reference sequence contains the coding sequence of a gene i.e. it is the coding/UN-transcribed DNA strand. A T>C mutation called on this reference sequence would be referred to as an untranscribed T>C (**U:T>C**). However, if instead an A>G mutation is called on this reference sequence, it would be referred to as a transcribed T>C (**T:T>C**). Purine-based mutations called from the reference sequence are converted to their pyrimidine context and this includes swapping to the complementary DNA strand. In this case, the reverse  complement of untranscribed A>G is transcribed T>C.
+
+In rare cases, both strands of a genomic region code for a gene. Such mutations are annotated as bidirectional based on their pyrimidine context. For example, both T:A>C:G and A:T>G:C mutations in regions of bidirectional transcription will be annotated as bidirectional T>C (**B:T>C**) mutations. 
+
+All SBS mutations will be classified within the four transcriptional bias categories:
 * Transcribed (T)
     + The variant is on the transcribed (template) strand.
 * Untranscribed (U)
@@ -691,20 +714,46 @@ Mutation matrices are created for DBS and SBS at various resolutions and stored 
 * Nontranscribed (N)
     + The variant is in a non-coding region and is untranslated. 
 
-Transcription Strand Bias (TSB)
-RNA polymerase uses the template strand to transcribe DNA to RNA. The strand upon which the gene is located is referred to as the coding strand while the .... template...
-Regions outside of the coding seuence of a gene are referred to as non-transcribed regions. ....
+The tool will then perform a transcription strand bias test which compares the number of transcribed and untranscribed mutations for each mutation type. For example, it will compare the number of transcribed T>C to untranscribed T>C mutations. Should there be a significant difference, it would indicate that T:A>C:G mutations are occuring at a higher rate on one of the strands compared to the other. Transcription strand bias tests will be included for the 6-base, 96-base and 288-base SBS mutation contexts. The output files contain the following information:
+* the `group`
+* the mutation type
+* the enrichment value (# Transcribed / # untranscribed)
+* the p-value, corrected for multiple comparisons using the false discrover rate method
+* the false discovery rate q-value
 
-https://osf.io/s93d5/wiki/5.%20Output%20-%20TSB/
+Files include:
+* *strandBiasTes_24.txt*: stats of the SBS6 variants
+* *strandBiasTes_384.txt*: stats of the SBS96 variants
+* *strandBiasTes_6144.txt*: stats of the SBS288 variants
+* *significantResults_strandBiasTest.txt*: returns significant results from the three files above.
 
-Barplots of the mutation matrices for all individual samples/groups can be found in the Plots folder. The number of mutations are plotted for each individual sample/group at the various subtype resolutions
+##### Signature Refitting Results
 
+Results from the signature refitting perfomed by [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within in the `Assignment_Solution` folder. `Assignment_Solution` consists of 3 subdirectories;  `Activities`, `Signatures`, and `Solution_Stats`. 
+
+* Activities
+    + *Assignment_Solution_Activities.txt*: the activity matrix for the selected signatures. The first column lists all of the samples/groups. All following columns list the calculated activity value for the respective signatures. The number of columns is the number of signatures identified. Signature activities correspond to the specific numbers of mutations from the original catalog caused by a particular mutational process.
+    + *Assignment_Solution_Activity_Plots.pdf*: stacked barplot showing the number of mutations in each signature on the y-axis and the sample name on the x-axis.
+    + *Assignment_Solution_TMB_plot.pdf*: tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase.
+    + *Decomposed_Mutation_Probabilities.txt*: the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures.
+    + *SampleReconstruction*: 
+* Signatures
+    + *Assignment_Solution_Signatures.txt*: the distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures.
+    + *SBS_96_plots_Assignment_Solution.pdf*:  barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature.
+* Solution_Stats
+    + *Assignment_Solution_Samples_Stats.txt*: the accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence.
+    + *Assignment_Solution_Signature_Assignment_log.txt*:  the events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps.
+    
 # References
+Bergstrom EN, Huang MN, Mahto U, Barnes M, Stratton MR, Rozen SG, Alexandrov LB. SigProfilerMatrixGenerator: a tool for visualizing and exploring patterns of small mutational events. BMC Genomics. 2019 Aug 30;20(1):685. doi: 10.1186/s12864-019-6041-2. PMID: 31470794; PMCID: PMC6717374.
+
 Díaz-Gay M, Vangara R, Barnes M, Wang X, Islam SMA, Vermes I, Narasimman NB, Yang T, Jiang Z, Moody S, Senkin S, Brennan P, Stratton MR, Alexandrov LB. Assigning mutational signatures to individual samples and individual somatic mutations with SigProfilerAssignment. bioRxiv [Preprint]. 2023 Jul 11:2023.07.10.548264. doi: 10.1101/2023.07.10.548264. Update in: Bioinformatics. 2023 Dec 1;39(12): PMID: 37502962; PMCID: PMC10369904.
 
 Piegorsch WW, Bailer AJ. Statistical approaches for analyzing mutational spectra: some recommendations for categorical data. Genetics. 1994 Jan;136(1):403-16. doi: 10.1093/genetics/136.1.403. PMID: 8138174; PMCID: PMC1205789.
 
 White PA, Long AS, Johnson GE. Quantitative Interpretation of Genetic Toxicity Dose-Response Data for Risk Assessment and Regulatory Decision-Making: Current Status and Emerging Priorities. Environ Mol Mutagen. 2020 Jan;61(1):66-83. doi: 10.1002/em.22351. Epub 2019 Dec 19. PMID: 31794061.
+
+
 
 
 
