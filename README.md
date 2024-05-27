@@ -651,39 +651,17 @@ The output folder contains the results from matrix generation and signature refi
 A single base substitution (SBS) is a mutation in which a single DNA base-pair is substituted with another single DNA base-pair. The most basic classfication catalogues SBSs into six distinct categories; C:G>A:T, C:G>G:C, C:G>T:A, T:A>A:T, T:A>C:G, T:A>G:C. However, it is common practice to report these mutations using the pyrimidine base of the Watson-Crick base-pair: C>A, C>G, C>T, T>A, T>C, T>G. These 6 mutation types can be further extended to include sequence context and strand information. The SBS-96, which includes the 6 mutations alongside their flanking nucleotides, is particularly useful for analysis of sequencing data. This classification is both simple enough to allow for visual inspection of mutational patterns and yet sufficiently complicated for seperating different sources of the same type of an SBS. The context can be further extended to include the flanking dinucleotides giving 1536 possible mutation classifications. However, use of the SBS-1536 requires a large number of somatic mutations, such as from the whole-sequencing of cancer samples with high mutational burden (> 2 mutations/Mb).
 
 Generated matrices are described below. *Matrices are stored as `.all` files which can be viewed in a text-editor like notepad.*
-* project_name.SBS6.all
-    + 6-base
-    + The 6 pyrimidine single-nucleotide variants.
-    + C > {A, G, or T} and T > {A, G, or C} = 6
-* project_name.SBS18.all
-    + 18-base
-    + The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories.
-    + Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).
-* project_name.SBS24.all
-    + 24-base
-    + The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories.
-    + Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N). 
-* **project_name.SBS96.all**
-    + 96-base
-    + The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations).
-    + This matrix is used for signature refitting of the SBS signatures.
-    + *Ex. A[C>G]T*
-* project_name.SBS288.all
-    + 288-base
-    + The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).
-* project_name.SBS384.all
-    + 384-base
-    + The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).
-* project_name.SBS1536.all
-    + 1536-base
-    + The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations).
-    + *Ex. AA[C>G]TT*
-* project_name.SBS4608.all
-    + 4608-base:
-    + The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N)
-*  project_name.SBS6144.all
-    + 6144-base:
-    + The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).
+| File                    |                                                                                                       |
+|-------------------------|-------------------------------------------------------------------------------------------------------|
+|*project_name.SBS6.all*  | 6-base. The 6 pyrimidine single-nucleotide variants. C > {A, G, or T} and T > {A, G, or C} = 6        |
+|*project_name.SBS18.all* | 6-base. The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).|
+|*project_name.SBS24.all* | 6-base. The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N).|
+|**project_name.SBS96.all**  | 96-base. The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A[C>G]T*|
+|*project_name.SBS288.all*  |96-base. The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).  |
+|*project_name.SBS384.all* |96-base. The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).|
+|*project_name.SBS1536.all* | 1536-base. The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations). *Ex. AA[C>G]TT*|
+|*project_name.SBS4608.all* | 1536-base. The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).|
+|*project_name.SBS6144.all* | 1536-base. The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).|
 
 DBS Matrices
 A doublet-base substitution (DBS) is a somatic mutation in which a set of two adjacent DNA base-pairs is *simultaneously* substituted with another set of two adjacent DNA base-pairs. **We do not recommend using the DBS matrices generated using `signature_fitting` for further analysis.** The `signature_fitting` function that we provide is designed to handle only the SBS mutations. All true multi-nucleotide variants, including doublets, are filtered out of the `mutation_data` prior to MatrixGeneration. However, the tool will still attempt to identify DBSs and will occasionally find two independent SBSs occuring next to each other simply by chance. If you wish to use DBS mutations in your signature analysis, please refer directly to the SigProfiler tools.
@@ -743,7 +721,7 @@ Results from the signature refitting perfomed by [SigProfilerAssignment](https:/
 * Solution_Stats
     + *Assignment_Solution_Samples_Stats.txt*: the accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence.
     + *Assignment_Solution_Signature_Assignment_log.txt*:  the events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps.
-    
+
 # References
 Bergstrom EN, Huang MN, Mahto U, Barnes M, Stratton MR, Rozen SG, Alexandrov LB. SigProfilerMatrixGenerator: a tool for visualizing and exploring patterns of small mutational events. BMC Genomics. 2019 Aug 30;20(1):685. doi: 10.1186/s12864-019-6041-2. PMID: 31470794; PMCID: PMC6717374.
 
