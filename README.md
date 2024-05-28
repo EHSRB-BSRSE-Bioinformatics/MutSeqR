@@ -651,13 +651,13 @@ The output folder contains the results from matrix generation and signature refi
 A single base substitution (SBS) is a mutation in which a single DNA base-pair is substituted with another single DNA base-pair. The most basic classfication catalogues SBSs into six distinct categories; C:G>A:T, C:G>G:C, C:G>T:A, T:A>A:T, T:A>C:G, T:A>G:C. However, it is common practice to report these mutations using the pyrimidine base of the Watson-Crick base-pair: C>A, C>G, C>T, T>A, T>C, T>G. These 6 mutation types can be further extended to include sequence context and strand information. The SBS-96, which includes the 6 mutations alongside their flanking nucleotides, is particularly useful for analysis of sequencing data. This classification is both simple enough to allow for visual inspection of mutational patterns and yet sufficiently complicated for seperating different sources of the same type of an SBS. The context can be further extended to include the flanking dinucleotides giving 1536 possible mutation classifications. However, use of the SBS-1536 requires a large number of somatic mutations, such as from the whole-sequencing of cancer samples with high mutational burden (> 2 mutations/Mb).
 
 Generated matrices are described below. *Matrices are stored as `.all` files which can be viewed in a text-editor like notepad.*
-| File                    |                                                                                                       |
-|-------------------------|-------------------------------------------------------------------------------------------------------|
-|*project_name.SBS6.all*  | 6-base. The 6 pyrimidine single-nucleotide variants. *C>A, C>G, C>T, T>A, T>C, or T>G*                |
-|*project_name.SBS18.all* | 6-base. The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).|
-|*project_name.SBS24.all* | 6-base. The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N).|
-|**project_name.SBS96.all**  | 96-base. The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A[C>G]T*|
-|*project_name.SBS288.all*  |96-base. The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).  |
+| File|                                                               |
+|-----|---------------------------------------------------------------|
+|*project_name.SBS6.all*  | 6-base. The 6 pyrimidine single-nucleotide variants. *C>A, C>G, C>T, T>A, T>C, or T>G*|
+|*project_name.SBS18.all*| 6-base. The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).|
+|*project_name.SBS24.all*| 6-base. The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N).|
+|**project_name.SBS96.all**| 96-base. The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A[C>G]T*|
+|*project_name.SBS288.all*|96-base. The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).|
 |*project_name.SBS384.all* |96-base. The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).|
 |*project_name.SBS1536.all* | 1536-base. The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations). *Ex. AA[C>G]TT*|
 |*project_name.SBS4608.all* | 1536-base. The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).|
@@ -685,10 +685,13 @@ For example, consider that our reference sequence contains the coding sequence o
 In rare cases, both strands of a genomic region code for a gene. Such mutations are annotated as bidirectional based on their pyrimidine context. For example, both **T:A>C:G** and **A:T>G:C** mutations in regions of bidirectional transcription will be annotated as bidirectional **T>C** (**B:T>C**) mutations. 
 
 All SBS mutations will be classified within the four transcriptional bias categories:
-| Transcribed (T) | The variant is on the transcribed (template) strand.  |
-| Untranscribed (U)| The variant is on the untranscribed (coding) strand.  |
-| Bidirectional (B) | The variant is on both strands and is transcribed either way. |
-| Nontranscribed (N)  | The variant is in a non-coding region and is untranslated. |
+
+|Category        | Description                                           |
+|----------------|-------------------------------------------------------|
+|Transcribed (T) |The variant is on the transcribed (template) strand.   |
+|Untranscribed (U)|The variant is on the untranscribed (coding) strand.  |
+|Bidirectional (B) |The variant is on both strands and is transcribed either way. |
+|Nontranscribed (N) |The variant is in a non-coding region and is untranslated. |
 
 The tool will then perform a transcription strand bias test which compares the number of transcribed and untranscribed mutations for each mutation type. For example, it will compare the number of transcribed T>C to untranscribed T>C mutations. Should there be a significant difference, it would indicate that T:A>C:G mutations are occuring at a higher rate on one of the strands compared to the other. Transcription strand bias tests will be included for the 6-base, 96-base and 288-base SBS mutation contexts. 
 
@@ -701,10 +704,12 @@ The output files contain the following information:
 
 
 Files include:
-* *strandBiasTes_24.txt*: stats of the SBS6 variants
-* *strandBiasTes_384.txt*: stats of the SBS96 variants
-* *strandBiasTes_6144.txt*: stats of the SBS288 variants
-* *significantResults_strandBiasTest.txt*: returns significant results from the three files above.
+| File | Description |
+|------|-------------|
+|*strandBiasTes_24.txt*| stats of the SBS6 variants|
+|*strandBiasTes_384.txt*| stats of the SBS96 variants|
+|*strandBiasTes_6144.txt*|stats of the SBS288 variants|
+|*significantResults_strandBiasTest.txt*|returns significant results from the three files above.|
 
 ##### Signature Refitting Results
 
