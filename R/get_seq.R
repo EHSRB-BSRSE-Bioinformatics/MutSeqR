@@ -30,12 +30,12 @@ get_seq <- function(
     regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval"),
     custom_regions_file = NULL,
     rg_sep = "\t",
-    genome= NULL, 
+    genome = NULL,
     is_0_based = TRUE,
     padding = 0) {
 
   if (regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat")) {
-    regions_df <- MutSeqR::load_regions_file(regions = regions) 
+    regions_df <- MutSeqR::load_regions_file(regions = regions)
   } else if (regions == "custom_interval") {
   
   regions_df <- MutSeqR::load_regions_file(regions = "custom_interval",
@@ -79,7 +79,7 @@ regions_df$seq_end <- regions_df$end + padding
   regions_df$sequence <- mapply(get_sequence_for_region, regions_df$contig, regions_df$seq_start, regions_df$seq_end)
   
   regions_gr <- GenomicRanges::makeGRangesFromDataFrame(df = as.data.frame(regions_df),
-                                                        keep.extra.columns = T,
+                                                        keep.extra.columns = TRUE,
                                                         seqnames.field = "contig",
                                                         start.field = "start",
                                                         end.field = "end")

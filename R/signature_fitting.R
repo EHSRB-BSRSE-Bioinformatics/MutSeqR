@@ -19,7 +19,7 @@
 #' @returns Creates a subfolder in the output directory with SigProfiler tools results.
 #'  SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
 #' @importFrom here here
-#' @importFrom dplyr filter select rename mutate relocate 
+#' @importFrom dplyr filter select rename mutate relocate
 #' @importFrom utils write.table
 #' @importFrom rlang .data
 #' @import reticulate
@@ -48,10 +48,10 @@ signature_fitting <- function(mutation_data,
           implications of this. For advanced use, it is suggested to
           use the SigProfiler python tools directly in python as described
           in their respective documentation.")
- 
+
   # Only run this once, not every time that the function is called
   #python_version <- "3.11:latest
-  
+
   installed_envs <- reticulate::virtualenv_list()
   # Check if MutSeqR virtualenv already exists
   if (env_name %in% installed_envs) {
@@ -61,9 +61,9 @@ signature_fitting <- function(mutation_data,
     # Ask the user for confirmation
     user_input <- utils::menu("Do you want to create a virtual environment and 
                               install the required Python packages? This may 
-                              take several minutes", 
+                              take several minutes",
                               title = "Confirmation", choices = c("Yes", "No"))
-    
+
     if (user_input == 1) {
       # User chose to install the packages
       # Virtualenv doesn't exist, set it up
@@ -75,38 +75,38 @@ signature_fitting <- function(mutation_data,
       # User chose not to install the packages
       cat("Installation aborted by the user.\n")
       stop("Function terminated.")
-    } }
-  
+    }
+  }
+
   # reticulate::install_python(version = python_version)
   reticulate::use_virtualenv(env_name)
   
   # This will only install the genome if it's not found in the current env
-   if (!requireNamespace("SigProfilerMatrixGeneratorR")) {
+  if (!requireNamespace("SigProfilerMatrixGeneratorR")) {
     stop("SigProfilerMatrixGeneratorR not installed: you need this to run SigProfiler tools in R. Install using devtools::install_github('AlexandrovLab/SigProfilerMatrixGeneratorR')")
   }
   SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file('extdata', 'signatures.py',
                                         package = "MutSeqR")
   reticulate::source_python(signatures_python_code)
-  
+
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...
   #ID doesn't always exist. 
-  # New F(x) to create MAF/txt input for web sigprofiler
-  signature_data <- as.data.frame(mutation_data) 
-  
+  signature_data <- as.data.frame(mutation_data)
+
   # Check if "id" column exists
   if (!"id" %in% colnames(signature_data)) {
     # If not, create "id" column and populate with "."
    signature_data$id <- "."
   }
-  
+
   # Check if "seqnames" column exists (ie if it came from a GRanges)
   if ("seqnames" %in% colnames(signature_data)) {
     # If "seqnames" exists, rename it to "contig"
     signature_data <- dplyr::rename(signature_data, contig = seqnames)
   }
-  
+
   signature_data <- signature_data %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
     dplyr::filter(.data$is_germline == FALSE) %>%   
@@ -129,8 +129,9 @@ signature_fitting <- function(mutation_data,
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
   
 # Make sure Samples column is NOT numeric
-# Note that the values will be class character, but even if so, number values will cause an issue
-signature_data <- signature_data %>% 
+# Note that the values will be class character, but even if so,
+  # number values will cause an issue
+signature_data <- signature_data %>%
   dplyr::mutate(Samples = paste0(!!group, "_", Samples))
 
   message("Generating output path string...")
@@ -151,39 +152,42 @@ signature_data <- signature_data %>%
 
   message(paste0("Creating directory ", output_path))
   if (!dir.exists(file.path(output_path, "matrices"))) {
-    dir.create(file.path(output_path, "matrices"), recursive = T)
+    dir.create(file.path(output_path, "matrices"), recursive = TRUE)
   }
-  
+
   message("Writing mutation matrix to use as input to SigProfiler...")
   write.table(signature_data,
-              file = file.path(output_path, "matrices", "mutations.txt"),
-              sep = "\t", row.names = F, quote = F
+    file = file.path(output_path, "matrices", "mutations.txt"),
+    sep = "\t", row.names = FALSE, quote = FALSE
   )
-  
-  
+
   message("Running SigProfilerMatrixGeneratorR...")
   signature_matrices <-
     SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
       project = project_name,
       genome = project_genome,
       matrix_path = file.path(output_path, "matrices"),
-      plot = T, exome = F, bed_file = NULL,
-      chrom_based = F, tsb_stat = T, seqInfo = T,
+      plot = TRUE,
+      exome = FALSE,
+      bed_file = NULL,
+      chrom_based = FALSE,
+      tsb_stat = TRUE,
+      seqInfo = TRUE,
       cushion = 100
     )
-  
+
   message("Running COSMIC fitting...")
   cosmic_fit_MutSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
     output = file.path(output_path, "matrices", "output"),
-    input_type="matrix", # "vcf", "seg:TYPE", "matrix"
-    context_type="96", # Required for vcf input
-    cosmic_version=3.3,
+    input_type = "matrix", # "vcf", "seg:TYPE", "matrix"
+    context_type = "96", # Required for vcf input
+    cosmic_version = 3.4,
     exome = FALSE,
     genome_build = project_genome,
-    signature_database= NULL, #tab delimited file of signatures
-    exclude_signature_subgroups= NULL,
+    signature_database = NULL, #tab delimited file of signatures
+    exclude_signature_subgroups = NULL,
     export_probabilities = TRUE,
     export_probabilities_per_mutation = FALSE, # Only for vcf input
     make_plots = TRUE,

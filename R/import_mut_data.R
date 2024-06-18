@@ -290,7 +290,7 @@ import_mut_data <- function(mut_file,
   # Validate ID column if rsids is TRUE
   # Add is_known column if rsids is TRUE
   if (rsids == TRUE) {
-    if (!"id" %in% colnames(dat)) {
+    if (!"id" %in% tolower(colnames(dat))) {
       stop("Error: you have set rsids to TRUE,
       but there is no id column in the mut file!")
     }
@@ -543,9 +543,7 @@ import_mut_data <- function(mut_file,
     
     # load regions file
     regions_df <- load_regions_file(regions, custom_regions_file, rg_sep)
-    
-    
-    
+
     # adjust regions start based on range_buffer
     regions_df <- regions_df %>%
       dplyr::mutate(regions_start_buffered =
@@ -596,9 +594,7 @@ import_mut_data <- function(mut_file,
     if (nrow(ranges_outside_regions) > 0) {
       print(paste(
         nrow(ranges_outside_regions),
-        "rows of data were outside specified regions and were filtered out of the mutation data.
-        The function will return a list of two dataframes. Mutation data will be stored
-        in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
+        "rows of data were outside specified regions and were filtered out of the mutation data. The function will return a list of two dataframes. Mutation data will be stored in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
       ))
     }
 
