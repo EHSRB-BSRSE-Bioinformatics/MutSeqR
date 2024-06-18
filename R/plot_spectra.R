@@ -219,7 +219,7 @@ if (group_order == "arranged") {
                                y = .data$response,
                                fill = .data$subtype,
                                add = FALSE)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", width = 1) +
     scale_fill_manual(values = palette) +
     axis_labels +
     theme_minimal() +

@@ -18,11 +18,16 @@ This R package is meant to facilitate the import, cleaning, and analysis of ecNG
 
 ## Installation
 
-Install from github with:
+Install the package from github:
 
 ```{r}
 # install.packages("devtools")
 devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR", auth_token = "your personal_access_token from GitHub")
+```
+
+Load the package
+```{r}
+library(MutSeqR)
 ```
 
 ## Data import
@@ -39,10 +44,141 @@ Set the `vaf_cutoff` to flag ostensibly germline mutations that have a **variant
 Supply a regions interval list of genomic ranges of interest and filter out mutations occuring outside of these regions. If you are targetting or are interested in a known range of genomic regions, these regions may be specified using the `regions` parameter. Any variant that occurs outside of the specified ranges will be filtered out of the variant file and returned in a seperate data frame. This includes variants that partially extend outside of the regions such as large insertions/deletions or structural variants. You may choose to retain some or all of these variants using the `range_buffer` parameter. Setting this parameter to an integer will extend the range of the genomic regions in which a variant can occur by the specified number of base-pairs.
 
 The `regions` parameter can be set to one of TwinStrand's DuplexSeq™ Mutagenesis Panels; *TSpanel_mouse*, *TSpanel_human*, or *TSpanel_rat*. If you are using an alternative panel then you may set the `regions` parameter to  "custom_interval" and  you will add your target regions' metadata using a `custom_regions_file`. Use parameters to indicate your file's file path, delimiter, and whether the region ranges coordinates are 0-based or 1-based. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify a regions list, then set the `regions` parameter to *none*.
+### Importing .vcf files
+`import_vcf_data` General usage: Indicate the file path to your **.vcf** or **.vcf.gz** file(s) using the `vcf_file` parameter. This can be either a single file or a directory containing multiple files. Should you provide a directory, then all files within will be bound into a single data frame. You may provide sample metadata uing the `sample_data_file` parameter. This parameter can take a R data frame, or it can read in a file if provided with a filepath. If using a filepath, specify the proper delimiter using the `sd_sep` parameter. Set the `vaf_cutoff` to flag ostensibly germline mutations that have a variant allele fraction greater than this parameter. Finally, load in the metadata for an interval list of genomic target regions using the `regions` parameter. 
+
+** Load Example Data **
+
+*We provide an example data set taken from Leblanc et al., 2022. This data consists of 24 mouse bone marrow samples sequenced with Duplex Sequencing using Twinstrand's Mouse Mutagenesis Panel of twenty 2.4kb targeted genomic loci. Mice were exposed to three doses of benzo[a]pyrene alongsie vehicle controls, n = 6.*
+
+Locate the example .vcf.gz files. Provided is the genomic vcf.gz file for each sample.
+```{r}
+mut_data <- system.file("extdata", "Example_files", package = "MutSeqR") # filepath to .vcf or .vcf.gz files
+```
+
+We will append the dose group to the mutation_data using `sample_data_file`. First, we will create a sample data file
+```{r}
+sample_data <- data.frame(sample = c("dna00973.1", "dna00974.1", "dna00975.1",
+                                     "dna00976.1", "dna00977.1", "dna00978.1",
+                                     "dna00979.1", "dna00980.1", "dna00981.1",
+                                     "dna00982.1", "dna00983.1", "dna00984.1",
+                                     "dna00985.1", "dna00986.1", "dna00987.1,"
+                                     "dna00988.1", "dna00989.1", "dna00990.1",
+                                     "dna00991.1", "dna00992.1", "dna00993.1",
+                                     "dna00994.1", "dna00995.1", "dna00996.1"),
+                          dose = c("Control", "Control", "Control",
+                                   "Control", "Control", "Control",
+                                   "Low", "Low", "Low",
+                                   "Low", "Low", "Low",
+                                   "Medium", "Medium", "Medium",
+                                   "Medium", "Medium", "Medium",
+                                   "High", "High", "High",
+                                   "High", "High", "High")
+                          )
+```
+
+Import the vcf files using the `import_vcf_data` function. This example data was sequenced using Twinstrand's Mouse Mutagenesis Panel, so we will specify the `regions` to `TSpanel_mouse`.
+```{r}
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.01,
+                  regions = "TSpanel_mouse" # Twinstand's Mouse Mutagenesis Panel
+                  )
+
+## Joining with `by = join_by(sample)` # Sample data file is joined with mutation data using the sample column
+## Expected ' alt ' but found ' alt_value ', matching columns in input data # Rename columns to default
+## Expected ' variation_type ' but found ' type ', matching columns in input data # Rename columns to default
+## Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.
+## "11 rows of data were outside specified regions and were filtered out of the mutation data. The function will return a list of two dataframes. Mutation ## data will be stored in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
+```
+
+11 variants were identified extending outside of our target regions. We can view these variants. 
+```{r}
+mutation_data$rows_outside_regions
+##       sample seqnames     start       end  ref 
+## 1  dna00976.1     chr7 142683043 142683043 G 
+## 2  dna00976.1    chr14  13076117  13076659 
+## 3  dna00976.1    chr14  13076118  13076118 T 
+## 4  dna00977.1     chr1  69303978  69304287 T 
+## 5  dna00977.1    chr12  80600840  80602385 C
+## 6  dna00977.1    chr12  80600841  80600841 T 
+## 7  dna00982.1    chr15  66779670  66779670 T 
+## 8  dna00989.1     chr9  28647798  28649757 G
+## 9  dna00989.1     chr9  28647799  28647799 A
+## 10 dna00993.1     chr1  69304006  69304660 G 
+## 11 dna00995.1    chr12  80601049  80601049 G
+```
+
+We can retain these regions inside of our mutation data by setting the range_buffer parameter. This parameter represents the number of base pairs by which to extend the target regions' ranges. In this example, the column bp_outside_rg tells us that variant #_ is the farthest from its target. Therefore, to include all these variants, we will set the range_buffer to __. This will extend the range of the targets to encapsulate even the farthest variant.
+
+```{r}
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "TSpanel_mouse", # Twinstand's Mouse Mutagenesis Panel
+                  range_buffer = 1 # Retain variants that extend 500 bp outside of the Mouse Mutageneis Panel's target ranges.
+                  )
+```
+
+When importing data using a vcf file, the function will retrieve the sequence context information for each position called in the variant file. The sequence context includes the reference base at the specified base pair coordinate alongside its two flanking bases. *Ex. ACT*. If a user specifies a regions interval file, then the function will retrieve the sequences of the specified genomic intervals from the USCS database. When using one of TwinStrand's DuplexSeq™ Mutagenesis Panels, the reference genomes are pre-set to human: GRCh38, mouse: mm10, rat: rn6. If you are supplying a `custom_regions_file`, then you must supply the reference genome for your target regions using the `genome` parameter. This ensures that the function retrieves the proper sequences to populate the context column.
+
+```{r}
+library(MutSeqR)
+# mut_data <- system.file("extdata", "Example_files", package = "MutSeqR")
+# sample_data <- sample_data
+# my_regions <- "file path to your regions file"
+
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "custom_interval", 
+                  custom_regions_file = my_regions,
+                  rg_sep = "\t", # tab-delimited
+                  is_0_based = FALSE, # Ranges are 1-based 
+                  genome = "mm10" # Will download target sequences from the mm10 reference genome
+                  )
+```
+
+If you choose not to supply an interval list of target regions, then you must supply both the species and the genome assembly version for your reference genome using the `species` and `genome` parameters respectively. The function will browse [BSgenome::available.genomes](https://www.rdocumentation.org/packages/BSgenome/versions/1.40.1/topics/available.genomes) for the appropriate reference genome and install the corresponding package. Context information will be extracted from the installed BSgenome object. BSgenome offers genomes with masked sequences. If you wish to use the masked version of the genome, set `masked_BS_genome` to `TRUE`.
+
+```{r}
+library(MutSeqR)
+# mut_data <- "file path to .vcf file"
+# sample_data <- "file path to sample meta data"
+mutation_data <-
+  import_vcf_data(vcf_file = mut_data,
+                  sample_data_file = sample_data,
+                  vaf_cutoff = 0.1,
+                  regions = "none", 
+                  species = "mouse" # Common name or scientific name is acceptable
+                  genome = "mm10", # assembly version
+                  masked_BS_genome = FALSE # download the non-masked version of the genome.
+                  )
+# the function will install BSgenome.Mmusculus.UCSC.mm10 from BioConductor.
+```
+
+Required fields for your `.vcf` file are listed in the table below.
+
+|              | **Field Name** | **Definition** |
+|--------------|-----------------|-----------------|
+| **FIXED FIELDS** | `CHROM` | The reference sequence name. |
+|              | `POS` | The 0-based start position of the feature in contig. |
+|              | `REF` | The reference allele at this position. |
+|              | `ALT` | The left-aligned, alternate allele at this position. |
+| **FORMAT FIELDS** | `AD` | The allelic depths for the reference and alternate alleles in the order listed. |
+|              | `DP` | The total read depth at this position (including N-calls). Equivalent to `depth`. |
+|              | `VD` | Variant Depth. Equivalent to `alt_depth`. |
+| **INFO FIELDS** | `TYPE` | The category to which this variant is assigned. Equivalent to `variation_type`. |
+|              | `END` | The half-open end position of the feature in contig. |
+| *SUGGESTED INFO FIELDS* | `sample` | An identifying field for your samples; either in the INFO field or as the header to the FORMAT field. |
+|              | `SVTYPE` | Structural variant types; INV DUP DEL INS FUS. |
+|              | `SVLEN` | Length of the structural variant in base pairs. |
 
 ### Importing .mut files
-
-`import_mut_data` General usage: Indicate the file path to your **.mut** file using the `mut_file` parameter. You may provide sample metadata uing the `sample_data_file` parameter. This parameter can take a R data frame, or it can read in a file if provided with a filepath. If using a filepath, specify the proper delimiter using the `sd_sep` parameter. Set the `vaf_cutoff` to flag ostensibly germline mutations that have a variant allele fraction greater than this parameter. Finally, load in the metadata for an interval list of genomic target regions  using the `regions` parameter. 
+`import_mut_data` General usage is the same as for `import_vcf_file`: Indicate the file path to your **.mut** file using the `mut_file` parameter.You may provide sample metadata uing the `sample_data_file` parameter. This parameter can take a R data frame, or it can read in a file if provided with a filepath. If using a filepath, specify the proper delimiter using the `sd_sep` parameter. Set the `vaf_cutoff` to flag ostensibly germline mutations that have a variant allele fraction greater than this parameter. Finally, load in the metadata for an interval list of genomic target regions using the `regions` parameter.  
 
 ```{r}
 library(MutSeqR)
@@ -109,76 +245,7 @@ mutation_data <-
 | variation_type | The category to which this variant is assigned.| type; mut_type; variant_type|
 | context     | The local reference trinucleotide context at this position (e.g. ATC - not necessarily the transcript codon).| sequence_context; flanking_sequence   |
 
-### Importing .vcf files
-`import_vcf_data` General usage is the same as for import_mut_file: Indicate the file path to your **.vcf** file using the `vcf_file` parameter. If you have sample metadata, then you can indicate the file path to your sample data file using the `sample_data_file` parameter. Set the `vaf_cutoff` to flag ostensibly germline mutations that have a variant allele fraction greater than this parameter. Finally, load in the metadata for an interval list of genomic target regions using the `regions` parameter. 
 
-```{r}
-library(MutSeqR)
-# mut_data <- "file path to .vcf file"
-# sample_data <- "file path to sample meta data"
-mutation_data <-
-  import_vcf_data(vcf_file = mut_data,
-                  sample_data_file = sample_data,
-                  vaf_cutoff = 0.1,
-                  regions = "TSpanel_mouse", # Twinstand's Mouse Mutagenesis Panel
-                  range_buffer = 500 # Retain variants that extend 500 bp outside of the Mouse Mutageneis Panel's target ranges.
-                  )
-```
-
-When importing data using a vcf file, the function will retrieve the sequence context information for each position called in the variant file. The sequence context includes the reference base at the specified base pair coordinate alongside its two flanking bases. *Ex. ACT*. If a user specifies a regions interval file, then the function will retrieve the sequences of the specified genomic intervals from the USCS database. When using one of TwinStrand's DuplexSeq™ Mutagenesis Panels, the reference genomes are pre-set to human: GRCh38, mouse: mm10, rat: rn6. If you are supplying a `custom_regions_file`, then you must supply the reference genome for your target regions using the `genome` parameter. This ensures that the function retrieves the proper sequences to populate the context column.
-
-```{r}
-library(MutSeqR)
-# mut_data <- "file path to .vcf file"
-# sample_data <- "file path to sample meta data"
-# my_regions <- "file path to your regions file"
-
-mutation_data <-
-  import_vcf_data(vcf_file = mut_data,
-                  sample_data_file = sample_data,
-                  vaf_cutoff = 0.1,
-                  regions = "custom_interval", 
-                  custom_regions_file = my_regions,
-                  rg_sep = "\t", # tab-delimited
-                  is_0_based = FALSE, # Ranges are 1-based 
-                  genome = "mm10" # Will download target sequences from the mm10 reference genome
-                  )
-```
-
-If you choose not to supply an interval list of target regions, then you must supply both the species and the genome assembly version for your reference genome using the `species` and `genome` parameters respectively. The function will browse [BSgenome::available.genomes](https://www.rdocumentation.org/packages/BSgenome/versions/1.40.1/topics/available.genomes) for the appropriate reference genome and install the corresponding package. Context information will be extracted from the installed BSgenome object. BSgenome offers genomes with masked sequences. If you wish to use the masked version of the genome, set `masked_BS_genome` to `TRUE`.
-
-```{r}
-library(MutSeqR)
-# mut_data <- "file path to .vcf file"
-# sample_data <- "file path to sample meta data"
-mutation_data <-
-  import_vcf_data(vcf_file = mut_data,
-                  sample_data_file = sample_data,
-                  vaf_cutoff = 0.1,
-                  regions = "none", 
-                  species = "mouse" # Common name or scientific name is acceptable
-                  genome = "mm10", # assembly version
-                  masked_BS_genome = FALSE # download the non-masked version of the genome.
-                  )
-# the function will install BSgenome.Mmusculus.UCSC.mm10 from BioConductor.
-```
-
-Required fields for your `.vcf` file are listed in the table below.
-
-|              | **Field Name** | **Definition** |
-|--------------|-----------------|-----------------|
-| **FIXED FIELDS** | `CHROM` | The reference sequence name. |
-|              | `POS` | The 0-based start position of the feature in contig. |
-|              | `REF` | The reference allele at this position. |
-|              | `ALT` | The left-aligned, alternate allele at this position. |
-| **FORMAT FIELDS** | `AD` | The allelic depths for the reference and alternate alleles in the order listed. |
-|              | `DP` | The total read depth at this position (including N-calls). Equivalent to `depth`. |
-|              | `VD` | Variant Depth. Equivalent to `alt_depth`. |
-| **INFO FIELDS** | `TYPE` | The category to which this variant is assigned. Equivalent to `variation_type`. |
-|              | `END` | The half-open end position of the feature in contig. |
-| *SUGGESTED INFO FIELDS* | `sample` | An identifying field for your samples; either in the INFO field or as the header to the FORMAT field. |
-|              | `SVTYPE` | Structural variant types; INV DUP DEL INS FUS. |
-|              | `SVLEN` | Length of the structural variant in base pairs. |
 
 ### Mutation_data Output
 Both import functions will import the variant file(s) as a dataframe, join it with the metadata, and create some columns that will be helpful for calculating frequencies in later analyses. A list of the new columns and their definitions can be found below. The functions will also make some adjustments to the `variation_type` column. The following table displays the categories for the different variation types. Some adjustments may include, changing "indel" to "insertion" or "deletion".
@@ -715,12 +782,42 @@ Files include:
 
 Results from the signature refitting perfomed by [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within in the `Assignment_Solution` folder. `Assignment_Solution` consists of 3 subdirectories;  `Activities`, `Signatures`, and `Solution_Stats`. 
 
+**Overview**
 * Activities
-    + *Assignment_Solution_Activities.txt*: the activity matrix for the selected signatures. The first column lists all of the samples/groups. All following columns list the calculated activity value for the respective signatures. The number of columns is the number of signatures identified. Signature activities correspond to the specific numbers of mutations from the original catalog caused by a particular mutational process.
-    + *Assignment_Solution_Activity_Plots.pdf*: stacked barplot showing the number of mutations in each signature on the y-axis and the sample name on the x-axis.
-    + *Assignment_Solution_TMB_plot.pdf*: tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase.
-    + *Decomposed_Mutation_Probabilities.txt*: the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures.
-    + *SampleReconstruction*: 
+    + *Assignment_Solution_Activities.txt*
+    + *Assignment_Solution_Activity_Plots.pdf*
+    + *Assignment_Solution_TMB_plot.pdf*
+    + *Decomposed_Mutation_Probabilities.txt*
+    + *SampleReconstruction*
+* Signatures
+    + *Assignment_Solution_Signatures.txt*
+    + *SBS_96_plots_Assignment_Solution.pdf*
+* Solution_Stats
+    + *Assignment_Solution_Samples_Stats.txt*
+    + *Assignment_Solution_Signature_Assignment_log.txt*
+
+###### Activities
+
+*Assignment_Solution_Activities.txt*
+
+This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process. 
+
+*Assignment_Solution_Activity_Plots.pdf*
+
+This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.
+
+*Assignment_Solution_TMB_plot.pdf*
+
+This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase.
+
+*Decomposed_Mutation_Probabilities.txt*
+
+This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures.
+
+*SampleReconstruction*
+
+This folder contains generated plots for each sample/group
+
 * Signatures
     + *Assignment_Solution_Signatures.txt*: the distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures.
     + *SBS_96_plots_Assignment_Solution.pdf*:  barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature.
@@ -731,7 +828,9 @@ Results from the signature refitting perfomed by [SigProfilerAssignment](https:/
 # References
 Bergstrom EN, Huang MN, Mahto U, Barnes M, Stratton MR, Rozen SG, Alexandrov LB. SigProfilerMatrixGenerator: a tool for visualizing and exploring patterns of small mutational events. BMC Genomics. 2019 Aug 30;20(1):685. doi: 10.1186/s12864-019-6041-2. PMID: 31470794; PMCID: PMC6717374.
 
-Díaz-Gay M, Vangara R, Barnes M, Wang X, Islam SMA, Vermes I, Narasimman NB, Yang T, Jiang Z, Moody S, Senkin S, Brennan P, Stratton MR, Alexandrov LB. Assigning mutational signatures to individual samples and individual somatic mutations with SigProfilerAssignment. bioRxiv [Preprint]. 2023 Jul 11:2023.07.10.548264. doi: 10.1101/2023.07.10.548264. Update in: Bioinformatics. 2023 Dec 1;39(12): PMID: 37502962; PMCID: PMC10369904.
+Díaz-Gay M, Vangara R, Barnes M, Wang X, Islam SMA, Vermes I, Duke S, Narasimman NB, Yang T, Jiang Z, Moody S, Senkin S, Brennan P, Stratton MR, Alexandrov LB. Assigning mutational signatures to individual samples and individual somatic mutations with SigProfilerAssignment. Bioinformatics. 2023 Dec 1;39(12):btad756. doi: 10.1093/bioinformatics/btad756. PMID: 38096571; PMCID: PMC10746860.
+
+LeBlanc DPM, Meier M, Lo FY, Schmidt E, Valentine C 3rd, Williams A, Salk JJ, Yauk CL, Marchetti F. Duplex sequencing identifies genomic features that determine susceptibility to benzo(a)pyrene-induced in vivo mutations. BMC Genomics. 2022 Jul 28;23(1):542. doi: 10.1186/s12864-022-08752-w. PMID: 35902794; PMCID: PMC9331077.
 
 Piegorsch WW, Bailer AJ. Statistical approaches for analyzing mutational spectra: some recommendations for categorical data. Genetics. 1994 Jan;136(1):403-16. doi: 10.1093/genetics/136.1.403. PMID: 8138174; PMCID: PMC1205789.
 

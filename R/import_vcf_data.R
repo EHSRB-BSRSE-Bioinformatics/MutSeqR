@@ -8,7 +8,7 @@
 #' extract the trinucleotide context of every position in the mutation data.
 #' The function can output the mutation data as a dataframe or a granges
 #' object.
-#' @param vcf_file The path to the genomic .vcf file(s)  to be imported. If
+#' @param vcf_file The path to the genomic .vcf or .vcf.gz file(s)  to be imported. If
 #' you specify a folder, the function will attempt to read all files in the
 #' folder and combine them into on dataset. Multisample vcf files are not
 #' supported; vcf files must contain one sample each. Required fields are
@@ -28,9 +28,9 @@
 #'  - `TYPE`: The category to which this variant is assigned. Equivalent to
 #' `variation_type`.
 #'  - `END`: The half-open end position of the feature in contig.
-#' - SUGGESTED INFO FIELDS:
 #'  - `sample`: An identifying field for your samples; either in the INFO
 #' field or as the header to the FORMAT field.
+#' - SUGGESTED INFO FIELDS:
 #'  - `SVTYPE`: Structural variant types; INV DUP DEL INS FUS.
 #'  - `SVLEN`: Length of the structural variant in base pairs.
 #' @param vaf_cutoff Add `is_germline` column that identifies ostensibly
@@ -40,7 +40,7 @@
 #' flag variants that are present at a frequency greater than this value
 #' at a given site.
 #' @param sample_data_file An optional file containing additional sample
-#' metadata (dose, timepoint, etc.)
+#' metadata (dose, timepoint, etc.). This can be a data frame or a file path.
 #' @param sd_sep The delimiter for importing sample metadata tables.
 #' Default is tab-delimited
 #' @param regions "TSpanel_human", "TSpanel_mouse", "TSpanel_rat" ,
@@ -135,18 +135,18 @@ import_vcf_data <- function(
     return(vcf)
   }
 
-  # Read and bind vcfs from folder  
+  # Read and bind vcfs from folder
   if (file.info(vcf_file)$isdir == TRUE) {
-    vcf_files <- list.files(path = vcf_file, pattern = "\\.vcf$", full.names = TRUE)
+    vcf_files <- list.files(path = vcf_file, pattern = "\\.vcf", full.names = TRUE)
     # Initialize an empty VCF object to store the combined data
     vcf <- NULL
     # Read and combine VCF files
     for (file in vcf_files) {
-      vcf_list <- readVcf(file)
+      vcf_list <- VariantAnnotation::readVcf(file)
       # Rename or create the "sample" column in the INFO field
       vcf_list <- suppressWarnings(check_and_rename_sample(vcf_list))
       # Ensure consistent column names
-      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info" 
+      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info"
       # Combine the VCF data
       if (is.null(vcf)) {
         vcf <- vcf_list
@@ -155,7 +155,7 @@ import_vcf_data <- function(
       }
     }
   } else {
-  # Read a single vcf file
+    # Read a single vcf file
     vcf <- VariantAnnotation::readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
     vcf <- suppressWarnings(check_and_rename_sample(vcf))
@@ -175,60 +175,79 @@ import_vcf_data <- function(
   dat <- cbind(dat, info)
   row.names(dat) <- NULL
 
-  # Rename columns to default and check for all required columns before proceeding
-  dat <- rename_columns(dat)
-  dat <- check_required_columns(dat, op$base_required_mut_cols)
-
-  # Read in sample data if it's provided
+  # Join with sample metadata if provided
   if (!is.null(sample_data_file)) {
-    sampledata <- read.delim(file.path(sample_data_file),
-      sep = sd_sep,
-      header = TRUE
-    )
-  # Grab the names of the columns that are being added to the data
-  sample_data_columns <- setdiff(names(sampledata), names(dat))
-  # Join the data
-    dat <- left_join(dat, sampledata, suffix = c("", ".sampledata"))
+    if (is.data.frame(sample_data_file)) {
+      sampledata <- sample_data_file
+      if (nrow(sampledata) == 0) {
+        stop("Error: The sample data frame you've provided is empty")
+      }
+    } else if (is.character(sample_data_file)) {
+      sample_file <- file.path(sample_data_file)
+      if (!file.exists(sample_file)) {
+        stop("Error: The sample data file path you've specified is invalid")
+      }
+      if (file.info(sample_file)$size == 0) {
+        stop("Error: You are trying to import an empty sample data file")
+      }
+      sampledata <- read.delim(file.path(sample_data_file),
+                               sep = sd_sep,
+                               header = TRUE)
+      if (ncol(sampledata) <= 1) {
+        stop("Your imported sample data only has one column.
+                            You may want to set sd_sep to properly reflect
+                            the delimiter used for the data you are importing.")
+      }
+    } else {
+      stop("Error: sample_data_file must be a character string or a data frame")
+    }
+    # Join
+    dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
+
+  # Rename columns to default names
+  dat <- rename_columns(dat)
+  # Check for all required columns before proceeding
+  dat <- check_required_columns(dat, op$base_required_mut_cols)
 
   # Clean up variation_type column to match .mut
   # Create varlen column
-    dat <- dat %>%
-      dplyr::mutate(
-        variation_type = tolower(dat$variation_type),
-        variation_type =
-          ifelse(.data$variation_type == "ref", "no_variant", 
-            ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
-                                              "cnv:tr", "dup:tandem", "del:me", "ins:me",
-                                        #These ambiguity codes may need to be defined from the alt column instead
-                                              "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
-                  .data$variation_type))) %>%
-      dplyr::mutate(
-        nchar_ref = nchar(ref),
-        nchar_alt = ifelse(.data$variation_type != "symbolic", nchar(alt), NA),
-        variation_type = 
-            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
-              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
-              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
-                ifelse(.data$variation_type != "symbolic" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 &  .data$nchar_ref > 1, "complex",
-                      .data$variation_type)))),
-        varlen =
-          ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
-          ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
-                  NA))
-      )
+  dat <- dat %>%
+    dplyr::mutate(
+      variation_type = tolower(dat$variation_type),
+      variation_type =
+        ifelse(.data$variation_type == "ref", "no_variant",
+          ifelse(.data$variation_type %in% c("inv", "dup", "del", "ins", "fus", "cnv",
+                                            "cnv:tr", "dup:tandem", "del:me", "ins:me",
+                                      #These ambiguity codes may need to be defined from the alt column instead
+                                            "r", "k", "s", "y", "m", "w", "b", "h", "n", "d", "v"),"symbolic",
+                .data$variation_type))) %>%
+    dplyr::mutate(
+      nchar_ref = nchar(ref),
+      nchar_alt = ifelse(.data$variation_type != "symbolic", nchar(alt), NA),
+      variation_type = 
+          ifelse(.data$variation_type != "symbolic" & .data$nchar_ref == .data$nchar_alt & .data$nchar_ref > 1 , "mnv",
+            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref > .data$nchar_alt & .data$nchar_alt == 1, "deletion",
+            ifelse(.data$variation_type != "symbolic" & .data$nchar_ref < .data$nchar_alt & .data$nchar_ref == 1, "insertion", 
+              ifelse(.data$variation_type != "symbolic" & .data$nchar_ref != .data$nchar_alt & .data$nchar_alt > 1 &  .data$nchar_ref > 1, "complex",
+                    .data$variation_type)))),
+      varlen =
+        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"), .data$nchar_alt - .data$nchar_ref,
+        ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
+               NA))
+    )
 
-    #create ref_depth, short_ref, subtype
-    dat <- dat %>%
-      dplyr::mutate(
-                    subtype = 
-                      ifelse(.data$variation_type == "snv",
-                            paste0(.data$ref, ">", .data$alt),
-                            "."),
-                    short_ref = substr(dat$ref, 1, 1))
+  #create ref_depth, short_ref, subtype
+  dat <- dat %>%
+    dplyr::mutate(
+                  subtype =
+                    ifelse(.data$variation_type == "snv",
+                           paste0(.data$ref, ">", .data$alt),
+                           "."),
+                  short_ref = substr(dat$ref, 1, 1))
 
   # Create total_depth and no_calls columns based on set parameter depth_calc.
-    # Requires AD field in FORMAT of vcf. If this field is missing, we use depth instead of total_depth
+  # Requires AD field in FORMAT of vcf. If this field is missing, we use depth instead of total_depth
   AD <- VariantAnnotation::geno(vcf)$AD
 
   if (length(AD) == 0) {
@@ -247,15 +266,16 @@ import_vcf_data <- function(
     dat$ref_depth <- AD$depth1
     dat$var_depth <- AD$depth2
     dat <- dat %>%
-      dplyr::mutate(
-                    var_depth = ifelse(is.na(.data$var_depth), 0, .data$var_depth))
+      dplyr::mutate(var_depth = ifelse(is.na(.data$var_depth),
+                                       0,
+                                       .data$var_depth))
 
-        # Filter the rows where "sample," "contig," and "start" are duplicated
+    # Filter the rows where "sample," "contig," and "start" are duplicated
     duplicated_rows <- dat %>%
       dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
       dplyr::filter(n() > 1)
 
-        # Calculate total_depth for the duplicated rows
+    # Calculate total_depth for the duplicated rows
     if (depth_calc == "take_del") {
       total_depth_duplicated <- duplicated_rows %>%
         dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
@@ -269,126 +289,131 @@ import_vcf_data <- function(
           )
         ) %>%
         dplyr::ungroup()
-  
+
     } else if (depth_calc == "take_mean") {
-  total_depth_duplicated <- duplicated_rows %>%
-    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::summarize(
-      total_depth = round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
-    ) %>%
-    dplyr::ungroup()
+      total_depth_duplicated <- duplicated_rows %>%
+        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+        dplyr::summarize(
+          total_depth = round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
+        ) %>%
+        dplyr::ungroup()
+    } else {
+      stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
+    }
 
-  } else {
-  stop("Invalid depth_calc input. Please choose 'take_mean' or 'take_del'.")
-}
+  # Merge the total_depth values for duplicated rows into the original df
+  dat <- dat %>%
+    dplyr::left_join(total_depth_duplicated,
+                     by = c("sample", "contig", "start"))
 
-# Merge the total_depth values for duplicated rows back into the original data frame
-dat <- dat %>%
-  dplyr::left_join(total_depth_duplicated, by = c("sample", "contig", "start"))
+  # Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
+  dat <- dat %>%
+    dplyr::mutate(
+      duplicated = duplicated(dat[, c("sample", "contig", "start")]) |
+        duplicated(dat[, c("sample", "contig", "start")], fromLast = TRUE),
+      total_depth = ifelse(duplicated,
+                           .data$total_depth,  .data$ref_depth + .data$var_depth),
+      no_calls = .data$depth - .data$total_depth,
+      vaf = .data$alt_depth / .data$total_depth) %>%
+    dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, FALSE, TRUE)) %>%
+    dplyr::select(-"var_depth", -"duplicated")
+  }
 
-# Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
-dat <- dat %>%
-  dplyr::mutate(
-    duplicated = duplicated(dat[, c("sample", "contig", "start")]) | 
-      duplicated(dat[, c("sample", "contig", "start")], fromLast = TRUE),
-    total_depth = ifelse(duplicated, 
-                        .data$total_depth,  .data$ref_depth + .data$var_depth),
-    no_calls = .data$depth - .data$total_depth,
-    vaf = .data$alt_depth / .data$total_depth) %>%
-  dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, F, T)) %>%
-  dplyr::select(-"var_depth", -"duplicated")
-}
-
-# Create Context Column using target Sequences
-# Turn dat into a GRanges object.  
-mut_ranges <- makeGRangesFromDataFrame(
+  # Create Context Column using target Sequences
+  # Turn dat into a GRanges object.
+  mut_ranges <- makeGRangesFromDataFrame(
     df = as.data.frame(dat),
     keep.extra.columns = TRUE,
     seqnames.field = "contig",
     start.field = "start",
     end.field = "end"
   )
-# load regions ranges and retrieve sequences with padding
-if(regions != "none") {
-  if (regions == "TSpanel_human") {
-    region_ranges <- MutSeqR::get_seq(regions = "TSpanel_human", padding = range_buffer)
-    cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
-  } else if (regions == "TSpanel_mouse") {
-    region_ranges <- MutSeqR::get_seq(regions = "TSpanel_mouse", padding = range_buffer)
-    cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.")
-  } else if (regions == "TSpanel_rat") {
-    region_ranges <- MutSeqR::get_seq(regions = "TSpanel_rat", padding = range_buffer)
-    cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6.")
-    } else if (regions == "custom_interval") { 
-    region_ranges <- MutSeqR::get_seq(regions = "custom_interval",
-                                      custom_regions_file = custom_regions_file,
-                                      rg_sep = rg_sep,
-                                      genome = genome,
-                                      padding = range_buffer
-    )
-    if (is.null(genome)) {
-      error("Please supply a genome assembly using the 'genome' parameter. For options, refer to https://genome.ucsc.edu" )
+
+  # load regions ranges and retrieve sequences with padding
+  if (regions != "none") {
+    if (regions == "TSpanel_human") {
+      region_ranges <- MutSeqR::get_seq(regions = "TSpanel_human",
+                                        padding = range_buffer)
+      cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly hg38.")
+    } else if (regions == "TSpanel_mouse") {
+      region_ranges <- MutSeqR::get_seq(regions = "TSpanel_mouse",
+                                        padding = range_buffer)
+      cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly mm10.")
+    } else if (regions == "TSpanel_rat") {
+      region_ranges <- MutSeqR::get_seq(regions = "TSpanel_rat",
+                                        padding = range_buffer)
+      cat("Populating context columns with sequences from https://genome.ucsc.edu; Genome assembly rn6.")
+      } else if (regions == "custom_interval") {
+        region_ranges <- MutSeqR::get_seq(regions = "custom_interval",
+          custom_regions_file = custom_regions_file,
+          rg_sep = rg_sep,
+          genome = genome,
+          padding = range_buffer
+        )
+        if (is.null(genome)) {
+          error("Please supply a genome assembly using the 'genome' parameter. For options, refer to https://genome.ucsc.edu" )
+        } else {
+          cat("Populating context columns with sequences from https://genome.ucsc.edu;", genome, "' assembly was used")  
+        }
+      }
+      # Join with mutation data
+      ranges_joined <- plyranges::join_overlap_left(mut_ranges,
+        region_ranges,
+        maxgap = range_buffer,
+        suffix = c("_mut", "_regions")
+      )
+    # Turn data back into a dataframe
+    dat <- as.data.frame(ranges_joined)
+    # Get no_variant context
+    dat <- dat %>%
+      dplyr::mutate(start_string = .data$start - .data$seq_start + 1,
+        context = substr(sequence,
+                        start_string - 1,
+                        start_string + 1)
+      ) %>%
+      dplyr::select(-"start_string", -"sequence") %>%
+      dplyr::mutate(bp_outside_rg = .data$seq_start - .data$start)
+    # Create a seperate dataframe for the ranges that are outside the regions
+      ranges_outside_regions <- dat %>%
+        dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0)
+
+    # Tell users that some variants were filtered
+      if (nrow(ranges_outside_regions) > 0) {
+        print(paste(
+          nrow(ranges_outside_regions),
+          "rows of data were outside specified regions and were filtered out of the mutation data. The function will return a list of two dataframes. Mutation data will be stored in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
+        ))
+      }
+
+    dat <- dat %>%
+      dplyr::filter(!is.na(.data$bp_outside_rg) & .data$bp_outside_rg <= 0)  %>%
+      dplyr::select(-"seq_start", -"seq_end", -"bp_outside_rg")
     } else {
-    cat("Populating context columns with sequences from https://genome.ucsc.edu;", genome, "' assembly was used")  
+      # regions == "none" Create Context Column
+      # install reference genome
+      ref_genome <- install_ref_genome(organism = species,
+                                      genome = genome,
+                                      masked = masked_BS_genome)
+
+      extract_context <- function(mutations,
+                                  bsgenome,
+                                  upstream = 1,
+                                  downstream = 1) {
+        # Resize the mut_ranges to include the context
+        expanded_ranges <- GenomicRanges::resize(x = mut_ranges,
+                                                width = upstream + downstream + 1,
+                                                fix = "center")
+        # Extract the sequences from the BSgenome
+        sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
+        # Return the sequences
+        return(sequences)
+      }
+      context <- extract_context(mut_ranges, ref_genome)
+      mut_ranges$context <- context
+      dat <- as.data.frame(mut_ranges)
+      ranges_outside_regions <- data.frame() # create an empty df
     }
-  
-    }
-  # Join with mutation data
-  ranges_joined <- plyranges::join_overlap_left(mut_ranges, region_ranges, maxgap = range_buffer , suffix = c("_mut", "_regions"))
-
-  dat <- as.data.frame(ranges_joined)
-  # Get no_variant context
-  dat <- dat %>%
-    dplyr::mutate(start_string = .data$start - .data$seq_start +1,
-                      context = substr(sequence, start_string - 1, start_string + 1)) %>%
-    dplyr::select(-"start_string", -"sequence") %>%
-    dplyr::mutate(bp_outside_rg = .data$seq_start - .data$start)
-
-  # Variants that occur outside of the regions (+ the defined buffer range) will 
-  # not have a context associated with them and thus must be removed
-  ranges_outside_regions <- dat %>%
-    dplyr::filter(is.na(.data$bp_outside_rg) | .data$bp_outside_rg > 0) %>%
-    dplyr::select("sample", "seqnames", "start", "end", "ref", "alt")
-
-  # Display the ranges that were filtered out of the data
-    # Display the ranges that were filtered out of the data
-    if (nrow(ranges_outside_regions) > 0) {
-      print(paste(
-        nrow(ranges_outside_regions),
-        "rows of data were outside specified regions and were filtered out of the mutation data.
-        The function will return a list of two dataframes. Mutation data will be stored
-        in the dataframe 'mut_dat'. Filtered rows will be stored in the dataframe 'rows_outside_regions'."
-      ))
-    }
-  # Filter the ranges out of the data
-    # TO DO: check how this is going to affect the total depth. 
-  dat <- dat %>%
-    dplyr::filter(!is.na(.data$bp_outside_rg) & .data$bp_outside_rg <= 0)  %>%
-    dplyr::select(-"seq_start", -"seq_end", -"bp_outside_rg")
-} else {
-############################################
-# Non targetted approach: context column 
-# install reference genome
-ref_genome <- install_ref_genome(organism = species, genome = genome, masked = masked_BS_genome)
-
-extract_context <- function(mutations, bsgenome, upstream = 1, downstream = 1) {
-  # Resize the mut_ranges to include the context
-  expanded_ranges <- GenomicRanges::resize(x = mut_ranges,
-                                           width = upstream + downstream + 1,
-                                           fix = 'center')
-
-  # Extract the sequences from the BSgenome
-  sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
-  # Return the sequences
-  return(sequences)
-}
- context <- extract_context(mut_ranges, ref_genome, upstream = 1, downstream = 1)
-mut_ranges$context <- context
-
-dat <- as.data.frame(mut_ranges)
-ranges_outside_regions <- data.frame()
-}
-# Define substitution dictionary to normalize to pyrimidine context
+  # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
     "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
     "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"

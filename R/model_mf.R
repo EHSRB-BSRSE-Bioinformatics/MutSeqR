@@ -151,43 +151,46 @@
 #' @importFrom stats as.formula model.matrix qqnorm relevel residuals
 #' @export
 model_mf <- function(mf_data,
-                    fixed_effects,
-                    test_interaction = TRUE,
-                    random_effects = NULL,
-                    reference_level,
-                    muts = "sample_sum_min",
-                    total_count = "sample_group_depth",
-                    family = NULL,
-                    contrasts = NULL,
-                    cont_sep = "\t",
-                    ...
-                    ) {
-  
+  fixed_effects,
+  test_interaction = TRUE,
+  random_effects = NULL,
+  reference_level,
+  muts = "sample_sum_min",
+  total_count = "sample_group_depth",
+  family = NULL,
+  contrasts = NULL,
+  cont_sep = "\t",
+  ...
+) {
+  # Convert muts and total_count to numeric to avoid integer overflow
+  mf_data[[muts]] <- as.numeric(mf_data[[muts]])
+  mf_data[[total_count]] <- as.numeric(mf_data[[total_count]])
+
   # Convert specified columns to factors
   mf_data[, fixed_effects] <- lapply(mf_data[, fixed_effects, drop = FALSE], as.factor)
 
     # Check that the reference levels are valid levels of the factors
-for (factor_name in fixed_effects) {
-  factor_levels <- levels(mf_data[[factor_name]])
-  reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
-  invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
-  if (length(invalid_levels) > 0) {
-    stop(paste("Invalid reference level(s) for factor", factor_name, ":", paste(invalid_levels, collapse = ", ")))
-  } else {
+  for (factor_name in fixed_effects) {
+    factor_levels <- levels(mf_data[[factor_name]])
+    reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
+    invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
+    if (length(invalid_levels) > 0) {
+      stop(paste("Invalid reference level(s) for factor", factor_name, ":", paste(invalid_levels, collapse = ", ")))
+    } else {
     message(paste("Reference level for factor", factor_name, ":", reference_level_char))
   }
 }
   # Set the reference level for each factor in fixed_effects
-  if(length(fixed_effects) == 1) {
+  if (length(fixed_effects) == 1) {
     mf_data[[fixed_effects]] <- stats::relevel(mf_data[[fixed_effects]], ref = as.character(reference_level))
   } else {
-     for (factor_name in as.list(fixed_effects)) {
+    for (factor_name in as.list(fixed_effects)) {
     reference_level_for_factor <- reference_level[match(factor_name, fixed_effects)]
     mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = reference_level_for_factor)
   }
 }
   # Construct the model formula
-  if(test_interaction){
+  if (test_interaction) {
     formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "*"))
   } else {
     formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "+"))
@@ -195,7 +198,7 @@ for (factor_name in fixed_effects) {
   
   # Add random effects to the formula
   if (!is.null(random_effects)) {
-   # Add random effect to model formula 
+   # Add random effect to model formula
     random_formula <- paste(paste("(1|", random_effects, ")", collapse = "+"))
     formula_str <- paste(formula_str, "+", random_formula)
     model_formula <- stats::as.formula(formula_str)
@@ -208,22 +211,22 @@ for (factor_name in fixed_effects) {
     
   # GLMM
   message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = ", family_param, ")"))
-  
-  model <- lme4::glmer(model_formula, 
-                       family = family_param, 
-                       data = mf_data, 
-                       ...                                                  
-                      )
-  
+
+    model <- lme4::glmer(model_formula,
+        family = family_param,
+        data = mf_data,
+        ...
+      )
+
   } else {
     model_formula <- stats::as.formula(formula_str)
-    
-    if(is.null(family)){
+
+    if(is.null(family)) {
       family_param <- "quasibinomial"
     } else {
       family_param <- family
     }
-    
+
     #GLM
     message(paste0("Fitting generalized linear model. glm(", formula_str, ", family = ", family_param, ")"))
     model <- stats::glm(model_formula,
@@ -231,7 +234,7 @@ for (factor_name in fixed_effects) {
                         data = mf_data,
                         weights = get(total_count),
                         ...
-                        ) 
+                        )
   }
   
   model_summary <- summary(model)

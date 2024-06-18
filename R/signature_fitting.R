@@ -183,7 +183,7 @@ signature_data <- signature_data %>%
     output = file.path(output_path, "matrices", "output"),
     input_type = "matrix", # "vcf", "seg:TYPE", "matrix"
     context_type = "96", # Required for vcf input
-    cosmic_version = 3.3,
+    cosmic_version = 3.4,
     exome = FALSE,
     genome_build = project_genome,
     signature_database = NULL, #tab delimited file of signatures
