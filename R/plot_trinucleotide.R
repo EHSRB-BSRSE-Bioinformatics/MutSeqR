@@ -53,7 +53,7 @@ plot_trinucleotide <- function(mutation_data,
     output_dir <- file.path(output_path)
   }
   if (!dir.exists(output_dir)) {
-    utils::dir.create(output_dir)
+    dir.create(output_dir)
   }
 
   # Calculate mutation frequency
