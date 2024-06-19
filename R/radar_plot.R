@@ -68,5 +68,4 @@ radar_plot <- function(mf_data,
                 cglwd = 0.7)
     }
   graphics::layout(1)
-  grDevices::dev.off()
 }
