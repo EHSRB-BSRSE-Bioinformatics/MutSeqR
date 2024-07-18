@@ -200,7 +200,7 @@ model_mf <- function(mf_data,
     model_formula <- stats::as.formula(formula_str)
     
   # GLMM
-  message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = ", family_param, ")"))
+  message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)"))
 
     model <- lme4::glmer(model_formula,
         family = "binomial",

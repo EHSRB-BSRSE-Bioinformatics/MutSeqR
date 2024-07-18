@@ -62,7 +62,7 @@ sample_data <- data.frame(sample = c("dna00973.1", "dna00974.1", "dna00975.1",
                                      "dna00976.1", "dna00977.1", "dna00978.1",
                                      "dna00979.1", "dna00980.1", "dna00981.1",
                                      "dna00982.1", "dna00983.1", "dna00984.1",
-                                     "dna00985.1", "dna00986.1", "dna00987.1,"
+                                     "dna00985.1", "dna00986.1", "dna00987.1",
                                      "dna00988.1", "dna00989.1", "dna00990.1",
                                      "dna00991.1", "dna00992.1", "dna00993.1",
                                      "dna00994.1", "dna00995.1", "dna00996.1"),
@@ -73,11 +73,10 @@ sample_data <- data.frame(sample = c("dna00973.1", "dna00974.1", "dna00975.1",
                                    "Medium", "Medium", "Medium",
                                    "Medium", "Medium", "Medium",
                                    "High", "High", "High",
-                                   "High", "High", "High")
-                          )
+                                   "High", "High", "High"))
 ```
 
-Import the vcf files using the `import_vcf_data` function. This example data was sequenced using Twinstrand's Mouse Mutagenesis Panel, so we will specify the `regions` to `TSpanel_mouse`.
+Import the vcf files using the `import_vcf_data` function. This example data was sequenced using Twinstrand's Mouse Mutagenesis Panel, so we will specify the `regions` as `TSpanel_mouse`.
 ```{r}
 mutation_data <-
   import_vcf_data(vcf_file = mut_data,
@@ -784,20 +783,6 @@ Files include:
 
 Results from the signature refitting perfomed by [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within the `Assignment_Solution` folder. `Assignment_Solution` consists of 3 subdirectories;  `Activities`, `Signatures`, and `Solution_Stats`. 
 
-**Overview**
-* Activities
-    + *Assignment_Solution_Activities.txt*
-    + *Assignment_Solution_Activity_Plots.pdf*
-    + *Assignment_Solution_TMB_plot.pdf*
-    + *Decomposed_Mutation_Probabilities.txt*
-    + *SampleReconstruction*
-* Signatures
-    + *Assignment_Solution_Signatures.txt*
-    + *SBS_96_plots_Assignment_Solution.pdf*
-* Solution_Stats
-    + *Assignment_Solution_Samples_Stats.txt*
-    + *Assignment_Solution_Signature_Assignment_log.txt*
-
 ###### Activities
 
 | File | Description |
@@ -822,6 +807,9 @@ Results from the signature refitting perfomed by [SigProfilerAssignment](https:/
 
 ###### Other Files
 *JOB_METADATA_SPA.txt* This file contains the metadata about system and runtime.
+
+## Visualisation
+
 
 # Glossary
 Below are a list of column name definitions and common synonyms
