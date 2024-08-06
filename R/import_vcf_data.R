@@ -256,7 +256,7 @@ import_vcf_data <- function(
       dplyr::mutate(
         no_calls = 0,  # Since AD is missing, no calls can't be calculated
         vaf = .data$alt_depth / .data$depth) %>% # Calculate vaf using depth 
-        dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, F, T))
+        dplyr::mutate(is_germline = ifelse(.data$vaf < vaf_cutoff, FALSE, TRUE))
     cat("Warning: no_calls cannot be calculated because there is no Allelic Depth (AD) field.\n")
     cat("vaf calculated with depth (DP; includes N-calls) because Allelic Depth (AD) field is missing.\n")
 
@@ -413,6 +413,13 @@ import_vcf_data <- function(
       dat <- as.data.frame(mut_ranges)
       ranges_outside_regions <- data.frame() # create an empty df
     }
+
+  # Add empty filter column
+  if("filter" %in% colnames(dat)) {
+    dat <- dplyr::rename(dat, original_filter = filter)
+  }
+  dat$filter <- FALSE
+
   # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
     "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",

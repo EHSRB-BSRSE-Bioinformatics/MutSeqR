@@ -469,6 +469,12 @@ import_mut_data <- function(mut_file,
       is_germline = ifelse(.data$VAF < vaf_cutoff, FALSE, TRUE),
       ref_depth = .data[[depth_col]] - .data$alt_depth
     )
+  
+  # Create an empty filter column
+  if ("filter" %in% colnames(dat)) {
+    dat <- dplyr::rename(dat, original_filter = filter)
+  }
+  dat$filter <- FALSE
 
   # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
