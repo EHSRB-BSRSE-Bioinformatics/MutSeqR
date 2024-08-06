@@ -62,7 +62,7 @@ sample_data <- data.frame(sample = c("dna00973.1", "dna00974.1", "dna00975.1",
                                      "dna00976.1", "dna00977.1", "dna00978.1",
                                      "dna00979.1", "dna00980.1", "dna00981.1",
                                      "dna00982.1", "dna00983.1", "dna00984.1",
-                                     "dna00985.1", "dna00986.1", "dna00987.1,"
+                                     "dna00985.1", "dna00986.1", "dna00987.1",
                                      "dna00988.1", "dna00989.1", "dna00990.1",
                                      "dna00991.1", "dna00992.1", "dna00993.1",
                                      "dna00994.1", "dna00995.1", "dna00996.1"),
@@ -73,11 +73,10 @@ sample_data <- data.frame(sample = c("dna00973.1", "dna00974.1", "dna00975.1",
                                    "Medium", "Medium", "Medium",
                                    "Medium", "Medium", "Medium",
                                    "High", "High", "High",
-                                   "High", "High", "High")
-                          )
+                                   "High", "High", "High"))
 ```
 
-Import the vcf files using the `import_vcf_data` function. This example data was sequenced using Twinstrand's Mouse Mutagenesis Panel, so we will specify the `regions` to `TSpanel_mouse`.
+Import the vcf files using the `import_vcf_data` function. This example data was sequenced using Twinstrand's Mouse Mutagenesis Panel, so we will specify the `regions` as `TSpanel_mouse`.
 ```{r}
 mutation_data <-
   import_vcf_data(vcf_file = mut_data,
@@ -250,7 +249,7 @@ mutation_data <-
 ### Mutation_data Output
 Both import functions will import the variant file(s) as a dataframe, join it with the metadata, and create some columns that will be helpful for calculating frequencies in later analyses. A list of the new columns and their definitions can be found below. The functions will also make some adjustments to the `variation_type` column. The following table displays the categories for the different variation types. Some adjustments may include, changing "indel" to "insertion" or "deletion".
 
-The column variation_type/TYPE may contain these values:
+The column `variation_type`/`TYPE` may contain these values:
 | `variation_type` | Definition                                          |
 |------------------|-----------------------------------------------------|
 | no_variant       | No variation, the null-case.                        |
@@ -291,7 +290,7 @@ An important component of importing your data for proper use is to assign each m
 Similarly, if you are using a target panel, they may supply additional metadata columns in their `custom_regions_file` that will be appended to the variant file. Metadata for the TwinStrand's DuplexSeq™ Mutagenesis Panels include: genic context, region chromatin state, region GC content, and the regions' genes.
 
 ## Calculating Mutation Frequencies
-The function `calculate_mut_freq` summarises the mutation counts across arbitrary groupings within the mutation data. Mutations can be summarised across samples, experimental groups, and mutation subtypes for later statistical analyses. Mutation frequency is calculated by dividing the number of mutations by the total number of sequenced bases in each group. The units for mutation frequency are mutations/bp.
+The function `calculate_mut_freq` summarises the mutation counts across arbitrary groupings within the mutation data. Mutations can be summarised across samples, experimental groups, and mutation subtypes for later statistical analyses. Mutation frequency is calculated by dividing the number of mutations (`sum`) by the total number of sequenced bases in each group (`group_depth`). The units for mutation frequency are mutations/bp.
 
 ### Grouping Mutations
 Mutation counts and total sequenced bases are summed within groups that can be designated using the `cols_to_group` parameter. This parameter can be set to one or more columns in the mutation data that represent experimental variables of interest. 
@@ -315,22 +314,18 @@ mf_data <- calculate_mut_freq(
 ```
 
 ### Mutation Subtypes
-Mutations can also be grouped by mutation subtype at varying degrees of resolution using the `subtype_resolution` parameter. Mutations and total sequenced bases will be summed across groups for each mutation subtype. The total number of sequenced bases is calculated based on the sequence context in which a mutation subtype occurs. For instance, C>T mutations will only occur at positions with a C reference. Therefore, the mutation frequency for C>T mutations is calculated as the total number of C>T mutations divided by the total number bases sequenced at a C reference position for a particular sample/group.
+Mutations can also be grouped by mutation subtype at varying degrees of resolution using the `subtype_resolution` parameter. Mutations and total depth will be summed across groups for each mutation subtype. The total number of sequenced bases is calculated based on the sequence context in which a mutation subtype occurs (`snv_depth`). For instance, C>T mutations will only occur at positions with a C reference. Therefore, the mutation frequency for C>T mutations is calculated as the total number of C>T mutations divided by the total number bases sequenced at a C reference position for a particular sample/group. The mutation frequency for snv subtypes, will thus be calculated as their sum / their snv_depth. The mutation frequency for non-snv mutation subtypes, such as mnvs, insertions, deletions, complex variants, and structural variants, will be calculated as their sum / the group_depth, since they can occur in the context of any nucleotide. 
 
-The function will also calculate the the proportion of mutations for each subtype. The proportion of mutations is calculated by dividing the number of mutations for each subtype by the total number of mutations within a sample or group. Proportions are then normalized to the sequencing depth. First proportions are divided by the context-dependent number of sequenced bases for that sample/group. Values are then divided by the sum of all values for that sample/group.
 
-**Subtype resolutions:** 
+The function will also calculate the the proportion of mutations for each subtype. The proportion of mutations is calculated by dividing the number of each mutation subtype by the total number of mutations within a sample or group. Proportions are then normalized to the sequencing depth. First proportions are divided by the context-dependent number of sequenced bases for that sample/group. Values are then divided by the sum of all values for that sample/group.
 
-* type: the variation type.
-    + "snv", "mnv", "insertion", "deletion", "complex", and "symbolic" variants.
-*  base_6: the simple snv spectrum. The snv subtypes are normalized to their pyrimidine context.
-    + C>A, C>G, C>T, T>A, T>C, T>G.
-* base_12: The non-normalized snv subtypes.
-    + A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G.
-* base_96: the trinculeotide spectrum. The snv subtypes are reported in their pyrimidine context alongside their two flanking nucleotides.
-    + Ex. A[C>T]A.
-* base_192: The non-normalized snv subtypes are reported alongside their two flanking nucleotides.
-    + Ex. A[G>T]A.
+|Subtype resolutions| Definition | Example |
+|-------------------|------------|---------|
+| `type`            | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
+| `base_6`          | The simple spectrum; snv subtypes in their pyrimidine context | C>A, C>G, C>T, T>A, T>C, T>G |
+| `base_12`         | The non-normalized snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
+| `base_96`         | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A |
+| `base_192`        | The non-normalized snv subtypes reported alongside their two flanking nucleotides | A[G>T]A |
 
 *Ex. The following code will return the simple mutation spectra for all samples.*
 ```{r}
@@ -382,8 +377,10 @@ The function will output the resulting `mf_data` as a data frame with the mutati
 The summary table will include:
 * `cols_to_group`: all columns used to group the data.
 * `_sum_`: the min/max mutation counts for the group.
+* `_group_depth`: the total depth summed across the group.
+* `_snv_depth`: the total depth summed across the group, in the context of the snv reference. *If subtype_resolution != "none".*
 * `_MF_`: the min/max mutation frequency for the group.
-* `_proportion_`: the min/max proportion for the group.
+* `_proportion_`: the min/max proportion for the group. *If subtype_resolution != "none".*
 
 Additional columns from the orginal mutation data can be retained using the `retain_metadata_cols` parameter. Retaining higher-order experimental groups may be useful for later statistical analyses or plotting.
 
@@ -669,9 +666,9 @@ The `signature_fitting` function utilizes the [SigProfiler](https://github.com/A
 
 Somatic mutations in their 96-base trinucleotide context are summed across samples or experimental groups of interest to create a mutation count matrix. Mutational signatures are then assigned to each sample/group using refitting methods (Díaz-Gay et al., 2023). Signature refitting (also known as signature fitting or signature assignment) quantifies the contribution of a set of signatures to the mutational profile of a sample/group. The process is a numerical optimization approach that finds the combination of mutational signatures that most closely reconstructs the mutation count matrix. To quantify the number of mutations imprinted by each signature, the tool uses a custom implementation of the forward stagewise algorithm and it applies nonnegative least squares, based on the Lawson-Hanson method. 
 
-Currently, `signature_fitting` offers fitting of COSMIC version 3.3 SBS signatures to the SBS96 matrix of any sample/group. For advanced use, including using a custom set of reference signatures, or fitting the DBS, ID, or CN signatures, it is suggested to use the SigProfiler python tools directly in python as described in their respective documentation [here](https://github.com/AlexandrovLab).
+Currently, `signature_fitting` offers fitting of COSMIC version 3.4 SBS signatures to the SBS96 matrix of any sample/group. For advanced use, including using a custom set of reference signatures, or fitting the DBS, ID, or CN signatures, it is suggested to use the SigProfiler python tools directly in as described in their respective documentation [here](https://github.com/AlexandrovLab).
 
-`signature_fitting` requires the installation of reticulate and [SigProfilerMatricGeneratorR](https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR) as well as a version of python 3.8 or newer.
+`signature_fitting` requires the installation of reticulate and [SigProfilerMatrixGeneratorR](https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR) as well as a version of python 3.8 or newer.
 ```{r}
 # Install reticulate
 install.packages("reticulate")
@@ -697,7 +694,7 @@ signature_fitting(mutation_data,
                   project_genome = "GRCh38", # human
                   env_name = "MutSeqR_example", # virtual environment
                   group = "sample",
-                  output_path = NULL, # file path for output directory
+                  output_path = NULL, # file path for output directory. NULL = working directory
                   python_version = "3.11" # your python version
                   )
 ```
@@ -739,7 +736,11 @@ A doublet-base substitution (DBS) is a somatic mutation in which a set of two ad
 SigProfilerMatrix Generator also supports small indels, structural variants, and copy-number variants. `signature_fitting` will not generate these matrices. If you wish to utilise these features, please refer directly to the SigProfiler tools.
 
 Barplots of the mutation matrices for all individual samples/groups can be found in the Plots folder. The number of mutations are plotted for each individual sample/group at the various subtype resolutions
- 
+
+###### vcf_files
+This output folder provides text-based files containing the original mutations and their SigProfilerMatrixGenerator classification for each chromosome. The files are separated into dinucleotides (DBS), multinucleotide substitutions (MNS), and single nucleotide variants (SNV) folders containing the appropriate files. The headers are (1) The sample/group; (2) the chromosome; (3) the position; (4) the SigProfilerMatrixGenerator classification; and (5) the strand {1, 0, -1}. The headers for each file are the same with the exception of the MNS files which don't contain a matrix classification or a strand classification {1, 0, -1}. As noted above the DBS and MNS matrices do no reflect the true mutation counts for these variant types. Only SBS/SNV mutations are included in the matrix generation.
+
+
 ##### Transcription Strand Bias (TSB)
 SBS mutations will be tested for [transcription strand bias](https://osf.io/s93d5/wiki/5.%20Output%20-%20TSB/). These results will be stored in the `TSB` folder.
 
@@ -760,7 +761,7 @@ All SBS mutations will be classified within the four transcriptional bias catego
 |Bidirectional (B) |The variant is on both strands and is transcribed either way. |
 |Nontranscribed (N) |The variant is in a non-coding region and is untranslated. |
 
-The tool will then perform a transcription strand bias test which compares the number of transcribed and untranscribed mutations for each mutation type. For example, it will compare the number of transcribed T>C to untranscribed T>C mutations. Should there be a significant difference, it would indicate that T:A>C:G mutations are occuring at a higher rate on one of the strands compared to the other. Transcription strand bias tests will be included for the 6-base, 96-base and 288-base SBS mutation contexts. 
+The tool will then perform a transcription strand bias test which compares the number of transcribed and untranscribed mutations for each mutation type. For example, it will compare the number of transcribed T>C to untranscribed T>C mutations. Should there be a significant difference, it would indicate that T:A>C:G mutations are occuring at a higher rate on one of the strands compared to the other. Transcription strand bias tests will be included for the 6-base, 96-base and 1536-base SBS mutation contexts. 
 
 The output files contain the following information:
 * the `group`
@@ -775,55 +776,43 @@ Files include:
 |------|-------------|
 |*strandBiasTes_24.txt*| stats of the SBS6 variants|
 |*strandBiasTes_384.txt*| stats of the SBS96 variants|
-|*strandBiasTes_6144.txt*|stats of the SBS288 variants|
+|*strandBiasTes_6144.txt*|stats of the SBS1536 variants|
 |*significantResults_strandBiasTest.txt*|returns significant results from the three files above.|
 
 ##### Signature Refitting Results
 
-Results from the signature refitting perfomed by [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within in the `Assignment_Solution` folder. `Assignment_Solution` consists of 3 subdirectories;  `Activities`, `Signatures`, and `Solution_Stats`. 
-
-**Overview**
-* Activities
-    + *Assignment_Solution_Activities.txt*
-    + *Assignment_Solution_Activity_Plots.pdf*
-    + *Assignment_Solution_TMB_plot.pdf*
-    + *Decomposed_Mutation_Probabilities.txt*
-    + *SampleReconstruction*
-* Signatures
-    + *Assignment_Solution_Signatures.txt*
-    + *SBS_96_plots_Assignment_Solution.pdf*
-* Solution_Stats
-    + *Assignment_Solution_Samples_Stats.txt*
-    + *Assignment_Solution_Signature_Assignment_log.txt*
+Results from the signature refitting perfomed by [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within the `Assignment_Solution` folder. `Assignment_Solution` consists of 3 subdirectories;  `Activities`, `Signatures`, and `Solution_Stats`. 
 
 ###### Activities
 
-*Assignment_Solution_Activities.txt*
+| File | Description |
+|------|-------------|
+|*Assignment_Solution_Activities.txt* | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process. |
+|*Assignment_Solution_Activity_Plots.pdf* | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.|
+| *Assignment_Solution_TMB_plot.pdf* | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase. |
+| *Decomposed_Mutation_Probabilities.txt* | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures. |
+| *SampleReconstruction* | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure.|
 
-This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process. 
+###### Signatures
+| Files | Description |
+|-------|-------------|
+| *Assignment_Solution_Signatures.txt* | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures. |
+| *SBS_96_plots_Assignment_Solution.pdf* | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
 
-*Assignment_Solution_Activity_Plots.pdf*
+###### Solution_Stats
+| Files | Description |
+|-------|-------------|
+| *Assignment_Solution_Samples_Stats.txt* | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
+| *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps. |
 
-This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.
+###### Other Files
+*JOB_METADATA_SPA.txt* This file contains the metadata about system and runtime.
 
-*Assignment_Solution_TMB_plot.pdf*
+## Visualisation
 
-This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase.
 
-*Decomposed_Mutation_Probabilities.txt*
-
-This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures.
-
-*SampleReconstruction*
-
-This folder contains generated plots for each sample/group
-
-* Signatures
-    + *Assignment_Solution_Signatures.txt*: the distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures.
-    + *SBS_96_plots_Assignment_Solution.pdf*:  barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature.
-* Solution_Stats
-    + *Assignment_Solution_Samples_Stats.txt*: the accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence.
-    + *Assignment_Solution_Signature_Assignment_log.txt*:  the events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps.
+# Glossary
+Below are a list of column name definitions and common synonyms
 
 # References
 Bergstrom EN, Huang MN, Mahto U, Barnes M, Stratton MR, Rozen SG, Alexandrov LB. SigProfilerMatrixGenerator: a tool for visualizing and exploring patterns of small mutational events. BMC Genomics. 2019 Aug 30;20(1):685. doi: 10.1186/s12864-019-6041-2. PMID: 31470794; PMCID: PMC6717374.

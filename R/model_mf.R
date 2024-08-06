@@ -26,10 +26,6 @@
 #' relation to the reference_level as deviations from the baseline effect.
 #' @param muts The column containing the mutation count per sample.
 #' @param total_count The column containing the sequencing depth per sample.
-#' @param family a description of the error distribution and link function to be
-#' used in the model. The default is "quasibinomial" for generalized linear models
-#' and "binomial" for generalized linear mixed-models. See \link[stats]{glm} 
-#' for more details.
 #' @param contrasts a data frame or a  filepath to a file that will
 #' provide the information necessary to make pairwise comparisons between groups. 
 #' The table must consist of two columns. The first column will be a group within 
@@ -157,7 +153,7 @@ model_mf <- function(mf_data,
   reference_level,
   muts = "sample_sum_min",
   total_count = "sample_group_depth",
-  family = NULL,
+ # family = NULL, # Note: back-transforming the estimates requires the family to be binomial
   contrasts = NULL,
   cont_sep = "\t",
   ...
@@ -202,18 +198,12 @@ model_mf <- function(mf_data,
     random_formula <- paste(paste("(1|", random_effects, ")", collapse = "+"))
     formula_str <- paste(formula_str, "+", random_formula)
     model_formula <- stats::as.formula(formula_str)
-  
-  if(is.null(family)){
-    family_param <- "binomial"
-  } else {
-    family_param <- family
-  }
     
   # GLMM
-  message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = ", family_param, ")"))
+  message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)"))
 
     model <- lme4::glmer(model_formula,
-        family = family_param,
+        family = "binomial",
         data = mf_data,
         ...
       )
@@ -221,16 +211,10 @@ model_mf <- function(mf_data,
   } else {
     model_formula <- stats::as.formula(formula_str)
 
-    if(is.null(family)) {
-      family_param <- "quasibinomial"
-    } else {
-      family_param <- family
-    }
-
     #GLM
-    message(paste0("Fitting generalized linear model. glm(", formula_str, ", family = ", family_param, ")"))
+    message(paste0("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial"))
     model <- stats::glm(model_formula,
-                        family = family_param,
+                        family = "quasibinomial",
                         data = mf_data,
                         weights = get(total_count),
                         ...
@@ -259,13 +243,13 @@ model_mf <- function(mf_data,
   
   par(las = 1)
   hist <- hist(mf_data$residuals, main = "Residuals", col = "yellow")
-  
+
   qqplot <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
   stats::qqline(mf_data$residuals, col = "red")
-  
-## TO DO: Have a message about what these should look like. 
-  
-  #########################################  
+
+## TO DO: Have a message about what these should look like.
+
+  #########################################
   # Point Estimates By Fixed Effects
   ###########################################################
   # Define your levels for each factor
@@ -276,17 +260,17 @@ model_mf <- function(mf_data,
   colnames(design_matrix) <- fixed_effects
   
    # Create simplified model formula
-  if(test_interaction){
+  if(test_interaction) {
     fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
   } else {
     fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "+")))
   }
-  
-  # Create the model matrix using model.matrix  
+
+  # Create the model matrix using model.matrix
   model_matrix <- stats::model.matrix(fixed_effect_formula, data = design_matrix)
   row_names <- apply(design_matrix, 1, paste, collapse = ":")
-  rownames(model_matrix) <- row_names 
-  
+  rownames(model_matrix) <- row_names
+
   # Computed estimates
   model_estimates <- doBy::esticon(obj = model, L = model_matrix)
 
@@ -295,9 +279,9 @@ model_mf <- function(mf_data,
   delta <- model_estimates$estimate^2
   model_estimates$lwr <- exp(model_estimates$lwr)
   model_estimates$upr <- exp(model_estimates$upr)
-  model_estimates$std.error <- sqrt(delta*model_estimates$std.error^2)
+  model_estimates$std.error <- sqrt(delta * model_estimates$std.error^2)
   # Clean data
-  model_estimates <- model_estimates[,-c(3,4,5,6)]
+  model_estimates <- model_estimates[, -c(3, 4, 5, 6)]
   colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
 
 # Split the string into individual characters
