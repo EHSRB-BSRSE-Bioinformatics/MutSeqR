@@ -155,10 +155,11 @@ calculate_mut_freq <- function(mutation_data,
   mutation_data <- MutSeqR::rename_columns(mutation_data)
   # Check for all required columns
   required_columns <- c("sample",
-                        "alt_depth", 
+                        "alt_depth",
                         "total_depth",
                         "variation_type",
                         "is_germline",
+                        "filter",
                         cols_to_group)
   if(subtype_resolution != "none") {
   required_columns <- c(required_columns, MutSeqR::subtype_dict[[subtype_resolution]])
@@ -202,11 +203,13 @@ if (!is.null(retain_metadata_cols)) {
     dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
     dplyr::mutate(!!paste0(freq_col_prefix, "_sum_max") :=
                     sum(.data$alt_depth[.data$variation_type %in% variant_types
-                                        & .data$is_germline == FALSE])) %>%
+                                        & .data$is_germline == FALSE
+                                        & .data$filter == FALSE])) %>%
     dplyr::mutate(!!paste0(freq_col_prefix, "_sum_min") :=
                     length(.data$alt_depth[.data$variation_type %in%
                                              variant_types &
-                                             .data$is_germline == FALSE])) %>%
+                                             .data$is_germline == FALSE
+                                             & .data$filter == FALSE])) %>%
     dplyr::ungroup()
 
   # Calculate denominator (same for max and min mutations)
