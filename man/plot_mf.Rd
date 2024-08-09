@@ -7,52 +7,58 @@
 plot_mf(
   mf_data,
   group_col,
-  mf_type = c("min", "max", "both", "stacked"),
+  plot_type = "bar",
+  mf_type = "min",
   fill_col = NULL,
   custom_palette = NULL,
-  group_order = c("none", "smart", "arranged", "custom"),
+  group_order = "none",
   group_order_input = NULL,
-  labels = c("count", "MF", "none"),
+  labels = "count",
   scale_y_axis = "linear",
   x_lab = NULL,
-  y_lab = NULL
+  y_lab = NULL,
+  title = NULL
 )
 }
 \arguments{
 \item{mf_data}{A data frame containing the mutation frequency data. This is
 obtained from the calculate_mut_freq function with SUMMARY = TRUE.}
 
-\item{group_col}{The name of the column containing the sample/group names.}
+\item{group_col}{The name of the column containing the sample/group names
+for the x-axis.}
+
+\item{plot_type}{The type of plot to create. Options are "bar" or "point".}
 
 \item{mf_type}{The type of mutation frequency to plot. Options are "min",
 "max", "both", or "stacked". If "both", the min and max mutation
-frequencies are plotted side by side. If "stacked", the difference between
-the min and max MF is stacked on top of the min MF such that the
-total height of both bars represent the max MF.}
+frequencies are plotted side by side. "stacked" can be chosen for bar
+plot_type only. If "stacked", the difference between the min and max
+MF is stacked on top of the min MF such that the total height of both
+bars represent the max MF.}
 
 \item{fill_col}{The name of the column containing the fill variable.}
 
 \item{custom_palette}{A character vector of colour codes to use for the plot.
 If NULL, a default palette is used}
 
-\item{group_order}{The order of the samples.
+\item{group_order}{The order of the samples/groups along the x-axis.
 ' Options include:
 \itemize{
 \item \code{none}: No ordering is performed. Default.
 \item \code{smart}: Samples are ordered based on the sample names.
 \item \code{arranged}: Samples are ordered based on one or more factor column(s)
-in mf_data. Column names are passed to the function using the
+in mf_data. Factor column names are passed to the function using the
 \code{group_order_input}.
 \item \code{custom}: Samples are ordered based on a custom vector of sample
 names. The custom vector is passed to the function using the
 \code{group_order_input}.
 }}
 
-\item{group_order_input}{The order of the samples if group_order is
-"custom". The column name by which to arrange samples if group_order
+\item{group_order_input}{The order of the samples/groups if group_order is
+"custom". The column name by which to arrange samples/groups if group_order
 is "arranged"}
 
-\item{labels}{The labels to use for the bars. Either "count", "MF", or
+\item{labels}{The data labels to display on the plot. Either "count", "MF", or
 "none". Count labels display the number of mutations, MF labels display
 the mutation frequency.}
 
@@ -61,10 +67,12 @@ the mutation frequency.}
 \item{x_lab}{The label for the x axis.}
 
 \item{y_lab}{The label for the y axis.}
+
+\item{title}{The title of the plot.}
 }
 \value{
 A ggplot object
 }
 \description{
-This function creates a bar plot of the mutation frequency
+This function creates a plot of the mutation frequency.
 }
