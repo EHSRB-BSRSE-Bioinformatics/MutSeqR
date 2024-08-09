@@ -21,7 +21,7 @@ import_vcf_data(
 )
 }
 \arguments{
-\item{vcf_file}{The path to the genomic .vcf file(s)  to be imported. If
+\item{vcf_file}{The path to the genomic .vcf or .vcf.gz file(s)  to be imported. If
 you specify a folder, the function will attempt to read all files in the
 folder and combine them into on dataset. Multisample vcf files are not
 supported; vcf files must contain one sample each. Required fields are
@@ -42,9 +42,9 @@ Equivalent to \code{depth}.
 \item \code{TYPE}: The category to which this variant is assigned. Equivalent to
 \code{variation_type}.
 \item \code{END}: The half-open end position of the feature in contig.
-\item SUGGESTED INFO FIELDS:
 \item \code{sample}: An identifying field for your samples; either in the INFO
 field or as the header to the FORMAT field.
+\item SUGGESTED INFO FIELDS:
 \item \code{SVTYPE}: Structural variant types; INV DUP DEL INS FUS.
 \item \code{SVLEN}: Length of the structural variant in base pairs.
 }}
@@ -66,7 +66,7 @@ in the final mutation data. Variants that are filtered out of the data
 are returned in a separate dataframe.}
 
 \item{sample_data_file}{An optional file containing additional sample
-metadata (dose, timepoint, etc.)}
+metadata (dose, timepoint, etc.). This can be a data frame or a file path.}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables.
 Default is tab-delimited}

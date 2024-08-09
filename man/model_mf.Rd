@@ -13,7 +13,6 @@ model_mf(
   reference_level,
   muts = "sample_sum_min",
   total_count = "sample_group_depth",
-  family = NULL,
   contrasts = NULL,
   cont_sep = "\\t",
   ...
@@ -43,11 +42,6 @@ relation to the reference_level as deviations from the baseline effect.}
 \item{muts}{The column containing the mutation count per sample.}
 
 \item{total_count}{The column containing the sequencing depth per sample.}
-
-\item{family}{a description of the error distribution and link function to be
-used in the model. The default is "quasibinomial" for generalized linear models
-and "binomial" for generalized linear mixed-models. See \link[stats]{glm}
-for more details.}
 
 \item{contrasts}{a data frame or a  filepath to a file that will
 provide the information necessary to make pairwise comparisons between groups.
