@@ -242,7 +242,9 @@ model_mf <- function(mf_data,
 
   # Make Residuals Plots
   par(las = 1, xaxs = "i", yaxs = "i")
-  hist <- hist(mf_data$residuals, main = "Residuals", col = "yellow")
+  hist_data <- hist(mf_data$residuals, plot = FALSE)
+  ylim_max <- max(hist_data$counts) + 1
+  hist(mf_data$residuals, main = "Residuals", col = "yellow", ylim = c(0, ylim_max))
 
   qqplot <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
   stats::qqline(mf_data$residuals, col = "red")
@@ -292,8 +294,8 @@ model_mf <- function(mf_data,
   }
   # Extract rownames into a column for each contrast variable
   for (i in 1:count) {
-      var_i <- get(paste0("var", i))
-      model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+    var_i <- get(paste0("var", i))
+    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
   }
 
   ##############################################################
@@ -304,10 +306,10 @@ model_mf <- function(mf_data,
     if (is.data.frame(contrasts)) {
       contrast_table <- contrasts
     } else {
-        contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
+        contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = FALSE)
       if (ncol(contrast_table) <= 1) {
         stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
-    }
+      }
   }
   model_matrix <- as.data.frame(model_matrix)
   contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
@@ -325,34 +327,34 @@ model_mf <- function(mf_data,
     # Perform matrix subtraction and store the result in the list
     result_list[[i]] <- model_matrix[V1, ] - model_matrix[V2, ]
   }
-  
-  # Convert the list of matrices to a single matrix
+
+    # Convert the list of matrices to a single matrix
   result_matrix <- as.matrix(do.call(rbind, result_list))
   # Set row names for result_matrix
   rownames(result_matrix) <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
-  
- # Perform comparisons
+
+  # Perform comparisons
   pairwise_comparisons <- doBy::esticon(obj = model, L = result_matrix)
 
-  # Clean results  
+  #Clean results
   pairwise_comparisons <- as.data.frame(pairwise_comparisons)
   pairwise_comparisons$estimate <- exp(pairwise_comparisons$estimate)
   delta <- pairwise_comparisons$estimate^2
   pairwise_comparisons$lwr <- exp(pairwise_comparisons$lwr)
   pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
-  pairwise_comparisons$std.error <- sqrt(delta*pairwise_comparisons$std.error^2)
-  pairwise_comparisons <- pairwise_comparisons[,-5]
+  pairwise_comparisons$std.error <- sqrt(delta * pairwise_comparisons$std.error^2)
+  pairwise_comparisons <- pairwise_comparisons[, -5]
   colnames(pairwise_comparisons) <- c("Fold.Change", "FC.Std.Err", "Obs.T", "p.value", "df", "FC.Lower", "FC.Upper")
   
   pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
   pairwise_comparisons <- pairwise_comparisons %>%
-  dplyr::mutate(
-    Significance = case_when(
-      adj_p.value <= 0.001 ~ "***",
-      adj_p.value <= 0.01 ~ "**",
-      adj_p.value <= 0.05 ~ "*",
-      TRUE ~ ""
-    )
+    dplyr::mutate(
+      Significance = case_when(
+        adj_p.value <= 0.001 ~ "***",
+        adj_p.value <= 0.01 ~ "**",
+        adj_p.value <= 0.05 ~ "*",
+        TRUE ~ ""
+      )
   )
 
 pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
