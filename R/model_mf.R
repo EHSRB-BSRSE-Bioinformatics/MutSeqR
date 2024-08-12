@@ -153,7 +153,6 @@ model_mf <- function(mf_data,
   reference_level,
   muts = "sample_sum_min",
   total_count = "sample_group_depth",
- # family = NULL, # Note: back-transforming the estimates requires the family to be binomial
   contrasts = NULL,
   cont_sep = "\t",
   ...
@@ -165,7 +164,7 @@ model_mf <- function(mf_data,
   # Convert specified columns to factors
   mf_data[, fixed_effects] <- lapply(mf_data[, fixed_effects, drop = FALSE], as.factor)
 
-    # Check that the reference levels are valid levels of the factors
+  # Check that the reference levels are valid levels of the factors
   for (factor_name in fixed_effects) {
     factor_levels <- levels(mf_data[[factor_name]])
     reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
@@ -191,21 +190,21 @@ model_mf <- function(mf_data,
   } else {
     formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "+"))
   }
-  
+
   # Add random effects to the formula
   if (!is.null(random_effects)) {
-   # Add random effect to model formula
+  # Add random effect to model formula
     random_formula <- paste(paste("(1|", random_effects, ")", collapse = "+"))
     formula_str <- paste(formula_str, "+", random_formula)
     model_formula <- stats::as.formula(formula_str)
-    
-  # GLMM
-  message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)"))
+
+    # GLMM
+    message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)"))
 
     model <- lme4::glmer(model_formula,
-        family = "binomial",
-        data = mf_data,
-        ...
+      family = "binomial",
+      data = mf_data,
+      ...
       )
 
   } else {
@@ -214,53 +213,52 @@ model_mf <- function(mf_data,
     #GLM
     message(paste0("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial"))
     model <- stats::glm(model_formula,
-                        family = "quasibinomial",
-                        data = mf_data,
-                        weights = get(total_count),
-                        ...
-                        )
+      family = "quasibinomial",
+      data = mf_data,
+      weights = get(total_count),
+      ...
+    )
+  }
+
+  model_summary <- summary(model)
+
+  if(length(fixed_effects) > 1) {
+    model_anova <- car::Anova(model)
   }
   
-  model_summary <- summary(model)
-  
-  if(length(fixed_effects) > 1){
-    model_anova <-car::Anova(model)}
- #################################
+  #################################
   # Check residuals
-  if(!is.null(random_effects)){
+  if(!is.null(random_effects)) {
    mf_data$residuals <- stats::residuals(model)
   } else {
     mf_data$residuals <- model$residuals
   }
- 
-   # Print the row with the maximum residual
+
+  # Print the row with the maximum residual
   max_residual_index <- which.max(abs(mf_data$residuals))
   max_residual_row <- mf_data[max_residual_index, ]
   message("The row with the maximum residual in absolute value is:\n")
   print(max_residual_row)
-  
-  ## TO DO: Let's walk users through what the residuals should look like and give advice on them
-  
-  par(las = 1)
+
+  # Make Residuals Plots
+  par(las = 1, xaxs = "i", yaxs = "i")
   hist <- hist(mf_data$residuals, main = "Residuals", col = "yellow")
 
   qqplot <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
   stats::qqline(mf_data$residuals, col = "red")
-
-## TO DO: Have a message about what these should look like.
 
   #########################################
   # Point Estimates By Fixed Effects
   ###########################################################
   # Define your levels for each factor
   fixed_effects_levels <- lapply(fixed_effects, function(factor) levels(mf_data[[factor]]))
-  
+
   # Define all combinations of each factor
   design_matrix <- do.call(expand.grid, fixed_effects_levels)
   colnames(design_matrix) <- fixed_effects
-  
+
    # Create simplified model formula
-  if(test_interaction) {
+  if (test_interaction) {
     fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
   } else {
     fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "+")))
@@ -284,39 +282,38 @@ model_mf <- function(mf_data,
   model_estimates <- model_estimates[, -c(3, 4, 5, 6)]
   colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
 
-# Split the string into individual characters
-chars <- strsplit(fixed_effects, " ")
-# Count the characters
-count <- length(unlist(chars))
-for (i in seq_along(chars)) {
-  # Assign each element to a separate variable in the global environment
-  assign(paste("var", i, sep = ""), chars[[i]])
-}
-    # Extract rownames into a column for each contrast variable
-for (i in 1:count) {
-    var_i <- get(paste0("var", i))
-    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
-}
-
+  # Split the string into individual characters
+  chars <- strsplit(fixed_effects, " ")
+  # Count the characters
+  count <- length(unlist(chars))
+  for (i in seq_along(chars)) {
+    # Assign each element to a separate variable in the global environment
+    assign(paste("var", i, sep = ""), chars[[i]])
+  }
+  # Extract rownames into a column for each contrast variable
+  for (i in 1:count) {
+      var_i <- get(paste0("var", i))
+      model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+  }
 
   ##############################################################
- # Pairwise Comparisons  
- ##################################################################
+  # Pairwise Comparisons
+  ##################################################################
   # load contrast table file and do checks
   if (!is.null(contrasts)) {
     if (is.data.frame(contrasts)) {
-        contrast_table <- contrasts
+      contrast_table <- contrasts
     } else {
         contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
-    if (ncol(contrast_table) <= 1) {
-      stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+      if (ncol(contrast_table) <= 1) {
+        stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
     }
   }
   model_matrix <- as.data.frame(model_matrix)
   contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
-  
-  # Create an empty list to store the result of matrix subtractions
-  result_list <- list()
+
+    # Create an empty list to store the result of matrix subtractions
+    result_list <- list()
   
   # Loop through each row in contrast_table
   for (i in seq_len(nrow(contrast_table))) {
@@ -366,26 +363,25 @@ for (i in 1:count) {
     pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
 }
 pairwise_comparisons <- pairwise_comparisons %>%
-  dplyr::select(-contrast_group1, -contrast_group2)
+  dplyr::select(-"contrast_group1", -"contrast_group2")
   }
-  
+
   model_results <- list(model = model,
                         model_data = mf_data,
                         model_formula = model_formula,
                         summary = model_summary,
                         residuals_histogram = hist,
-residuals_qq_plot = qqplot,
+                        residuals_qq_plot = qqplot,
                         point_estimates_matrix = model_matrix,
                         point_estimates = model_estimates)
   if (length(fixed_effects) > 1) {
     model_results$anova <- model_anova
   }
-  if(!is.null(contrasts)){
+  if (!is.null(contrasts)) {
     model_results$pairwise_comparisons_matrix <- result_matrix
     model_results$pairwise_comparisons <- pairwise_comparisons
   }
-  
+
   return(model_results)
-  
+
 }
-  
