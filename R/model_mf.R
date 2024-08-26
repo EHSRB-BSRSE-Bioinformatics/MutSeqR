@@ -43,7 +43,7 @@
 #' model uses the `glm` function.
 #' @export
 #' 
-#' @details 
+#' @details
 #' 
 #' `fixed_effects` are variables that have a direct and constant effect on the 
 #' dependent variable (ie mutation frequency).They are typically the experimental 
@@ -193,7 +193,7 @@ model_mf <- function(mf_data,
 
   # Add random effects to the formula
   if (!is.null(random_effects)) {
-  # Add random effect to model formula
+    # Add random effect to model formula
     random_formula <- paste(paste("(1|", random_effects, ")", collapse = "+"))
     formula_str <- paste(formula_str, "+", random_formula)
     model_formula <- stats::as.formula(formula_str)
@@ -205,7 +205,7 @@ model_mf <- function(mf_data,
       family = "binomial",
       data = mf_data,
       ...
-      )
+    )
 
   } else {
     model_formula <- stats::as.formula(formula_str)
@@ -221,15 +221,13 @@ model_mf <- function(mf_data,
   }
 
   model_summary <- summary(model)
-
-  if(length(fixed_effects) > 1) {
+  if (length(fixed_effects) > 1) {
     model_anova <- car::Anova(model)
   }
-  
-  #################################
+
   # Check residuals
   if(!is.null(random_effects)) {
-   mf_data$residuals <- stats::residuals(model)
+    mf_data$residuals <- stats::residuals(model)
   } else {
     mf_data$residuals <- model$residuals
   }
@@ -242,14 +240,17 @@ model_mf <- function(mf_data,
 
   # Make Residuals Plots
   par(las = 1, xaxs = "i", yaxs = "i")
-  hist <- hist(mf_data$residuals, main = "Residuals", col = "yellow")
+  hist_data <- hist(mf_data$residuals, plot = FALSE)
+  ylim_max <- max(hist_data$counts) + 1
+  hist(mf_data$residuals,
+       main = "Residuals",
+       col = "yellow",
+       ylim = c(0, ylim_max))
 
   qqplot <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
   stats::qqline(mf_data$residuals, col = "red")
 
-  #########################################
   # Point Estimates By Fixed Effects
-  ###########################################################
   # Define your levels for each factor
   fixed_effects_levels <- lapply(fixed_effects, function(factor) levels(mf_data[[factor]]))
 
@@ -257,7 +258,7 @@ model_mf <- function(mf_data,
   design_matrix <- do.call(expand.grid, fixed_effects_levels)
   colnames(design_matrix) <- fixed_effects
 
-   # Create simplified model formula
+  # Create simplified model formula
   if (test_interaction) {
     fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
   } else {
@@ -292,78 +293,76 @@ model_mf <- function(mf_data,
   }
   # Extract rownames into a column for each contrast variable
   for (i in 1:count) {
-      var_i <- get(paste0("var", i))
-      model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+    var_i <- get(paste0("var", i))
+    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
   }
 
-  ##############################################################
   # Pairwise Comparisons
-  ##################################################################
   # load contrast table file and do checks
   if (!is.null(contrasts)) {
     if (is.data.frame(contrasts)) {
       contrast_table <- contrasts
     } else {
-        contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
+      contrast_table <- read.delim(file.path(contrasts),
+                                   sep = cont_sep,
+                                   header = FALSE)
       if (ncol(contrast_table) <= 1) {
         stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+      }
     }
-  }
   model_matrix <- as.data.frame(model_matrix)
   contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
 
     # Create an empty list to store the result of matrix subtractions
     result_list <- list()
-  
+
   # Loop through each row in contrast_table
   for (i in seq_len(nrow(contrast_table))) {
-    
     # Get the model_row values
     V1 <- as.character(contrast_table[i, 1])
     V2 <- as.character(contrast_table[i, 2])
-    
     # Perform matrix subtraction and store the result in the list
     result_list[[i]] <- model_matrix[V1, ] - model_matrix[V2, ]
   }
-  
-  # Convert the list of matrices to a single matrix
-  result_matrix <- as.matrix(do.call(rbind, result_list))
-  # Set row names for result_matrix
-  rownames(result_matrix) <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
-  
- # Perform comparisons
-  pairwise_comparisons <- doBy::esticon(obj = model, L = result_matrix)
+    # Convert the list of matrices to a single matrix
+    result_matrix <- as.matrix(do.call(rbind, result_list))
+    # Set row names for result_matrix
+    rownames(result_matrix) <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
 
-  # Clean results  
-  pairwise_comparisons <- as.data.frame(pairwise_comparisons)
-  pairwise_comparisons$estimate <- exp(pairwise_comparisons$estimate)
-  delta <- pairwise_comparisons$estimate^2
-  pairwise_comparisons$lwr <- exp(pairwise_comparisons$lwr)
-  pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
-  pairwise_comparisons$std.error <- sqrt(delta*pairwise_comparisons$std.error^2)
-  pairwise_comparisons <- pairwise_comparisons[,-5]
-  colnames(pairwise_comparisons) <- c("Fold.Change", "FC.Std.Err", "Obs.T", "p.value", "df", "FC.Lower", "FC.Upper")
-  
-  pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
-  pairwise_comparisons <- pairwise_comparisons %>%
-  dplyr::mutate(
-    Significance = case_when(
-      adj_p.value <= 0.001 ~ "***",
-      adj_p.value <= 0.01 ~ "**",
-      adj_p.value <= 0.05 ~ "*",
-      TRUE ~ ""
-    )
-  )
+    # Perform comparisons
+    pairwise_comparisons <- doBy::esticon(obj = model, L = result_matrix)
 
-pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
-pairwise_comparisons$contrast_group2 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 2)
-for (i in 1:count) {
-    var_i <- get(paste0("var", i))
-    pairwise_comparisons[[paste0(var_i, "_1")]] <- sapply(strsplit(pairwise_comparisons$contrast_group1, ":"), "[", i)
-    pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
-}
-pairwise_comparisons <- pairwise_comparisons %>%
-  dplyr::select(-"contrast_group1", -"contrast_group2")
+    # Clean results
+    pairwise_comparisons <- as.data.frame(pairwise_comparisons)
+    pairwise_comparisons$estimate <- exp(pairwise_comparisons$estimate)
+    delta <- pairwise_comparisons$estimate^2
+    pairwise_comparisons$lwr <- exp(pairwise_comparisons$lwr)
+    pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
+    pairwise_comparisons$std.error <- sqrt(delta * pairwise_comparisons$std.error^2)
+    pairwise_comparisons <- pairwise_comparisons[, -5]
+    colnames(pairwise_comparisons) <- c("Fold.Change",
+                                        "FC.Std.Err",
+                                        "Obs.T",
+                                        "p.value",
+                                        "df",
+                                        "FC.Lower",
+                                        "FC.Upper")
+
+    pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
+    pairwise_comparisons <- pairwise_comparisons %>%
+      dplyr::mutate(Significance = case_when(adj_p.value <= 0.001 ~ "***",
+                                             adj_p.value <= 0.01 ~ "**",
+                                             adj_p.value <= 0.05 ~ "*",
+                                             TRUE ~ ""))
+    pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
+    pairwise_comparisons$contrast_group2 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 2)
+    for (i in 1:count) {
+      var_i <- get(paste0("var", i))
+      pairwise_comparisons[[paste0(var_i, "_1")]] <- sapply(strsplit(pairwise_comparisons$contrast_group1, ":"), "[", i)
+      pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
+    }
+    pairwise_comparisons <- pairwise_comparisons %>%
+      dplyr::select(-"contrast_group1", -"contrast_group2")
   }
 
   model_results <- list(model = model,
