@@ -1,6 +1,6 @@
 # Concatenated files for minimal proast package
 #' Run dose-response modeling using PROAST.
-#'             
+#' 
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive)
 #' @param datatype Options: continuous, individual data.
 #' @return Results from PROAST.
