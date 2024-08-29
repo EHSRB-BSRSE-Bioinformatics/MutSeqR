@@ -9075,3 +9075,546 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
 
 
 
+f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
+    if (exists("track")) 
+        print("f.quick.con")
+        message(paste0("indep_var_choice: ", indep_var_choice))
+    if (ans.all$WAPP) {
+        ans.all$gui <- TRUE
+        ans.all$interrupt <- FALSE
+    }
+    ans.all <- with(ans.all, {
+        output <- ans.all$output
+        if (gui) {
+            if (ans.all$quick.ans != 6) 
+                ans.all$quick.ans <- 3
+            if (output) 
+                if (!WAPP && !simu) {
+                  cat("\nclick in this window to see current output\n")
+                  f.press.key.to.continue()
+                }
+            ans.all$data.0 <- odt
+            f.overlap()
+            ans.all$cont <- f.cont(ans.all)
+            Vyans <- yans
+            Vnans <- 0
+            Vsans <- 0
+            if (dtype %in% c(10, 15)) {
+                Vsans <- sans
+                Vnans <- nans
+            }
+            if (length(Vnans) == 1 && length(Vyans) > 1) 
+                Vnans <- rep(Vnans, length(Vyans))
+            ans.all$const.var <- FALSE
+            version.old <- ans.all$PRversion
+            if (version.old[1] != PRversion) 
+                ans.all <- f.adjust.saved(ans.all)
+            if (ans.all$WAPP && ans.all$nruns == 0 && dtype %in% 
+                c(5, 15)) 
+                ans.all$nruns <- 200
+            if (ans.all$WAPP && ans.all$do.MA) 
+                ans.all$nr.models <- 4
+            if (length(Vyans) > 1) 
+                ans.all$auto.detlim <- TRUE
+            if (DA.ans == 2) 
+                ans.all <- f.add.dosecols(ans.all)
+        }
+        if (!gui) {
+            varnames <- ans.all$varnames
+            nvar <- ans.all$nvar
+            dtype <- ans.all$dtype
+            odt <- ans.all$odt
+            if (ans.all$xans[1] == 0) {
+                ans.all$change[1] <- T
+                ans.all <- f.change.settings(ans.all, indep_var_choice = indep_var_choice)
+            }
+            cat("\n")
+            cat(paste(1:nvar, varnames[1:nvar], "\n"))
+            cat("Give number(s) of the response(s) you want to analyse\n")
+            if (!is.null(Vyans_input)) {
+              if (is.numeric(Vyans_input) || all(Vyans_input %in% varnames)) {
+                Vyans <- if (is.numeric(Vyans_input)) Vyans_input else match(Vyans_input, varnames)
+                ans.all$Vyans <- Vyans
+                zero.ind <- if (length(Vyans) > 1) any(data.0[, Vyans] == 0, na.rm = TRUE) else F
+              } else {
+                stop("Vyans_input must be a vector of either numeric column indices or names that exist in 'varnames'.")
+              }
+            } else {
+            Vyans <- eval(parse(prompt = paste(" -------- > ")))
+            }
+            zero.ind <- F
+            if (length(Vyans) > 1) 
+                zero.ind <- any(data.0[, Vyans] == 0, na.rm = T)
+            Vsans <- 0
+            Vnans <- 0
+            if (dtype %in% c(10, 15, 250)) {
+                cat("\n")
+                cat(paste(1:nvar, varnames[1:nvar], "\n"))
+                cat("Give number(s) of the variation statistic associated to these endpoints\n")
+                Vsans <- eval(parse(prompt = paste(" -------- > ")))
+                if (length(Vsans) == 1 && length(Vyans) > 1) 
+                  Vsans <- rep(Vsans, length(Vyans))
+                sd.se <- menu(c("standard deviations", "standard errors"), 
+                  title = "Do you have standard deviations or standard errors associated \n                          with the means?")
+                cat("\n")
+                cat(paste(1:nvar, varnames[1:nvar], "\n"))
+                cat("Give number(s) of the group size(s) associated to these endpoints\n")
+                Vnans <- eval(parse(prompt = paste(" -------- > ")))
+                if (length(Vnans) == 1 && length(Vyans) > 1) 
+                  Vnans <- rep(Vnans, length(Vyans))
+                ans.all$Vsans <- Vsans
+                ans.all$sd.se <- sd.se
+                ans.all$Vnans <- Vnans
+            }
+            ans.all$covar.dd <- 0
+            if (dtype == 5) 
+                ans.all$nest.no <- menu(varnames[1:nvar], title = "Give number of the nested factor \n (type 0 to skip nested analysis)")
+            if (ans.all$DA.ans == 1) {
+                if (!is.null(covariates)) {
+                  if (is.numeric(covariates) || covariates %in% varnames) {
+                    covar.no <- if (is.numeric(covariates)) covariates else match(covariates, varnames)
+                    ans.all$covar.no <- covar.no
+                  } else {
+                    stop("covariates must be either a numeric column index or a name that exists in 'varnames'.")
+                  }
+                } else if (interactive_mode && ans.all$DA.ans == 1) {
+                  covar.no <- menu(varnames[1:nvar], title = "Give number of factor serving as potential covariate (e.g.sex)\n                     type 0 if none --- \n  ")
+                  ans.all$covar.no <- covar.no
+                }
+            }
+            if (0) 
+                if (ans.all$quick.ans == 4 && covar.no > 0) {
+                  covar.dd <- menu(c("no", "yes"), title = "Do you want parameter d to be covariate dependent? \n  ")
+                  covar.dd <- covar.dd - 1
+                  ans.all$covar.dd <- covar.dd
+                  ans.all$CES <- -1
+                  fix.ans <- 2
+                  cc.fix <- NA
+                  if (fix.ans == 1) 
+                    ans.all$cc.fix <- eval(parse(prompt = "\n\ngive fixed value for parameter c >   "))
+                }
+            if (!ans.all$covar.dd) {
+              if (interactive_mode == FALSE) {
+                 # Setting CES based on the parameter provided
+                 ans.all$CES <- abs(CES) # Ensure the CES value is positive
+                 ans.all$NES.ans <- adjust_CES_to_group_SD
+              } else {
+                ans.all$NES.ans <- menu(c("no", "yes"), title = "Do you want to adjust CES to within group SD?\n")
+                if (ans.all$NES.ans == 1)
+                  ans.all$CES <- eval(parse(prompt = paste("\nGive value for CES (always positive)\n                           type 0 to avoid calculation of CIs  > ")))
+                ans.all$CES <- abs(ans.all$CES)
+              }
+            }
+            if (quick.ans == 6) {
+                fct2.fact <- data.0[, covar.no]
+                levels.all <- levels(factor(fct2.fact))
+                nr.lev <- length(levels.all)
+                cat("\n: Give number associated with the reference\n")
+                cat(" ")
+                cat(paste(1:nr.lev, ":", levels.all, "\n"))
+                ans.all$ref.lev <- eval(parse(prompt = paste(" -------- > ")))
+            }
+            if (length(Vyans) == 1) 
+                interrupt <- TRUE
+            if (length(Vyans) > 1) {
+                int.ans <- menu(c("no", "yes (opportunity to save results per endpoint)"), 
+                  title = "Do you want to interrupt calculations after each endpoint? \n")
+                if (int.ans == 2) 
+                  interrupt <- TRUE
+                else interrupt <- FALSE
+            }
+            ans.all$interrupt <- interrupt
+            ans.all$auto.detlim <- FALSE
+            if (length(Vyans) > 1) {
+                if (zero.ind && int.ans == 1) {
+                  auto.ans <- menu(c("yes", "apply automatic detection limit"), 
+                    title = "Do you want to provide detection limit for each separate response, or automically use smallest nonzero observation?\n")
+                  switch(auto.ans, ans.all$auto.detlim <- FALSE, 
+                    ans.all$auto.detlim <- TRUE)
+                }
+            }
+            if ((ans.all$CES != 0 || ans.all$NES.ans == 2)) {
+                if (ans.all$quick.ans == 6) 
+                  ans.all$nruns <- eval(parse(prompt = "\nprovide number of bootstrap runs, or type 0 to get profile likelihood CI > "))
+                else if (length(ans.all$xans) == 1) {
+                  if (interactive_mode == FALSE) {
+                    do.MA <- model_averaging
+                  } else {
+                    do.MA <- menu(c("no", "yes"), title = "Do you want to calculate the BMD confidence interval by model averaging?") - 
+                    1
+                  }
+                }
+                if (do.MA) {
+                  if (interactive_mode == FALSE) {
+                    ans.all$nr.boot.ma <- num_bootstraps
+                  } else {
+                    ans.all$nr.boot.ma <- eval(parse(prompt = "\n\ngive number of bootstrap runs for calculating BMD confidence interval based on MA (e.g. 200) >   "))
+                  }
+                  ans.all$do.MA <- do.MA
+                  ans.all$nr.models <- 4
+                }
+            }
+            if (!do.MA && quick.ans < 6) {
+              model.options <- c(
+                "Exponential model only",
+                "Exponential and Hill model",
+                "previous option with inverse exponential model added",
+                "previous option with lognormal DR model added"
+              )
+              if (!is.null(model_selection) && model_selection %in% model.options) {
+                # If a valid model selection is made, use the corresponding index
+                ans.all$nr.models <- match(model_selection, model.options)
+              } else {
+                model.options <- c("Exponential model only", 
+                  "Exponential and Hill model", "previous option with inverse exponential model added", 
+                  "previous option with lognormal DR model added")
+                cat("Which models do you want to be fitted?\n")
+                cat(" ")
+                cat(paste(1:4, ":", model.options, "\n"))
+                ans.all$nr.models <- eval(parse(prompt = paste(" -------- > ")))
+              }
+            }
+            if (dtype %in% c(5, 15) && !ans.all$no.CI && !ans.all$WAPP && 
+                !do.MA && ans.all$CES != 0) 
+                ans.all$nruns <- eval(parse(prompt = "\n\ngive the number of bootstrap runs you want to be done \n        for calculating CED CIs for each model (e.g.200) > "))
+        }
+        if (ans.all$NES.ans == 2) 
+            ans.all$CES <- 0.05
+        ans.all$no.CI <- F
+        if (ans.all$CES == 0) {
+            ans.all$CES <- 0.05
+            ans.all$no.CI <- T
+        }
+        data.0.global <- f.remove.NAs(xans = ans.all$xans, yans = Vyans[1], 
+            sans = Vsans[1], nans = Vnans[1], covar.no = 0, dfr = ans.all$data.0, 
+            output = output)
+        if (covar.no > 0) {
+            covariate <- data.0.global[, covar.no]
+            covariate <- f.remove.blanks(covariate)
+            covar.txt <- levels(as.factor(covariate))
+        }
+        else covar.txt <- character(1)
+        CED.matr <- matrix(NA, ncol = (2 * length(covar.txt)))
+        dimn.col = character()
+        for (ii in 1:length(covar.txt)) dimn.col <- c(dimn.col, 
+            paste("BMDL", covar.txt[ii], sep = "-"), paste("BMDU", 
+                covar.txt[ii], sep = "-"))
+        dimnames(CED.matr)[[2]] <- dimn.col
+        ans.all$CED.matr.ma <- matrix(NA, nrow = 0, ncol = 4)
+        dimnames(ans.all$CED.matr.ma)[[2]] <- c("endpoint", "subgroup", 
+            "BMDL.MA", "BMDU.MA")
+        if (ans.all$nr.gr == 1) 
+            ans.all$CED.matr.ma <- ans.all$CED.matr.ma[, -2]
+        if (ans.all$NES.ans == 2) {
+            Mces <- matrix(ncol = 2)
+            Msd <- matrix(ncol = 2)
+        }
+        else {
+            Mces <- NA
+            Msd <- NA
+        }
+        ans.all$CI.plt <- FALSE
+        ans.all$cont <- f.cont(ans.all)
+        if (ans.all$cont) {
+            ans.all$plot.type <- 4
+            ans.all$plt.mns <- 3
+        }
+        else ans.all$plot.type <- 2
+        CED.all <- list(CED.matr = CED.matr, endpoints = character(), 
+            covar.txt = covar.txt, CES = ans.all$CES, Mces = Mces, 
+            Msd = Msd, NES.ans = ans.all$NES.ans, nr.models = ans.all$nr.models, 
+            quick.ans = quick.ans, PRversion = PRversion, date = date(), 
+            Vtrend = logical())
+        if (ans.all$NES.ans == 2) 
+            CED.all$CES <- NA
+        ans.all$model.type <- 1
+        ans.all$model.list <- c("EXP", "HILL", "INVEXP", "LOGN")
+        CI.matr.ma <- numeric()
+        endpoint.ma <- character(0)
+        data.0.global <- ans.all$data.0
+        first.loop <- T
+        ii <- 1
+        for (yans.tmp in Vyans) {
+            ans.all$yans <- yans.tmp
+            if (dtype %in% c(10, 15, 250, 260)) {
+                ans.all$sans <- Vsans[ii]
+                ans.all$nans <- Vnans[ii]
+            }
+            ans.all$data.0 <- f.remove.NAs(xans = ans.all$xans, 
+                yans = ans.all$yans, sans = ans.all$sans, nans = ans.all$nans, 
+                covar.no = 0, dfr = data.0.global, output = output)
+            response <- ans.all$data.0[, yans.tmp]
+            skip <- FALSE
+            if (transf.ans == 3) 
+                skip <- f.check.nonneg.num(response, gui, dtype, 
+                  quick.ans = 2)
+            if (skip) 
+                cat("\n\nATTENTION: analysis not possible for response", 
+                  ans.all$varnames[yans.tmp], "\n")
+            date.tmp <- date()
+            if (!skip) {
+                if (length(Vyans) > 1) {
+                  ans.all$detlim <- 0
+                  ans.all$Vdetlim <- 0
+                  ans.all$detlim.col <- 0
+                  ans.all$covar.no <- covar.no
+                }
+                ans.all <- f.execute(ans.all, no.plot = T)
+                ans.all <- f.clear(ans.all)
+                ans.all$twice <- T
+                if (first.loop) 
+                  ans.all$full.ans <- f.full.ans(ans.all, gui = gui)
+                first.loop <- F
+                constr.dd <- f.constr.dd(model.ans = 5)
+                ans.all$lower.dd <- constr.dd[1]
+                ans.all$upper.dd <- constr.dd[2]
+                if (!gui && yans.tmp == Vyans[1]) {
+                  if (interactive_mode) {
+                    if (is.null(lower_dd) && is.null(upper_dd)) {
+                        cat(paste("\n\nATTENTION: the constraints on parameter d in the exponential model are set at\n",
+                            ans.all$lower.dd, "and", ans.all$upper.dd, "\n"))
+                        cat("and adjusted for the other models\n")
+                        cat("\ntype 0 if you want to change these constraints,")
+                        constr.ans <- as.numeric(readline(prompt = "\notherwise enter any other number > "))
+                        if (!is.na(constr.ans) && constr.ans == 0) {
+                            ans.all$lower.dd <- as.numeric(readline(prompt = "enter lower bound for parameter d > "))
+                            ans.all$upper.dd <- as.numeric(readline(prompt = "enter upper bound for parameter d > "))
+                        }
+                    } else {
+                        if (!is.null(lower_dd)) {
+                            ans.all$lower.dd <- lower_dd
+                        }
+                        if (!is.null(upper_dd)) {
+                            ans.all$upper.dd <- upper_dd
+                        }
+                    }
+                  } else {
+                    # Non-interactive mode: Use existing defaults for lower_dd and upper_dd if not provided
+                    ans.all$lower.dd <- if (is.null(lower_dd)) ans.all$lower.dd else lower_dd
+                    ans.all$upper.dd <- if (is.null(upper_dd)) ans.all$upper.dd else upper_dd
+                  }
+                }
+                ans.all$hill <- 0
+                ans.all$increase <- 0
+                ans.all$Vyans <- Vyans
+                ans.all$do.MA <- do.MA
+                ans.all <- f.select.con(ans.all, interactive_mode = interactive_mode, results_env = results_env)
+                if (ans.all$quick.ans == 6) {
+                  if (!(WAPP || gui)) 
+                    f.store.results(ans.all, store.name = 0)
+                  return(ans.all)
+                }
+                do.MA <- ans.all$do.MA
+                bmdl.lowest <- numeric()
+                bmdu.highest <- numeric()
+                if (ans.all$nr.models == 1) {
+                  for (qq in (1:nr.gr)) {
+                    bmdl.lowest[qq] <- ans.all$EXP$conf.int[qq, 
+                      1]
+                    bmdu.highest[qq] <- ans.all$EXP$conf.int[qq, 
+                      2]
+                  }
+                }
+                if (!ans.all$no.CI && ans.all$nr.models > 0 && 
+                  length(ans.all$xans) > 0) {
+                  if (ans.all$nr.models > 1) 
+                    if (!is.na(ans.all$EXP$conf.int[1, 1]) && 
+                      !is.na(ans.all$HILL$conf.int[1, 1])) {
+                      nr.gr <- length(ans.all$EXP$conf.int[, 
+                        1])
+                      nr.gr <- max(nr.gr, length(ans.all$HILL$conf.int[, 
+                        1]))
+                      if (ans.all$nr.models > 2) 
+                        nr.gr <- max(nr.gr, length(ans.all$INVEXP$conf.int[, 
+                          1]))
+                      if (ans.all$nr.models > 3) 
+                        nr.gr <- max(nr.gr, length(ans.all$LOGN$conf.int[, 
+                          1]))
+                      if (length(ans.all$EXP$conf.int[, 1]) == 
+                        1) 
+                        ans.all$EXP$conf.int <- matrix(ans.all$EXP$conf.int[1, 
+                          ], byrow = TRUE, ncol = 2, nrow = nr.gr)
+                      if (length(ans.all$HILL$conf.int[, 1]) == 
+                        1) 
+                        ans.all$HILL$conf.int <- matrix(ans.all$HILL$conf.int[1, 
+                          ], byrow = TRUE, ncol = 2, nrow = nr.gr)
+                      for (qq in (1:nr.gr)) {
+                        bmdl.lowest[qq] <- min(ans.all$EXP$conf.int[qq, 
+                          1], ans.all$HILL$conf.int[qq, 1])
+                        bmdu.highest[qq] <- max(ans.all$EXP$conf.int[qq, 
+                          2], ans.all$HILL$conf.int[qq, 2])
+                      }
+                    }
+                  if (ans.all$nr.models > 2) 
+                    if (!is.na(ans.all$INVEXP$conf.int[1, 1])) {
+                      if (length(ans.all$INVEXP$conf.int[, 1]) == 
+                        1) 
+                        ans.all$INVEXP$conf.int <- matrix(ans.all$INVEXP$conf.int[1, 
+                          ], byrow = TRUE, ncol = 2, nrow = nr.gr)
+                      for (qq in (1:nr.gr)) {
+                        bmdl.lowest[qq] <- min(bmdl.lowest[qq], 
+                          ans.all$INVEXP$conf.int[qq, 1])
+                        bmdu.highest[qq] <- max(bmdu.highest[qq], 
+                          ans.all$INVEXP$conf.int[qq, 2])
+                      }
+                    }
+                  if (ans.all$nr.models > 3) 
+                    if (!is.na(ans.all$LOGN$conf.int[1, 1])) {
+                      if (length(ans.all$LOGN$conf.int[, 1]) == 
+                        1) 
+                        ans.all$LOGN$conf.int <- matrix(ans.all$LOGN$conf.int[1, 
+                          ], byrow = TRUE, ncol = 2, nrow = nr.gr)
+                      for (qq in (1:nr.gr)) {
+                        bmdl.lowest[qq] <- min(bmdl.lowest[qq], 
+                          ans.all$LOGN$conf.int[qq, 1])
+                        bmdu.highest[qq] <- max(bmdu.highest[qq], 
+                          ans.all$LOGN$conf.int[qq, 2])
+                      }
+                    }
+                  ans.all$bmdl.lowest <- bmdl.lowest
+                  ans.all$bmdu.highest <- bmdu.highest
+                  if (ans.all$nr.models > 0) 
+                    bmdCI.overall <- rbind(bmdl.lowest, bmdu.highest)
+                  bmdCI.overall <- t(bmdCI.overall)
+                  if (length(bmdl.lowest) == 1) 
+                    covar.txt <- "all"
+                  else covar.txt <- dimnames(ans.all$EXP$conf.int)[[1]]
+                  bmdCI.overall <- cbind(covar.txt, bmdCI.overall)
+                  bmdCI.overall <- as.data.frame(bmdCI.overall)
+                  ans.all$bmdCI.overall <- bmdCI.overall
+                  if (output) {
+                    if (ans.all$NES.ans == 1) 
+                      cat("\n\n -----------  CES = ", ans.all$CES, 
+                        " --------------------------------- ")
+                    if (ans.all$NES.ans == 2 && length(ans.all$bmdCI.overall[, 
+                      1]) > 0) 
+                      if (output) 
+                        cat("\n-----------  endpoint-specific CES", 
+                          round(ans.all$CES, 3), "-----------------\n ")
+                    if (!do.MA && length(ans.all$bmdCI.overall[, 
+                      1]) > 0) {
+                      cat("\nThe lowest BMDL and highest BMDU from the fitted models are:\n")
+                      print(ans.all$bmdCI.overall)
+                      cat(" ---------------------------------------------------\n\n ")
+                    }
+                  }
+                }
+                if (length(Vyans) > 1) 
+                  if (ans.all$no.CI != T) {
+                    CED.all$covar.txt <- ans.all$covar.txt
+                    CED.all <- f.CED.all(CED.all, ans.all$y.leg, 
+                      ans.all$EXP, ans.all$HILL, ans.all$INVEXP, 
+                      ans.all$LOGN, ans.all$TREND)
+                  }
+                if (interactive_mode == TRUE) {
+                  assign("last.fit", ans.all, immed = T, pos = 1)
+                }
+                if (ans.all$fitted) {
+                  if (ans.all$dtype %in% c(1, 5)) 
+                    ans.all$plt.mns <- 1
+                  ans.all <- f.plot.gui(ans.all)
+                  if (!WAPP && length(ans.all$xans) > 1 && ans.all$nr.aa > 
+                    1) {
+                    f.press.key.to.continue()
+                    f.plot.all(ans.all, sep = T)
+                  }
+                }
+                if (length(ans.all$xans) > 1) {
+                  ans.all$conf.int <- f.confint.doseaddition(ans.all)
+                  cat("\n the confidence intervals (per model) are:\n")
+                  print(ans.all$conf.int)
+                }
+                if (do.MA) {
+                  if (ans.all$TREND) {
+                    ans.all$MA.running <- TRUE
+                    cat("\n\nCalculating confidence intervals by model averaging, this may make some time ....\n\n")
+                    ans.all <- f.boot.ma(ans.all, interactive_mode = interactive_mode, results_env = results_env)
+                    cat("\nThe model-average BMD confidence interval is:\n")
+                    print(ans.all$MA$conf.int.ma)
+                    cat("\n")
+                    CI.ma <- ans.all$MA$conf.int.ma
+                    CI.ma <- cbind(rep(ans.all$y.leg, ans.all$nr.gr), 
+                      CI.ma)
+                    dimnames(CI.ma)[[2]][1] <- "endpoint"
+                    ans.all$CED.matr.ma <- rbind(ans.all$CED.matr.ma, 
+                      CI.ma)
+                    CI.matr.ma <- rbind(CI.matr.ma, ans.all$MA$CI.row.ma)
+                    results_env$model_averaging <- ans.all$MA
+                  }
+                  else {
+                    ans.all$MA <- list()
+                    CI.matr.ma <- rbind(CI.matr.ma, rep(NA, 2 * 
+                      ans.all$nr.gr))
+                    ans.all$MA$conf.int.ma <- CI.matr.ma
+                    cat("\n\nNo Model Averaging applied, due to nonsignificant trend in the data\n\n")
+                  }
+                  endpoint.ma <- c(endpoint.ma, ans.all$y.leg)
+                }
+                if (length(ans.all$HILL) == 0) 
+                  ans.all <- f.move.sublist(ans.all, ans.all$EXP)
+                if (!gui && !WAPP) {
+                  if (length(ans.all$notes) > 1) {
+                    print("f.quick.con")
+                    cat(ans.all$notes)
+                    f.press.key.to.continue()
+                  }
+                  if (!(WAPP || gui) && length(Vyans) > 1 && 
+                    interrupt) 
+                    store.name <- f.store.results(ans.all, store.name = 0)
+                }
+            }
+            if (!gui) 
+                cat(paste("\n\nend of analysis for response: ", 
+                  ans.all$y.leg))
+            if (gui) 
+                ans.all$date <- date()
+            ans.all$MA.running <- FALSE
+            ii <- ii + 1
+        }
+        if (ans.all$do.MA) {
+            CED.matr.ma.plt <- data.frame(endpoint = endpoint.ma, 
+                CI = CI.matr.ma)
+            ans.all$CED.matr.ma.plt <- CED.matr.ma.plt
+        }
+        if (ans.all$no.CI == F && length(Vyans) == 1 && length(ans.all$EXP$conf.int[, 
+            1]) > 1 && length(ans.all$xans) == 1) 
+            f.plot.CI(ans.all)
+        if (ans.all$no.CI == F & length(Vyans) > 1) {
+            if (sum(!is.na(CED.all$CED.matr[, 1]) > 0)) {
+                CED.all$CED.matr <- CED.all$CED.matr[-1, ]
+                dimnames(CED.all$CED.matr)[[1]] <- CED.all$endpoints
+                dimnames(CED.all$Mces)[[1]] <- NULL
+                CED.all$Mces <- as.data.frame(CED.all$Mces[-1, 
+                  ])
+                dimnames(CED.all$Msd)[[1]] <- NULL
+                CED.all$Msd <- as.data.frame(CED.all$Msd[-1, 
+                  ])
+                CED.all$max.x <- max(ans.all$x)
+                lst.name <- 0
+                if (WAPP) 
+                  graphics.off()
+                if (output) {
+                  cat("\ncalculations started at:", date.tmp)
+                  cat("\nand ended at:", date())
+                  cat("\n")
+                }
+                ans.all$data.0 <- data.0.global
+                ans.all$means.plt.lst <- NULL
+                ans.all$Vyans <- Vyans
+                ans.all$CED.all <- CED.all
+                f.plot.CED(ans.all, WAPP = WAPP, plotprefix = ans.all$plotprefix, 
+                  svg.plots = ans.all$svg.plots)
+            }
+            else cat("\n\nNone of the endpoints showed a significant trend\n")
+        }
+        if (!gui) 
+            ans.all$NES.ans <- 1
+        if (exists("track")) 
+            print("f.quick.con:  END")
+        message("Returning ans.all from f.quick.con")
+        return(ans.all)
+    })
+}
+
+
+
