@@ -11454,3 +11454,88 @@ f.converged <- function(mess, conv.out, tmp.quick = F) {
 
 
 
+f.bb.con <- function(model.ans, cc, dd, CED, CES, ref.lev = NA, CED.ref = NA, 
+    incr.decr.no = 0, cont, aa = NA) {
+    if (exists("track2")) 
+        print("f.bb.con")
+    if (model.ans == 12) 
+        bb <- logb(CES + 1)/CED
+    if (model.ans == 14) 
+        bb <- -logb((CES + 1 - cc)/(1 - cc))/CED
+    if (model.ans %in% c(13, 15, 50)) {
+        if (incr.decr.no > 0) 
+            CES.tmp <- CES
+        else {
+            if ((cc[1] < 1)) 
+                CES.tmp <- -abs(CES)
+            else CES.tmp <- abs(CES)
+        }
+        bb <- CED/(-log(1 - log(CES.tmp + 1)/log(cc)))^(1/dd)
+    }
+    if (model.ans == 22) 
+        bb <- -CED * (1 + CES)/CES
+    if (model.ans %in% c(23, 25)) {
+        if (incr.decr.no > 0) 
+            CES.tmp <- CES
+        else {
+            if ((cc[1] < 1)) 
+                CES.tmp <- -abs(CES)
+            else CES.tmp <- abs(CES)
+        }
+        dum <- log(CES.tmp + 1)/log(cc)
+        bb <- CED * ((1 - dum)/dum)^(1/dd)
+    }
+    if (model.ans == 24) 
+        bb <- CED/(CES/(cc - 1 - CES))
+    if (model.ans == 46) {
+        if ((cc[1] < 1)) 
+            CES.tmp <- -abs(CES)
+        else CES.tmp <- abs(CES)
+        CED <- CED.ref/CED
+        CED[ref.lev] <- CED.ref
+        if (cont) 
+            bb <- CED/(-log(1 - log(CES.tmp + 1)/log(cc)))^(1/dd)
+    }
+    if (model.ans %in% c(51, 52)) {
+        if (incr.decr.no > 0) 
+            CES.tmp <- CES
+        else {
+            if ((cc[1] < 1)) 
+                CES.tmp <- -abs(CES)
+            else CES.tmp <- abs(CES)
+        }
+        dum <- log(CES.tmp + 1)/log(cc)
+        dum <- (-log(dum))^(1/dd)
+        bb <- CED * dum
+    }
+    if (model.ans %in% c(53, 54)) {
+        if (incr.decr.no > 0) 
+            CES.tmp <- CES
+        else {
+            if ((cc[1] < 1)) 
+                CES.tmp <- -abs(CES)
+            else CES.tmp <- abs(CES)
+        }
+        dum <- log(CES.tmp + 1)/log(cc)
+        log.bb <- qnorm(dum) - dd * log(CED)
+        bb <- exp(log.bb)
+    }
+    if (model.ans == 60) {
+        dum <- log(1 - log(CES + 1)/(aa * (cc - 1)))
+        bb <- -dum/(CED^dd)
+    }
+    if (model.ans == 61) {
+        dum <- log(1 - log(CES + 1)/(aa * (cc - 1)))
+        bb <- -dum/(CED^dd)
+    }
+    if (model.ans == 63) {
+        dum <- qnorm((1/aa) * log(CES + 1) + pnorm(cc))
+        bb <- (dum - cc)/(CED^dd)
+    }
+    if (exists("track2")) 
+        print("f.bb.con:END")
+    return(bb)
+}
+
+
+
