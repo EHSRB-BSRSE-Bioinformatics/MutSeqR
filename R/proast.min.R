@@ -11435,3 +11435,22 @@ f.pars <- function(ans.all) {
 
 
 
+f.converged <- function(mess, conv.out, tmp.quick = F) {
+    if (exists("track2")) 
+        print("f.converged")
+    converged <- F
+    if (mode(mess) == "NULL") {
+        converged <- F
+        if (!tmp.quick) 
+            cat("\nATTENTION: convergence message is NULL\n")
+    }
+    else converged <- 1 - conv.out
+    if (!tmp.quick) 
+        cat("\n CONVERGION TYPE: ", mess, "\n")
+    if (exists("track2")) 
+        print("f.converged:  END")
+    return(converged)
+}
+
+
+
