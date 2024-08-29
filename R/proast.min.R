@@ -12713,3 +12713,157 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
 
 
 
+f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
+    if (exists("track")) 
+        print("f.CI.sel")
+    ans.all <- with(ans.all, {
+        nr.aa <- max(fct1)
+        nr.bb <- max(fct2)
+        nr.var <- max(fct3)
+        if (cont) {
+            cc.OK <- f.check.cc(ans.all)
+            if (!cc.OK) {
+                note.tmp <- paste(y.leg, ": parameter cc too close to CES; no BMD CI calculated")
+                ans.all$notes <- paste(ans.all$notes, "\n\n", 
+                  note.tmp, "\n")
+                ans.all$conf.int <- matrix(NA, ncol = 2, nrow = max(fct2))
+                return(ans.all)
+            }
+            from <- nr.var + nr.aa + 1
+            if (length(xans) == 1) {
+                until <- nr.var + nr.aa + nr.bb
+                ans.all$group <- from:until
+            }
+            else {
+                from.rpf <- nr.var + nr.aa + length(MLE) - nr.dosecol + 
+                  2
+                until.rpf <- nr.var + nr.aa + length(MLE)
+                ans.all$group <- c(from, from.rpf:until.rpf)
+            }
+        }
+        if (!cont) {
+            CED.lst <- f.ced.cat(ans.all)
+            ans.all$CED.matr <- CED.lst$CED.matr
+            ans.all$response.matr <- CED.lst$response.matr
+            CED <- CED.lst$CED
+            ans.all$CED <- CED
+            rank.low <- order(CED)[1]
+            if (max(fct1) > 1 && max(fct2) == 1) 
+                group <- rank.low + 1
+            else group <- rank.low + max(fct1)
+            if (dtype == 6) 
+                group <- group + 1
+            if (length(xans) == 1) 
+                ans.all$group <- group
+            ans.all$rank.low <- rank.low
+            if (model.ans > 1) 
+                ans.all$sens.lev <- covar.txt[rank.low]
+            else ans.all$sens.lev <- NA
+        }
+        if (dtype %in% c(2, 4, 6)) 
+            no.CI <- T
+        if (!no.CI) {
+            if (dtype %in% c(5, 15)) {
+                ans.all$plot.ans <- 1
+                ans.all$nrp <- length(regr.par)
+                ans.all$CED <- CED
+                ans.all <- f.mm7.con(ans.all)
+                conf.int <- ans.all$conf.int
+            }
+            else {
+                if (ans.all$loglik == 1e-12) 
+                  cat("\n\nno finite log-likelihood found, CI will not be calculated\n\n")
+                else {
+                  ans.all$trace <- F
+                  ans.all$trace.plt <- F
+                  if (length(xans) > 1) {
+                    group <- nr.var + nr.aa + 1
+                    RPF.rank <- (npar - nr.dosecol + 2):npar
+                    if (length(xans) > 1) 
+                      group <- c(group, RPF.rank)
+                    ans.all$group <- group
+                  }
+                  if (ans.all$output) 
+                    cat("\n\n calculating confidence intervals ....\n\n")
+                  ans.all <- f.CI(ans.all)
+                  conf.int <- ans.all$conf.int
+                  if (ans.all$update) {
+                    if (cont) {
+                      CED <- ans.all$regr.par[(nr.aa + 1):(nr.aa + 
+                        nr.bb)]
+                    }
+                    if (!cont) {
+                      CED.lst <- f.ced.cat(ans.all)
+                      ans.all$CED.matr <- CED.lst$CED.matr
+                      ans.all$response.matr <- CED.lst$response.matr
+                      CED <- CED.lst$CED
+                      if (nr.bb == 1) 
+                        CED <- rep(CED, nr.aa)
+                    }
+                    ans.all$Vloglik[ans.all$row.sel] <- ans.all$loglik
+                    ans.all$Vconverged[ans.all$row.sel] <- ans.all$converged
+                    ans.all$regr.par.matr <- f.pars(ans.all)$regr.par.matr
+                  }
+                }
+            }
+            if (model.ans > 1) {
+                CED <- signif(CED, 4)
+                ans.all$conf.int <- ans.all$conf.int
+                conf.int <- signif(conf.int, 3)
+                CED.uniq <- unique(CED)
+                if (cont && ans.all$output) 
+                  if (length(CED.uniq) > 1) {
+                    if (model.ans == 46) {
+                      cat("\n\nthe CED (in orig. units) and the", 
+                        100 * conf.lev, "% confidence interval for group", 
+                        covar.txt[1], "is: \n", sf.x * CED[1], 
+                        "\n", conf.int[1, 1], "\n", conf.int[1, 
+                          2], "\n\n")
+                      for (qq in 2:max(fct2)) {
+                        cat("\n\nthe RPF (in orig. units) and the", 
+                          100 * conf.lev, "% confidence interval for group", 
+                          covar.txt[qq], "is: \n", sf.x * CED[qq], 
+                          "\n", conf.int[qq, 1], "\n", conf.int[qq, 
+                            2], "\n\n")
+                      }
+                    }
+                    else {
+                      for (qq in 1:max(fct2)) {
+                        cat("\n\nthe CED (in orig. units) and the", 
+                          100 * conf.lev, "% confidence interval for group", 
+                          covar.txt[qq], "is: \n", sf.x * CED[qq], 
+                          "\n", conf.int[qq, 1], "\n", conf.int[qq, 
+                            2], "\n\n")
+                      }
+                    }
+                  }
+                  else cat("\n\nthe CED (in orig. units) and the", 
+                    100 * conf.lev, "% confidence interval is: \n", 
+                    sf.x * CED[1], "\n", conf.int[1, 1], "\n", 
+                    conf.int[1, 2], "\n\n")
+            }
+            if (length(CED) > 1) 
+                ced.table <- data.frame(subgroup = covar.txt, 
+                  BMDL = conf.int[, 1], BMDU = conf.int[, 2], 
+                  BMD = CED)
+            else ced.table <- data.frame(BMDL = conf.int[, 1], 
+                BMDU = conf.int[, 2], BMD = CED)
+            ans.all$ced.table <- ced.table
+        }
+        if (0) 
+            if (!gui && length(ans.all$MLE) > 10) {
+                f.store.results(ans.all, "refit.tmp")
+                cat("\n\nNOTE: confidence intervals were stored in refit.tmp\n\n")
+            }
+        ans.all$CED <- signif(CED, 4)
+        if (exists("track")) 
+            print("f.CI.sel:  END")
+        if (interactive_mode == FALSE) {
+          assign(ans.all$modelname, ans.all, envir = results_env)
+        }
+        return(ans.all)
+    })
+}
+
+
+
