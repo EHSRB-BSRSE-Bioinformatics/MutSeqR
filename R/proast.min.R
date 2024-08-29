@@ -9618,3 +9618,483 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
 
 
 
+f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 1, 
+    fct4 = 1, fct5 = 1, name = F, CES = NA, twice = T, ttt = 0, 
+    yy = 0, trace.expect = F, increase, x.mn = NA, ref.lev, ans.m6.sd = 1, 
+    par.start = NA, sign.q = 0, x1, x2, opposing = 1, cc.inf, 
+    incr.decr.no = 0, cont = TRUE) {
+    if (exists("track2")) 
+        print("f.expect.con")
+    if (0) 
+        if (name == !T) {
+            print("f.expect.con ---    ")
+            print(model.ans)
+            print(x)
+        }
+    if (name) {
+        model.names <- c("E1: y = a", "E2: y = a*exp(bx)", "E3: y = a*exp(bx^d)", 
+            "E4: y = a*[c-(c-1)exp(-bx)]", "E5: y = a*[c-(c-1)exp(-bx^d)]", 
+            "E5b: y = a*(c^(1 - exp(-(x/b)^d)))", "E2 y = a*exp(x/b)", 
+            "E3 y = a*exp((x/b)^d)", "E4 y = a * [c - (c-1)exp(-(x/b))]", 
+            "E5 y = a * [c - (c-1)exp(-(x/b)^d)]", "Full model: y = group mean", 
+            "E2-CED: y = a*exp(bx)", "E3-CED: y = a*(c^(1 - exp(-(x/b)^d))) with c='Inf'", 
+            "E4-CED: y = a * [c-(c-1)exp(-bx)]", "E5-CED: y = a*(c^(1 - exp(-(x/b)^d)))", 
+            "BMDratio model (M10)", "H2: a * (1 - x/(b+x))", 
+            "H3: a * (1 - x^d/(b^d+x^d))", "H4: a * (1 + (c-1)x/(b+x))", 
+            "H5: a * (1 + (c-1)x^d/(b^d+x^d))", "H5b: y = a*(c^(x^d/(b^d + x^d)))", 
+            "H2-CED: a * (1 - x/(b+x))", "H3-CED: a * c ^(x^d/(b^d+x^d)) with c='Inf'", 
+            "H4-CED: a * (1 + (c-1)x/(b+x))", "H5-CED: a * c ^(x^d/(b^d+x^d))", 
+            "y = c + a*x^b", "y = c + exp((x/b)^a)", "y = c + b(x-a)^d*(x>a)", 
+            "y = a + c * (1 - exp( - (x/b)^d))", "y = a + b*x^c", 
+            "y = a {c1^(1 - exp(-(x/b1)^d)) * c2^(1 - exp(-(x/b2)^d))}", 
+            "y = a {[cc-(cc-1)exp(-(x/b1)^d1)] * [cc - (cc-1)exp(-(x/b2)^d2)]}", 
+            "y = a {c1^(1 - exp(-(x/b1)^d1)) * c2^(1 - exp(-(x/b2)^d2))}", 
+            "y = a + bx + cx^2 + dx^3", "y = a / b^x", "y = a * b^x", 
+            "y =  b*exp(c(x-a)^d) * (x>a) + b * (x<a)", "select model 5 from nested families of models", 
+            "select model 3 or model 5 from nested families of models", 
+            "select model 3 from nested families of models", 
+            "y = ax^b", "effect multiplication based on model 6", 
+            "hill-additive: y = a + cx^d/(b^d+x^d)", "E2 with independent a and b: y = exp(a + b(x - mean.x))", 
+            "y = a {[c1-(c1-1)exp(-(x/b)^d)] * [c2 - (c2-1)exp(-(x/b)^d)]}", 
+            "E5-CED in terms of RPFs", "E5b in terms of CED, with c replaced by qs according to ES theory", 
+            "CxT model 6 with b = aa.t * exp( - (time/bb.t)^dd.t)", 
+            "E5b-ED50: y = a*(c^(1 - exp(-ln(2)(x/ED50)^d)))", 
+            "CxT model 15 with CED = aa.t * exp( - (time/bb.t)^dd.t)", 
+            "inverse exponential in terms of CED with c='Inf'", 
+            "inverse exponential in terms of CED", "LN DR model in terms of CED with c='Inf'", 
+            "LN DR model in terms of CED", "AUC-external dose: y = x * (Km + 0.5*x/V) / Vmax", 
+            "SS-external dose: y = Km * x/V / (Vmax - x/V)", 
+            "y = a {cc^(1 - exp(-(x/b1)^d1)) * exp(-(x/b2)^d2)}", 
+            "y = (FD / V) * ka / (ka - ke) * [exp(- ke*t) - exp(- ka*t)]", 
+            "y = C1 * exp(- lab1*t) + C2 * exp(-lab2*t) - (C1 + C2) * exp(- ka*t)", 
+            "logE5-canon: y = exp[ a(1 + (c - 1)(1 - exp(-bx^d)) ]", 
+            "logE5-noncan: y = exp[ a(1 + (c - 1)(1 - exp(-bx^d)) ]", 
+            "EFSA probit model, noncanon", "EFSA probit model y = exp(a * pnorm(c + b * x^d))", 
+            "two comp. PBPK lipoph", "simple two-comp model")
+        return(model.names)
+    }
+    y.expect <- nr.aa <- max(fct1)
+    nr.bb <- max(fct2)
+    nr.var <- max(fct3)
+    nr.cc <- max(fct4)
+    nr.dd <- max(fct5)
+    if (model.ans %in% c(31, 33, 57)) {
+        nr.b1 <- 1
+        nr.b2 <- nr.bb
+    }
+    if (model.ans == 57) 
+        nr.b1 <- nr.dd
+    if (model.ans == 47 || (model.ans == 6 && ans.m6.sd == 2)) {
+        sd.tmp <- sqrt(regr.par[1:nr.var])
+        sd0 <- rep(0, length(x))
+        for (ii in (1:nr.var)) sd0 <- sd0 + sd.tmp[ii] * (fct3 == 
+            ii)
+        regr.par <- regr.par[-(1:nr.var)]
+        qq <- regr.par[nr.aa + nr.bb + 1]
+        sign.q0 <- rep(0, length(x))
+        for (ii in (1:nr.var)) sign.q0 <- sign.q0 + sign.q[ii] * 
+            (fct3 == ii)
+    }
+    if (model.ans != 11) {
+        nrp <- length(regr.par)
+        aa0 <- rep(0, length(x))
+        aa.tmp <- regr.par[1:nr.aa]
+        if (nr.aa == 1) 
+            aa0 <- aa0 + aa.tmp[1]
+        else for (ii in (1:nr.aa)) aa0 <- aa0 + aa.tmp[ii] * 
+            (fct1 == ii)
+        bb0 <- rep(0, length(x))
+        bb.tmp <- regr.par[(nr.aa + 1):(nr.aa + nr.bb)]
+        if (model.ans %in% c(31, 33, 57)) 
+            bb.tmp <- regr.par[(nr.aa + nr.b1 + 1):(nr.aa + nr.b1 + 
+                nr.b2)]
+        for (jj in (1:nr.bb)) bb0 <- bb0 + bb.tmp[jj] * (fct2 == 
+            jj)
+        if (model.ans == 57) {
+            bb2.0 <- bb0
+            bb0 <- rep(0, length(x))
+            bb.tmp <- regr.par[(nr.aa + 1):(nr.aa + nr.b1)]
+            for (jj in (1:nr.b1)) bb0 <- bb0 + bb.tmp[jj] * (fct5 == 
+                jj)
+            bb1.0 <- bb0
+        }
+        par3 <- regr.par[nr.aa + nr.bb + 1]
+        if (length(par3) == 0 || is.na(par3)) 
+            par3 <- 0
+        par4 <- regr.par[nr.aa + nr.bb + nr.cc + 1]
+        cc0 <- par3
+        dd0 <- par4
+        if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53, 65)) {
+            dd0 <- par3
+            if (max(fct5) > 1) {
+                dd0 <- rep(0, length(x))
+                dd.tmp <- regr.par[(nr.aa + nr.bb + 1):length(regr.par)]
+                for (kk in (1:nr.dd)) dd0 <- dd0 + dd.tmp[kk] * 
+                  (fct5 == kk)
+            }
+        }
+        if (model.ans %in% c(5, 6, 10, 15, 20, 21, 25, 41, 42, 
+            46, 52, 54)) {
+            dd0 <- par4
+            if (max(fct5) > 1) {
+                dd0 <- rep(0, length(x))
+                dd.tmp <- regr.par[(nr.aa + nr.bb + nr.cc + 1):length(regr.par)]
+                for (kk in (1:nr.dd)) dd0 <- dd0 + dd.tmp[kk] * 
+                  (fct5 == kk)
+            }
+        }
+        if (model.ans %in% c(4, 5, 6, 9, 10, 14, 15, 19, 20, 
+            24, 25, 41, 42, 46, 52, 54, 55, 56)) {
+            if (max(fct4) > 1) {
+                cc0 <- rep(0, length(x))
+                cc.tmp <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + 
+                  nr.bb + nr.cc)]
+                for (kk in (1:nr.cc)) cc0 <- cc0 + cc.tmp[kk] * 
+                  (fct4 == kk)
+            }
+        }
+        if (model.ans %in% c(31, 33, 57)) {
+            cc0 <- rep(0, length(x))
+            cc.tmp <- regr.par[(nr.aa + nr.b1 + nr.b2 + 1):(nr.aa + 
+                nr.b1 + nr.b2 + nr.cc)]
+            for (kk in (1:nr.cc)) cc0 <- cc0 + cc.tmp[kk] * (fct4 == 
+                kk)
+        }
+    }
+    if (model.ans %in% c(49, 50)) {
+        gg <- regr.par[nr.aa + nr.bb + nr.cc + nr.dd + 1]
+        hh <- regr.par[nr.aa + nr.bb + nr.cc + nr.dd + 2]
+    }
+    switch(model.ans, y.expect <- aa0, y.expect <- aa0 * exp(bb0 * 
+        x + cc0 * ttt), y.expect <- aa0 * exp(bb0 * (x^dd0)), 
+        y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-bb0 * x)), 
+        y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-bb0 * (x^dd0))), 
+        {
+            if (ans.m6.sd == 1) y.expect <- exp(log(aa0) + log(cc0) * 
+                (1 - exp(-(x/bb0)^dd0)))
+            if (ans.m6.sd == 2) y.expect <- exp(log(aa0) + sign.q0 * 
+                qq * sd0 * (1 - exp(-(x/bb0)^dd0)))
+        }, y.expect <- aa0 * exp(x/bb0), {
+            if (bb0[1] > 0) y.expect <- aa0 * exp((x/bb0)^dd0) else y.expect <- aa0 * 
+                exp(-(x/-bb0)^dd0)
+        }, y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-x/bb0)), 
+        y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-(x/bb0)^dd0)), 
+        {
+            x.gr <- levels(factor(x))
+            x.fact <- factor(x)
+            y.tmp <- rep(NA, length(x))
+            y.expect <- rep(0, length(x))
+            if (nr.var > 1 & nr.aa == 1 & nr.bb == 1) {
+                for (jj in (1:nr.var)) for (ii in (1:length(x.gr))) {
+                  y.tmp <- yy[x.fact == x.gr[ii] & fct3 == jj]
+                  if (length(y.tmp) > 0) {
+                    y.mn <- exp(mean(logb(y.tmp)))
+                    y.expect <- y.expect + y.mn * (x.fact == 
+                      x.gr[ii]) * (fct3 == jj)
+                  }
+                  y.mn <- y.tmp
+                }
+            } else if (twice) for (jj in (1:nr.bb)) for (ii in (1:length(x.gr))) {
+                y.tmp <- yy[x.fact == x.gr[ii] & fct2 == jj]
+                if (length(y.tmp) > 0) {
+                  y.mn <- exp(mean(logb(y.tmp)))
+                  y.expect <- y.expect + y.mn * (x.fact == x.gr[ii]) * 
+                    (fct2 == jj)
+                }
+            } else if (!twice) for (jj in (1:nr.aa)) for (kk in (1:nr.bb)) for (ii in (1:length(x.gr))) {
+                y.tmp <- yy[x.fact == x.gr[ii] & fct1 == jj & 
+                  fct2 == kk]
+                if (length(y.tmp) > 0) {
+                  y.mn <- exp(mean(logb(y.tmp)))
+                  y.expect <- y.expect + y.mn * (x.fact == x.gr[ii]) * 
+                    (fct1 == jj) * (fct2 == kk)
+                }
+            }
+        }, {
+            y.expect <- aa0 * (CES + 1)^(x/bb0)
+        }, {
+            if (increase == 1) cc0 <- cc.inf
+            if (increase == -1) cc0 <- 1/cc.inf
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * (1 - exp(-(x/dum)^dd0))
+            y.expect <- exp(y.expect)
+        }, y.expect <- aa0 * (cc0 - (cc0 - 1) * ((CES + 1 - cc0)/(1 - 
+            cc0))^(x/bb0)), {
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, incr.decr.no = incr.decr.no, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * (1 - exp(-(x/dum)^dd0))
+            y.expect <- exp(y.expect)
+        }, {
+            if (!exists("CES.16")) {
+                cat("\n\nATTENTION:  CES.16 not defined; CES2 is set to 0.10 and CES1 to 0.05\n\n")
+                CES2 <- 0.1
+                CES1 <- 0.05
+                f.press.key.to.continue()
+            } else {
+                CES2 <- CES.16$CES2
+                CES1 <- CES.16$CES1
+            }
+            if (par4 <= 1) print(c("f.expect.con, value of BMD-ratio:", 
+                par4))
+            dd <- f.uniroot.BMDratio(ratio = par4, cc = cc0, 
+                CES1 = CES1, CES2 = CES2)
+            y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-(x/bb0)^dd))
+            if (is.na(dd)) y.expect <- rep(0, length(x))
+        }, {
+            y.expect <- aa0 * (1 - x/(bb0 + x))
+        }, {
+            if (increase == 1) y.expect <- aa0 * (1 - x^dd0/(-(-bb0)^dd0 + 
+                x^dd0))
+            if (increase == -1) y.expect <- aa0 * (1 - x^dd0/((bb0)^dd0 + 
+                x^dd0))
+        }, {
+            y.expect <- aa0 * (1 + ((cc0 - 1) * x)/(bb0 + x))
+        }, {
+            y.expect <- aa0 * (1 + (cc0 - 1) * x^dd0/(bb0^dd0 + 
+                x^dd0))
+        }, {
+            y.expect <- log(aa0) + log(cc0) * (x^dd0/(bb0^dd0 + 
+                x^dd0))
+            y.expect <- exp(y.expect)
+        }, {
+            dum <- f.bb.con(model.ans, cc = NA, dd = NA, CED = bb0, 
+                CES, cont = cont)
+            y.expect <- aa0 * (1 - x/(sign(dum) * (abs(dum) + 
+                x)))
+            y.expect <- aa0 * (1 - x/(dum + x))
+        }, {
+            if (increase == 1) cc0 <- cc.inf
+            if (increase == -1) cc0 <- 1/cc.inf
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * (x^dd0/(dum^dd0 + 
+                x^dd0))
+            y.expect <- exp(y.expect)
+        }, {
+            dum <- f.bb.con(model.ans, cc = cc0, dd = NA, CED = bb0, 
+                CES, cont = cont)
+            y.expect <- aa0 * (1 + ((cc0 - 1) * x)/(dum + x))
+        }, {
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, incr.decr.no = incr.decr.no, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * (x^dd0/(dum^dd0 + 
+                x^dd0))
+            y.expect <- exp(y.expect)
+        }, {
+            y.expect <- cc0 + aa0 * x^bb0
+        }, y.expect <- cc0 + exp(x/bb0)^aa0, y.expect <- cc0 + 
+            (bb0 * abs((x - aa0))^dd0) * (x >= aa0), y.expect <- aa0 + 
+            cc0 * (1 - exp(-(x/bb0)^dd0)), {
+            y.expect <- aa0 + bb0 * x^cc0
+        }, {
+            b1 <- regr.par[nr.aa + 1]
+            c2 <- regr.par[nr.aa + 1 + nr.b2 + nr.cc + 1]
+            dd <- regr.par[nr.aa + 1 + nr.b2 + nr.cc + 2]
+            if (0) {
+                print(" f.expect.con")
+                print(regr.par)
+                print(aa0[1:5])
+                print(b1[1:5])
+                print(bb0[1:20])
+                print(cc0[1:20])
+                print(c2[1:5])
+                print(dd[1:5])
+            }
+            y.expect.1 <- log(cc0) * (1 - exp(-(x/b1)^dd))
+            y.expect.2 <- log(c2) * (1 - exp(-(x/bb0)^dd))
+            y.expect <- exp(log(aa0) + y.expect.1 + y.expect.2)
+        }, {
+            b2 <- regr.par[nr.aa + nr.bb + 1]
+            cc <- regr.par[nr.aa + nr.bb + 2]
+            d1 <- regr.par[nr.aa + nr.bb + 3]
+            d2 <- regr.par[nr.aa + nr.bb + 4]
+            y.expect.1 <- cc - (cc - 1) * exp(-(x/bb0)^d1)
+            y.expect.2 <- cc - (cc - 1) * exp(-(x/b2)^d1)
+            y.expect <- aa0 * (y.expect.1 * y.expect.2)
+        }, {
+            b1 <- regr.par[nr.aa + 1]
+            c2 <- regr.par[nr.aa + 1 + nr.b2 + nr.cc + 1]
+            d1 <- regr.par[nr.aa + 1 + nr.b2 + nr.cc + 2]
+            d2 <- regr.par[nr.aa + 1 + nr.b2 + nr.cc + 3]
+            if (0) {
+                print(" f.expect.con")
+                print(regr.par)
+                print(aa0[1:5])
+                print(b1[1:5])
+                print(bb0[1:20])
+                print(cc0[1:20])
+                print(c2[1:5])
+                print(d1[1:5])
+                print(d2[1:5])
+            }
+            y.expect.1 <- log(cc0) * (1 - exp(-(x/b1)^d1))
+            y.expect.2 <- log(c2) * (1 - exp(-(x/bb0)^d2))
+            y.expect <- exp(log(aa0) + y.expect.1 + y.expect.2)
+        }, {
+            y.expect <- aa0 + bb0 * x + cc0 * x^2 + dd0 * x^3
+        }, y.expect <- aa0/bb0^x, y.expect <- aa0 * bb0^x, {
+            tmp1 <- bb0 * (x < aa0) + 0 * (x >= aa0)
+            tmp2 <- bb0 * exp(cc0 * (x - aa0)^dd0) * (x >= aa0)
+            tmp2[is.na(tmp2)] <- 0
+            y.expect <- tmp1 + tmp2
+        }, cat(""), cat(""), cat(""), y.expect <- aa0 * x^bb0, 
+        {
+            aa <- regr.par[1]
+            bb1 <- regr.par[2]
+            bb2 <- regr.par[3]
+            cc1 <- regr.par[4]
+            cc2 <- regr.par[5]
+            dd <- regr.par[6]
+            y.expect.1 <- log(aa) + log(cc1) * (1 - exp(-(x1/bb1)^dd)) * 
+                (x2 == 0)
+            y.expect.2 <- log(aa) + log(cc1) * (1 - exp(-(x1/bb1)^dd)) * 
+                (x1 == 0)
+            y.expect.bis <- y.expect.1 * (x1 != 0) * y.expect.2 * 
+                (x2 != 0)
+            y.expect <- exp(y.expect.1 + y.expect.2 + y.expect.bis)
+        }, {
+            y.expect <- aa0 + cc0 * x^dd0/(bb0^dd0 + x^dd0)
+        }, {
+            y.expect <- exp(aa0 + bb0 * (x - x.mn))
+        }, {
+            c1 <- regr.par[nr.aa + nr.bb + 1]
+            c2 <- regr.par[nr.aa + nr.bb + 2]
+            dd <- regr.par[nr.aa + nr.bb + 3]
+            y.expect.1 <- c1 - (c1 - 1) * exp(-(x/bb0)^dd)
+            y.expect.2 <- c2 - (c2 - 1) * exp(-(x/bb0)^dd)
+            y.expect <- aa0 * (y.expect.1 * y.expect.2)
+        }, {
+            CED.pars <- regr.par[(nr.aa + 1):(nr.aa + nr.bb)]
+            CED.ref <- CED.pars[ref.lev]
+            bb0 <- CED.ref/bb0
+            bb0[fct2 == ref.lev] <- CED.ref
+            dum <- ((x/bb0)^dd0) * (-log(1 - log(CES + 1)/log(cc0)))
+            y.expect <- log(aa0) + log(cc0) * (1 - exp(-dum))
+            y.expect <- exp(y.expect)
+        }, {
+            y.expect <- exp(log(aa0) + sign.q0 * qq * sd0 * (1 - 
+                exp(x^dd0 * log(1 - CES)/bb0^dd0)))
+        }, {
+            aa0 <- regr.par[1]
+            cc0 <- regr.par[2]
+            dd0 <- regr.par[3]
+            aa.t <- regr.par[4]
+            bb.t <- regr.par[5]
+            dd.t <- regr.par[6]
+            bb0 <- aa.t * exp(-(ttt/bb.t)^dd.t)
+            y.expect <- exp(log(aa0) + log(cc0) * (1 - exp(-(x/bb0)^dd0)))
+        }, {
+            y.expect <- exp(log(aa0) + log(cc0) * (1 - exp(-log(2) * 
+                (x/bb0)^dd0)))
+        }, {
+            aa0 <- regr.par[1]
+            cc0 <- regr.par[2]
+            dd0 <- regr.par[3]
+            aa.t <- regr.par[4]
+            bb.t <- regr.par[5]
+            dd.t <- regr.par[6]
+            CED0 <- aa.t * exp(-(ttt/bb.t)^dd.t)
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = CED0, 
+                CES, cont = cont)
+            y.expect <- exp(log(aa0) + log(cc0) * (1 - exp(-(x/dum)^dd0)))
+        }, {
+            if (increase == 1) cc0 <- cc.inf
+            if (increase == -1) cc0 <- 1/cc.inf
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * exp(-(x/dum)^(-dd0))
+            y.expect <- exp(y.expect)
+        }, {
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, incr.decr.no = incr.decr.no, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * exp(-(x/dum)^(-dd0))
+            y.expect <- exp(y.expect)
+        }, {
+            if (increase == 1) cc0 <- cc.inf
+            if (increase == -1) cc0 <- 1/cc.inf
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * pnorm(log(dum) + 
+                dd0 * log(x))
+            y.expect <- exp(y.expect)
+        }, {
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, incr.decr.no = incr.decr.no, cont = cont)
+            y.expect <- log(aa0) + log(cc0) * pnorm(log(dum) + 
+                dd0 * log(x))
+            y.expect <- exp(y.expect)
+        }, {
+            y.expect <- x * (aa0 + 0.5 * x/cc0)/bb0
+        }, {
+            y.expect <- aa0 * x/cc0/(bb0 - x/cc0)
+        }, {
+            d1 <- regr.par[nr.aa + nr.b1 + nr.b2 + nr.cc + 1]
+            d2 <- regr.par[nr.aa + nr.b1 + nr.b2 + nr.cc + 2]
+            y.expect.1 <- log(cc0) * (1 - exp(-(x/bb1.0)^d1))
+            y.expect.2 <- log(exp(-(x/bb2.0)^d2))
+            y.expect <- exp(log(aa0) + y.expect.1 + y.expect.2)
+        }, {
+            FD.V <- regr.par[1]
+            ka <- regr.par[2]
+            ke <- regr.par[3]
+            y.expect <- FD.V * (ka/(ka - ke)) * (exp(-ke * x) - 
+                exp(-ka * x))
+        }, {
+            C1 <- regr.par[1]
+            C2 <- regr.par[2]
+            ka <- regr.par[3]
+            lab1 <- regr.par[4]
+            lab2 <- regr.par[5]
+            y.expect <- C1 * exp(-lab1 * x) + C2 * exp(-lab2 * 
+                x) - (C1 + C2) * exp(-ka * x)
+        }, {
+            aa.can <- aa0
+            cc.can <- cc0
+            aa0 <- log(aa.can)
+            cc0 <- 1 + log(cc.can)/log(aa.can)
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, incr.decr.no = incr.decr.no, cont = cont, 
+                aa = aa0)
+            y.expect <- exp(aa0 * (1 + (cc0 - 1) * (1 - exp(-dum * 
+                (x^dd0)))))
+        }, {
+            dum <- f.bb.con(model.ans, cc = cc0, dd = dd0, CED = bb0, 
+                CES, incr.decr.no = incr.decr.no, cont = cont, 
+                aa = aa0)
+            y.expect <- exp(aa0 * (1 + (cc0 - 1) * (1 - exp(-dum * 
+                (x^dd0)))))
+        }, {
+            y.expect <- exp(aa0 * pnorm(cc0 + bb0 * x^dd0))
+        }, {
+            aa.can <- aa0
+            cc.can <- cc0
+            aa0 <- log(aa.can * cc.can)
+            cc0 <- qnorm(log(aa.can)/log(aa.can * cc.can))
+            dum <- f.bb.con(model.ans = 63, cc = cc0, dd = dd0, 
+                CED = bb0, CES, incr.decr.no = incr.decr.no, 
+                cont = cont, aa = aa0)
+            y.expect <- exp(aa0 * pnorm(cc0 + dum * x^dd0))
+        }, {
+            D <- regr.par[1]
+            V <- regr.par[2]
+            lab.min <- regr.par[3]
+            lab.plus <- regr.par[4]
+            qk <- regr.par[5]
+            dum = (D/V)/(lab.min - lab.plus)
+            y.expect = dum * ((lab.min + qk) * exp(lab.plus * 
+                x) - (lab.plus + qk) * exp(lab.min * x))
+        }, {
+            cc <- aa0
+            k1 <- bb0
+            ke <- dd0
+            dum = cc * k1/(k1 - ke)
+            y.expect = dum * (exp(-ke * x) - exp(-k1 * x))
+        })
+    if (exists("track2")) 
+        print("f.expect.con:  END")
+    return(y.expect)
+}
+
+
+
