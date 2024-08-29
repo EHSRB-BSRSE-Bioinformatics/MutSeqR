@@ -9075,6 +9075,29 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
 
 
 
+f.nr.replicates <- function(ans.all) {
+    if (exists("track")) 
+        print("f.nr.replicates")
+    with(ans.all, {
+        if (length(xans) > 1) {
+            x <- data.0[, xans[1]]
+        }
+        if (quick.ans == 1) 
+            if (length(fct3) > 1) 
+                dum.nn <- table(x, fct1, fct2, fct3, fct5)
+            else dum.nn <- table(x, fct1, fct2, fct5)
+        if (quick.ans > 1) 
+            dum.nn <- table(x, covariate)
+        if (dtype %in% c(4, 6, 10, 15, 250, 260)) 
+            dum.nn <- nn
+        dum.nn <- as.numeric(dum.nn)
+        dum.nn <- dum.nn[dum.nn != 0]
+        return(dum.nn)
+    })
+}
+
+
+
 f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
     if (exists("track")) 
         print("f.quick.con")
