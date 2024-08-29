@@ -10830,3 +10830,357 @@ f.constr.con <- function(ans.all, tmp.quick = F) {
 
 
 
+f.nlminb <- function(ans.all, tmp.quick = F) {
+    if (exists("track2")) 
+        print("f.nlminb")
+    ans.all$tmp.quick <- tmp.quick
+    with(ans.all, {
+        th.par <- ans.all$th.par
+        scale.dum <- abs(1/par.start)
+        scale.dum[scale.dum == Inf] <- 1000
+        if (dtype == 6) {
+            nr.alfa <- max(fct3)
+            scale.dum[1:nr.alfa] <- 1
+        }
+        else nr.alfa <- 0
+        if (scale.ans && quick.ans == 1 && model.ans != 1 && 
+            !((model.ans == 14 & model.type == 1) || (model.ans == 
+                11 & model.type == 2))) {
+            ans <- 1
+            while (ans <= npar) {
+                ans <- menu(c(paste(text.par, ":      ", signif(scale.dum, 
+                  3)), "continue"), title = "\n For what parameter do you want to change scaling used in nlminb? ")
+                if (ans <= npar) 
+                  scale.dum[ans] <- eval(parse(prompt = paste("Give value larger than one ", 
+                    text.par[ans], ": ")))
+            }
+        }
+        ans.all$scale.dum <- scale.dum
+        trace.tmp <- F
+        if (cont) {
+            if (incr.decr.no == 0) 
+                if (model.ans %in% c(4, 5, 9, 10, 14, 15, 19, 
+                  20, 24, 25)) {
+                  cc.start <- par.start[(nr.var + nr.aa + nr.bb + 
+                    1):(nr.var + nr.aa + nr.bb + nr.cc)]
+                  if (increase == -1 && cc.start >= (1 - abs(CES))) 
+                    cc.start <- 0.9 * (1 - abs(CES))
+                  if (increase == 1 && cc.start <= (1 + abs(CES))) 
+                    cc.start <- 1.1 * (1 + abs(CES))
+                  par.start[(nr.var + nr.aa + nr.bb + 1):(nr.var + 
+                    nr.aa + nr.bb + nr.cc)] <- cc.start
+                }
+            loglik.check <- f.lik.con(par.start, x, y, dtype, 
+                fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
+                nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
+                ttt = ttt, trace.tmp = trace.tmp, fct4 = fct4, 
+                fct5 = fct5, cens.up = cens.up, par.tmp = NA, 
+                increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
+                sign.q = sign.q, ans.m6.sd = ans.m6.sd, Mx = Mx, 
+                x1 = x1, x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+            count <- 0
+            while (!is.finite(loglik.check) && model.ans %in% 
+                c(17, 18, 22, 23) && count < 30) {
+                ced.start <- par.start[(nr.var + nr.aa + 1):(nr.var + 
+                  nr.aa + nr.bb)]
+                ced.start <- 1.5 * ced.start
+                par.start[(nr.var + nr.aa + 1):(nr.var + nr.aa + 
+                  nr.bb)] <- ced.start
+                loglik.check <- f.lik.con(par.start, x, y, dtype, 
+                  fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
+                  nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
+                  ttt = ttt, trace.tmp = trace.tmp, fct4 = fct4, 
+                  fct5 = fct5, cens.up = cens.up, par.tmp = NA, 
+                  increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
+                  sign.q = sign.q, ans.m6.sd = ans.m6.sd, Mx = Mx, 
+                  x1 = x1, x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+                count <- count + 1
+            }
+            if (model.ans == -51) {
+                cat("\n")
+                print("f.nlminb start")
+                print(model.ans)
+                print(CES)
+                print(increase)
+                print(cbind(text.par, par.start, lb, ub, scale.dum))
+                print(loglik.check)
+                f.press.key.to.continue()
+            }
+            fit.res <- nlminb(par.start, f.lik.con, scale = scale.dum, 
+                lower = lb, upper = ub, control = lst.control, 
+                x = x, y = y, dtype = dtype, fct1 = fct1, fct2 = fct2, 
+                fct3 = fct3, fct4 = fct4, fct5 = fct5, model.ans = model.ans, 
+                mn.log = mn.log, sd2.log = sd2.log, nn = nn, 
+                Vdetlim = Vdetlim, CES = CES, twice = twice, 
+                ttt = ttt, trace.tmp = F, cens.up = cens.up, 
+                lb = lb, ub = ub, par.tmp = par.start, increase = increase, 
+                x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
+                ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
+                cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+            if (is.na(fit.res$obj)) 
+                fit.res$obj <- 1e-12
+            count <- 0
+            while (is.na(fit.res$par[1]) || (fit.res$obj == 0) || 
+                abs(fit.res$obj) == 1e-12 || !is.finite(fit.res$obj) && 
+                count <= 20) {
+                cat("\n      model is refitted with other scaling parameter")
+                scale.dum <- rep(0.5, length(par.start))
+                scale.dum <- 2 * scale.dum
+                fit.res <- nlminb(par.start, f.lik.con, scale = scale.dum, 
+                  lower = lb, upper = ub, control = lst.control, 
+                  x = x, y = y, dtype = dtype, fct1 = fct1, fct2 = fct2, 
+                  fct3 = fct3, fct4 = fct4, fct5 = fct5, model.ans = model.ans, 
+                  mn.log = mn.log, sd2.log = sd2.log, nn = nn, 
+                  Vdetlim = Vdetlim, CES = CES, twice = T, cens.up = cens.up, 
+                  lb = lb, ub = ub, par.tmp = fit.res$par, increase = increase, 
+                  x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
+                  ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
+                  cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+                if (is.na(fit.res$obj)) 
+                  fit.res$obj <- 1e-12
+                count <- count + 1
+            }
+            ans.all$MLE <- fit.res$par
+            if (model.ans == 47 || (model.ans == 6 && ans.m6.sd == 
+                2)) 
+                ans.all$regr.par <- ans.all$MLE
+            else ans.all$regr.par <- ans.all$MLE[-(1:max(fct3))]
+            if (model.ans %in% c(31, 33, 57)) 
+                ans.all$regr.par.matr <- f.pars.m31(ans.all)$regr.par.matr
+            else ans.all$regr.par.matr <- f.pars(ans.all)$regr.par.matr
+            if (0) {
+                loglik.tmp <- -f.lik.con(MLE, x, y, dtype, fct1, 
+                  fct2, fct3, model.ans, mn.log, sd2.log, nn, 
+                  Vdetlim = Vdetlim, CES = CES, twice = twice, 
+                  ttt = ttt, trace.tmp = T, fct4 = fct4, fct5 = fct5, 
+                  cens.up = cens.up, par.tmp = NA, increase = increase, 
+                  x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
+                  ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
+                  cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+                print(loglik.tmp)
+                f.press.key.to.continue()
+            }
+        }
+        if (!cont) {
+            loglik.check <- f.lik.cat(par.start, x = x, y = y, 
+                kk = kk, nn = nn, dtype = dtype, fct1 = fct1, 
+                fct2 = fct2, nrp = nrp, nth = nth, th.par = th.par, 
+                nr.aa = nr.aa, nr.bb = nr.bb, model.ans = model.ans, 
+                model.type = model.type, ans.nobg = 0, CES = CES, 
+                CES.cat = CES.cat, ttt = ttt, twice = twice, 
+                cens.up = cens.up, fct3 = fct3, fct4 = fct4, 
+                fct5 = fct5, x.full = x.full, fct1.full = fct1.full, 
+                fct2.full = fct2.full, trace.tmp = trace.tmp, 
+                ces.ans = ces.ans, cc.inf = cc.inf, decr.zz = decr.zz, 
+                CES1 = CES1, CES2 = CES2, nn.tot = nn.tot, kk.tot = kk.tot, 
+                ref.lev = ref.lev, x1 = x1, x2 = x2, output = output, 
+                Mx = Mx)
+            if (model.ans == -5) {
+                cat("\n")
+                print("f.nlminb start")
+                print(model.ans)
+                print(CES)
+                print(CES.cat)
+                print(cbind(text.par, par.start, lb, ub, scale.dum))
+                print(loglik.check)
+                f.press.key.to.continue()
+            }
+            retry <- FALSE
+            if (!is.finite(loglik.check) || abs(loglik.check) == 
+                2e+10) 
+                retry <- TRUE
+            if (retry) {
+                count <- 0
+                while (retry && (model.type == 2 && model.ans %in% 
+                  c(13, 18, 23)) && count < 15) {
+                  ced.start <- par.start[(nr.alfa + nr.aa + 1):(nr.alfa + 
+                    nr.aa + nr.bb)]
+                  ced.start <- 1.5 * ced.start
+                  par.start[(nr.alfa + nr.aa + 1):(nr.alfa + 
+                    nr.aa + nr.bb)] <- ced.start
+                  if (count < 3) 
+                    cat("\nModel re-fitted with new start values\n")
+                  loglik.check <- f.lik.cat(par.start, x = x, 
+                    y = y, kk = kk, nn = nn, dtype = dtype, fct1 = fct1, 
+                    fct2 = fct2, nrp = nrp, nth = nth, th.par = th.par, 
+                    nr.aa = nr.aa, nr.bb = nr.bb, model.ans = model.ans, 
+                    model.type = model.type, ans.nobg = 0, CES = CES, 
+                    CES.cat = CES.cat, ttt = ttt, twice = twice, 
+                    cens.up = cens.up, fct3 = fct3, fct4 = fct4, 
+                    fct5 = fct5, x.full = x.full, fct1.full = fct1.full, 
+                    fct2.full = fct2.full, trace.tmp = trace.tmp, 
+                    ces.ans = ces.ans, cc.inf = cc.inf, decr.zz = decr.zz, 
+                    CES1 = CES1, CES2 = CES2, nn.tot = nn.tot, 
+                    kk.tot = kk.tot, ref.lev = ref.lev, Mx = Mx, 
+                    x1 = x1, x2 = x2, output = output)
+                  if (is.finite(loglik.check) && abs(loglik.check) < 
+                    2e+10) 
+                    retry <- FALSE
+                  count <- count + 1
+                }
+            }
+            fit.res <- nlminb(par.start, f.lik.cat, scale = scale.dum, 
+                lower = lb, upper = ub, control = lst.control, 
+                x = x, y = y, kk = kk, nn = nn, dtype = dtype, 
+                fct1 = fct1, fct2 = fct2, nrp = nrp, nth = nth, 
+                th.par = th.par, nr.aa = nr.aa, nr.bb = nr.bb, 
+                model.ans = model.ans, model.type = model.type, 
+                ans.nobg = 0, CES = CES, CES.cat = CES.cat, ttt = ttt, 
+                twice = twice, cens.up = cens.up, fct3 = fct3, 
+                fct4 = fct4, fct5 = fct5, x.full = x.full, fct1.full = fct1.full, 
+                fct2.full = fct2.full, trace.tmp = trace.tmp, 
+                ces.ans = ces.ans, cc.inf = cc.inf, decr.zz = decr.zz, 
+                CES1 = CES1, CES2 = CES2, nn.tot = nn.tot, kk.tot = kk.tot, 
+                ref.lev = ref.lev, Mx = Mx, x1 = x1, x2 = x2, 
+                output = output)
+            if (dtype == 6 && model.type == 2 && model.ans %in% 
+                c(13, 15, 23, 25) && quick.ans > 1) {
+                par.start <- f.start.cat(ans.all, tmp.quick = TRUE)$par.start
+                scale.dum <- abs(1/par.start)
+                scale.dum[scale.dum == Inf] <- 1000
+                scale.dum[1:nr.alfa] <- 1
+                fit.res.test <- nlminb(par.start, f.lik.cat, 
+                  scale = scale.dum, lower = lb, upper = ub, 
+                  control = lst.control, x = x, y = y, kk = kk, 
+                  nn = nn, dtype = dtype, fct1 = fct1, fct2 = fct2, 
+                  nrp = nrp, nth = nth, th.par = th.par, nr.aa = nr.aa, 
+                  nr.bb = nr.bb, model.ans = model.ans, model.type = model.type, 
+                  ans.nobg = 0, CES = CES, CES.cat = CES.cat, 
+                  ttt = ttt, twice = twice, cens.up = cens.up, 
+                  fct3 = fct3, fct4 = fct4, fct5 = fct5, x.full = x.full, 
+                  fct1.full = fct1.full, fct2.full = fct2.full, 
+                  trace.tmp = trace.tmp, ces.ans = ces.ans, cc.inf = cc.inf, 
+                  decr.zz = decr.zz, CES1 = CES1, CES2 = CES2, 
+                  nn.tot = nn.tot, kk.tot = kk.tot, ref.lev = ref.lev, 
+                  Mx = Mx, x1 = x1, x2 = x2, output = output)
+                if (fit.res.test$objective < fit.res$objective) 
+                  fit.res <- fit.res.test
+            }
+            if (dtype == 3) 
+                if (model.type == 2 && model.ans %in% c(12:16, 
+                  22:25, 46:47)) {
+                  ced.start <- par.start[(nr.aa + 1):(nr.aa + 
+                    nr.bb)]
+                  par.start[(nr.aa + 1):(nr.aa + nr.bb)] <- ced.start/10
+                  fit.res.test <- nlminb(par.start, f.lik.cat, 
+                    scale = scale.dum, lower = lb, upper = ub, 
+                    control = lst.control, x = x, y = y, kk = kk, 
+                    nn = nn, dtype = dtype, fct1 = fct1, fct2 = fct2, 
+                    nrp = nrp, nth = nth, th.par = th.par, nr.aa = nr.aa, 
+                    nr.bb = nr.bb, model.ans = model.ans, model.type = model.type, 
+                    ans.nobg = 0, CES = CES, CES.cat = CES.cat, 
+                    ttt = ttt, twice = twice, cens.up = cens.up, 
+                    fct3 = fct3, fct4 = fct4, fct5 = fct5, x.full = x.full, 
+                    fct1.full = fct1.full, fct2.full = fct2.full, 
+                    trace.tmp = trace.tmp, ces.ans = ces.ans, 
+                    cc.inf = cc.inf, decr.zz = decr.zz, CES1 = CES1, 
+                    CES2 = CES2, nn.tot = nn.tot, kk.tot = kk.tot, 
+                    ref.lev = ref.lev, Mx = Mx, x1 = x1, x2 = x2, 
+                    output = output)
+                  if (fit.res.test$objective < fit.res$objective) 
+                    fit.res <- fit.res.test
+                }
+            if (model.ans == -10) {
+                print(" f.nlminb cont")
+                print(model.ans)
+                print(CES)
+                print(CES.cat)
+                print(cbind(text.par, par.start, lb, ub, scale.dum))
+                print(fit.res$objective)
+                print(fit.res$par)
+                f.press.key.to.continue()
+            }
+            count <- 0
+            while (is.na(fit.res$par[1]) || (fit.res$obj == 1e-12) | 
+                is.na(fit.res$obj)) {
+                cat("\n     model", model.ans, "refitted with other scaling parameter")
+                if (model.ans == 14 && model.type == 1 && dtype == 
+                  6) 
+                  par.start[1] <- eval(parse(prompt = paste("give start value for alfa", 
+                    "  > ")))
+                scale.dum <- rep(0.5, length(par.start))
+                scale.dum <- 2 * scale.dum
+                count <- count + 1
+                fit.res <- nlminb(par.start, f.lik.cat, scale = scale.dum, 
+                  lower = lb, upper = ub, control = lst.control, 
+                  x = x, y = y, kk = kk, nn = nn, dtype = dtype, 
+                  fct1 = fct1, fct2 = fct2, nrp = nrp, nth = nth, 
+                  th.par = th.par, nr.aa = nr.aa, nr.bb = nr.bb, 
+                  model.ans = model.ans, model.type = model.type, 
+                  ans.nobg = 0, CES = CES, CES.cat = CES.cat, 
+                  ttt = ttt, twice = twice, cens.up = cens.up, 
+                  fct3 = fct3, fct5 = fct5, x.full = x.full, 
+                  fct1.full = fct1.full, fct2.full = fct2.full, 
+                  cc.inf = cc.inf, trace.tmp = trace.tmp, ces.ans = ces.ans, 
+                  decr.zz = decr.zz, CES1 = CES1, CES2 = CES2, 
+                  ref.lev = ref.lev, Mx = Mx, x1 = x1, x2 = x2, 
+                  output = output)
+                if (count > 50) {
+                  fit.res$obj <- -1e+10
+                  fit.res$par <- 0
+                }
+            }
+            ans.all$MLE <- fit.res$par
+            if (model.type == 1) 
+                ans.all$regr.par <- ans.all$MLE
+            if (model.type == 2) 
+                if (length(unique(fct3)) == 1) {
+                  par.lst <- f.split.par(ans.all$MLE, nrp, nth, 
+                    dtype, fct3)
+                  ans.all$regr.par <- par.lst$regr.par
+                  ans.all$th.par <- par.lst$th.par
+                  ans.all$sig.par <- par.lst$sig.par
+                  ans.all <- f.pars(ans.all)
+                }
+                else {
+                  ans.all$get.gr.txt <- TRUE
+                  ans.all$regr.par <- ans.all$MLE[1:nrp]
+                  ans.all <- f.pars.frq(ans.all)
+                }
+        }
+        ans.all$loglik <- round(-fit.res$objective, 2)
+        if (!tmp.quick) 
+            if (quick.ans == 1 && length(ans.all$loglik.start) > 
+                0) 
+                if (abs(ans.all$loglik - loglik.start) < 0.1) {
+                  cat("\n\nATTENTION:  log-likelihood hardly changed\n\n")
+                  f.press.key.to.continue()
+                }
+        if ((model.type == 1 && model.ans == 14) || (cont && 
+            model.ans == 11)) 
+            npar.aic <- npar
+        else npar.aic <- length(ans.all$MLE) - sum(lb == ub)
+        ans.all$aic <- 2 * npar.aic - 2 * ans.all$loglik
+        ans.all$npar.aic <- npar.aic
+        if (!is.finite(ans.all$loglik)) 
+            ans.all$loglik <- -1e+12
+        mess <- fit.res$message
+        ans.all$converged <- f.converged(mess, fit.res$conv, 
+            tmp.quick = tmp.quick)
+        if (dtype == 6 && (model.ans == 14 & model.type == 1)) {
+            dum <- list()
+            dum$loglik <- ans.all$loglik
+            dum$MLE <- ans.all$MLE
+            ans.all$full.model <- dum
+            alfa.start <- ans.all$MLE[1]
+            nn.dum <- table(x, x)
+            nn.dum <- nn.dum[nn.dum != 0]
+            if (length(nn.dum) > 15 && alfa.start > 20) 
+                alfa.start <- 5
+            ans.all$alfa.start <- alfa.start
+        }
+        ans.all$fitted <- T
+        ans.all$l.ty <- 1
+        ans.all$new.model <- F
+        if (0) {
+            ans.all$fit.res <- fit.res
+            f.vcov(ans.all)
+        }
+        if (exists("track2")) 
+            print("f.nlminb : END")
+        return(ans.all)
+    })
+}
+
+
+
