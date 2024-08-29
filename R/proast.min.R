@@ -11539,3 +11539,13 @@ f.bb.con <- function(model.ans, cc, dd, CED, CES, ref.lev = NA, CED.ref = NA,
 
 
 
+f.grubb <- function(ss = 25, alfa = 0.05) {
+    alfa <- alfa/2
+    t.crit <- qt(alfa/ss, ss - 2)
+    G <- (ss - 1)/sqrt(ss)
+    G <- G * sqrt(t.crit^2/(ss - 2 + t.crit^2))
+    return(G)
+}
+
+
+
