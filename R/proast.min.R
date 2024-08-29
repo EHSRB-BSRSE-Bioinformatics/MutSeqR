@@ -8744,3 +8744,10 @@ f.store.results <- function(ans.all, store.name = 0, add.ext = 0, interactive_mo
 
 
 
+f.version <- function() {
+    PRversion <- "71.1"
+    PRversion
+}
+
+
+
