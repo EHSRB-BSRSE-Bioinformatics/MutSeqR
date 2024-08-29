@@ -8774,3 +8774,304 @@ f.control <- function(lev = 3) {
 
 
 
+f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input = NULL, interactive_mode = TRUE, covariates = NULL, CES = NULL, model_selection = NULL, lower_dd = NULL, upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
+    if (exists("track")) 
+        print("f.con")
+    f.assign(".Pr.last", ans.all)
+    if (list.logic) {
+        cat("\n You have chosen previous results concerning:   ")
+        cat(ans.all$odt.name)
+        PRversion <- ans.all$PRversion
+        if (ans.all$model.fam > 0) {
+            cat("\nfitted model: ")
+            cat(ans.all$modelname, "\n")
+            if (length(ans.all$loglik) == 1) 
+                cat("loglik:", ans.all$loglik, "\n")
+            cat(ans.all$show)
+        }
+        if (ans.all$boot) {
+            cat("\nBootstrap data are available")
+            nruns <- length(ans.all$CED.boot[, 1])
+            cat("\nnruns:", nruns, "\n")
+        }
+        if (length(ans.all$SINGMOD) > 0) 
+            ans.all <- f.move.sublist(ans.all, ans.all$SINGMOD)
+        if (ans.all$model.ans %in% 41:42 && ans.all$nr.cc > 1) {
+            with(ans.all, {
+                npar <- length(MLE)
+                Vcc <- MLE[(npar - nr.dd + 1):npar]
+                Vsd <- sqrt(MLE[1:nr.var])
+                f.graph.window(1)
+                plot(log10(Vcc), log10(Vsd), xlab = "log.sd", 
+                  ylab = "log.c")
+                f.press.key.to.continue()
+            })
+        }
+        if (length(ans.all$xans) > 1) 
+            ans.all$ans.plt <- 0
+        if (ans.all$nr.cc > 1 && ans.all$incr.decr.no == 0) {
+            ans.all <- with(ans.all, {
+                npar <- length(MLE)
+                Vcc <- MLE[(nr.var + nr.aa + nr.bb + 1):(nr.var + 
+                  nr.aa + nr.bb + nr.cc)]
+                Vsd <- sqrt(MLE[1:nr.var])
+                if (length(Vsd) == length(Vcc)) {
+                  gr.txt <- f.pars(ans.all)$gr.txt
+                  gr.lab <- letters[1:length(gr.txt)]
+                  show <- "subgroups"
+                  for (i in 1:length(gr.txt)) show <- paste(show, 
+                    nl, gr.lab[i], tb, gr.txt[i])
+                  f.graph.window(1)
+                  plot(Vsd, log(Vcc), pch = as.character(gr.lab))
+                  abline(0, 7)
+                  loc.txt <- max(log(Vcc))
+                  mtext(show, 4, 1, adj = 0, padj = 1, las = 1, 
+                    at = loc.txt, cex = 0.7)
+                  cat("\n\n\nSee plot for relationship between c and sd\n\n")
+                  f.press.key.to.continue()
+                  if (model.ans == 6 && fitted) 
+                    ans.all <- f.fit.model6(ans.all)
+                }
+                return(ans.all)
+            })
+        }
+        ans.all$par.start <- ans.all$MLE
+        if (ans.all$plot.type > 8) 
+            ans.all$plot.type <- 2
+        ans.all$PRversion <- ans.all$version.old
+        if (ans.all$model.fam > 0) 
+            f.plot.all(ans.all)
+        else f.plot.gui(ans.all)
+        ans.all$PRversion <- PRversion
+        if (ans.all$dtype != 3 && length(ans.all$gr.txt) > 1) 
+            f.explain.marks(ans.all)
+        if (length(ans.all$EXP$conf.int[, 1]) > 1) {
+            f.press.key.to.continue()
+            cat("\n\nplot of BMD CIs for each subgroup\n\n")
+            f.plot.CI(ans.all)
+        }
+    }
+    main.ans <- 2
+    if (list.logic) 
+        main.ans <- 12
+    if (ans.all$model.ans > 0) {
+        if (!ans.all$fitted) 
+            ans.all <- f.start.con(ans.all)
+        main.ans <- 14
+    }
+    while (T) {
+        switch(main.ans, {
+            ans.all$change <- rep(F, ans.all$nrQ)
+            ans.all <- f.change.settings(ans.all, choose = T)
+            if (ans.all$fitted) ans.all$show <- f.show.con(ans.all)
+            if (!ans.all$fitted) {
+                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env) else {
+                  ans.all <- f.execute(ans.all)
+                  if (ans.all$ans.m6.sd != 2) ans.all <- f.start.con(ans.all, 
+                    adjust = F, fitted = F, tmp.quick = F)
+                }
+            } else {
+                ans.all <- f.execute(ans.all)
+                f.plot.all(ans.all)
+            }
+            model.names <- f.expect.con(name = TRUE)
+            ans.all$modelname <- model.names[ans.all$model.ans]
+        }, {
+            ans.all <- f.clear(ans.all)
+            if (ans.all$quick.ans == 1) {
+                ans.all <- f.choose.model(ans.all)
+                if (ans.all$model.ans %in% c(48, 50)) {
+                  ans.all$change[24] <- T
+                  ans.all <- f.change.settings(ans.all)
+                  ans.all <- f.execute(ans.all)
+                }
+                if (ans.all$model.ans == 6) ans.all$ans.m6.sd <- 1
+                ans.all$new.model <- T
+            }
+            if (ans.all$quick.ans == 1) {
+                ans.all$modelname <- ans.all$model.names[ans.all$model.ans]
+                ans.all <- f.start.con(ans.all)
+                if (ans.all$adjust.start) {
+                  ans.all <- f.start.con(ans.all, adjust = T, 
+                    fitted = T, tmp.quick = F)
+                }
+            }
+            if (ans.all$quick.ans > 1) {
+                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+                
+                # Human-readable list of models
+                list.of.models <- c("exponential", "Hill", "inverse exponential", "lognormal DR")
+      
+                if (interactive_mode == FALSE && !is.null(selected_model)) {
+                    # Find the index of the selected model in the list of models and proceed
+                  # TODO Error checking on the user input (selected_model parameter must be one of the list.of.models)
+                    model.fam <- which(tolower(list.of.models) == tolower(selected_model)) # assuming selected_model is the name of the model
+                    ans.all$model.fam <- model.fam
+                } else {
+                    # In case of interactive mode or no selected model, show a menu to continue
+                    model.fam <- menu(list.of.models, title = "\nWhich model do you want to continue with?  ")
+                    ans.all$model.fam <- model.fam
+                }
+                
+                # # Use the model.fam to determine further steps
+                # ans.all <- switch(ans.all$model.fam,
+                #     # Assuming EXP, HILL, INVEXP, LOGN match indices of list.of.models
+                #     f.move.sublist(ans.all, ans.all$EXP),
+                #     f.move.sublist(ans.all, ans.all$HILL),
+                #     f.move.sublist(ans.all, ans.all$INVEXP),
+                #     f.move.sublist(ans.all, ans.all$LOGN),
+                #     stop("Invalid model family selection.")
+                # )
+                # # Store results and other tasks
+                # f.store.results(ans.all)
+                
+                # # If 'selected_model' was used, 'model.fam' will already be set, 
+                # # otherwise, it will be set by the menu choice
+                # ans.all$modelname <- list.of.models[ans.all$model.fam]
+                
+                # # Quick analysis reset to step into the next interaction until an "exit condition" is met
+                # ans.all$quick.ans <- 1
+            
+                # # Set ans.plt to 0 to probably reset the plot or interaction
+                # ans.all$ans.plt <- 0
+              
+              
+              
+              
+              
+              # list.of.models <- c("exponential", "Hill", "inverse exponential", 
+              #     "lognormal DR")
+              #   list.of.models <- list.of.models[1:ans.all$nr.models]
+              #   if (length(ans.all$Vyans) >= 1 && length(ans.all$HILL) > 
+              #     0) model.fam <- menu(list.of.models, title = "\nWhich model do you want to continue with?  ") else model.fam <- 1
+                if (ans.all$quick.ans < 6) switch(model.fam, 
+                  ans.all <- f.move.sublist(ans.all, ans.all$EXP), 
+                  ans.all <- f.move.sublist(ans.all, ans.all$HILL), 
+                  ans.all <- f.move.sublist(ans.all, ans.all$INVEXP), 
+                  ans.all <- f.move.sublist(ans.all, ans.all$LOGN)) else ans.all <- f.move.sublist(ans.all, 
+                  ans.all$SINGMOD)
+                f.store.results(ans.all, interactive_mode = interactive_mode)
+                if (0) switch(model.fam, ans.all$heading <- "Exponential model", 
+                  ans.all$heading <- "Hill model", ans.all$heading <- "Inverse exponential model", 
+                  ans.all$heading <- "Lognormal DR model")
+                ans.all$model.fam <- model.fam
+                ans.all$quick.ans <- 1
+                ans.all$modelname <- ans.all$model.names[ans.all$model.ans]
+                ans.all$ans.plt <- 0
+
+
+
+
+            }
+          
+
+          
+        }, {
+            if (ans.all$fitted & !ans.all$new.model) ans.all$par.start <- ans.all$MLE
+            if (0) {
+                ans.dd <- 2
+                if (max(ans.all$fct5) > 1) ans.dd <- menu(c("yes", 
+                  "no"), title = "\nDo you want to use previous MLE from model with one d as start value?\n")
+                if (ans.dd == 1) {
+                  nr.dd <- max(ans.all$fct5)
+                  dd.start <- ans.all$MLE[length(ans.all$MLE)]
+                  ans.all$par.start <- c(ans.all$MLE, rep(dd.start, 
+                    nr.dd - 1))
+                  ans.all$scale.dum <- c(ans.all$scale.dum, rep(1, 
+                    nr.dd - 1))
+                }
+            }
+            ans.all <- f.start.con(ans.all, adjust = T, fitted = ans.all$fitted, 
+                tmp.quick = F)
+        }, {
+            ans.all <- f.mm4.con(ans.all)
+            while (ans.all$out.ans == 1) ans.all <- f.mm4.con(ans.all)
+        }, {
+            ans.all <- f.mm5.con(ans.all)
+        }, {
+            if (ans.all$fitted == F) cat("\nFirst fit the model using option 4\n") else if (ans.all$model.ans == 
+                11) cat("\nCED not defined for full model\n") else if (ans.all$model.ans == 
+                1) cat("\nCED not defined for null model\n") else ans.all <- f.mm6.con(ans.all)
+        }, {
+            if (is.na(ans.all$CED[1]) && ans.all$model.ans != 
+                59) cat("\nYou did not calculate CED! First use option 6 from main menu\n") else {
+                ans.all$nruns <- eval(parse(prompt = "\ngive the number of bootstrap runs you want to be done > "))
+                ans.all$plot.ans <- 1
+                ans.all$plot.ans <- menu(c("no", "yes (reduces speed)"), 
+                  title = "\ndo you want plots of each sampling run?")
+                ans.all <- f.mm7.con(ans.all)
+            }
+        }, {
+            ans.all <- f.mm8.con(ans.all)
+        }, {
+            ans.all <- f.mm10.con(ans.all)
+        }, {
+            with(ans.all, {
+                if (model.ans != 2) {
+                  cat("\nonly model 2 implemented\n")
+                  return(invisible())
+                }
+                regr.par.matr <- f.pars(ans.all)$regr.par.matr
+                for (ii in 1:length(regr.par.matr[, 1])) {
+                  aa <- logb(regr.par.matr[ii, 1])
+                  bb <- regr.par.matr[ii, 2]
+                  if (max(fct3) == 1) SD <- sqrt(MLE[1]) else SD <- sqrt(MLE[ii])
+                  ADI <- eval(parse(prompt = paste("give value for ADI (or MRL)", 
+                    "  > ")))
+                  kkk <- eval(parse(prompt = paste("give value for k, in tol.lim = x + k*sd", 
+                    "  > ")))
+                  WP <- (logb(ADI) - kkk * SD - aa)/bb
+                  cat("\n\nThe withdrawal period is:", WP, "\n")
+                }
+            })
+        }, {
+            with(ans.all, {
+                cat(paste(1:npar, ": ", text.par[1:npar], "\n"))
+                cat("Give number(s) of the (consecutive) parameter(s)\n")
+                ans.all$group <- eval(parse(prompt = paste(" -------- > ")))
+                MLE <- ans.all$MLE
+                if (length(MLE) > 100 && !WAPP) {
+                  cat("\n\nnumber of parameters exceeds 100\n")
+                  cat("Consider to relax the convergence criteria\n\n")
+                  ans.all$change[23] <- T
+                  ans.all$change[nrQ] <- F
+                  ans.all <- f.change.settings(ans.all)
+                }
+                conf.int.0 <- ans.all$conf.int
+                ans.all$trace <- T
+                ans.all <- f.CI(ans.all)
+                name.ci <- text.par[ans.all$group]
+                confint.spec <- ans.all$conf.int
+                if (ans.all$sf.x != 1) {
+                  cat("\nATTENTION: the scaling factor on dose of", 
+                    ans.all$sf.x, "was not taken into account here")
+                  cat("\nwhich should be noted when one of confidence intervals relate to a CED\n")
+                }
+                dimnames(confint.spec) <- list(name.ci, NULL)
+                ans.all$conf.int <- conf.int.0
+                ans.all$confint.spec <- confint.spec
+                cat("\n\n the confidence intervals are:\n")
+                print(confint.spec)
+                f.store.results(ans.all, interactive_mode = interactive_mode)
+            })
+        }, {
+            return(T)
+        })
+      if (interactive_mode == FALSE) {
+        main.ans <- 12
+      } else {
+        cat("\n\n--------\nMAIN MENU :\n--------\n\n")
+        main.ans <- menu(c("Change settings", "Choose (another) model", 
+            "Choose other startvalues", "Fit model", "Plot results", 
+            "Calculate CED: point estimate or confidence interval", 
+            "Generate bootstrap runs based on fitted model", 
+            "Calculate CED distribution for the animal", "Calculate effect size for given exposure in the animal", 
+            "Calculate withdrawal period for veterinary medicines", 
+            "Calculate confidence interval for model parameter(s)", 
+            "End session"), title = "What do you want to do ? \n")
+      }
+      }
+}
+
+
+
