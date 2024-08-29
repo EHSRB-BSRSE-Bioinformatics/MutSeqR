@@ -9641,6 +9641,148 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
 
 
 
+f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log, 
+    sd2.log, nn, Vdetlim, CES, twice = T, ttt = 0, trace.tmp = F, 
+    fct4 = 1, fct5 = 1, cens.up = NA, lb = -Inf, ub = Inf, par.tmp, 
+    increase = increase, x.mn = NA, ref.lev = ref.lev, ans.m6.sd = 1, 
+    sign.q, Mx = 0, x1 = 0, x2 = 0, cc.inf, incr.decr.no = 0) {
+    if (model.ans == -42) {
+        print("f.lik.con:  begin")
+        print(model.ans)
+        print(theta)
+    }
+    if (sum(is.na(theta)) > 0) {
+        if (trace.tmp) {
+            cat("\nnote: problem in f.lik.con: NAs in theta\n")
+            print(theta)
+        }
+        return(NA)
+    }
+    if (0) 
+        if ((length(fct3) > 1) & (length(fct3) != length(x))) {
+            print("f.lik.con")
+            cat("\nATTENTION: fct3 incorrect\n\n")
+            print(length(fct3))
+            stop()
+        }
+    variance <- 0
+    for (jj in 1:max(fct3)) variance <- variance + theta[jj] * 
+        (fct3 == jj)
+    if (!model.ans %in% c(6, 47) || ans.m6.sd != 2) 
+        regr.par <- theta[(max(fct3) + 1):length(theta)]
+    else regr.par <- theta
+    if (model.ans == 11) {
+        yy <- y
+        yy[y == -1000] <- Vdetlim[y == -1000]
+        yy[y == -2000] <- cens.up
+    }
+    if (sum(!is.finite(theta)) > 0) {
+        theta[!is.finite(theta)] <- par.tmp[!is.finite(theta)]
+    }
+    if (length(Mx) != 1) {
+        nr.dosecol <- length(Mx[1, ])
+        RPF.vec <- regr.par[(length(regr.par) - nr.dosecol + 
+            2):length(regr.par)]
+        x <- Mx %*% c(1, RPF.vec)
+    }
+    if (sum(theta <= lb) > 0) {
+        theta[theta < lb] <- 1.1 * par.tmp[theta < lb]
+    }
+    if (sum(theta >= ub) > 0) {
+        theta[theta > ub] <- 0.9 * par.tmp[theta > ub]
+    }
+    if (dtype %in% c(1, 5, 25, 26)) 
+        expect <- f.expect.con(model.ans, x, regr.par, fct1 = fct1, 
+            fct2 = fct2, fct3 = fct3, fct4 = fct4, fct5 = fct5, 
+            CES = CES, twice = twice, ttt = ttt, y = yy, trace.expect = F, 
+            increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
+            sign.q = sign.q, ans.m6.sd = ans.m6.sd, x1 = x1, 
+            x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+    if (dtype == 1 | dtype == 5) {
+        if (trace.tmp & sum(is.na(expect)) > 0) {
+            cat("\nnote: NAs in predicted response\nat parameter values:\n")
+            cat(signif(theta, 4), "\n")
+        }
+        expect <- logb(expect)
+        y.log <- logb(y)
+        y.log[y < 0] <- 0
+        score1 <- (y > 0) * (-0.5 * logb(2 * pi * variance) - 
+            ((y.log - expect)^2)/(2 * variance))
+        score.detlim <- logb(pnorm((logb(Vdetlim) - expect)/sqrt(variance)))
+        score.detlim[!is.finite(score.detlim)] <- 0
+        score.censup <- logb(1 - pnorm((logb(cens.up) - expect)/sqrt(variance)))
+        score.censup[!is.finite(score.censup)] <- 0
+        score2 <- (y == -1000) * score.detlim + (y == -2000) * 
+            score.censup
+        score <- score1 + score2
+    }
+    if (dtype == 25) {
+        score1 <- (y > 0) * (-0.5 * logb(2 * pi * variance) - 
+            ((y - expect)^2)/(2 * variance))
+        score.detlim <- logb(pnorm(((Vdetlim) - expect)/sqrt(variance)))
+        score.detlim[!is.finite(score.detlim)] <- 0
+        score.censup <- logb(1 - pnorm(((cens.up) - expect)/sqrt(variance)))
+        score.censup[!is.finite(score.censup)] <- 0
+        score2 <- (y == -1000) * score.detlim + (y == -2000) * 
+            score.censup
+        score <- score1 + score2
+    }
+    if (dtype == 26) {
+        expect <- sqrt(expect)
+        y.sqrt <- sqrt(y)
+        score1 <- (y > 0) * (-0.5 * logb(2 * pi * variance) - 
+            ((y.sqrt - expect)^2)/(2 * variance))
+        score.detlim <- logb(pnorm((sqrt(Vdetlim) - expect)/sqrt(variance)))
+        score.detlim[!is.finite(score.detlim)] <- 0
+        score.censup <- logb(1 - pnorm((sqrt(cens.up) - expect)/sqrt(variance)))
+        score.censup[!is.finite(score.censup)] <- 0
+        score2 <- (y == -1000) * score.detlim + (y == -2000) * 
+            score.censup
+        score <- score1 + score2
+    }
+    if (dtype %in% c(10, 15, 250, 260)) 
+        expect <- f.expect.con(model.ans, x, regr.par, fct1 = fct1, 
+            fct2 = fct2, fct3 = fct3, fct4 = fct4, fct5 = fct5, 
+            CES = CES, twice = twice, ttt = ttt, y = y, increase = increase, 
+            x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
+            ans.m6.sd = ans.m6.sd, x1 = x1, x2 = x2, cc.inf = cc.inf, 
+            incr.decr.no = incr.decr.no)
+    if (dtype %in% c(10, 15)) {
+        if (model.ans != 11) {
+            expect <- logb(expect)
+            dum <- nn * (mn.log - expect)^2 + (nn - 1) * sd2.log
+        }
+        else dum <- (nn - 1) * sd2.log
+        score <- -(nn * logb(sqrt(2 * pi * variance)) + dum/(2 * 
+            variance))
+    }
+    if (dtype == 250) {
+        if (model.ans != 11) {
+            dum <- nn * (mn.log - expect)^2 + (nn - 1) * sd2.log
+        }
+        else dum <- (nn - 1) * sd2.log
+        score <- -(nn * logb(sqrt(2 * pi * variance)) + dum/(2 * 
+            variance))
+    }
+    if (dtype == 260) {
+        if (model.ans != 11) {
+            expect <- sqrt(expect)
+            dum <- nn * (mn.log - expect)^2 + (nn - 1) * sd2.log
+        }
+        else dum <- (nn - 1) * sd2.log
+        score <- -(nn * logb(sqrt(2 * pi * variance)) + dum/(2 * 
+            variance))
+    }
+    if (model.ans == -51) {
+        print("f.lik.con END")
+        print(theta)
+        print(sum(score))
+    }
+    return(-sum(score))
+}
+
+
+
 f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 1, 
     fct4 = 1, fct5 = 1, name = F, CES = NA, twice = T, ttt = 0, 
     yy = 0, trace.expect = F, increase, x.mn = NA, ref.lev, ans.m6.sd = 1, 
