@@ -11645,3 +11645,758 @@ f.CI <- function(ans.all) {
 
 
 
+f.profile.all <- function(ans.all, nolog = F, debug = FALSE) {
+    if (exists("track")) 
+        print("f.profile.all")
+    date.start <- date()
+    with(ans.all, {
+        if (debug) {
+            xlow <- eval(parse(prompt = paste(" give lower bound of CED for plotting profile -------- > ")))
+            xupp <- eval(parse(prompt = paste(" give upper bound of CED for plotting profile -------- > ")))
+            x.lim <- log10(c(xlow, xupp))
+            interrupt <- menu(c("no", "yes"), title = "Do you want to interrupt at each run? \n  ") - 
+                1
+        }
+        crit <- 0.5 * qchisq(conf.lev, 1)
+        disturb <- 1.01
+        loglik.max <- loglik
+        lb.orig <- lb
+        ub.orig <- ub
+        profile.out <- list()
+        tb <- "\t"
+        if (dtype == 3) {
+        }
+        from <- 0
+        if (cont) {
+            sig2 <- mean(MLE[1:nr.var])
+            if (group[1] == 0) {
+                if (model.ans == 16) {
+                  from <- nr.var + nr.aa + nr.bb + 2
+                  until <- from
+                  group <- from:until
+                }
+                else {
+                  from <- nr.var + nr.aa + 1
+                  if (length(xans) == 1) {
+                    until <- nr.var + nr.aa + nr.bb
+                    group <- from:until
+                  }
+                  else {
+                    from.rpf <- length(MLE) - nr.dosecol + 2
+                    until.rpf <- length(MLE)
+                    group <- c(from, from.rpf:until.rpf)
+                  }
+                }
+            }
+            if (dtype %in% c(5, 15) && nruns > 0) 
+                return(group)
+        }
+        if (!cont) {
+            if (group[1] == 0) {
+                from <- nr.aa + 1
+                until <- nr.aa + nr.bb
+                if (model.type == 2) {
+                  if (nr.aa == 1) {
+                    until <- until - nr.bb + 1
+                  }
+                  if (nr.aa > 1 && nr.bb == 1 && ces.ans != 4) {
+                    from <- 2
+                    until <- nr.aa + 1
+                  }
+                  if (nr.aa == 1 & nr.bb > 1) {
+                    from <- 2
+                    until <- nr.bb + 1
+                  }
+                  if (nr.aa > 1 & nr.bb > 1) {
+                    from <- nr.aa + 1
+                    until <- nr.aa + nr.bb
+                  }
+                }
+                if (model.ans == 30 & model.type == 1) {
+                  from <- nr.aa + nr.bb + 1
+                  until <- nr.aa + nr.bb + 1
+                }
+                if (dtype == 6) {
+                  from <- from + 1
+                  until <- until + 1
+                }
+                group <- from:until
+            }
+        }
+        conf.int <- matrix(NA, nrow = length(group), ncol = 2)
+        par.nr <- 0
+        for (jj in group) {
+            par.nr <- par.nr + 1
+            CI.NA.low <- FALSE
+            CI.NA.upp <- FALSE
+            stop <- FALSE
+            if (trace) {
+                if (model.type == 2 && nr.aa > 1 && nr.bb == 
+                  1) 
+                  cat("\n\ncalculating C.I.for group", fct1.txt[par.nr], 
+                    text.par[jj], "......\n")
+                else if (length(xans) > 1) 
+                  cat("\ncalculating C.I.for group", fct2.txt[par.nr], 
+                    text.par[jj], "......\n")
+                else if (nr.bb == 1 || quick.ans == 2) 
+                  cat("\nCalculating C.I. ......\n")
+                else if (group[1] == 0) 
+                  cat("\nCalculating C.I.for group", fct2.txt[par.nr], 
+                    text.par[jj], "......\n")
+                else cat("\nCalculating C.I.for parameter", jj, 
+                  text.par[jj], "......\n")
+            }
+            CED.low.inf <- FALSE
+            CED.upp.inf <- FALSE
+            small.step.low <- F
+            small.step.upp <- F
+            large.step.low <- F
+            large.step.upp <- F
+            if (trace) {
+                cat("\n=========== lower limit =================\n")
+                cat(text.par, "loglik", "loglik boundary", sep = tb)
+                cat("\n")
+                cat(signif(MLE, 3), round(loglik.max, 2), round(loglik.max - 
+                  crit, 2), sep = tb)
+            }
+            lb <- lb.orig
+            ub <- ub.orig
+            lb[jj] <- MLE[jj]
+            if (lb[jj] < 0) 
+                nolog <- TRUE
+            else nolog <- FALSE
+            loglik.low <- rep(loglik.max, 2)
+            CED.low <- rep(MLE[jj], 2)
+            start <- disturb * MLE
+            if (!debug) 
+                if (trace.plt && !(dtype %in% 2:3)) {
+                  ans.all.plt <- ans.all
+                  ans.all.plt$color <- rep(1, length(x))
+                  if (from != 0) 
+                    ans.all.plt$color[par.nr] <- 3
+                  f.graph.window(2, nr.gr = nr.gr)
+                  if (!cont & dtype != 3) {
+                    f.plot.frq(ans.all.plt)
+                  }
+                  else {
+                    if (ans.all$plt.mns == 1) {
+                      ans.all.plt$plt.mns <- 3
+                      ans.all.plt$cex.2 <- 2.5
+                    }
+                    f.plot.con(ans.all.plt)
+                  }
+                  title(paste("\n\n", text.par[jj]))
+                }
+            if (debug) {
+                f.graph.window(1)
+                print("haha")
+                y.lim <- c((loglik.max - 10 * crit), loglik.max)
+                if (nolog) 
+                  xxx <- CED.low
+                else xxx <- log10(CED.low)
+                print("haha")
+                print(x.lim)
+                print(xxx)
+                print(loglik.low)
+                plot(xxx, loglik.low, xlim = x.lim, ylim = y.lim, 
+                  ylab = "log(likelihood)", col = 1, pch = 16)
+                lines(x.lim, rep(loglik.max - crit, 2), col = 1, 
+                  lty = 2)
+                h.pr()
+            }
+            if (cont && dtype %in% c(1, 5, 10)) 
+                step.start <- 1.06 + 0.11 * sig2
+            else step.start <- 1.08
+            step <- step.start
+            run <- 0
+            max.runs <- 1000
+            while (stop == F) {
+                run <- run + 1
+                if (!nolog) 
+                  lb[jj] <- lb[jj]/step
+                if (nolog) 
+                  lb[jj] <- lb[jj] * step
+                ub[jj] <- lb[jj]
+                start[jj] <- lb[jj] * disturb
+                if (0) {
+                  step.tmp <- step
+                  while (lb[jj] <= lb.orig[jj]) {
+                    if (trace) {
+                      cat("\nf.profile.all: value of parameter exceeds lower constraint (", 
+                        lb.orig[jj], ")\n")
+                      cat("attempting to avoid this by using smaller step\n")
+                      cat("it may be needed to refit the model with other constraints for the target parameter \n")
+                    }
+                    step.tmp <- sqrt(step.tmp)
+                    lb[jj] <- lb.orig[jj] * step.tmp
+                    ub[jj] <- lb[jj]
+                    start[jj] <- lb[jj]
+                    step <- step.tmp
+                  }
+                }
+                start[start < lb] <- lb[start < lb]
+                start[start > ub] <- ub[start > ub]
+                ans.all$par.start <- start
+                ans.all$lb <- lb
+                ans.all$ub <- ub
+                if (cont) 
+                  loglik.try <- -f.lik.con(start, x, y, dtype, 
+                    fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
+                    nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
+                    ttt = ttt, trace = F, fct4 = fct4, fct5 = fct5, 
+                    cens.up = cens.up, par.tmp = NA, increase = increase, 
+                    x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
+                    ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, 
+                    x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+                if (!cont) 
+                  loglik.try <- -f.lik.cat(start, x, y, kk, nn, 
+                    dtype, fct1, fct2, nrp, nth, nr.aa, nr.bb, 
+                    model.ans, model.type, th.par = th.par, ttt = ttt, 
+                    twice = twice, cens.up = cens.up, fct3 = fct3, 
+                    ces.ans = ces.ans, CES = CES, CES.cat = CES.cat, 
+                    decr.zz = decr.zz, kk.tot = kk.tot, cc.inf = cc.inf, 
+                    nn.tot = nn.tot, ref.lev = ref.lev, Mx = Mx, 
+                    x1 = x1, x2 = x2, output = TRUE)
+                if (!is.finite(loglik.try) || loglik.try < loglik.max - 
+                  1e+08) {
+                  lb[jj] <- lb[jj] * step
+                  step <- sqrt(step)
+                  if (trace) 
+                    cat("\ntemporary fitting problem, trying to solve this\n")
+                  start <- start * runif(length(start), 0.9, 
+                    1.1)
+                }
+                else {
+                  nlminb.out <- f.nlminb(ans.all, tmp.quick = T)
+                  MLE.current <- nlminb.out$MLE
+                  loglik.current <- nlminb.out$loglik
+                  start <- MLE.current * disturb
+                  if (trace) {
+                    cat("\n")
+                    cat(signif(MLE.current, 3), round(loglik.current, 
+                      2), round(loglik.max - crit, 2), sep = tb)
+                  }
+                  if (debug) {
+                    if (nolog) 
+                      xxx <- MLE.current[jj]
+                    else xxx <- log10(MLE.current[jj])
+                    points(xxx, loglik.current)
+                    cat("\n")
+                    print("MLE current")
+                    print(MLE.current[jj])
+                    print("loglik current")
+                    print(loglik.current)
+                    if (interrupt) 
+                      f.press.key.to.continue()
+                  }
+                  if (!debug && trace.plt && (loglik.current > 
+                    (loglik.max - crit))) {
+                    if (!cont & !(dtype %in% 2:3)) {
+                      par.lst <- f.split.par(MLE.current, nrp, 
+                        nth, dtype, fct3)
+                      ans.all.plt$regr.par <- par.lst$regr.par
+                      f.lines.frq(ans.all.plt)
+                    }
+                    else if (cont) {
+                      if (ans.m6.sd != 2) 
+                        ans.all.plt$regr.par <- MLE.current[-c(1:nr.var)]
+                      f.lines.con(ans.all.plt)
+                      if (0) {
+                        ans.all.plt$regr.par.matr <- f.pars(ans.all.plt)$regr.par.matr
+                        ans.all.plt$CED <- f.ced.con(ans.all.plt)
+                        f.cedlines.con(ans.all.plt)
+                      }
+                    }
+                  }
+                  if (loglik.current > loglik.max + 0.03) {
+                    ans.all$par.start <- MLE.current * disturb
+                    if (trace) 
+                      cat("\nlocal optimum found....\n")
+                    profile.out$MLE.new <- nlminb.out$MLE
+                    profile.out$loglik <- loglik.current
+                    profile.out$conf.int <- conf.int
+                    profile.out$converged <- nlminb.out$converged
+                    return(profile.out)
+                  }
+                  loglik.low <- c(loglik.current, loglik.low)
+                  CED.low <- c(lb[jj], CED.low)
+                  if ((CED.low[1] < CED.low[2]) && loglik.low[1] > 
+                    loglik.low[2]) {
+                    CED.low <- CED.low[-2]
+                    loglik.low <- loglik.low[-2]
+                  }
+                  if (((loglik.max - loglik.current) > crit) && 
+                    (length(unique(loglik.low)) > 6)) {
+                    stop <- TRUE
+                  }
+                  if (step < 1.00001) {
+                    if (trace) 
+                      cat("\nstep size too small, calculations stopped\n")
+                    stop <- T
+                    small.step.low <- T
+                  }
+                  if (step > 1e+10) {
+                    if (trace) 
+                      cat("\nstep size too large, calculations stopped\n")
+                    stop <- T
+                    large.step.low <- T
+                  }
+                  if (abs(CED.low[1]) < 1e-20) {
+                    if (trace) 
+                      cat("\ncurrent parameter value is too small:", 
+                        CED.low[1], ", evaluating likelihood profile is stopped\n")
+                    CED.low.inf <- TRUE
+                    stop <- T
+                  }
+                  if (run > max.runs) {
+                    if (trace) 
+                      cat("\nATTENTION: Maximum number of runs reached in gauching profile\n")
+                    stop <- T
+                  }
+                  if (!stop) {
+                    if (loglik.low[2] - loglik.low[1] > 0.25 * 
+                      crit) {
+                      if (!nolog) 
+                        lb[jj] <- lb[jj] * step
+                      if (nolog) 
+                        lb[jj] <- lb[jj]/step
+                      step <- step^0.4
+                      CED.low[1] <- NA
+                      if (trace) 
+                        cat("\nLarge change in loglik, step decreased:", 
+                          signif(step, 4), "\n")
+                    }
+                    else if (loglik.low[2] - loglik.low[1] < 
+                      0.1 * crit) {
+                      if (loglik.low[2] >= loglik.low[1]) {
+                        step <- step^1.26
+                        if (!is.na(loglik.low[3])) 
+                          if (loglik.low[3] >= loglik.low[1]) 
+                            step <- step^1.26
+                        if (!is.na(loglik.low[4])) 
+                          if (loglik.low[4] >= loglik.low[1]) 
+                            step <- step^1.26
+                        if (!is.na(loglik.low[5])) 
+                          if (loglik.low[5] >= loglik.low[1]) 
+                            step <- step^1.26
+                        if (trace) 
+                          cat("\nSmall change in loglik, step increased:", 
+                            signif(step, 4), "\n")
+                      }
+                    }
+                    else if (loglik.low[1] < loglik.max - crit) {
+                      if (trace) 
+                        cat("\ncritical log-likelihood reached too early, jump back")
+                      if (!nolog) 
+                        lb[jj] <- MLE.current[jj]/sqrt(step)
+                      if (nolog) 
+                        lb[jj] <- MLE.current[jj] * sqrt(step)
+                      CED.low[1] <- NA
+                    }
+                  }
+                }
+                loglik.low <- loglik.low[order(CED.low)]
+                CED.low <- sort(CED.low)
+            }
+            if (trace) {
+                cat("\n\n=========== upper limit =================\n")
+                cat(text.par, "loglik", "loglik boundary", sep = tb)
+                cat("\n")
+                cat(signif(MLE, 3), round(loglik.max, 2), round(loglik.max - 
+                  crit, 2), sep = tb)
+            }
+            lb <- lb.orig
+            ub <- ub.orig
+            lb[jj] <- MLE[jj]
+            loglik.upp <- rep(loglik.max, 2)
+            CED.upp <- rep(MLE[jj], 2)
+            start <- disturb * MLE
+            if (cont && dtype %in% c(1, 5, 10)) 
+                step.start <- 1.06 + 0.11 * sig2
+            else step.start <- 1.08
+            step <- step.start
+            run <- 0
+            stop <- F
+            while (stop == F) {
+                run <- run + 1
+                if (!nolog) 
+                  lb[jj] <- lb[jj] * step
+                if (nolog) 
+                  lb[jj] <- lb[jj]/step
+                ub[jj] <- lb[jj]
+                start[jj] <- lb[jj]
+                if (0) {
+                  step.tmp <- step
+                  while (lb[jj] >= ub.orig[jj]) {
+                    if (trace) {
+                      cat("\nf.profile.all: value of parameter exceeds upper constraint (", 
+                        lb.orig[jj], ")\n")
+                      cat("attempting to avoid this by using smaller step\n")
+                      cat("it may be needed to refit the model with other constraints for the target parameter \n")
+                    }
+                    step.tmp <- sqrt(step.tmp)
+                    lb[jj] <- lb[jj]/step.tmp
+                    ub[jj] <- lb[jj]
+                    step <- step.tmp
+                  }
+                }
+                start[start < lb] <- lb[start < lb]
+                start[start > ub] <- ub[start > ub]
+                ans.all$par.start <- start
+                ans.all$lb <- lb
+                ans.all$ub <- ub
+                if (cont) 
+                  loglik.try <- -f.lik.con(start, x, y, dtype, 
+                    fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
+                    nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
+                    ttt = ttt, trace = F, fct4 = fct4, fct5 = fct5, 
+                    cens.up = cens.up, par.tmp = NA, increase = increase, 
+                    x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
+                    ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, 
+                    x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
+                if (!cont) 
+                  loglik.try <- -f.lik.cat(start, x, y, kk, nn, 
+                    dtype, fct1, fct2, nrp, nth, nr.aa, nr.bb, 
+                    model.ans, model.type, th.par = th.par, ttt = ttt, 
+                    twice = twice, cens.up = cens.up, fct3 = fct3, 
+                    ces.ans = ces.ans, CES = CES, CES.cat = CES.cat, 
+                    decr.zz = decr.zz, kk.tot = kk.tot, cc.inf = cc.inf, 
+                    nn.tot = nn.tot, ref.lev = ref.lev, Mx = Mx, 
+                    x1 = x1, x2 = x2, output = TRUE)
+                if (!is.finite(loglik.try) || loglik.try < loglik.max - 
+                  1e+08) {
+                  if (!nolog) 
+                    lb[jj] <- lb[jj]/step
+                  if (nolog) 
+                    lb[jj] <- lb[jj] * step
+                  step <- sqrt(step)
+                  if (trace) 
+                    cat("\ntemporary fitting problem\n")
+                  start <- start * runif(length(start), 0.9, 
+                    1.1)
+                }
+                else {
+                  nlminb.out <- f.nlminb(ans.all, tmp.quick = T)
+                  MLE.current <- nlminb.out$MLE
+                  loglik.current <- nlminb.out$loglik
+                  start <- MLE.current * disturb
+                  if (trace) {
+                    cat("\n")
+                    cat(signif(MLE.current, 3), round(loglik.current, 
+                      2), round(loglik.max - crit, 2), sep = tb)
+                  }
+                  if (debug) {
+                    if (nolog) 
+                      xxx <- MLE.current[jj]
+                    else xxx <- log10(MLE.current[jj])
+                    points(xxx, loglik.current)
+                    cat("\n")
+                    print(MLE.current[jj])
+                    print(loglik.current)
+                    if (interrupt) 
+                      f.press.key.to.continue()
+                  }
+                  if (!debug && trace.plt & (loglik.current > 
+                    (loglik.max - crit))) {
+                    if (!cont && !(dtype %in% 2:3)) {
+                      par.lst <- f.split.par(MLE.current, nrp, 
+                        nth, dtype, fct3)
+                      ans.all.plt$regr.par <- par.lst$regr.par
+                      f.lines.frq(ans.all.plt)
+                    }
+                    else if (cont) {
+                      if (ans.m6.sd != 2) 
+                        ans.all.plt$regr.par <- MLE.current[-c(1:nr.var)]
+                      f.lines.con(ans.all.plt)
+                    }
+                  }
+                  if (loglik.current > loglik.max + 0.03) {
+                    ans.all$par.start <- MLE.current * disturb
+                    if (trace) 
+                      cat("\nlocal optimum found....\n")
+                    profile.out$MLE.new <- nlminb.out$MLE
+                    profile.out$loglik <- loglik.current
+                    profile.out$conf.int <- conf.int
+                    profile.out$converged <- nlminb.out$converged
+                    return(profile.out)
+                  }
+                  loglik.upp <- c(loglik.current, loglik.upp)
+                  CED.upp <- c(lb[jj], CED.upp)
+                  if ((CED.upp[1] > CED.upp[2]) && loglik.upp[1] > 
+                    loglik.upp[2]) {
+                    CED.upp <- CED.upp[-2]
+                    loglik.upp <- loglik.upp[-2]
+                  }
+                  if ((loglik.max - loglik.current > crit) && 
+                    (length(unique(loglik.upp)) > 6)) 
+                    stop <- TRUE
+                  if (step < 1.00001) {
+                    stop <- T
+                    small.step.upp <- T
+                    if (trace) 
+                      cat("\nstep size too small, calculations stopped\n")
+                  }
+                  if (step > 1e+10) {
+                    stop <- T
+                    large.step.upp <- T
+                    if (trace) 
+                      cat("\nstep size too large, calculations stopped\n")
+                  }
+                  if (abs(CED.upp[1]) > 1e+20) {
+                    if (trace) 
+                      cat("\ncurrent parameter value is too large:", 
+                        CED.upp[1], "\n")
+                    CED.upp.inf <- TRUE
+                    stop <- T
+                  }
+                  if (run > max.runs) {
+                    if (trace) 
+                      cat("\nATTENTION: Maximum number of runs reached in establishing profile\n")
+                    stop <- T
+                  }
+                  if (!stop) {
+                    if (loglik.upp[2] - loglik.upp[1] > 0.25 * 
+                      crit) {
+                      if (!nolog) 
+                        lb[jj] <- lb[jj]/step
+                      if (nolog) 
+                        lb[jj] <- lb[jj] * step
+                      step <- step^0.4
+                      CED.upp[1] <- NA
+                      if (trace) 
+                        cat("\nLarge change in loglik, step decreased:", 
+                          signif(step, 4), "\n")
+                    }
+                    else if (loglik.upp[2] - loglik.upp[1] < 
+                      0.1 * crit) {
+                      if (loglik.upp[2] >= loglik.upp[1]) {
+                        step <- step^1.26
+                        if (!is.na(loglik.upp[3])) 
+                          if (loglik.upp[3] >= loglik.upp[1]) 
+                            step <- step^1.26
+                        if (!is.na(loglik.upp[4])) 
+                          if (loglik.upp[4] >= loglik.upp[1]) 
+                            step <- step^1.26
+                        if (!is.na(loglik.upp[5])) 
+                          if (loglik.upp[5] >= loglik.upp[1]) 
+                            step <- step^1.26
+                        if (trace) 
+                          cat("\nSmall change in loglik, step increased:", 
+                            signif(step, 4), "\n")
+                      }
+                    }
+                    else if (loglik.upp[1] < loglik.max - crit) {
+                      if (trace) 
+                        cat("\ncritical log-likelihood reached too early, jump back")
+                      if (!nolog) 
+                        lb[jj] <- MLE.current[jj] * sqrt(step)
+                      if (nolog) 
+                        lb[jj] <- MLE.current[jj]/sqrt(step)
+                      CED.upp[1] <- NA
+                    }
+                    if (0) 
+                      if (model.ans %in% c(14, 15, 24, 25)) {
+                        cc <- MLE.current[nr.var + nr.aa + nr.bb + 
+                          1]
+                        if (increase == 1) 
+                          if (cc <= 1 + CES) {
+                            print("f.profile.all:   c does not reach CES")
+                            print(MLE.current)
+                            print(cc)
+                            stop <- T
+                            CED.upp.inf <- TRUE
+                          }
+                        if (increase == -1) 
+                          if (cc >= 1 - abs(CES)) {
+                            print("f.profile.all decrease:   c does not reach CES")
+                            print(MLE.current)
+                            print(cc)
+                            print(1 - abs(CES))
+                            stop <- T
+                            CED.upp.inf <- TRUE
+                          }
+                      }
+                  }
+                }
+                if (is.na(CED.upp[1])) {
+                  CED.upp <- CED.upp[-1]
+                  loglik.upp <- loglik.upp[-1]
+                }
+                loglik.upp <- loglik.upp[rev(order(CED.upp))]
+                CED.upp <- rev(sort(CED.upp))
+            }
+            if (debug) 
+                f.press.key.to.continue()
+            lst <- loglik.low < (loglik.max - crit)
+            if (sum(lst) > 0) {
+                first.crit.ll <- max(loglik.low[lst])
+                first.crit.ced <- CED.low[loglik.low == first.crit.ll]
+                first.crit.ll <- rep(first.crit.ll, length(first.crit.ced))
+                loglik.low <- c(loglik.low[!lst], first.crit.ll)
+                CED.low <- c(CED.low[!lst], first.crit.ced)
+                loglik.low <- loglik.low[order(CED.low)]
+                CED.low <- sort(CED.low)
+            }
+            lst <- loglik.upp < (loglik.max - crit)
+            if (length(loglik[lst]) > 0) {
+                first.crit.ll <- max(loglik.upp[lst])
+                first.crit.ced <- CED.upp[loglik.upp == first.crit.ll]
+                first.crit.ll <- rep(first.crit.ll, length(first.crit.ced))
+                loglik.upp <- c(loglik.upp[!lst], first.crit.ll)
+                CED.upp <- c(CED.upp[!lst], first.crit.ced)
+                loglik.upp <- loglik.upp[order(CED.upp)]
+                CED.upp <- sort(CED.upp)
+            }
+            if (!nolog) 
+                CED.low <- log10(CED.low)
+            CED.low <- CED.low[-length(CED.low)]
+            loglik.low <- loglik.low[-length(loglik.low)]
+            if (any(diff(loglik.low) < 0)) 
+                spline.low <- spline(CED.low, loglik.low)
+            else spline.low <- spline(CED.low, loglik.low, method = "hyman")
+            if (min(spline.low$x) > min(CED.low)) {
+                spline.low$x <- c(min(CED.low), spline.low$x)
+                spline.low$y <- c(loglik.low[1], spline.low$y)
+            }
+            if (length(unique(spline.low$y)) == 1) {
+                if (trace) 
+                  cat("\n\nonly one point in lower spline\n")
+                ci.low <- list(y = -Inf)
+                conf.int[par.nr, 1] <- ci.low$y
+                CI.NA.low <- TRUE
+            }
+            else {
+                ci.low <- approx(spline.low$y, spline.low$x, 
+                  xout = loglik.max - crit)
+                conf.int[par.nr, 1] <- ci.low$y
+            }
+            if (small.step.low) {
+                conf.int[par.nr, 1] <- CED.low[1]
+            }
+            if (large.step.low) 
+                conf.int[par.nr, 1] <- -Inf
+            if (loglik.low[1] > loglik.max - crit) 
+                conf.int[par.nr, 1] <- -Inf
+            if (!nolog) 
+                CED.upp <- log10(CED.upp)
+            if (max(abs(diff(loglik.upp))) > 0.01) {
+                CED.upp <- CED.upp[-1]
+                loglik.upp <- loglik.upp[-1]
+                if (any(diff(loglik.upp) < 0)) 
+                  spline.upp <- spline(CED.upp, loglik.upp)
+                else spline.upp <- spline(CED.upp, loglik.upp, 
+                  method = "hyman")
+                if (max(spline.upp$x) < max(CED.upp)) {
+                  spline.upp$x <- c(spline.upp$x, max(CED.upp))
+                  spline.upp$y <- c(spline.upp$y, loglik.upp[length(loglik.upp)])
+                }
+                if (length(unique(spline.upp$y)) == 1) {
+                  if (trace) 
+                    cat("\n\nonly one point in upper spline\n")
+                  ci.upp <- list(y = Inf)
+                  conf.int[par.nr, 2] <- ci.upp$y
+                  CI.NA.upp <- TRUE
+                }
+                else {
+                  ci.upp <- approx(spline.upp$y, spline.upp$x, 
+                    xout = loglik.max - crit)
+                  conf.int[par.nr, 2] <- ci.upp$y
+                }
+                if (small.step.upp) 
+                  conf.int[par.nr, 2] <- CED.upp[1]
+                if (large.step.upp) 
+                  conf.int[par.nr, 2] <- Inf
+                if (loglik.upp[length(loglik.upp)] > loglik.max - 
+                  crit) {
+                  if (!small.step.upp) {
+                    conf.int[par.nr, 2] <- Inf
+                  }
+                  else conf.int[par.nr, 2] <- NA
+                }
+            }
+            else {
+                spline.upp <- list()
+                spline.upp$x <- CED.upp
+                spline.upp$y <- rep(loglik.upp[1], length(CED.upp))
+                ci.upp <- list(y = max(CED.upp))
+            }
+            if (CED.low.inf) 
+                conf.int[par.nr, 1] <- -Inf
+            if (CED.upp.inf) 
+                conf.int[par.nr, 2] <- Inf
+            CED.vec <- c(CED.low, CED.upp)
+            loglik.vec <- c(loglik.low, loglik.upp)
+            if (!(CI.NA.low && CI.NA.upp)) 
+                if (trace.plt) {
+                  if (dtype %in% 2:3) 
+                    f.graph.window(1, nr.gr = nr.gr)
+                  y.low <- min(spline.low$y, spline.upp$y)
+                  y.upp <- max(spline.low$y, spline.upp$y)
+                  y.lim <- c(min(y.low, loglik.max - crit), y.upp)
+                  if (nolog) 
+                    x.lab = text.par[jj]
+                  else x.lab = paste("log10(", text.par[jj], 
+                    ")")
+                  plot(CED.vec, loglik.vec, xlab = x.lab, ylim = y.lim, 
+                    ylab = "log(likelihood)", col = 1, pch = 16)
+                  title("calculation of confidence interval")
+                  if (nolog) 
+                    MLE.tmp <- MLE[jj]
+                  else MLE.tmp <- log10(MLE[jj])
+                  points(MLE.tmp, loglik.max, col = 8, pch = 16, 
+                    cex = 2.5)
+                  lines(spline.low$x, spline.low$y, col = 6)
+                  lines(spline.upp$x, spline.upp$y, col = 6)
+                  segments(min(CED.vec), loglik.max - crit, max(CED.vec), 
+                    loglik.max - crit, col = 1, lty = 2)
+                  lines(rep(ci.low$y, 2), c(min(loglik.vec), 
+                    loglik.max), lty = 2)
+                  lines(rep(ci.upp$y, 2), c(min(loglik.vec), 
+                    loglik.max), lty = 2)
+                }
+            if (max(abs(diff(loglik.low))) < 0.01) 
+                conf.int[par.nr, 1] <- -Inf
+            if (max(abs(diff(loglik.upp))) < 0.01) {
+                conf.int[par.nr, 2] <- Inf
+            }
+            if (CI.NA.low) {
+                if (trace) 
+                  cat("\nlower conf. bound could not be established, log-likelihood profile did not change\n")
+            }
+            if (CI.NA.upp) {
+                if (trace) 
+                  cat("\nupper conf. bound could not be established, log-likelihood profile did not change\n")
+            }
+        }
+        if (length(conf.int[, 1]) > 1) {
+            text.CED <- text.par[group]
+            dimnames(conf.int)[[1]] <- text.CED
+        }
+        else text.CED <- rep(NA, length(conf.int[, 1]))
+        ans.all$text.CED <- text.CED
+        if (nolog) 
+            conf.int <- signif(conf.int, 3)
+        else conf.int <- signif(10^conf.int, 3)
+        profile.out <- list(conf.int = conf.int, MLE = MLE, loglik = nlminb.out$loglik, 
+            profile = cbind(CED.vec, loglik.vec), text.CED = text.CED)
+        if (quick.ans == 1) {
+            if (trace) 
+                cat("\nstarted at:", date.start)
+            if (trace) 
+                cat("\n")
+            if (trace) 
+                cat(date())
+        }
+        profile.out$CED.low <- CED.low
+        profile.out$loglik.low <- loglik.low
+        profile.out$CED.upp <- CED.upp
+        profile.out$loglik.upp <- loglik.upp
+        ans.all$boot <- FALSE
+        if (exists("track")) 
+            print("end of profile.all")
+        return(profile.out)
+    })
+}
+
+
+
