@@ -11549,3 +11549,99 @@ f.grubb <- function(ss = 25, alfa = 0.05) {
 
 
 
+f.CI <- function(ans.all) {
+    if (exists("track")) 
+        print("f.CI")
+    with(ans.all, {
+        if (quick.ans == 1) 
+            ans.all$trace.plt <- T
+        profile.out <- f.profile.all(ans.all)
+        conf.int <- profile.out$conf.int
+        update <- F
+        count <- 0
+        loglik.tmp <- profile.out$loglik - 0.5
+        ans.all$CED.low <- profile.out$CED.low
+        ans.all$loglik.low <- profile.out$loglik.low
+        ans.all$CED.upp <- profile.out$CED.upp
+        ans.all$loglik.upp <- profile.out$loglik.upp
+        while (sum(profile.out$MLE.new) != 0) {
+            count <- count + 1
+            if (interrupt) {
+                cat(" \n\n local optimum found .... calculation of CI is re-started\n")
+                cat(" improved fit will be stored in R-object called newfit\n\n")
+            }
+            if (profile.out$loglik < loglik.tmp - 0.02) {
+                cat("\n\nATTENTION: log-likelihood fluctuates, CI is not calculated\n\n")
+                profile.out$conf.int <- matrix(NA, ncol = 2)
+                profile.out$MLE.new <- 0
+            }
+            else {
+                ans.all$par.start <- profile.out$MLE.new
+                ans.all <- f.nlminb(ans.all)
+                cat("\n\n new log-likelihood: ", ans.all$loglik, 
+                  "\n\n")
+                if (!WAPP && !gui) 
+                  f.store.results(ans.all, "newfit")
+                profile.out <- f.profile.all(ans.all)
+                loglik.tmp <- profile.out$loglik
+                update <- T
+                if (count > 50) {
+                  cat("\n\nno global optimum found\n\n")
+                  profile.out$MLE.new <- 0
+                  profile.out$conf.int <- matrix(NA, ncol = 2)
+                }
+                conf.int <- profile.out$conf.int
+            }
+        }
+        if (update) {
+            if (cont) 
+                ans.all$regr.par <- ans.all$MLE[-(1:max(fct3))]
+            if (!cont) {
+                if (dtype == 6) 
+                  nr.alfa <- max(fct3)
+                else nr.alfa <- 0
+                CED <- ans.all$MLE[(nr.alfa + nr.var + nr.aa + 
+                  1):(nr.alfa + nr.var + nr.aa + nr.bb)]
+                CED.matr <- matrix(CED, ncol = 1)
+                ans.all$CED <- signif(CED, 2)
+                ans.all$CED.matr <- CED.matr
+                if (model.type == 1) {
+                  ans.all$regr.par <- ans.all$MLE[1:nrp]
+                  if (dtype == 6) 
+                    ans.all$regr.par <- ans.all$regr.par[-1]
+                }
+                if (model.type == 2) {
+                  par.lst <- f.split.par(ans.all$MLE, nrp, nth, 
+                    dtype, fct3)
+                  ans.all$regr.par <- par.lst$regr.par
+                  ans.all$th.par <- par.lst$th.par
+                  ans.all$sig.par <- par.lst$sig.par
+                }
+                ans.all$show <- f.show.cat(ans.all)
+            }
+        }
+        low <- conf.int[, 1]
+        upp <- conf.int[, 2]
+        lst1 <- is.na(low)
+        lst2 <- is.na(upp)
+        lst <- lst1 & lst2
+        conf.int[lst, ] <- rep(NA, 2)
+        ans.all$conf.int <- conf.int
+        ans.all$update <- update
+        ans.all$profile <- profile.out$profile
+        if (quick.ans == 1) {
+            cat("\n\nCheck the log-likelihood plot\n")
+        }
+        ans.all$text.CED <- profile.out$text.CED
+        if (update) 
+            if (cont) 
+                ans.all$show <- f.show.con(ans.all)
+            else ans.all$show <- f.show.cat(ans.all)
+        if (exists("track")) 
+            print("f.CI END")
+        return(ans.all)
+    })
+}
+
+
+
