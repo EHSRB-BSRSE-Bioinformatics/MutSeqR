@@ -8751,3 +8751,26 @@ f.version <- function() {
 
 
 
+f.control <- function(lev = 3) {
+    lst <- list()
+    switch(lev, {
+        lst$eval.max <- 50
+        lst$iter.max <- 40
+        lst$rel.tol <- 0.001
+        lst$x.tol <- 0.015
+        lst$step.min <- 0.00022
+    }, {
+        lst$eval.max <- 100
+        lst$iter.max <- 75
+        lst$rel.tol <- 1e-06
+        lst$x.tol <- 0.00015
+        lst$step.min <- 2.2e-07
+    }, {
+        lst$eval.max <- 1000
+        lst$iter.max <- 750
+    })
+    return(lst)
+}
+
+
+
