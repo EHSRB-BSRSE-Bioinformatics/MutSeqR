@@ -7,7 +7,7 @@
 f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE, 
     scale.ans = FALSE, const.var = F, show.warnings = F, interactive_mode = TRUE,
     datatype = NULL, model_choice = NULL, setting_choice = NULL, nested_model_choice = NULL,
-    indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, CES = 0.05, model_selection = NULL, lower_dd = NULL,
+    indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = 0.05, model_selection = NULL, lower_dd = NULL,
     upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL) {
     message(paste0("Independent variable: ", indep_var_choice))
     if (interactive_mode == TRUE) {
@@ -34,7 +34,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
         ans.all$const.var <- const.var
         ans.all$quick.ans <- 1
         if (ans.all$cont) 
-            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
         else quit <- f.cat(ans.all, list.logic = T)
         if (quit) {
             if (interactive_mode == FALSE) {
@@ -179,7 +179,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
                 }
             }
             if (ans.all$quick.ans > 1) 
-                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
         }
         if (dtype %in% c(2, 3, 4, 6, 84)) {
             ans.all$cont <- FALSE
@@ -2185,7 +2185,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
     if (ans.all$quick.ans == 6) {
         ans.all <- f.select.m46.con(ans.all, interactive_mode = interactive_mode, results_env = results_env)
         return(ans.all)
-        assign(ans.all$created, ans.all, envir = results_env)
+        # assign(ans.all$created, ans.all, envir = results_env)
     }
     if (ans.all$NES.ans == 2) 
         ans.all$CES <- 0.05
@@ -2254,7 +2254,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
     if (exists("track")) 
         print("f.select.con END")
     return(ans.all)
-    assign(ans.all$created, ans.all, envir = results_env)
+    #assign(ans.all$created, ans.all, envir = results_env)
 }
 
 
@@ -3558,10 +3558,10 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             }
         }
         else if (!ans.all$no.CI && cont) {
-            ans.all.tmp <- f.CI.sel(ans.all.tmp)
+            ans.all.tmp <- f.CI.sel(ans.all.tmp, results_env = results_env, interactive_mode = interactive_mode)
         }
         else if (!cont) {
-            ans.all.tmp <- f.CI.sel(ans.all.tmp)
+            ans.all.tmp <- f.CI.sel(ans.all.tmp, results_env = results_env, interactive_mode = interactive_mode)
         }
     }
     if (model.sel == 1 && dtype %in% c(4, 6)) {
@@ -7019,9 +7019,10 @@ f.refit.nes <- function(ans.all, interactive_mode = T, results_env = NULL) {
                     MLE <- ans.all$MLE
                 }
             }
-            message("WRITING OBJECT HERE")
-            ans.all$CED <- CED # This is probably not a good idea
-            assign(ans.all$modelname, ans.all, envir = results_env)
+            # If you want to do the CES recalculation you need to uncomment these lines
+            # Something weird about ans.all at this point though. Probably best to avoid this.
+            # ans.all$CED <- CED # This is probably not a good idea, but necessary to get the CED to match the output below, which also matches the figures. No idea where the proper ans.all to capture for this is.
+            # assign(ans.all$modelname, ans.all, envir = results_env)
             regr.par <- MLE[-(1:max(fct3))]
             CED <- regr.par[(nr.aa + 1):(nr.aa + nr.bb)]
             if (nr.bb == 1) 
@@ -8774,7 +8775,7 @@ f.control <- function(lev = 3) {
 
 
 
-f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input = NULL, interactive_mode = TRUE, covariates = NULL, CES = NULL, model_selection = NULL, lower_dd = NULL, upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
+f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input = NULL, interactive_mode = TRUE, covariates = NULL, custom_CES = NULL, model_selection = NULL, lower_dd = NULL, upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
     if (exists("track")) 
         print("f.con")
     f.assign(".Pr.last", ans.all)
@@ -8865,7 +8866,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
             ans.all <- f.change.settings(ans.all, choose = T)
             if (ans.all$fitted) ans.all$show <- f.show.con(ans.all)
             if (!ans.all$fitted) {
-                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env) else {
+                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env) else {
                   ans.all <- f.execute(ans.all)
                   if (ans.all$ans.m6.sd != 2) ans.all <- f.start.con(ans.all, 
                     adjust = F, fitted = F, tmp.quick = F)
@@ -8897,7 +8898,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                 }
             }
             if (ans.all$quick.ans > 1) {
-                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
                 
                 # Human-readable list of models
                 list.of.models <- c("exponential", "Hill", "inverse exponential", "lognormal DR")
@@ -9098,7 +9099,7 @@ f.nr.replicates <- function(ans.all) {
 
 
 
-f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
+f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
     if (exists("track")) 
         print("f.quick.con")
         message(paste0("indep_var_choice: ", indep_var_choice))
@@ -9218,16 +9219,21 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 }
             if (!ans.all$covar.dd) {
               if (interactive_mode == FALSE) {
-                 # Setting CES based on the parameter provided
-                 ans.all$CES <- abs(CES) # Ensure the CES value is positive
-                 ans.all$NES.ans <- adjust_CES_to_group_SD
+                # Setting CES based on the parameter provided
+                ans.all$NES.ans <- adjust_CES_to_group_SD
               } else {
                 ans.all$NES.ans <- menu(c("no", "yes"), title = "Do you want to adjust CES to within group SD?\n")
-                if (ans.all$NES.ans == 1)
+              }
+              if (ans.all$NES.ans == 1) {
+                if (interactive_mode == FALSE ) {
+                  ans.all$CES <- custom_CES
+                } else {
                   ans.all$CES <- eval(parse(prompt = paste("\nGive value for CES (always positive)\n                           type 0 to avoid calculation of CIs  > ")))
+                }
                 ans.all$CES <- abs(ans.all$CES)
               }
             }
+          message("END BLOCK COVAR DD")
             if (quick.ans == 6) {
                 fct2.fact <- data.0[, covar.no]
                 levels.all <- levels(factor(fct2.fact))
@@ -9237,15 +9243,19 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 cat(paste(1:nr.lev, ":", levels.all, "\n"))
                 ans.all$ref.lev <- eval(parse(prompt = paste(" -------- > ")))
             }
+            message("END BLOCK QUICK ANS 6")
             if (length(Vyans) == 1) 
                 interrupt <- TRUE
+                message("END LENGTH VYANS == 1")
             if (length(Vyans) > 1) {
                 int.ans <- menu(c("no", "yes (opportunity to save results per endpoint)"), 
                   title = "Do you want to interrupt calculations after each endpoint? \n")
                 if (int.ans == 2) 
                   interrupt <- TRUE
                 else interrupt <- FALSE
+                message("END LENGTH VYANS > 1")
             }
+            message("BEFORE INTERRUPT")
             ans.all$interrupt <- interrupt
             ans.all$auto.detlim <- FALSE
             if (length(Vyans) > 1) {
@@ -9256,11 +9266,14 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                     ans.all$auto.detlim <- TRUE)
                 }
             }
+            message("BEFORE BOOTSTRAP QUESTION")
             if ((ans.all$CES != 0 || ans.all$NES.ans == 2)) {
                 if (ans.all$quick.ans == 6) 
                   ans.all$nruns <- eval(parse(prompt = "\nprovide number of bootstrap runs, or type 0 to get profile likelihood CI > "))
                 else if (length(ans.all$xans) == 1) {
                   if (interactive_mode == FALSE) {
+                    message("Model averaging enabled.")
+                    message(paste0("ans.all$CES: ", ans.all$CES))
                     do.MA <- model_averaging
                   } else {
                     do.MA <- menu(c("no", "yes"), title = "Do you want to calculate the BMD confidence interval by model averaging?") - 
