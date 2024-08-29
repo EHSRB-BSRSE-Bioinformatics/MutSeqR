@@ -10263,3 +10263,570 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
 
 
 
+f.constr.con <- function(ans.all, tmp.quick = F) {
+    if (exists("track")) 
+        print("f.constr.con")
+    ans.all$tmp.quick <- tmp.quick
+    with(ans.all, {
+        nr.aa <- max(fct1)
+        nr.bb <- max(fct2)
+        nr.cc <- max(fct4)
+        nr.dd <- max(fct5)
+        if (dtype != 6) 
+            nr.var <- max(fct3)
+        lower.var <- 1e-06
+        upper.var <- 10
+        if (dtype %in% c(25, 250)) 
+            upper.var <- 1e+10
+        if (dtype %in% c(26, 260)) 
+            upper.var <- 10000
+        lower.RPF <- 1e-12
+        upper.RPF <- 1e+12
+        if (tmp.quick && model.ans %in% c(1:10, 12:21, 22:25, 
+            46:54)) {
+            if (cont) {
+                lower.aa <- min(yy/100)
+                upper.aa <- max(yy * 100)
+            }
+            if (!cont) {
+                lower.aa <- 0.1
+                if (length(unique(fct3)) == 1) {
+                  if (nth > 4) 
+                    upper.aa <- exp(2 * sig.start)
+                  else switch(nth, upper.aa <- exp(6 * sig.start), 
+                    upper.aa <- exp(5 * sig.start), upper.aa <- exp(4 * 
+                      sig.start), upper.aa <- exp(3 * sig.start))
+                  if (quick.ans == 1) 
+                    cat("\n\n Upper bound of parameter a was constrained based on\n                           the value", 
+                      sig.start, "for sigma\n")
+                }
+                else {
+                  lower.aa <- 1e-04
+                  upper.aa <- 1000
+                }
+            }
+            lower.bb <- -Inf
+            upper.bb <- Inf
+            if (model.ans %in% c(4:6, 9:10, 13:15, 16, 19:21, 
+                23:25, 46:48, 50, 51:54)) 
+                lower.bb <- 1e-06
+            if (model.ans %in% 17:18) {
+                if (increase == 1) {
+                  lower.bb <- -Inf
+                  upper.bb <- -1.01 * max(x)
+                }
+                else {
+                  lower.bb <- eps
+                  upper.bb <- Inf
+                }
+            }
+            if (model.ans %in% 3) {
+                if (increase == -1) {
+                  lower.bb <- -Inf
+                  upper.bb <- 0
+                }
+                if (increase == 1) {
+                  lower.bb <- 0
+                  upper.bb <- Inf
+                }
+            }
+            if (model.ans %in% 18) {
+                if (increase == 1) {
+                  lower.bb <- -Inf
+                  upper.bb <- 0
+                }
+                if (increase == -1) {
+                  lower.bb <- 0
+                  upper.bb <- Inf
+                }
+            }
+            low.cc.default <- 1.3
+            if (increase == 1) {
+                lower.cc <- low.cc.default
+                upper.cc <- 1e+06
+            }
+            if (increase == -1) {
+                lower.cc <- 1e-06
+                upper.cc <- 1/low.cc.default
+            }
+            if (increase == 0) {
+                lower.cc <- 1e-06
+                upper.cc <- 1000
+            }
+            if (incr.decr.no > 0) {
+                lower.cc <- c(1e-18, 1e+18)
+                upper.cc <- c(1e-18, 1e+18)
+            }
+            if (model.ans == 6 && ans.m6.sd == 2) {
+                lower.cc <- 1e-06
+                upper.cc <- 1000
+            }
+            if (model.ans == 49) {
+                lower.cc <- 1e-06
+                upper.cc <- 1000
+            }
+            if (incr.decr.no == 0) 
+                if (cont && !MA.running && model.ans %in% c(4, 
+                  5, 14, 15, 19, 20, 21, 24, 25, 46, 52, 54)) {
+                  if (increase == 1) {
+                    cc.feasible <- (1 + abs(CES)) * 1.01
+                    if (cc.feasible > low.cc.default) {
+                      lower.cc <- cc.feasible
+                      cat("\nwarning: lower constraint on parameter cc has been increased to", 
+                        lower.cc, "\ndue to value of CES\n")
+                      cat("This might result in suboptimal fit of model", 
+                        model.ans, "\n")
+                    }
+                  }
+                  if (increase == -1) {
+                    cc.feasible <- (1 - abs(CES))/1.01
+                    if (upper.cc > cc.feasible) {
+                      cat("\nwarning: upper constraint on parameter cc has been decreased to", 
+                        cc.feasible, "\ndue to value of CES\n")
+                      cat("This might result in suboptimal fit of model", 
+                        model.ans, "\n")
+                    }
+                  }
+                }
+            constr.dd <- f.constr.dd(model.ans)
+            lower.dd <- constr.dd[1]
+            upper.dd <- constr.dd[2]
+            if (model.ans == 1) {
+                lower <- c(lower.aa)
+                upper <- c(upper.aa)
+            }
+            if (model.ans %in% c(2, 7, 12, 17, 22)) {
+                lower <- c(lower.aa, lower.bb)
+                upper <- c(upper.aa, upper.bb)
+            }
+            if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53)) {
+                lower <- c(lower.aa, lower.bb, lower.dd)
+                upper <- c(upper.aa, upper.bb, upper.dd)
+            }
+            if (model.ans %in% c(4, 9, 14, 19, 24)) {
+                lower <- c(lower.aa, lower.bb, lower.cc)
+                upper <- c(upper.aa, upper.bb, upper.cc)
+            }
+            if (model.ans %in% c(5, 6, 10, 15, 16, 20, 21, 25, 
+                46, 49, 52, 54)) {
+                lower <- c(lower.aa, lower.bb, lower.cc, lower.dd)
+                upper <- c(upper.aa, upper.bb, upper.cc, upper.dd)
+            }
+            if (model.ans == 47) {
+                lower.qq <- 5
+                upper.qq <- 10
+                lower <- c(lower.aa, lower.bb, lower.qq, lower.dd)
+                upper <- c(upper.aa, upper.bb, upper.qq, upper.dd)
+            }
+            if (model.ans %in% c(48, 50)) {
+                lower.aa.t <- lower.bb
+                upper.aa.t <- upper.bb
+                lower.bb.t <- 1e-06
+                upper.bb.t <- 1e+06
+                lower.dd.t <- 0.1
+                upper.dd.t <- 10
+                lower <- c(lower.aa, lower.cc, lower.dd, lower.aa.t, 
+                  lower.bb.t, lower.dd.t)
+                upper <- c(upper.aa, upper.cc, upper.dd, upper.aa.t, 
+                  upper.bb.t, upper.dd.t)
+            }
+            if (cont && fit.ans == 1) {
+                lower <- c(lower.var, lower)
+                upper <- c(upper.var, upper)
+            }
+        }
+        else if (model.ans == 11) {
+            lower <- c(rep(lower.var, nr.var), regr.par)
+            upper <- c(rep(upper.var, nr.var), regr.par)
+        }
+        else if (model.ans == 58) {
+            lower.var <- lower[1]
+            lower.FD.V <- lower[2]
+            lower.ka <- lower[3]
+            lower.ke <- lower[4]
+            upper.var <- upper[1]
+            upper.FD.V <- upper[2]
+            upper.ka <- upper[3]
+            upper.ke <- upper[4]
+        }
+        else if (model.ans == 59) {
+            lower.var <- lower[1]
+            lower.C1 <- lower[2]
+            lower.C2 <- lower[3]
+            lower.ka <- lower[4]
+            lower.lab1 <- lower[5]
+            lower.lab2 <- lower[6]
+            upper.var <- upper[1]
+            upper.C1 <- upper[2]
+            upper.C2 <- upper[3]
+            upper.ka <- upper[4]
+            upper.lab1 <- upper[5]
+            upper.lab2 <- upper[6]
+        }
+        else if (model.ans %in% c(31, 33, 57)) {
+            lower.var <- lower[1]
+            lower.aa <- lower[2]
+            lower.b1 <- lower[3]
+            lower.b2 <- lower[4]
+            lower.c1 <- lower[5]
+            lower.c2 <- lower[6]
+            lower.dd <- lower[7]
+            upper.var <- upper[1]
+            upper.aa <- upper[2]
+            upper.b1 <- upper[3]
+            upper.b2 <- upper[4]
+            upper.c1 <- upper[5]
+            upper.c2 <- upper[6]
+            upper.dd <- upper[7]
+            if (model.ans == 33) {
+                lower.d1 <- lower[7]
+                lower.d2 <- lower[8]
+                upper.d1 <- upper[7]
+                upper.d2 <- upper[8]
+            }
+            if (model.ans == 57) {
+                lower.d1 <- lower[6]
+                lower.d2 <- lower[7]
+                upper.d1 <- upper[6]
+                upper.d2 <- upper[7]
+            }
+        }
+        else if (model.ans == 65) {
+            lower.cc <- lower[2]
+            upper.cc <- upper[2]
+            lower.k1 <- lower[3]
+            upper.k1 <- upper[3]
+            lower.ke <- lower[4]
+            upper.ke <- upper[4]
+        }
+        else {
+            if (cont) 
+                dum <- 1
+            else dum <- 0
+            lower.var <- lower[dum]
+            lower.aa <- lower[1 + dum]
+            lower.bb <- lower[2 + dum]
+            lower.cc <- lower[3 + dum]
+            lower.dd <- lower[4 + dum]
+            lower.ee <- lower[5 + dum]
+            lower.ff <- lower[6 + dum]
+            lower.gg <- lower[7 + dum]
+            lower.hh <- lower[8 + dum]
+            upper.var <- upper[dum]
+            upper.aa <- upper[1 + dum]
+            upper.bb <- upper[2 + dum]
+            upper.cc <- upper[3 + dum]
+            upper.dd <- upper[4 + dum]
+            upper.ee <- upper[5 + dum]
+            upper.ff <- upper[6 + dum]
+            upper.gg <- upper[7 + dum]
+            upper.hh <- upper[8 + dum]
+            if (model.ans == 43) {
+                lower.cc <- -1e+12
+                upper.cc <- 1e+12
+                lower[3 + dum] <- lower.cc
+                upper[3 + dum] <- upper.cc
+            }
+        }
+        if (tmp.quick) 
+            if (length(xans) > 1) {
+                lower <- c(lower, lower.RPF)
+                upper <- c(upper, upper.RPF)
+            }
+        if (tmp.quick == F) {
+            {
+                vabcd <- f.text.par(ans.all, brief = T)
+                if (incr.decr.no > 0) {
+                }
+                ans <- 1
+                while (ans <= length(vabcd)) {
+                  ans <- menu(c(paste(vabcd, ":     ", lower, 
+                    " --- ", upper), "None, continue"), title = "\n For which parameter do you want to change the constraint? ")
+                  if (ans <= length(vabcd)) {
+                    cat("\n give infinite constraints as Inf or -Inf\n\n")
+                    lower[ans] <- eval(parse(prompt = paste("give lower bound for ", 
+                      vabcd[ans], "  ", "  > ")))
+                    upper[ans] <- eval(parse(prompt = paste("give upper bound for ", 
+                      vabcd[ans], "  > ")))
+                  }
+                }
+                lower.var <- lower[1]
+                lower.aa <- lower[2]
+                lower.bb <- lower[3]
+                upper.var <- upper[1]
+                upper.aa <- upper[2]
+                upper.bb <- upper[3]
+                if (model.ans %in% c(4, 5, 6, 9, 10, 14, 15, 
+                  19, 20, 21, 24, 25, 26, 30, 34, 43, 46, 49, 
+                  52, 54, 60:63)) {
+                  lower.cc <- lower[4]
+                  upper.cc <- upper[4]
+                  lower.dd <- lower[5]
+                  upper.dd <- upper[5]
+                  if (length(xans) > 1) {
+                    lower.RPF <- lower[6]
+                    upper.RPF <- upper[6]
+                  }
+                }
+                if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53)) {
+                  lower.dd <- lower[4]
+                  upper.dd <- upper[4]
+                  if (length(xans) > 1) {
+                    lower.RPF <- lower[5]
+                    upper.RPF <- upper[5]
+                  }
+                }
+                if (model.ans %in% c(2, 7, 12, 17, 22)) {
+                  if (length(xans) > 1) {
+                    lower.RPF <- lower[3]
+                    upper.RPF <- upper[3]
+                  }
+                }
+                if (model.ans %in% c(31, 33)) {
+                  lower.b1 <- lower[3]
+                  lower.b2 <- lower[4]
+                  lower.c1 <- lower[5]
+                  lower.c2 <- lower[6]
+                  lower.dd <- lower[7]
+                  upper.b1 <- upper[3]
+                  upper.b2 <- upper[4]
+                  upper.c1 <- upper[5]
+                  upper.c2 <- upper[6]
+                  upper.dd <- upper[7]
+                  if (model.ans == 33) {
+                    lower.d1 <- lower[7]
+                    lower.d2 <- lower[8]
+                    upper.d1 <- upper[7]
+                    upper.d2 <- upper[8]
+                  }
+                  if (model.ans == 57) {
+                    lower.d1 <- lower[6]
+                    lower.d2 <- lower[7]
+                    upper.d1 <- upper[6]
+                    upper.d2 <- upper[7]
+                  }
+                }
+                if (model.ans %in% c(48, 50)) {
+                  lower.c <- lower[3]
+                  lower.d <- lower[4]
+                  lower.aa.t <- lower[5]
+                  lower.bb.t <- lower[6]
+                  lower.dd.t <- lower[7]
+                  upper.c <- upper[3]
+                  upper.d <- upper[4]
+                  upper.aa.t <- upper[5]
+                  upper.bb.t <- upper[6]
+                  upper.dd.t <- upper[7]
+                }
+            }
+        }
+        if (model.ans == 1) {
+            lb <- c(rep(lower.aa, nr.aa))
+            ub <- c(rep(upper.aa, nr.aa))
+        }
+        if (model.ans %in% c(2, 7, 12, 17, 22, 35, 41, 44)) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb))
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb))
+        }
+        if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53)) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                rep(lower.dd, nr.dd))
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                rep(upper.dd, nr.dd))
+        }
+        if (model.ans %in% c(4, 9, 14, 19, 24, 26, 27, 30, 55, 
+            56)) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                rep(lower.cc, nr.cc))
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                rep(upper.cc, nr.cc))
+        }
+        if (model.ans %in% c(5, 6, 10, 15, 16, 20, 21, 25, 28, 
+            29, 34, 37, 43, 49, 52, 54, 60:63)) {
+            if (incr.decr.no > 0) 
+                nr.cc <- 1
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                rep(lower.cc, nr.cc), rep(lower.dd, nr.dd))
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                rep(upper.cc, nr.cc), rep(upper.dd, nr.dd))
+        }
+        if (model.ans == 11) {
+            lb <- regr.par
+            ub <- regr.par
+        }
+        if (model.ans == 31) {
+            lb <- c(rep(lower.aa, nr.aa), lower.b1, rep(lower.b2, 
+                nr.bb), rep(lower.c1, nr.cc), lower.c2, lower.dd)
+            ub <- c(rep(upper.aa, nr.aa), upper.b1, rep(upper.b2, 
+                nr.bb), rep(upper.c1, nr.cc), upper.c2, upper.dd)
+        }
+        if (model.ans == 32) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                lower.cc, lower.dd, lower.ee, lower.ff)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                upper.cc, upper.dd, upper.ee, upper.ff)
+        }
+        if (model.ans == 33) {
+            lb <- c(rep(lower.aa, nr.aa), lower.b1, rep(lower.b2, 
+                nr.bb), rep(lower.c1, nr.cc), lower.c2, lower.d1, 
+                lower.d2)
+            ub <- c(rep(upper.aa, nr.aa), upper.b1, rep(upper.b2, 
+                nr.bb), rep(upper.c1, nr.cc), upper.c2, upper.d1, 
+                upper.d2)
+        }
+        if (model.ans %in% 35:36) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb))
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb))
+        }
+        if (model.ans == 57) {
+            nr.b1 <- nr.dd
+            nr.b2 <- nr.bb
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.b1, nr.b1), 
+                rep(lower.b2, nr.b2), rep(lower.c1, nr.cc), lower.d1, 
+                lower.d2)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.b1, nr.b1), 
+                rep(upper.b2, nr.b2), rep(upper.c1, nr.cc), upper.d1, 
+                upper.d2)
+        }
+        if (model.ans == 42) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, 2), lower.cc, 
+                lower.dd)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, 2), upper.cc, 
+                upper.dd)
+        }
+        if (model.ans == 45) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                lower.cc, lower.dd, lower.ee)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                upper.cc, upper.dd, upper.ee)
+        }
+        if (model.ans == 46) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                lower.cc, lower.dd)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                upper.cc, upper.dd)
+        }
+        if (model.ans == 47) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.bb, nr.bb), 
+                lower.qq, lower.dd)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.bb, nr.bb), 
+                upper.qq, upper.dd)
+        }
+        if (model.ans %in% c(48, 50)) {
+            lb <- c(rep(lower.aa, nr.aa), rep(lower.cc, nr.cc), 
+                rep(lower.dd, nr.dd), lower.aa.t, lower.bb.t, 
+                lower.dd.t)
+            ub <- c(rep(upper.aa, nr.aa), rep(upper.cc, nr.cc), 
+                rep(upper.dd, nr.dd), upper.aa.t, upper.bb.t, 
+                upper.dd.t)
+        }
+        if (model.ans == 58) {
+            lb <- c(rep(lower.FD.V, nr.aa), rep(lower.ka, nr.bb), 
+                rep(lower.ke, nr.cc))
+            ub <- c(rep(upper.FD.V, nr.aa), rep(upper.ka, nr.bb), 
+                rep(upper.ke, nr.cc))
+        }
+        if (model.ans == 59) {
+            lb <- c(rep(lower.C1, nr.aa), rep(lower.C2, nr.bb), 
+                lower.ka, lower.lab1, lower.lab2)
+            ub <- c(rep(upper.C1, nr.aa), rep(upper.C2, nr.bb), 
+                upper.ka, upper.lab1, upper.lab2)
+        }
+        if (model.ans == 64) {
+            lb <- c(0, rep(0, nr.aa), rep(-Inf, nr.bb), rep(-Inf, 
+                nr.cc), rep(-Inf, nr.dd))
+            ub <- c(Inf, rep(Inf, nr.aa), rep(0, nr.bb), rep(0, 
+                nr.cc), rep(0, nr.dd))
+        }
+        if (model.ans == 65) {
+            lb <- c(rep(lower.cc, nr.aa), rep(lower.k1, nr.bb), 
+                rep(lower.ke, nr.dd))
+            ub <- c(rep(upper.cc, nr.aa), rep(upper.k1, nr.bb), 
+                rep(upper.ke, nr.dd))
+        }
+        if (model.ans != 42) 
+            if (!(model.ans == 11 && model.type == 1)) {
+                if (length(xans) > 1) {
+                  lb <- c(lb, rep(lower.RPF, nr.dosecol - 1))
+                  ub <- c(ub, rep(upper.RPF, nr.dosecol - 1))
+                }
+            }
+        if (cont && fit.ans == 1) {
+            lb <- c(rep(lower.var, nr.var), lb)
+            ub <- c(rep(upper.var, nr.var), ub)
+        }
+        if (!cont) {
+            if (model.ans %in% c(2:3, 7:8)) 
+                ub[(nr.aa + 1):(nr.aa + nr.bb)] <- 0
+            if (model.ans %in% c(4:5, 9:10)) 
+                lb[(nr.aa + 1):(nr.aa + nr.bb)] <- 0
+            if (model.ans %in% c(17:21)) 
+                lb[(nr.aa + 1):(nr.aa + nr.bb)] <- 0
+            if (model.ans %in% c(4, 5, 9, 10, 14, 15, 19, 20, 
+                21, 24, 25, 46)) {
+                lb[nr.aa + nr.bb + 1] <- 1e-06
+                ub[nr.aa + nr.bb + 1] <- 0.999999
+            }
+            if (model.ans %in% c(12:15, 22:25, 51:54)) {
+                if (nr.aa > 1 && nr.bb == 1) {
+                  lb[2:(nr.aa + 1)] <- eps
+                  ub[2:(nr.aa + 1)] <- Inf
+                }
+                else {
+                  lb[(nr.aa + 1):(nr.aa + nr.bb)] <- eps
+                  ub[(nr.aa + 1):(nr.aa + nr.bb)] <- Inf
+                }
+            }
+            lb[nrp + 1] <- th.0.start
+            ub[nrp + 1] <- th.0.start
+            if (dtype == 6) 
+                npar <- npar - max(fct3)
+            if (nth > 1) {
+                lb[(nrp + 2):(npar - 1)] <- -Inf
+                ub[(nrp + 2):(npar - 1)] <- 1e-10
+            }
+            lb[npar] <- sig.start
+            ub[npar] <- sig.start
+            if (length(unique(fct3)) > 1) {
+                lb[npar] <- sig.start/100
+                ub[npar] <- sig.start * 100
+            }
+            if (0) {
+                if (max(as.numeric(fct3)) > 1) {
+                  lb[npar] <- 0
+                  ub[npar] <- Inf
+                }
+            }
+            if (dtype %in% c(4, 6)) 
+                if (model.ans %in% c(3, 5, 18, 20, 13, 15, 23, 
+                  25)) 
+                  lb[npar - nth - 1] <- constr.steepness
+            if (model.ans %in% c(4, 5, 9, 10, 14, 15, 24, 25)) {
+                lb[nr.aa + nr.bb + 1] <- 0
+                ub[nr.aa + nr.bb + 1] <- 1
+            }
+            if (dtype == 6) {
+                lb <- c(rep(0, max(fct3)), lb)
+                ub <- c(rep(Inf, max(fct3)), ub)
+            }
+        }
+        ans.all$lb <- lb
+        ans.all$ub <- ub
+        ans.all$lower <- lower
+        ans.all$upper <- upper
+        text.par <- f.text.par(ans.all)
+        if (cont || quick.ans > 1) 
+            for (ii in (1:length(lb))) {
+                if (lb[ii] == ub[ii]) 
+                  text.par[ii] <- paste(text.par[ii], "(fixed)", 
+                    sep = "")
+            }
+        ans.all$text.par <- text.par
+        if (exists("track")) 
+            print("f.constr.con:  END")
+        return(ans.all)
+    })
+}
+
+
+
