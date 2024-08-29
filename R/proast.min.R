@@ -11184,3 +11184,254 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
 
 
 
+f.pars <- function(ans.all) {
+    if (exists("track2")) 
+        print("f.pars")
+    if (ans.all$fit.ans == 1) 
+        if (ans.all$model.ans == 47 || (ans.all$model.ans == 
+            6 && ans.all$ans.m6.sd == 2)) 
+            return(f.pars.m6(ans.all))
+    with(ans.all, {
+        if (!cont && model.ans == 14 && model.type == 1) {
+            ans.all$regr.par.matr <- 0
+            return(ans.all)
+        }
+        else if (cont && model.ans == 11) {
+            ans.all$regr.par.matr <- 0
+            return(ans.all)
+        }
+        gr.txt.save <- ans.all$gr.txt
+        nrp <- length(regr.par)
+        regr.par.matr <- numeric()
+        nr.aa <- max(fct1)
+        nr.bb <- max(fct2)
+        nr.cc <- max(fct4)
+        nr.dd <- max(fct5)
+        nr.var <- max(fct3)
+        if (dtype == 4 && max(fct3) > 1) 
+            nr.var <- 1
+        if (length(ans.all$nr.cc) == 0) 
+            nr.cc <- 1
+        if (length(ans.all$nr.dd) == 0) 
+            nr.dd <- 1
+        if (length(ans.all$nr.var) == 0) 
+            nr.var <- 1
+        if (model.ans == 36) {
+            nr.cc <- 0
+            nr.dd <- 0
+        }
+        if (nr.aa == 1 && nr.bb == 1 && nr.cc == 1 && nr.dd == 
+            1 && nr.var < 2) {
+            ans.all$regr.par.matr <- matrix(regr.par, nrow = 1)
+            ans.all$nr.gr <- 1
+            ans.all$gr.txt <- ""
+            if (max(fct3) > 1) {
+                ans.all$gr.txt <- fct3.txt
+                ans.all$regr.par.matr <- matrix(regr.par, byrow = TRUE, 
+                  nrow = length(fct3.txt), ncol = length(regr.par))
+            }
+            if (length(xans) > 1) 
+                ans.all$gr.txt <- gr.txt.save
+            if (exists("track2")) 
+                print("end of f.pars")
+            return(ans.all)
+        }
+        if (cont || model.type == 2) {
+            if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53)) 
+                nr.cc <- 0
+            if (model.ans %in% c(4, 9, 14, 19, 24)) 
+                nr.dd <- 0
+            if (model.ans %in% c(2, 12, 17, 22)) {
+                nr.cc <- 0
+                nr.dd <- 0
+            }
+            cc <- regr.par[nr.aa + nr.bb + 1]
+            dd <- regr.par[nr.aa + nr.bb + nr.cc + 1]
+            if (cont && model.ans == 31) 
+                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
+                  4)]
+            if (cont && model.ans == 32) 
+                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
+                  4)]
+            if (cont && model.ans == 33) 
+                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
+                  5)]
+            if (cont && model.ans == 45) 
+                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
+                  3)]
+        }
+        if (cont && model.ans %in% c(35, 41, 44)) 
+            nr.cc <- 0
+        if (cont && model.ans %in% c(26, 27, 30, 35, 41, 44, 
+            55, 56)) 
+            nr.dd <- 0
+        if (!cont && model.type == 1) {
+            if (model.ans %in% c(7, 20)) {
+                nr.dd <- 1
+                dd <- regr.par[nr.aa + nr.bb + nr.cc + 1]
+            }
+            else nr.dd <- 0
+        }
+        nr.subgr <- max(nr.aa, nr.bb, nr.cc, nr.dd)
+        if (nr.aa == 1) 
+            fct1.txt <- rep("", nr.subgr)
+        if (nr.bb == 1) 
+            fct2.txt <- rep("", nr.subgr)
+        if (nr.cc == 1) 
+            fct4.txt <- rep("", nr.subgr)
+        if (nr.dd == 1) 
+            fct5.txt <- rep("", nr.subgr)
+        if (identical(fct1, fct2)) 
+            fct2.txt <- rep("", nr.subgr)
+        if (identical(fct1, fct4)) 
+            fct4.txt <- rep("", nr.subgr)
+        if (identical(fct4, fct2)) 
+            fct4.txt <- rep("", nr.subgr)
+        gr.txt <- character(0)
+        if (!cont && model.type == 2 && (model.ans %in% c(12:15, 
+            22:25)) && ces.ans %in% c(1:3, 5)) {
+            if (nrp > (nr.aa + nr.bb)) 
+                par.rest <- regr.par[(nr.aa + nr.bb + 1):nrp]
+            else par.rest <- numeric()
+            if (nr.aa > 1 && nr.bb == 1) 
+                for (ii in 1:nr.aa) {
+                  par.tmp <- c(regr.par[1], regr.par[ii + 1], 
+                    par.rest)
+                  regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                }
+            if (nr.aa == 1 & nr.bb > 1) 
+                for (jj in 1:nr.bb) {
+                  par.tmp <- c(regr.par[1], regr.par[jj + 1], 
+                    par.rest)
+                  regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                }
+            if (nr.aa > 1 & nr.bb > 1) 
+                for (jj in 1:nr.bb) {
+                  par.tmp <- c(regr.par[jj], regr.par[jj + nr.aa], 
+                    par.rest)
+                  regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                }
+            ans.all$regr.par.matr <- regr.par.matr
+            if (quick.ans > 1 && length(ans.all$covar.txt) > 
+                0) 
+                fct1.txt <- covar.txt
+            kk <- 1
+            for (jj in 1:nr.bb) {
+                f1 <- fct1[fct2 == jj]
+                f1.lev <- levels(factor(f1))
+                for (ii.index in f1.lev) {
+                  ii <- as.numeric(ii.index)
+                  if (!twice) 
+                    gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
+                      sep = "-")
+                  if (twice) {
+                    gr.txt[kk] <- paste(fct1.txt[kk], sep = "-")
+                  }
+                  kk <- kk + 1
+                }
+            }
+            ans.all$nr.gr <- length(ans.all$regr.par.matr[, 1])
+            ans.all$gr.txt <- gr.txt
+            if (length(xans) > 1) 
+                ans.all$gr.txt <- gr.txt.save
+            if (exists("track2")) 
+                print("f.pars LVM: END ")
+            return(ans.all)
+        }
+        if (nr.dd < 2) {
+            if (length(fct4) == 1) 
+                fct4 <- rep(1, length(x))
+            par.tmp <- rep(NA, length(regr.par))
+            kk <- 1
+            for (jj in 1:nr.bb) {
+                f1 <- fct1[fct2 == jj]
+                f1.lev <- levels(factor(f1))
+                for (ii.index in f1.lev) {
+                  ii <- as.numeric(ii.index)
+                  f4 <- fct4[fct1 == ii & fct2 == jj]
+                  f4.lev <- levels(factor(f4))
+                  for (mm.index in f4.lev) {
+                    mm <- as.numeric(mm.index)
+                    if (cont && model.ans %in% c(31, 32, 33, 
+                      45)) {
+                      mm <- 0
+                      nr.cc <- 0
+                    }
+                    par.tmp <- c(regr.par[ii], regr.par[nr.aa + 
+                      jj])
+                    if (nr.cc > 0) 
+                      par.tmp <- c(par.tmp, regr.par[nr.aa + 
+                        nr.bb + mm])
+                    if (nr.dd > 0) 
+                      par.tmp <- c(par.tmp, dd)
+                    if (length(xans) > 1) {
+                      RPF.vec <- ans.all$regr.par[(length(ans.all$regr.par) - 
+                        nr.dosecol + 2):length(ans.all$regr.par)]
+                      par.tmp <- c(par.tmp, RPF.vec)
+                    }
+                    regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                    gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
+                      fct4.txt[mm], sep = "-")
+                    kk <- kk + 1
+                  }
+                }
+            }
+            n.col <- length(par.tmp)
+            regr.par.matr <- matrix(regr.par.matr[, 1:n.col], 
+                ncol = n.col)
+        }
+        if (exists("track2")) 
+            print("f.pars, continue 2")
+        if (nr.cc < 2 && nr.dd > 1) {
+            if (length(fct5) == 1) 
+                fct5 <- rep(1, length(x))
+            par.tmp <- rep(NA, length(regr.par))
+            kk <- 1
+            for (jj in 1:nr.bb) {
+                f1 <- fct1[fct2 == jj]
+                f1.lev <- levels(factor(f1))
+                for (ii.index in f1.lev) {
+                  ii <- as.numeric(ii.index)
+                  f5 <- fct5[fct1 == ii & fct2 == jj]
+                  f5.lev <- levels(factor(f5))
+                  for (mm.index in f5.lev) {
+                    mm <- as.numeric(mm.index)
+                    par.tmp <- c(regr.par[ii], regr.par[nr.aa + 
+                      jj])
+                    if (nr.cc > 0) 
+                      par.tmp <- c(par.tmp, regr.par[nr.aa + 
+                        nr.bb + 1])
+                    if (nr.dd > 0) 
+                      par.tmp <- c(par.tmp, regr.par[nr.aa + 
+                        nr.bb + nr.cc + mm])
+                    if (length(xans) > 1) {
+                      RPF.vec <- ans.all$regr.par[(length(ans.all$regr.par) - 
+                        nr.dosecol + 2):length(ans.all$regr.par)]
+                      par.tmp <- c(par.tmp, RPF.vec)
+                    }
+                    regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                    gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
+                      fct5.txt[mm], sep = "-")
+                    kk <- kk + 1
+                  }
+                }
+            }
+            n.col <- length(par.tmp)
+            regr.par.matr <- matrix(regr.par.matr[, 1:n.col], 
+                ncol = n.col)
+        }
+        if (exists("track2")) 
+            print("f.pars, continue 3")
+        ans.all$regr.par.matr <- regr.par.matr
+        ans.all$gr.txt <- gr.txt
+        ans.all$nr.gr <- length(regr.par.matr[, 1])
+        if (length(xans) > 1) 
+            ans.all$gr.txt <- gr.txt.save
+        if (exists("track2")) 
+            print("f.pars: END ")
+        return(ans.all)
+    })
+}
+
+
+
