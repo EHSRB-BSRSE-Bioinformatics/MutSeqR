@@ -12867,3 +12867,129 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
 
 
 
+f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = NA, 
+    logn.out = NA, TREND) {
+    if (exists("track")) 
+        print("f.CED.all")
+    CED.matr <- CED.all$CED.matr
+    endpoints <- CED.all$endpoints
+    Mces <- CED.all$Mces
+    Msd <- CED.all$Msd
+    covar.txt <- CED.all$covar.txt
+    Vtrend <- CED.all$Vtrend
+    Vtrend <- c(Vtrend, TREND)
+    if (length(exp.out) > 0) {
+        nr.aa <- max(exp.out$fct1)
+        nr.bb <- max(exp.out$fct2)
+        CED <- exp.out$CED
+        conf.int <- exp.out$conf.int
+        if (length(covar.txt) > 2) {
+            cat("\nATTENTION: plot of all CED CIs not implemented for more than two subgroups\n")
+            return(CED.all)
+        }
+        else if (length(conf.int[, 1]) == 1 && length(covar.txt) > 
+            1) {
+            confint.tmp <- conf.int[1, ]
+            conf.int <- matrix(ncol = 2, nrow = length(covar.txt))
+            for (ii in 1:length(covar.txt)) conf.int[ii, ] <- confint.tmp
+        }
+        if (!is.na(CED[1])) {
+            col <- 1
+            CED.tmp <- rep(NA, length(CED.matr[1, ]))
+            for (kk in 1:length(covar.txt)) {
+                CED.tmp[(col):(col + 1)] <- signif(conf.int[kk, 
+                  ], 3)
+                col <- col + 2
+            }
+            CED.matr <- rbind(CED.matr, CED.tmp)
+            endpoints <- c(endpoints, y.leg)
+        }
+        ces.tmp <- c(y.leg, round(exp.out$CES, 3))
+        if (!TREND) 
+            ces.tmp <- NA
+        sd.tmp <- c(y.leg, round(exp.out$pooled.sd, 4))
+    }
+    if (length(hill.out) > 1) {
+        nr.aa <- max(hill.out$fct1)
+        nr.bb <- max(hill.out$fct2)
+        CED <- hill.out$CED
+        conf.int <- hill.out$conf.int
+        if (length(conf.int[, 1]) == 1 && length(covar.txt) > 
+            1) {
+            confint.tmp <- conf.int[1, ]
+            conf.int <- matrix(ncol = 2, nrow = length(covar.txt))
+            for (ii in 1:length(covar.txt)) conf.int[ii, ] <- confint.tmp
+        }
+        if (!is.na(CED[1])) {
+            col <- 1
+            CED.tmp <- rep(NA, length(CED.matr[1, ]))
+            for (kk in 1:length(covar.txt)) {
+                CED.tmp[(col):(col + 1)] <- signif(conf.int[kk, 
+                  ], 3)
+                col <- col + 2
+            }
+            CED.matr <- rbind(CED.matr, CED.tmp)
+            endpoints <- c(endpoints, y.leg)
+        }
+    }
+    if (length(invexp.out) > 1) {
+        nr.aa <- max(invexp.out$fct1)
+        nr.bb <- max(invexp.out$fct2)
+        CED <- invexp.out$CED
+        conf.int <- invexp.out$conf.int
+        if (length(conf.int[, 1]) == 1 && length(covar.txt) > 
+            1) {
+            confint.tmp <- conf.int[1, ]
+            conf.int <- matrix(ncol = 2, nrow = length(covar.txt))
+            for (ii in 1:length(covar.txt)) conf.int[ii, ] <- confint.tmp
+        }
+        if (!is.na(CED[1])) {
+            col <- 1
+            CED.tmp <- rep(NA, length(CED.matr[1, ]))
+            for (kk in 1:length(covar.txt)) {
+                CED.tmp[(col):(col + 1)] <- signif(conf.int[kk, 
+                  ], 3)
+                col <- col + 2
+            }
+            CED.matr <- rbind(CED.matr, CED.tmp)
+            endpoints <- c(endpoints, y.leg)
+        }
+    }
+    if (length(logn.out) > 1) {
+        nr.aa <- max(logn.out$fct1)
+        nr.bb <- max(logn.out$fct2)
+        CED <- logn.out$CED
+        conf.int <- logn.out$conf.int
+        if (length(conf.int[, 1]) == 1 && length(covar.txt) > 
+            1) {
+            confint.tmp <- conf.int[1, ]
+            conf.int <- matrix(ncol = 2, nrow = length(covar.txt))
+            for (ii in 1:length(covar.txt)) conf.int[ii, ] <- confint.tmp
+        }
+        if (!is.na(CED[1])) {
+            col <- 1
+            CED.tmp <- rep(NA, length(CED.matr[1, ]))
+            for (kk in 1:length(covar.txt)) {
+                CED.tmp[(col):(col + 1)] <- signif(conf.int[kk, 
+                  ], 3)
+                col <- col + 2
+            }
+            CED.matr <- rbind(CED.matr, CED.tmp)
+            endpoints <- c(endpoints, y.leg)
+        }
+    }
+    Mces <- rbind(Mces, ces.tmp)
+    Msd <- rbind(Msd, sd.tmp)
+    CED.all$endpoints <- endpoints
+    CED.all$CED.matr <- CED.matr
+    CED.all$Mces <- Mces
+    CED.all$Msd <- Msd
+    Vtrend <- CED.all$Vtrend
+    CED.all$Vtrend <- c(Vtrend, TREND)
+    if (exists("track")) 
+        print("f.CED.all:   END")
+    return(CED.all)
+}
+
+
+
