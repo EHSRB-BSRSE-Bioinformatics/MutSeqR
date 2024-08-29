@@ -12993,3 +12993,138 @@ f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = 
 
 
 
+f.plot.CED <- function(ans.all, logscale = T, xx.lim = NA, WAPP = FALSE, plotprefix = "", 
+    svg.plots = FALSE) {
+    if (exists("track")) 
+        print("f.plot.CED")
+    data <- ans.all$CED.all
+    covar.txt <- data$covar.txt
+    nr.lev <- length(covar.txt)
+    if (nr.lev == 0) 
+        nr.lev <- 1
+    endp.name <- data$endpoints
+    if (ans.all$do.MA) 
+        endp.name <- unique(endp.name)
+    if (0) {
+        if (ans.all$NES.ans == 2) 
+            endp.name.legend <- paste(endp.name, "", data$Mces[, 
+                2])
+        else endp.name.legend <- endp.name
+    }
+    endp.name.legend <- paste(unique(endp.name), data$Mces[, 
+        2])
+    CI <- data$CED.matr
+    if (ans.all$do.MA) {
+        CI <- ans.all$CED.matr.ma.plt
+        CI <- CI[, -1]
+    }
+    if (is.na(xx.lim[1])) {
+        max.x <- max(CI[CI != Inf], na.rm = T)
+        zero.dum <- min(CI[CI > 0], na.rm = T)/1.1
+        xx.lim <- c(log10(zero.dum), log10(max.x))
+    }
+    CES <- data$CES
+    NES.ans <- data$NES.ans
+    if (logscale) 
+        CI <- log10(CI)
+    nr.row <- length(CI[, 1])
+    nr.endp <- length(unique(data$endpoints))
+    mainjump <- 1
+    subjump <- 0.35
+    if (ans.all$do.MA) 
+        max.y <- nr.endp
+    else max.y <- nr.endp * (data$nr.models * subjump + mainjump)
+    if (max.y > 40) 
+        cex.mtext <- 0.6
+    else cex.mtext <- 0.8
+    yy.lim <- c(1, max.y)
+    xx.lab <- paste("CED", CES, sep = "-")
+    if (NES.ans == 2) 
+        xx.lab <- paste("CED (for endpoint-specific CES)")
+    if (logscale) 
+        xx.lab <- paste("log10-", xx.lab)
+    jj <- 1
+    for (ii in 1:nr.lev) {
+        ci.matr <- CI[, jj:(jj + 1)]
+        ci.tmp <- ci.matr[1, 1:2]
+        name.wapp <- paste("b", ii, "cedCI", sep = "")
+        endp.nr <- 1
+        f.graph.window(1, WAPP = WAPP, title = "", name.wapp = name.wapp, 
+            plotprefix = plotprefix, svg.plots = svg.plots)
+        plot(1:max.y, 1:max.y, xlim = xx.lim, ylim = yy.lim, 
+            ylab = "", yaxt = "n", xlab = xx.lab, type = "n")
+        if (length(covar.txt) > 1) 
+            title(main = paste("group", covar.txt[ii]), cex.main = 1.2)
+        if (!ans.all$do.MA) 
+            title(main = paste("\n\n\n", ans.all$nr.models, "models per endpoint"), 
+                cex.main = 0.8)
+        if (ans.all$do.MA) 
+            title(main = paste("\n\n\n", "CIs based on model averaging"), 
+                cex.main = 0.8)
+        yyy.tmp <- max.y
+        if (!is.na(ci.tmp[1])) {
+            lty.tmp <- 1
+            if (ci.tmp[1] == -Inf) {
+                lty.tmp <- 2
+                ci.tmp[1] <- -100
+            }
+            if (ci.tmp[2] == Inf) {
+                lty.tmp <- 2
+                ci.tmp[2] <- 100
+            }
+            lines(ci.tmp, rep(yyy.tmp, 2), lty = lty.tmp)
+            mtext(endp.name.legend[1], 4, 1, adj = 0, las = 1, 
+                at = yyy.tmp, cex = cex.mtext)
+        }
+        else {
+            points(xx.lim[2], yyy.tmp, pch = "\"")
+            mtext(endp.name.legend[1], 4, 1, adj = 0, las = 1, 
+                at = yyy.tmp, cex = cex.mtext, col = 2)
+        }
+        first.kk <- 2
+        for (kk in first.kk:nr.row) {
+            ci.tmp <- ci.matr[kk, 1:2]
+            if (endp.name[kk] == endp.name[kk - 1]) 
+                yyy.tmp <- yyy.tmp - subjump
+            else {
+                endp.nr <- endp.nr + 1
+                yyy.tmp <- yyy.tmp - 1
+                if (!is.na(ci.tmp[1])) 
+                  color.tmp <- 1
+                else {
+                  color.tmp <- 2
+                }
+                mtext(endp.name.legend[endp.nr], 4, 1, adj = 0, 
+                  las = 1, at = yyy.tmp, cex = cex.mtext, col = color.tmp)
+            }
+            if (!is.na(ci.tmp[1])) {
+                lty.tmp <- 1
+                if (ci.tmp[1] == -Inf) {
+                  lty.tmp <- 2
+                  ci.tmp[1] <- -100
+                }
+                if (ci.tmp[2] == Inf) {
+                  lty.tmp <- 2
+                  ci.tmp[2] <- 100
+                }
+                lines(ci.tmp, rep(yyy.tmp, 2), lty = lty.tmp)
+            }
+            else {
+                points(xx.lim[2], yyy.tmp, pch = "\"")
+            }
+        }
+        jj <- jj + 2
+        if (!WAPP) {
+            cat("\nCED-CI plot created for subgroup", ii, "\n")
+            if (ii < nr.lev) 
+                f.press.key.to.continue()
+        }
+        if (WAPP) 
+            dev.off()
+    }
+    if (exists(" track")) 
+        print("f.plot.CED: END")
+}
+
+
+
