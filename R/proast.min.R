@@ -12991,3 +12991,71 @@ f.plot.CED <- function(ans.all, logscale = T, xx.lim = NA, WAPP = FALSE, plotpre
 
 
 
+parse_PROAST_output <- function(result) {
+  selected_models <- c()
+  CES <- c()
+  CED <- c()
+  CEDL <- c()
+  CEDU <- c()
+  AIC <- c()
+  log_likelihood <- c()
+  var <- c()
+  a <- c()
+  d <- c()
+  covariate <- c()
+  model_weights <- c()
+  # Loop through the list excluding 'model_averaging'
+  for (i in seq_along(result)) {
+    model <- result[[i]]
+    message(names(result)[i])
+    message(model$modelname)
+    if (!names(result)[i] == "model_averaging") {
+      # Extract the relevant pieces of information
+      selected_models <- c(selected_models, model$modelname)
+      CES <- c(CES, model$CES)
+      CED <- c(CED, model$CED)
+      CEDL <- c(CEDL, model$conf.int[1])
+      CEDU <- c(CEDU, model$conf.int[2])
+      AIC <- c(AIC, model$aic)
+      log_likelihood <- c(log_likelihood, model$loglik)
+      var <- c(var, model$MLE[1])
+      a <- c(a, model$MLE[2])
+      d <- c(d, model$MLE[4])
+    }
+    
+    # Special handling for 'model_averaging'
+    if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+      message("Handling model averaging case")
+      ma_info <- result[[i]]$MA
+      
+      ma_row <- c("Model averaging", "N/A", "N/A",
+      ma_info$conf.int.ma$BMDlower.ma, ma_info$conf.int.ma$BMDupper.ma,
+      "N/A", "N/A", "N/A", "N/A", "N/A")
+    }
+  }
+
+  # Combine the vectors into a dataframe
+  result_df <- data.frame(
+    'Selected Model' = selected_models,
+    'CES' = CES,
+    'CED' = CED,
+    'CEDL' = CEDL,
+    'CEDU' = CEDU,
+    'AIC' = AIC,
+    'Log-Likelihood' = log_likelihood,
+    'Var' = var,
+    'a' = a,
+    'd' = d#,
+    #'Model Weights' = model_weights
+  )
+
+  result_df <- rbind(result_df, ma_row)
+
+  # Retrieve model names and their corresponding weights
+  model_names <- ma_info$Vmodelname
+  weights <- data.frame(Selected.Model = model_names, weights = ma_info$Vweight$weight)
+  result_df <- merge(result_df, weights, all.x = TRUE)
+  return(result_df)
+}
+
+
