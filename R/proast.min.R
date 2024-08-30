@@ -39,52 +39,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
         if (quit) {
             if (interactive_mode == FALSE) {
                 result <- as.list(results_env)
-
-                selected_models <- c()
-                CES <- c()
-                CED <- c()
-                CEDL <- c()
-                CEDU <- c()
-                AIC <- c()
-                log_likelihood <- c()
-                var <- c()
-                a <- c()
-                d <- c()
-                # Loop through the list excluding 'model_averaging'
-                for (i in seq_along(result)) {
-                    message(names(result)[i])
-                    # Skip 'model_averaging'
-                    if (names(result)[i] == "model_averaging") {
-                        next
-                    }
-                    model <- result[[i]]
-                    message(model$modelname)
-                    # Extract the relevant pieces of information
-                    selected_models <- c(selected_models, model$modelname)
-                    CES <- c(CES, model$CES)
-                    CED <- c(CED, model$CED)
-                    CEDL <- c(CEDL, model$conf.int[1])
-                    CEDU <- c(CEDU, model$conf.int[2])
-                    AIC <- c(AIC, model$aic)
-                    log_likelihood <- c(log_likelihood, model$loglik)
-                    var <- c(var, model$MLE[1])
-                    a <- c(a, model$MLE[2])
-                    d <- c(d, model$MLE[4])
-                }
-
-                # Combine the vectors into a dataframe
-                result_df <- data.frame(
-                'Selected Model' = selected_models,
-                'CES' = CES,
-                'CED' = CED,
-                'CEDL' = CEDL,
-                'CEDU' = CEDU,
-                'AIC' = AIC,
-                'Log-Likelihood' = log_likelihood,
-                'Var' = var,
-                'a' = a,
-                'd' = d
-                )
+                result_df <- parse_PROAST_output(result)
                 print(result_df)
                 return(list(result, result_df))
             } else {
@@ -212,52 +167,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
         if (quit) {
             if (interactive_mode == FALSE) {
                 result <- as.list(results_env)
-
-                selected_models <- c()
-                CES <- c()
-                CED <- c()
-                CEDL <- c()
-                CEDU <- c()
-                AIC <- c()
-                log_likelihood <- c()
-                var <- c()
-                a <- c()
-                d <- c()
-                # Loop through the list excluding 'model_averaging'
-                for (i in seq_along(result)) {
-                    message(names(result)[i])
-                    # Skip 'model_averaging'
-                    if (names(result)[i] == "model_averaging") {
-                        next
-                    }
-                    model <- result[[i]]
-                    message(model$modelname)
-                    # Extract the relevant pieces of information
-                    selected_models <- c(selected_models, model$modelname)
-                    CES <- c(CES, model$CES)
-                    CED <- c(CED, model$CED)
-                    CEDL <- c(CEDL, model$conf.int[1])
-                    CEDU <- c(CEDU, model$conf.int[2])
-                    AIC <- c(AIC, model$aic)
-                    log_likelihood <- c(log_likelihood, model$loglik)
-                    var <- c(var, model$MLE[1])
-                    a <- c(a, model$MLE[2])
-                    d <- c(d, model$MLE[4])
-                }
-
-                # Combine the vectors into a dataframe
-                result_df <- data.frame(
-                'Selected Model' = selected_models,
-                'CES' = CES,
-                'CED' = CED,
-                'CEDL' = CEDL,
-                'CEDU' = CEDU,
-                'AIC' = AIC,
-                'Log-Likelihood' = log_likelihood,
-                'Var' = var,
-                'a' = a,
-                'd' = d
-                )
+                result_df <- parse_PROAST_output(result)
                 print(result_df)
                 return(list(result, result_df))
             } else {
@@ -298,52 +208,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
     if (quit) {
         if (interactive_mode == FALSE) {
             result <- as.list(results_env)
-
-            selected_models <- c()
-            CES <- c()
-            CED <- c()
-            CEDL <- c()
-            CEDU <- c()
-            AIC <- c()
-            log_likelihood <- c()
-            var <- c()
-            a <- c()
-            d <- c()
-            # Loop through the list excluding 'model_averaging'
-            for (i in seq_along(result)) {
-                message(names(result)[i])
-                # Skip 'model_averaging'
-                if (names(result)[i] == "model_averaging") {
-                    next
-                }
-                model <- result[[i]]
-                message(model$modelname)
-                # Extract the relevant pieces of information
-                selected_models <- c(selected_models, model$modelname)
-                CES <- c(CES, model$CES)
-                CED <- c(CED, model$CED)
-                CEDL <- c(CEDL, model$conf.int[1])
-                CEDU <- c(CEDU, model$conf.int[2])
-                AIC <- c(AIC, model$aic)
-                log_likelihood <- c(log_likelihood, model$loglik)
-                var <- c(var, model$MLE[1])
-                a <- c(a, model$MLE[2])
-                d <- c(d, model$MLE[4])
-            }
-
-            # Combine the vectors into a dataframe
-            result_df <- data.frame(
-            'Selected Model' = selected_models,
-            'CES' = CES,
-            'CED' = CED,
-            'CEDL' = CEDL,
-            'CEDU' = CEDU,
-            'AIC' = AIC,
-            'Log-Likelihood' = log_likelihood,
-            'Var' = var,
-            'a' = a,
-            'd' = d
-            )
+            result_df <- parse_PROAST_output(result)
             print(result_df)
             return(list(result, result_df))
         } else {
@@ -9233,7 +9098,6 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 ans.all$CES <- abs(ans.all$CES)
               }
             }
-          message("END BLOCK COVAR DD")
             if (quick.ans == 6) {
                 fct2.fact <- data.0[, covar.no]
                 levels.all <- levels(factor(fct2.fact))
@@ -9243,19 +9107,19 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 cat(paste(1:nr.lev, ":", levels.all, "\n"))
                 ans.all$ref.lev <- eval(parse(prompt = paste(" -------- > ")))
             }
-            message("END BLOCK QUICK ANS 6")
             if (length(Vyans) == 1) 
                 interrupt <- TRUE
-                message("END LENGTH VYANS == 1")
             if (length(Vyans) > 1) {
+              if (interactive_mode == TRUE) {
                 int.ans <- menu(c("no", "yes (opportunity to save results per endpoint)"), 
-                  title = "Do you want to interrupt calculations after each endpoint? \n")
-                if (int.ans == 2) 
-                  interrupt <- TRUE
-                else interrupt <- FALSE
-                message("END LENGTH VYANS > 1")
+                title = "Do you want to interrupt calculations after each endpoint? \n")
+              } else {
+                int.ans <- 1
+              }  
+              if (int.ans == 2) 
+                interrupt <- TRUE
+              else interrupt <- FALSE
             }
-            message("BEFORE INTERRUPT")
             ans.all$interrupt <- interrupt
             ans.all$auto.detlim <- FALSE
             if (length(Vyans) > 1) {
@@ -9266,7 +9130,6 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                     ans.all$auto.detlim <- TRUE)
                 }
             }
-            message("BEFORE BOOTSTRAP QUESTION")
             if ((ans.all$CES != 0 || ans.all$NES.ans == 2)) {
                 if (ans.all$quick.ans == 6) 
                   ans.all$nruns <- eval(parse(prompt = "\nprovide number of bootstrap runs, or type 0 to get profile likelihood CI > "))
@@ -9575,7 +9438,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                     ans.all$CED.matr.ma <- rbind(ans.all$CED.matr.ma, 
                       CI.ma)
                     CI.matr.ma <- rbind(CI.matr.ma, ans.all$MA$CI.row.ma)
-                    results_env$model_averaging <- ans.all$MA
+                    results_env$model_averaging <- ans.all
                   }
                   else {
                     ans.all$MA <- list()
