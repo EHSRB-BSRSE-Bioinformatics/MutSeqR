@@ -1,8 +1,49 @@
 #' proast_bmd
-#' @description This function is an extension of the PROAST package that
-#' calculates the BMD of continuous, individual-level data. The function
+#' @description This function is an extension of the PROAST software that
+#' calculates the BMD of continuous, individual-level data.
+#' @param mf_data A data frame containing the data to be analyzed. This can
+#' be created using calculate_mut_freq(cols_to_group = "sample",
+#' retain_metadata_cols = "dose", summary = TRUE)
+#' @param dose_col The name of the column in mf_data that contains the dose.
+#' Must be a numeric value.
+#' @param response_col The name of the column(s) in mf_data that contains the
+#' mutation frequency. Currently, only one response column at a time is
+#' supported. *FIX* this.
+#' @param covariate_col The name of the column in mf_data that contains the
+#' covariate. If no covariate is present, set to NULL.
+#' @param CES The critical effect size to be used in the analysis. The Benchmark
+#' Response is calculated as a relative increase of CES from the control.
+#' @param adjust_CES_to_group_SD A logical value indicating whether the group
+#' standard deviation should be used as the CES.
+#' @param model_averaging A logical value indicating whether confidence
+#' intervals should be calculated using model averaging.
+#' @param num_bootstraps The number of bootstrap resamples to be used in the
+#' model averaging.
+#' @param summary A logical value indicating whether a summary of the results
+#' should be returned. If FALSE, raw results from the PROAST analysis are
+#' returned.
+#' @return A list containing the results of the PROAST analysis.
+#' @export
+#' @details This function is a  modified vresion of the original interactive
+#' PROAST software to allow for batch processing of data. The function is
+#' designed to be used with the output of the calculate_mut_freq function
+#' for the purpose of calculating the Benchmark Dose of mutation frequency
+#' data. As such, some functionality of the original PROAST software has
+#' been removed.
+#' The function will fit model 3 or 5 from various families of models
+#' (Exponential, Hill, Inverse Exponential, LogNormal). It will then compare
+#' the fits of models 3 and 5 for each model family and select the model with
+#' the lowest AIC. The BMD confidence intervals will be calculated for each
+#' model family using its selected model (3 or 5). The BMD confidence
+#' may also be calculated using the bootstrap method.
 #' 
+#' var: represents the residual variance around the fitted curve on the natural log-scale
+#' Plots: the fitted curves relate to the median at each dose.
 #' 
+#' CED the calculated value of the CED is retirn in the orginal dose units, while the 
+#' legend to the plot is printined in the same dose units as used in the plot (thus they
+#' may differ by the dose scalling factor)
+#' The CI is calculated by the profile likelihood method (likelihood ratio method)
 proast_bmd <- function(mf_data,
                        dose_col = "dose",
                        response_col = "sample_MF_min",
@@ -13,8 +54,9 @@ proast_bmd <- function(mf_data,
                        num_bootstraps = 200,
                        summary = TRUE) {
 
+
   CES_sd <- as.numeric(adjust_CES_to_group_SD) + 1
-  
+
   if(is.null(covariate_col)) {
     covariate <- 0
   } else {
@@ -40,11 +82,22 @@ proast_bmd <- function(mf_data,
 
   if (summary == TRUE) {
     results_df <- results[[2]]
-    if (model_averaging) {
-      ma_results <- results[[1]]$model_averaging$conf.int.ma
-
-      f.plot.con(bmd[[1]]$"Expon. m3-")
+    if (!is.null(covariate_col)) {
+      ced.list <- list()
+      for (i in names(results[[1]])) {
+        ced.list[[i]] <- results[[1]][[i]]$ced.table
+      }
+      ced.df.list <- lapply(names(ced.list), function(name) {
+        df <- ced.list[[name]]
+        df$model <- name
+        return(df)
+      })
+      ced.df <- do.call(rbind, ced.df.list)
+      results_df <- dplyr::left_join(results_df, ced.df)
     }
+    BMD <- results_df[results_df$AIC == min(results_df$AIC), ]
+    results <- list(BMD = BMD,
+                    summary <- results_df)
   } else {
     return(results[[1]])
   }
