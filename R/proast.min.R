@@ -13002,35 +13002,76 @@ parse_PROAST_output <- function(result) {
   var <- c()
   a <- c()
   d <- c()
-  covariate <- c()
+  covariates <- c()
+  ma_rows <- c()
   model_weights <- c()
   # Loop through the list excluding 'model_averaging'
   for (i in seq_along(result)) {
     model <- result[[i]]
     message(names(result)[i])
     message(model$modelname)
-    if (!names(result)[i] == "model_averaging") {
-      # Extract the relevant pieces of information
-      selected_models <- c(selected_models, model$modelname)
-      CES <- c(CES, model$CES)
-      CED <- c(CED, model$CED)
-      CEDL <- c(CEDL, model$conf.int[1])
-      CEDU <- c(CEDU, model$conf.int[2])
-      AIC <- c(AIC, model$aic)
-      log_likelihood <- c(log_likelihood, model$loglik)
-      var <- c(var, model$MLE[1])
-      a <- c(a, model$MLE[2])
-      d <- c(d, model$MLE[4])
-    }
-    
-    # Special handling for 'model_averaging'
-    if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
-      message("Handling model averaging case")
-      ma_info <- result[[i]]$MA
+    covariate_analysis <- length(unique(model$covariate)) > 1
+    message("Covariate analysis is:", covariate_analysis)
+    if (!covariate_analysis) {
+      if (!names(result)[i] == "model_averaging") {
+        # Extract the relevant pieces of information
+        selected_models <- c(selected_models, model$modelname)
+        CES <- c(CES, model$CES)
+        CED <- c(CED, model$CED)
+        CEDL <- c(CEDL, model$conf.int[1])
+        CEDU <- c(CEDU, model$conf.int[2])
+        AIC <- c(AIC, model$aic)
+        log_likelihood <- c(log_likelihood, model$loglik)
+        var <- c(var, model$MLE[1])
+        a <- c(a, model$MLE[2])
+        d <- c(d, model$MLE[4])
+      }
       
-      ma_row <- c("Model averaging", "N/A", "N/A",
-      ma_info$conf.int.ma$BMDlower.ma, ma_info$conf.int.ma$BMDupper.ma,
-      "N/A", "N/A", "N/A", "N/A", "N/A")
+      # Special handling for 'model_averaging'
+      if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+        message("Handling model averaging case")
+        ma_info <- result[[i]]$MA
+        ma_row <- c("Model averaging", "N/A", "N/A",
+        ma_info$conf.int.ma$BMDlower.ma, ma_info$conf.int.ma$BMDupper.ma,
+        "N/A", "N/A", "N/A", "N/A", "N/A")
+      }
+    } else {
+      # Handle covariates
+      subgroups <- model$covar.txt
+      message(subgroups)
+      for (subgroup in subgroups) {
+        message("Working on covariate: ", subgroup)
+        if (!names(result)[i] == "model_averaging") {
+          message("For subgroup", subgroup, " in ", names(result)[i])
+          covariates <- c(covariates, subgroup)
+          current_ced <- model$ced.table[model$ced.table$subgroup == subgroup, ]
+          extra_info <- data.frame(names = model$text.par, values = model$MLE)
+          selected_models <- c(selected_models, model$modelname)
+          CES <- c(CES, model$CES)
+          CED <- c(CED, current_ced$BMD)
+          CEDL <- c(CEDL, current_ced$BMDL)
+          CEDU <- c(CEDU, current_ced$BMDU)
+          AIC <- c(AIC, model$aic)
+          log_likelihood <- c(log_likelihood, model$loglik)
+          var <- c(var, extra_info[extra_info$names == paste0("var-",subgroup),]$values)
+          a <- c(a, extra_info[extra_info$names == paste0("a-",subgroup),]$values)
+          d <- c(d, extra_info[extra_info$names == "d-",]$values)
+          message(length(covariates))
+        }
+        message(names(result)[i])
+        message(result[[i]]$MA)
+        
+        if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+          message("Handling model averaging case for ", subgroup)
+          ma_info <- result[[i]]$MA
+          ma_row <- c("Model averaging", subgroup, "N/A", "N/A",
+          ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDlower.ma,
+          ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDupper.ma,
+          "N/A", "N/A", "N/A", "N/A", "N/A")
+          message(ma_row)
+          ma_rows <- rbind(ma_rows, ma_row, deparse.level=0)
+        }
+      }
     }
   }
 
@@ -13045,15 +13086,23 @@ parse_PROAST_output <- function(result) {
     'Log-Likelihood' = log_likelihood,
     'Var' = var,
     'a' = a,
-    'd' = d#,
-    #'Model Weights' = model_weights
+    'd' = d
   )
 
-  result_df <- rbind(result_df, ma_row)
+  # if covariates is not empty, insert it into table:
+  if (length(covariates) > 0) {
+    result_df <- data.frame(result_df[,1], 'Covariates' = covariates, result_df[,-1])
+    result_df <- rbind(result_df, ma_rows[-1])
+  } else {
+    result_df <- rbind(result_df, ma_row)
+  }
+  print(result_df)
 
   # Retrieve model names and their corresponding weights
   model_names <- ma_info$Vmodelname
+  message(model_names)
   weights <- data.frame(Selected.Model = model_names, weights = ma_info$Vweight$weight)
+  message(weights)
   result_df <- merge(result_df, weights, all.x = TRUE)
   return(result_df)
 }
