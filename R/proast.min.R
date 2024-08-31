@@ -13003,7 +13003,7 @@ parse_PROAST_output <- function(result) {
   a <- c()
   d <- c()
   covariates <- c()
-  ma_rows <- c()
+  ma_rows <- list()
   model_weights <- c()
   # Loop through the list excluding 'model_averaging'
   for (i in seq_along(result)) {
@@ -13069,7 +13069,7 @@ parse_PROAST_output <- function(result) {
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDupper.ma,
           "N/A", "N/A", "N/A", "N/A", "N/A")
           message(ma_row)
-          ma_rows <- rbind(ma_rows, ma_row, deparse.level=0)
+          ma_rows[[subgroup]] <- ma_row
         }
       }
     }
@@ -13091,8 +13091,9 @@ parse_PROAST_output <- function(result) {
 
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
-    result_df <- data.frame(result_df[,1], 'Covariates' = covariates, result_df[,-1])
-    result_df <- rbind(result_df, ma_rows[-1])
+    result_df <- data.frame('Selected model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
+    ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)), colnames(result_df))
+    result_df <- rbind(result_df, ma_frame)
   } else {
     result_df <- rbind(result_df, ma_row)
   }
@@ -13101,7 +13102,7 @@ parse_PROAST_output <- function(result) {
   # Retrieve model names and their corresponding weights
   model_names <- ma_info$Vmodelname
   message(model_names)
-  weights <- data.frame(Selected.Model = model_names, weights = ma_info$Vweight$weight)
+  weights <- data.frame('Selected model' = model_names, weights = ma_info$Vweight$weight)
   message(weights)
   result_df <- merge(result_df, weights, all.x = TRUE)
   return(result_df)
