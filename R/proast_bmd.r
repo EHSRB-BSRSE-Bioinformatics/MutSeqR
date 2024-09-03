@@ -97,7 +97,50 @@ proast_bmd <- function(mf_data,
     }
     BMD <- results_df[results_df$AIC == min(results_df$AIC), ]
     results <- list(BMD = BMD,
-                    summary <- results_df)
+                    summary = results_df)
+    # Plot Confidence Intervals
+    results_bmd_df_plot <- BMD %>%
+    dplyr::group_by(response) %>%
+    dplyr::mutate(max = BMDU) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(across(where(is.numeric), round, 1)) %>%
+    tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
+
+  nudge_value <- 0.3
+
+  g <- ggplot(results_bmd_df_plot,
+              aes(x = value, y = response, color = name)) +
+    geom_line(aes(group = response), color = "#b8b8b8", linewidth = 3.5) +
+    geom_point(size = 3) +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          axis.text.y = element_text(color = "black"),
+          axis.text.x = element_text(color = "#000000"),
+          panel.border = element_rect(colour = "black", fill = NA, size = 1),
+          panel.grid = element_blank()) +
+    scale_color_manual(values = c("black", "#BF2F24", "#436685")) +
+    scale_x_continuous() +
+    geom_text(aes(label = value, color = name),
+              size = 3.25,
+              nudge_x = dplyr::if_else(
+                results_bmd_df_plot$value == results_bmd_df_plot$max, # if it's the larger value...
+                nudge_value,   # move it to the right of the point
+                -nudge_value), # otherwise, move it to the left of the point
+              hjust = dplyr::if_else(
+                results_bmd_df_plot$value==results_bmd_df_plot$max, #if it's the larger value
+                0, # left justify
+                1)# otherwise, right justify
+    ) +
+    ggplot2::labs(x = "BMD", y = "Response",
+                  title = paste0("BMD with ",
+                                  conf_int,
+                                  "% Confidence Intervals"),
+                  color = NULL) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
+                                                       vjust = 0.5,
+                                                       hjust = 0.5),
+                    plot.title = ggplot2::element_text(hjust = 0.5)) +
+    ggplot2::theme(axis.ticks = element_line(color = "black", size = 0.5))
   } else {
     return(results[[1]])
   }
