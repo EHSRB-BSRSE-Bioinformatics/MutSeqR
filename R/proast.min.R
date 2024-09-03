@@ -13097,7 +13097,7 @@ parse_PROAST_output <- function(result) {
   } else {
     result_df <- rbind(result_df, ma_row)
   }
-  print(result_df)
+  # print(result_df)
 
   # Retrieve model names and their corresponding weights
   model_names <- ma_info$Vmodelname
