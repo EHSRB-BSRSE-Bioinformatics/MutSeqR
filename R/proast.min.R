@@ -13102,10 +13102,11 @@ parse_PROAST_output <- function(result) {
   # Retrieve model names and their corresponding weights
   model_names <- ma_info$Vmodelname
   message(model_names)
-  weights <- data.frame('Selected model' = model_names, weights = ma_info$Vweight$weight)
+  weights <- data.frame('Selected Model' = model_names, weights = ma_info$Vweight$weight)
   message(weights)
-  result_df <- merge(result_df, weights, all.x = TRUE)
+  result_df <- merge(result_df, weights, by = "Selected.Model", all.x = TRUE)
   return(result_df)
 }
+
 
 
