@@ -13135,7 +13135,7 @@ parse_PROAST_output <- function(result) {
     'a' = a,
     'd' = d
   )
-  browser()
+
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
     result_df <- data.frame('Selected Model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
