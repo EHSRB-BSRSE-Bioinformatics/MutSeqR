@@ -8,7 +8,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
     scale.ans = FALSE, const.var = F, show.warnings = F, interactive_mode = TRUE,
     datatype = NULL, model_choice = NULL, setting_choice = NULL, nested_model_choice = NULL,
     indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = 0.05, model_selection = NULL, lower_dd = NULL,
-    upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL) {
+    upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, display_plots = TRUE) {
     message(paste0("Independent variable: ", indep_var_choice))
     if (interactive_mode == TRUE) {
         message("Running in interactive mode...")
@@ -34,7 +34,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
         ans.all$const.var <- const.var
         ans.all$quick.ans <- 1
         if (ans.all$cont) 
-            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots)
         else quit <- f.cat(ans.all, list.logic = T)
         if (quit) {
             if (interactive_mode == FALSE) {
@@ -134,7 +134,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
                 }
             }
             if (ans.all$quick.ans > 1) 
-                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots)
         }
         if (dtype %in% c(2, 3, 4, 6, 84)) {
             ans.all$cont <- FALSE
@@ -203,7 +203,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
         ans.all <- f.execute(ans.all)
     }
     if (ans.all$cont) 
-        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots)
     else quit <- f.cat(ans.all)
     if (quit) {
         if (interactive_mode == FALSE) {
@@ -2027,7 +2027,7 @@ f.constr.dd <- function(model.ans) {
 
 
 
-f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
+f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, display_plots = TRUE) {
     if (exists("track")) 
         print("f.select.con")
     ans.all$HILL <- NA
@@ -2048,13 +2048,13 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
         cat(paste("\n\nresponse: ", ans.all$y.leg))
     ans.all$model.switch <- 0
     if (ans.all$quick.ans == 6) {
-        ans.all <- f.select.m46.con(ans.all, interactive_mode = interactive_mode, results_env = results_env)
+        ans.all <- f.select.m46.con(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
         return(ans.all)
         # assign(ans.all$created, ans.all, envir = results_env)
     }
     if (ans.all$NES.ans == 2) 
         ans.all$CES <- 0.05
-    ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env)
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
     Vaic[1] <- ans.all$EXP$aic
     Vnpar.sel <- c(Vnpar.sel, ans.all$EXP$npar)
     ans.all$TREND <- TRUE
@@ -2064,7 +2064,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
         if (ans.all$output) 
             cat(paste("\n\nresponse: ", ans.all$y.leg))
         ans.all$model.switch <- 1
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env)
+        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
         Vaic[2] <- ans.all$HILL$aic
         Vnpar.sel <- c(Vnpar.sel, ans.all$HILL$npar)
         if (!ans.all$TREND) 
@@ -2075,7 +2075,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
         if (ans.all$output) 
             cat(paste("\n\nresponse: ", ans.all$y.leg))
         ans.all$model.switch <- 2
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env)
+        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
         Vaic[3] <- ans.all$INVEXP$aic
         Vnpar.sel <- c(Vnpar.sel, ans.all$INVEXP$npar)
         if (!ans.all$TREND) 
@@ -2086,7 +2086,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
         if (ans.all$output) 
             cat(paste("\n\nresponse: ", ans.all$y.leg))
         ans.all$model.switch <- 3
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env)
+        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
         Vaic[4] <- ans.all$LOGN$aic
         Vnpar.sel <- c(Vnpar.sel, ans.all$LOGN$npar)
         if (!ans.all$TREND) 
@@ -2124,7 +2124,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL) {
 
 
 
-f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, results_env = NULL) {
+f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, results_env = NULL, display_plots = TRUE) {
     if (exists("track")) 
         print("f.select.m5.con")
     gui <- ans.all$gui
@@ -2224,9 +2224,11 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
     if (model.switch == 3) 
         title.tmp <- "LN models"
     name.tmp <- ""
-    if (!ans.all$WAPP && output && interrupt && cont) 
-        f.graph.window(12, WAPP = ans.all$WAPP, title = title.tmp, 
-            name.wapp = name.tmp, plotprefix = ans.all$plotprefix)
+    if (!ans.all$WAPP && output && interrupt && cont)
+        if (display_plots) {
+            f.graph.window(12, WAPP = ans.all$WAPP, title = title.tmp, 
+                name.wapp = name.tmp, plotprefix = ans.all$plotprefix)
+        }
     tb <- "\t"
     model.txt <- character()
     Vconverged <- numeric()
@@ -2278,7 +2280,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             ans.all.fit$fct3 <- fct3
             if (dtype != 6) 
                 ans.all.fit <- f.qfit(ans.all.fit, plot.type, 
-                  output = output)
+                  output = output, display_plots = display_plots)
             else {
                 ans.all.fit <- f.dtype6.mn(ans.all.fit)
                 ans.all$full6.done <- TRUE
@@ -2321,7 +2323,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                 ans.all.fit$par.start <- c(rep(var.start, nr.var), 
                   ans.all.fit$par.start[-1])
                 ans.all.fit <- f.qfit(ans.all.fit, plot.type = 0, 
-                  output = output)
+                  output = output, display_plots = display_plots)
                 Vnpar[ii] <- ans.all.fit$npar.aic
                 Vloglik[ii] <- round(ans.all.fit$loglik, 2)
                 Vaic[ii] <- ans.all.fit$aic
@@ -2401,7 +2403,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             if (cont && full.ans == 1) 
                 ans.all.fit$par.start <- c(rep(var.start, nr.var), 
                   exp(mean(log(y))))
-            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output)
+            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output, display_plots = display_plots)
             if (is.na(ans.all.fit$loglik)) {
                 if (output) 
                   cat("\nATTENTION:  model 1 did not result in finite log-likelihood valu\n\n")
@@ -2454,7 +2456,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                     par.start <- c(alfa.start, par.start)
                   ans.all.fit$par.start <- par.start
                   ans.all.fit <- f.qfit(ans.all.fit, plot.type, 
-                    output = output)
+                    output = output, display_plots = display_plots)
                   Vnpar[ii] <- ans.all.fit$npar.aic
                   Vloglik[ii] <- round(ans.all.fit$loglik, 2)
                   Vaic[ii] <- ans.all.fit$aic
@@ -2526,7 +2528,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             ans.all.fit$par.start <- c(rep(var.start, nr.var), 
                 aa.start.tmp, bb.start)
         else ans.all.fit$par.start <- NA
-        ans.all.fit <- f.qfit(ans.all.fit, plot.type = 0, output = output)
+        ans.all.fit <- f.qfit(ans.all.fit, plot.type = 0, output = output, display_plots = display_plots)
         MLE <- ans.all.fit$MLE
         if (0) {
             Vnpar[ii] <- ans.all.fit$npar.aic
@@ -2698,7 +2700,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
         if (length(xans) > 1) 
             par.start <- c(par.start, RPF.start)
         ans.all.fit$par.start <- par.start
-        ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output)
+        ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output, display_plots = display_plots)
         Vnpar[ii] <- ans.all.fit$npar.aic
         Vloglik[ii] <- round(ans.all.fit$loglik, 2)
         Vaic[ii] <- ans.all.fit$aic
@@ -2754,7 +2756,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             if (length(xans) > 1) 
                 par.start <- c(par.start, RPF.start)
             ans.all.fit$par.start <- par.start
-            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output)
+            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output, display_plots = display_plots)
             Vnpar[ii] <- ans.all.fit$npar.aic
             Vloglik[ii] <- round(ans.all.fit$loglik, 2)
             Vaic[ii] <- ans.all.fit$aic
@@ -2818,7 +2820,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             if (dtype == 6) 
                 par.start <- c(alfa.start, par.start)
             ans.all.fit$par.start <- par.start
-            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output)
+            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output, display_plots = display_plots)
             Vnpar[ii] <- ans.all.fit$npar.aic
             Vloglik[ii] <- round(ans.all.fit$loglik, 2)
             Vaic[ii] <- ans.all.fit$aic
@@ -2873,7 +2875,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
             if (dtype == 6) 
                 par.start <- c(alfa.start, par.start)
             ans.all.fit$par.start <- par.start
-            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output)
+            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output, display_plots = display_plots)
             Vnpar[ii] <- ans.all.fit$npar.aic
             Vloglik[ii] <- round(ans.all.fit$loglik, 2)
             Vaic[ii] <- ans.all.fit$aic
@@ -2987,7 +2989,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                 ans.all.fit$par.start <- par.start
             }
             ans.all.fit$par.start <- NA
-            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output)
+            ans.all.fit <- f.qfit(ans.all.fit, plot.type, output = output, display_plots = display_plots)
             Vnpar[ii] <- ans.all.fit$npar.aic
             Vloglik[ii] <- round(ans.all.fit$loglik, 2)
             Vaic[ii] <- ans.all.fit$aic
@@ -3044,7 +3046,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                   par.start <- c(alfa.start, par.start)
                 ans.all.fit$par.start <- par.start
                 ans.all.fit <- f.qfit(ans.all.fit, plot.type, 
-                  output = output)
+                  output = output, display_plots = display_plots)
                 Vnpar[ii] <- ans.all.fit$npar.aic
                 Vloglik[ii] <- round(ans.all.fit$loglik, 2)
                 Vaic[ii] <- ans.all.fit$aic
@@ -3098,7 +3100,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                   par.start <- c(alfa.start, par.start)
                 ans.all.fit$par.start <- par.start
                 ans.all.fit <- f.qfit(ans.all.fit, plot.type, 
-                  output = output)
+                  output = output, display_plots = display_plots)
                 Vnpar[ii] <- ans.all.fit$npar.aic
                 Vloglik[ii] <- round(ans.all.fit$loglik, 2)
                 Vaic[ii] <- ans.all.fit$aic
@@ -3155,7 +3157,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                   par.start <- c(alfa.start, par.start)
                 ans.all.fit$par.start <- par.start
                 ans.all.fit <- f.qfit(ans.all.fit, plot.type, 
-                  output = output)
+                  output = output, display_plots = display_plots)
                 Vnpar[ii] <- ans.all.fit$npar.aic
                 Vloglik[ii] <- round(ans.all.fit$loglik, 2)
                 Vaic[ii] <- ans.all.fit$aic
@@ -3334,7 +3336,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
                 plot.type.tmp <- 0
             else plot.type.tmp <- plot.type
             ans.all.tmp <- f.qfit(ans.all.tmp, plot.type.tmp, 
-                output = output)
+                output = output, display_plots = display_plots)
             Vnpar[ii] <- ans.all.tmp$npar
             Vloglik[ii] <- round(ans.all.tmp$loglik, 2)
             Vaic[ii] <- ans.all.tmp$aic
@@ -3524,7 +3526,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
     #assign(current_model, ans.all, envir = results_env) # Nope... this only gets one model in each "loop" of the code somehow.
     if (exists("track")) 
         print("f.select.m5.con:   END")
-    message("Returning ans.all from f.select.m5.con")
     return(ans.all)
 }
 
@@ -3673,7 +3674,7 @@ f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, 
 
 
 
-f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE) {
+f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_plots = TRUE) {
     if (exists("track")) 
         print("f.qfit")
     plot.type.save <- ans.all.fit$plot.type
@@ -3729,12 +3730,14 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE) {
             if (interrupt && plot.type > 0 && !WAPP) {
                 ans.all.fit$heading <- ""
                 ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
-                ignore <- f.plot.con(ans.all.fit)
+                ignore <- f.plot.con(ans.all.fit, display_plots = display_plots)
                 modelname <- ans.all.fit$modelname
-                title(main = paste(modelname))
+                if (display_plots == TRUE) {
+                  title(main = paste(modelname))
+                }
                 ans.all.fit$l.ty = 1
                 if (model.ans != 11) 
-                  f.lines.con(ans.all.fit)
+                  f.lines.con(ans.all.fit, display_plots = display_plots)
             }
         }
         if (!cont) {
@@ -4252,7 +4255,7 @@ f.text.par <- function(ans.all, brief = F) {
 
 
 
-f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F) {
+f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_plots = TRUE) {
     if (exists("track")) 
         print("f.start.con")
     if (ans.all$model.ans == 0) {
@@ -4281,7 +4284,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F) {
                 nr.bb)] <- bb.new
             ans.all$par.start <- par.start
             ans.all$regr.par <- ans.all$par.start[-(1:nr.var)]
-            ans.all <- f.plot.con(ans.all)
+            ans.all <- f.plot.con(ans.all, display_plots = display_plots)
             f.lines.con(ans.all)
             with(ans.all, {
                 loglik.start <- -f.lik.con(par.start, x, y, dtype, 
@@ -5352,8 +5355,10 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F) {
                 ans.all$plot.type <- 1
             if (!tmp.quick && plot.type > 0) {
                 ans.all$l.ty <- 2
-                f.graph.window(1)
-                f.plot.all(ans.all, new.window = FALSE, no.show = TRUE)
+                if (!display_plots == TRUE) {
+                  f.graph.window(1)
+                }
+                f.plot.all(ans.all, new.window = FALSE, no.show = TRUE, display_plots = display_plots)
             }
             switch(fit.ans, loglik.start <- -f.lik.con(ans.all$par.start, 
                 x, y, dtype, fct1, fct2, fct3, model.ans, mn.log, 
@@ -5583,7 +5588,7 @@ f.report.pars <- function(ans.all) {
 
 
 
-f.plot.con <- function(ans.all, sep = FALSE) {
+f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = FALSE) {
     if (exists("track")) 
         print("f.plot.con")
     if (ans.all$plot.type == 0) {
@@ -5609,9 +5614,11 @@ f.plot.con <- function(ans.all, sep = FALSE) {
         }
         bbb <- (x.lim.plt[2] - x.lim.plt[1])/70
         dfr <- points.plt.lst[[1]]
-        plot(dfr$x, dfr$y, xlim = x.lim.plt, ylim = y.lim.plt, 
-            xlab = xleg, ylab = yleg, cex = 0.5, col = 1, type = "n")
-        title(main = heading)
+        if (display_plots == TRUE) {
+          plot(dfr$x, dfr$y, xlim = x.lim.plt, ylim = y.lim.plt, 
+              xlab = xleg, ylab = yleg, cex = 0.5, col = 1, type = "n")
+          title(main = heading)
+        }
         nr.gr <- length(gr.txt)
         if (plt.mns < 3) 
             for (ii in 1:nr.gr) {
@@ -5620,8 +5627,10 @@ f.plot.con <- function(ans.all, sep = FALSE) {
                 y.tmp <- dfr$y
                 if (mark[ii] == 1) 
                   cex.1 <- cex.1 * 2
-                points(x.tmp, y.tmp, col = color[ii], pch = mark[ii], 
+                if (display_plots == TRUE) {
+                  points(x.tmp, y.tmp, col = color[ii], pch = mark[ii], 
                   cex = cex.1)
+                }
                 if (mark[ii] == 1) 
                   cex.1 <- cex.1/2
             }
@@ -5636,8 +5645,10 @@ f.plot.con <- function(ans.all, sep = FALSE) {
                   l.ty <- 2
                   type.dum <- "b"
                 }
-                points(x.tmp, y.tmp, col = color[ii], pch = mark[ii], 
+                if (display_plots == TRUE) {
+                  points(x.tmp, y.tmp, col = color[ii], pch = mark[ii], 
                   type = type.dum, cex = cex.2)
+                }
                 ans.CI <- 2
                 if (length(x.tmp) > 1000) {
                   ans.CI <- menu(c("no", "yes"), title = "plotting CIs may take some time (or result in unclear plot), \n                           are you sure?")
@@ -7055,7 +7066,7 @@ f.check.cc <- function(ans.all) {
 
 
 
-f.lines.con <- function(ans.all) {
+f.lines.con <- function(ans.all, display_plots = TRUE) {
     if (exists("track")) 
         print("f.lines.con")
     with(ans.all, {
@@ -7065,10 +7076,12 @@ f.lines.con <- function(ans.all) {
             dfr <- lines.plt.lst[[ii]]
             x.tmp <- dfr$xline
             y.tmp <- dfr$expect
-            lines(x.tmp[1:2], y.tmp[1:2], col = color[ii], pch = mark[ii], 
-                lty = 2)
-            lines(x.tmp[-(1:2)], y.tmp[-(1:2)], col = color[ii], 
-                pch = mark[ii], lty = l.ty)
+            if (display_plots) {
+                lines(x.tmp[1:2], y.tmp[1:2], col = color[ii], pch = mark[ii], 
+                    lty = 2)
+                lines(x.tmp[-(1:2)], y.tmp[-(1:2)], col = color[ii], 
+                    pch = mark[ii], lty = l.ty)
+            }
         }
         ans.all$lines.plt.lst <- lines.plt.lst
         ans.all$nr.gr <- nr.gr
@@ -7217,7 +7230,7 @@ f.lines.plt.con <- function(ans.all) {
 
 
 
-f.cedlines.con <- function(ans.all) {
+f.cedlines.con <- function(ans.all, display_plots = TRUE) {
     if (exists("track")) 
         print("f.cedlines.con")
     ans.all$cedes <- f.cedes.plt.con(ans.all)
@@ -7234,8 +7247,10 @@ f.cedlines.con <- function(ans.all) {
         if (length(xans) > 1) 
             nr.gr <- 1
         for (ii in (1:nr.gr)) {
-            lines(ES.x[ii, ], ES.y[ii, ], lty = 2)
-            lines(CED.x[ii, ], CED.y[ii, ], lty = 2)
+            if (display_plots == TRUE) {
+                lines(ES.x[ii, ], ES.y[ii, ], lty = 2)
+                lines(CED.x[ii, ], CED.y[ii, ], lty = 2)
+            }
         }
         if (exists("track")) 
             print("f.cedlines.con:  END")
@@ -7652,7 +7667,7 @@ f.show.con <- function(ans.all) {
 
 
 f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE, 
-    no.show = FALSE) {
+    no.show = FALSE, display_plots = TRUE) {
     if (exists("track")) 
         print("f.plot.all")
     if (ans.all$plot.type == 0) 
@@ -7693,8 +7708,10 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
     }
     with(ans.all, {
         if (cont) {
-            if (new.window) 
-                f.graph.window(1)
+            if (new.window)
+                if (display_plots) {
+                  f.graph.window(1)
+                }
             if (plot.type %in% 10:11) {
                 if (is.na(regr.resid[1])) 
                   cat("\nno residuals available \n")
@@ -7702,23 +7719,25 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
                 ans.all$CI.plt <- FALSE
             }
             ans.all$heading <- ""
-            ans.all <- f.plot.con(ans.all)
+            ans.all <- f.plot.con(ans.all, display_plots = display_plots)
             if (model.ans != 11 && plot.type != 9) 
-                ans.all <- f.lines.con(ans.all)
+                ans.all <- f.lines.con(ans.all, display_plots = display_plots)
             if (plot.type < 9 && !is.na(CED[1]) && model.ans != 
                 16 && fitted) 
-                ans.all <- f.cedlines.con(ans.all)
+                ans.all <- f.cedlines.con(ans.all, display_plots = display_plots)
             if (is.na(ans.all$MLE[1])) 
                 ans.all$MLE <- ans.all$par.start
             if (no.show) 
                 ans.all$show <- ""
             else ans.all$show <- f.show.con(ans.all)
-            f.mtext(ans.all)
+            f.mtext(ans.all, display_plots = display_plots)
         }
         if (!cont) {
             if (!combi.ans) {
                 if (!bootstrap && new.window) 
-                  f.graph.window(1)
+                  if (display_plots) {
+                    f.graph.window(1)
+                  }
                 if (dtype %in% c(4, 6, 84) && model.type == 2 && 
                   plot.type %in% c(7:10)) {
                   ans.all.plt <- ans.all
@@ -7746,7 +7765,9 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
                   f.mtext(ans.all)
             }
             if (combi.ans) {
-                f.graph.window(4)
+                if (display_plots) {
+                  f.graph.window(4)
+                }
                 ans.all.plt <- ans.all
                 ans.all.plt$modelname <- ""
                 ans.all.plt$main <- ""
@@ -7902,7 +7923,7 @@ f.move.sublist <- function(lst, sub) {
 
 
 
-f.ced.ma <- function(ans.all, xline, first.call) {
+f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
     if (exists("track")) 
         print("f.ced.ma")
     with(ans.all, {
@@ -8144,8 +8165,10 @@ f.ced.ma <- function(ans.all, xline, first.call) {
                       Vced.ma.plt <- Vced.ma
                     if (plot.type %in% c(2, 4, 6)) 
                       Vced.ma.plt <- log10(Vced.ma)
-                    lines(xline.plt, yy.ma.plt, lty = 2, col = group)
-                    points(log10(Vced.ma[group]), -0.03, col = group)
+                    if (display_plots) {
+                      lines(xline.plt, yy.ma.plt, lty = 2, col = group)
+                      points(log10(Vced.ma[group]), -0.03, col = group)
+                    }
                   }
                 }
                 if (cont) {
@@ -8165,15 +8188,19 @@ f.ced.ma <- function(ans.all, xline, first.call) {
                     Vced.ma.plt <- log10(Vced.ma)
                   if (plot.type %in% c(6, 8)) 
                     Vced.ma.plt <- sqrt(Vced.ma)
-                  lines(xline.plt, yy.ma.plt, lty = 2, col = group)
-                  points(Vced.ma.plt[group], y.min, col = group)
+                  if (display_plots) {
+                    lines(xline.plt, yy.ma.plt, lty = 2, col = group)
+                    points(Vced.ma.plt[group], y.min, col = group)
+                  }
                 }
             }
             if (0) {
                 x.tmp <- x
                 x.tmp[x == 0] <- min(x[x > 0])/2
                 x.min <- min(x.tmp)
-                f.graph.window(1)
+                if (display_plots) {
+                  f.graph.window(1)
+                }
                 plot(log10(xline), yy.ma.plt, xlim = log10(c(x.min, 
                   max(x))), type = "n")
                 lines(log10(xline), yy.ma.plt)
@@ -8407,7 +8434,7 @@ f.show.ma <- function(ans.all) {
 
 
 
-f.mtext <- function(ans.all) {
+f.mtext <- function(ans.all, display_plots = TRUE) {
     if (exists("track")) 
         print("f.mtext")
     modelname <- ans.all$modelname
@@ -8417,14 +8444,18 @@ f.mtext <- function(ans.all) {
             y.lim <- ans.all$y.lim.plt
         else y.lim <- ans.all$xy.lim[4:5]
         loc.txt <- y.lim[2] + 0.05 * (y.lim[2] - y.lim[1])
-        mtext(show, 4, 1, adj = 0, padj = 1, las = 1, at = loc.txt, 
-            cex = 0.7)
+        if (display_plots == TRUE) {
+            mtext(show, 4, 1, adj = 0, padj = 1, las = 1, at = loc.txt, 
+                cex = 0.7)
+        }
         if (ans.all$model.ans %in% c(31, 32, 33, 45, 55)) 
             cexmain <- 0.8
         else cexmain <- 1.2
-        if (ans.all$output) 
-            title(main = paste("\n\n", modelname), cex.main = cexmain, 
-                font.main = 1)
+        if (ans.all$output)
+            if (display_plots == TRUE) {
+                title(main = paste("\n\n", modelname), cex.main = cexmain, 
+                    font.main = 1)
+            }
     }
     else if (!ans.all$fitted && ans.all$heading == "") {
         title(main = "\nstarting values")
@@ -8436,12 +8467,13 @@ f.mtext <- function(ans.all) {
 
 
 
-f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
+f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE) {
     if (exists("track")) 
         print("f.boot.ma")
     if (ans.all$seed.bt != 0) 
         set.seed(ans.all$seed.bt)
     date.0 <- date()
+    message("Display plots:", display_plots)
     with(ans.all, {
         nr.gr <- max(ans.all$covariate)
         if (dtype != 2) {
@@ -8449,9 +8481,11 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
             xline <- exp(seq(from = logb(2 * dum.contr), to = logb(xy.lim[3]), 
                 length = 1000))
             name.wapp <- paste("c", yans, "ma.plot", sep = "")
-            f.graph.window(1, WAPP = WAPP, title = "bootstrap curves based on model averaging", 
+            if (display_plots) {
+                f.graph.window(1, WAPP = WAPP, title = "bootstrap curves based on model averaging", 
                 name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
                 svg.plots = svg.plots, output = output)
+            }
             if (!cont) 
                 ans.all$xy.lim[4:5] <- c(0, 1)
             ans.all$xy.lim[1] <- dum.contr
@@ -8464,13 +8498,15 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 ans.all$fct2 <- covariate
                 ans.all$plt.mns <- 3
                 ans.all$heading <- ""
-                ans.all$y.min <- f.plot.con(ans.all)$y.lim.plt[1]
+                ans.all$y.min <- f.plot.con(ans.all, display_plots = display_plots)$y.lim.plt[1]
             }
-            title(main = "bootstrap curves \nbased on model averaging", 
+            if (display_plots) {
+                title(main = "bootstrap curves \nbased on model averaging", 
                 cex.main = 1)
+            }
         }
         else xline <- NA
-        ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE)
+        ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE, display_plots = display_plots)
         cat("\n The weights used in model averaging are:\n")
         print(ans.all$MA$Vweight)
         date.0 <- date()
@@ -8538,9 +8574,9 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 ans.all.bt$dtype <- 1
                 ans.all.bt$dtype.0 <- 1
                 ans.all.bt$output <- FALSE
-                ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, results_env = results_env)
+                ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
             }
-            Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE)
+            Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
             ced.ma.matr[ii, ] <- Vced.ma
         }
         Vlower.ma <- numeric()
@@ -8568,7 +8604,7 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
         if (dtype != 2) {
             ans.all$show <- f.show.ma(ans.all)
             ans.all$output <- FALSE
-            f.mtext(ans.all)
+            f.mtext(ans.all, display_plots = display_plots)
             ans.all$output <- TRUE
         }
         if (!ans.all$gui) {
@@ -8640,7 +8676,7 @@ f.control <- function(lev = 3) {
 
 
 
-f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input = NULL, interactive_mode = TRUE, covariates = NULL, custom_CES = NULL, model_selection = NULL, lower_dd = NULL, upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
+f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input = NULL, interactive_mode = TRUE, covariates = NULL, custom_CES = NULL, model_selection = NULL, lower_dd = NULL, upper_dd = NULL, selected_model = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL, display_plots = TRUE) {
     if (exists("track")) 
         print("f.con")
     f.assign(".Pr.last", ans.all)
@@ -8667,9 +8703,11 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                 npar <- length(MLE)
                 Vcc <- MLE[(npar - nr.dd + 1):npar]
                 Vsd <- sqrt(MLE[1:nr.var])
-                f.graph.window(1)
-                plot(log10(Vcc), log10(Vsd), xlab = "log.sd", 
+                if (display_plots) {
+                  f.graph.window(1)
+                  plot(log10(Vcc), log10(Vsd), xlab = "log.sd", 
                   ylab = "log.c")
+                }
                 f.press.key.to.continue()
             })
         }
@@ -8687,7 +8725,9 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                   show <- "subgroups"
                   for (i in 1:length(gr.txt)) show <- paste(show, 
                     nl, gr.lab[i], tb, gr.txt[i])
-                  f.graph.window(1)
+                  if (display_plots) {
+                    f.graph.window(1)
+                  }
                   plot(Vsd, log(Vcc), pch = as.character(gr.lab))
                   abline(0, 7)
                   loc.txt <- max(log(Vcc))
@@ -8731,7 +8771,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
             ans.all <- f.change.settings(ans.all, choose = T)
             if (ans.all$fitted) ans.all$show <- f.show.con(ans.all)
             if (!ans.all$fitted) {
-                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env) else {
+                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots) else {
                   ans.all <- f.execute(ans.all)
                   if (ans.all$ans.m6.sd != 2) ans.all <- f.start.con(ans.all, 
                     adjust = F, fitted = F, tmp.quick = F)
@@ -8763,7 +8803,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                 }
             }
             if (ans.all$quick.ans > 1) {
-                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env)
+                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots)
                 
                 # Human-readable list of models
                 list.of.models <- c("exponential", "Hill", "inverse exponential", "lognormal DR")
@@ -8964,7 +9004,7 @@ f.nr.replicates <- function(ans.all) {
 
 
 
-f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL) {
+f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL, display_plots = TRUE) {
     if (exists("track")) 
         print("f.quick.con")
         message(paste0("indep_var_choice: ", indep_var_choice))
@@ -9297,7 +9337,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 ans.all$increase <- 0
                 ans.all$Vyans <- Vyans
                 ans.all$do.MA <- do.MA
-                ans.all <- f.select.con(ans.all, interactive_mode = interactive_mode, results_env = results_env)
+                ans.all <- f.select.con(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
                 if (ans.all$quick.ans == 6) {
                   if (!(WAPP || gui)) 
                     f.store.results(ans.all, store.name = 0)
@@ -9411,11 +9451,11 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 if (ans.all$fitted) {
                   if (ans.all$dtype %in% c(1, 5)) 
                     ans.all$plt.mns <- 1
-                  ans.all <- f.plot.gui(ans.all)
+                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots)
                   if (!WAPP && length(ans.all$xans) > 1 && ans.all$nr.aa > 
                     1) {
                     f.press.key.to.continue()
-                    f.plot.all(ans.all, sep = T)
+                    f.plot.all(ans.all, sep = T, display_plots = display_plots)
                   }
                 }
                 if (length(ans.all$xans) > 1) {
@@ -9427,7 +9467,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                   if (ans.all$TREND) {
                     ans.all$MA.running <- TRUE
                     cat("\n\nCalculating confidence intervals by model averaging, this may make some time ....\n\n")
-                    ans.all <- f.boot.ma(ans.all, interactive_mode = interactive_mode, results_env = results_env)
+                    ans.all <- f.boot.ma(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
                     cat("\nThe model-average BMD confidence interval is:\n")
                     print(ans.all$MA$conf.int.ma)
                     cat("\n")
@@ -9477,7 +9517,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
         }
         if (ans.all$no.CI == F && length(Vyans) == 1 && length(ans.all$EXP$conf.int[, 
             1]) > 1 && length(ans.all$xans) == 1) 
-            f.plot.CI(ans.all)
+            f.plot.CI(ans.all, display_plots = display_plots)
         if (ans.all$no.CI == F & length(Vyans) > 1) {
             if (sum(!is.na(CED.all$CED.matr[, 1]) > 0)) {
                 CED.all$CED.matr <- CED.all$CED.matr[-1, ]
@@ -9502,7 +9542,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 ans.all$Vyans <- Vyans
                 ans.all$CED.all <- CED.all
                 f.plot.CED(ans.all, WAPP = WAPP, plotprefix = ans.all$plotprefix, 
-                  svg.plots = ans.all$svg.plots)
+                  svg.plots = ans.all$svg.plots, display_plots = display_plots)
             }
             else cat("\n\nNone of the endpoints showed a significant trend\n")
         }
@@ -9510,7 +9550,6 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
             ans.all$NES.ans <- 1
         if (exists("track")) 
             print("f.quick.con:  END")
-        message("Returning ans.all from f.quick.con")
         return(ans.all)
     })
 }
@@ -11425,13 +11464,13 @@ f.grubb <- function(ss = 25, alfa = 0.05) {
 
 
 
-f.CI <- function(ans.all) {
+f.CI <- function(ans.all, display_plots = TRUE) {
     if (exists("track")) 
         print("f.CI")
     with(ans.all, {
         if (quick.ans == 1) 
             ans.all$trace.plt <- T
-        profile.out <- f.profile.all(ans.all)
+        profile.out <- f.profile.all(ans.all, display_plots = display_plots)
         conf.int <- profile.out$conf.int
         update <- F
         count <- 0
@@ -11458,7 +11497,7 @@ f.CI <- function(ans.all) {
                   "\n\n")
                 if (!WAPP && !gui) 
                   f.store.results(ans.all, "newfit")
-                profile.out <- f.profile.all(ans.all)
+                profile.out <- f.profile.all(ans.all, display_plots = display_plots)
                 loglik.tmp <- profile.out$loglik
                 update <- T
                 if (count > 50) {
@@ -11521,7 +11560,7 @@ f.CI <- function(ans.all) {
 
 
 
-f.profile.all <- function(ans.all, nolog = F, debug = FALSE) {
+f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRUE) {
     if (exists("track")) 
         print("f.profile.all")
     date.start <- date()
@@ -11650,7 +11689,9 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE) {
                   ans.all.plt$color <- rep(1, length(x))
                   if (from != 0) 
                     ans.all.plt$color[par.nr] <- 3
-                  f.graph.window(2, nr.gr = nr.gr)
+                  if (display_plots) {
+                    f.graph.window(2, nr.gr = nr.gr)
+                  }
                   if (!cont & dtype != 3) {
                     f.plot.frq(ans.all.plt)
                   }
@@ -12204,9 +12245,11 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE) {
             loglik.vec <- c(loglik.low, loglik.upp)
             if (!(CI.NA.low && CI.NA.upp)) 
                 if (trace.plt) {
-                  if (dtype %in% 2:3) 
-                    f.graph.window(1, nr.gr = nr.gr)
-                  y.low <- min(spline.low$y, spline.upp$y)
+                  if (dtype %in% 2:3)
+                    if (display_plots) {
+                      f.graph.window(1, nr.gr = nr.gr)
+                    } 
+                    y.low <- min(spline.low$y, spline.upp$y)
                   y.upp <- max(spline.low$y, spline.upp$y)
                   y.lim <- c(min(y.low, loglik.max - crit), y.upp)
                   if (nolog) 
@@ -12276,7 +12319,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE) {
 
 
 
-f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
+f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots = TRUE) {
     if (exists("track")) 
         print("f.plot.gui")
     WAPP <- ans.all$WAPP
@@ -12300,7 +12343,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
         if (ans.all$model.fam == 0 && length(ans.all$SINGMOD) == 
             0) {
             if (!HTML) {
-                if (ans.all$nr.models == 1) 
+                if (ans.all$nr.models == 1)
                   f.graph.window(1)
                 else {
                   if (WAPP & !ans.all$svg.plots) 
@@ -12310,9 +12353,11 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                   else .gw.size <- c(7, 3)
                   name.wapp <- paste("a", ans.all$yans, "exphill", 
                     sep = "")
-                  f.create.graphwin(.gw.size[1], .gw.size[2], 
+                  if (display_plots) {
+                    f.create.graphwin(.gw.size[1], .gw.size[2], 
                     WAPP = WAPP, title = "", name.wapp = name.wapp, 
                     plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
+                  }
                   par(mfcol = c(1, 2))
                   par(mar = c(5.5, 4.8, 4, 12))
                   par(cex.main = 1.2)
@@ -12332,7 +12377,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                 if (ans.all$dtype == 3) 
                   ans.all.plt$show <- f.show.cat(ans.all.plt)
                 else ans.all.plt$show <- f.show.con(ans.all.plt)
-            ans.all <- f.plot.all(ans.all.plt, new.window = F)
+            ans.all <- f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
             if (ans.all$dtype == 3) 
                 title(main = "Exponential model", font.main = 2.5)
             if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
@@ -12352,7 +12397,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                   if (ans.all$dtype == 3) 
                     ans.all.plt$show <- f.show.cat(ans.all.plt)
                   else ans.all.plt$show <- f.show.con(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = F)
+                f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
                 if (ans.all$dtype == 3) 
                   title(main = "Hill model", font.main = 2)
                 if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
@@ -12364,15 +12409,17 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                   dev.off()
                 name.wapp <- paste("a", ans.all$yans, "invlogn", 
                   sep = "")
-                f.create.graphwin(.gw.size[1], .gw.size[2], WAPP = WAPP, 
-                  title = "", name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
-                  svg.plots = ans.all$svg.plots)
-                par(mfcol = c(1, 2))
-                par(mar = c(5.5, 4.8, 4, 12))
-                par(cex.main = 1.2)
-                par(cex.sub = 1)
-                par(cex.lab = 1.5)
-                par(cex = 0.6)
+                if (display_plots) {
+                  f.create.graphwin(.gw.size[1], .gw.size[2], WAPP = WAPP, 
+                    title = "", name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
+                    svg.plots = ans.all$svg.plots)
+                  par(mfcol = c(1, 2))
+                  par(mar = c(5.5, 4.8, 4, 12))
+                  par(cex.main = 1.2)
+                  par(cex.sub = 1)
+                  par(cex.lab = 1.5)
+                  par(cex = 0.6)
+                }
             }
             if (ans.all$nr.models > 2) {
                 ans.all.plt <- ans.all
@@ -12388,7 +12435,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                   if (ans.all$dtype == 3) 
                     ans.all.plt$show <- f.show.cat(ans.all.plt)
                   else ans.all.plt$show <- f.show.con(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = F)
+                f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
                 if (ans.all$dtype == 3) 
                   title(main = "inverse expon model", font.main = 2)
                 if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
@@ -12409,7 +12456,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                   if (ans.all$dtype == 3) 
                     ans.all.plt$show <- f.show.cat(ans.all.plt)
                   else ans.all.plt$show <- f.show.con(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = F)
+                f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
                 if (ans.all$dtype == 3) 
                   title(main = "LN model", font.main = 2)
                 if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
@@ -12455,7 +12502,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                 if (ans.all$dtype == 3) 
                   ans.all.plt$show <- f.show.cat(ans.all.plt)
                 else ans.all.plt$show <- f.show.con(ans.all.plt)
-            f.plot.all(ans.all.plt, new.window = new.window)
+            f.plot.all(ans.all.plt, new.window = new.window, display_plots = display_plots)
             if (ans.all$dtype == 3) 
                 title(main = title.tmp, font.main = 2.5)
         }
@@ -12496,7 +12543,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                 count <- count + 1
                 xleg <- ans.all.plt$xleg
                 yleg <- ans.all.plt$y.leg
-                f.plot.all(ans.all.plt, new.window = FALSE)
+                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
                 title(main = paste(ans.all.plt$modelname, "--"), 
                   cex = 0.5)
             }
@@ -12517,7 +12564,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                 if (ans.all$dtype == 2) 
                   ans.all.plt$CI.plt <- FALSE
                 count <- count + 1
-                f.plot.all(ans.all.plt, new.window = FALSE)
+                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
                 title(main = ans.all$EXP$modelname, cex = 0.5)
                 ans.all.plt <- ans.all
                 ans.all.plt$model.type <- 2
@@ -12530,7 +12577,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                 if (ans.all$dtype == 2) 
                   ans.all.plt$CI.plt <- FALSE
                 count <- count + 1
-                f.plot.all(ans.all.plt, new.window = FALSE)
+                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
                 title(main = ans.all$HILL$modelname, cex = 0.5)
             }
             if (count < 9) {
@@ -12560,7 +12607,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE) {
                   ans.all.plt$CI.plt <- FALSE
                 if (model.summ) 
                   ans.all.plt$show <- f.show.cat(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = FALSE)
+                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
             }
         }
     }
@@ -13088,10 +13135,10 @@ parse_PROAST_output <- function(result) {
     'a' = a,
     'd' = d
   )
-
+  browser()
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
-    result_df <- data.frame('Selected model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
+    result_df <- data.frame('Selected Model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
     ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)), colnames(result_df))
     result_df <- rbind(result_df, ma_frame)
   } else {
