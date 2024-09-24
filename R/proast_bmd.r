@@ -36,10 +36,10 @@
 #' the lowest AIC. The BMD confidence intervals will be calculated for each
 #' model family using its selected model (3 or 5). The BMD confidence
 #' may also be calculated using the bootstrap method.
-#' 
+#'
 #' var: represents the residual variance around the fitted curve on the natural log-scale
 #' Plots: the fitted curves relate to the median at each dose.
-#' 
+#'
 #' CED the calculated value of the CED is retirn in the orginal dose units, while the 
 #' legend to the plot is printined in the same dose units as used in the plot (thus they
 #' may differ by the dose scalling factor)
@@ -57,7 +57,7 @@ proast_bmd <- function(mf_data,
 
   CES_sd <- as.numeric(adjust_CES_to_group_SD) + 1
 
-  if(is.null(covariate_col)) {
+  if (is.null(covariate_col)) {
     covariate <- 0
   } else {
     covariate <- covariate_col
@@ -82,65 +82,98 @@ proast_bmd <- function(mf_data,
 
   if (summary == TRUE) {
     results_df <- results[[2]]
-    if (!is.null(covariate_col)) {
-      ced.list <- list()
-      for (i in names(results[[1]])) {
-        ced.list[[i]] <- results[[1]][[i]]$ced.table
-      }
-      ced.df.list <- lapply(names(ced.list), function(name) {
-        df <- ced.list[[name]]
-        df$model <- name
-        return(df)
-      })
-      ced.df <- do.call(rbind, ced.df.list)
-      results_df <- dplyr::left_join(results_df, ced.df)
+    results_df <- results_df %>%
+      dplyr::mutate(across(c(CED, CEDL, CEDU, weights), as.numeric))
+    lowest_AIC_model <- results_df[results_df$AIC == min(results_df$AIC), ]
+    results_ls <- list(lowest_AIC_model = lowest_AIC_model,
+                       summary = results_df)
+
+    # Cleveland plot: all models w weights
+    if (model_averaging) {
+      model_order <- results_df %>%
+        dplyr::filter(.data$Selected.Model != "Model averaging") %>%
+        dplyr::arrange(weights) %>%
+        dplyr::pull(Selected.Model)
+      c.plot_df <- results_df %>%
+        dplyr::mutate(Selected.Model = factor(Selected.Model,
+                                              levels = c(model_order,
+                                                         "Model averaging")))
+      # assign dummy values to Model averaging,
+      # making sure it is in range of the other CEDL and CEDU.
+      c.plot_df$weights[c.plot_df$Selected.Model == "Model averaging"] <- NA
+      c.plot_df$CED[c.plot_df$Selected.Model == "Model averaging"] <- with(subset(c.plot_df, Selected.Model == "Model averaging"), (CEDL + CEDU) / 2)
+
+      c <- ggplot(c.plot_df, aes(x = CED, y = Selected.Model)) +
+        geom_errorbar(aes(xmin = CEDL, xmax = CEDU),
+                      color = "gray",
+                      width = 0.1) +
+        geom_point(aes(size = weights),
+                   color = "red") +
+        scale_size_continuous(guide = "none") +
+        ggplot2::theme(panel.background = ggplot2::element_blank(),
+                       axis.line = ggplot2::element_line(),
+                       panel.grid = ggplot2::element_blank(),
+                       axis.ticks.x = ggplot2::element_line(),
+                       axis.ticks.y = ggplot2::element_line()) +
+        ggplot2::xlab("BMD Estimate") +
+        ggplot2::ylab("Model") +
+        ggtitle("BMD by Selected Model (Sorted by Weights)")
+
+      results_ls$Cleveland_plot <- c
     }
-    BMD <- results_df[results_df$AIC == min(results_df$AIC), ]
-    results <- list(BMD = BMD,
-                    summary = results_df)
-    # Plot Confidence Intervals
-    results_bmd_df_plot <- BMD %>%
-    dplyr::group_by(response) %>%
-    dplyr::mutate(max = BMDU) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(across(where(is.numeric), round, 1)) %>%
-    tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
+    #
+    results_raw <- results[[1]]
+    names(results_raw)
+    expon <- results_raw$'Expon. m5-'
+    names(expon)
+    expon$regr.resid.raw
+    
+    # CI Plot
+    #Plot the CI of one or all models
+    results_bmd_df_plot <- results_df %>%
+      dplyr::group_by(Selected.Model) %>%
+      dplyr::mutate(max = CEDU) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(across(where(is.numeric), round, 1)) %>%
+      tidyr::pivot_longer(cols = c("CED", "CEDL", "CEDU"))
+    results_bmd_df_plot <- as.data.frame(results_bmd_df_plot)
+    results_bmd_df_plot$value <- as.numeric(as.character(results_bmd_df_plot$value))
 
-  nudge_value <- 0.3
+    nudge_value <- 0.3
 
-  g <- ggplot(results_bmd_df_plot,
-              aes(x = value, y = response, color = name)) +
-    geom_line(aes(group = response), color = "#b8b8b8", linewidth = 3.5) +
-    geom_point(size = 3) +
-    theme_minimal() +
-    theme(legend.position = "bottom",
-          axis.text.y = element_text(color = "black"),
-          axis.text.x = element_text(color = "#000000"),
-          panel.border = element_rect(colour = "black", fill = NA, size = 1),
-          panel.grid = element_blank()) +
-    scale_color_manual(values = c("black", "#BF2F24", "#436685")) +
-    scale_x_continuous() +
-    geom_text(aes(label = value, color = name),
-              size = 3.25,
-              nudge_x = dplyr::if_else(
-                results_bmd_df_plot$value == results_bmd_df_plot$max, # if it's the larger value...
-                nudge_value,   # move it to the right of the point
-                -nudge_value), # otherwise, move it to the left of the point
-              hjust = dplyr::if_else(
-                results_bmd_df_plot$value==results_bmd_df_plot$max, #if it's the larger value
-                0, # left justify
-                1)# otherwise, right justify
-    ) +
-    ggplot2::labs(x = "BMD", y = "Response",
-                  title = paste0("BMD with ",
-                                  conf_int,
-                                  "% Confidence Intervals"),
-                  color = NULL) +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
-                                                       vjust = 0.5,
-                                                       hjust = 0.5),
-                    plot.title = ggplot2::element_text(hjust = 0.5)) +
-    ggplot2::theme(axis.ticks = element_line(color = "black", size = 0.5))
+    g <- ggplot(results_bmd_df_plot,
+                aes(x = value, y = Selected.Model, color = name)) +
+      geom_line(aes(group = Selected.Model), color = "#b8b8b8", linewidth = 1) +
+      geom_point(size = 3) +
+      theme_minimal() +
+      theme(legend.position = "bottom",
+            axis.text.y = element_text(color = "black"),
+            axis.text.x = element_text(color = "#000000"),
+            panel.border = element_rect(colour = "black", fill = NA, size = 1),
+            panel.grid = element_blank()) +
+      scale_color_manual(values = c("black", "#BF2F24", "#436685")) +
+      scale_x_continuous() +
+      geom_text(aes(label = value, color = name),
+                size = 3.25,
+                nudge_x = dplyr::if_else(
+                  results_bmd_df_plot$value == results_bmd_df_plot$max, # if it's the larger value...
+                  nudge_value,   # move it to the right of the point
+                  -nudge_value), # otherwise, move it to the left of the point
+                hjust = dplyr::if_else(
+                  results_bmd_df_plot$value==results_bmd_df_plot$max, #if it's the larger value
+                  0, # left justify
+                  1)# otherwise, right justify
+      ) +
+      ggplot2::labs(x = "BMD", y = "Selected Model",
+                    title = paste0("BMD with 90% Confidence Intervals"),
+                    color = NULL) +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
+                                                        vjust = 0.5,
+                                                        hjust = 0.5),
+                      plot.title = ggplot2::element_text(hjust = 0.5)) +
+      ggplot2::theme(axis.ticks = element_line(color = "black", size = 0.5))
+
+    return(results_ls)
   } else {
     return(results[[1]])
   }

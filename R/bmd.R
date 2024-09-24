@@ -253,7 +253,7 @@ bmd_ma <- function(mf_data,
                    panel.grid = ggplot2::element_blank(),
                    axis.ticks.x = ggplot2::element_line(),
                    axis.ticks.y = ggplot2::element_line()) +
-      ggplot2::xlab("BMD Estimate (mg/kg-bw/d)") +
+      ggplot2::xlab("BMD Estimate") +
       ggplot2::ylab("Model")
   }
 
