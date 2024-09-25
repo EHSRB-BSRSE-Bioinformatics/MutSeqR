@@ -13144,12 +13144,12 @@ parse_PROAST_output <- function(result) {
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
     result_df <- data.frame('Selected Model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
-    if ("model_average" %in% names(result)) {
+    if ("model_averaging" %in% names(result)) {
     ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)), colnames(result_df))
     result_df <- rbind(result_df, ma_frame)
     }
   } else {
-    if ("model_average" %in% names(result)) {
+    if ("model_averaging" %in% names(result)) {
       result_df <- rbind(result_df, ma_row)
     }
   }
