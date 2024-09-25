@@ -1,6 +1,6 @@
 # Concatenated files for minimal proast package
 #' Run dose-response modeling using PROAST.
-#' 
+#'
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive)
 #' @param datatype Options: continuous, individual data.
 #' @return Results from PROAST.
@@ -13061,7 +13061,7 @@ parse_PROAST_output <- function(result) {
     message("Covariate analysis is:", covariate_analysis)
     if (!covariate_analysis) {
       if (!names(result)[i] == "model_averaging") {
-        # Extract the relevant pieces of information
+        # Extract the relevant pieces of information excluding model averaging
         selected_models <- c(selected_models, model$modelname)
         CES <- c(CES, model$CES)
         CED <- c(CED, model$CED)
@@ -13073,7 +13073,7 @@ parse_PROAST_output <- function(result) {
         a <- c(a, model$MLE[2])
         d <- c(d, model$MLE[4])
       }
-      
+
       # Special handling for 'model_averaging'
       if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
         message("Handling model averaging case")
@@ -13086,10 +13086,11 @@ parse_PROAST_output <- function(result) {
       # Handle covariates
       subgroups <- model$covar.txt
       message(subgroups)
+      message("names of result are: ", names(result))
       for (subgroup in subgroups) {
         message("Working on covariate: ", subgroup)
         if (!names(result)[i] == "model_averaging") {
-          message("For subgroup", subgroup, " in ", names(result)[i])
+          message("For subgroup ", subgroup, " in ", names(result)[i])
           covariates <- c(covariates, subgroup)
           current_ced <- model$ced.table[model$ced.table$subgroup == subgroup, ]
           extra_info <- data.frame(names = model$text.par, values = model$MLE)
@@ -13107,7 +13108,7 @@ parse_PROAST_output <- function(result) {
         }
         message(names(result)[i])
         message(result[[i]]$MA)
-        
+
         if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
           message("Handling model averaging case for ", subgroup)
           ma_info <- result[[i]]$MA
@@ -13136,22 +13137,35 @@ parse_PROAST_output <- function(result) {
     'd' = d
   )
 
+  if (!"model_averaging" %in% names(result)) {
+    ma_row <- NULL
+  }
+
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
     result_df <- data.frame('Selected Model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
+    if ("model_average" %in% names(result)) {
     ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)), colnames(result_df))
     result_df <- rbind(result_df, ma_frame)
+    }
   } else {
-    result_df <- rbind(result_df, ma_row)
+    if ("model_average" %in% names(result)) {
+      result_df <- rbind(result_df, ma_row)
+    }
   }
   # print(result_df)
 
   # Retrieve model names and their corresponding weights
-  model_names <- ma_info$Vmodelname
-  message(model_names)
-  weights <- data.frame('Selected Model' = model_names, weights = ma_info$Vweight$weight)
-  message(weights)
-  result_df <- merge(result_df, weights, by = "Selected.Model", all.x = TRUE)
+  if ("model_averaging" %in% names(result)) {
+    model_names <- ma_info$Vmodelname
+    message(model_names)
+    weights <- data.frame('Selected Model' = model_names, weights = ma_info$Vweight$weight)
+    message(weights)
+    result_df <- merge(result_df, weights, by = "Selected.Model", all.x = TRUE)
+  } else {
+    result_df$weights <- NA
+  }
+
   return(result_df)
 }
 
