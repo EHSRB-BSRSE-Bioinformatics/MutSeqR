@@ -6,9 +6,9 @@
 #' retain_metadata_cols = "dose", summary = TRUE)
 #' @param dose_col The name of the column in mf_data that contains the dose.
 #' Must be a numeric value.
-#' @param response_col The name of the column(s) in mf_data that contains the
+#' @param response_col The name of the column in mf_data that contains the
 #' mutation frequency. Currently, only one response column at a time is
-#' supported. *FIX* this.
+#' supported.
 #' @param covariate_col The name of the column in mf_data that contains the
 #' covariate. If no covariate is present, set to NULL.
 #' @param CES The critical effect size to be used in the analysis. The Benchmark
@@ -18,7 +18,7 @@
 #' @param model_averaging A logical value indicating whether confidence
 #' intervals should be calculated using model averaging.
 #' @param num_bootstraps The number of bootstrap resamples to be used in the
-#' model averaging.
+#' model averaging. Default is 200.
 #' @param summary A logical value indicating whether a summary of the results
 #' should be returned. If FALSE, raw results from the PROAST analysis are
 #' returned.
@@ -40,10 +40,11 @@
 #' var: represents the residual variance around the fitted curve on the natural log-scale
 #' Plots: the fitted curves relate to the median at each dose.
 #'
-#' CED the calculated value of the CED is retirn in the orginal dose units, while the 
+#' CED the calculated value of the CED is returned in the orginal dose units, while the 
 #' legend to the plot is printined in the same dose units as used in the plot (thus they
 #' may differ by the dose scalling factor)
 #' The CI is calculated by the profile likelihood method (likelihood ratio method)
+#' 
 proast_bmd <- function(mf_data,
                        dose_col = "dose",
                        response_col = "sample_MF_min",
@@ -121,57 +122,13 @@ proast_bmd <- function(mf_data,
 
       results_ls$Cleveland_plot <- c
     }
+
     #
     results_raw <- results[[1]]
     names(results_raw)
     expon <- results_raw$'Expon. m5-'
     names(expon)
     expon$regr.resid.raw
-    
-    # CI Plot
-    #Plot the CI of one or all models
-    results_bmd_df_plot <- results_df %>%
-      dplyr::group_by(Selected.Model) %>%
-      dplyr::mutate(max = CEDU) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(across(where(is.numeric), round, 1)) %>%
-      tidyr::pivot_longer(cols = c("CED", "CEDL", "CEDU"))
-    results_bmd_df_plot <- as.data.frame(results_bmd_df_plot)
-    results_bmd_df_plot$value <- as.numeric(as.character(results_bmd_df_plot$value))
-
-    nudge_value <- 0.3
-
-    g <- ggplot(results_bmd_df_plot,
-                aes(x = value, y = Selected.Model, color = name)) +
-      geom_line(aes(group = Selected.Model), color = "#b8b8b8", linewidth = 1) +
-      geom_point(size = 3) +
-      theme_minimal() +
-      theme(legend.position = "bottom",
-            axis.text.y = element_text(color = "black"),
-            axis.text.x = element_text(color = "#000000"),
-            panel.border = element_rect(colour = "black", fill = NA, size = 1),
-            panel.grid = element_blank()) +
-      scale_color_manual(values = c("black", "#BF2F24", "#436685")) +
-      scale_x_continuous() +
-      geom_text(aes(label = value, color = name),
-                size = 3.25,
-                nudge_x = dplyr::if_else(
-                  results_bmd_df_plot$value == results_bmd_df_plot$max, # if it's the larger value...
-                  nudge_value,   # move it to the right of the point
-                  -nudge_value), # otherwise, move it to the left of the point
-                hjust = dplyr::if_else(
-                  results_bmd_df_plot$value==results_bmd_df_plot$max, #if it's the larger value
-                  0, # left justify
-                  1)# otherwise, right justify
-      ) +
-      ggplot2::labs(x = "BMD", y = "Selected Model",
-                    title = paste0("BMD with 90% Confidence Intervals"),
-                    color = NULL) +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
-                                                        vjust = 0.5,
-                                                        hjust = 0.5),
-                      plot.title = ggplot2::element_text(hjust = 0.5)) +
-      ggplot2::theme(axis.ticks = element_line(color = "black", size = 0.5))
 
     return(results_ls)
   } else {
