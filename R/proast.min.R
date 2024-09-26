@@ -13093,6 +13093,8 @@ f.plot.CED <- function(ans.all,
 
 
 parse_PROAST_output <- function(result) {
+  result <- result[setdiff(names(result), "plot_result")]
+ # browser()
   selected_models <- c()
   CES <- c()
   CED <- c()
@@ -13106,6 +13108,7 @@ parse_PROAST_output <- function(result) {
   covariates <- c()
   ma_rows <- list()
   model_weights <- c()
+  response <- c()
   # Loop through the list excluding 'model_averaging'
   for (i in seq_along(result)) {
     model <- result[[i]]
@@ -13126,6 +13129,7 @@ parse_PROAST_output <- function(result) {
         var <- c(var, model$MLE[1])
         a <- c(a, model$MLE[2])
         d <- c(d, model$MLE[4])
+        response <- c(response, model$res.name)
       }
 
       # Special handling for 'model_averaging'
@@ -13158,6 +13162,7 @@ parse_PROAST_output <- function(result) {
           var <- c(var, extra_info[extra_info$names == paste0("var-",subgroup),]$values)
           a <- c(a, extra_info[extra_info$names == paste0("a-",subgroup),]$values)
           d <- c(d, extra_info[extra_info$names == "d-",]$values)
+          response <- c(response, model$res.name)
           message(length(covariates))
         }
         message(names(result)[i])
@@ -13188,7 +13193,8 @@ parse_PROAST_output <- function(result) {
     'Log-Likelihood' = log_likelihood,
     'Var' = var,
     'a' = a,
-    'd' = d
+    'd' = d,
+    'response' = response
   )
 
   if (!"model_averaging" %in% names(result)) {
