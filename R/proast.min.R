@@ -3532,7 +3532,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
 
 
 f.graph.window <- function(nr.pl = 1, nr.gr = 1, WAPP = FALSE, title = "", name.wapp = NA, 
-    plotprefix = NA, quick.ans, svg.plots = FALSE, output = TRUE) {
+    plotprefix = NA, quick.ans, svg.plots = FALSE, output = TRUE, filename = NULL, output_type = NULL) {
     if (exists("track")) 
         print("f.graph.window")
     if (nr.pl > 64) 
@@ -3545,7 +3545,7 @@ f.graph.window <- function(nr.pl = 1, nr.gr = 1, WAPP = FALSE, title = "", name.
         .gw.size <- c(6, 6)
     f.create.graphwin(.gw.size[1], .gw.size[2], nr.gr = nr.gr, 
         WAPP = WAPP, title = title, name.wapp = name.wapp, plotprefix = plotprefix, 
-        svg.plots = svg.plots, output = output)
+        svg.plots = svg.plots, output = output, filename = filename, output_type = output_type)
     if (nr.pl == 1) {
         par(mfcol = c(1, 1))
         par(mex = 0.7)
@@ -8491,7 +8491,7 @@ f.mtext <- function(ans.all, display_plots = TRUE) {
 
 
 
-f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE) {
+f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE, filename = NULL, output_type = NULL) {
     if (exists("track")) 
         print("f.boot.ma")
     if (ans.all$seed.bt != 0) 
@@ -8507,7 +8507,8 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, disp
             if (display_plots) {
                 f.graph.window(1, WAPP = WAPP, title = "bootstrap curves based on model averaging", 
                 name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
-                svg.plots = svg.plots, output = output)
+                svg.plots = svg.plots, output = output, filename = filename,
+            output_type = output_type)
             }
             if (!cont) 
                 ans.all$xy.lim[4:5] <- c(0, 1)
