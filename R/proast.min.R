@@ -12800,12 +12800,13 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
         if (exists("track")) 
             print("f.CI.sel:  END")
         if (interactive_mode == FALSE) {
-          if (length($Vyans) > 1) {
+          if (length(ans.all$Vyans) > 1) {
             message("Vyans is greater than 1")
-            browser()
+            ans.all$res.name <- ans.all$varname[ans.all$yans]
+            assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = results_env)
           } else {
             assign(ans.all$modelname, ans.all, envir = results_env)
-          }
+        }
         }
         return(ans.all)
     })
