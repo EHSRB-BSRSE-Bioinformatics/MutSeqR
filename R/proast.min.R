@@ -3635,7 +3635,7 @@ f.graph.window <- function(nr.pl = 1, nr.gr = 1, WAPP = FALSE, title = "", name.
 
 
 f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, plotprefix = NA, 
-    nr.gr = 1, svg.plots = FALSE, output = TRUE) {
+    nr.gr = 1, svg.plots = FALSE, output = TRUE, output_type = NULL, filename = NULL) {
     if (exists("track")) 
         print("f.create.graphwin")
     lst <- dev.list()
@@ -3650,11 +3650,35 @@ f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, 
     if (nr.gr > 25) 
         f.delete.gw()
     if (WAPP) {
-        if (svg.plots) 
+        if (!is.null(filename)) {
+            filename <- paste0(filename, "_", name.wapp)
+        }
+        if (svg.plots & is.null(filename)) {
             svg(paste(plotprefix, name.wapp, ".svg", sep = ""), 
                 aa, bb)
-        else png(paste(plotprefix, name.wapp, ".png", sep = ""), 
+        } else if (output_type == "jpeg") {
+            filename <- paste0(filename, ".jpeg")
+            grDevices::jpeg(filename, width = aa, height = bb)
+        } else if (output_type == "pdf") {
+            filename <- paste0(filename, ".pdf")
+            grDevices::pdf(filename, width = aa, height = bb)
+        } else if (output_type == "png") {
+            filename <- paste0(filename, ".png")
+            grDevices::png(filename, width = aa, height = bb, res = 100)
+        } else if (output_type == "tiff") {
+            filename <- paste0(filename, ".tiff")
+            grDevices::tiff(filename, width = aa, height = bb)
+        } else if (output_type == "svg") {
+            message("Making SVG...")
+            message(filename)
+            filename <- paste0(filename, ".svg")
+            grDevices::svg(filename, width = aa, height = bb)
+        } else if (output_type == "none") {
+            message("Not saving PROAST plots to file!")
+        } else {
+            png(paste(plotprefix, name.wapp, ".png", sep = ""), 
             aa, bb)
+        }
     }
     else {
         title <- paste(dev.cur(), "PROAST:", title)
@@ -8473,7 +8497,6 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, disp
     if (ans.all$seed.bt != 0) 
         set.seed(ans.all$seed.bt)
     date.0 <- date()
-    message("Display plots:", display_plots)
     with(ans.all, {
         nr.gr <- max(ans.all$covariate)
         if (dtype != 2) {
@@ -9451,7 +9474,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 if (ans.all$fitted) {
                   if (ans.all$dtype %in% c(1, 5)) 
                     ans.all$plt.mns <- 1
-                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots)
+                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots, results_env = results_env)
                   if (!WAPP && length(ans.all$xans) > 1 && ans.all$nr.aa > 
                     1) {
                     f.press.key.to.continue()
@@ -9478,7 +9501,9 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                     ans.all$CED.matr.ma <- rbind(ans.all$CED.matr.ma, 
                       CI.ma)
                     CI.matr.ma <- rbind(CI.matr.ma, ans.all$MA$CI.row.ma)
+                    if (interactive_mode == FALSE) {
                     results_env$model_averaging <- ans.all
+                    }
                   }
                   else {
                     ans.all$MA <- list()
@@ -12319,7 +12344,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 
 
 
-f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots = TRUE) {
+f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots = TRUE, results_env = NULL, output_type = NULL, filename = NULL) {
     if (exists("track")) 
         print("f.plot.gui")
     WAPP <- ans.all$WAPP
@@ -12356,7 +12381,8 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
                   if (display_plots) {
                     f.create.graphwin(.gw.size[1], .gw.size[2], 
                     WAPP = WAPP, title = "", name.wapp = name.wapp, 
-                    plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
+                    plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots,
+                    output_type = output_type, filename = filename)
                   }
                   par(mfcol = c(1, 2))
                   par(mar = c(5.5, 4.8, 4, 12))
@@ -12412,7 +12438,8 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
                 if (display_plots) {
                   f.create.graphwin(.gw.size[1], .gw.size[2], WAPP = WAPP, 
                     title = "", name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
-                    svg.plots = ans.all$svg.plots)
+                    svg.plots = ans.all$svg.plots,
+                    output_type = output_type, filename = filename)
                   par(mfcol = c(1, 2))
                   par(mar = c(5.5, 4.8, 4, 12))
                   par(cex.main = 1.2)
@@ -12618,6 +12645,9 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
         dev.off()
     if (exists("track")) 
         print("f.plot.gui:  END")
+    if (!is.null(results_env)) {
+      assign("plot_result", ans.all, envir = results_env)
+    }
     return(ans.all)
 }
 
