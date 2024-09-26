@@ -3664,10 +3664,10 @@ f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, 
             grDevices::pdf(filename, width = aa, height = bb)
         } else if (output_type == "png") {
             filename <- paste0(filename, ".png")
-            grDevices::png(filename, width = aa, height = bb, res = 100)
+            grDevices::png(filename, width = aa*3, height = bb*3, res = 300)
         } else if (output_type == "tiff") {
             filename <- paste0(filename, ".tiff")
-            grDevices::tiff(filename, width = aa, height = bb)
+            grDevices::tiff(filename, width = aa*3, height = bb*3, res = 300)
         } else if (output_type == "svg") {
             message("Making SVG...")
             message(filename)
@@ -12799,7 +12799,12 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
         if (exists("track")) 
             print("f.CI.sel:  END")
         if (interactive_mode == FALSE) {
-          assign(ans.all$modelname, ans.all, envir = results_env)
+          if (length($Vyans) > 1) {
+            message("Vyans is greater than 1")
+            browser()
+          } else {
+            assign(ans.all$modelname, ans.all, envir = results_env)
+          }
         }
         return(ans.all)
     })
