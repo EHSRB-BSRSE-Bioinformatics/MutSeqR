@@ -30,7 +30,8 @@ jobs:
 
       - name: Build PDF manual
         run: |
-          Rscript -e 'devtools::build_manual(pkg = ".", path = ".")'
+          R CMD Rd2pdf
+          # Rscript -e 'devtools::build_manual(pkg = ".", path = ".")'
 
       - name: Commit PDF Manual
         run: |
