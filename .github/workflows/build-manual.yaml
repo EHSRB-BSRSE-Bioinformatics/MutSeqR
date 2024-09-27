@@ -21,12 +21,12 @@ jobs:
       - name: Install LaTeX
         run: |
           sudo apt-get update
-          sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
+          sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra texinfo
 
 
       - name: Build PDF manual
         run: |
-          R CMD Rd2pdf .
+          R CMD Rd2pdf MutSeqR_manual
           # Rscript -e 'devtools::build_manual(pkg = ".", path = ".")'
 
       - name: Commit PDF Manual
