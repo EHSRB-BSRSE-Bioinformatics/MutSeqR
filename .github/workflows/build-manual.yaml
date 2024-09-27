@@ -26,7 +26,7 @@ jobs:
 
       - name: Build PDF manual
         run: |
-          R CMD Rd2pdf MutSeqR_manual
+          R CMD Rd2pdf . --output=MutSeqR.pdf
           # Rscript -e 'devtools::build_manual(pkg = ".", path = ".")'
 
       - name: Commit PDF Manual
