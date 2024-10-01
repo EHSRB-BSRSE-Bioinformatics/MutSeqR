@@ -13280,3 +13280,92 @@ parse_PROAST_output <- function(result) {
 
 
 
+f.plot.result <- function(proast_results_list,
+                          output_path = NULL,
+                          output_type = "svg",
+                          prefix = NULL,
+                          model_averaging = FALSE) {
+
+  if (model_averaging == FALSE) {
+    result <- proast_results_list[grepl("plot_result", names(proast_results_list))]
+  } else {
+    if (model_averaging == TRUE) {
+      result <- proast_results_list[grepl("model_averaging", names(proast_results_list))]
+    } else {
+      stop("Invalid choice for model averaging. If you want to plot model averaging results, set it to TRUE, otherwise, set it to FALSE")
+    }
+  }
+
+  # Output directory
+  if (is.null(output_path)) {
+    output_dir <- file.path(here::here(), "output")
+  } else {
+    output_dir <- file.path(output_path)
+  }
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir)
+  }
+
+  # Output filename
+  if (!is.null(prefix)) {
+    filename <- file.path(output_dir, paste0("PROAST_", prefix))
+  } else {
+    filename <- file.path(output_dir, paste0("PROAST"))
+  }
+  for (i in seq_along(result)) {
+    res <- result[[i]]
+    if (output_type == "svg") {
+      res$svg.plots <- TRUE
+    }
+    if (!is.null(output_type) && !output_type == "none") {
+      message("Setting WAPP to TRUE")
+      res$WAPP <- TRUE
+      if (model_averaging == FALSE) {
+        f.plot.gui(res, filename = filename, output_type = output_type)
+      } else {
+        if (model_averaging == TRUE) {
+          f.boot.ma(res, filename = filename, output_type = output_type)
+        } else {
+         stop("Invalid choice for model averaging. If you want to plot model averaging results, set it to TRUE, otherwise, set it to FALSE")
+        }
+      }
+    } else { # When output type isn't set
+      if (model_averaging == FALSE) {
+        f.plot.gui(res)
+      } else {
+        if (model_averaging == TRUE) {
+          f.boot.ma(res)
+        }
+      }
+    }
+  }
+}
+
+  ### TODO
+  # - add option to plot one model at a time?
+
+  # loop over all elements of results list
+  # for (i in seq_along(proast_results_list)) {
+  #   message("Plotting ", names(proast_results_list)[[i]])
+  #   proast_result <- proast_results_list[[i]]
+  #   if (!names(proast_results_list)[[i]] == "model_averaging") {
+  #     proast_result$plt.mns <- 1
+  #     proast_result$fitted <- TRUE
+  #     proast_result$WAPP <- TRUE
+  #     f.plot.all(proast_result)
+  #     dev.off()
+  #   } else {
+  #     if (names(proast_results_list)[[i]] == "model_averaging") {
+  #       message("Plotting model averaging results")
+  #       f.boot.ma(proast_result)
+  #     }
+  #   }
+  # }
+  # if (!output_type == "none") {
+  #   grDevices::dev.off()
+  # }
+
+# f.plot.result(result_A[[1]])
+
+
+
