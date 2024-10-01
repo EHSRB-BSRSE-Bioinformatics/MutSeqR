@@ -9028,7 +9028,20 @@ f.nr.replicates <- function(ans.all) {
 
 
 
-f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL, display_plots = TRUE) {
+f.quick.con <- function(ans.all,
+                        indep_var_choice = NULL,
+                        Vyans_input = NULL,
+                        covariates = NULL,
+                        custom_CES = NULL,
+                        model_selection = NULL,
+                        interactive_mode = TRUE,
+                        lower_dd = NULL,
+                        upper_dd = NULL,
+                        adjust_CES_to_group_SD = NULL,
+                        model_averaging = NULL,
+                        num_bootstraps = NULL,
+                        results_env = NULL,
+                        display_plots = TRUE) {
     if (exists("track")) 
         print("f.quick.con")
         message(paste0("indep_var_choice: ", indep_var_choice))
@@ -9503,10 +9516,16 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                       CI.ma)
                     CI.matr.ma <- rbind(CI.matr.ma, ans.all$MA$CI.row.ma)
                     if (interactive_mode == FALSE) {
-                    results_env$model_averaging <- ans.all
+                      if (length(ans.all$Vyans) > 1) {
+                        message("Vyans is greater than 1")
+                        ans.all$res.name <- ans.all$varname[ans.all$yans]
+                        assign(paste(ans.all$res.name, "model_averaging"), ans.all, envir = results_env)
+                      } else {
+                        ans.all$res.name <- ans.all$varname[ans.all$yans]
+                        results_env$model_averaging <- ans.all
+                      } 
                     }
-                  }
-                  else {
+                  } else {
                     ans.all$MA <- list()
                     CI.matr.ma <- rbind(CI.matr.ma, rep(NA, 2 * 
                       ans.all$nr.gr))
@@ -9577,7 +9596,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
         if (exists("track")) 
             print("f.quick.con:  END")
         return(ans.all)
-    })
+  })
 }
 
 
@@ -12805,6 +12824,7 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
             ans.all$res.name <- ans.all$varname[ans.all$yans]
             assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = results_env)
           } else {
+            ans.all$res.name <- ans.all$varname[ans.all$yans]
             assign(ans.all$modelname, ans.all, envir = results_env)
         }
         }
@@ -13094,7 +13114,6 @@ f.plot.CED <- function(ans.all,
 
 parse_PROAST_output <- function(result) {
   result <- result[setdiff(names(result), "plot_result")]
- # browser()
   selected_models <- c()
   CES <- c()
   CED <- c()
@@ -13107,8 +13126,9 @@ parse_PROAST_output <- function(result) {
   d <- c()
   covariates <- c()
   ma_rows <- list()
-  model_weights <- c()
+  model_weights <- list()
   response <- c()
+
   # Loop through the list excluding 'model_averaging'
   for (i in seq_along(result)) {
     model <- result[[i]]
@@ -13117,7 +13137,7 @@ parse_PROAST_output <- function(result) {
     covariate_analysis <- length(unique(model$covariate)) > 1
     message("Covariate analysis is:", covariate_analysis)
     if (!covariate_analysis) {
-      if (!names(result)[i] == "model_averaging") {
+      if (!grepl("model_averaging", names(result)[i])) {
         # Extract the relevant pieces of information excluding model averaging
         selected_models <- c(selected_models, model$modelname)
         CES <- c(CES, model$CES)
@@ -13133,21 +13153,41 @@ parse_PROAST_output <- function(result) {
       }
 
       # Special handling for 'model_averaging'
-      if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+      if (grepl("model_averaging", names(result)[i]) && !is.null(result[[i]]$MA)) {
         message("Handling model averaging case")
         ma_info <- result[[i]]$MA
+        ma_response <- result[[i]]$res.name
         ma_row <- c("Model averaging", "N/A", "N/A",
-        ma_info$conf.int.ma$BMDlower.ma, ma_info$conf.int.ma$BMDupper.ma,
-        "N/A", "N/A", "N/A", "N/A", "N/A")
+                    ma_info$conf.int.ma$BMDlower.ma,
+                    ma_info$conf.int.ma$BMDupper.ma,
+                    "N/A", "N/A", "N/A", "N/A", "N/A", ma_response)
+        ma_rows[[length(ma_rows) + 1]] <- ma_row
+        # Model weights
+        model_names <- ma_info$Vmodelname
+        model_weights[[length(model_weights) + 1]] <- data.frame('Selected Model' = model_names,
+                                                                 'Response' = rep(ma_response, length(model_names)),
+                                                                 weights = ma_info$Vweight$weight)
       }
     } else {
       # Handle covariates
       subgroups <- model$covar.txt
       message(subgroups)
-      message("names of result are: ", names(result))
+      # Check if the covariate has a significant effect on the BMD
+      # if not, extend the CED table to include a row for each subgroup
+      ## TEST: we need to test this with 3+ subgroups. What if one subgroup is significant and the others are not?
+      if (!grepl("model_averaging", names(result)[i])) {
+        signif_covariate <- nrow(model$ced.table) > 1
+        if (signif_covariate == FALSE) {
+          message("Covariate does not have a significant effect on the BMD")
+          model$ced.table <- data.frame('subgroup' = subgroups,
+                              'BMDL' = rep(model$ced.table$BMDL, length(subgroups)),
+                              'BMDU' = rep(model$ced.table$BMDU, length(subgroups)),
+                              'BMD' = rep(model$ced.table$BMD, length(subgroups)))
+        }
+      }
       for (subgroup in subgroups) {
         message("Working on covariate: ", subgroup)
-        if (!names(result)[i] == "model_averaging") {
+        if (!grepl("model_averaging", names(result)[i])) {
           message("For subgroup ", subgroup, " in ", names(result)[i])
           covariates <- c(covariates, subgroup)
           current_ced <- model$ced.table[model$ced.table$subgroup == subgroup, ]
@@ -13160,28 +13200,34 @@ parse_PROAST_output <- function(result) {
           AIC <- c(AIC, model$aic)
           log_likelihood <- c(log_likelihood, model$loglik)
           var <- c(var, extra_info[extra_info$names == paste0("var-",subgroup),]$values)
-          a <- c(a, extra_info[extra_info$names == paste0("a-",subgroup),]$values)
-          d <- c(d, extra_info[extra_info$names == "d-",]$values)
+          a <- c(a, extra_info[extra_info$names == paste0("a-",subgroup), ]$values)
+          d <- c(d, extra_info[extra_info$names == "d-", ]$values)
           response <- c(response, model$res.name)
           message(length(covariates))
         }
         message(names(result)[i])
         message(result[[i]]$MA)
 
-        if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+        if (grepl("model_averaging", names(result)[i]) && !is.null(result[[i]]$MA)) {
           message("Handling model averaging case for ", subgroup)
           ma_info <- result[[i]]$MA
+          ma_response <- result[[i]]$res.name
           ma_row <- c("Model averaging", subgroup, "N/A", "N/A",
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDlower.ma,
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDupper.ma,
-          "N/A", "N/A", "N/A", "N/A", "N/A")
-          message(ma_row)
-          ma_rows[[subgroup]] <- ma_row
+          "N/A", "N/A", "N/A", "N/A", "N/A", ma_response)
+          ma_rows[[length(ma_rows) + 1]] <- ma_row
+
+          # Model weights
+          model_names <- ma_info$Vmodelname
+          model_weights[[length(model_weights) + 1]] <- data.frame('Selected Model' = model_names,
+                                                               'Response' = rep(ma_response, length(model_names)),
+                                                               'Covariates' = rep(subgroup, length(model_names)),
+                                                               weights = ma_info$Vweight$weight)
         }
       }
     }
   }
-
   # Combine the vectors into a dataframe
   result_df <- data.frame(
     'Selected Model' = selected_models,
@@ -13194,34 +13240,29 @@ parse_PROAST_output <- function(result) {
     'Var' = var,
     'a' = a,
     'd' = d,
-    'response' = response
+    'Response' = response
   )
-
-  if (!"model_averaging" %in% names(result)) {
-    ma_row <- NULL
-  }
 
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
-    result_df <- data.frame('Selected Model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
-    if ("model_averaging" %in% names(result)) {
-    ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)), colnames(result_df))
-    result_df <- rbind(result_df, ma_frame)
-    }
-  } else {
-    if ("model_averaging" %in% names(result)) {
-      result_df <- rbind(result_df, ma_row)
-    }
+    result_df <- data.frame('Selected Model' = result_df[, 1],
+                            'Covariates' = covariates,
+                            result_df[, -1])
   }
-  # print(result_df)
+  if (any(grepl("model_averaging", names(result)))) {
+    # Add model averaging rows to the  results dataframe
+    ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)),
+                         colnames(result_df))
+    result_df <- rbind(result_df, ma_frame)
 
-  # Retrieve model names and their corresponding weights
-  if ("model_averaging" %in% names(result)) {
-    model_names <- ma_info$Vmodelname
-    message(model_names)
-    weights <- data.frame('Selected Model' = model_names, weights = ma_info$Vweight$weight)
-    message(weights)
-    result_df <- merge(result_df, weights, by = "Selected.Model", all.x = TRUE)
+    # Bind models with their corresponding ma weights
+    weights <- as.data.frame(do.call(rbind, model_weights))
+
+    if (length(covariates) > 0) {
+      result_df <- merge(result_df, weights, by = c("Selected.Model", "Response", "Covariates"), all.x = TRUE)
+    } else {
+      result_df <- merge(result_df, weights, by = c("Selected.Model", "Response"), all.x = TRUE) 
+    }
   } else {
     result_df$weights <- NA
   }
