@@ -9587,7 +9587,7 @@ f.quick.con <- function(ans.all,
                 ans.all$Vyans <- Vyans
                 ans.all$CED.all <- CED.all
                 f.plot.CED(ans.all, WAPP = WAPP, plotprefix = ans.all$plotprefix, 
-                  svg.plots = ans.all$svg.plots, display_plots = display_plots)
+                  svg.plots = ans.all$svg.plots, display_plots = display_plots, interactive_mode = interactive_mode)
             }
             else cat("\n\nNone of the endpoints showed a significant trend\n")
         }
@@ -12966,7 +12966,8 @@ f.plot.CED <- function(ans.all,
                        WAPP = FALSE,
                        plotprefix = "", 
                        svg.plots = FALSE,
-                       display_plots = TRUE) {
+                       display_plots = TRUE,
+                       interactive_mode = TRUE) {
     if (exists("track"))
         print("f.plot.CED")
     data <- ans.all$CED.all
@@ -13101,7 +13102,9 @@ f.plot.CED <- function(ans.all,
         if (!WAPP) {
             cat("\nCED-CI plot created for subgroup", ii, "\n")
             if (ii < nr.lev)
-                f.press.key.to.continue()
+                if (interactive_mode == TRUE) {
+                  f.press.key.to.continue()
+                }
         }
         if (WAPP)
             dev.off()
