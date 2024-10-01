@@ -12666,7 +12666,12 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
     if (exists("track")) 
         print("f.plot.gui:  END")
     if (!is.null(results_env)) {
-      assign("plot_result", ans.all, envir = results_env)
+      if (length(ans.all$Vyans) > 1) {
+        ans.all$res.name <- ans.all$varnames[ans.all$yans]
+        assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
+      } else {
+        assign("plot_result", ans.all, envir = results_env)
+      }
     }
     return(ans.all)
 }
@@ -13116,7 +13121,7 @@ f.plot.CED <- function(ans.all,
 
 
 parse_PROAST_output <- function(result) {
-  result <- result[setdiff(names(result), "plot_result")]
+  result <- result[!grepl("plot_result", names(result))]
   selected_models <- c()
   CES <- c()
   CED <- c()
