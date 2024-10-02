@@ -13409,3 +13409,224 @@ f.explain.marks <- function(ans.all) {
 
 
 
+f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE, 
+    ref = NA, rm.NAs = TRUE, display_plots = TRUE) {
+    if (exists("track")) 
+        print("f.plot.CI")
+    no.hill <- FALSE
+    if (ans.all$do.MA) {
+        CI <- ans.all$MA$conf.int.ma
+        covar.txt <- CI[, 1]
+        CI.hill <- matrix(c(NA, NA), nrow = 1)
+        CI <- CI[, -1]
+        no.hill <- TRUE
+    }
+    else {
+        if (length(ans.all$HILL) == 0 || is.na(ans.all$HILL[1])) 
+            no.hill <- T
+        if (length(ans.all$EXP) == 0) 
+            ans.all$EXP$conf.int <- ans.all$conf.int
+        if (ans.all$dtype %in% c(4, 6)) {
+            CI <- ans.all$conf.int
+            CI.hill <- matrix(c(NA, NA), nrow = 1)
+        }
+        else {
+            CI <- ans.all$EXP$conf.int
+            if (!no.hill) 
+                CI.hill <- ans.all$HILL$conf.int
+            else CI.hill <- matrix(c(NA, NA), nrow = 1)
+        }
+        if (ans.all$cont) {
+            if (length(CI[, 1]) == 1 && length(CI.hill[, 1]) > 
+                1) 
+                CI <- matrix(CI, ncol = 2, nrow = length(CI.hill[, 
+                  1]), byrow = TRUE)
+            if (length(CI[, 1]) > 1 && length(CI.hill[, 1]) == 
+                1) 
+                CI.hill <- matrix(CI.hill, ncol = 2, nrow = length(CI[, 
+                  1]), byrow = TRUE)
+        }
+        covar.txt <- dimnames(CI)[[1]]
+        if (is.null(covar.txt)) 
+            covar.txt <- ans.all$fct2.txt
+    }
+    if (rm.NAs) {
+        lst.na.1 <- is.na(CI[, 1])
+        lst.na.2 <- is.na(CI[, 2])
+        lst.na <- lst.na.1 | lst.na.2
+        CI <- CI[!lst.na, ]
+        if (!is.matrix(CI) && !is.data.frame(CI)) {
+            if (length(CI[1, ]) == 2) 
+                CI <- matrix(CI, ncol = 2)
+            if (length(CI[1, ]) == 3) {
+                covar.txt <- CI[, 1]
+                CI <- as.matrix(CI[, 2:3])
+            }
+        }
+        if (ans.all$cont && !no.hill) {
+            lst.na.1 <- is.na(CI.hill[, 1])
+            lst.na.2 <- is.na(CI.hill[, 2])
+            lst.na <- lst.na.1 | lst.na.2
+            CI.hill <- CI.hill[!lst.na, ]
+            if (!is.matrix(CI.hill)) {
+                if (length(CI.hill[1, ]) == 2) 
+                  CI.hill <- matrix(CI.hill, ncol = 2)
+                if (length(CI.hill[1, ]) == 3) 
+                  CI.hill <- as.matrix(CI.hill[, 2:3])
+            }
+        }
+        covar.txt <- covar.txt[!lst.na]
+    }
+    nr.lev <- length(CI[, 1])
+    CES <- ans.all$CES
+    if (!any(!is.na(CI))) {
+        cat("\n No confidence intervals available\n")
+        return()
+    }
+    CI.matr <- data.frame(covar = covar.txt, LB.E = CI[, 1], 
+        UB.E = CI[, 2])
+    if (!no.hill) {
+        CI.matr$LB.H <- CI.hill[, 1]
+        CI.matr$UB.H <- CI.hill[, 2]
+    }
+    max.x <- 1.1 * max(ans.all$x, na.rm = TRUE)
+    max.CI <- max(CI, na.rm = T)
+    if (is.infinite(max.CI)) 
+        max.CI <- max(CI[is.finite(CI)]) * 10
+    CI[, 2][is.na(CI[, 2])] <- max.CI
+    if (!no.hill) {
+        max.CI.hill <- max(CI.hill, na.rm = T)
+        if (is.infinite(max.CI.hill)) 
+            max.CI.hill <- max(CI.hill[is.finite(CI.hill)]) * 
+                10
+        CI.hill[, 2][is.na(CI.hill[, 2])] <- max.CI.hill
+        max.CI <- max(max.CI, max.CI.hill)
+    }
+    lb <- CI[, 1]
+    lb.pos <- lb[lb != 0]
+    lb.min <- min(lb.pos, na.rm = TRUE)
+    ub <- CI[, 2]
+    ub.pos <- ub[ub != 0]
+    ub.min <- min(ub.pos, na.rm = TRUE)
+    min.CI <- min(lb.min/10, ub.min/10)
+    if (!is.na(xx.lim[1])) 
+        min.CI <- 10^xx.lim[1]
+    CI[, 1][CI[, 1] == 0] <- min.CI
+    if (!no.hill) {
+        lb <- CI.hill[, 1]
+        lb.pos <- lb[lb != 0]
+        lb.min <- min(lb.pos, na.rm = TRUE)
+        ub <- CI.hill[, 2]
+        ub.pos <- ub[ub != 0]
+        ub.min <- min(ub.pos, na.rm = TRUE)
+        min.CI <- min(lb.min/10, ub.min/10, min.CI)
+        CI.hill[, 1][CI.hill[, 1] == 0] <- min.CI
+    }
+    if (logscale) {
+        CI <- log10(CI)
+        if (!no.hill) 
+            CI.hill <- log10(CI.hill)
+        min.CI <- log10(min.CI)
+        max.CI <- log10(max.CI)
+    }
+    max.y <- length(covar.txt)
+    yyy.tmp <- nr.lev
+    if (!no.hill) {
+        max.y <- max.y * 1.5
+        yyy.tmp <- nr.lev * 1.5
+    }
+    max.y <- max.y - 0.7
+    yy.lim <- c(-0.3, max.y)
+    if (is.na(xx.lim[1])) {
+        CI.tmp <- CI
+        CI.tmp[, 1][CI.tmp[, 1] == 0] <- NA
+        if (!no.hill) 
+            CI.tmp <- cbind(CI, CI.hill)
+        xx.lim <- c(min(CI.tmp, na.rm = T), max.CI)
+    }
+    if (max.CI < max.x) {
+        if (is.infinite(xx.lim[2])) 
+            xx.lim[2] <- log10(max.x)
+        if (is.na(xx.lim[2])) 
+            xx.lim[2] <- log10(max.x)
+    }
+    else {
+        if (is.infinite(xx.lim[2])) 
+            xx.lim[2] <- log10(max.CI)
+        if (is.na(xx.lim[2])) 
+            xx.lim[2] <- log10(max.CI)
+    }
+    xx.lab <- paste("CED", round(CES[1], 3), sep = "-")
+    if (logscale) 
+        xx.lab <- paste("log10-", xx.lab)
+    name.wapp <- paste("b", ans.all$yans, "cedCI", sep = "")
+    if (display_plots) {
+        f.graph.window(1, WAPP = ans.all$WAPP, title = "", name.wapp = name.wapp, 
+        plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
+        plot(1:max.y, 1:max.y, xlim = xx.lim, ylim = yy.lim, ylab = "", 
+            yaxt = "n", xlab = xx.lab, type = "n")
+        par(cex.main = 0.9)
+        if (ans.all$do.MA) 
+            title(main = "BMD confidence intervals based on MA")
+        else if (!RPFs) {
+            if (no.hill) 
+                title(main = "BMD confidence intervals per subgroup")
+            else title(main = "BMD confidence intervals \n(exponential and Hill, per subgroup)")
+        }
+        else if (RPFs) {
+            if (no.hill) 
+                title(main = "RPF confidence intervals per subgroup")
+            else title(main = "RPF confidence intervals \n(exponential and Hill, per subgroup)")
+            par(cex.main = 0.8)
+            if (!is.na(ref)) 
+                title(main = paste("\n\nreference: ", ref))
+        }
+    }
+    if (sort && length(CI[, 1]) > 1) {
+        ci.mn <- (CI[, 1] + CI[, 2])/2
+        covar.txt <- covar.txt[order(ci.mn)]
+        CI <- CI[order(ci.mn), ]
+        if (!no.hill) {
+            CI.hill <- CI.hill[order(ci.mn), ]
+        }
+    }
+    l.ty <- 1
+    for (ii in 1:nr.lev) {
+        yyy.tmp <- yyy.tmp - 1
+        if (CI[ii, 1] == min.CI) {
+            l.ty <- 2
+        }
+        if (is.infinite(CI[ii, 2])) {
+            l.ty <- 2
+            CI[ii, 2] <- max.CI
+        }
+        if (display_plots) {
+            lines(CI[ii, ], rep(yyy.tmp, 2), lty = l.ty)
+            mtext(covar.txt[ii], 4, 1, adj = 0, las = 1, at = 1.01 * 
+                yyy.tmp, cex = 0.8)
+        }
+        l.ty <- 1
+        if (!no.hill) {
+            yyy.tmp <- yyy.tmp - 0.2
+            if (CI.hill[ii, 1] == min.CI) {
+                l.ty <- 2
+            }
+            if (is.infinite(CI.hill[ii, 2])) {
+                l.ty <- 2
+                CI.hill[ii, 2] <- max.x
+            }
+            if (display_plots) {
+                lines(CI.hill[ii, ], rep(yyy.tmp, 2), lty = l.ty)
+            }
+        }
+        l.ty <- 1
+    }
+    if (exists("track")) 
+        print("f.plot.CI  END")
+    if (ans.all$WAPP) 
+        dev.off()
+    return(CI.matr)
+}
+
+
+
