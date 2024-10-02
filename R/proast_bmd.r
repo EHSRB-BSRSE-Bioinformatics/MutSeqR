@@ -136,20 +136,33 @@ proast_bmd <- function(mf_data,
       for (i in unique(results_df$Response)) {
         c.plot.df <- results_df %>%
           dplyr::filter(Response == i)
-        model_order <- c.plot.df %>%
-          dplyr::filter(.data$Selected.Model != "Model averaging") %>%
-          dplyr::arrange(weights) %>%
-          dplyr::pull(Selected.Model)
-        c.plot_df <- c.plot.df %>%
-          dplyr::mutate(Selected.Model = factor(Selected.Model,
-                                                levels = c(model_order,
-                                                           "Model averaging")))
+
+        if (!is.null(covariate_col)) {
+          c.plot.df <- c.plot.df %>%
+            dplyr::rename(Model = "Selected.Model")
+          c.plot.df$Selected.Model <- paste(c.plot.df$Model, c.plot.df$Covariate)
+          model_order <- c.plot.df %>%
+            dplyr::arrange(Covariates, weights) %>%
+            dplyr::pull(Selected.Model)
+          c.plot.df$Selected.Model <- factor(c.plot.df$Selected.Model,
+                                             levels = model_order)
+        } else {
+          model_order <- c.plot.df %>%
+            dplyr::filter(.data$Selected.Model != "Model averaging") %>%
+            dplyr::arrange(weights) %>%
+            dplyr::pull(Selected.Model)
+          
+          c.plot.df <- c.plot.df %>%
+            dplyr::mutate(Selected.Model = factor(Selected.Model,
+                                                  levels = c(unique(model_order),
+                                                            "Model averaging")))
+        }
         # assign dummy values to Model averaging,
         # making sure it is in range of the other CEDL and CEDU.
-        c.plot_df$weights[c.plot_df$Selected.Model == "Model averaging"] <- NA
-        c.plot_df$CED[c.plot_df$Selected.Model == "Model averaging"] <- with(subset(c.plot_df, Selected.Model == "Model averaging"), (CEDL + CEDU) / 2)
+        c.plot.df$weights[c.plot.df$Model == "Model averaging"] <- NA
+        c.plot.df$CED[c.plot.df$Model == "Model averaging"] <- with(subset(c.plot.df, Model == "Model averaging"), (CEDL + CEDU) / 2)
 
-        c <- ggplot(c.plot_df, aes(x = CED, y = Selected.Model)) +
+        c <- ggplot(c.plot.df, aes(x = CED, y = Selected.Model)) +
           geom_errorbar(aes(xmin = CEDL, xmax = CEDU),
                         color = "gray",
                         width = 0.1) +
