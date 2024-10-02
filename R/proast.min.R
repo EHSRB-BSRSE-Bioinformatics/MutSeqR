@@ -13388,3 +13388,24 @@ f.alert.full <- function() {
 
 
 
+f.explain.marks <- function(ans.all) {
+    color.txt <- c("black", "red", "green", "dark blue", "light blue", 
+        "pink", "grey")
+    color.txt <- c(color.txt, color.txt[1:3])
+    mark.txt <- c("upward triangle", "cross", "diamond", "downward triangle", 
+        "cross-square", "cross-plus", "diamond-plus", "circle-plus", 
+        "double triangle", "square-plus")
+    if (length(ans.all$gr.txt) == 1 || is.na(ans.all$displ.txt[1])) 
+        gr.txt <- ans.all$gr.txt
+    else gr.txt <- ans.all$displ.txt
+    nr.points <- min(length(gr.txt), 10)
+    group.txt.tmp <- gr.txt[1:nr.points]
+    color.txt.tmp <- color.txt[1:nr.points]
+    mark.txt.tmp <- mark.txt[1:nr.points]
+    cat("\nThe colors in the plot relate to the following subgroups:\n")
+    print(data.frame(color = color.txt.tmp, mark = mark.txt.tmp, 
+        subgroup = group.txt.tmp))
+}
+
+
+
