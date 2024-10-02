@@ -13200,6 +13200,25 @@ parse_PROAST_output <- function(result) {
           covariates <- c(covariates, subgroup)
           current_ced <- model$ced.table[model$ced.table$subgroup == subgroup, ]
           extra_info <- data.frame(names = model$text.par, values = model$MLE)
+          # With covariates, "var", "a" and "d" may or may not differ between subgroups
+          # When they do not differ, PROAST will return only a single value for that parameter.
+          # Make sure that there is a value for each subgroup regardless:
+          extra_info$subgroup <- ifelse(grepl("-", extra_info$names),
+                      sub(".*-", "", extra_info$names), NA)
+          extra_info$names <- sub("-.*", "", extra_info$names)
+          empty_subgroup_rows <- extra_info[extra_info$subgroup == "", ]
+          duplicated_rows <- do.call(rbind, lapply(1:nrow(empty_subgroup_rows), function(i) {
+            row <- empty_subgroup_rows[i, ]
+            new_rows <- data.frame(
+              names = row$names,
+              values = row$values,
+              subgroup = subgroups
+            )
+            return(new_rows)
+          }))
+          extra_info <- extra_info[extra_info$subgroup != "", ]
+          extra_info <- rbind(extra_info, duplicated_rows)
+          
           selected_models <- c(selected_models, model$modelname)
           CES <- c(CES, model$CES)
           CED <- c(CED, current_ced$BMD)
@@ -13207,9 +13226,9 @@ parse_PROAST_output <- function(result) {
           CEDU <- c(CEDU, current_ced$BMDU)
           AIC <- c(AIC, model$aic)
           log_likelihood <- c(log_likelihood, model$loglik)
-          var <- c(var, extra_info[extra_info$names == paste0("var-",subgroup),]$values)
-          a <- c(a, extra_info[extra_info$names == paste0("a-",subgroup), ]$values)
-          d <- c(d, extra_info[extra_info$names == "d-", ]$values)
+          var <- c(var, extra_info[extra_info$names == "var" & extra_info$subgroup == subgroup,]$values)
+          a <- c(a, extra_info[extra_info$names == "a" & extra_info$subgroup == subgroup,]$values)
+          d <- c(d, extra_info[extra_info$names == "d" & extra_info$subgroup == subgroup,]$values)
           response <- c(response, model$res.name)
           message(length(covariates))
         }
