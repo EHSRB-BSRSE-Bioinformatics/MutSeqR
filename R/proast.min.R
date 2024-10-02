@@ -13369,3 +13369,16 @@ f.plot.result <- function(proast_results_list,
 
 
 
+f.remove.blanks <- function(vec) {
+    if (exists("track")) 
+        print("f.remove.blanks")
+    LEVELS <- levels(as.factor(vec))
+    LEVELS <- subset(LEVELS, LEVELS != "")
+    vec <- factor(vec, level = LEVELS)
+    if (exists("track")) 
+        print("f.remove.blanks:   END")
+    return(vec)
+}
+
+
+
