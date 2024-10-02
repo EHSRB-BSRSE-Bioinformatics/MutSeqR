@@ -22,7 +22,16 @@
 #' @param summary A logical value indicating whether a summary of the results
 #' should be returned. If FALSE, raw results from the PROAST analysis are
 #' returned.
-#' @return A list containing the results of the PROAST analysis.
+#' @param plot_results A logical value indicating whether the results should
+#' be plotted. Plots can either be saved as an svg to the output_path or
+#' displayed in the R plot viewer.
+#' @param output_path The filepath to save the plots .svg files. If NULL, the plots
+#' will be saved in the current working directory.
+#' @param output_type svg or none. If svg, the plots will be saved as .svg files
+#' in the output_path. If none, the plots will NOT be saved, but be displayed in
+#' the R plot viewer.
+#' @return If summary is TRUE, a data frame of final results. If summary is
+#' FALSE, a list of the raw results from the PROAST analysis.
 #' @export
 #' @details This function is a  modified vresion of the original interactive
 #' PROAST software to allow for batch processing of data. The function is
@@ -44,7 +53,7 @@
 #' legend to the plot is printined in the same dose units as used in the plot (thus they
 #' may differ by the dose scalling factor)
 #' The CI is calculated by the profile likelihood method (likelihood ratio method)
-#' 
+#'
 proast_bmd <- function(mf_data,
                        dose_col = "dose",
                        response_col = "sample_MF_min",
@@ -53,8 +62,32 @@ proast_bmd <- function(mf_data,
                        adjust_CES_to_group_SD = FALSE,
                        model_averaging = TRUE,
                        num_bootstraps = 200,
-                       summary = TRUE) {
+                       summary = TRUE,
+                       plot_results = FALSE,
+                       output_path = NULL,
+                       output_type = "none") {
 
+  if (!dose_col %in% colnames(mf_data)) {
+    stop("Dose column not found in mf_data")
+  }
+  if (!any(response_col %in% colnames(mf_data))) {
+    stop("Response column not found in mf_data")
+  }
+  if (!is.null(covariate_col) && !covariate_col %in% colnames(mf_data)) {
+    stop("Covariate column not found in mf_data")
+  }
+  if (model_averaging == TRUE) {
+    message("Model averaging is set to TRUE. This may take some time to run.")
+  }
+  # ensure that dose is numeric #
+  if (!is.numeric(mf_data[[dose_col]])) {
+    stop("Dose column must be numeric")
+  }
+  if (plot_results == TRUE && model_averaging == TRUE && output_type == "svg") {
+    if (!require("svglite", quietly = TRUE)) {
+      stop("The 'svglite' package is required to save model averaging plots as svgs. Please install to use this functionality.")
+}
+  }
 
   CES_sd <- as.numeric(adjust_CES_to_group_SD) + 1
 
@@ -79,61 +112,81 @@ proast_bmd <- function(mf_data,
                       upper_dd = NULL,
                       selected_model = "exponential",
                       model_averaging = model_averaging,
-                      num_bootstraps = num_bootstraps)
+                      num_bootstraps = num_bootstraps,
+                      display_plots = FALSE)
 
-  if (summary == TRUE) {
-    results_df <- results[[2]]
-    results_df <- results_df %>%
-      dplyr::mutate(across(c(CED, CEDL, CEDU, weights), as.numeric))
-    lowest_AIC_model <- results_df[results_df$AIC == min(results_df$AIC), ]
-    results_ls <- list(lowest_AIC_model = lowest_AIC_model,
-                       summary = results_df)
+  if (plot_results == TRUE) {
+    f.plot.result(results[[1]],
+                  output_path = output_path,
+                  output_type = output_type,
+                  model_averaging = FALSE)
 
-    # Cleveland plot: all models w weights
-    if (model_averaging) {
-      model_order <- results_df %>%
-        dplyr::filter(.data$Selected.Model != "Model averaging") %>%
-        dplyr::arrange(weights) %>%
-        dplyr::pull(Selected.Model)
-      c.plot_df <- results_df %>%
-        dplyr::mutate(Selected.Model = factor(Selected.Model,
-                                              levels = c(model_order,
-                                                         "Model averaging")))
-      # assign dummy values to Model averaging,
-      # making sure it is in range of the other CEDL and CEDU.
-      c.plot_df$weights[c.plot_df$Selected.Model == "Model averaging"] <- NA
-      c.plot_df$CED[c.plot_df$Selected.Model == "Model averaging"] <- with(subset(c.plot_df, Selected.Model == "Model averaging"), (CEDL + CEDU) / 2)
+    if (model_averaging == TRUE) {
+      f.plot.result(results[[1]],
+                    output_path = output_path,
+                    output_type = output_type,
+                    model_averaging = TRUE)
 
-      c <- ggplot(c.plot_df, aes(x = CED, y = Selected.Model)) +
-        geom_errorbar(aes(xmin = CEDL, xmax = CEDU),
-                      color = "gray",
-                      width = 0.1) +
-        geom_point(aes(size = weights),
-                   color = "red") +
-        scale_size_continuous(guide = "none") +
-        ggplot2::theme(panel.background = ggplot2::element_blank(),
-                       axis.line = ggplot2::element_line(),
-                       panel.grid = ggplot2::element_blank(),
-                       axis.ticks.x = ggplot2::element_line(),
-                       axis.ticks.y = ggplot2::element_line()) +
-        ggplot2::xlab("BMD Estimate") +
-        ggplot2::ylab("Model") +
-        ggtitle("BMD by Selected Model (Sorted by Weights)")
+      # Cleveland plot: all models w weights
+      results_df <- results[[2]] %>%
+        dplyr::mutate(CED = as.numeric(CED),
+                      CEDL = as.numeric(CEDL),
+                      CEDU = as.numeric(CEDU))
 
-      results_ls$Cleveland_plot <- c
+      for (i in unique(results_df$Response)) {
+        c.plot.df <- results_df %>%
+          dplyr::filter(Response == i)
+        model_order <- c.plot.df %>%
+          dplyr::filter(.data$Selected.Model != "Model averaging") %>%
+          dplyr::arrange(weights) %>%
+          dplyr::pull(Selected.Model)
+        c.plot_df <- c.plot.df %>%
+          dplyr::mutate(Selected.Model = factor(Selected.Model,
+                                                levels = c(model_order,
+                                                           "Model averaging")))
+        # assign dummy values to Model averaging,
+        # making sure it is in range of the other CEDL and CEDU.
+        c.plot_df$weights[c.plot_df$Selected.Model == "Model averaging"] <- NA
+        c.plot_df$CED[c.plot_df$Selected.Model == "Model averaging"] <- with(subset(c.plot_df, Selected.Model == "Model averaging"), (CEDL + CEDU) / 2)
+
+        c <- ggplot(c.plot_df, aes(x = CED, y = Selected.Model)) +
+          geom_errorbar(aes(xmin = CEDL, xmax = CEDU),
+                        color = "gray",
+                        width = 0.1) +
+          geom_point(aes(size = weights),
+                     color = "red") +
+          scale_size_continuous(guide = "none") +
+          ggplot2::theme(panel.background = ggplot2::element_blank(),
+                         axis.line = ggplot2::element_line(),
+                         panel.grid = ggplot2::element_blank(),
+                         axis.ticks.x = ggplot2::element_line(),
+                         axis.ticks.y = ggplot2::element_line()) +
+          ggplot2::xlab(paste("BMD Estimate for", i)) +
+          ggplot2::ylab("Model") +
+          ggtitle("BMD by Selected Model (Sorted by Weights)")
+        if (output_type == "svg") {
+          file_name <- file.path(output_path, paste0("PROAST_", i , "_cleveland.svg"))
+          ggsave(filename = file_name, plot = c, device = "svg")
+        } else if (output_type == "none") {
+          # Determine the operating system to open the plot in the correct viewer
+          os <- Sys.info()[["sysname"]]
+          # Open the plot in the correct viewer
+          if (os == "Windows") {
+            windows(width = 8, height = 6)
+          } else if (os == "Darwin") {  # Darwin is macOS
+            quartz(width = 8, height = 6)
+          } else if (os == "Linux") {
+            X11(width = 8, height = 6)
+          }
+          print(c)
+          dev.flush()
+        }
+      }
     }
-
-    #
-    results_raw <- results[[1]]
-    names(results_raw)
-    expon <- results_raw$'Expon. m5-'
-    names(expon)
-    expon$regr.resid.raw
-
-    return(results_ls)
+  }
+  if (summary == TRUE) {
+    return(results[[2]])
   } else {
     return(results[[1]])
   }
-
-
 }
