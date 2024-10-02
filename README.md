@@ -537,8 +537,8 @@ install_github("NIEHS/ToxicR")
 
 We have two functions available to users:
 
-* `mf_bmd` will fit a single continuous BMD model to the mutation frequency data.
-* `bmd_ma` will fit a model average continuous BMD to the mutation frequency data. 
+* `bmd_toxicr` will fit a single continuous BMD model to the mutation frequency data.
+* `bmd_toxicr_ma` will fit a model average continuous BMD to the mutation frequency data. 
 
 Protection and safety authorities recommend the use of model averaging to determine the benchmark dose. Model averaging incorporates information across multiple models to acount for model uncertainty. In most cases, this allows the BMD to be more accurately estimated.
 
@@ -563,7 +563,7 @@ mf_data <- calculate_mut_freq(
             retain_metadata_cols = "dose"
             )
 # Fit a model-averaged BMD to the mutation frequency data.
-bmd <- bmd_ma(mf_data,
+bmd <- bmd_toxicr_ma(mf_data,
   # specify the name of your dose column
               dose_col = "dose", 
   # specify the name of your response column(s)
@@ -577,9 +577,9 @@ bmd <- bmd_ma(mf_data,
 Ideally, the BMR would be based on a consensus scientific definition of what  minimal level of change in mutation frequency is biologically significant. Currently, the default provided by this package calculates the BMD at a 50% relative increase in mutation frequency from the background. This BMR was selected based on previous recommendations for genotoxicity assessment by White et al., 2020.
 
 ### Models
-Model averaging highly depends on the set of candidate models used. A sufficiently large set of models is needed to ensure that a well-fitting model is included in the averaging. The `bmd_ma` function uses the default EFSA models to average. These models are (normal then lognormal for each model): `exp-aerts`, `invexp-aerts`, `hill-aerts`, `lognormal-aerts`, `gamma-efsa`, `LMS`, `probit-aerts`, and `logistic-aerts`.
+Model averaging highly depends on the set of candidate models used. A sufficiently large set of models is needed to ensure that a well-fitting model is included in the averaging. The `bmd_toxicr_ma` function uses the default EFSA models to average. These models are (normal then lognormal for each model): `exp-aerts`, `invexp-aerts`, `hill-aerts`, `lognormal-aerts`, `gamma-efsa`, `LMS`, `probit-aerts`, and `logistic-aerts`.
 
-When using the `mf_bmd` function, the `model_type` parameter specifies the model that will be fit to the data. All EFSA models can be specified. Additionally, legacy continuous models based upon US EPA BMDS software can be specified: `hill`, `exp-3`, `exp-5`, `power`, `polynomial`. See R documentation ?ToxicR::single_continuous_fit for more details.
+When using the `bmd_toxicr` function, the `model_type` parameter specifies the model that will be fit to the data. All EFSA models can be specified. Additionally, legacy continuous models based upon US EPA BMDS software can be specified: `hill`, `exp-3`, `exp-5`, `power`, `polynomial`. See R documentation ?ToxicR::single_continuous_fit for more details.
 
 ### Data Type
 For both functions, dose-response data can be provided for individual subjects, or as a summary across dose groups. It is preferable to provide information on individual subjects however, in the case where this information is not available, summary data may be used.
@@ -595,7 +595,7 @@ mf_data <- calculate_mut_freq(
             retain_metadata_cols = "dose"
             )
 # Fit a model-averaged BMD to the mutation frequency data.
-bmd <- bmd_ma(mf_data,
+bmd <- bmd_toxicr_ma(mf_data,
               data_type = "individual"
               dose_col = "dose", 
               response_cols = c("sample_MF_min", "sample_MF_max"),
@@ -612,7 +612,7 @@ mf_data <- data.frame(
   standard_deviation = c(1.0E-08, 1.6E-08, 2.3E-08, 2.8E-08),
   sample_size = c(6, 6, 6, 6))
 
-bmd <- bmd_ma(mf_data,
+bmd <- bmd_toxicr_ma(mf_data,
               data_type = "summary"
               dose_col = "dose", 
               response_cols = "mean_mf",

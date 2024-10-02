@@ -40,7 +40,7 @@
 #' @importFrom ggplot2 aes geom_bar geom_errorbar geom_point
 #' geom_text ggplot guides labs theme position_dodge scale_fill_manual
 #' element_blank element_line
-#' @grDevices colorRampPalette
+#' @importFrom grDevices colorRampPalette
 
 plot_model_mf <- function(model,
                           plot_type = "point",

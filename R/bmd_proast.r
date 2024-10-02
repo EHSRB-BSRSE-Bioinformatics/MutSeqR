@@ -1,4 +1,4 @@
-#' proast_bmd
+#' bmd_proast
 #' @description This function is an extension of the PROAST software that
 #' calculates the BMD of continuous, individual-level data.
 #' @param mf_data A data frame containing the data to be analyzed. This can
@@ -54,7 +54,7 @@
 #' may differ by the dose scalling factor)
 #' The CI is calculated by the profile likelihood method (likelihood ratio method)
 #'
-proast_bmd <- function(mf_data,
+bmd_proast <- function(mf_data,
                        dose_col = "dose",
                        response_col = "sample_MF_min",
                        covariate_col = NULL,
