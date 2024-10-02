@@ -13382,3 +13382,9 @@ f.remove.blanks <- function(vec) {
 
 
 
+f.alert.full <- function() {
+    "\nAttention: the AIC of the best model (minimum AIC) is more than two units larger than that of the full model. \nThis might indicate a problem in the data, in particular when the difference is much larger than two units (e.g. > 5). \n\nYou might check the following options:\n1. In real-life studies, not all experimental factors are completely randomized over all animals (experimental units), \ne.g. animals were housed in the same cage within a given dose group, or order of treatments were not randomized over individual animals. \nAnother option is that individual outlying animals distort the mean response of one or more treatment groups. \nThis may lead to fluctuations in the (mean) responses among treatment groups that are larger than expected from random sampling error, \nresulting in an AIC difference with the full model larger than 2 units.\n2. the data consist of subgroups not taken into account in the model (e.g. various studies, or two sexes) \n3. the data contain litter effects not taken into account \n4. the response in the top dose group deviates substantially from the fitted model (check the CI around the observed (mean) response); \n\nAssociated actions for each of these four options are:\n1. the greater scatter in (mean) responses will result in a wider BMD CI; normally, no further action is needed, \nas the BMD approach is relatively robust to such devations. You might check this by leaving out specific \ntreatment groups (one by one) and check if this has a major impact on the BMD CI.\n2. use the factor defining the subgroups as a covariate and re-analyse the data \n3. re-analyse the data with litter effects taken into account \n4. consider to leave out the top dose; it is not recommended to leave out two high dose groups.\n\n"
+}
+
+
+
