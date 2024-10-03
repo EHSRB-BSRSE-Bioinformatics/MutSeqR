@@ -11,7 +11,7 @@
 #' @param response_col A character string specifying the column in data to be used to identify response.
 #' @return A list with the following components:
 #' @export
-mf_bmd <- function(mf_data,
+bmd_toxicr <- function(mf_data,
                    dose_col = "dose",
                    response_col = c("sample_MF_min", "sample_MF_max"),
                    model_types = c("hill",
@@ -167,7 +167,7 @@ mf_bmd <- function(mf_data,
 #' @importFrom tidyr pivot_longer
 #' @import ggplot2
 #' @export
-bmd_ma <- function(mf_data,
+bmd_toxicr_ma <- function(mf_data,
                    data_type = "individual",
                    dose_col = "dose",
                    response_cols = c("sample_MF_min", "sample_MF_max"),

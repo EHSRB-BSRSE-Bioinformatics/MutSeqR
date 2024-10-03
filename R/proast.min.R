@@ -9028,7 +9028,20 @@ f.nr.replicates <- function(ans.all) {
 
 
 
-f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, covariates = NULL, custom_CES = NULL, model_selection = NULL, interactive_mode = TRUE, lower_dd = NULL, upper_dd = NULL, adjust_CES_to_group_SD = NULL, model_averaging = NULL, num_bootstraps = NULL, results_env = NULL, display_plots = TRUE) {
+f.quick.con <- function(ans.all,
+                        indep_var_choice = NULL,
+                        Vyans_input = NULL,
+                        covariates = NULL,
+                        custom_CES = NULL,
+                        model_selection = NULL,
+                        interactive_mode = TRUE,
+                        lower_dd = NULL,
+                        upper_dd = NULL,
+                        adjust_CES_to_group_SD = NULL,
+                        model_averaging = NULL,
+                        num_bootstraps = NULL,
+                        results_env = NULL,
+                        display_plots = TRUE) {
     if (exists("track")) 
         print("f.quick.con")
         message(paste0("indep_var_choice: ", indep_var_choice))
@@ -9503,10 +9516,16 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                       CI.ma)
                     CI.matr.ma <- rbind(CI.matr.ma, ans.all$MA$CI.row.ma)
                     if (interactive_mode == FALSE) {
-                    results_env$model_averaging <- ans.all
+                      if (length(ans.all$Vyans) > 1) {
+                        message("Vyans is greater than 1")
+                        ans.all$res.name <- ans.all$varname[ans.all$yans]
+                        assign(paste(ans.all$res.name, "model_averaging"), ans.all, envir = results_env)
+                      } else {
+                        ans.all$res.name <- ans.all$varname[ans.all$yans]
+                        results_env$model_averaging <- ans.all
+                      } 
                     }
-                  }
-                  else {
+                  } else {
                     ans.all$MA <- list()
                     CI.matr.ma <- rbind(CI.matr.ma, rep(NA, 2 * 
                       ans.all$nr.gr))
@@ -9568,7 +9587,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
                 ans.all$Vyans <- Vyans
                 ans.all$CED.all <- CED.all
                 f.plot.CED(ans.all, WAPP = WAPP, plotprefix = ans.all$plotprefix, 
-                  svg.plots = ans.all$svg.plots, display_plots = display_plots)
+                  svg.plots = ans.all$svg.plots, display_plots = display_plots, interactive_mode = interactive_mode)
             }
             else cat("\n\nNone of the endpoints showed a significant trend\n")
         }
@@ -9577,7 +9596,7 @@ f.quick.con <- function(ans.all, indep_var_choice = NULL, Vyans_input = NULL, co
         if (exists("track")) 
             print("f.quick.con:  END")
         return(ans.all)
-    })
+  })
 }
 
 
@@ -12647,7 +12666,12 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
     if (exists("track")) 
         print("f.plot.gui:  END")
     if (!is.null(results_env)) {
-      assign("plot_result", ans.all, envir = results_env)
+      if (length(ans.all$Vyans) > 1) {
+        ans.all$res.name <- ans.all$varnames[ans.all$yans]
+        assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
+      } else {
+        assign("plot_result", ans.all, envir = results_env)
+      }
     }
     return(ans.all)
 }
@@ -12805,6 +12829,7 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
             ans.all$res.name <- ans.all$varname[ans.all$yans]
             assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = results_env)
           } else {
+            ans.all$res.name <- ans.all$varname[ans.all$yans]
             assign(ans.all$modelname, ans.all, envir = results_env)
         }
         }
@@ -12946,7 +12971,8 @@ f.plot.CED <- function(ans.all,
                        WAPP = FALSE,
                        plotprefix = "", 
                        svg.plots = FALSE,
-                       display_plots = TRUE) {
+                       display_plots = TRUE,
+                       interactive_mode = TRUE) {
     if (exists("track"))
         print("f.plot.CED")
     data <- ans.all$CED.all
@@ -13081,7 +13107,9 @@ f.plot.CED <- function(ans.all,
         if (!WAPP) {
             cat("\nCED-CI plot created for subgroup", ii, "\n")
             if (ii < nr.lev)
-                f.press.key.to.continue()
+                if (interactive_mode == TRUE) {
+                  f.press.key.to.continue()
+                }
         }
         if (WAPP)
             dev.off()
@@ -13093,8 +13121,7 @@ f.plot.CED <- function(ans.all,
 
 
 parse_PROAST_output <- function(result) {
-  result <- result[setdiff(names(result), "plot_result")]
- # browser()
+  result <- result[!grepl("plot_result", names(result))]
   selected_models <- c()
   CES <- c()
   CED <- c()
@@ -13107,8 +13134,9 @@ parse_PROAST_output <- function(result) {
   d <- c()
   covariates <- c()
   ma_rows <- list()
-  model_weights <- c()
+  model_weights <- list()
   response <- c()
+
   # Loop through the list excluding 'model_averaging'
   for (i in seq_along(result)) {
     model <- result[[i]]
@@ -13117,7 +13145,7 @@ parse_PROAST_output <- function(result) {
     covariate_analysis <- length(unique(model$covariate)) > 1
     message("Covariate analysis is:", covariate_analysis)
     if (!covariate_analysis) {
-      if (!names(result)[i] == "model_averaging") {
+      if (!grepl("model_averaging", names(result)[i])) {
         # Extract the relevant pieces of information excluding model averaging
         selected_models <- c(selected_models, model$modelname)
         CES <- c(CES, model$CES)
@@ -13133,25 +13161,64 @@ parse_PROAST_output <- function(result) {
       }
 
       # Special handling for 'model_averaging'
-      if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+      if (grepl("model_averaging", names(result)[i]) && !is.null(result[[i]]$MA)) {
         message("Handling model averaging case")
         ma_info <- result[[i]]$MA
+        ma_response <- result[[i]]$res.name
         ma_row <- c("Model averaging", "N/A", "N/A",
-        ma_info$conf.int.ma$BMDlower.ma, ma_info$conf.int.ma$BMDupper.ma,
-        "N/A", "N/A", "N/A", "N/A", "N/A")
+                    ma_info$conf.int.ma$BMDlower.ma,
+                    ma_info$conf.int.ma$BMDupper.ma,
+                    "N/A", "N/A", "N/A", "N/A", "N/A", ma_response)
+        ma_rows[[length(ma_rows) + 1]] <- ma_row
+        # Model weights
+        model_names <- ma_info$Vmodelname
+        model_weights[[length(model_weights) + 1]] <- data.frame('Selected Model' = model_names,
+                                                                 'Response' = rep(ma_response, length(model_names)),
+                                                                 weights = ma_info$Vweight$weight)
       }
     } else {
       # Handle covariates
       subgroups <- model$covar.txt
       message(subgroups)
-      message("names of result are: ", names(result))
+      # Check if the covariate has a significant effect on the BMD
+      # if not, extend the CED table to include a row for each subgroup
+      ## TEST: we need to test this with 3+ subgroups. What if one subgroup is significant and the others are not?
+      if (!grepl("model_averaging", names(result)[i])) {
+        signif_covariate <- nrow(model$ced.table) > 1
+        if (signif_covariate == FALSE) {
+          message("Covariate does not have a significant effect on the BMD")
+          model$ced.table <- data.frame('subgroup' = subgroups,
+                              'BMDL' = rep(model$ced.table$BMDL, length(subgroups)),
+                              'BMDU' = rep(model$ced.table$BMDU, length(subgroups)),
+                              'BMD' = rep(model$ced.table$BMD, length(subgroups)))
+        }
+      }
       for (subgroup in subgroups) {
         message("Working on covariate: ", subgroup)
-        if (!names(result)[i] == "model_averaging") {
+        if (!grepl("model_averaging", names(result)[i])) {
           message("For subgroup ", subgroup, " in ", names(result)[i])
           covariates <- c(covariates, subgroup)
           current_ced <- model$ced.table[model$ced.table$subgroup == subgroup, ]
           extra_info <- data.frame(names = model$text.par, values = model$MLE)
+          # With covariates, "var", "a" and "d" may or may not differ between subgroups
+          # When they do not differ, PROAST will return only a single value for that parameter.
+          # Make sure that there is a value for each subgroup regardless:
+          extra_info$subgroup <- ifelse(grepl("-", extra_info$names),
+                      sub(".*-", "", extra_info$names), NA)
+          extra_info$names <- sub("-.*", "", extra_info$names)
+          empty_subgroup_rows <- extra_info[extra_info$subgroup == "", ]
+          duplicated_rows <- do.call(rbind, lapply(1:nrow(empty_subgroup_rows), function(i) {
+            row <- empty_subgroup_rows[i, ]
+            new_rows <- data.frame(
+              names = row$names,
+              values = row$values,
+              subgroup = subgroups
+            )
+            return(new_rows)
+          }))
+          extra_info <- extra_info[extra_info$subgroup != "", ]
+          extra_info <- rbind(extra_info, duplicated_rows)
+          
           selected_models <- c(selected_models, model$modelname)
           CES <- c(CES, model$CES)
           CED <- c(CED, current_ced$BMD)
@@ -13159,29 +13226,35 @@ parse_PROAST_output <- function(result) {
           CEDU <- c(CEDU, current_ced$BMDU)
           AIC <- c(AIC, model$aic)
           log_likelihood <- c(log_likelihood, model$loglik)
-          var <- c(var, extra_info[extra_info$names == paste0("var-",subgroup),]$values)
-          a <- c(a, extra_info[extra_info$names == paste0("a-",subgroup),]$values)
-          d <- c(d, extra_info[extra_info$names == "d-",]$values)
+          var <- c(var, extra_info[extra_info$names == "var" & extra_info$subgroup == subgroup,]$values)
+          a <- c(a, extra_info[extra_info$names == "a" & extra_info$subgroup == subgroup,]$values)
+          d <- c(d, extra_info[extra_info$names == "d" & extra_info$subgroup == subgroup,]$values)
           response <- c(response, model$res.name)
           message(length(covariates))
         }
         message(names(result)[i])
         message(result[[i]]$MA)
 
-        if (names(result)[i] == "model_averaging" && !is.null(result[[i]]$MA)) {
+        if (grepl("model_averaging", names(result)[i]) && !is.null(result[[i]]$MA)) {
           message("Handling model averaging case for ", subgroup)
           ma_info <- result[[i]]$MA
+          ma_response <- result[[i]]$res.name
           ma_row <- c("Model averaging", subgroup, "N/A", "N/A",
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDlower.ma,
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDupper.ma,
-          "N/A", "N/A", "N/A", "N/A", "N/A")
-          message(ma_row)
-          ma_rows[[subgroup]] <- ma_row
+          "N/A", "N/A", "N/A", "N/A", "N/A", ma_response)
+          ma_rows[[length(ma_rows) + 1]] <- ma_row
+
+          # Model weights
+          model_names <- ma_info$Vmodelname
+          model_weights[[length(model_weights) + 1]] <- data.frame('Selected Model' = model_names,
+                                                               'Response' = rep(ma_response, length(model_names)),
+                                                               'Covariates' = rep(subgroup, length(model_names)),
+                                                               weights = ma_info$Vweight$weight)
         }
       }
     }
   }
-
   # Combine the vectors into a dataframe
   result_df <- data.frame(
     'Selected Model' = selected_models,
@@ -13194,39 +13267,384 @@ parse_PROAST_output <- function(result) {
     'Var' = var,
     'a' = a,
     'd' = d,
-    'response' = response
+    'Response' = response
   )
-
-  if (!"model_averaging" %in% names(result)) {
-    ma_row <- NULL
-  }
 
   # if covariates is not empty, insert it into table:
   if (length(covariates) > 0) {
-    result_df <- data.frame('Selected Model' = result_df[,1], 'Covariates' = covariates, result_df[,-1])
-    if ("model_averaging" %in% names(result)) {
-    ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)), colnames(result_df))
-    result_df <- rbind(result_df, ma_frame)
-    }
-  } else {
-    if ("model_averaging" %in% names(result)) {
-      result_df <- rbind(result_df, ma_row)
-    }
+    result_df <- data.frame('Selected Model' = result_df[, 1],
+                            'Covariates' = covariates,
+                            result_df[, -1])
   }
-  # print(result_df)
+  if (any(grepl("model_averaging", names(result)))) {
+    # Add model averaging rows to the  results dataframe
+    ma_frame <- setNames(as.data.frame(do.call(rbind, ma_rows)),
+                         colnames(result_df))
+    result_df <- rbind(result_df, ma_frame)
 
-  # Retrieve model names and their corresponding weights
-  if ("model_averaging" %in% names(result)) {
-    model_names <- ma_info$Vmodelname
-    message(model_names)
-    weights <- data.frame('Selected Model' = model_names, weights = ma_info$Vweight$weight)
-    message(weights)
-    result_df <- merge(result_df, weights, by = "Selected.Model", all.x = TRUE)
+    # Bind models with their corresponding ma weights
+    weights <- as.data.frame(do.call(rbind, model_weights))
+
+    if (length(covariates) > 0) {
+      result_df <- merge(result_df, weights, by = c("Selected.Model", "Response", "Covariates"), all.x = TRUE)
+    } else {
+      result_df <- merge(result_df, weights, by = c("Selected.Model", "Response"), all.x = TRUE) 
+    }
   } else {
     result_df$weights <- NA
   }
 
   return(result_df)
+}
+
+
+
+f.plot.result <- function(proast_results_list,
+                          output_path = NULL,
+                          output_type = "svg",
+                          prefix = NULL,
+                          model_averaging = FALSE) {
+
+  if (model_averaging == FALSE) {
+    result <- proast_results_list[grepl("plot_result", names(proast_results_list))]
+  } else {
+    if (model_averaging == TRUE) {
+      result <- proast_results_list[grepl("model_averaging", names(proast_results_list))]
+    } else {
+      stop("Invalid choice for model averaging. If you want to plot model averaging results, set it to TRUE, otherwise, set it to FALSE")
+    }
+  }
+
+  # Output directory
+  if (is.null(output_path)) {
+    output_dir <- file.path(here::here(), "output")
+  } else {
+    output_dir <- file.path(output_path)
+  }
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir)
+  }
+
+  # Output filename
+  if (!is.null(prefix)) {
+    filename <- file.path(output_dir, paste0("PROAST_", prefix))
+  } else {
+    filename <- file.path(output_dir, paste0("PROAST"))
+  }
+  for (i in seq_along(result)) {
+    res <- result[[i]]
+    if (output_type == "svg") {
+      res$svg.plots <- TRUE
+    }
+    if (!is.null(output_type) && !output_type == "none") {
+      message("Setting WAPP to TRUE")
+      res$WAPP <- TRUE
+      if (model_averaging == FALSE) {
+        f.plot.gui(res, filename = filename, output_type = output_type)
+      } else {
+        if (model_averaging == TRUE) {
+          f.boot.ma(res, filename = filename, output_type = output_type)
+        } else {
+         stop("Invalid choice for model averaging. If you want to plot model averaging results, set it to TRUE, otherwise, set it to FALSE")
+        }
+      }
+    } else { # When output type isn't set
+      if (model_averaging == FALSE) {
+        f.plot.gui(res)
+      } else {
+        if (model_averaging == TRUE) {
+          f.boot.ma(res)
+        }
+      }
+    }
+  }
+}
+
+  ### TODO
+  # - add option to plot one model at a time?
+
+  # loop over all elements of results list
+  # for (i in seq_along(proast_results_list)) {
+  #   message("Plotting ", names(proast_results_list)[[i]])
+  #   proast_result <- proast_results_list[[i]]
+  #   if (!names(proast_results_list)[[i]] == "model_averaging") {
+  #     proast_result$plt.mns <- 1
+  #     proast_result$fitted <- TRUE
+  #     proast_result$WAPP <- TRUE
+  #     f.plot.all(proast_result)
+  #     dev.off()
+  #   } else {
+  #     if (names(proast_results_list)[[i]] == "model_averaging") {
+  #       message("Plotting model averaging results")
+  #       f.boot.ma(proast_result)
+  #     }
+  #   }
+  # }
+  # if (!output_type == "none") {
+  #   grDevices::dev.off()
+  # }
+
+# f.plot.result(result_A[[1]])
+
+
+
+f.remove.blanks <- function(vec) {
+    if (exists("track")) 
+        print("f.remove.blanks")
+    LEVELS <- levels(as.factor(vec))
+    LEVELS <- subset(LEVELS, LEVELS != "")
+    vec <- factor(vec, level = LEVELS)
+    if (exists("track")) 
+        print("f.remove.blanks:   END")
+    return(vec)
+}
+
+
+
+f.alert.full <- function() {
+    "\nAttention: the AIC of the best model (minimum AIC) is more than two units larger than that of the full model. \nThis might indicate a problem in the data, in particular when the difference is much larger than two units (e.g. > 5). \n\nYou might check the following options:\n1. In real-life studies, not all experimental factors are completely randomized over all animals (experimental units), \ne.g. animals were housed in the same cage within a given dose group, or order of treatments were not randomized over individual animals. \nAnother option is that individual outlying animals distort the mean response of one or more treatment groups. \nThis may lead to fluctuations in the (mean) responses among treatment groups that are larger than expected from random sampling error, \nresulting in an AIC difference with the full model larger than 2 units.\n2. the data consist of subgroups not taken into account in the model (e.g. various studies, or two sexes) \n3. the data contain litter effects not taken into account \n4. the response in the top dose group deviates substantially from the fitted model (check the CI around the observed (mean) response); \n\nAssociated actions for each of these four options are:\n1. the greater scatter in (mean) responses will result in a wider BMD CI; normally, no further action is needed, \nas the BMD approach is relatively robust to such devations. You might check this by leaving out specific \ntreatment groups (one by one) and check if this has a major impact on the BMD CI.\n2. use the factor defining the subgroups as a covariate and re-analyse the data \n3. re-analyse the data with litter effects taken into account \n4. consider to leave out the top dose; it is not recommended to leave out two high dose groups.\n\n"
+}
+
+
+
+f.explain.marks <- function(ans.all) {
+    color.txt <- c("black", "red", "green", "dark blue", "light blue", 
+        "pink", "grey")
+    color.txt <- c(color.txt, color.txt[1:3])
+    mark.txt <- c("upward triangle", "cross", "diamond", "downward triangle", 
+        "cross-square", "cross-plus", "diamond-plus", "circle-plus", 
+        "double triangle", "square-plus")
+    if (length(ans.all$gr.txt) == 1 || is.na(ans.all$displ.txt[1])) 
+        gr.txt <- ans.all$gr.txt
+    else gr.txt <- ans.all$displ.txt
+    nr.points <- min(length(gr.txt), 10)
+    group.txt.tmp <- gr.txt[1:nr.points]
+    color.txt.tmp <- color.txt[1:nr.points]
+    mark.txt.tmp <- mark.txt[1:nr.points]
+    cat("\nThe colors in the plot relate to the following subgroups:\n")
+    print(data.frame(color = color.txt.tmp, mark = mark.txt.tmp, 
+        subgroup = group.txt.tmp))
+}
+
+
+
+f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE, 
+    ref = NA, rm.NAs = TRUE, display_plots = TRUE) {
+    if (exists("track")) 
+        print("f.plot.CI")
+    no.hill <- FALSE
+    if (ans.all$do.MA) {
+        CI <- ans.all$MA$conf.int.ma
+        covar.txt <- CI[, 1]
+        CI.hill <- matrix(c(NA, NA), nrow = 1)
+        CI <- CI[, -1]
+        no.hill <- TRUE
+    }
+    else {
+        if (length(ans.all$HILL) == 0 || is.na(ans.all$HILL[1])) 
+            no.hill <- T
+        if (length(ans.all$EXP) == 0) 
+            ans.all$EXP$conf.int <- ans.all$conf.int
+        if (ans.all$dtype %in% c(4, 6)) {
+            CI <- ans.all$conf.int
+            CI.hill <- matrix(c(NA, NA), nrow = 1)
+        }
+        else {
+            CI <- ans.all$EXP$conf.int
+            if (!no.hill) 
+                CI.hill <- ans.all$HILL$conf.int
+            else CI.hill <- matrix(c(NA, NA), nrow = 1)
+        }
+        if (ans.all$cont) {
+            if (length(CI[, 1]) == 1 && length(CI.hill[, 1]) > 
+                1) 
+                CI <- matrix(CI, ncol = 2, nrow = length(CI.hill[, 
+                  1]), byrow = TRUE)
+            if (length(CI[, 1]) > 1 && length(CI.hill[, 1]) == 
+                1) 
+                CI.hill <- matrix(CI.hill, ncol = 2, nrow = length(CI[, 
+                  1]), byrow = TRUE)
+        }
+        covar.txt <- dimnames(CI)[[1]]
+        if (is.null(covar.txt)) 
+            covar.txt <- ans.all$fct2.txt
+    }
+    if (rm.NAs) {
+        lst.na.1 <- is.na(CI[, 1])
+        lst.na.2 <- is.na(CI[, 2])
+        lst.na <- lst.na.1 | lst.na.2
+        CI <- CI[!lst.na, ]
+        if (!is.matrix(CI) && !is.data.frame(CI)) {
+            if (length(CI[1, ]) == 2) 
+                CI <- matrix(CI, ncol = 2)
+            if (length(CI[1, ]) == 3) {
+                covar.txt <- CI[, 1]
+                CI <- as.matrix(CI[, 2:3])
+            }
+        }
+        if (ans.all$cont && !no.hill) {
+            lst.na.1 <- is.na(CI.hill[, 1])
+            lst.na.2 <- is.na(CI.hill[, 2])
+            lst.na <- lst.na.1 | lst.na.2
+            CI.hill <- CI.hill[!lst.na, ]
+            if (!is.matrix(CI.hill)) {
+                if (length(CI.hill[1, ]) == 2) 
+                  CI.hill <- matrix(CI.hill, ncol = 2)
+                if (length(CI.hill[1, ]) == 3) 
+                  CI.hill <- as.matrix(CI.hill[, 2:3])
+            }
+        }
+        covar.txt <- covar.txt[!lst.na]
+    }
+    nr.lev <- length(CI[, 1])
+    CES <- ans.all$CES
+    if (!any(!is.na(CI))) {
+        cat("\n No confidence intervals available\n")
+        return()
+    }
+    CI.matr <- data.frame(covar = covar.txt, LB.E = CI[, 1], 
+        UB.E = CI[, 2])
+    if (!no.hill) {
+        CI.matr$LB.H <- CI.hill[, 1]
+        CI.matr$UB.H <- CI.hill[, 2]
+    }
+    max.x <- 1.1 * max(ans.all$x, na.rm = TRUE)
+    max.CI <- max(CI, na.rm = T)
+    if (is.infinite(max.CI)) 
+        max.CI <- max(CI[is.finite(CI)]) * 10
+    CI[, 2][is.na(CI[, 2])] <- max.CI
+    if (!no.hill) {
+        max.CI.hill <- max(CI.hill, na.rm = T)
+        if (is.infinite(max.CI.hill)) 
+            max.CI.hill <- max(CI.hill[is.finite(CI.hill)]) * 
+                10
+        CI.hill[, 2][is.na(CI.hill[, 2])] <- max.CI.hill
+        max.CI <- max(max.CI, max.CI.hill)
+    }
+    lb <- CI[, 1]
+    lb.pos <- lb[lb != 0]
+    lb.min <- min(lb.pos, na.rm = TRUE)
+    ub <- CI[, 2]
+    ub.pos <- ub[ub != 0]
+    ub.min <- min(ub.pos, na.rm = TRUE)
+    min.CI <- min(lb.min/10, ub.min/10)
+    if (!is.na(xx.lim[1])) 
+        min.CI <- 10^xx.lim[1]
+    CI[, 1][CI[, 1] == 0] <- min.CI
+    if (!no.hill) {
+        lb <- CI.hill[, 1]
+        lb.pos <- lb[lb != 0]
+        lb.min <- min(lb.pos, na.rm = TRUE)
+        ub <- CI.hill[, 2]
+        ub.pos <- ub[ub != 0]
+        ub.min <- min(ub.pos, na.rm = TRUE)
+        min.CI <- min(lb.min/10, ub.min/10, min.CI)
+        CI.hill[, 1][CI.hill[, 1] == 0] <- min.CI
+    }
+    if (logscale) {
+        CI <- log10(CI)
+        if (!no.hill) 
+            CI.hill <- log10(CI.hill)
+        min.CI <- log10(min.CI)
+        max.CI <- log10(max.CI)
+    }
+    max.y <- length(covar.txt)
+    yyy.tmp <- nr.lev
+    if (!no.hill) {
+        max.y <- max.y * 1.5
+        yyy.tmp <- nr.lev * 1.5
+    }
+    max.y <- max.y - 0.7
+    yy.lim <- c(-0.3, max.y)
+    if (is.na(xx.lim[1])) {
+        CI.tmp <- CI
+        CI.tmp[, 1][CI.tmp[, 1] == 0] <- NA
+        if (!no.hill) 
+            CI.tmp <- cbind(CI, CI.hill)
+        xx.lim <- c(min(CI.tmp, na.rm = T), max.CI)
+    }
+    if (max.CI < max.x) {
+        if (is.infinite(xx.lim[2])) 
+            xx.lim[2] <- log10(max.x)
+        if (is.na(xx.lim[2])) 
+            xx.lim[2] <- log10(max.x)
+    }
+    else {
+        if (is.infinite(xx.lim[2])) 
+            xx.lim[2] <- log10(max.CI)
+        if (is.na(xx.lim[2])) 
+            xx.lim[2] <- log10(max.CI)
+    }
+    xx.lab <- paste("CED", round(CES[1], 3), sep = "-")
+    if (logscale) 
+        xx.lab <- paste("log10-", xx.lab)
+    name.wapp <- paste("b", ans.all$yans, "cedCI", sep = "")
+    if (display_plots) {
+        f.graph.window(1, WAPP = ans.all$WAPP, title = "", name.wapp = name.wapp, 
+        plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
+        plot(1:max.y, 1:max.y, xlim = xx.lim, ylim = yy.lim, ylab = "", 
+            yaxt = "n", xlab = xx.lab, type = "n")
+        par(cex.main = 0.9)
+        if (ans.all$do.MA) 
+            title(main = "BMD confidence intervals based on MA")
+        else if (!RPFs) {
+            if (no.hill) 
+                title(main = "BMD confidence intervals per subgroup")
+            else title(main = "BMD confidence intervals \n(exponential and Hill, per subgroup)")
+        }
+        else if (RPFs) {
+            if (no.hill) 
+                title(main = "RPF confidence intervals per subgroup")
+            else title(main = "RPF confidence intervals \n(exponential and Hill, per subgroup)")
+            par(cex.main = 0.8)
+            if (!is.na(ref)) 
+                title(main = paste("\n\nreference: ", ref))
+        }
+    }
+    if (sort && length(CI[, 1]) > 1) {
+        ci.mn <- (CI[, 1] + CI[, 2])/2
+        covar.txt <- covar.txt[order(ci.mn)]
+        CI <- CI[order(ci.mn), ]
+        if (!no.hill) {
+            CI.hill <- CI.hill[order(ci.mn), ]
+        }
+    }
+    l.ty <- 1
+    for (ii in 1:nr.lev) {
+        yyy.tmp <- yyy.tmp - 1
+        if (CI[ii, 1] == min.CI) {
+            l.ty <- 2
+        }
+        if (is.infinite(CI[ii, 2])) {
+            l.ty <- 2
+            CI[ii, 2] <- max.CI
+        }
+        if (display_plots) {
+            lines(CI[ii, ], rep(yyy.tmp, 2), lty = l.ty)
+            mtext(covar.txt[ii], 4, 1, adj = 0, las = 1, at = 1.01 * 
+                yyy.tmp, cex = 0.8)
+        }
+        l.ty <- 1
+        if (!no.hill) {
+            yyy.tmp <- yyy.tmp - 0.2
+            if (CI.hill[ii, 1] == min.CI) {
+                l.ty <- 2
+            }
+            if (is.infinite(CI.hill[ii, 2])) {
+                l.ty <- 2
+                CI.hill[ii, 2] <- max.x
+            }
+            if (display_plots) {
+                lines(CI.hill[ii, ], rep(yyy.tmp, 2), lty = l.ty)
+            }
+        }
+        l.ty <- 1
+    }
+    if (exists("track")) 
+        print("f.plot.CI  END")
+    if (ans.all$WAPP) 
+        dev.off()
+    return(CI.matr)
 }
 
 
