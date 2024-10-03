@@ -23,6 +23,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra texinfo
 
+      - name: Remove previous PDF file
+        run: |
+          rm -f MutSeqR.pdf || echo "No previous PDF to remove."
 
       - name: Build PDF manual
         run: |
