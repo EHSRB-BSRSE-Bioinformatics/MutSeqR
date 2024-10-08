@@ -35,7 +35,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
         ans.all$quick.ans <- 1
         if (ans.all$cont) 
             quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots)
-        else quit <- f.cat(ans.all, list.logic = T)
+        else quit <- f.cat(ans.all, list.logic = T, interactive_mode = interactive_mode)
         if (quit) {
             if (interactive_mode == FALSE) {
                 result <- as.list(results_env)
@@ -162,7 +162,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
                 }
             }
             if (ans.all$quick.ans == 3) 
-                quit <- f.cat(ans.all)
+                quit <- f.cat(ans.all, interactive_mode = interactive_mode)
             }
         if (quit) {
             if (interactive_mode == FALSE) {
@@ -204,7 +204,7 @@ f.proast <- function(odt = list(), ans.all = 0, er = FALSE, resize = FALSE,
     }
     if (ans.all$cont) 
         quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots)
-    else quit <- f.cat(ans.all)
+    else quit <- f.cat(ans.all, interactive_mode = interactive_mode)
     if (quit) {
         if (interactive_mode == FALSE) {
             result <- as.list(results_env)
@@ -3412,7 +3412,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
         if (!ans.all$no.CI && dtype == 3) 
             ans.all.tmp <- f.CI.sel.ord(ans.all.tmp)
         else if (ans.all$NES.ans == 2) {
-            ans.all.tmp <- f.refit.nes(ans.all.tmp, interactive_mode = interactive_mode, results_env = results_env)
+            if (interactive_mode == FALSE){
+              ans.all.tmp <- f.refit.nes(ans.all.tmp, interactive_mode = interactive_mode, results_env = results_env)
+            }
             # assign(ans.all.tmp$modelname, ans.all.tmp, envir = results_env)
             current_model <- ans.all.tmp$modelname
             ans.all$do.MA <- ans.all.tmp$do.MA
@@ -8771,7 +8773,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
         ans.all$PRversion <- ans.all$version.old
         if (ans.all$model.fam > 0) 
             f.plot.all(ans.all)
-        else f.plot.gui(ans.all)
+        else f.plot.gui(ans.all, interactive_mode = interactive_mode)
         ans.all$PRversion <- PRversion
         if (ans.all$dtype != 3 && length(ans.all$gr.txt) > 1) 
             f.explain.marks(ans.all)
@@ -8917,7 +8919,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
             ans.all <- f.mm4.con(ans.all)
             while (ans.all$out.ans == 1) ans.all <- f.mm4.con(ans.all)
         }, {
-            ans.all <- f.mm5.con(ans.all)
+            ans.all <- f.mm5.con(ans.all, interactive_mode = interactive_mode)
         }, {
             if (ans.all$fitted == F) cat("\nFirst fit the model using option 4\n") else if (ans.all$model.ans == 
                 11) cat("\nCED not defined for full model\n") else if (ans.all$model.ans == 
@@ -9488,7 +9490,7 @@ f.quick.con <- function(ans.all,
                 if (ans.all$fitted) {
                   if (ans.all$dtype %in% c(1, 5)) 
                     ans.all$plt.mns <- 1
-                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots, results_env = results_env)
+                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots, results_env = results_env, interactive_mode = interactive_mode)
                   if (!WAPP && length(ans.all$xans) > 1 && ans.all$nr.aa > 
                     1) {
                     f.press.key.to.continue()
@@ -12364,7 +12366,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 
 
 
-f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots = TRUE, results_env = NULL, output_type = NULL, filename = NULL) {
+f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots = TRUE, results_env = NULL, output_type = NULL, filename = NULL, interactive_mode = TRUE) {
     if (exists("track")) 
         print("f.plot.gui")
     WAPP <- ans.all$WAPP
@@ -12661,16 +12663,18 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
     if (ans.all$dtype != 3) 
         if (length(ans.all$gr.txt) > 1) 
             f.explain.marks(ans.all)
-    if (WAPP) 
+    if (WAPP)
         dev.off()
-    if (exists("track")) 
+    if (exists("track"))
         print("f.plot.gui:  END")
-    if (!is.null(results_env)) {
-      if (length(ans.all$Vyans) > 1) {
-        ans.all$res.name <- ans.all$varnames[ans.all$yans]
-        assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
-      } else {
-        assign("plot_result", ans.all, envir = results_env)
+    if (interactive_mode == FALSE) {
+      if (!is.null(results_env)) {
+        if (length(ans.all$Vyans) > 1) {
+          ans.all$res.name <- ans.all$varnames[ans.all$yans]
+          assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
+        } else {
+          assign("plot_result", ans.all, envir = results_env)
+        }
       }
     }
     return(ans.all)
@@ -13341,7 +13345,7 @@ f.plot.result <- function(proast_results_list,
       message("Setting WAPP to TRUE")
       res$WAPP <- TRUE
       if (model_averaging == FALSE) {
-        f.plot.gui(res, filename = filename, output_type = output_type)
+        f.plot.gui(res, filename = filename, output_type = output_type, interactive_mode = FALSE)
       } else {
         if (model_averaging == TRUE) {
           f.boot.ma(res, filename = filename, output_type = output_type)
@@ -13351,7 +13355,7 @@ f.plot.result <- function(proast_results_list,
       }
     } else { # When output type isn't set
       if (model_averaging == FALSE) {
-        f.plot.gui(res)
+        f.plot.gui(res, interactive_mode = FALSE)
       } else {
         if (model_averaging == TRUE) {
           f.boot.ma(res)
