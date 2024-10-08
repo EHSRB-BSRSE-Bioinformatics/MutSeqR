@@ -35,7 +35,7 @@ supported.}
 covariate. If no covariate is present, set to NULL.}
 
 \item{CES}{The critical effect size to be used in the analysis. The Benchmark
-Response is calculated as a relative increase of CES from the control.}
+Response is calculated as a relative increase of CES from the control MF.}
 
 \item{adjust_CES_to_group_SD}{A logical value indicating whether the group
 standard deviation should be used as the CES.}
@@ -54,8 +54,8 @@ returned.}
 be plotted. Plots can either be saved as an svg to the output_path or
 displayed in the R plot viewer.}
 
-\item{output_path}{The filepath to save the plots .svg files. If NULL, the plots
-will be saved in the current working directory.}
+\item{output_path}{The filepath to save the plots' .svg files. If NULL, the
+plots will be saved in the current working directory.}
 
 \item{output_type}{svg or none. If svg, the plots will be saved as .svg files
 in the output_path. If none, the plots will NOT be saved, but be displayed in
@@ -70,8 +70,8 @@ This function is an extension of the PROAST software that
 calculates the BMD of continuous, individual-level data.
 }
 \details{
-This function is a  modified vresion of the original interactive
-PROAST software to allow for batch processing of data. The function is
+This function is a  modified version of the original interactive
+PROAST software that allows for batch processing of data. The function is
 designed to be used with the output of the calculate_mut_freq function
 for the purpose of calculating the Benchmark Dose of mutation frequency
 data. As such, some functionality of the original PROAST software has
@@ -81,13 +81,42 @@ The function will fit model 3 or 5 from various families of models
 the fits of models 3 and 5 for each model family and select the model with
 the lowest AIC. The BMD confidence intervals will be calculated for each
 model family using its selected model (3 or 5). The BMD confidence
-may also be calculated using the bootstrap method.
+may also be calculated using the bootstrap method if model_averaging
+is set to TRUE. It is recommended to use 200 bootstraps for model averaging.
 
-var: represents the residual variance around the fitted curve on the natural log-scale
+The function gives you the option to return either a summary of the results
+or the raw results output from the PROAST analysis. The summary will include
+the parameters of each selected model for each response and covariate
+subgroup (if applicable), as well as the model averaging results.
+
+Model Parameters:
+\itemize{
+\item \code{Selected.Model}: The m3 or m5 model selected for the model family
+\item \code{Response}: The response variable
+\item \code{Covariate}: The covariate variable, if applicable
+\item \code{CES}: The critical effect size of the Benchmark Response
+\item \code{CED}: The Benchmark Dose, in original dose units, estimated for the given model.
+\item \code{CEDL}: The lower bound of the 90\% confidence interval for the BMD, calculated
+by the profile likelihood method.
+\item \code{CEDU}: The upper bound of the 90\% confidence interval for the BMD, calculated
+by the profile likelihood method.
+\item \code{AIC}: The Akaike Information Criterion for the selected model. Lower values
+indicate a better fit. It is advised to choose the BMD value from the model with the
+lowest AIC.
+\item \code{Log.Likelihood}: the log-likelihood of the given model.
+\item \code{Var}: The residual variance around the fitted curve on the natural log-scale.
+\item \code{a}: Model Parameter - the background response
+\item \code{d}: Model Parameter - the slope of the curve.
+\item \code{weights}: The weight of the model in the model averaging process, if applicable.
+}
+
+Expon m3 y=a exp(bx^d) m5 y=a\link{c-(c-1) exp(b x^d)}
+b reflects the potency of the compound
+c is used for curves that level off. It is the maximum fold-change relative to the background response value (a)
+When c>1 the curve increases, when c<1 the curve decreases
 Plots: the fitted curves relate to the median at each dose.
 
 CED the calculated value of the CED is returned in the orginal dose units, while the
-legend to the plot is printined in the same dose units as used in the plot (thus they
+legend to the plot is printned in the same dose units as used in the plot (thus they
 may differ by the dose scalling factor)
-The CI is calculated by the profile likelihood method (likelihood ratio method)
 }
