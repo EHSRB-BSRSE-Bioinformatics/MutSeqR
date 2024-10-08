@@ -13121,6 +13121,7 @@ f.plot.CED <- function(ans.all,
 
 
 parse_PROAST_output <- function(result) {
+ # browser()
   result <- result[!grepl("plot_result", names(result))]
   selected_models <- c()
   CES <- c()
@@ -13291,7 +13292,7 @@ parse_PROAST_output <- function(result) {
       result_df <- merge(result_df, weights, by = c("Selected.Model", "Response"), all.x = TRUE) 
     }
   } else {
-    result_df$weights <- NA
+    #result_df$weights <- NA
   }
 
   return(result_df)
