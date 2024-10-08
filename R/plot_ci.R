@@ -49,8 +49,10 @@ plot_CI <- function(data,
   nudge_value <- 0.3
 
   g <- ggplot(results_bmd_df_plot,
-              ggplot2::aes(x = value, y = Response, color = name)) +
-    ggplot2::geom_line(ggplot2::aes(group = Response),
+              ggplot2::aes(x = results_bmd_df_plot$value,
+                           y = results_bmd_df_plot$Response,
+                           color = results_bmd_df_plot$name)) +
+    ggplot2::geom_line(ggplot2::aes(group = results_bmd_df_plot$Response),
                        color = "#b8b8b8", linewidth = 3.5) +
     ggplot2::geom_point(size = 3) +
     ggplot2::theme_minimal() +
@@ -63,7 +65,9 @@ plot_CI <- function(data,
                    panel.grid = ggplot2::element_blank()) +
     ggplot2::scale_color_manual(values = c("black", "#BF2F24", "#436685")) +
     ggplot2::scale_x_continuous() +
-    ggplot2::geom_text(ggplot2::aes(label = value, color = name), size = 3.25,
+    ggplot2::geom_text(ggplot2::aes(label = results_bmd_df_plot$value,
+                                    color = results_bmd_df_plot$name),
+                       size = 3.25,
                        nudge_x = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
                                                 nudge_value, -nudge_value),
                        hjust = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
@@ -74,7 +78,7 @@ plot_CI <- function(data,
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
                                                        vjust = 0.5,
                                                        hjust = 0.5),
-                  plot.title = ggplot2::element_text(hjust = 0.5)) +
+                   plot.title = ggplot2::element_text(hjust = 0.5)) +
     ggplot2::theme(axis.ticks = ggplot2::element_line(color = "black",
                                                       linewidth = 0.5))
 
