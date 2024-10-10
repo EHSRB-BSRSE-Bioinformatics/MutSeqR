@@ -2132,7 +2132,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
 
 
 
-f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, results_env = NULL, display_plots = TRUE) {
+f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE) {
     if (exists("track")) 
         print("f.select.m5.con")
     gui <- ans.all$gui
@@ -3418,7 +3418,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = T, result
         if (cont) 
             f.hit.constr(ans.all.tmp)
         if (!ans.all$no.CI && dtype == 3) 
-            ans.all.tmp <- f.CI.sel.ord(ans.all.tmp)
+            ans.all.tmp <- f.CI.sel.ord(ans.all.tmp, interactive_mode = interactive_mode)
         else if (ans.all$NES.ans == 2) {
             if (interactive_mode == FALSE){
               ans.all.tmp <- f.refit.nes(ans.all.tmp, interactive_mode = interactive_mode, results_env = results_env)
@@ -6749,7 +6749,7 @@ f.hit.constr <- function(ans.all) {
 
 
 
-f.refit.nes <- function(ans.all, interactive_mode = T, results_env = NULL) {
+f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
     if (exists("track")) 
         print("f.refit.nes")
     ans.all <- f.nes(ans.all)
@@ -6859,7 +6859,7 @@ f.refit.nes <- function(ans.all, interactive_mode = T, results_env = NULL) {
         Vloglik[ii] <- round(ans.all$loglik, 2)
         if (0) 
             if (!gui && length(ans.all$MLE) > 10) {
-                f.store.results(ans.all, "refit.tmp")
+                f.store.results(ans.all, "refit.tmp", interactive_mode = interactive_mode)
                 cat("\nNOTE: refitted  model was stored in refit.tmp\n")
             }
         if (Vloglik[ii] < loglik - 0.1) {
@@ -6914,7 +6914,7 @@ f.refit.nes <- function(ans.all, interactive_mode = T, results_env = NULL) {
             if (dtype == 5) {
                 ans.all$plot.ans <- 1
                 ans.all$CED <- CED
-                ans.all <- f.mm7.con(ans.all)
+                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
                 conf.int <- ans.all$conf.int
             }
             else {
@@ -6923,7 +6923,7 @@ f.refit.nes <- function(ans.all, interactive_mode = T, results_env = NULL) {
                 else {
                   ans.all$trace <- F
                   ans.all$trace.plt <- F
-                  ans.all <- f.CI(ans.all)
+                  ans.all <- f.CI(ans.all, interactive_mode = interactive_mode)
                   conf.int <- ans.all$conf.int
                   if (ans.all$update) 
                     MLE <- ans.all$MLE
@@ -6968,7 +6968,7 @@ f.refit.nes <- function(ans.all, interactive_mode = T, results_env = NULL) {
             ans.all$CED <- CED
         if (0) 
             if (!gui && length(ans.all$MLE) > 10) {
-                f.store.results(ans.all, "refit.tmp")
+                f.store.results(ans.all, "refit.tmp", interactive_mode = interactive_mode)
                 cat("\nNOTE: confidence intervals were stored in refit.tmp\n")
             }
         ans.all$model.txt <- model.txt
@@ -8658,7 +8658,7 @@ f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, disp
 
 
 
-f.store.results <- function(ans.all, store.name = 0, add.ext = 0, interactive_mode = NULL) {
+f.store.results <- function(ans.all, store.name = 0, add.ext = 0, interactive_mode = TRUE) {
     if (exists("track")) 
         print("f.store.results")
     if (ans.all$quick.ans == 1) {
@@ -8770,7 +8770,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                   cat("\n\n\nSee plot for relationship between c and sd\n\n")
                   f.press.key.to.continue()
                   if (model.ans == 6 && fitted) 
-                    ans.all <- f.fit.model6(ans.all)
+                    ans.all <- f.fit.model6(ans.all, interactive_mode = interactive_mode)
                 }
                 return(ans.all)
             })
@@ -8924,14 +8924,14 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
             ans.all <- f.start.con(ans.all, adjust = T, fitted = ans.all$fitted, 
                 tmp.quick = F)
         }, {
-            ans.all <- f.mm4.con(ans.all)
-            while (ans.all$out.ans == 1) ans.all <- f.mm4.con(ans.all)
+            ans.all <- f.mm4.con(ans.all, interactive_mode = interactive_mode)
+            while (ans.all$out.ans == 1) ans.all <- f.mm4.con(ans.all, interactive_mode = interactive_mode)
         }, {
             ans.all <- f.mm5.con(ans.all, interactive_mode = interactive_mode)
         }, {
             if (ans.all$fitted == F) cat("\nFirst fit the model using option 4\n") else if (ans.all$model.ans == 
                 11) cat("\nCED not defined for full model\n") else if (ans.all$model.ans == 
-                1) cat("\nCED not defined for null model\n") else ans.all <- f.mm6.con(ans.all)
+                1) cat("\nCED not defined for null model\n") else ans.all <- f.mm6.con(ans.all, interactive_mode = interactive_mode)
         }, {
             if (is.na(ans.all$CED[1]) && ans.all$model.ans != 
                 59) cat("\nYou did not calculate CED! First use option 6 from main menu\n") else {
@@ -8939,12 +8939,12 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                 ans.all$plot.ans <- 1
                 ans.all$plot.ans <- menu(c("no", "yes (reduces speed)"), 
                   title = "\ndo you want plots of each sampling run?")
-                ans.all <- f.mm7.con(ans.all)
+                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
             }
         }, {
-            ans.all <- f.mm8.con(ans.all)
+            ans.all <- f.mm8.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            ans.all <- f.mm10.con(ans.all)
+            ans.all <- f.mm10.con(ans.all, interactive_mode = interactive_mode)
         }, {
             with(ans.all, {
                 if (model.ans != 2) {
@@ -8979,7 +8979,7 @@ f.con <- function(ans.all, list.logic = F, indep_var_choice = NULL, Vyans_input 
                 }
                 conf.int.0 <- ans.all$conf.int
                 ans.all$trace <- T
-                ans.all <- f.CI(ans.all)
+                ans.all <- f.CI(ans.all, interactive_mode = interactive_mode)
                 name.ci <- text.par[ans.all$group]
                 confint.spec <- ans.all$conf.int
                 if (ans.all$sf.x != 1) {
@@ -9387,7 +9387,7 @@ f.quick.con <- function(ans.all,
                 ans.all <- f.select.con(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
                 if (ans.all$quick.ans == 6) {
                   if (!(WAPP || gui)) 
-                    f.store.results(ans.all, store.name = 0)
+                    f.store.results(ans.all, store.name = 0, interactive_mode = interactive_mode)
                   return(ans.all)
                 }
                 do.MA <- ans.all$do.MA
@@ -9554,7 +9554,8 @@ f.quick.con <- function(ans.all,
                   }
                   if (!(WAPP || gui) && length(Vyans) > 1 && 
                     interrupt) 
-                    store.name <- f.store.results(ans.all, store.name = 0)
+                    store.name <- f.store.results(ans.all, store.name = 0, 
+                      interactive_mode = interactive_mode)
                 }
             }
             if (!gui) 
@@ -11519,7 +11520,7 @@ f.grubb <- function(ss = 25, alfa = 0.05) {
 
 
 
-f.CI <- function(ans.all, display_plots = TRUE) {
+f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
     if (exists("track")) 
         print("f.CI")
     with(ans.all, {
@@ -11551,7 +11552,7 @@ f.CI <- function(ans.all, display_plots = TRUE) {
                 cat("\n\n new log-likelihood: ", ans.all$loglik, 
                   "\n\n")
                 if (!WAPP && !gui) 
-                  f.store.results(ans.all, "newfit")
+                  f.store.results(ans.all, "newfit", interactive_mode = interactive_mode)
                 profile.out <- f.profile.all(ans.all, display_plots = display_plots)
                 loglik.tmp <- profile.out$loglik
                 update <- T
@@ -12690,7 +12691,7 @@ f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots =
 
 
 
-f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
+f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
     if (exists("track")) 
         print("f.CI.sel")
     ans.all <- with(ans.all, {
@@ -12744,7 +12745,7 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
                 ans.all$plot.ans <- 1
                 ans.all$nrp <- length(regr.par)
                 ans.all$CED <- CED
-                ans.all <- f.mm7.con(ans.all)
+                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
                 conf.int <- ans.all$conf.int
             }
             else {
@@ -12762,7 +12763,7 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
                   }
                   if (ans.all$output) 
                     cat("\n\n calculating confidence intervals ....\n\n")
-                  ans.all <- f.CI(ans.all)
+                  ans.all <- f.CI(ans.all, interactive_mode = interactive_mode)
                   conf.int <- ans.all$conf.int
                   if (ans.all$update) {
                     if (cont) {
@@ -12829,7 +12830,7 @@ f.CI.sel <- function(ans.all, interactive_mode = NULL, results_env = NULL) {
         }
         if (0) 
             if (!gui && length(ans.all$MLE) > 10) {
-                f.store.results(ans.all, "refit.tmp")
+                f.store.results(ans.all, "refit.tmp", interactive_mode = interactive_mode)
                 cat("\n\nNOTE: confidence intervals were stored in refit.tmp\n\n")
             }
         ans.all$CED <- signif(CED, 4)
