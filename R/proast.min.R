@@ -1887,7 +1887,7 @@ f.clear <- function(ans.all) {
 
 
 
-f.full.ans <- function(ans.all, gui) {
+f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
     if (exists("track")) 
         print("f.full.ans")
     if (gui == T) 
@@ -1916,14 +1916,22 @@ f.full.ans <- function(ans.all, gui) {
         full.ans <- ans.all$full.ans
         if (!gui && dtype != 15) {
             if (mean(dum.nn) < 3) {
-                cat("\n\naverage group size is only", round(mean(dum.nn), 
-                  1))
-                full.ans <- menu(c("yes", "no"), title = "\nDo you nonetheless want to fit full model?\n")
+                if (interactive_mode == TRUE) {
+                  cat("\n\naverage group size is only", round(mean(dum.nn), 1))
+                  full.ans <- menu(c("yes", "no"), title = "\nDo you nonetheless want to fit full model?\n")
+                } else {
+                  warning("average group size is only ", round(mean(dum.nn), 1))
+                  full.ans <- 1
+                }
             }
             else if (nr.dosegr > 100 || length(dum.nn) > 100) {
-                cat("\ndataset is large (total number of dose groups: ", 
-                  nr.dosegr, "), fitting full model may take long")
-                full.ans <- menu(c("yes", "no"), title = "\nDo you nonetheless want to fit full model?\n")
+                if (interactive_mode == TRUE) {
+                  cat("\ndataset is large (total number of dose groups: ", nr.dosegr, "), fitting full model may take long")
+                  full.ans <- menu(c("yes", "no"), title = "\nDo you nonetheless want to fit full model?\n")
+                } else {
+                  warning("dataset is large (total number of dose groups: ", nr.dosegr, "), fitting full model may take a while")
+                  full.ans <- 1
+                }
             }
         }
         if (gui) {
@@ -9341,7 +9349,7 @@ f.quick.con <- function(ans.all,
                 ans.all <- f.clear(ans.all)
                 ans.all$twice <- T
                 if (first.loop) 
-                  ans.all$full.ans <- f.full.ans(ans.all, gui = gui)
+                  ans.all$full.ans <- f.full.ans(ans.all, gui = gui, interactive_mode = interactive_mode)
                 first.loop <- F
                 constr.dd <- f.constr.dd(model.ans = 5)
                 ans.all$lower.dd <- constr.dd[1]
