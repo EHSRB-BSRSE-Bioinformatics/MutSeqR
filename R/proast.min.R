@@ -2317,6 +2317,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 alfa <- MLE[1]
             }
             results.full <- f.model.specific.results(ans.all.fit)
+            if (interactive_mode == FALSE) {
+              results.full$res.name <- ans.all.fit$varname[ans.all.fit$yans]
+            }
             if (ans.all$const.var == TRUE) 
                 vv <- 1
             else if (cont && covar.no > 0) {
@@ -2347,6 +2350,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 else {
                   vv <- 2
                   results.full <- f.model.specific.results(ans.all.fit)
+                  if (interactive_mode == FALSE) {
+                    results.full$res.name <- ans.all.fit$varname[ans.all.fit$yans]
+                  }
                 }
                 MLE <- ans.all.fit$MLE
                 MLE.all[ii, ] <- signif(MLE[1:length(MLE.all[1, 
@@ -2435,6 +2441,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             }
             aic.m1 <- ans.all.fit$aic
             results.m1 <- f.model.specific.results(ans.all.fit)
+            if (interactive_mode == FALSE) {
+              results.m1$res.name <- ans.all.fit$varname[ans.all.fit$yans]
+            }
             if (!skip.a) 
                 if (covar.no > 0) {
                   ii <- ii + 1
@@ -2481,6 +2490,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                       tb, Vnpar[ii], tb, Vloglik[ii]), tb, Vaic[ii])
                   if (Vaic[ii] < Vaic[ii - 1]) {
                     results.m1 <- f.model.specific.results(ans.all.fit)
+                    if (interactive_mode == FALSE) {
+                      results.m1$res.name <- ans.all.fit$varname[ans.all.fit$yans]
+                    }
                     row.sel.m1 <- ii
                     aic.m1 <- ans.all.fit$aic
                   }
@@ -2728,6 +2740,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             RPF.start <- MLE[(length(MLE) - ans.all$nr.dosecol + 
                 2):length(MLE)]
         results.m3.0 <- f.model.specific.results(ans.all.fit)
+        if (interactive_mode == FALSE) {
+          results.m3.0$res.name <- ans.all.fit$varname[ans.all.fit$yans]
+        }
     }
     if (covar.no > 0) {
         if (!skip.a) {
@@ -2779,6 +2794,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             Vaa.start <- MLE[(alfa.length + nr.var + 1):(alfa.length + 
                 nr.var + max(fct1))]
             results.m3.a <- f.model.specific.results(ans.all.fit)
+            message(" \nstoring results in results.m3.a for ", results.m3.a$modelname)
             if (model.switch == 0) 
                 if (Vaic[ii - 1] - Vaic[ii] > 10) {
                   skip.b <- T
@@ -2843,6 +2859,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                   tb, Vnpar[ii], tb, Vloglik[ii]), tb, Vaic[ii])
             aa.start.mb <- MLE[alfa.length + nr.var + 1]
             results.m3.b <- f.model.specific.results(ans.all.fit)
+            message(" \nstoring results in results.m3.b for ", results.m3.b$modelname)
         }
         if (!skip.ab) {
             ii <- ii + 1
@@ -2914,6 +2931,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 f.press.key.to.continue()
             }
             results.m3.ab <- f.model.specific.results(ans.all.fit)
+            message(" \nstoring results in results.m3.ab for ", results.m3.ab$modelname)
         }
     }
     rank.m3 <- order(Vaic.m3)[1]
@@ -3010,6 +3028,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 cat(paste(" \n", model.txt[ii], tb, Vconverged[ii], 
                   tb, Vnpar[ii], tb, Vloglik[ii]), tb, Vaic[ii])
             results.m5.0 <- f.model.specific.results(ans.all.fit)
+            if (interactive_mode == FALSE) {
+              results.m5.0$res.name <- ans.all.fit$varname[ans.all.fit$yans]
+            }
         }
         if (covar.no > 0) {
             if (!skip.a) {
@@ -3069,6 +3090,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 Vaa.start <- MLE[(alfa.length + nr.var + 1):(alfa.length + 
                   nr.var + max(fct1))]
                 results.m5.a <- f.model.specific.results(ans.all.fit)
+                message(" \nstoring results in results.m5.a for ", results.m5.a$modelname)
             }
             if (!skip.b) {
                 ii <- ii + 1
@@ -3121,6 +3143,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                   cat(paste(" \n", model.txt[ii], tb, Vconverged[ii], 
                     tb, Vnpar[ii], tb, Vloglik[ii]), tb, Vaic[ii])
                 results.m5.b <- f.model.specific.results(ans.all.fit)
+                message(" \nstoring results in results.m5.b for ", results.m5.b$modelname)
             }
             if (!skip.ab) {
                 ii <- ii + 1
@@ -3182,6 +3205,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                     tb, Vnpar[ii], tb, Vloglik[ii]), tb, Vaic[ii])
                 }
                 results.m5.ab <- f.model.specific.results(ans.all.fit)
+                message(" \nstoring results in results.m5.ab for ", results.m5.ab$modelname)
             }
         }
         rank.m5 <- order(Vaic.m5)[1]
@@ -3231,6 +3255,25 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 model.ans, " \n\n\n")
             model.sel <- 1
             row.sel <- row.sel.m1
+            if (interactive_mode == FALSE) { 
+              if (ans.all$MA.running == FALSE) {
+                if (length(ans.all$Vyans) > 1) {
+                  assign(paste(results.m3.0$res.name, results.m3.0$modelname), results.m3.0, envir = results_env)
+                  assign(paste(results.m5.0$res.name, results.m5.0$modelname), results.m5.0, envir = results_env)
+                  if (model.switch == 0){
+                      assign(paste(results.m1$res.name, "Null"), results.m1, envir = results_env)
+                      assign(paste(results.full, "Full"), results.full, envir = results_env)
+                    }
+                } else {
+                  assign(results.m3.0$modelname, results.m3.0, envir = results_env)
+                  assign(results.m5.0$modelname, results.m5.0, envir = results_env)
+                  if (model.switch == 0){
+                    assign("Null", results.m1, envir = results_env)
+                    assign("Full", results.full, envir = results_env)
+                  }
+                }
+              }
+            }
         }
     }
     if (quick.ans == 3 && covar.no > 0 && model.sel > 1) {
@@ -12705,7 +12748,17 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 ans.all$notes <- paste(ans.all$notes, "\n\n", 
                   note.tmp, "\n")
                 ans.all$conf.int <- matrix(NA, ncol = 2, nrow = max(fct2))
-                return(ans.all)
+              if (interactive_mode == FALSE) {
+                if (length(ans.all$Vyans) > 1) {
+                  ans.all$res.name <- ans.all$varname[ans.all$yans]
+                  assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = results_env)
+                } else {
+                  ans.all$res.name <- ans.all$varname[ans.all$yans]
+                  assign(ans.all$modelname, ans.all, envir = results_env)
+                }
+              }
+              return(ans.all)
+
             }
             from <- nr.var + nr.aa + 1
             if (length(xans) == 1) {
@@ -13134,7 +13187,6 @@ f.plot.CED <- function(ans.all,
 
 
 parse_PROAST_output <- function(result) {
- # browser()
   result <- result[!grepl("plot_result", names(result))]
   selected_models <- c()
   CES <- c()
@@ -13232,7 +13284,6 @@ parse_PROAST_output <- function(result) {
           }))
           extra_info <- extra_info[extra_info$subgroup != "", ]
           extra_info <- rbind(extra_info, duplicated_rows)
-          
           selected_models <- c(selected_models, model$modelname)
           CES <- c(CES, model$CES)
           CED <- c(CED, current_ced$BMD)
@@ -13307,6 +13358,22 @@ parse_PROAST_output <- function(result) {
   } else {
     #result_df$weights <- NA
   }
+  na_rows <- result_df[is.na(result_df$CED), ]
+  na_rows <- na_rows[!grepl("null model|full model", na_rows$Selected.Model), ]
+  if (nrow(na_rows) > 0) {
+    apply(na_rows, 1, function(row) {
+      warning("No significant trend according to AIC criterion for ", row["Selected.Model"], "\n")
+    })
+  }
+  na_rows <- result_df[is.na(result_df$CEDL) & is.na(result_df$CEDU) & !is.na(result_df$CED), ]
+  if (nrow(na_rows) > 0) {
+    apply(na_rows, 1, function(row) {
+      warning(row["Selected.Model"], " was selected, however, the value of
+              parameter c is too close to the CES. This could indicate that there
+              are (nonrandom) errors in the data, or that the value of CES is too
+              high. Cannot calculate the CIs for the CED")
+  })
+}
 
   return(result_df)
 }
