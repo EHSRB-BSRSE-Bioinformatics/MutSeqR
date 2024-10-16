@@ -5,7 +5,18 @@ Authors@R: c(
     person("Matthew", "Meier", , "matthew.meier@hc-sc.gc.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8199-8754")),
     person("Annette", "Dodge", , "annette.dodge@hc-sc.gc.ca", role = "aut",
-           comment = c(ORCID = "0000-0002-0446-9055"))
+           comment = c(ORCID = "0000-0002-0446-9055")),
+    person("Andrew", "Williams", , "andrew.williams#hc-sc.gc.ca", role = "aut",
+           comment = c(ORCID = "0000-0002-7637-7686")),
+    person("Elena", "Esina", , role = "aut"),
+    person("Danielle", "LeBlanc", , "danielle.leblanc@hc-sc.gc.ca", role = "ctb",
+           comment = c(ORCID = "0000-0002-3847-8371")),
+    person("Geronimo", "Matteo", , role = "ctb", comment = c(ORCID = "xyz")),
+    person("David", "Schuster", , role = "ctb", comment = c(ORCID = "xyz")),
+    person("Francesco", "Marchetti", , "francesco.marchetti@hc-sc.gc.ca", role = "ctb",
+            comment = c(ORCID = "0000-0002-9435-4867")),
+    person("Carole", "Yauk", , "Carole.Yauk@uottawa.ca", role = "ctb",
+           comment = c(ORCID = "0000-0002-6725-3454"))
   )
 Description: Standard methods for analysis of mutation data following ecNGS 
     for the purpose of mutagencity assessment. Functions include importing 
