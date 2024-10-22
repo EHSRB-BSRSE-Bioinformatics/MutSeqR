@@ -61,8 +61,7 @@ op$base_required_mut_cols <-
     "sample",
     "ref",
     "alt",
-    "alt_depth",
-    "variation_type")
+    "alt_depth")
 op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 
 #' Values accepted for mutation subtypes
@@ -84,10 +83,11 @@ subtype_dict <- c(
 #' A list of mutation subtypes at different resolutions
 #' @format A list with corresponding values
 #' @export
-subtype_list <- list (
-  type = c("no_variant", "snv", "deletion", "insertion", "complex", "mnv","symbolic"),
+subtype_list <- list(
+  type = c("no_variant", "snv", "deletion", "insertion", "complex", "mnv",
+           "sv", "ambiguous", "uncategorized"),
   base_6 = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"),
-  base_12 = c("A>C", "A>G", "A>T", "C>A", "C>G", "C>T", 
+  base_12 = c("A>C", "A>G", "A>T", "C>A", "C>G", "C>T",
               "G>A", "G>C", "G>T", "T>A", "T>C", "T>G"),
   base_96 = c("A[C>A]A", "A[C>A]C", "A[C>A]G", "A[C>A]T", "A[C>G]A", "A[C>G]C",
               "A[C>G]G", "A[C>G]T", "A[C>T]A", "A[C>T]C", "A[C>T]G", "A[C>T]T",
@@ -106,7 +106,7 @@ subtype_list <- list (
               "T[T>A]A", "T[T>A]C", "T[T>A]G", "T[T>A]T", "T[T>C]A", "T[T>C]C",
               "T[T>C]G", "T[T>C]T", "T[T>G]A", "T[T>G]C", "T[T>G]G", "T[T>G]T"),
   base_192 = c("A[A>C]A", "A[A>C]C", "A[A>C]G", "A[A>C]T", "A[A>G]A", "A[A>G]C",
-                "A[A>G]G", "A[A>G]T", "A[A>T]A", "A[A>T]C", "A[A>T]G", "A[A>T]T", 
+               "A[A>G]G", "A[A>G]T", "A[A>T]A", "A[A>T]C", "A[A>T]G", "A[A>T]T", 
                "A[C>A]A", "A[C>A]C", "A[C>A]G", "A[C>A]T", "A[C>G]A", "A[C>G]C",
                "A[C>G]G", "A[C>G]T", "A[C>T]A", "A[C>T]C", "A[C>T]G", "A[C>T]T",
                "A[G>A]A", "A[G>A]C", "A[G>A]G", "A[G>A]T", "A[G>C]A", "A[G>C]C",
@@ -136,7 +136,7 @@ subtype_list <- list (
                "T[G>A]A", "T[G>A]C", "T[G>A]G", "T[G>A]T", "T[G>C]A", "T[G>C]C",
                "T[G>C]G", "T[G>C]T", "T[G>T]A", "T[G>T]C", "T[G>T]G", "T[G>T]T",
                "T[T>A]A", "T[T>A]C", "T[T>A]G", "T[T>A]T", "T[T>C]A", "T[T>C]C",
-               "T[T>C]G", "T[T>C]T", "T[T>G]A", "T[T>G]C", "T[T>G]G", "T[T>G]T" )
+               "T[T>C]G", "T[T>C]T", "T[T>G]A", "T[T>G]C", "T[T>G]G", "T[T>G]T")
 )
 
 
