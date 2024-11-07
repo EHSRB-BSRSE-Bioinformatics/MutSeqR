@@ -130,9 +130,10 @@ filter_mut <- function(mutation_data,
   if (!("filter_mut" %in% colnames(mutation_data))) {
     mutation_data$filter_mut <- FALSE
   }
+
   if (!("filter_reason" %in% colnames(mutation_data))) {
     mutation_data$filter_reason <- ""
-  }
+ }
 
   # Quality check for depth TO ADD:
   ## read depth is not abnormally high or low (corrected for regional GC content)
@@ -142,6 +143,7 @@ filter_mut <- function(mutation_data,
   if (vaf_cutoff < 0 || vaf_cutoff > 1) {
     stop("Error: The VAF cutoff must be between 0 and 1")
   }
+
   ######## VAF Filter #########################################################
   if (vaf_cutoff < 1) {
     if (!("vaf" %in% colnames(mutation_data))) {
@@ -207,6 +209,7 @@ filter_mut <- function(mutation_data,
     }
     message("Removing rows with abnormal VAF...")
     original_row_count <- nrow(mutation_data)
+
     if (return_filtered_rows) {
       rm_abnormal_vaf <- mutation_data %>%
         dplyr::filter((vaf > 0.05 & vaf < 0.45) | (vaf > 0.55 & vaf < 0.95)) %>%
@@ -221,6 +224,7 @@ filter_mut <- function(mutation_data,
     abnormal_vaf_count <- original_row_count - nrow(mutation_data)
     message("Removed ", abnormal_vaf_count, " rows with abnormal VAF.")
   }
+
   ######## Custom Filter ######################################################
   if (!is.null(custom_filter_col)) {
     message("Applying custom filter...")
@@ -393,5 +397,4 @@ filter_mut <- function(mutation_data,
   } else {
     return(mutation_data)
   }
-
 }
