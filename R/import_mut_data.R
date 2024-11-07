@@ -89,7 +89,7 @@
 #' @returns A table where each row is a mutation, and columns indicate the
 #' location, type, and other data. If `output_granges` is set to TRUE, the
 #' mutation data will be returned as a GRanges object, otherwise mutation
-#' data is returned as a dataframe.
+#' data is returned as a dataframe. 
 #'
 #' Output Column Definitions:
 #' \itemize{
