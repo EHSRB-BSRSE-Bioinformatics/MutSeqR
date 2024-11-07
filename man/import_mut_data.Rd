@@ -5,17 +5,19 @@
 \title{Import a .mut file}
 \usage{
 import_mut_data(
-  mut_file,
+  mut_file = "/home/annette.dodge/Documents/mut_files",
   mut_sep = "\\t",
-  rsids = FALSE,
+  is_0_based_mut = TRUE,
   sample_data_file = NULL,
   sd_sep = "\\t",
-  vaf_cutoff,
-  range_buffer = 0,
   regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
-  is_0_based = TRUE,
+  is_0_based_rg = TRUE,
+  range_buffer = 0,
+  genome = NULL,
+  species = NULL,
+  masked_BS_genome = FALSE,
   depth_calc = "take_del",
   custom_column_names = NULL,
   output_granges = FALSE
@@ -36,42 +38,32 @@ Synonymous names for these columns are accepted.
 \item \code{ref}: The reference allele at this position
 \item \code{alt}: The left-aligned, normalized, alternate allele at this
 position.
-\item \code{alt_depth}: The read depth supporting the alternate allele.
+}
+The following columns are not required, but are recommended for full
+package functionality:
+\itemize{
+\item \code{alt_depth}: The read depth supporting the alternate allele. If
+not included, the function will assume a value of 1.
 \item depth col: The total read depth at this position. This column can
 be \code{total_depth} (excluding N-calls) or \code{depth}(including N-calls; if
-\code{total_depth} is not available).
-\item \code{variation_type}: The category to which this variant is assigned.
-\item \code{context}: The local reference trinucleotide context at this
-position (e.g. ATC - not necessarily the transcript codon)
+\code{total_depth} is not available.
 }}
 
 \item{mut_sep}{The delimiter for importing the .mut file.
 Default is tab-delimited.}
 
-\item{rsids}{A logical variable; whether or not the .mut file
-contains rsID information (existing SNPs).}
+\item{is_0_based_mut}{A logical variable. Indicates whether the
+position coordinates in the mutation data are 0 based (TRUE) or
+1 based (FALSE). If TRUE, positions will be converted to 1-based.}
 
-\item{sample_data_file}{An optional file containing
+\item{sample_data_file}{"filepath". A file containing
+\code{custom_regions_file} target region coordinates are 0 based (TRUE)
+or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.
 additional sample metadata (dose, tissue, timepoint, etc.).
 This can be either a data frame object or a file path to a file.}
 
 \item{sd_sep}{The delimiter for importing sample metadata table.
 Default is tab-delimited.}
-
-\item{vaf_cutoff}{The function will add \code{is_germline} column
-that identifies ostensibly germline variants using a cutoff
-for variant allele fraction (VAF). There is no default value
-provided, but generally a value of 0.1 (i.e., 10\%) is a good
-starting point. Setting this will flag variants that are
-present at a frequency greater than this value at a given site.}
-
-\item{range_buffer}{An integer >= 0. Variants that occur outside of
-the defined regions' ranges will be filtered out. Use the range-buffer
-to extend the range within which a variant can occur. The default is
-1 nucleotide outside of region ranges. Ex. Structural variants and
-indels may start outside of the regions. Adjust the range_buffer to
-include these variants. Rows that were filtered out of the mutation
-data will be returned in a separate data frame.}
 
 \item{regions}{Values are \verb{c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom_interval", "none")}.
 Indicates the target panel used for Duplex Sequencing.
@@ -80,17 +72,39 @@ specified species, or to a custom panel. If "custom",
 provide the file path of your regions file in
 \code{custom_regions_file}.}
 
-\item{custom_regions_file}{"filepath". If \code{regions} is set to "custom_interval",
-provide  the file containing regions metadata.
-Required columns are \code{contig}, \code{start}, and \code{end}.
-This can be either a data frame object or a file path to a file.}
+\item{custom_regions_file}{"filepath". If \code{regions} is set to
+"custom_interval", provide  the file containing regions metadata.
+Required columns are \code{contig}, \code{start}, and \code{end}. This can be either
+a data frame object or a file path to a file.}
 
 \item{rg_sep}{The delimiter for importing the \code{custom_regions_file}.
 Default is tab-delimited.}
 
-\item{is_0_based}{A logical variable. Indicates whether the
-\code{custom_regions_file} target region coordinates are 0 based (TRUE)
-or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.}
+\item{is_0_based_rg}{A logical variable. Indicates whether the
+position coordinates in the custom regions file are 0 based (TRUE) or
+1 based (FALSE). If TRUE, positions will be converted to 1-based.}
+
+\item{range_buffer}{An integer >= 0. Extend the range of your regions
+in both directions by the given amount. Ex. Structural variants and
+indels may start outside of the regions. Adjust the range_buffer to
+include these variants in your regions.}
+
+\item{genome}{The genome assembly of the reference genome. This is only
+required if your data does not include a context column. Sequences will
+be retrieved for the given reference genome to populate the context column.
+For a complete list, refer to https://genome.ucsc.edu.
+Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
+Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
+
+\item{species}{The species of your data. Required if
+your data does not include a context column and regions = "none". The
+function will install a BS genome for the given species/genome/masked to
+populate the context column. The species can be the common name of the
+species or the scientific name. Ex. "human" or "Homo sapiens".}
+
+\item{masked_BS_genome}{A logical value. Required when using a BS genome
+to poulate the context column. Whether to use the masked version of the
+BS genome (TRUE) or not (FALSE).}
 
 \item{depth_calc}{Values are \code{c("take_del", "take_mean")}. In the instance
 when there are two or more calls at the same location within a sample, and
@@ -111,17 +125,19 @@ examples. You can change one or more of these.}
 
 \item{output_granges}{A logical variable; whether you want the mutation
 data to output as a GRanges object. Default output (FALSE) is as a dataframe.}
+
+\item{vaf_cutoff}{The function will add \code{is_germline} column
+that identifies ostensibly germline variants using a cutoff
+for variant allele fraction (VAF). There is no default value
+provided, but generally a value of 0.1 (i.e., 10\%) is a good
+starting point. Setting this will flag variants that are
+present at a frequency greater than this value at a given site.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the
 location, type, and other data. If \code{output_granges} is set to TRUE, the
 mutation data will be returned as a GRanges object, otherwise mutation
-data is returned as a dataframe. If the mutation data contains rows that
-are filtered out of the specified regions, results will be returned as a
-list. The first element will be the mutation data called \code{mut_dat} and
-the second element will be the rows that were filtered from the data called
-\code{rows_outside_regions}. If no rows are filtered out, the results will be
-returned as a single dataframe or GRanges object.
+data is returned as a dataframe.
 
 Output Column Definitions:
 \itemize{
@@ -153,6 +169,9 @@ type for the snv variant including the two flanking nucleotide
 \item \code{normalized_context}: The trinucleotide context in C/T base
 notation for this position (e.g. TAG -> CTA).
 \item \code{gc_content}: \% GC of the trinucleotide context at this position.
+\item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
+\item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
+the same as that of at least one other row for the same sample.
 }
 }
 \description{
