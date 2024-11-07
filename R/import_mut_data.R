@@ -98,11 +98,7 @@
 #'      \item `varlen`: The length (in bp) of the variant.
 #'      \item `total_depth`: The total read depth at this position, excluding
 #' N-calls.
-#'      \item `vaf`: The variant allele fraction. Calculated as
 #' `alt_depth`/`depth_col` where `depth_col` can be `total_depth` or `depth`.
-#'      \item `is_germline`: TRUE or FALSE. Flags ostensible germline mutations
-#' (`vaf` > `vaf_cutoff`).
-#'      \item `ref_depth`: The total read depth at the position calling for the
 #' reference allele. Calculated as `depth_col` - `alt_depth` where
 #' `depth_col` can be `total_depth`or `depth`.
 #'      \item `subtype`: The substitution type for the snv variant
