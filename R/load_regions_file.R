@@ -26,13 +26,23 @@ load_regions_file <- function(regions,
       if (is.data.frame(custom_regions_file)) {
         regions_df <- custom_regions_file
       } else {
-        regions_df <- read.table(custom_regions_file, header = TRUE, sep = rg_sep)
+        file <- file.path(custom_regions_file)
+        if (!file.exists(file)) {
+          stop("Error: could not load your custom_regions_file because the file
+          path is invalid")
+        }
+        regions_df <- read.table(file, header = TRUE, sep = rg_sep)
+        if (nrow(regions_df) == 0) {
+          stop("Error: your imported regions file is empty")
+        }
       }
     } else {
-      warning("You must provide either a data frame or a filepath to custom_regions_file when regions is set to 'custom_interval'.")
+      stop("You must provide either a data frame or a filepath to
+      custom_regions_file when regions is set to 'custom_interval'.")
     }
   } else {
-    warning("Invalid regions parameter. Choose from 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', or 'custom_interval'.")
+    stop("Invalid regions parameter. Choose from 'TSpanel_human',
+    'TSpanel_mouse','TSpanel_rat', or 'custom_interval'.")
   }
   return(regions_df)
 }

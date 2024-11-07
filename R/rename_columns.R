@@ -2,12 +2,11 @@
 
 #' A utility function that renames columns of mutation data to default columns names.
 #' @param data mutation data
-#' @param column_map a list that maps synonymous column names to their default. 
+#' @param column_map a list that maps synonymous column names to their default.
 #' @returns the mutation data with column names changed to match default.
 #' @export
 
-rename_columns <- function(data,
-                           column_map = op$column) {
+rename_columns <- function(data, column_map = op$column) {
   # Remove dots and replace with underscores
   colnames(data) <- tolower(gsub("\\.+", "_",
                                  gsub("(\\.+)?$", "",
