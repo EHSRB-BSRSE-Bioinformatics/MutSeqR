@@ -49,25 +49,28 @@ op$site$columns <- c("contig", "start")
 op$mut_count_method <- "min"
 op$processed_required_mut_cols <-
   c("alt_depth",
-    "total_depth",
     "variation_type",
     "subtype",
+    "normalized_subtype",
+    "context_with_mutation",
+    "normalized_context_with_mutation",
+    "normalized_ref",
+    "short_ref",
     "context",
-    "vaf")
+    "normalized_context")
 op$base_required_mut_cols <-
   c("contig",
     "start",
     "end",
     "sample",
     "ref",
-    "alt",
-    "alt_depth")
+    "alt")
 op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 
 #' Values accepted for mutation subtypes
 #'
 #' These values are used to enable user input to translate to columns in a
-#' mut file 
+#' mut file
 #'
 #' @format A vector with corresponding values
 #' @export
