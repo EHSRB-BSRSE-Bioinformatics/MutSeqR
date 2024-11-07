@@ -326,6 +326,7 @@ filter_mut <- function(mutation_data,
           dplyr::select(-dplyr::starts_with("TO_REMOVE_"))
         rm_rows <- rbind(rm_rows, rm_regions)
       }
+
       mutation_data <- mutation_data %>%
         dplyr::filter(.data$TO_REMOVE_in_regions == TRUE)
     } else {
