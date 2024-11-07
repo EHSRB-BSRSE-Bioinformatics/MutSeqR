@@ -5,7 +5,7 @@
 \title{Get sequence of genomic target regions}
 \usage{
 get_seq(
-  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval"),
+  regions,
   custom_regions_file = NULL,
   rg_sep = "\\t",
   genome = NULL,
