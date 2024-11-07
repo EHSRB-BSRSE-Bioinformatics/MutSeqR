@@ -26,33 +26,25 @@
 #' @importFrom xml2 read_xml xml_text xml_find_first
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @export
-get_seq <- function( 
-    regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval"),
-    custom_regions_file = NULL,
-    rg_sep = "\t",
-    genome = NULL,
-    is_0_based = TRUE,
-    padding = 0) {
+get_seq <- function(regions,
+                    custom_regions_file = NULL,
+                    rg_sep = "\t",
+                    genome = NULL,
+                    is_0_based = TRUE,
+                    padding = 0) {
 
-  if (regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat")) {
-    regions_df <- MutSeqR::load_regions_file(regions = regions)
-  } else if (regions == "custom_interval") {
-  
-  regions_df <- MutSeqR::load_regions_file(regions = "custom_interval",
-                                         custom_regions_file = custom_regions_file,
-                                         rg_sep = rg_sep)
-  } else {
-    warning("Invalid regions parameter. Choose from 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', or 'custom_interval'.")
-  }
+  regions_df <- MutSeqR::load_regions_file(regions = regions,
+                                           custom_regions_file = custom_regions_file,
+                                           rg_sep = rg_sep)
 
   if (is_0_based) {
-  regions_df$start <- regions_df$start + 1
-}
+    regions_df$start <- regions_df$start + 1
+  }
 
-regions_df$seq_start <- regions_df$start - padding
-regions_df$seq_end <- regions_df$end + padding
+  regions_df$seq_start <- regions_df$start - padding
+  regions_df$seq_end <- regions_df$end + padding
 
-# Define the API base URL
+  # Define the API base URL
   # Function to retrieve sequence for a given region
   get_sequence_for_region <- function(contig, start, end) {
     # Specify the genome to be searched
@@ -77,7 +69,7 @@ regions_df$seq_end <- regions_df$end + padding
 
   # Apply the function to each row of the dataframe
   regions_df$sequence <- mapply(get_sequence_for_region, regions_df$contig, regions_df$seq_start, regions_df$seq_end)
-  
+
   regions_gr <- GenomicRanges::makeGRangesFromDataFrame(df = as.data.frame(regions_df),
                                                         keep.extra.columns = TRUE,
                                                         seqnames.field = "contig",
