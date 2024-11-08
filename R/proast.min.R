@@ -87,7 +87,12 @@ f.proast <- function(odt = list(),
                 result <- as.list(results_env)
                 result_df <- parse_PROAST_output(result)
                 print(result_df)
+                if (interactive_mode == FALSE) {
+                    # Get rid of results_env
+                    rm(list = ls(), envir = results_env)
+                }
                 return(list(result, result_df))
+
             } else {
                 cat("\n\n   Goodbye,\n    PROAST \n\n")
                 return(invisible())
@@ -235,6 +240,10 @@ f.proast <- function(odt = list(),
                 result <- as.list(results_env)
                 result_df <- parse_PROAST_output(result)
                 print(result_df)
+                if (interactive_mode == FALSE) {
+                    # Get rid of results_env
+                    rm(list = ls(), envir = results_env)
+                }
                 return(list(result, result_df))
             } else {
                 cat("\n\n   Goodbye,\n    PROAST \n\n")
@@ -294,6 +303,10 @@ f.proast <- function(odt = list(),
             result <- as.list(results_env)
             result_df <- parse_PROAST_output(result)
             print(result_df)
+            if (interactive_mode == FALSE) {
+                    # Get rid of results_env
+                    rm(list = ls(), envir = results_env)
+            }
             return(list(result, result_df))
         } else {
             cat("\n\n   Goodbye,\n    PROAST \n\n")
