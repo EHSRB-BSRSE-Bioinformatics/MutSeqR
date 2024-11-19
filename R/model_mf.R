@@ -215,10 +215,18 @@ model_mf <- function(mf_data,
     model <- stats::glm(model_formula,
       family = "quasibinomial",
       data = mf_data,
-      weights = get(total_count),
       ...
     )
+    if(summary(model)$dispersion < 1) {
+      warning("The dispersion parameter is less than 1. Switching to a bionomial distribution.")
+      model <- stats::glm(model_formula,
+        family = "binomial",
+        data = mf_data,
+        ...
+      )
+    }
   }
+
 
   model_summary <- summary(model)
   if (length(fixed_effects) > 1) {
