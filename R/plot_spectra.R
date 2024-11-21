@@ -188,9 +188,9 @@ if (group_order == "arranged") {
                     "T>C" = "red3",
                     "T>G" = "red4",
                     "mnv" = "hotpink",
-                    "deletion" = "white",
-                    "insertion" = "azure2",
-                    "symbolic" = "purple")
+                    "deletion" = "yellow",
+                    "insertion" = "purple",
+                    "symbolic" = "azure2")
     } else if (subtype_resolution == "base_96") {
       base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
       palette <- colorRampPalette(base_colors)(101)

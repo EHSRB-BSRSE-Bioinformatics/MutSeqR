@@ -6,9 +6,10 @@
 \usage{
 generate_bubble_plots(
   mutation_data,
-  facet_col = "dose",
-  circle_spacing = 1,
+  size_by = "alt_depth",
+  facet_col = NULL,
   color_by = "normalized_subtype",
+  circle_spacing = 1,
   circle_outline = "none",
   circle_resolution = 50
 )
@@ -16,11 +17,17 @@ generate_bubble_plots(
 \arguments{
 \item{mutation_data}{Data frame containing the mutation data.}
 
-\item{facet_col}{A string with the column name to facet by. If NULL or not provided, no faceting is performed.}
+\item{size_by}{A string with the column name by which to size the circles.
+Recommended values are "alt_depth" or "vaf".}
+
+\item{facet_col}{A string with the column name by which to facet .
+If NULL, no facetting will be done. Default is NULL.}
+
+\item{color_by}{Character vector specifying how to color the mutations.
+Accepted values are "normalized_subtype", "subtype", and
+"trinucleotide_subtype". NOT FULLY IMPLEMENTED - open to any column name. Ex. contig}
 
 \item{circle_spacing}{Numerical value to adjust the spacing between circles.}
-
-\item{color_by}{Character vector specifying how to color the mutations. Accepted values are "normalized_subtype", "subtype", and "trinucleotide_subtype". NOT FULLY IMPLEMENTED.}
 
 \item{circle_outline}{Color for the circle outline. Default is "none", resulting in no outline color. Other accepted values are colors in the R language.}
 
