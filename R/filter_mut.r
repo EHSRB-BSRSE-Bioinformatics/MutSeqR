@@ -381,6 +381,7 @@ filter_mut <- function(mutation_data,
     message(corrected_depth_count, " rows had their total_depth corrected.")
   }
   if (rm_filtered_mut_from_depth) {
+    ####TO DO Rethink this: what if a germline mutation is problematic? Can that happen? If VAF = 1, is_germline is not created = error
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%
       dplyr::mutate(total_depth =
