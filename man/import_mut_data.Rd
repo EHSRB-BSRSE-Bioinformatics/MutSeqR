@@ -5,7 +5,7 @@
 \title{Import a .mut file}
 \usage{
 import_mut_data(
-  mut_file = "/home/annette.dodge/Documents/mut_files",
+  mut_file,
   mut_sep = "\\t",
   is_0_based_mut = TRUE,
   sample_data_file = NULL,
