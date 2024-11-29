@@ -130,6 +130,9 @@ filter_mut <- function(mutation_data,
   if (!("filter_mut" %in% colnames(mutation_data))) {
     mutation_data$filter_mut <- FALSE
   }
+  if (!("filter_reason" %in% colnames(mutation_data))) {
+    mutation_data$filter_reason <- ""
+  }
 
   if (!("filter_reason" %in% colnames(mutation_data))) {
     mutation_data$filter_reason <- ""
@@ -216,7 +219,6 @@ filter_mut <- function(mutation_data,
         dplyr::mutate(filter_reason = ifelse(filter_reason == "",
                                              "abnormal_vaf",
                                              paste0(filter_reason, "|abnormal_vaf")))
-
       rm_rows <- rbind(rm_rows, rm_abnormal_vaf)
     }
     mutation_data <- mutation_data %>%
@@ -254,7 +256,7 @@ filter_mut <- function(mutation_data,
       }
       mutation_data <- mutation_data[!custom_filtered_rows, ]
       message("Removed ", custom_filtered_count, " rows with values in <", custom_filter_col, "> that contained ",
-              custom_filter_val, " from mutation_data")
+             custom_filter_val, " from mutation_data")
     } else {
       mutation_data$filter_mut[custom_filtered_rows] <- TRUE
 
