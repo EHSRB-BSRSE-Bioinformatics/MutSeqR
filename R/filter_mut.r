@@ -83,7 +83,7 @@
 #' return both the filtered mutation data and the rows that were
 #' removed/flagged in a seperate data frame. The two dataframes will be
 #' returned inside a list, with names \code{mutation_data} and
-#' \code{filtered_data}. Default is FALSE.
+#' \code{filtered_rows}. Default is FALSE.
 #' @details
 #' Depth correction is important for preventing double-counting of reads in
 #' mutation data when summing the total_depth across samples or other groups.
@@ -120,7 +120,7 @@ filter_mut <- function(mutation_data,
                        rm_filtered_mut_from_depth = FALSE,
                        return_filtered_rows = FALSE) {
   # import mut will add in_regions column that can be used to filter. Make sure this doesn't interfere with regions filter
-  if (rm_filtered_mut_from_depth) {
+  if (return_filtered_rows) {
     rm_rows <- data.frame()
   }
 
@@ -130,49 +130,6 @@ filter_mut <- function(mutation_data,
   }
   if (!("filter_reason" %in% colnames(mutation_data))) {
     mutation_data$filter_reason <- ""
-  }
-
-  # Fix the depth
-  if (correct_depth) {
-    if (!("total_depth" %in% colnames(mutation_data))) {
-      stop("Error: You have set correct_depth to TRUE but there is no
-      'total_depth' column in your mutation_data.")
-    }
-    message("Correcting depth...")
-    if (correct_depth_to_indel) {
-
-      # priority list for variation types
-      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv",
-                              "sv", "uncategorised", "no_variant")
-
-      # Step 1: Identify the highest priority type and depth for each unique group
-      priority_data <- mutation_data %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::summarize(
-          all_depths_same = dplyr::n_distinct(.data$total_depth) == 1,
-          highest_priority_type = variation_type[which.min(match(variation_type, variation_priority))],
-          .groups = "drop")
-      # Step 2: Join back to the original data for efficient updates
-      mutation_data <- mutation_data %>%
-        dplyr::left_join(priority_data, by = c("sample", "contig", "start")) %>%
-        dplyr::group_by(sample, contig, start) %>%
-        dplyr::mutate(first_row = dplyr::row_number() == 1) %>%
-        dplyr::ungroup() %>%
-        dplyr::mutate(total_depth = dplyr::case_when(
-                        all_depths_same ~ dplyr::if_else(first_row, total_depth, 0),
-                        variation_type == highest_priority_type ~ total_depth,
-                        TRUE ~ 0)) %>%
-        dplyr::select(-"all_depths_same",
-                      -"highest_priority_type")
-    } else {
-      mutation_data <- mutation_data %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::mutate(
-          total_depth = dplyr::if_else(row_number() == 1, .data$total_depth, 0)) %>%
-        dplyr::ungroup()
-    }
-    corrected_depth_count <- sum(mutation_data$total_depth == 0)
-    message(corrected_depth_count, " rows had their total_depth corrected.")
   }
 
   # Quality check for depth TO ADD:
@@ -237,6 +194,8 @@ filter_mut <- function(mutation_data,
       snv_in_germ_mnv_count <- sum(mutation_data$snv_mnv_overlaps == TRUE)
       message("Found ", snv_in_germ_mnv_count, " SNVs overlapping with germline MNVs found.")
     }
+  } else {
+    mutation_data$is_germline <- FALSE
   }
   if (rm_abnormal_vaf) {
     if (!("vaf" %in% colnames(mutation_data))) {
@@ -248,10 +207,11 @@ filter_mut <- function(mutation_data,
     original_row_count <- nrow(mutation_data)
     if (return_filtered_rows) {
       rm_abnormal_vaf <- mutation_data %>%
-        dplyr::filter(.data$vaf > 0.05 & .data$vaf < 0.45) & !(.data$vaf > 0.55 & .data$vaf < 0.95) %>%
-        dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "", "abnormal_vaf",
-                                             paste0(.data$filter_reason, "|abnormal_vaf"),
-                                             .data$filter_reason))
+        dplyr::filter((vaf > 0.05 & vaf < 0.45) | (vaf > 0.55 & vaf < 0.95)) %>%
+        dplyr::mutate(filter_reason = ifelse(filter_reason == "",
+                                             "abnormal_vaf",
+                                             paste0(filter_reason, "|abnormal_vaf")))
+
       rm_rows <- rbind(rm_rows, rm_abnormal_vaf)
     }
     mutation_data <- mutation_data %>%
@@ -361,8 +321,52 @@ filter_mut <- function(mutation_data,
     message("Removed ", region_filtered_count, " rows based on regions.")
   }
 
+
+  # Fix the depth
+  if (correct_depth) {
+    if (!("total_depth" %in% colnames(mutation_data))) {
+      stop("Error: You have set correct_depth to TRUE but there is no
+      'total_depth' column in your mutation_data.")
+    }
+    message("Correcting depth...")
+    if (correct_depth_to_indel) {
+
+      # priority list for variation types
+      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv",
+                              "sv", "uncategorised", "no_variant")
+
+      # Step 1: Identify the highest priority type and depth for each unique group
+      priority_data <- mutation_data %>%
+        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+        dplyr::summarize(
+          all_depths_same = dplyr::n_distinct(.data$total_depth) == 1,
+          highest_priority_type = variation_type[which.min(match(variation_type, variation_priority))],
+          .groups = "drop")
+      # Step 2: Join back to the original data for efficient updates
+      mutation_data <- mutation_data %>%
+        dplyr::left_join(priority_data, by = c("sample", "contig", "start")) %>%
+        dplyr::group_by(sample, contig, start) %>%
+        dplyr::mutate(first_row = dplyr::row_number() == 1) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(total_depth = dplyr::case_when(
+                        all_depths_same ~ dplyr::if_else(first_row, total_depth, 0),
+                        variation_type == highest_priority_type ~ total_depth,
+                        TRUE ~ 0)) %>%
+        dplyr::select(-"all_depths_same",
+                      -"highest_priority_type")
+    } else {
+      mutation_data <- mutation_data %>%
+        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+        dplyr::mutate(
+          total_depth = dplyr::if_else(row_number() == 1, .data$total_depth, 0)) %>%
+        dplyr::ungroup()
+    }
+    corrected_depth_count <- sum(mutation_data$total_depth == 0)
+    message(corrected_depth_count, " rows had their total_depth corrected.")
+  }
   if (rm_filtered_mut_from_depth) {
     ####TO DO Rethink this: what if a germline mutation is problematic? Can that happen? If VAF = 1, is_germline is not created = error
+    ## Error is vaf_cutoff = 1
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%
       dplyr::mutate(total_depth =
@@ -373,8 +377,8 @@ filter_mut <- function(mutation_data,
   if (return_filtered_rows) {
     filtered_muts <- mutation_data %>%
       dplyr::filter(filter_mut == TRUE)
-    filtered_rows <- rbind(rm_rows, filtered_muts)
-    return(list(mutation_data = mutation_data, filtered_data = filtered_rows))
+    filter_rows_return <- rbind(rm_rows, filtered_muts)
+    return(list(mutation_data = mutation_data, filtered_rows = filter_rows_return))
   } else {
     return(mutation_data)
   }
