@@ -507,7 +507,7 @@ import_mut_data <- function(mut_file,
       subtype =
         ifelse(.data$variation_type == "snv",
           paste0(.data$ref, ">", .data$alt),
-          ".data$variation_type"
+          .data$variation_type
         ),
       normalized_subtype = ifelse(.data$subtype %in% names(sub_dict),
                                   sub_dict[.data$subtype],
