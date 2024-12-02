@@ -202,6 +202,8 @@ filter_mut <- function(mutation_data,
       snv_in_germ_mnv_count <- sum(mutation_data$snv_mnv_overlaps == TRUE)
       message("Found ", snv_in_germ_mnv_count, " SNVs overlapping with germline MNVs.")
     }
+  } else {
+    mutation_data$is_germline <- FALSE
   }
   ######## rm_abnormal_vaf Filter #############################################
   if (rm_abnormal_vaf) {
@@ -219,6 +221,7 @@ filter_mut <- function(mutation_data,
         dplyr::mutate(filter_reason = ifelse(filter_reason == "",
                                              "abnormal_vaf",
                                              paste0(filter_reason, "|abnormal_vaf")))
+
       rm_rows <- rbind(rm_rows, rm_abnormal_vaf)
     }
     mutation_data <- mutation_data %>%
@@ -380,6 +383,7 @@ filter_mut <- function(mutation_data,
   }
   if (rm_filtered_mut_from_depth) {
     ####TO DO Rethink this: what if a germline mutation is problematic? Can that happen? If VAF = 1, is_germline is not created = error
+    ## Error is vaf_cutoff = 1
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%
       dplyr::mutate(total_depth =
