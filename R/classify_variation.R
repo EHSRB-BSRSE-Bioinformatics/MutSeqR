@@ -17,7 +17,8 @@ classify_variation <- function(ref, alt) {
   # We will have to assume that anytime we see <NON_REF> alone, that
   # there is no variant, and if <NON_REF> is followed by an alt allele,
   # there is a variant.
-  alt <- gsub(",?<NON_REF>,?", "", alt)
+  alt <- gsub("(^|,)<NON_REF>(,|$)", "", alt)
+  alt <- gsub("^,|,$", "", alt)  # Trim leading/trailing commas
 
   if (alt %in% no_variant_indicators || alt == ref) {
     return("no_variant")
@@ -39,18 +40,19 @@ classify_variation <- function(ref, alt) {
   if (nchar(ref) > 1 && nchar(ref) == nchar(alt) && ref != alt) {
     return("mnv")
   }
-  # Case: Complex variant (different lengths but both > 1)
-  if (nchar(ref) > 1 && nchar(alt) > 1 && nchar(ref) != nchar(alt)) {
-    return("complex")
-  }
-  # Case: Insertion
-  if (nchar(ref) < nchar(alt) && ref == substr(alt, 1, 1)) {
+   # Case: Insertion
+  if (nchar(ref) < nchar(alt) && startsWith(alt, ref)) {
     return("insertion")
   }
   # Case: Deletion
-  if (nchar(ref) > nchar(alt) && substr(ref, 1, 1) == alt) {
+  if (nchar(ref) > nchar(alt) && nchar(alt) == 1 && startsWith(ref, alt)) {
     return("deletion")
   }
+  # Case: Complex; ref and alt have different lengths and different base compositions
+  if (nchar(ref) != nchar(alt) && !grepl(paste0("^", ref), alt) && !grepl(paste0("^", alt), ref)) {
+    return("complex")
+  }
+
   # Otherwise, uncategorized
   return("uncategorized")
 }
