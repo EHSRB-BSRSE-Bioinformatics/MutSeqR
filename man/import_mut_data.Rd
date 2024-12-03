@@ -18,7 +18,6 @@ import_mut_data(
   genome = NULL,
   species = NULL,
   masked_BS_genome = FALSE,
-  depth_calc = "take_del",
   custom_column_names = NULL,
   output_granges = FALSE
 )
@@ -105,17 +104,6 @@ species or the scientific name. Ex. "human" or "Homo sapiens".}
 \item{masked_BS_genome}{A logical value. Required when using a BS genome
 to poulate the context column. Whether to use the masked version of the
 BS genome (TRUE) or not (FALSE).}
-
-\item{depth_calc}{Values are \code{c("take_del", "take_mean")}. In the instance
-when there are two or more calls at the same location within a sample, and
-the depths differ, this parameter chooses the method for resolving the
-difference. This occurs when a deletion is called in the data. It will be
-called alongside a no_variant. "take_mean" calculates the depth column by
-taking the mean of all depths in the group. "take_del" calculates the depth
-column by choosing only the depth of the deletion in the group, or if no
-deletion is present, the complex variant. If there is no deletion or
-complex variant, then it takes the mean of the depths within the group.
-Default is "take_del". depth_col = \code{total_depth} or \code{depth}.}
 
 \item{custom_column_names}{A list of names to specify the meaning of column
 headers. Since column names can vary with data, this might be necessary to
