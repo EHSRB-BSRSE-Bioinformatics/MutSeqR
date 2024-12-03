@@ -140,6 +140,7 @@ filter_mut <- function(mutation_data,
   if (vaf_cutoff < 0 || vaf_cutoff > 1) {
     stop("Error: The VAF cutoff must be between 0 and 1")
   }
+  ######## VAF Filter #########################################################
   if (vaf_cutoff < 1) {
     if (!("vaf" %in% colnames(mutation_data))) {
       stop("\nError: You have set a vaf_cutoff but there is no 'vaf' column in
@@ -159,7 +160,7 @@ filter_mut <- function(mutation_data,
     vaf_filtered_count <- sum(as.numeric(mutation_data$is_germline == TRUE))
     message("Found ", vaf_filtered_count, " germline mutations.")
 
-    # Filter snvs that overlap with clonal mnvs
+  ######## snv_in_germ_mnv Filter #############################################
     if (snv_in_germ_mnv) {
       message("Flagging SNVs overlapping with germline MNVs...")
       mnv_ranges <- mutation_data %>%
@@ -190,13 +191,14 @@ filter_mut <- function(mutation_data,
                       filter_reason = ifelse(.data$snv_mnv_overlaps == TRUE,
                                              ifelse(.data$filter_reason == "", "snv_in_germ_mnv",
                                                     paste0(.data$filter_reason, "|snv_in_germ_mnv")),
-                                              .data$filter_reason))
+                                            .data$filter_reason))
       snv_in_germ_mnv_count <- sum(mutation_data$snv_mnv_overlaps == TRUE)
-      message("Found ", snv_in_germ_mnv_count, " SNVs overlapping with germline MNVs found.")
+      message("Found ", snv_in_germ_mnv_count, " SNVs overlapping with germline MNVs.")
     }
   } else {
     mutation_data$is_germline <- FALSE
   }
+  ######## rm_abnormal_vaf Filter #############################################
   if (rm_abnormal_vaf) {
     if (!("vaf" %in% colnames(mutation_data))) {
       stop("\nError: You have set rm_abnormal_vaf to TRUE but there is no 'vaf'
@@ -219,6 +221,7 @@ filter_mut <- function(mutation_data,
     abnormal_vaf_count <- original_row_count - nrow(mutation_data)
     message("Removed ", abnormal_vaf_count, " rows with abnormal VAF.")
   }
+  ######## Custom Filter ######################################################
   if (!is.null(custom_filter_col)) {
     message("Applying custom filter...")
     if (is.null(custom_filter_val)) {
@@ -229,34 +232,40 @@ filter_mut <- function(mutation_data,
     if (!(custom_filter_col) %in% colnames(mutation_data)) {
       stop(paste("Error: could not find", custom_filter_col, "in mutation_data"))
     }
+    pattern <- paste(custom_filter_val, collapse = "|")
+    custom_filtered_rows <- grepl(pattern, mutation_data[[custom_filter_col]])
+    custom_filtered_count <- sum(custom_filtered_rows)
     if (custom_filter_rm) {
-      custom_filtered_count <- sum(mutation_data[[custom_filter_col]] %in% custom_filter_val)
       if (return_filtered_rows) {
-        rm_custom <- mutation_data %>%
-          dplyr::filter(!!sym(custom_filter_col) %in% custom_filter_val) %>%
-          dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "", custom_filter_val,
-                                             paste0(.data$filter_reason, "|" , custom_filter_val)))
+        rm_custom <- mutation_data[custom_filtered_rows, ]
+        matching_filter_values <- custom_filter_val[sapply(custom_filter_val, function(val) grepl(val, rm_custom[[custom_filter_col]]))]
+        rm_custom <- rm_custom %>%
+          dplyr::mutate(filter_reason =
+            ifelse(.data$filter_reason == "",
+              .data[[custom_filter_col]],
+              paste0(.data$filter_reason, "|", .data[[custom_filter_col]])
+            )
+          )
         rm_rows <- rbind(rm_rows, rm_custom)
       }
-      mutation_data <- mutation_data %>%
-        dplyr::filter(!(!!sym(custom_filter_col) %in% custom_filter_val))
-      message("Removed ", custom_filtered_count, " rows with values in <", custom_filter_col, "> that matched ",
+      mutation_data <- mutation_data[!custom_filtered_rows, ]
+      message("Removed ", custom_filtered_count, " rows with values in <", custom_filter_col, "> that contained ",
               custom_filter_val, " from mutation_data")
     } else {
-      custom_filtered_count <- sum(mutation_data[[custom_filter_col]] %in% custom_filter_val)
+      mutation_data$filter_mut[custom_filtered_rows] <- TRUE
+
       mutation_data <- mutation_data %>%
-        dplyr::mutate(filter_mut =
-                        ifelse(!!sym(custom_filter_col) %in% custom_filter_val,
-                               TRUE, filter_mut),
-                      filter_reason = ifelse(!!sym(custom_filter_col) %in% custom_filter_val,
-                                              ifelse(.data$filter_reason == "", custom_filter_val,
-                                                      paste0(.data$filter_reason, "|" , custom_filter_val)),
-                                                      .data$filter_reason))
-      message("Flagged ", custom_filtered_count, " rows with values in <", custom_filter_col, "> column that matched ",
-              custom_filter_val)
+        dplyr::mutate(filter_reason = ifelse(custom_filtered_rows,
+          ifelse(.data$filter_reason == "",
+            .data[[custom_filter_col]],
+            paste0(.data$filter_reason, "|", .data[[custom_filter_col]])
+          ),
+          .data$filter_reason
+        ))
+      message("Flagged ", custom_filtered_count, " rows with values in <", custom_filter_col, "> column that matched ", custom_filter_val)
     }
   }
-
+  ######## Regions Filter #####################################################
   if (!is.null(regions)) {
     message("Applying region filter...")
     regions_df <- MutSeqR::load_regions_file("custom_interval", regions, rg_sep)
@@ -282,32 +291,32 @@ filter_mut <- function(mutation_data,
     if (allow_half_overlap) {
       ranges_joined <- plyranges::join_overlap_left_directed(mut_ranges,
                                                              region_ranges,
-                                                             suffix = c("",
-                                                                        "_regions")) 
+                                                             suffix = c("", "_regions"))
     } else {
-      ranges_joined <- plyranges::join_overlap_left_within_directed(mut_ranges,
-                                                                    region_ranges,
-                                                                    suffix = c("",
-                                                                               "_regions"))
+      ranges_joined <- plyranges::join_overlap_left_within_directed(mut_ranges, region_ranges, suffix = c("", "_regions"))
     }
     mutation_data <- as.data.frame(ranges_joined)
+    mutation_data$TO_REMOVE_in_regions[is.na(mutation_data$TO_REMOVE_in_regions)] <- FALSE
+    mutation_data <- dplyr::rename(mutation_data, contig = seqnames)
     original_row_count <- nrow(mutation_data)
     if (regions_filter == "remove_within") {
       if (return_filtered_rows) {
         rm_regions <- mutation_data %>%
           dplyr::filter(.data$TO_REMOVE_in_regions == TRUE) %>%
           dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "", "regions",
-                                               paste0(.data$filter_reason, "|regions")))
+                                               paste0(.data$filter_reason, "|regions"))) %>%
+          dplyr::select(-dplyr::starts_with("TO_REMOVE_"))
         rm_rows <- rbind(rm_rows, rm_regions)
       }
       mutation_data <- mutation_data %>%
-        dplyr::filter(!(.data$TO_REMOVE_in_regions == TRUE)) # Will be NULL not FALSE is not TRUE
+        dplyr::filter(.data$TO_REMOVE_in_regions == FALSE)
     } else if (regions_filter == "keep_within") {
       if (return_filtered_rows) {
         rm_regions <- mutation_data %>%
-          dplyr::filter(!(.data$TO_REMOVE_in_regions == TRUE)) %>%
+          dplyr::filter(.data$TO_REMOVE_in_regions == FALSE) %>%
           dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "", "regions",
-                                               paste0(.data$filter_reason, "|regions")))
+                                               paste0(.data$filter_reason, "|regions"))) %>%
+          dplyr::select(-dplyr::starts_with("TO_REMOVE_"))
         rm_rows <- rbind(rm_rows, rm_regions)
       }
       mutation_data <- mutation_data %>%
@@ -321,8 +330,7 @@ filter_mut <- function(mutation_data,
     message("Removed ", region_filtered_count, " rows based on regions.")
   }
 
-
-  # Fix the depth
+  ######## Depth Correction ###################################################
   if (correct_depth) {
     if (!("total_depth" %in% colnames(mutation_data))) {
       stop("Error: You have set correct_depth to TRUE but there is no
@@ -333,15 +341,14 @@ filter_mut <- function(mutation_data,
 
       # priority list for variation types
       variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv",
-                              "sv", "uncategorised", "no_variant")
+                              "sv", "uncategorized", "no_variant")
 
-      # Step 1: Identify the highest priority type and depth for each unique group
+      # Step 1: Identify the highest priority type for each unique group
       priority_data <- mutation_data %>%
         dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::summarize(
+        dplyr::reframe(
           all_depths_same = dplyr::n_distinct(.data$total_depth) == 1,
-          highest_priority_type = variation_type[which.min(match(variation_type, variation_priority))],
-          .groups = "drop")
+          highest_priority_type = variation_type[which.min(match(variation_type, variation_priority))])
       # Step 2: Join back to the original data for efficient updates
       mutation_data <- mutation_data %>%
         dplyr::left_join(priority_data, by = c("sample", "contig", "start")) %>%
@@ -353,7 +360,8 @@ filter_mut <- function(mutation_data,
                         variation_type == highest_priority_type ~ total_depth,
                         TRUE ~ 0)) %>%
         dplyr::select(-"all_depths_same",
-                      -"highest_priority_type")
+                      -"highest_priority_type",
+                      -"first_row")
     } else {
       mutation_data <- mutation_data %>%
         dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
@@ -366,7 +374,6 @@ filter_mut <- function(mutation_data,
   }
   if (rm_filtered_mut_from_depth) {
     ####TO DO Rethink this: what if a germline mutation is problematic? Can that happen? If VAF = 1, is_germline is not created = error
-    ## Error is vaf_cutoff = 1
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%
       dplyr::mutate(total_depth =
@@ -374,10 +381,13 @@ filter_mut <- function(mutation_data,
                          .data$total_depth - .data$alt_depth, .data$total_depth)
       )
   }
+  message("Filtering complete.")
   if (return_filtered_rows) {
+    ## If filter_rows_return is empty, return just mutation data, no list.
     filtered_muts <- mutation_data %>%
       dplyr::filter(filter_mut == TRUE)
     filter_rows_return <- rbind(rm_rows, filtered_muts)
+    message("Returning a list: mutation_data and filtered_rows.")
     return(list(mutation_data = mutation_data, filtered_rows = filter_rows_return))
   } else {
     return(mutation_data)
