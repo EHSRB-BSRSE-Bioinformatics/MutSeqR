@@ -108,15 +108,17 @@ using one of the TSpanels.}
 \item{rm_filtered_mut_from_depth}{A logical value. If TRUE, the function will
 subtract the \code{alt_depth} of rows that were flagged by the
 \code{filter_mut} column from their \code{total_depth}. This will treat
-flagged variants as N-calls. If FALSE, the \code{alt_depth} will be retained
-in the \code{total_depth} This will not apply to variants flagged as germline
-by the \code{vaf_cutoff}. Default is FALSE.}
+flagged variants as N-calls. This will not apply to variants flagged as
+germline by the \code{vaf_cutoff}. However, if the germline variant
+has additional filters applied, then the subtraction will still occur.
+If FALSE, the \code{alt_depth} will be retained in the
+\code{total_depth} for all variants.  Default is FALSE.}
 
 \item{return_filtered_rows}{A logical value. If TRUE, the function will
 return both the filtered mutation data and the rows that were
 removed/flagged in a seperate data frame. The two dataframes will be
 returned inside a list, with names \code{mutation_data} and
-\code{filtered_data}. Default is FALSE.}
+\code{filtered_rows}. Default is FALSE.}
 }
 \description{
 This function creates a filter_mut column that will be read by
