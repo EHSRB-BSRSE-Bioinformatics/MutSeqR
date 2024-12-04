@@ -62,9 +62,6 @@
 #' A vector of one or more variation_types. Options are:
 #'  "snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
 #'  Default includes all variants.
-#' @param filter_germ A logical variable. If TRUE, exclude rows from the
-#' mutation count that were flagged as germline mutations in `is_germline`.
-#' Default is TRUE.
 #' @param summary A logical variable, whether to return a summary table
 #' (i.e., where only relevant columns for frequencies and groupings are
 #' returned). Setting this to false returns all columns in the original
@@ -119,8 +116,9 @@ calculate_mut_freq <- function(mutation_data,
                                                  "insertion",
                                                  "complex",
                                                  "mnv",
-                                                 "symbolic"),
-                               filter_germ = TRUE,
+                                                 "sv",
+                                                 "ambiguous",
+                                                 "uncategorized"),
                                summary = TRUE,
                                retain_metadata_cols = NULL) {
 # Validate Parameters
@@ -137,13 +135,12 @@ calculate_mut_freq <- function(mutation_data,
       none, type, base_6, base_12, base_96, base_192")
     )
   }
-  if (any(!variant_types %in% c("snv", "deletion", "insertion", "complex", "mnv", "symbolic", "no_variant"))) {
+  if (any(!variant_types %in% MutSeqR::subtype_list$type)) {
     stop(paste0(
-      "Error: you need to set variant_types to one or more of: snv, deletion, insertion, complex, mnv, symbolic, no_variant. Variation_types outside of this list will not be included in the mutation frequency calculation.")
-    )
-  }
-  if (!is.logical(filter_germ)) {
-    stop("filter_germ must be a logical variable.")
+      "Error: you need to set variant_types to one or more of: ",
+      paste(MutSeqR::subtype_list$type, collapse = ", "),
+      ". Variation_types outside of this list will not be included in the mutation frequency calculation."
+    ))
   }
   if (!is.logical(summary)) {
     stop("summary must be a logical variable.")
