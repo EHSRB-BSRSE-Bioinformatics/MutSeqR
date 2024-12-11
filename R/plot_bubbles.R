@@ -71,7 +71,8 @@ plot_bubbles <- function(mutation_data,
   }
 
   x <- mutation_data %>% 
-    dplyr::filter(!.data$variation_type %in% "no_variant" & .data$is_germline == FALSE) %>%
+    dplyr::filter(!.data$variation_type %in% "no_variant" &
+                    .data$filter_mut == FALSE) %>%
     dplyr::arrange(!!rlang::sym(color_by))
   data <- data.frame(group = paste(x$sample,
                                    x$contig,
