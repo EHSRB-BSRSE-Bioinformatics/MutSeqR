@@ -58,12 +58,14 @@
 spectra_comparison <- function(mutation_data,
                                cols_to_group,
                                subtype_resolution = "base_6",
-                               variant_types =  c("snv",
+                               variant_types = c("snv",
                                                  "deletion",
                                                  "insertion",
                                                  "complex",
                                                  "mnv",
-                                                 "symbolic"),
+                                                 "sv",
+                                                 "ambiguous",
+                                                 "uncategorized"),
                                mf_type = "min",
                                contrasts,
                                cont_sep = "\t") {
@@ -72,7 +74,6 @@ spectra_comparison <- function(mutation_data,
                                          cols_to_group = cols_to_group,
                                          subtype_resolution = subtype_resolution,
                                          variant_types = variant_types,
-                                         filter_germ = TRUE,
                                          summary = TRUE)
   # Prepare Data
   ## Find the sum columns for the mutation counts
