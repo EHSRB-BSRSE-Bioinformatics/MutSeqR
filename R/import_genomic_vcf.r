@@ -54,6 +54,7 @@
 #' @importFrom dplyr left_join mutate case_when
 #' @importFrom tidyr separate_rows separate pivot_wider
 #' @return a data frame of your imported mutation data.
+#' @export
 import_genomic_vcf <- function(vcf_file,
                                sample_data_file,
                                sd_sep,
