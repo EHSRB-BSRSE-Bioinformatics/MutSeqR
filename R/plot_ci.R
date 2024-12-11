@@ -53,8 +53,8 @@ plot_CI <- function(data,
                            y = results_bmd_df_plot$Response,
                            color = results_bmd_df_plot$name)) +
     ggplot2::geom_line(ggplot2::aes(group = results_bmd_df_plot$Response),
-                       color = "#b8b8b8", linewidth = 3.5) +
-    ggplot2::geom_point(size = 3) +
+                       color = "#b8b8b8", linewidth = 3.5, na.rm = TRUE) +
+    ggplot2::geom_point(size = 3, na.rm = TRUE) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "bottom",
                    axis.text.y = ggplot2::element_text(color = "black"),
@@ -71,7 +71,7 @@ plot_CI <- function(data,
                        nudge_x = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
                                                 nudge_value, -nudge_value),
                        hjust = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
-                                              0, 1)) +
+                                              0, 1), na.rm = TRUE) +
     ggplot2::labs(x = "BMD", y = "Response",
                   title = paste0("BMD with 90% Confidence Intervals"),
                   color = NULL) +
