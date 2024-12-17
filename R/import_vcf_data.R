@@ -48,30 +48,18 @@
 #'  Required columns are "contig", "start", and "end"
 #' @param rg_sep The delimiter for importing the custom_regions_file.
 #' Default is tab-delimited
-#' @param genome The genome assembly of the reference genome. For a ########
-#' complete list, refer to https://genome.ucsc.edu.
+#' @param genome The genome assembly of the reference genome.
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 #' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
 #' @param species The species of the reference genome. Required if
 #' regions is set to none. The value can be the common name of the species
 #' or the scientific name. Ex. "human" or "Homo sapiens".
 #' @param range_buffer An integer >= 0 .Required if using a targetted
-#' approach.  Variants that occur outside of the defined regions' ranges
-#' will be filtered out. Use the range-buffer to extend the range outside
-#' of a region within which a variant can occur. The default is 1 nucleotide
+#' approach.  Use the range-buffer to extend the range outside
+#' of a region within which a variant can occur. The default is 0 nucleotides
 #' outside of region ranges. Ex. Structural variants and indels may start
 #' outside of the regions. Adjust the range_buffer to include these variants
-#' in the final mutation data. Variants that are filtered out of the data
-#' are returned in a separate dataframe.
-#' @param depth_calc In the instance when there are two or more calls at the
-#' same location within a sample, and the depths differ, this parameter chooses
-#' the method of calculation for the total_depth. take_mean calculates the
-#' total_depth by taking the mean reference depth and then adding all the alt
-#' depths. take_del calculates the total_depth by choosing only the reference
-#' depth of the deletion in the group, or if no deletion is present, the
-#' complex variant, then adding all alt depths. If there is no deletion
-#' or complex variant, it takes the mean of the reference depths.
-#' Default is "take_del".
+#' in the target sequencies.
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation
 #' data to output as a GRanges object. Default output is as a dataframe.
 #' @returns A data frame or a GRanges object where each row is a mutation,
@@ -88,12 +76,12 @@
 #'
 import_vcf_data <- function(
     vcf_file,
-    range_buffer = 1,
     sample_data_file = NULL,
     sd_sep = "\t",
     regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
     custom_regions_file = NULL,
     rg_sep = "\t",
+    range_buffer = 0,
     genome = NULL,
     species = NULL,
     masked_BS_genome = FALSE,
@@ -150,6 +138,7 @@ import_vcf_data <- function(
     vcf <- suppressWarnings(check_and_rename_sample(vcf))
   }
   # Extract and Clean alt column
+  ## May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
   alt <- VariantAnnotation::alt(vcf)
   alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
   alt <- IRanges::CharacterList(alt_values_clean)
@@ -161,15 +150,34 @@ import_vcf_data <- function(
     ref = VariantAnnotation::ref(vcf),
     alt = alt
   )
-
-  # Retain all INFO and GENO fields
+  # Retain all INFO fields
   info <- as.data.frame(VariantAnnotation::info(vcf))
+  # Extract GENO fields depending on the type of data
   geno <- VariantAnnotation::geno(vcf)
-  # turn geno into a vector
-  geno_df <- as.data.frame(lapply(geno, function(arr) {
-    as.vector(arr)
-  }))
-  dat <- cbind(dat, info, geno_df)
+  geno_df <- data.frame(row.names = rownames(geno[[1]]))
+  for (field_name in names(geno)) {
+    field <- geno[[field_name]]
+    if (is.list(field)) { # Ex. AD
+      max_length <- max(sapply(field, length))
+      expanded_field <- do.call(rbind, lapply(field, function(x) {
+        c(x, rep(NA, max_length - length(x)))
+      }))
+      colnames(expanded_field) <- paste(field_name, seq_len(max_length), sep = "_")
+      geno_df <- cbind(geno_df, expanded_field)
+    } else if (is.matrix(field)) { # Ex. GT, DP, VD
+      geno_df[[field_name]] <- as.vector(field)
+    } else if (is.array(field) && length(dim(field)) == 3) { # Ex. RD, ALD
+      # Collapse the array over the 2nd and 3rd dimensions
+      collapsed_field <- apply(field, c(1), function(x) as.vector(x))
+      collapsed_field <- as.data.frame(t(collapsed_field))
+      ncols <- ncol(collapsed_field)
+      colnames(collapsed_field) <- paste(field_name, seq_len(ncols), sep = "_")
+      geno_df <- cbind(geno_df, collapsed_field)
+    } else {
+      geno_df[[field_name]] <- field
+    }
+  }
+  dat <- cbind(dat, geno_df, info)
   row.names(dat) <- NULL
 
   # Join with sample metadata if provided
@@ -266,7 +274,7 @@ import_vcf_data <- function(
     mut_ranges <- plyranges::join_overlap_left_within_directed(mut_ranges,
                                                                region_ranges,
                                                                suffix = c("",
-                                                                         "_regions"))
+                                                                          "_regions"))
 
     mut_ranges <- mut_ranges %>%
       plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
@@ -276,86 +284,33 @@ import_vcf_data <- function(
       warning("Warning: ", false_count, " rows were outside of the specified regions.\n
         To remove these rows, use the filter_mut() function")
     }
-    # Create a context column, if needed
-    # Use sequences of provided regions to populate the context column:
-    if (!context_exists) {
-      sequences <- MutSeqR::get_seq(regions = regions,
-                                    custom_regions_file = custom_regions_file,
-                                    rg_sep = rg_sep,
-                                    genome = genome,
-                                    is_0_based = is_0_based_rg,
-                                    padding = 1 + range_buffer)
-      sequences <- sequences %>%
-        plyranges::select("seq_start", "seq_end", "sequence")
-
-      if (false_count > 0) { # handle sequences outside of regions
-        rows_outside_regions <- mut_ranges %>%
-          plyranges::filter(in_regions == FALSE) %>%
-          as.data.frame() %>%
-          dplyr::rename("contig" = "seqnames")
-
-        if (regions == "TSpanel_human") {
-          genome <- "hg38"
-        } else if (regions == "TSpanel_mouse") {
-          genome <- "mm10"
-        } else if (regions == "TSpanel_rat") {
-          genome <- "rn6"
-        } else if (regions == "custom_interval") {
-          genome <- genome
-        }
-
-        sequences_outside_regions <- MutSeqR::get_seq(regions = "custom_interval",
-                                                      custom_regions_file = rows_outside_regions,
-                                                      rg_sep = NULL,
-                                                      genome = genome,
-                                                      is_0_based = FALSE,
-                                                      padding = 1)
-        sequences_outside_regions <- sequences_outside_regions %>%
-          plyranges::select("seq_start", "sequence")
-        sequences <- c(sequences, sequences_outside_regions)
-      }
-      # Join the sequences to the mutation data
-      mut_ranges <- plyranges::join_overlap_left(mut_ranges,
-                                                 sequences,
-                                                 suffix = c("", "_seq"))
-      mut_ranges <- mut_ranges %>%
-        plyranges::mutate(start_string = start - seq_start + 1,
-                          context = substr(sequence,
-                                           start_string - 1,
-                                           start_string + 1)) %>%
-        plyranges::select(-seq_start, -sequence, -start_string)
-      message("Populating context column with sequences from https://genome.ucsc.edu")
+  }
+  # Create a context column, if needed
+  if (!context_exists) {
+    if (is.null(genome) || is.null(species)) {
+      stop("Error: We need to populate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
     }
-    # Turn data back into a dataframe
+    ref_genome <- install_ref_genome(organism = species,
+                                     genome = genome,
+                                     masked = masked_BS_genome)
+
+    extract_context <- function(mutations,
+                                bsgenome,
+                                upstream = 1,
+                                downstream = 1) {
+      # Resize the mut_ranges to include the context
+      expanded_ranges <- GenomicRanges::resize(x = mutations,
+                                               width = upstream + downstream + 1,
+                                               fix = "center")
+      # Extract the sequences from the BSgenome
+      sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
+      # Return the sequences
+      return(sequences)
+    }
+    context <- extract_context(mut_ranges, ref_genome)
+    mut_ranges$context <- context
     dat <- as.data.frame(mut_ranges) %>%
       dplyr::rename(contig = "seqnames")
-  } else { # Populate the context using BSgenomes
-    if (!context_exists) {
-      if (is.null(genome) || is.null(species)) {
-        stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
-      }
-      ref_genome <- install_ref_genome(organism = species,
-                                       genome = genome,
-                                       masked = masked_BS_genome)
-
-      extract_context <- function(mutations,
-                                  bsgenome,
-                                  upstream = 1,
-                                  downstream = 1) {
-        # Resize the mut_ranges to include the context
-        expanded_ranges <- GenomicRanges::resize(x = mutations,
-                                                width = upstream + downstream + 1,
-                                                fix = "center")
-        # Extract the sequences from the BSgenome
-        sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
-        # Return the sequences
-        return(sequences)
-      }
-      context <- extract_context(mut_ranges, ref_genome)
-      mut_ranges$context <- context
-      dat <- as.data.frame(mut_ranges) %>%
-        dplyr::rename(contig = "seqnames")
-    }
   }
 
   # Create is_known based on ID col, if present
@@ -370,7 +325,7 @@ import_vcf_data <- function(
     dat$variation_type <- mapply(classify_variation, dat$ref, dat$alt)
   }
 
-# Define substitution dictionary to normalize to pyrimidine context
+  # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
     "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
     "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
@@ -442,58 +397,14 @@ import_vcf_data <- function(
   total_depth_exists <- "total_depth" %in% colnames(dat)
   depth_exists <- "depth" %in% colnames(dat)
   no_calls_exists <- "no_calls" %in% colnames(dat)
+  ad_columns <- grep("^ad_", colnames(dat), value = TRUE)
 
   if (!total_depth_exists) {
-    if(no_calls_exists && depth_exists) {
+    if (no_calls_exists && depth_exists) {
       dat <- dat %>%
         dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-    } else if ("ad" %in% colnames(dat)) { #create total_depth from AD
-##################### finish this #########################################
-    AD <- VariantAnnotation::geno(vcf)$AD
-    AD <- as.data.frame(do.call(rbind, AD))
-    colnames(AD) <- paste0("depth", 1:ncol(AD))
-    dat$ref_depth <- AD$depth1
-    dat$var_depth <- AD$depth2
-    dat <- dat %>%
-      dplyr::mutate(var_depth = ifelse(is.na(.data$var_depth),
-                                       0,
-                                       .data$var_depth))
-
-    # Filter the rows where "sample," "contig," and "start" are duplicated
-    duplicated_rows <- dat %>%
-      dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-      dplyr::filter(n() > 1)
-
-    # Calculate total_depth for the duplicated rows
-      total_depth_duplicated <- duplicated_rows %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::summarize(
-          total_depth = case_when(
-            any(.data$variation_type == "deletion") & length(unique(.data$ref_depth[!is.na(.data$ref_depth)])) > 1 ~
-              sum(ifelse(.data$variation_type == "deletion", .data$ref_depth, 0), na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE),
-            any(.data$variation_type == "complex" & !any(.data$variation_type == "deletion")) & length(unique(.data$ref_depth[!is.na(.data$ref_depth)])) > 1 ~
-              sum(ifelse(.data$variation_type == "complex", .data$ref_depth, 0), na.rm = TRUE + sum(.data$var_depth, na.rm = TRUE)),
-            TRUE ~ round(mean(.data$ref_depth, na.rm = TRUE) + sum(.data$var_depth, na.rm = TRUE))
-          )
-        ) %>%
-        dplyr::ungroup()
-
-  # Merge the total_depth values for duplicated rows into the original df
-  dat <- dat %>%
-    dplyr::left_join(total_depth_duplicated,
-                     by = c("sample", "contig", "start"))
-
-  # Calculate total_depth for non-duplicated rows (ref_depth + var_depth)
-  dat <- dat %>%
-    dplyr::mutate(
-      duplicated = duplicated(dat[, c("sample", "contig", "start")]) |
-        duplicated(dat[, c("sample", "contig", "start")], fromLast = TRUE),
-      total_depth = ifelse(duplicated,
-                           .data$total_depth,  .data$ref_depth + .data$var_depth),
-      no_calls = .data$depth - .data$total_depth,
-      vaf = .data$alt_depth / .data$total_depth) %>%
-    dplyr::select(-"var_depth", -"duplicated")
-#########################################################################
+    } else if (length(ad_columns) > 0) { # create total_depth from AD
+      dat$total_depth <- rowSums(dat[, ad_columns], na.rm = TRUE)
     } else { # use the DP field
       if (depth_exists) {
         dat <- dat %>%
@@ -512,14 +423,38 @@ import_vcf_data <- function(
     }
   }
 
-    
+  # Check for duplicated rows
+  dat <- dat %>%
+    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+    dplyr::mutate(row_has_duplicate = n() > 1) %>%
+    dplyr::ungroup()
+
+  if (sum(dat$row_has_duplicate) > 0) {
+    warning(sum(dat$row_has_duplicate), " rows were found whose
+    position was the same as that of at least one other row for the same
+    sample.")
+
+    # Warn about the depth for the duplicated rows
+    if ("total_depth" %in% colnames(dat)) {
+      warning("The total_depth may be double-counted in some instances due to
+      overlapping positions. Use the filter_mut() function to correct the
+      total_depth for these instances.")
+    }
+  }
+
+  # Make VAF and ref_depth columns, if depth exists
+  if ("total_depth" %in% colnames(dat)) {
+    dat <- dat %>%
+      dplyr::mutate(vaf = .data$alt_depth / .data$total_depth,
+                    ref_depth = .data$total_depth - .data$alt_depth)
+  }
 
   # Add empty filter column
-  if(!"filter_mut" %in% colnames(dat)) {
+  if (!"filter_mut" %in% colnames(dat)) {
    dat$filter_mut <- FALSE
   }
 
-  if(output_granges) {
+  if (output_granges) {
     gr <-  GenomicRanges::makeGRangesFromDataFrame(
       df = dat,
       keep.extra.columns = TRUE,
