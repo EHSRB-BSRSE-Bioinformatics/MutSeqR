@@ -2,8 +2,8 @@
 #' @description this function will run the import_genomic_vcf function for
 #' multiple VCF files, with the ability for multi-threading. 
 #' 
-library(future)
-library(future.apply)
+# library(future)
+# library(future.apply)
 
 # Function to process multiple VCF files
 process_vcf_files <- function(vcf_files, use_multithreading = FALSE) {
