@@ -150,8 +150,7 @@ import_vcf_data <- function(
     ref = VariantAnnotation::ref(vcf),
     alt = alt
   )
-
-  # Retain all INFO and GENO fields
+  # Retain all INFO fields
   info <- as.data.frame(VariantAnnotation::info(vcf))
   # Extract GENO fields depending on the type of data
   geno <- VariantAnnotation::geno(vcf)
