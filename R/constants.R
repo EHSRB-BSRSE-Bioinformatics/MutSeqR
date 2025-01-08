@@ -162,3 +162,32 @@ denominator_dict <- c(
   "base_96" = "normalized_context",
   "base_192" = "context"
 )
+#' A list of reference contexts at different resolutions
+#' @format A list with corresponding values
+#' @export
+context_list <- list(
+  none = NA,
+  type = NA,
+  base_6 = c("C", "T"),
+  base_12 = c("A", "C", "G", "T"),
+  base_96 = c("ACA", "ACC", "ACG", "ACT", "ATA", "ATC", "ATG", "ATT",
+              "CCA", "CCC", "CCG", "CCT", "CTA", "CTC", "CTG", "CTT",
+              "GCA", "GCC", "GCG", "GCT", "GTA", "GTC", "GTG", "GTT",
+              "TCA", "TCC", "TCG", "TCT", "TTA", "TTC", "TTG", "TTT"),
+  base_192 = c("AAA", "AAC", "AAG", "AAT",
+               "ACA", "ACC", "ACG", "ACT",
+               "AGA", "AGC", "AGG", "AGT",
+               "ATA", "ATC", "ATG", "ATT",
+               "CAA", "CAC", "CAG", "CAT",
+               "CCA", "CCC", "CCG", "CCT",
+               "CGA", "CGC", "CGG", "CGT",
+               "CTA", "CTC", "CTG", "CTT",
+               "GAA", "GAC", "GAG", "GAT",
+               "GCA", "GCC", "GCG", "GCT",
+               "GGA", "GGC", "GGG", "GGT",
+               "GTA", "GTC", "GTG", "GTT",
+               "TAA", "TAC", "TAG", "TAT",
+               "TCA", "TCC", "TCG", "TCT",
+               "TGA", "TGC", "TGG", "TGT",
+               "TTA", "TTC", "TTG", "TTT")
+)
