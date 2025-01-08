@@ -17,12 +17,10 @@
 #'      \item `sample`: The sample name.
 #'      \item `alt_depth`: The read depth supporting the alternate allele.
 #'      \item total_depth: The total read depth at this position (excluding N-calls).
-#'      \item `is_germline`: A logical variable indicating whether the mutation
-#' is a germline mutation.
 #'      \item `variation_type`: The category to which this variant is assigned.
 #'      \item subtype_col: The column containing the mutation subtype. This
 #' column depends on the `subtype_resolution` parameter.
-#'     \item reference_col: The column containing the referene base(s) for the
+#'     \item reference context: The column containing the referene base(s) for the
 #' mutation. This column depends on the `subtype_resolution` parameter.
 #'    \item metadata_cols for grouping: all columns across which you want to calculate
 #' the mutation frequency. Ex. `c("tissue", "dose")`. These columns should be listed
@@ -37,36 +35,54 @@
 #' calculated. Options are
 #'  \itemize{
 #'        \item "none" calculates mutation frequencies across all selected
-#' grouping columns.  The reference_col is not needed. 
+#' grouping columns.
 #'         \item "type" calculates mutation frequencies across all selected
 #' grouping columns for each `variation_type` seperately; snv, mnv, deletion,
-#' insertion, complex, symbolic. The reference_col is not needed. 
+#' insertion, complex, sv, ambiguous, uncategorized.
 #'          \item "base_6" calculates mutation frequencies across all selected
 #' grouping columns for each variation_type with snv mutations separated by
-#' `normalized_subtype`; C>A, C>G, C>T, T>A, T>C, T>G. The reference_col is
+#' `normalized_subtype`; C>A, C>G, C>T, T>A, T>C, T>G. The reference context is
 #' `normalized_ref`.
 #'          \item "base_12" calculates mutation frequencies across all
 #' selected grouping columns for each variation_type with snv mutations
 #' separated by `subtype`; A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T,
-#' T>A, T>C, T>G. The reference_col is `short_ref`.
+#' T>A, T>C, T>G. The reference context is `short_ref`.
 #'           \item "base_96" calculates mutation frequencies across all
 #' selected grouping columns for each variation_type with snv mutations
 #' separated by `normalized_context_with_mutation`, i.e. the 96-base
-#' trinucleotide context. Ex. A\\[C>T\\]A. The reference_col is `normalized_context`.
+#' trinucleotide context. Ex. A\\[C>T\\]A. The reference context is `normalized_context`.
 #'           \item "base_192" calculates mutation frequencies across all
 #' selected grouping columns for each variation_type with snv mutations
 #' separated by `context_with_mutation`, i.e. the 192-base trinucleotide
-#' context. Ex A\\[G>A\\]A. The reference_col is `context`.
+#' context. Ex A\\[G>A\\]A. The reference context is `context`.
 #'  }
 #' @param variant_types Include these variant types in mutation counts.
 #' A vector of one or more variation_types. Options are:
 #'  "snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
 #'  Default includes all variants.
+#' @param calculate_depth A logical variable, whether to calculate the
+#' per-group total_depth from the mutation data. If set to TRUE, the mutation
+#' data must contain a total_depth value for every sequenced base (including
+#' variants AND no-variant calls). If set to FALSE, pre-calculated per-group
+#' total_depth values may be supplied at the desired subtype_resolution
+#' using the precalc_depth_file parameter. Alternatively, if no per-group
+#' total_depth is available, per-group mutation counts and will be calculated,
+#' but mutation_frequency will not. In such cases, mutation subtype proportions
+#' will not be normalized to the total_depth.
+#' @param precalc_depth_file A data frame of a file path to a text file
+#' containing pre-calculated per-group total_depth values. This data frame
+#' should contain the columns for the desired grouping variable
+#' and mutation subtype (if applicable). The precalculated total_depth column(s)
+#' should be called one or both of 'group_depth' and 'subtype_depth'. 
+#' See the subtype_resolution
+#' parameter for more information on the mutation subtype columns.
+#' @param d_sep The delimiter used in the precalc_depth_file, if applicable.
+#' Default is "\t".
 #' @param summary A logical variable, whether to return a summary table
 #' (i.e., where only relevant columns for frequencies and groupings are
 #' returned). Setting this to false returns all columns in the original
-#' mutation_data, which might make plotting more difficult, but may provide additional
-#' flexibility to power users.
+#' mutation_data, which might make plotting more difficult, but may provide
+#' additional flexibility to power users.
 #' @param retain_metadata_cols a character vector that contains the names of the
 #' metadata columns that you would like to retain in the summary table.
 #' This may be useful for plotting your summary data. Ex. retain the "dose"
@@ -81,17 +97,25 @@
 #' @returns A data frame with the mutation frequency calculated. If summary
 #' is set to TRUE, the data frame will be a summary table with the mutation
 #' frequency calculated for each group. If summary is set to FALSE, the
-#' mutation frequency will be appended to each row of the original mutation_data.
+#' mutation frequency will be appended to each row of the original
+#' mutation_data.
 #'  \itemize{
-#'       \item `_MF_min`: The mutation frequency calculated using the "min"
+#'      \item `sum_min`: The sum of all mutations within the group, calculated
+#' using the "min" method for mutation counting. All identical mutations
+#' within a samples are assumed to be the result of clonal expansion and are
+#' thus only counted once.
+#'      \item `sum_max`: The sum of all mutations within the group, calculated
+#' using the "max" method for mutaiton counting. All identical mutations
+#' within a sample are assumed to be idenpendant mutational evens and are
+#' included in the mutation frequency calculation.
+#'       \item `mf_min`: The mutation frequency calculated using the "min"
 #' method for mutation counting. All identical mutations within a samples are
 #' assumed to be the result of clonal expansion and are thus only counted
 #' once.
-#'        \item `_MF_max`: The mutation frequency calculated using the "max"
+#'        \item `mf_max`: The mutation frequency calculated using the "max"
 #' method for mutaiton counting. All identical mutations within a sample are
 #' assumed to be idenpendant mutational evens and are included in the
-#' mutation frequency calculation. Note that this does not apply for germline
-#' variants. 
+#' mutation frequency calculation.
 #'     \item `proportion_min`: The proportion of each mutation
 #' subtype within the group, normalized to its read depth. Calculated
 #' using the "min" method. This is only calculated if `subtype_resolution`
@@ -119,9 +143,13 @@ calculate_mut_freq <- function(mutation_data,
                                                  "sv",
                                                  "ambiguous",
                                                  "uncategorized"),
+                               calculate_depth = TRUE,
+                               precalc_depth_file = NULL,
+                               d_sep = "\t",
                                summary = TRUE,
                                retain_metadata_cols = NULL) {
-# Validate Parameters
+
+  # Validate Parameters
   # Check if data is provided as GRanges: if so, convert to data frame.
   if (inherits(mutation_data, "GRanges")) {
     mutation_data <- as.data.frame(mutation_data)
@@ -153,27 +181,33 @@ calculate_mut_freq <- function(mutation_data,
   # Check for all required columns
   required_columns <- c("sample",
                         "alt_depth",
-                        "total_depth",
                         "variation_type",
-                        "is_germline",
                         "filter_mut",
                         cols_to_group)
+  if (calculate_depth) {
+    required_columns <- c(required_columns, "total_depth")
+  }
   if(subtype_resolution != "none") {
-  required_columns <- c(required_columns, MutSeqR::subtype_dict[[subtype_resolution]])
-}
-if (!is.null(retain_metadata_cols)) {
-  required_columns <- c(required_columns, retain_metadata_cols)
-}
-  mutation_data <- MutSeqR::check_required_columns(mutation_data, required_columns)
-  
+    required_columns <- c(required_columns,
+                          MutSeqR::subtype_dict[[subtype_resolution]])
+    if (subtype_resolution != "type") {
+      required_columns <- c(required_columns,
+                            MutSeqR::denominator_dict[[subtype_resolution]])
+    }
+  }
+
+  if (!is.null(retain_metadata_cols)) {
+    required_columns <- c(required_columns, retain_metadata_cols)
+  }
+  mutation_data <- MutSeqR::check_required_columns(mutation_data,
+                                                   required_columns)
+
   if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")
       && !("snv" %in% variant_types)) {
     warning("Please include 'snv' in parameter 'variant_types' to calculate
             single-nucleotide variant subtype frequencies.")
   }
 
-  freq_col_prefix <- paste(cols_to_group, collapse = "_")
-  
   numerator_groups <- c(cols_to_group,
                         MutSeqR::subtype_dict[[subtype_resolution]])
   numerator_groups <- numerator_groups[!is.na(numerator_groups)]
@@ -181,274 +215,261 @@ if (!is.null(retain_metadata_cols)) {
                           MutSeqR::denominator_dict[[subtype_resolution]])
   denominator_groups <- denominator_groups[!is.na(denominator_groups)]
 
-  # Un-duplicating the depth col
-  # When there are +1 calls at the same position, modify total_depth such that
-  # 1st call retains value, all other duplicates have total_depth = 0.
+  # Calculate mutation counts groups
   mut_freq_table <- mutation_data %>%
-    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::mutate(dup_id = dplyr::row_number()) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(total_depth_unduplicated =
-                    ifelse(.data$dup_id > 1, 0, .data$total_depth)) %>%
-    dplyr::select(-"total_depth", -"dup_id")
-
-  mut_freq_table <- mut_freq_table %>%
-    dplyr::rename(total_depth = "total_depth_unduplicated")
-
-  # Calculate denominator Numerator groups
-  mut_freq_table <- mut_freq_table %>%
+    dplyr::mutate(alt_depth_min = ifelse(.data$alt_depth == 0, 0, 1)) %>%
     dplyr::group_by(dplyr::across(dplyr::all_of(c(numerator_groups)))) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_sum_max") :=
+    dplyr::mutate(sum_max =
                     sum(.data$alt_depth[.data$variation_type %in% variant_types
-                                        & .data$is_germline == FALSE
                                         & .data$filter_mut == FALSE])) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_sum_min") :=
-                    length(.data$alt_depth[.data$variation_type %in%
-                                             variant_types &
-                                             .data$is_germline == FALSE
-                                             & .data$filter_mut == FALSE])) %>%
-    dplyr::ungroup()
+    dplyr::mutate(sum_min =
+                    sum(.data$alt_depth_min[.data$variation_type %in% variant_types
+                                            & .data$filter_mut == FALSE])) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-"alt_depth_min")
 
   # Calculate denominator (same for max and min mutations)
   # snv depth: depth across groups and snv subtype resolution
   # group depth: depth across groups.
-  mut_freq_table <- mut_freq_table %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_group_depth") :=
-                    sum(.data$total_depth)) %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(denominator_groups)))) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_snv_depth") :=
-                    sum(.data$total_depth)) %>%
-    dplyr::ungroup()
-
-  # Calculate frequencies
-  mut_freq_table <- mut_freq_table %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_MF_max") :=
-                    ifelse(.data$variation_type == "snv",
-                      .data[[paste0(freq_col_prefix, "_sum_max")]] /
-                        .data[[paste0(freq_col_prefix, "_snv_depth")]],
-                      .data[[paste0(freq_col_prefix, "_sum_max")]] /
-                        .data[[paste0(freq_col_prefix, "_group_depth")]]
-                    )) %>%
-    dplyr::mutate(!!paste0(freq_col_prefix, "_MF_min") :=
-                    ifelse(.data$variation_type == "snv",
-                      .data[[paste0(freq_col_prefix, "_sum_min")]] /
-                        .data[[paste0(freq_col_prefix, "_snv_depth")]],
-                      .data[[paste0(freq_col_prefix, "_sum_min")]] /
-                        .data[[paste0(freq_col_prefix, "_group_depth")]]
-                    )) %>%
-    dplyr::ungroup()
-
-  #######################################
-  # Create a summary table
-  ######################################
-
-  # Grab all cols_to_group
-  col_values <- lapply(cols_to_group, 
-                       function(col) unique(mut_freq_table[[col]]))
-
-  # Summary Data
-  summary_cols <- c(
-    numerator_groups,
-    paste0(freq_col_prefix, "_sum_min"),
-    paste0(freq_col_prefix, "_sum_max"),
-    paste0(freq_col_prefix, "_group_depth"),
-    paste0(freq_col_prefix, "_snv_depth"),
-    paste0(freq_col_prefix, "_MF_min"),
-    paste0(freq_col_prefix, "_MF_max")
-  )
-  summary_rows <- do.call(expand.grid, col_values)
-
-  subset_type <- MutSeqR::subtype_list$type[MutSeqR::subtype_list$type %in%
-                                              variant_types]
-
-  if (subtype_resolution != "none") {
-    summary_rows <- base::merge(as.data.frame(subset_type), summary_rows)
-    col_names <- c(paste(MutSeqR::subtype_dict[[subtype_resolution]]),
-                   cols_to_group)
+  if (calculate_depth) {
+    mut_freq_table <- mut_freq_table %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
+      dplyr::mutate(group_depth =
+                      sum(.data$total_depth)) %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(c(denominator_groups)))) %>%
+      dplyr::mutate(subtype_depth =
+                      sum(.data$total_depth)) %>%
+      dplyr::ungroup()
+    depth_exists <- TRUE
   } else {
-    col_names <- paste(cols_to_group)
+    if (!is.null(precalc_depth_file)) {
+      if (is.data.frame(precalc_depth_file)) {
+        depth_df <- precalc_depth_file
+      } else if (is.character(precalc_depth_file)) {
+        depth_file <- file.path(precalc_depth_file)
+        if (!file.exists(depth_file)) {
+          stop("The precalc_depth_file does not exist.")
+        }
+        if (file.info(depth_file)$size == 0) {
+          stop("Error: You are trying to import an empty precalc_depth_file")
+        }
+        depth_df <- read.delim(file.path(depth_file),
+                               sep = d_sep,
+                               header = TRUE)
+        if (ncol(depth_df) <= 1) {
+          stop("Your imported precalc only has one column.
+              You may want to set d_sep to properly reflect
+              the delimiter used for the data you are importing.")
+        }
+      } else {
+        stop("precalc_depth_file must be NULL, a data frame, or a file path.")
+      }
+      # check for required columns in depth_df
+      # If they are just using snvs, maybe don't require group_depth
+      required_columns <- c(denominator_groups, "group_depth")
+      if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")) {
+        required_columns <- c(required_columns, "subtype_depth")
+      } else {
+        # add a subtype_depth column if it doesn't exist
+        depth_df$subtype_depth <- depth_df$group_depth
+      }
+      missing_columns <- setdiff(required_columns, colnames(depth_df))
+      if (length(missing_columns) > 0) {
+        stop("Missing columns in precalc_depth_file: ",
+             paste(missing_columns, collapse = ", "), "\n")
+      }
+      # Merge depth_df with mut_freq_table
+      mut_freq_table <- dplyr::left_join(mut_freq_table, depth_df,
+                                         by = c(denominator_groups))
+      depth_exists <- TRUE
+    } else {
+      warning("No depth data provided. Mutation frequencies will not be calculated. Mutation subtype proportions will not be normalized to the total_depth.")
+      depth_exists <- FALSE
+    }
   }
 
-  colnames(summary_rows) <- col_names
+  # Calculate frequencies
+  if (depth_exists) {
+    if (subtype_resolution == "none") {
+      mut_freq_table <- mut_freq_table %>%
+        dplyr::mutate(mf_max = .data$sum_max / .data$group_depth,
+                      mf_min = .data$sum_min / .data$group_depth) %>%
+        dplyr::ungroup()
+    } else {
+      mut_freq_table <- mut_freq_table %>%
+        dplyr::mutate(mf_max = ifelse(!!rlang::sym(MutSeqR::subtype_dict[[subtype_resolution]])  %in% MutSeqR::subtype_list$type,
+                                      .data$sum_max / .data$group_depth,
+                                      .data$sum_max / .data$subtype_depth),
+                      mf_min = ifelse(!!rlang::sym(MutSeqR::subtype_dict[[subtype_resolution]]) %in% MutSeqR::subtype_list$type,
+                                      .data$sum_min / .data$subtype_depth,
+                                      .data$sum_min / .data$group_depth)) %>%
+        dplyr::ungroup()
+    }
+    summary_cols <- c(numerator_groups,
+                      "sum_min",
+                      "sum_max",
+                      "mf_min",
+                      "mf_max"
+                    )
+  } else {
+    summary_cols <- c(numerator_groups,
+                      "sum_min",
+                      "sum_max"
+                    )
+  }
 
-  # Grab the data and filter for mutations of interest including no_variants
-  summary_data <- mut_freq_table %>%
-    dplyr::filter(.data$variation_type %in% subset_type |
-                    .data$variation_type == "no_variant") %>%
-    dplyr::select(
-      {{ summary_cols }},
-      if (!is.null(retain_metadata_cols)) {
-        retain_metadata_cols
+  # Create a summary table
+  group_list <- lapply(cols_to_group, function(col) unique(mut_freq_table[[col]]))
+  names(group_list) <- cols_to_group
+  group_df <- do.call(expand.grid, group_list)
+  non_snvs <- setdiff(MutSeqR::subtype_list$type, "snv")
+
+  # Extract the depth values from mutation data, if we calculated them
+  if (calculate_depth) {
+    depth_df <- mut_freq_table %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(denominator_groups))) %>%
+      dplyr::summarise(group_depth = dplyr::first(.data$group_depth),
+                       subtype_depth = dplyr::first(.data$subtype_depth),
+                       .groups = "drop")
+
+    # Make sure we have all a complete list of groups and context rows for the summary table
+    # Do not depend on the data to have all the possible context rows; we will grab from set list in context_list
+    # Missing data will be 0s eventually.
+    if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")) {
+      context_rows_snv <- context_list[[subtype_resolution]] ### TO DO: ADD back in MutSeqR::
+      context_rows_snv <- tidyr::expand_grid(group_df, !!paste(MutSeqR::denominator_dict[[subtype_resolution]]) := context_rows_snv)
+
+      depth_df <- left_join(context_rows_snv, depth_df, by = denominator_groups)
+
+      # re-extract the group depth seperately, to make sure we have a complete list of all groups
+      # Do no depend on extracting all group x context combinations from the data as we may end up missing some groups
+      depth_df <- dplyr::select(depth_df, -"group_depth")
+      group_depth_df <- mut_freq_table %>%
+        dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
+        dplyr::summarise(group_depth = dplyr::first(.data$group_depth),
+                         .groups = "drop")
+      depth_df <- dplyr::left_join(depth_df, group_depth_df, by = cols_to_group)
+      # make a list of depths for non-snv subtypes to add to the depth_df (reference = N)      
+      if (any(non_snvs %in% variant_types)) {
+        group_depth_df[[MutSeqR::denominator_dict[[subtype_resolution]]]] <- "N"
+        group_depth_df$subtype_depth <- group_depth_df$group_depth
+        depth_df <- rbind(group_depth_df, depth_df)
       }
-    ) %>%
+    } else { # none or type
+      depth_df$subtype_depth <- depth_df$group_depth
+    }
+  }
+
+  # Make Summary Rows for Mutations
+  subset_type <- list(MutSeqR::subtype_list$type[MutSeqR::subtype_list$type %in% variant_types])
+  if (subtype_resolution != "none") {
+    names(subset_type) <- MutSeqR::subtype_dict[[subtype_resolution]]
+    summary_rows <- do.call(expand.grid, c(subset_type, group_list)) # full list of non-snv subtypes
+    if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")) {
+      snv_subtype <- list(MutSeqR::subtype_list[[subtype_resolution]])
+      names(snv_subtype) <- MutSeqR::subtype_dict[[subtype_resolution]]
+      summary_rows_snv <- do.call(expand.grid, c(snv_subtype, group_list)) # full list of snv subtypes
+      summary_rows <- rbind(summary_rows, summary_rows_snv)
+      summary_rows <- summary_rows %>% # add the context column
+        dplyr::rowwise() %>%
+        dplyr::mutate(!!paste(denominator_dict[[subtype_resolution]]) :=
+                      get_ref_of_mut(get(subtype_dict[[subtype_resolution]])))
+      summary_rows <- summary_rows %>%
+        dplyr::mutate(!!paste0(MutSeqR::denominator_dict[[subtype_resolution]])
+                     := if_else(is.na(!!sym(paste0(MutSeqR::denominator_dict[[subtype_resolution]]))), 
+                                "N",
+                                !!sym(paste0(MutSeqR::denominator_dict[[subtype_resolution]]))))
+    }
+  } else {
+    summary_rows <- group_df
+  }
+
+  # grab the metadata columns
+  if (!is.null(retain_metadata_cols)) {
+    metadata <- mut_freq_table %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(numerator_groups))) %>%
+      dplyr::summarise(across(all_of(retain_metadata_cols), ~ first(.)), .groups = "drop")
+    summary_rows <- dplyr::left_join(summary_rows, metadata)
+  }
+
+  # Grab the data
+  summary_data <- mut_freq_table %>%
+    dplyr::filter(.data$variation_type %in% unlist(subset_type)) %>%
+    dplyr::select(
+      {{ summary_cols }}) %>%
     dplyr::distinct(dplyr::across(dplyr::all_of(c(numerator_groups))),
                     .keep_all = TRUE)
 
   # Merge summary rows and data cols.
-  summary_table <- merge(summary_rows, summary_data,
-                         by = c(col_names), all = TRUE)
+  # this makes sure that every group and subtype has a row in the summary table, regardless of if there is a variant in the data.
+  summary_table <- merge(summary_rows, summary_data, all = TRUE)
 
-  # Make the subtype resolution list
-  # These are handled separately in order to fill in the snv_depth for all rows
-  if (!is.na(MutSeqR::denominator_dict[[subtype_resolution]])) {
-    # Create a list of all snv subtypes at resolution for each group
-    snv_subtype <- list(MutSeqR::subtype_list[[subtype_resolution]])
-    summary_rows_snv <- do.call(expand.grid, c(snv_subtype, col_values))
-    colnames(summary_rows_snv) <- col_names
-    # Add in the denominator reference column
-    summary_rows_snv <- summary_rows_snv %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate(!!paste(denominator_dict[[subtype_resolution]]) :=
-                      get_ref_of_mut(get(subtype_dict[[subtype_resolution]])))
-
-    # Grab the data and filter for snvs + no_variant
-    summary_data_snv <- mut_freq_table %>%
-      dplyr::filter(.data$variation_type == "snv" |
-                      .data$variation_type == "no_variant") %>%
-      dplyr::select(
-        {{ summary_cols }},
-        MutSeqR::denominator_dict[[subtype_resolution]],
-        if (!is.null(retain_metadata_cols)) {
-          retain_metadata_cols
-        }
-      ) %>%
-      dplyr::distinct(
-        dplyr::across(dplyr::all_of(c(
-          numerator_groups,
-          MutSeqR::denominator_dict[[subtype_resolution]]
-        ))),
-        .keep_all = TRUE
-      )
-
-    # Merge summary rows and data cols.
-    summary_table_snv <- merge(summary_rows_snv, summary_data_snv,
-      all = TRUE,
-      by = c(col_names, MutSeqR::denominator_dict[[subtype_resolution]])
-    )
-
-    # Fill in snv_depth for snv subtypes that were not in the data
-    summary_table_snv <- summary_table_snv %>%
-      dplyr::group_by(dplyr::across(dplyr::all_of(denominator_groups))) %>%
-      dplyr::mutate(!!paste0(freq_col_prefix, "_snv_depth") :=
-                    dplyr::first(stats::na.omit(.data[[!!paste0(freq_col_prefix,
-                                                    "_snv_depth")]]))) %>%
-      dplyr::ungroup()
-
-    # Bind together the types and snv data + summary_rows into one
-    # In the types dataframes, create a column for the denominator reference to
-    # match snv dataframes & enable binding
-    summary_rows <- summary_rows %>%
-      dplyr::mutate(!!paste0(MutSeqR::denominator_dict[[subtype_resolution]])
-                    := "N")
-
-    summary_table <- summary_table %>%
-      dplyr::mutate(!!paste0(MutSeqR::denominator_dict[[subtype_resolution]])
-                    := "N")
-
-    summary_rows <- rbind(summary_rows, summary_rows_snv)
-
-    summary_table <- rbind(summary_table, summary_table_snv)
-  }
-
-  # Populate the group depth for rows that didn't exist in the data.
-  # Also, fill in the metadata columns.
-  summary_table <- summary_table %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
-    dplyr::mutate(
-      if (!is.null(retain_metadata_cols)) {
-        dplyr::across(dplyr::all_of(retain_metadata_cols),
-                      ~ dplyr::first(stats::na.omit(.)))
-      },
-      !!paste0(freq_col_prefix, "_group_depth") :=
-        dplyr::first(stats::na.omit(.data[[!!paste0(freq_col_prefix,
-                                                     "_group_depth")]]))
-    ) %>%
-    dplyr::ungroup()
-
-  # left_join with summary_rows to keep only the (sub)types of interest
-  summary_table <- dplyr::left_join(summary_rows, summary_table)
-  # get rid of NA values
-  summary_table[is.na(summary_table)] <- 0
-    
-    # When we merge the variation_types list with the subtype_dict[[base_#]] list
-    # remove snv rows since they are now represented by their subtypes
   if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")) {
-    summary_table <- summary_table %>%
-      dplyr::filter(.data[[paste0(MutSeqR::subtype_dict[[subtype_resolution]])]]
-                    != "snv")
+    # Remove snv rows since they are now represented by their subtypes
+    summary_table <- filter(summary_table, get(subtype_dict[[subtype_resolution]]) != "snv")
   }
-# Calculate the proportions of each subtype
+
+  if (depth_exists) {
+    summary_table <- dplyr::left_join(summary_table, depth_df)
+  }
+
+  # Replace NAs in data with 0s (sum and MF cols only)
+  summary_table <- summary_table %>%
+    dplyr::mutate(dplyr::across(dplyr::all_of(summary_cols), ~ tidyr::replace_na(., 0)))
+
+
+  # Calculate the proportions of each subtype
   if (subtype_resolution != "none") {
-    # Set the snv_depth to NA for non-snv types
-    summary_table <- summary_table %>%
-      dplyr::mutate(
-        !!paste0(freq_col_prefix, "_snv_depth") :=
-          ifelse(
-            .data[[paste(subtype_dict[[subtype_resolution]])]] %in%
-              variant_types,
-            NA,
-            .data[[paste0(freq_col_prefix, "_snv_depth")]]
-          )
-      )
+    # Get total sum of mutations across groups
     proportions <- summary_table %>%
       dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group)))) %>%
       dplyr::mutate(
-        # Get sum of mutations across groups
         total_group_mut_sum_min =
-          sum(.data[[paste0(freq_col_prefix, "_sum_min")]]),
+          sum(.data$sum_min),
         total_group_mut_sum_max =
-          sum(.data[[paste0(freq_col_prefix, "_sum_max")]])
+          sum(.data$sum_max)
       ) %>%
       dplyr::ungroup()
-# freq = mut_sum / total_mut_sum / depth : min
-    proportions <- proportions %>%
-      dplyr::mutate(
-        freq_min =
-          ifelse(is.na(.data[[paste0(freq_col_prefix, "_snv_depth")]]), # non-snv subtypes divide by group depth
-            .data[[paste0(freq_col_prefix, "_sum_min")]] /
-              .data$total_group_mut_sum_min /
-              .data[[paste0(freq_col_prefix, "_group_depth")]],
-            .data[[paste0(freq_col_prefix, "_sum_min")]] / # snv subtypes divide by snv depth
-              .data$total_group_mut_sum_min /
-              .data[[paste0(freq_col_prefix, "_snv_depth")]]
-          )
-      )
-# freq = mut_sum / total_mut_sum / depth : max
-    proportions <- proportions %>%
-      dplyr::mutate(
-        freq_max =
-          ifelse(is.na(.data[[paste0(freq_col_prefix, "_snv_depth")]]), # non-snv subtypes divide by group depth
-            .data[[paste0(freq_col_prefix, "_sum_max")]] /
-              .data$total_group_mut_sum_max /
-              .data[[paste0(freq_col_prefix, "_group_depth")]],
-            .data[[paste0(freq_col_prefix, "_sum_max")]] / # snv subtypes divide by snv depth
-              .data$total_group_mut_sum_max /
-              .data[[paste0(freq_col_prefix, "_snv_depth")]]
-          )
-      )
- # proportion = freq / total_freq   
-    summary_table <- proportions %>%
-      dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group)))) %>%
-      dplyr::mutate(
-        total_freq_min = sum(.data$freq_min),
-        total_freq_max = sum(.data$freq_max)
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(
-        proportion_min = .data$freq_min / .data$total_freq_min,
-        proportion_max = .data$freq_max / .data$total_freq_max
-      ) %>% # Remove extra columns
-      dplyr::select(
-        -"total_group_mut_sum_min", -"total_freq_min",
-        -"total_group_mut_sum_max", -"total_freq_max",
-        -"freq_min", -"freq_max"
-      )
-  }
-# Remove the snv_depth column if we are not using it
-  if (subtype_resolution %in% c("none", "type")) {
+
+    if (depth_exists) {
+      # freq = mut_sum / total_mut_sum / depth
+      # subtype_depth is = group_depth for non-snv mutations
+      proportions <- proportions %>%
+        dplyr::mutate(freq_min = .data$sum_min / .data$total_group_mut_sum_min / .data$subtype_depth,
+                      freq_max = .data$sum_max / .data$total_group_mut_sum_max / .data$subtype_depth
+        )
+
+      # proportion = freq / total_freq  
+      summary_table <- proportions %>%
+        dplyr::group_by(dplyr::across(dplyr::all_of(c(cols_to_group)))) %>%
+        dplyr::mutate(
+          total_freq_min = sum(.data$freq_min),
+          total_freq_max = sum(.data$freq_max)
+        ) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(
+          proportion_min = .data$freq_min / .data$total_freq_min,
+          proportion_max = .data$freq_max / .data$total_freq_max
+        ) %>% # Remove extra columns
+        dplyr::select(
+          -"total_group_mut_sum_min", -"total_freq_min",
+          -"total_group_mut_sum_max", -"total_freq_max",
+          -"freq_min", -"freq_max"
+        )
+    } else {
+      summary_table <- proportions %>%
+        dplyr::mutate(proportion_min = .data$sum_min / .data$total_group_mut_sum_min,
+                      proportion_max = .data$sum_max / .data$total_group_mut_sum_max) %>%
+        dplyr::select(-"total_group_mut_sum_min", -"total_group_mut_sum_max")
+    }
+    # replace NAs with 0s (when sum of group = 0, dividing by 0 = NaN)
     summary_table <- summary_table %>%
-      dplyr::select(-all_of(paste0(freq_col_prefix, "_snv_depth")))
+      dplyr::mutate(dplyr::across(c(proportion_min, proportion_max), ~ tidyr::replace_na(., 0)))
+  }
+  # Remove the subtype_depth column if we are not using it
+  if (depth_exists && subtype_resolution %in% c("none", "type")) {
+    summary_table <- summary_table %>%
+      dplyr::select(-"subtype_depth")
   }
 
   if (!summary) {

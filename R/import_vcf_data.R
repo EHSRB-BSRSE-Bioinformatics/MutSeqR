@@ -154,7 +154,7 @@ import_vcf_data <- function(
   info <- as.data.frame(VariantAnnotation::info(vcf))
   # Extract GENO fields depending on the type of data
   geno <- VariantAnnotation::geno(vcf)
-  geno_df <- data.frame(row.names = rownames(geno[[1]]))
+  geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
   for (field_name in names(geno)) {
     field <- geno[[field_name]]
     if (is.list(field)) { # Ex. AD
