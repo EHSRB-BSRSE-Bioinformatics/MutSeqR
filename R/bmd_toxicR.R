@@ -74,7 +74,7 @@ bmd_toxicr <- function(mf_data,
 #' ("individual", "summary").
 #' @param dose_col A character string specifying the column in mf_data
 #' containing the dose data.
-#' @param response_cols A character vector specifying the columns in mf_data
+#' @param response_col A character vector specifying the columns in mf_data
 #' containing the response data. For summarised data types, this should be
 #' the mean response for each dose group.
 #' @param sd_col A character string specifying the column in mf_data containing
@@ -170,7 +170,7 @@ bmd_toxicr <- function(mf_data,
 bmd_toxicr_ma <- function(mf_data,
                    data_type = "individual",
                    dose_col = "dose",
-                   response_cols = c("sample_MF_min", "sample_MF_max"),
+                   response_col = c("mf_min", "mf_max"),
                    sd_col = NULL,
                    n_col = NULL,
                    bmr_type = "rel",
@@ -192,9 +192,9 @@ bmd_toxicr_ma <- function(mf_data,
     results_model_plots <- list()
     results_cleveland_plots <- list()
 
-    for (i in seq_along(response_cols)) {
+    for (i in seq_along(response_col)) {
       model <- ToxicR::ma_continuous_fit(D = mf_data[, dose_col],
-                                         Y = mf_data[, response_cols[i]],
+                                         Y = mf_data[, response_col[i]],
                                          fit_type = fit,
                                          BMR_TYPE = bmr_type,
                                          BMR = bmr,
@@ -202,15 +202,15 @@ bmd_toxicr_ma <- function(mf_data,
                                          ...
                                          )
 
-      results_bmd[[response_cols[i]]] <- summary(model)$BMD
-      results_summary[[response_cols[i]]] <- summary(model)
-      results_model[[response_cols[i]]] <- model
-      results_model_plots[[response_cols[i]]] <- plot(model) +
+      results_bmd[[response_col[i]]] <- summary(model)$BMD
+      results_summary[[response_col[i]]] <- summary(model)
+      results_model[[response_col[i]]] <- model
+      results_model_plots[[response_col[i]]] <- plot(model) +
                             ggplot2::theme(panel.background = ggplot2::element_blank(),
                             axis.line = ggplot2::element_line(),
                             panel.grid = ggplot2::element_blank(),
                             axis.ticks.x = ggplot2::element_line())
-      results_cleveland_plots[[response_cols[i]]] <- ToxicR::cleveland_plot(model) +
+      results_cleveland_plots[[response_col[i]]] <- ToxicR::cleveland_plot(model) +
         ggplot2::theme(panel.background = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    panel.grid = ggplot2::element_blank(),
@@ -222,8 +222,8 @@ bmd_toxicr_ma <- function(mf_data,
     results_bmd_df <- do.call(rbind, results_bmd)
   } else if (data_type == "summary") {
     response_mat <- mf_data %>%
-      dplyr::select({{response_cols}}, {{n_col}}, {{sd_col}})
-    response_mat <- response_mat %>% rename(Mean = {{response_cols}},
+      dplyr::select({{response_col}}, {{n_col}}, {{sd_col}})
+    response_mat <- response_mat %>% rename(Mean = {{response_col}},
                                             N = {{n_col}},
                                             SD = {{sd_col}})
     response_mat <- as.matrix(response_mat)
@@ -239,7 +239,7 @@ bmd_toxicr_ma <- function(mf_data,
     results_bmd_df <- data.frame(BMDL = results_bmd[1],
                                  BMD = results_bmd[2],
                                  BMDU = results_bmd[3])
-    row.names(results_bmd_df) <- response_cols
+    row.names(results_bmd_df) <- response_col
     results_summary <- summary(model)
     results_model <- model
     results_model_plots <- plot(model) +
