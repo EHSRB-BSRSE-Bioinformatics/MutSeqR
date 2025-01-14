@@ -4,7 +4,10 @@
 #' @param mf_data A data frame containing the mutation frequency data. This is
 #' obtained from the calculate_mut_freq function with SUMMARY = TRUE.
 #' @param group_col The column in mf_data by which to calculate the mean.
-#' Ex. "dose" or c("dose", "tissue"). 
+#' Ex. "dose" or c("dose", "tissue").
+#' @param fill_col The column in mf_data by which to fill the color. Default is NULL.
+#' fill_col must be a variable of equal or higher level to group_col. fill_col
+#' may equal group_col.
 #' @param mf_type The type of mutation frequency to plot. Options are "min",
 #' "max", "both", or "stacked". If "both", the min and max mutation
 #' frequencies are plotted side by side. "stacked" can be chosen for bar
@@ -43,9 +46,14 @@
 #' @param ylab The y-axis label. Default is "Mutation Frequency (mutations/bp)".
 #' @param scale_y_axis The scale of the y axis. Either "linear" or "log".
 #' Default is "linear".
-#' @param custom_palette A custom color palette to use for the plot. Values that
-#' can be customized include "Mean", "Individual", "Mean min", "Mean max",
-#' "Individual min", and "Individual max". Default is NULL.
+#' @param custom_palette A custom color palette to use for the plot. Input a
+#' character vector of colours. Input a named character vector to specify
+#' olours to specific groups. Fill labels will be constructed by the following components
+#' 1. "Mean/Individual" if plot_indiv_vals = TRUE, fill labels will specify Mean/Individual values.
+#' 2. "min/max" if mf_type = "both" or "stacked", fill labels will specify min/max values.
+#' 3. fill_col value. Name colours to match the fill labels. Default is NULL. If no
+#' custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
+#' will be the same colour, different shades.
 #'  @return a ggplot object
 #' @import ggplot2
 #' @importFrom dplyr across all_of arrange rename group_by summarize
@@ -53,6 +61,7 @@
 
 plot_mean_mf <- function(mf_data,
                          group_col = "dose",
+                         fill_col = NULL,
                          mf_type = "both",
                          plot_type = "line",
                          plot_error_bars = TRUE,
@@ -120,37 +129,31 @@ plot_mean_mf <- function(mf_data,
                                    levels = group_order_input)
   }
 
+
   # Plot Data
-  ## identify the MF columns
-  MF_min_column_pattern <- paste0(".*(_MF_min", ")$")
-  min_mf_col <- names(mf_data)[grepl(MF_min_column_pattern, names(mf_data))]
-  MF_max_column_pattern <- paste0(".*(_MF_max", ")$")
-  max_mf_col <- names(mf_data)[grepl(MF_max_column_pattern, names(mf_data))]
-
-  ## identify the sum columns for label making
-  sum_min_column_pattern <- paste0(".*(_sum_min", ")$")
-  min_count_col <- names(mf_data)[grepl(sum_min_column_pattern, names(mf_data))]
-  sum_max_column_pattern <- paste0(".*(_sum_max", ")$")
-  max_count_col <- names(mf_data)[grepl(sum_max_column_pattern, names(mf_data))]
-
-  ## Make indiv plot data
+    ## Make indiv plot data
   indiv_data <- mf_data %>%
-    dplyr::rename(group_col = dplyr::all_of(group_col)) %>%
-    dplyr::rename(mf_min = dplyr::all_of(min_mf_col)) %>%
-    dplyr::rename(mf_max = dplyr::all_of(max_mf_col)) %>%
-    dplyr::rename(sum_min = dplyr::all_of(min_count_col)) %>%
-    dplyr::rename(sum_max = dplyr::all_of(max_count_col))
-
+    dplyr::rename(group_col = dplyr::all_of(group_col))
+  if (!is.null(fill_col)) {
+    if (group_col == fill_col) {
+      indiv_data$fill_col <- indiv_data$group_col
+    } else {
+      indiv_data <- dplyr::rename(indiv_data, fill_col = dplyr::all_of(fill_col))
+    }
+  } else {
+    indiv_data$fill_col <- "f1ll_c0l"
+  }
   ## Make Group Mean data
   mean_data <- indiv_data %>%
-    dplyr::group_by(.data$group_col) %>%
+    dplyr::group_by(.data$group_col, .data$fill_col) %>%
     dplyr::summarize(min_Mean = mean(.data$mf_min, na.rm = TRUE),
               min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(n()),
               min_sum_mean = mean(.data$sum_min, na.rm = TRUE),
               max_Mean = mean(.data$mf_max, na.rm = TRUE),
               max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(n()),
-              max_sum_mean = mean(.data$sum_max, na.rm = TRUE))
-  mean_data <- as.data.frame(mean_data)
+              max_sum_mean = mean(.data$sum_max, na.rm = TRUE),
+              .groups = "drop")
+  mean_data <- as.data.frame(mean_data) # Note: loses the fill_col
 
   ## Set the max y value
   if (mf_type == "min") {
@@ -214,41 +217,79 @@ plot_mean_mf <- function(mf_data,
 
   # Set the fill column: min/max
   if (mf_type %in% c("both", "stacked")) {
-    mean_data$mean_fill_col <- paste0("Mean ", mean_data$mf_type)
-    indiv_data$indiv_fill_col <- paste0("Individual ", indiv_data$mf_type)
+    mean_data$mean_fill_col <- paste(mean_data$mf_type, mean_data$fill_col)
+    # Remove trailing spaces
+    indiv_data$indiv_fill_col <- paste(indiv_data$mf_type, indiv_data$fill_col)
   } else { # if mf_type is min or max
-    mean_data$mean_fill_col <- "Mean"
-    indiv_data$indiv_fill_col <- "Individual"
-  } # end fill column
+    mean_data$mean_fill_col <- paste(mean_data$fill_col)
+    indiv_data$indiv_fill_col <- paste(indiv_data$fill_col)
+  }
+  if (plot_indiv_vals) {
+    indiv_data$indiv_fill_col <- paste("Individual", indiv_data$indiv_fill_col)
+    mean_data$mean_fill_col <- paste("Mean", mean_data$mean_fill_col)
+  }
+  # Remove the f1ll_c0l placeholder
+  mean_data$mean_fill_col <- sub(" f1ll_c0l$", "", mean_data$mean_fill_col)
+  indiv_data$indiv_fill_col <- sub(" f1ll_c0l$", "", indiv_data$indiv_fill_col)
+  mean_data$mean_fill_col <- stringr::str_trim(mean_data$mean_fill_col, side = "both")
+  indiv_data$indiv_fill_col <- stringr::str_trim(indiv_data$indiv_fill_col, side = "both")
+   # end fill column
 
   # set the fill_col order for both/stacked.
-  if (mf_type == "both") {
-    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col,
-                                        levels = c("Individual min",
-                                                   "Individual max"))
+  if (mf_type == "both") { # 1. min, 2. max
+    sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("max", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
+    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
+    sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("max", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
     mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
-                                      levels = c("Mean min",
-                                                 "Mean max"))
+                                      levels = sorted_levels)
   }
-  if (mf_type == "stacked") {
-    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col,
-                                        levels = c("Individual max",
-                                                   "Individual min"))
+  if (mf_type == "stacked") { # 1. max, 2. min so that max is stacked on top of min
+    sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("min", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
+    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
+    sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("min", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
     mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
-                                      levels = c("Mean max",
-                                                 "Mean min"))
+                                      levels = sorted_levels)
   }
   # Palette
   if (is.null(custom_palette)) {
-    palette <- c("Mean" = "#b8b8b8",
-                 "Individual" = "#1a80bb",
-                 "Mean min" = "#eddca5",
-                 "Mean max" = "#8fd7d7",
-                 "Individual min" = "#c99b38",
-                 "Individual max" = "#00b0be")
+    fill_values <- unique(indiv_data$fill_col)
+    palette <- grDevices::rainbow(length(fill_values))
+    palette <- setNames(palette, fill_values)
+    # Function to generate lighter/darker shades
+    generate_shades <- function(color, steps = 2) {
+      # Blend the input color with white to generate lighter shades
+      shades <- colorspace::lighten(color, amount = seq(0, 0.5, length.out = steps))
+     return(shades)
+    }
+    # Generate shades for min/max
+    if (mf_type == "both" || mf_type == "stacked") {
+      palette <- lapply(palette, function(color) {
+        generate_shades(color)  # Lighter for min, darker for max
+      })
+      palette <- unlist(lapply(names(palette), function(name) {
+        setNames(palette[[name]], paste(c("min", "max"), name))
+      }), recursive = FALSE)
+    }
+    # Generate shades for mean/indiv
+    if (plot_indiv_vals) {
+      palette <- lapply(palette, function(color) {
+        generate_shades(color)  # Lighter for min, darker for max
+      })
+      palette <- unlist(lapply(names(palette), function(name) {
+        setNames(palette[[name]], paste(c("Individual", "Mean"), name))
+      }), recursive = FALSE)
+    }
+    if (is.null(fill_col)) {
+      names(palette) <- sub(" ?f1ll_c0l$", "", names(palette))
+    }
+    if (plot_type == "line") {
+      palette[grepl("^Mean", names(palette))] <- "#000000"
+    }
   } else {
     palette <- custom_palette
   }
+  mean_data$mean_fill_col <- sub(" f1ll_c0l$", "", mean_data$mean_fill_col)
+  indiv_data$indiv_fill_col <- sub(" f1ll_c0l$", "", indiv_data$indiv_fill_col)
 
   # Position
   if (mf_type == "both") {
