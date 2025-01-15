@@ -235,21 +235,6 @@ plot_mean_mf <- function(mf_data,
   indiv_data$indiv_fill_col <- stringr::str_trim(indiv_data$indiv_fill_col, side = "both")
    # end fill column
 
-  # set the fill_col order for both/stacked.
-  if (mf_type == "both") { # 1. min, 2. max
-    sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("max", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
-    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
-    sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("max", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
-    mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
-                                      levels = sorted_levels)
-  }
-  if (mf_type == "stacked") { # 1. max, 2. min so that max is stacked on top of min
-    sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("min", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
-    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
-    sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("min", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
-    mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
-                                      levels = sorted_levels)
-  }
   # Palette
   if (is.null(custom_palette)) {
     fill_values <- unique(indiv_data$fill_col)
@@ -290,7 +275,22 @@ plot_mean_mf <- function(mf_data,
   }
   mean_data$mean_fill_col <- sub(" f1ll_c0l$", "", mean_data$mean_fill_col)
   indiv_data$indiv_fill_col <- sub(" f1ll_c0l$", "", indiv_data$indiv_fill_col)
-
+  
+  # set the fill_col order for both/stacked.
+  if (mf_type == "both") { # 1. min, 2. max
+    sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("max", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
+    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
+    sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("max", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
+    mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
+                                      levels = sorted_levels)
+  }
+  if (mf_type == "stacked") { # 1. max, 2. min so that max is stacked on top of min
+    sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("min", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
+    indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
+    sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("min", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
+    mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
+                                      levels = sorted_levels)
+  }
   # Position
   if (mf_type == "both") {
     bar_position <- ggplot2::position_dodge(width = 0.9)
