@@ -11,8 +11,8 @@ model_mf(
   test_interaction = TRUE,
   random_effects = NULL,
   reference_level,
-  muts = "sample_sum_min",
-  total_count = "sample_group_depth",
+  muts = "sum_min",
+  total_count = "group_depth",
   contrasts = NULL,
   cont_sep = "\\t",
   ...

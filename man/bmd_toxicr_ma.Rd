@@ -8,7 +8,7 @@ bmd_toxicr_ma(
   mf_data,
   data_type = "individual",
   dose_col = "dose",
-  response_cols = c("sample_MF_min", "sample_MF_max"),
+  response_col = c("mf_min", "mf_max"),
   sd_col = NULL,
   n_col = NULL,
   bmr_type = "rel",
@@ -33,7 +33,7 @@ Data may be response per individual or summarised across dose groups.
 \item{dose_col}{A character string specifying the column in mf_data
 containing the dose data.}
 
-\item{response_cols}{A character vector specifying the columns in mf_data
+\item{response_col}{A character vector specifying the columns in mf_data
 containing the response data. For summarised data types, this should be
 the mean response for each dose group.}
 

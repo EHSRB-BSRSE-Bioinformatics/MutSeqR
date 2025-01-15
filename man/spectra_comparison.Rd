@@ -8,7 +8,8 @@ spectra_comparison(
   mutation_data,
   cols_to_group,
   subtype_resolution = "base_6",
-  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
+  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "sv", "ambiguous",
+    "uncategorized"),
   mf_type = "min",
   contrasts,
   cont_sep = "\\t"
