@@ -7,7 +7,7 @@
 bmd_proast(
   mf_data,
   dose_col = "dose",
-  response_col = "sample_MF_min",
+  response_col = "mf_min",
   covariate_col = NULL,
   CES = 0.5,
   adjust_CES_to_group_SD = FALSE,

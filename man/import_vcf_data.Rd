@@ -6,17 +6,15 @@
 \usage{
 import_vcf_data(
   vcf_file,
-  vaf_cutoff,
-  range_buffer = 1,
   sample_data_file = NULL,
   sd_sep = "\\t",
   regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
   custom_regions_file = NULL,
   rg_sep = "\\t",
+  range_buffer = 0,
   genome = NULL,
   species = NULL,
   masked_BS_genome = FALSE,
-  depth_calc = "take_del",
   output_granges = FALSE
 )
 }
@@ -32,38 +30,19 @@ listed below
 \item \code{POS}: 0-based start position of the feature in contig.
 \item \code{REF}: The reference allele at this position
 \item \code{ALT}: The left-aligned, normalized, alternate allele at this position.
-\item FORMAT FIELDS:
-\item \code{AD}: The allelic depths for the reference and alternate alleles in the
-order listed.
-\item \code{DP}: The total read depth at this position (including N-calls).
-Equivalent to \code{depth}.
-\item \code{VD}: Variant Depth. Equivalent to \code{alt_depth}.
 \item INFO FIELDS
-\item \code{TYPE}: The category to which this variant is assigned. Equivalent to
-\code{variation_type}.
 \item \code{END}: The half-open end position of the feature in contig.
 \item \code{sample}: An identifying field for your samples; either in the INFO
 field or as the header to the FORMAT field.
-\item SUGGESTED INFO FIELDS:
-\item \code{SVTYPE}: Structural variant types; INV DUP DEL INS FUS.
-\item \code{SVLEN}: Length of the structural variant in base pairs.
+\item SUGGESTED FIELDS:
+\item FORMAT \code{AD}: The allelic depths for the reference and alternate alleles in the
+order listed.
+\item FORMAT \code{DP}: The total read depth at this position (including N-calls).
+Equivalent to \code{depth}.
+\item FORMAT \code{VD}: Variant Depth. Equivalent to \code{alt_depth}.
+\item INFO \code{SVTYPE}: Structural variant types; INV DUP DEL INS FUS.
+\item INFO \code{SVLEN}: Length of the structural variant in base pairs.
 }}
-
-\item{vaf_cutoff}{Add \code{is_germline} column that identifies ostensibly
-germline variants using a cutoff for variant allele fraction (VAF).
-There is no default value provided, but generally a value of 0.01 - 0.1
-(i.e., 1\% - 10\%) is a good starting point. Setting this
-flag variants that are present at a frequency greater than this value
-at a given site.}
-
-\item{range_buffer}{An integer >= 0 .Required if using a targetted
-approach.  Variants that occur outside of the defined regions' ranges
-will be filtered out. Use the range-buffer to extend the range outside
-of a region within which a variant can occur. The default is 1 nucleotide
-outside of region ranges. Ex. Structural variants and indels may start
-outside of the regions. Adjust the range_buffer to include these variants
-in the final mutation data. Variants that are filtered out of the data
-are returned in a separate dataframe.}
 
 \item{sample_data_file}{An optional file containing additional sample
 metadata (dose, timepoint, etc.). This can be a data frame or a file path.}
@@ -88,24 +67,20 @@ Required columns are "contig", "start", and "end"}
 \item{rg_sep}{The delimiter for importing the custom_regions_file.
 Default is tab-delimited}
 
-\item{genome}{The genome assembly of the reference genome. For a ########
-complete list, refer to https://genome.ucsc.edu.
+\item{range_buffer}{An integer >= 0 .Required if using a targetted
+approach.  Use the range-buffer to extend the range outside
+of a region within which a variant can occur. The default is 0 nucleotides
+outside of region ranges. Ex. Structural variants and indels may start
+outside of the regions. Adjust the range_buffer to include these variants
+in the target sequencies.}
+
+\item{genome}{The genome assembly of the reference genome.
 Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
 \item{species}{The species of the reference genome. Required if
 regions is set to none. The value can be the common name of the species
 or the scientific name. Ex. "human" or "Homo sapiens".}
-
-\item{depth_calc}{In the instance when there are two or more calls at the
-same location within a sample, and the depths differ, this parameter chooses
-the method of calculation for the total_depth. take_mean calculates the
-total_depth by taking the mean reference depth and then adding all the alt
-depths. take_del calculates the total_depth by choosing only the reference
-depth of the deletion in the group, or if no deletion is present, the
-complex variant, then adding all alt depths. If there is no deletion
-or complex variant, it takes the mean of the reference depths.
-Default is "take_del".}
 
 \item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation
 data to output as a GRanges object. Default output is as a dataframe.}
