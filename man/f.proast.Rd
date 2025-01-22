@@ -19,7 +19,7 @@ f.proast(
   nested_model_choice = NULL,
   indep_var_choice = NULL,
   Vyans_input = NULL,
-  covariates = 0,
+  covariates = NULL,
   custom_CES = 0.05,
   model_selection = NULL,
   lower_dd = NULL,

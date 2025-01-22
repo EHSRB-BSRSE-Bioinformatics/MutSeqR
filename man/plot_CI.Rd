@@ -4,7 +4,13 @@
 \alias{plot_CI}
 \title{plot_CI}
 \usage{
-plot_CI(data, order = "none", custom_order = NULL)
+plot_CI(
+  data,
+  order = "none",
+  custom_order = NULL,
+  nudge = 0.3,
+  log_scale = FALSE
+)
 }
 \arguments{
 \item{data}{A data frame with the results of the BMD analysis.
@@ -17,6 +23,12 @@ BMD values, or a custom order.}
 
 \item{custom_order}{A character vector with the custom order of the
 Responses.}
+
+\item{nudge}{A numeric value to nudge the text labels away from points.
+Default is 0.3.}
+
+\item{log_scale}{A logical value indicating if the x-axis should be in
+log10 scale. Default is false.}
 }
 \value{
 a ggplot object
