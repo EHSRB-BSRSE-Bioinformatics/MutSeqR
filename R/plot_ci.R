@@ -8,6 +8,10 @@
 #' BMD values, or a custom order.
 #' @param custom_order A character vector with the custom order of the
 #' Responses.
+#' @param nudge A numeric value to nudge the text labels away from points.
+#' Default is 0.3.
+#' @param log_scale A logical value indicating if the x-axis should be in
+#' log10 scale. Default is false.
 #' @return a ggplot object
 #' @export
 #' @importFrom dplyr arrange pull mutate group_by ungroup across where desc
@@ -17,7 +21,9 @@
 #' element_rect element_blank element_line
 plot_CI <- function(data,
                     order = "none",
-                    custom_order = NULL) {
+                    custom_order = NULL,
+                    nudge = 0.3,
+                    log_scale = FALSE) {
 
   if (order == "asc") {
     response_order <- data %>%
@@ -39,14 +45,28 @@ plot_CI <- function(data,
     dplyr::mutate(BMD = as.numeric(.data$BMD),
                   BMDL = as.numeric(.data$BMDL),
                   BMDU = as.numeric(.data$BMDU))
-  results_bmd_df_plot <- data %>%
-    dplyr::group_by(.data$Response) %>%
-    dplyr::mutate(max = .data$BMDU) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 1))) %>%
-    tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
-
-  nudge_value <- 0.3
+  if (log_scale) {
+    data <- data %>%
+      dplyr::mutate(BMD = log10(.data$BMD),
+                    BMDL = log10(.data$BMDL),
+                    BMDU = log10(.data$BMDU))
+    results_bmd_df_plot <- data %>%
+      dplyr::group_by(.data$Response) %>%
+      dplyr::mutate(max = .data$BMDU) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 2))) %>%
+      tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
+    x_lab <- "log10(BMD)"
+  } else {
+    results_bmd_df_plot <- data %>%
+      dplyr::group_by(.data$Response) %>%
+      dplyr::mutate(max = .data$BMDU) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 1))) %>%
+      tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
+    x_lab <- "BMD"
+  }
+  nudge_value <- nudge
 
   g <- ggplot(results_bmd_df_plot,
               ggplot2::aes(x = results_bmd_df_plot$value,
@@ -72,7 +92,7 @@ plot_CI <- function(data,
                                                 nudge_value, -nudge_value),
                        hjust = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
                                               0, 1), na.rm = TRUE) +
-    ggplot2::labs(x = "BMD", y = "Response",
+    ggplot2::labs(x = x_lab, y = "Response",
                   title = paste0("BMD with 90% Confidence Intervals"),
                   color = NULL) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
