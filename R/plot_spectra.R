@@ -101,9 +101,9 @@ if (group_order == "arranged") {
   if (response == "proportion") {
     response_col <- paste0("proportion_", mf_type)
   } else if (response == "frequency") {
-    response_col <- paste0(group_col_prefix, "_MF_", mf_type)
+    response_col <- paste0("mf_", mf_type)
   } else if (response == "sum") {
-    response_col <- paste0(group_col_prefix, "_sum_", mf_type)
+    response_col <- paste0("sum_", mf_type)
   } else {
     stop("response must be one of 'frequency', 'proportion', or 'sum'")
   }
@@ -138,20 +138,20 @@ if (group_order == "arranged") {
     plot_data$group <- factor(plot_data$group, levels = order)
   } else if (group_order == "custom") {
     plot_data$group <- factor(plot_data$group,
-                                     levels = group_order_input)
+                              levels = group_order_input)
   } else if (group_order == "clustered") {
     # Cluster the samples
     hc <- cluster_spectra(mf_data = plot_data,
-                  group_col = "group",
-                  response_col = "response",
-                  subtype_col = "subtype",
-                  dist = dist,
-                  cluster_method = cluster_method)
+                          group_col = "group",
+                          response_col = "response",
+                          subtype_col = "subtype",
+                          dist = dist,
+                          cluster_method = cluster_method)
     # Reorder the samples based on hierarchical clustering
     order <- hc$labels[hc$order]
     # Reorder the levels of the sample variable in your data frame
     plot_data$group <- factor(plot_data$group,
-                                      levels = order)
+                              levels = order)
   }
   if (subtype_resolution != "type") {
   subtype_order <- c(MutSeqR::subtype_list$type, rev(MutSeqR::subtype_list[[subtype_resolution]]))
@@ -291,6 +291,8 @@ unique_subtypes <- unique(mf_data[[subtype_col]])
 mat <- matrix(0, nrow = length(unique_samples),
               ncol = length(unique_subtypes),
               dimnames = list(unique_samples, unique_subtypes))
+mf_data$subtype <- as.character(mf_data$subtype)
+mf_data$group <- as.character(mf_data$group)
 for (i in seq_len(nrow(mf_data))) {
   mat[mf_data[[group_col]][i], mf_data[[subtype_col]][i]] <- mf_data[[response_col]][i]
 }

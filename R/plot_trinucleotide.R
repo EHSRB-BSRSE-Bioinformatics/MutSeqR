@@ -68,9 +68,9 @@ plot_trinucleotide <- function(mutation_data,
   if (response == "proportion") {
     response_col <- paste0("proportion_", mf_type)
   } else if (response == "frequency") {
-    response_col <- paste0(group_col_prefix, "_MF_", mf_type)
+    response_col <- paste0("mf_", mf_type)
   } else if (response == "sum") {
-    response_col <- paste0(group_col_prefix, "_sum_", mf_type)
+    response_col <- paste0("sum_", mf_type)
   } else {
     stop("response must be one of 'frequency', 'proportion', or 'sum'")
   }
@@ -85,12 +85,12 @@ plot_trinucleotide <- function(mutation_data,
     dplyr::select("group",
                   "normalized_context_with_mutation",
                   "normalized_context",
-                  dplyr::all_of(paste0(group_col_prefix, "_sum_", mf_type)),
+                  dplyr::all_of(paste0("sum_", mf_type)),
                   dplyr::all_of(response_col)) %>%
     dplyr::rename(context = "normalized_context",
       subtype = "normalized_context_with_mutation",
       response = dplyr::all_of(response_col),
-      sum = dplyr::all_of(paste0(group_col_prefix, "_sum_", mf_type))
+      sum = dplyr::all_of(paste0("sum_", mf_type))
     ) %>%
     dplyr::mutate(mutation = stringr::str_extract(.data$subtype, "(?<=\\[)[^\\]]+(?=\\])")) %>%
     dplyr::arrange(.data$mutation, .data$context) %>%
