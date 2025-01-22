@@ -76,15 +76,12 @@ spectra_comparison <- function(mutation_data,
                                          variant_types = variant_types,
                                          summary = TRUE)
   # Prepare Data
-  ## Find the sum columns for the mutation counts
-  freq_col_prefix <- paste(cols_to_group, collapse = "_")
-  pattern <- paste0(freq_col_prefix, "_sum_", mf_type)
-  matching_col <- grep(pattern, names(mf_data), value = TRUE)
+  sum_col <- paste0("sum_", mf_type)
   ## Find the subtype column
   subtype_col <- MutSeqR::subtype_dict[[subtype_resolution]]
   ## Select the necessary columns
   mut_spectra <- mf_data %>%
-    dplyr::select(dplyr::all_of(c( cols_to_group, subtype_col, matching_col)))
+    dplyr::select(dplyr::all_of(c(cols_to_group, subtype_col, sum_col)))
   ## Create a single group column
   mut_spectra <- mut_spectra %>%
     dplyr::mutate(group_col = do.call(paste,
