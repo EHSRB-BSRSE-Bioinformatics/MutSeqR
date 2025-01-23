@@ -24,6 +24,11 @@ radar_plot <- function(mf_data,
     dplyr::select({{response_col}}, {{label_col}}, {{facet_col}}) %>%
     tidyr::pivot_wider(names_from = {{label_col}}, values_from = {{response_col}})
 
+  if (is.factor(mf_data[[rlang::as_name(enquo(label_col))]])) {
+    label_levels <- levels(mf_data[[rlang::as_name(enquo(label_col))]])
+    plot_data <- plot_data %>%
+      dplyr::select({{facet_col}}, all_of(label_levels))
+  }
     # Convert dose column to a factor to handle arbitrary values
     plot_data[[facet_col]] <- as.factor(plot_data[[facet_col]])
     # Get levels
@@ -39,7 +44,8 @@ radar_plot <- function(mf_data,
     facet <- facet_levels[i]
     df_i <- plot_data %>%
       dplyr::filter(.data[[paste0(facet_col)]] == facet) %>%
-      select(-{{facet_col}})
+      dplyr::ungroup() %>%
+      dplyr::select(-{{facet_col}})
 
     count <- ncol(df_i)
     # Add rows for max and min values
