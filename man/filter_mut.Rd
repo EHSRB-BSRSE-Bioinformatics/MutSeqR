@@ -141,3 +141,57 @@ no_variant. In these cases, correct_depth_to_indel == TRUE will ensure that
 the total_depth value for the deletion is retained, while the total_depth
 value for the no_variant is removed.
 }
+\examples{
+# Load example data
+example_file <- system.file("extdata", "example_mutation_data.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+# Filter the data
+## Basic Usage: correct the depth and filter out germline variants
+filter_example_1 <- filter_mut(mutation_data = example_data,
+                               correct_depth = TRUE,
+                               vaf_cutoff = 0.01)
+## Remove rows outside of specified regions (TSpanel_mouse)
+filter_example_2 <- filter_mut(mutation_data = example_data,
+                               correct_depth = TRUE,
+                               vaf_cutoff = 0.01,
+                               regions = load_regions_file("TSpanel_mouse"),
+                               regions_filter = "keep_within")
+## Apply a custom filter to flag rows with "EndRepairFillInArtifact" in the column 'filter'
+filter_example_3 <- filter_mut(mutation_data = example_data,
+                               correct_depth = TRUE,
+                               vaf_cutoff = 0.01,
+                               regions = load_regions_file("TSpanel_mouse"),
+                               regions_filter = "keep_within",
+                               custom_filter_col = "filter",
+                               custom_filter_val = "EndRepairFillInArtifact",
+                               custom_filter_rm = FALSE)
+## Flag snv variants that overlap with germline mnv variants.
+## Subtract the alt_depth of these variants from their total_depth (treat them as N-calls).
+## Return all the flagged/removed rows in a seperate data frame
+filter_example_4 <- filter_mut(mutation_data = example_data,
+                               correct_depth = TRUE,
+                               vaf_cutoff = 0.01,
+                               regions = load_regions_file("TSpanel_mouse"),
+                               regions_filter = "keep_within",
+                               custom_filter_col = "filter",
+                               custom_filter_val = "EndRepairFillInArtifact",
+                               custom_filter_rm = FALSE,
+                               snv_in_germ_mnv = TRUE,
+                               rm_filtered_mut_from_depth = TRUE,
+                               return_filtered_rows = TRUE)
+# Flagging germline mutations...
+# Found 612 germline mutations.
+# Flagging SNVs overlapping with germline MNVs...
+# Found 20 SNVs overlapping with germline MNVs.
+# Applying custom filter...
+# Flagged 2021 rows with values in <filter> column that matched EndRepairFillInArtifact
+# Applying region filter...
+# Removed 22 rows based on regions.
+# Correcting depth...
+# 909 rows had their total_depth corrected.
+# Removing filtered mutations from the total_depth...
+# Filtering complete.
+# Returning a list: mutation_data and filtered_rows.
+filtered_rows <- filter_example_4$filtered_rows
+filtered_example_mutation_data <- filter_example_4$mutation_data
+}
