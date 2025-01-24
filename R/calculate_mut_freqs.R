@@ -145,7 +145,16 @@
 #'                                    cols_to_group = "sample",
 #'                                    subtype_resolution = "base_6",
 #'                                    retain_metadata_cols = "dose")
-#' # Then calculate the mean mutation frequency for each 6 base subtype per dose
+#' # Note: NA values in retain_metadata_cols. When we create a summary table
+#' # that includes mutation subtypes, there may occasionally be NA values in
+#' # the metadata columns. This is because the mutation data does not contain
+#' # any mutations (filtered or not) for that particular subtype within the
+#' # given group.
+#' # For example, our example_data does not contain any ambiguous mutations, so
+#' # the dose column is NA for all ambiguous mutations in the summary table.
+#' # This will not affect our mean mutation frequency calculations.
+#'
+#' # Calculate the mean mutation frequency for each 6 base subtype per dose
 #' mf_6_mean_example <- mf_6_example %>%
 #'  dplyr::group_by(dose, normalized_subtype) %>%
 #'  dplyr::summarise(mean_mf_min = mean(mf_min), se_mf_min = sd(mf_min) / sqrt(n()),
