@@ -87,9 +87,9 @@ will not be normalized to the total_depth.}
 \item{precalc_depth_file}{A data frame of a file path to a text file
 containing pre-calculated per-group total_depth values. This data frame
 should contain the columns for the desired grouping variable
-and mutation subtype (if applicable). The precalculated total_depth column(s)
-should be called one or both of 'group_depth' and 'subtype_depth'.
-See the subtype_resolution
+and the reference context at the desired subtype resolution (if applicable).
+The precalculated total_depth column(s) should be called one or both of
+'group_depth' and 'subtype_depth'. See the subtype_resolution
 parameter for more information on the mutation subtype columns.}
 
 \item{d_sep}{The delimiter used in the precalc_depth_file, if applicable.
@@ -155,4 +155,75 @@ the sequencing depth at the proper reference bases under consideration.
 \details{
 Additionally, by default, the operation is run by default using both the minimum
 and maximum independent methods for counting mutations.
+}
+\examples{
+# Load example data
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+
+# Basic Usage: Calculate mutation frequency by sample.
+# Calculate depth from the mutation data
+mf_example <- calculate_mut_freq(mutation_data = example_data,
+                                 cols_to_group = "sample")
+# Calculate the trinucleotide mutation proportions for each dose
+mf_96_example <- calculate_mut_freq(mutation_data = example_data,
+                                    cols_to_group = "dose",
+                                    subtype_resolution = "base_96",
+                                    variant_types  = "snv")
+# Calculate the mean mutation frequency for each 6 base subtype per dose
+# First, calculate 6 base MF per sample. Retain the dose column.
+mf_6_example <- calculate_mut_freq(mutation_data = example_data,
+                                   cols_to_group = "sample",
+                                   subtype_resolution = "base_6",
+                                   retain_metadata_cols = "dose")
+# Then calculate the mean mutation frequency for each 6 base subtype per dose
+mf_6_mean_example <- mf_6_example \%>\%
+ dplyr::group_by(dose, normalized_subtype) \%>\%
+ dplyr::summarise(mean_mf_min = mean(mf_min), se_mf_min = sd(mf_min) / sqrt(n()),
+                 mean_mf_max = mean(mf_max), se_mf_max = sd(mf_max) / sqrt(n()))
+# Note: calculate_mut_freq does not calculate mean mutation frequency for
+# groups; this function only sums mutations across groups. Thus, if you are
+# interested in calculating the mean of a group, this must be done separately.
+
+# Calculate MF using a precalculated depth file
+sample_depth_example <- data.frame(sample = c("dna00973.1", "dna00974.1",
+                                              "dna00975.1", "dna00976.1",
+                                              "dna00977.1", "dna00978.1",
+                                              "dna00979.1", "dna00980.1",
+                                              "dna00981.1", "dna00982.1",
+                                              "dna00983.1", "dna00984.1",
+                                              "dna00985.1", "dna00986.1",
+                                              "dna00987.1", "dna00988.1",
+                                              "dna00989.1", "dna00990.1",
+                                              "dna00991.1", "dna00992.1",
+                                              "dna00993.1", "dna00994.1",
+                                              "dna00995.1", "dna00996.1"),
+                                   group_depth = c(565395266, 755574283,
+                                                   639909215, 675090988,
+                                                   598104021, 611295330,
+                                                   648531765, 713240735,
+                                                   669734626, 684951248,
+                                                   716913381, 692323218,
+                                                   297661400, 172863681,
+                                                   672259724, 740901132,
+                                                   558051386, 733727643,
+                                                   703349287, 884821671,
+                                                   743311822, 799605045,
+                                                   677693752, 701163532))
+mf_example_precalc <- calculate_mut_freq(mutation_data = example_data,
+                                         cols_to_group = "sample",
+                                         calculate_depth = FALSE,
+                                         precalc_depth_file = sample_depth_example)
+# Use a precalculated depth file for 6 base mutation frequencies per sample.
+# the base_6 resolution uses reference context 'normalized_ref'; C or T.
+# Our precalc_depth_file needs group_depth (depth per sample) and the subtype_depth (depth per sample AND per normalized_ref)
+# We will create the example precalc_depth file_for the base_6 resolution from the mf_6_example for simplicity.
+sample_subtype_depth_example <- mf_6_example \%>\%
+ dplyr::select(sample, normalized_ref, group_depth, subtype_depth) \%>\%
+ unique()
+mf_6_example_precalc <- calculate_mut_freq(mutation_data = example_data,
+                                           cols_to_group = "sample",
+                                           subtype_resolution = "base_6",
+                                           calculate_depth = FALSE,
+                                           precalc_depth_file = sample_subtype_depth_example)
 }
