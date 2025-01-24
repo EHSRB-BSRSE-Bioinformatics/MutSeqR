@@ -5,19 +5,20 @@
 \title{Plot the trinucleotide spectrum}
 \usage{
 plot_trinucleotide(
-  mutation_data,
+  mf_96_data,
   response = c("frequency", "proportion", "sum"),
   mf_type = "min",
   group_col = "dose",
   max_y = c("individual", "group"),
   sum_totals = TRUE,
   output_path = NULL,
-  output_type = "svg"
+  output_type = "tiff"
 )
 }
 \arguments{
-\item{mutation_data}{A data frame containing mutation data. This can be obtained
-using the 'import_mut_data' or 'read_vcf' functions.}
+\item{mf_96_data}{A data frame containing the mutation frequency data at the 96-base resolution.
+This should be obtained using the 'calculate_mut_freq' with subtype_resolution set to 'base_96'.
+Generally, cols_to_group should be the same as 'group_col'.}
 
 \item{response}{A character string specifying the type of response to plot.
 Must be one of 'frequency', 'proportion', or 'sum'.}
@@ -25,10 +26,11 @@ Must be one of 'frequency', 'proportion', or 'sum'.}
 \item{mf_type}{A character string specifying the mutation count method to
 plot. Must be one of 'min' or 'max'. Default is 'min'.}
 
-\item{group_col}{A character string specifying the column(s) in 'mutation_data'
+\item{group_col}{A character string specifying the column(s) in 'mf_96_data'
 to group the data by. Default is 'sample'. The sum, proportion, or frequency
-will be calculated and a plot will be generated for all unique levels of this
-group. You can specify more than one column to group by.}
+will be plotted for all unique levels of this
+group. You can specify more than one column to group by. Generally the same as
+the 'cols_to_group' parameter in 'calculate_mut_freq' when generating mf_96_data.}
 
 \item{max_y}{A character string specifying the max response value for the y-axis.
 Must be one of 'individual' or 'group'.'individual' will adjust the maximum y-axis
@@ -50,15 +52,61 @@ Creates barplots of the trinucleotide spectrum for all levels of
 a given group based on the mutation data. All plots are exported.
 }
 \details{
-The function calculates the mutation frequency and plots the trinucleotide
-spectrum for all levels of a given group based on the mutation data.
-The function calculates the mutation frequency using the 'calculate_mut_freq'
-function with "cols_to_group" set to 'group_col' and "subtype_resolution" set
-to 'base_96'. For a given group, mutation counts and total informative duplex
-bases are summed across all samples. Mutation frequency is calculated by
-dividing the total mutation counts by the total number of duplex bases.
-For a given mutation subtype, proportion is calculated as the proportion
-of total mutation counts normalized to the total number of duplex bases
-for a given group and subtype.
-^ should just explain this in calculate mutation freq and refer to that function.
+The function plots the trinucleotide spectrum for all levels of a given
+group from the provided mf_96 data; the output of calculate_mut_freq with
+subtype_resolution = "base_96".
+}
+\examples{
+# Load example data
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+
+# Use a temporary directory to save the example plots.
+temp_output <- tempdir()
+
+# Calculate the mutation frequency data at the 96-base resolution
+mf_96 <- calculate_mut_freq(mutation_data = example_data,
+                            cols_to_group = "dose_group",
+                            subtype_resolution = "base_96",
+                            variant_types = "snv")
+# Plot the trinucleotide proportions for each dose group
+# Scale y-axis the same for all groups
+plot_trinucleotide(mf_96_data = mf_96,
+                   response = "proportion",
+                   mf_type = "min",
+                   group_col = "dose_group",
+                   max_y = "group",
+                   output_path = temp_output)
+# Plot the trinucleotide sums for each dose group
+# Scale y-axis the differently for each group
+plot_trinucleotide(mf_96_data = mf_96,
+                   response = "sum",
+                   mf_type = "min",
+                   group_col = "dose_group",
+                   max_y = "individual",
+                   output_path = temp_output)
+
+# Plot the mean mutation frequency for each dose group
+mf_96_sample <- calculate_mut_freq(mutation_data = example_data,
+                                   cols_to_group = "sample",
+                                   subtype_resolution = "base_96",
+                                   variant_types = "snv",
+                                   retain_metadata_cols = "dose_group")
+mean_mf_96 <- mf_96_sample \%>\%
+ dplyr::group_by(dose_group, normalized_context_with_mutation) \%>\%
+ dplyr::summarise(mf_min = mean(mf_min), .groups = "drop_last")
+plot_trinucleotide(mf_96_data = mean_mf_96,
+                   response = "frequency",
+                   mf_type = "min",
+                   group_col = "dose_group",
+                   max_y = "individual",
+                   output_path = temp_output)
+list.files(temp_output)
+# Note: The plots are saved as image files in the temporary directory.
+# To view the plots, use the following code:
+## if (!requireNamespace("tiff", quietly = TRUE)) install.packages("tiff")
+## library(tiff)
+## example_plot <- file.path(temp_output, "plot_Control_trinucleotide_proportion.tiff")
+## image <- tiff::readTIFF(example_plot)
+## plot(as.raster(image))
 }
