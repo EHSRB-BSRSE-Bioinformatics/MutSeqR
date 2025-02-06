@@ -27,11 +27,6 @@ plot_bubbles <- function(mutation_data,
                                   circle_spacing = 1,
                                   circle_outline = "none",
                                   circle_resolution = 50) {
-  
-  library(ggplot2)
-  library(dplyr)
-  library(rlang)
-  library(packcircles)
 
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
