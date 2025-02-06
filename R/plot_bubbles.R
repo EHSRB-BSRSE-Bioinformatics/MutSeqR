@@ -20,21 +20,18 @@
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
 #' @export
-generate_bubble_plots <- function(mutation_data,
+plot_bubbles <- function(mutation_data,
                                   size_by = "alt_depth",
                                   facet_col = NULL,
                                   color_by = "normalized_subtype",
                                   circle_spacing = 1,
                                   circle_outline = "none",
                                   circle_resolution = 50) {
-  if (!requireNamespace("fmsb")) {
-    stop("You need the package fmsb to run this function.")
-  }
+
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
   }
-  # TO DO: I haven't fully implemented the color_by option
-  # ideally it would conditionally build the color pallet depending on the value of this variable
+  
   if (color_by == "normalized_subtype") {
     plotcolors <- c("C>A" = "#3288BD",
                     "C>G" = "#99D594",
@@ -64,23 +61,18 @@ generate_bubble_plots <- function(mutation_data,
                     "insertion" = "purple",
                     "symbolic" = "azure2")
   } else if (color_by == "trinucleotide_subtype") {
-    plotcolors <- NULL  # Use NULL to indicate automatic color generation
+    plotcolors <- NULL
   } else {
     plotcolors <- NULL
   }
 
-  # TODO - allow some text labels on the circles? Perhaps for clonally expanded mutants above a certain size (e.g., >1), we could show a number?
-
-  # Ensure additional_columns is a character vector
   if (!is.null(facet_col) && !is.character(facet_col)) {
     stop("facet_col must be a character vector")
   }
 
   x <- mutation_data %>% 
-    dplyr::filter(!.data$variation_type %in% "no_variant" &
-                    .data$is_germline == FALSE) %>% # TO DO: add a parameter to filter out germline mutations
+    dplyr::filter(!.data$variation_type %in% "no_variant" & .data$is_germline == FALSE) %>%
     dplyr::arrange(!!rlang::sym(color_by))
-
   data <- data.frame(group = paste(x$sample,
                                    x$contig,
                                    x$start,
@@ -90,77 +82,93 @@ generate_bubble_plots <- function(mutation_data,
                                    sep = "_"),
                      response = x[[size_by]],
                      color_column = x[[color_by]])
+
   if (!is.null(facet_col)) {
     data$facet <- x[[facet_col]]
   }
+
   data <- data %>% dplyr::arrange("color_column")
+
   if (!is.null(facet_col)) {
-    # Convert facet column to a factor to handle arbitrary values
     data$facet <- as.factor(data$facet)
-    # Get levels
     facet_levels <- levels(data$facet)
-    # Loop through facets
-    circles <- lapply(
-                      seq_along(facet_levels),
-                      function(i) {
-                        facet_level <- facet_levels[[i]]
-                        # Filter data for the current facet_level
-                        filtered_data <- data %>% filter(.data$facet == facet_level)
-                        
-                        # Generate the layout for the filtered data with scaled response
-                        circles <- packcircles::circleProgressiveLayout(filtered_data,
-                                                          sizecol = "response", sizetype = 'area')
-                        circles$radius <- circle_spacing * circles$radius
-                        data2 <- cbind(filtered_data, circles)
-                        return(list(data2 = data2))
-                      })
-    data2 <- do.call(rbind, lapply(circles, `[[`, "data2"))
-
+    # Pack circles for each facet level
+    circles <- lapply(seq_along(facet_levels), function(i) {
+      facet_level <- facet_levels[[i]]
+      filtered_data <- data %>% filter(facet == facet_level)
+      circle_layout <- packcircles::circleProgressiveLayout(filtered_data, sizecol = "response", sizetype = 'area')
+      circle_layout$radius <- circle_spacing * circle_layout$radius
+      data2 <- cbind(filtered_data, circle_layout)
+      return(data2)
+    })
+    data2 <- do.call(rbind, circles)
   } else {
-
-    # Generate the layout for the filtered data with scaled response
-    circles <- packcircles::circleProgressiveLayout(data,
-                                                    sizecol = "response",
-                                                    sizetype = 'area')
+    circles <- packcircles::circleProgressiveLayout(data, sizecol = "response", sizetype = 'area')
     circles$radius <- circle_spacing * circles$radius
     data2 <- cbind(data, circles)
   }
-
-  # Select the specified columns from data2 for vertices
-  vertices <- packcircles::circleLayoutVertices(data2,
-                                                npoints = circle_resolution,
-                                                idcol = "group",
-                                                xysizecols = (ncol(data2) - 2):(ncol(data2)))
-
-  # Perform the left join with the suffixes to handle different x and y columns
-  plot_data <- left_join(vertices, data2, by = c("id" = "group"),
-                         suffix = c(".circle_coords", ".circle_centres"))
-
-  # Create the plot
+  
+  vertices <- packcircles::circleLayoutVertices(data2, npoints = circle_resolution, idcol = "group", xysizecols = c("x", "y", "radius"))
+  
+  plot_data <- left_join(vertices, data2, by = c("id" = "group"), suffix = c(".circle_coords", ".circle_centres"))
+  
+  # Create the main plot with bubbles
   p <- ggplot() +
     geom_polygon(data = plot_data,
-                 aes(x = x.circle_coords, y = y.circle_coords,
-                     group = id,
-                     fill = color_column),
+                 aes(x = x.circle_coords, y = y.circle_coords, group = id, fill = color_column),
                  colour = if(is.null(circle_outline) || circle_outline == "none") NA else circle_outline) +
     theme_void() +
     labs(fill = "Mutation type") +
     theme(legend.position = "right") +
     coord_equal()
-
+  
   if (is.null(plotcolors)) {
     num_colors <- length(unique(plot_data$color_column))
-    color_palette <- colorRampPalette(RColorBrewer::Rcolorbrewer.pal(8, "Set1"))(num_colors)
+    color_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set1"))(num_colors)
     p <- p + scale_fill_manual(values = color_palette)
   } else {
-    p <- p + scale_fill_manual(values = plotcolors,
-                               breaks = names(plotcolors))
+    p <- p + scale_fill_manual(values = plotcolors, breaks = names(plotcolors))
   }
-
+  
   if (!is.null(facet_col)) {
     p <- p + facet_wrap(~facet)
-    return(p)
-  } else {
-    return(p)
   }
+  
+  # Generate a size legend within the same plot
+  unique_responses <- sort(unique(data$response))
+  num_legend_circles <- min(5, length(unique_responses))  # Up to 5 elements
+  selected_indices <- seq(1, length(unique_responses), length.out = num_legend_circles) %>% round()
+  selected_sizes <- unique_responses[selected_indices]
+  
+  # Calculate the range of x-values in the data and determine the center point of the x-axis
+  x_range <- range(data2$x, na.rm = TRUE)
+  x_center <- mean(x_range)
+  
+  # Calculate the total length of the legend
+  legend_width <- legend_gap * (num_legend_circles - 1)
+  legend_gap <- max(data2$radius) * 2  # Adjust gap based on maximum circle radius
+  
+  # Adjust legend positions to be centered about x_center
+  legend_start <- x_center - (legend_width / 2)
+  legend_positions <- seq(legend_start, by = legend_gap, length.out = num_legend_circles)
+  
+  size_legend_df <- data.frame(
+    x = legend_positions,
+    y = rep(min(data2$y) - legend_gap, num_legend_circles),
+    radius = circle_spacing * sqrt(selected_sizes / pi),
+    label = as.character(selected_sizes)
+  )
+  legend_data <- packcircles::circleLayoutVertices(size_legend_df, idcol = NULL, xysizecols = 1:3)
+  if (!is.null(facet_col)) {
+    legend_data$facet <- levels(plot_data$facet)[length(levels(plot_data$facet))]
+    size_legend_df$facet <- levels(plot_data$facet)[length(levels(plot_data$facet))]
+  }
+  # Overlay the size legend on the main plot
+  q <- p +
+    geom_polygon(data = legend_data,
+                 aes(x = x, y = y, group = "label"),
+                 fill = "grey80") +
+    geom_text(data = size_legend_df, aes(x = x, y = y, label = label), vjust = 0.5)
+  q
+  return(q)
 }
