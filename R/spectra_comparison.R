@@ -9,7 +9,7 @@
 #' function will sum the mutations across groups before running the comparison.
 #' @param subtype_resolution The resolution of the mutation spectra to be
 #' compared. Options include "base_6", "base_12", "base_96", and "base_192" and "type".
-#' See calculate_mut_freq for more details.
+#' See calculate_mf for more details.
 #' @param variant_types A character vector of the mutation types to include
 #' in the comparison. Default is all types of mutations.
 #' @param contrasts a filepath to a tab-delimited `.txt` file OR a dataframe that
@@ -70,7 +70,7 @@ spectra_comparison <- function(mutation_data,
                                contrasts,
                                cont_sep = "\t") {
   
-  mf_data <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
+  mf_data <- MutSeqR::calculate_mf(mutation_data = mutation_data,
                                          cols_to_group = cols_to_group,
                                          subtype_resolution = subtype_resolution,
                                          variant_types = variant_types,

@@ -1,4 +1,4 @@
-#' plot_CI
+#' plot_ci
 #' @description Plot confidence intervals
 #' @param data A data frame with the results of the BMD analysis.
 #' Data must contain columns "Response", "BMD", "BMDL", and "BMDU".
@@ -19,7 +19,7 @@
 #' @importFrom ggplot2 ggplot aes geom_line geom_point theme_minimal theme
 #' scale_color_manual scale_x_continuous geom_text labs element_text
 #' element_rect element_blank element_line
-plot_CI <- function(data,
+plot_ci <- function(data,
                     order = "none",
                     custom_order = NULL,
                     nudge = 0.3,

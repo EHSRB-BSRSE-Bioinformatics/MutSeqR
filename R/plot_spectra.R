@@ -89,7 +89,7 @@ if (group_order == "arranged") {
  # If the group_order_input contains the group_col, remove it.
  metadata_cols <- group_order_input[!group_order_input %in% group_col]
 }
-  mf_data <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
+  mf_data <- MutSeqR::calculate_mf(mutation_data = mutation_data,
                                          cols_to_group = group_col,
                                          subtype_resolution = subtype_resolution,
                                          variant_types = variant_types,

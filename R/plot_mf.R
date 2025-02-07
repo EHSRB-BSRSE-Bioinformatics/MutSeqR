@@ -1,7 +1,7 @@
 #' Plot the Mutation Frequency
 #' @description This function creates a plot of the mutation frequency.
 #' @param mf_data A data frame containing the mutation frequency data. This is
-#' obtained from the calculate_mut_freq function with SUMMARY = TRUE.
+#' obtained from the calculate_mf function with SUMMARY = TRUE.
 #' @param group_col The name of the column containing the sample/group names
 #' for the x-axis.
 #' @param plot_type The type of plot to create. Options are "bar" or "point".

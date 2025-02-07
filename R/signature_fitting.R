@@ -109,7 +109,7 @@ signature_fitting <- function(mutation_data,
 
   signature_data <- signature_data %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
-    dplyr::filter(.data$filter_mut == FALSE) %>%   
+    dplyr::filter(.data$filter_mut == FALSE) %>%
     dplyr::select(all_of(group), "id", "variation_type", "contig", "start", "end", "ref", "alt") %>%
     dplyr::rename(
       "Samples" = all_of(group),

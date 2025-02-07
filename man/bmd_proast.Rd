@@ -21,7 +21,7 @@ bmd_proast(
 }
 \arguments{
 \item{mf_data}{A data frame containing the data to be analyzed. This can
-be created using \code{calculate_mut_freq(cols_to_group = "sample",
+be created using \code{calculate_mf(cols_to_group = "sample",
 retain_metadata_cols = [dose_col], summary = TRUE)}.}
 
 \item{dose_col}{The name of the column in mf_data that contains the dose.
@@ -74,7 +74,7 @@ National Institute for Public Health and the Environment).
 This function is a  modified version of the original interactive
 PROAST software (\url{https://www.rivm.nl/en/proast} that allows for batch
 processing of data. The function is designed to be used with the output of
-the \code{calculate_mut_freq} function for the purpose of calculating the
+the \code{calculate_mf} function for the purpose of calculating the
 Benchmark Dose of mutation frequency data. As such, some functionality of
 the original PROAST software has been removed.
 

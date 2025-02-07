@@ -1,6 +1,6 @@
 #' Filter your mutation data
 #' @description This function creates a filter_mut column that will be read by
-#' the \code{calculate_mut_freq} function. Variants with filter == TRUE will
+#' the \code{calculate_mf} function. Variants with filter == TRUE will
 #' not be included in final mutation counts. This function may also remove
 #' records of given loci from the mutation data based on user specification.
 #' Running this function again on the same data will not overide the previous

@@ -10,11 +10,11 @@ make_CpG_summary_table(cpg_muts, ...)
 \item{cpg_muts}{A data frame containing CpG mutations
 TO DO: cpg_muts = df "cpg_mutations" is created in the .Rmd file, but is not created by any other function.}
 
-\item{...}{Additional arguments to calculate_mut_freqs()}
+\item{...}{Additional arguments to calculate_mfs()}
 }
 \description{
 Creates a summary table of CpG sites based on groupings of interest. This is
-basically a convenience function that wraps \code{calculate_mut_freqs()} over CpG
+basically a convenience function that wraps \code{calculate_mfs()} over CpG
 data (or any data). See the documentation for that function for parameters.
 It is up to the user to supply proper data to the function.
 }
