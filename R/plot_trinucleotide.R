@@ -2,7 +2,7 @@
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
 #' a given group based on the mutation data. All plots are exported. 
 #' @param mf_96_data A data frame containing the mutation frequency data at the 96-base resolution.
-#' This should be obtained using the 'calculate_mut_freq' with subtype_resolution set to 'base_96'.
+#' This should be obtained using the 'calculate_mf' with subtype_resolution set to 'base_96'.
 #' Generally, cols_to_group should be the same as 'group_col'.
 #' @param response A character string specifying the type of response to plot.
 #' Must be one of 'frequency', 'proportion', or 'sum'.
@@ -12,7 +12,7 @@
 #' to group the data by. Default is 'sample'. The sum, proportion, or frequency
 #' will be plotted for all unique levels of this
 #' group. You can specify more than one column to group by. Generally the same as
-#' the 'cols_to_group' parameter in 'calculate_mut_freq' when generating mf_96_data.
+#' the 'cols_to_group' parameter in 'calculate_mf' when generating mf_96_data.
 #' @param max_y A character string specifying the max response value for the y-axis.
 #' Must be one of 'individual' or 'group'.'individual' will adjust the maximum y-axis
 #' value for each level of the group independently of the others. 'group' will set the
@@ -28,7 +28,7 @@
 #' @importFrom stringr str_extract str_c
 
 #' @details The function plots the trinucleotide spectrum for all levels of a given
-#' group from the provided mf_96 data; the output of calculate_mut_freq with
+#' group from the provided mf_96 data; the output of calculate_mf with
 #' subtype_resolution = "base_96".
 #' @examples 
 #' # Load example data
@@ -39,7 +39,7 @@
 #' temp_output <- tempdir()
 #' 
 #' # Calculate the mutation frequency data at the 96-base resolution
-#' mf_96 <- calculate_mut_freq(mutation_data = example_data,
+#' mf_96 <- calculate_mf(mutation_data = example_data,
 #'                             cols_to_group = "dose_group",
 #'                             subtype_resolution = "base_96",
 #'                             variant_types = "snv")
@@ -61,7 +61,7 @@
 #'                    output_path = temp_output)
 #'
 #' # Plot the mean mutation frequency for each dose group
-#' mf_96_sample <- calculate_mut_freq(mutation_data = example_data,
+#' mf_96_sample <- calculate_mf(mutation_data = example_data,
 #'                                    cols_to_group = "sample",
 #'                                    subtype_resolution = "base_96",
 #'                                    variant_types = "snv",

@@ -2,7 +2,7 @@
 #' @description This function calculates the mean mutation frequency across
 #' samples for given groups and plots the results.
 #' @param mf_data A data frame containing the mutation frequency data. This is
-#' obtained from the calculate_mut_freq function with SUMMARY = TRUE.
+#' obtained from the calculate_mf function with SUMMARY = TRUE.
 #' @param group_col The column in mf_data by which to calculate the mean.
 #' Ex. "dose" or c("dose", "tissue").
 #' @param fill_col The column in mf_data by which to fill the color. Default is NULL.

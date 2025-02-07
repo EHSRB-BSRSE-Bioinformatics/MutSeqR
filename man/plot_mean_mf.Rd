@@ -24,7 +24,7 @@ plot_mean_mf(
 }
 \arguments{
 \item{mf_data}{A data frame containing the mutation frequency data. This is
-obtained from the calculate_mut_freq function with SUMMARY = TRUE.}
+obtained from the calculate_mf function with SUMMARY = TRUE.}
 
 \item{group_col}{The column in mf_data by which to calculate the mean.
 Ex. "dose" or c("dose", "tissue").}

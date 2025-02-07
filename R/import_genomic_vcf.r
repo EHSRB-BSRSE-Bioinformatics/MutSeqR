@@ -281,7 +281,7 @@ import_genomic_vcf <- function(vcf_file,
     summary <- list()
     results <- list()  # Initialize an empty list to store results
     for (subtype in subtype_resolutions) {
-      result <- calculate_mut_freq(dat,
+      result <- calculate_mf(dat,
                                      subtype_resolution = subtype,
                                      filter_germ = FALSE)  # Run the function
       results[[subtype]] <- result

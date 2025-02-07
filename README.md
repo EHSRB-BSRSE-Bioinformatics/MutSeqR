@@ -290,14 +290,14 @@ An important component of importing your data for proper use is to assign each m
 Similarly, if you are using a target panel, they may supply additional metadata columns in their `custom_regions_file` that will be appended to the variant file. Metadata for the TwinStrand's DuplexSeq™ Mutagenesis Panels include: genic context, region chromatin state, region GC content, and the regions' genes.
 
 ## Calculating Mutation Frequencies
-The function `calculate_mut_freq` summarises the mutation counts across arbitrary groupings within the mutation data. Mutations can be summarised across samples, experimental groups, and mutation subtypes for later statistical analyses. Mutation frequency is calculated by dividing the number of mutations (`sum`) by the total number of sequenced bases in each group (`group_depth`). The units for mutation frequency are mutations/bp.
+The function `calculate_mf` summarises the mutation counts across arbitrary groupings within the mutation data. Mutations can be summarised across samples, experimental groups, and mutation subtypes for later statistical analyses. Mutation frequency is calculated by dividing the number of mutations (`sum`) by the total number of sequenced bases in each group (`group_depth`). The units for mutation frequency are mutations/bp.
 
 ### Grouping Mutations
 Mutation counts and total sequenced bases are summed within groups that can be designated using the `cols_to_group` parameter. This parameter can be set to one or more columns in the mutation data that represent experimental variables of interest. 
 
 The following will return mutation counts and frequencies summed across samples.
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none"
@@ -306,7 +306,7 @@ mf_data <- calculate_mut_freq(
 
 Alternatively, you can sum mutations by experimental groups such as `dose` or `tissue`, or both at the same time. Counts and frequencies will be returned for every level of the designated groups.
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = c("dose", "tissue"),
             subtype_resolution = "none"
@@ -329,7 +329,7 @@ The function will also calculate the the proportion of mutations for each subtyp
 
 *Ex. The following code will return the simple mutation spectra for all samples.*
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "base_6"
@@ -340,7 +340,7 @@ This function will also calculate mutation frequencies and proportions on a spec
 
 *Ex. The following code will calculate mutation frequencies per sample for only insertion and deletion mutations.*
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none",
@@ -350,7 +350,7 @@ mf_data <- calculate_mut_freq(
 
 *Ex. Alternatively, the following code will return the mutation frequencies  and proportions for single-nucleotide variants (snv) only, differentiated into their trinucleotide spectra.*
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "base_96", # trinucleotide resolution
@@ -386,7 +386,7 @@ Additional columns from the orginal mutation data can be retained using the `ret
 
 *Ex. The following code will calculate the mutation frequencies for each sample and retain the dose column for each sample to use in later analyes.*
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none",
@@ -397,7 +397,7 @@ mf_data <- calculate_mut_freq(
 ## Generalized Linear Modelling
 An important component of analysing mutagencity data is how mutation frequency changes based on experimental variables.
 
-The `model_mf` function will fit a generalized linear model to analyse the effect(s) of given factor(s) on mutation frequency and perform specified pairwise comparisons between levels of your factors. Mutation data should first be summarised by sample using the `calculate_mut_freq` function. The `mf_data` should be output as a summary table. Be sure to retain the columns for experimental
+The `model_mf` function will fit a generalized linear model to analyse the effect(s) of given factor(s) on mutation frequency and perform specified pairwise comparisons between levels of your factors. Mutation data should first be summarised by sample using the `calculate_mf` function. The `mf_data` should be output as a summary table. Be sure to retain the columns for experimental
 variables of interest using the `retain_metadata_cols` parameter.
 
 You may specify factors and covariates for your model using the `fixed_effects` and `random_effects` parameters respectively. If more
@@ -410,7 +410,7 @@ parameter.
 
 *Ex. The following code will fit a generalized linear model to study the effect of dose on mutation frequency.*
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none",
@@ -430,7 +430,7 @@ Additional arguments can be passed to the model to further customize it to your 
 *Ex. We can study the effects of dose on mutation frequency for individual genomic loci from a panel of targets.*
 ```{r}
 # Summarise mutations by sample and by genomic target.
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = c("sample", "target")
             subtype_resolution = "none",
@@ -462,7 +462,7 @@ The `model_mf` function will also run specified pairwise comparisons between the
 
 *Ex. Let's go back to our example in which we model the effect of dose on mutation frequency. Let's assume that we have four dose groups: D1, D2, D3, and a vehicle control D0. The `reference_level` will be D0. Using the contrast table, we can specify pairwise comparisons between each of the doses and the vehicle control (D1 vs. D0, D2 vs. D0, D3 vs. D0).*
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none",
@@ -484,7 +484,7 @@ For multiple fixed effects, the user must include levels for all `fixed_effects`
 
 *Ex. Let's go back to our example modelling the effect of dose across multiple genomic targets. We will define the levels of dose as D0, D1, D2, and D3, with D0 as the reference level. The genomic target factor will have levels chr1 and chr2, representing two genomic targets. We will arbitrarily set the reference level as chr1 for this factor. We will create a contrasts table that compares each dose group to the control dose D0 for both of the genomic targets. The order in which values occur for both the reference level and the contrasts should match the order in which the fixed_effects are listed. In this example "dose" levels will always preceed "target" levels.* 
 ```{r}
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = c("sample", "target")
             subtype_resolution = "none",
@@ -555,7 +555,7 @@ One of these options can be specified using the `bmr_type` parameter. The `bmr` 
 ```{r}
 # summarise mutation frequencies by sample
 # retain the dose column in the summary table
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none",
@@ -587,7 +587,7 @@ For both functions, dose-response data can be provided for individual subjects, 
 Ex. Individual data
 ```{r}
 # summarise mutation frequencies by sample
-mf_data <- calculate_mut_freq(
+mf_data <- calculate_mf(
             mutation_data = mut_data,
             cols_to_group = "sample",
             subtype_resolution = "none",
@@ -640,7 +640,7 @@ $Y_{ij}$ represents the mutation counts and $E_{ij}$ are the *expected* counts u
 
 This comparison assumes independance among the observations. Each tabled observation represents a sum of independent contributions to the total mutant count. We assume independance is valid for mutants derived from a  mixed population, however, mutants that are derived clonally from a single progenitor cell would violate this assumption. As such, it is recommended to use the **MFmin method** of mutation counting for spectral analyses  to ensure that all mutation counts are independant. In those cases where the independence may be invalid, and where additional, extra-multinomial sources of variability are present, more complex, hierarchical statistical models are required. This is currently outside the scope of this package.
 
-The `spectra_comparison` function takes the imported mutation data. It will use the `calculate_mut_freq` function to sum each of the mutation subtypes across specified groups. Use the `subtype_resolution` and the `variant_types` parameters to specify the mutation subtypes that you wish to include in the analysis. Comparisons between groups are made based on an inputted contrasts table. The contrasts table will consist of two columns, each specifying a group to be contrasted against the other. 
+The `spectra_comparison` function takes the imported mutation data. It will use the `calculate_mf` function to sum each of the mutation subtypes across specified groups. Use the `subtype_resolution` and the `variant_types` parameters to specify the mutation subtypes that you wish to include in the analysis. Comparisons between groups are made based on an inputted contrasts table. The contrasts table will consist of two columns, each specifying a group to be contrasted against the other. 
 
 *Ex. Consider a study in which we are studying the effect of a mutagenic chemical on the mutation spectra. Our samples were exposed to three doses of a mutagenic chemical (D1, D2, D3), or to the vehicle control (D0). We will compare the simple snv subtypes, alongside non-snv variants, of each of the three chemical dose groups to the control. In this way we can investigate if exposure to the mutagenic chemical leads to differences in the mutation spectrum. The function will output the $G^{2}$ statistic and p-value for each of the three comparisons listed in the `constrasts_table`. P-values are adjusted for multiple comparison using the Sidak method.*
 ```{r}

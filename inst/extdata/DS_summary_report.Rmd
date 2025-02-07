@@ -173,7 +173,7 @@ write_VCF_from_mut(mutation_data, vcf_out = file.path(output_dir, "mutations.vcf
 
 ## Calculate Mutation Frequencies
 ```{r Dose analysis, eval=!is.null(params$dose_column)}
-MF_per_sample <- calculate_mut_freq(mutation_data = mutation_data,
+MF_per_sample <- calculate_mf(mutation_data = mutation_data,
                                     cols_to_group = c("sample"),
                                     subtype_resolution = "none",
                                     retain_metadata_cols = params$dose_column)
@@ -256,7 +256,7 @@ ma$model_plots$sample_MF_min
 ma$BMD_plot
 }
 # MF per target Analysis
-MF_per_target <- calculate_mut_freq(data = mutation_data,
+MF_per_target <- calculate_mf(data = mutation_data,
                                       cols_to_group = c("sample", "label"),
                                       subtype_resolution = "none",
                                       retain_metadata_cols = params$dose_column)
@@ -340,7 +340,7 @@ MF_per_target <- calculate_mut_freq(data = mutation_data,
 
 # Calculate mutation frequency per sample
 group_cols <- c(params$contrast_variable, params$dose_column)
-MF_per_sample <- calculate_mut_freq(data = mutation_data,
+MF_per_sample <- calculate_mf(data = mutation_data,
                                     cols_to_group = c("sample"),
                                     subtype_resolution = "none",
                                     retain_metadata_cols = group_cols)                                  
@@ -448,7 +448,7 @@ plot_model
 ```
 
 ```{r model-mutation-frequencies-per-sample, eval=is.null(params$dose_column)}
-MF_per_sample <- calculate_mut_freq(data = mutation_data,
+MF_per_sample <- calculate_mf(data = mutation_data,
                                     cols_to_group = c("sample"),
                                     subtype_resolution = "none")
 write.table(MF_per_sample, file.path(output_dir, "mutation_frequency_by_sample.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
@@ -463,7 +463,7 @@ plot_mf(mf_data = MF_per_sample,
 # rank the samples by mutation frequency
 
 
-  MF_per_target <- calculate_mut_freq(data = mutation_data,
+  MF_per_target <- calculate_mf(data = mutation_data,
                                       cols_to_group = c("sample", "label"),
                                       subtype_resolution = "none")
   MF_per_target 
@@ -513,7 +513,7 @@ plot_mf(mf_data = MF_per_sample,
 
 ```{r mutation-spectra}
 # 96-base trinucleotide spectra
-trinuc_spectra <- calculate_mut_freq(data = mutation_data,
+trinuc_spectra <- calculate_mf(data = mutation_data,
                                     cols_to_group = "sample",
                                     subtype_resolution = "base_96",
                                     variant_types = "snv"
@@ -523,7 +523,7 @@ trinuc_spectra
 
 if ("dose" %in% colnames(mutation_data)) {
   # Simple 6-base spectra including non-snvs variants
-  simple_spectra <- calculate_mut_freq(data = mutation_data,
+  simple_spectra <- calculate_mf(data = mutation_data,
                                       cols_to_group = "sample",
                                       subtype_resolution = "base_6",
                                       retain_metadata_cols = "dose")
@@ -542,7 +542,7 @@ if ("dose" %in% colnames(mutation_data)) {
 
  
 } else {
-  simple_spectra <- calculate_mut_freq(data = mutation_data,
+  simple_spectra <- calculate_mf(data = mutation_data,
                                       cols_to_group = "sample",
                                       subtype_resolution = "base_6")
   simple_spectra                        
@@ -661,7 +661,7 @@ nrow(as.data.frame(cpg_sites)) # could also use %>% count() %>% pull()
 n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
 
 # Testing general function for this application...
-cpg_summary_subtype <- calculate_mut_freq(data = as.data.frame(cpg_mutations),
+cpg_summary_subtype <- calculate_mf(data = as.data.frame(cpg_mutations),
                                           subtype_resolution = "base_6",
                                           vaf_cutoff = params$vaf_cutoff,
                                           summary = T,

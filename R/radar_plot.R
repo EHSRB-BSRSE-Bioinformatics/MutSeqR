@@ -12,7 +12,7 @@
 
 
 # radar chart
-radar_plot <- function(mf_data,
+plot_radar <- function(mf_data,
                       response_col,
                       label_col,
                       facet_col) {

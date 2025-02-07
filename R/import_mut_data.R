@@ -145,6 +145,8 @@ import_mut_data <- function(mut_file,
                             custom_column_names = NULL,
                             output_granges = FALSE) {
 ### TO DO #####
+# **** Context for deletions, insertions, and MNVs is wrong.
+  ## When position is +1, it centers within the variant, not around the start position.
 # Remove VAF cutoff - done
 # Remove regions filtering - done
 # Modify context column addition - done

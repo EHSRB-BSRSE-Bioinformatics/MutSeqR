@@ -22,7 +22,7 @@ model_mf(
 \item{mf_data}{The data frame containing the mutation frequency data.
 Mutation counts and total sequencing depth should be summarized per sample
 alongside columns for your fixed effects.
-This data can be obtained using \code{calculate_mut_freq(summary=TRUE)}.}
+This data can be obtained using \code{calculate_mf(summary=TRUE)}.}
 
 \item{fixed_effects}{The name(s) of the column(s) that will act as the
 fixed_effects (factor/independent variable) for modelling mutation frequency.}
