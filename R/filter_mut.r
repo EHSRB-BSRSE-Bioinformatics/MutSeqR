@@ -281,7 +281,6 @@ filter_mut <- function(mutation_data,
     message("Removed ", abnormal_vaf_count, " rows with abnormal VAF.")
   }
 
-
   ######## Custom Filter ######################################################
   if (!is.null(custom_filter_col)) {
     message("Applying custom filter...")
