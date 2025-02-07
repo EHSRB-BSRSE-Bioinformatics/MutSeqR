@@ -20,13 +20,15 @@
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
 #' @export
+#' 
+## TO DO: fix awkward legend facetting 
 plot_bubbles <- function(mutation_data,
-                                  size_by = "alt_depth",
-                                  facet_col = NULL,
-                                  color_by = "normalized_subtype",
-                                  circle_spacing = 1,
-                                  circle_outline = "none",
-                                  circle_resolution = 50) {
+                         size_by = "alt_depth",
+                         facet_col = NULL,
+                         color_by = "normalized_subtype",
+                         circle_spacing = 1,
+                         circle_outline = "none",
+                         circle_resolution = 50) {
 
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
@@ -70,9 +72,9 @@ plot_bubbles <- function(mutation_data,
     stop("facet_col must be a character vector")
   }
 
-  x <- mutation_data %>% 
+  x <- mutation_data %>%
     dplyr::filter(!.data$variation_type %in% "no_variant" &
-                    .data$filter_mut == FALSE) %>%
+                  .data$filter_mut == FALSE) %>%
     dplyr::arrange(!!rlang::sym(color_by))
   data <- data.frame(group = paste(x$sample,
                                    x$contig,
@@ -84,18 +86,20 @@ plot_bubbles <- function(mutation_data,
                      response = x[[size_by]],
                      color_column = x[[color_by]])
 
-  if (!is.null(facet_col)) {
-    data$facet <- x[[facet_col]]
-  }
-
   data <- data %>% dplyr::arrange("color_column")
 
   if (!is.null(facet_col)) {
-    data$facet <- as.factor(data$facet)
-    facet_levels <- levels(data$facet)
+    if (is.factor(x[[facet_col]])) {
+      original_facet_levels <- levels(x[[facet_col]])
+    } else {
+      original_facet_levels <- unique(x[[facet_col]])
+    }
+    all_facet_levels <- c(original_facet_levels, "Legend")
+    data$facet <- factor(x[[facet_col]], levels = all_facet_levels)
+
     # Pack circles for each facet level
-    circles <- lapply(seq_along(facet_levels), function(i) {
-      facet_level <- facet_levels[[i]]
+    circles <- lapply(seq_along(original_facet_levels), function(i) {
+      facet_level <- original_facet_levels[[i]]
       filtered_data <- data %>% filter(facet == facet_level)
       circle_layout <- packcircles::circleProgressiveLayout(filtered_data, sizecol = "response", sizetype = 'area')
       circle_layout$radius <- circle_spacing * circle_layout$radius
@@ -146,8 +150,8 @@ plot_bubbles <- function(mutation_data,
   x_center <- mean(x_range)
   
   # Calculate the total length of the legend
-  legend_width <- legend_gap * (num_legend_circles - 1)
   legend_gap <- max(data2$radius) * 2  # Adjust gap based on maximum circle radius
+  legend_width <- legend_gap * (num_legend_circles - 1)
   
   # Adjust legend positions to be centered about x_center
   legend_start <- x_center - (legend_width / 2)
@@ -161,15 +165,15 @@ plot_bubbles <- function(mutation_data,
   )
   legend_data <- packcircles::circleLayoutVertices(size_legend_df, idcol = NULL, xysizecols = 1:3)
   if (!is.null(facet_col)) {
-    legend_data$facet <- levels(plot_data$facet)[length(levels(plot_data$facet))]
-    size_legend_df$facet <- levels(plot_data$facet)[length(levels(plot_data$facet))]
+    legend_data$facet <- factor("Legend", levels = all_facet_levels)
+    size_legend_df$facet <- factor("Legend", levels = all_facet_levels)
   }
-  # Overlay the size legend on the main plot
+   # Overlay the size legend on the main plot
   q <- p +
     geom_polygon(data = legend_data,
                  aes(x = x, y = y, group = "label"),
                  fill = "grey80") +
     geom_text(data = size_legend_df, aes(x = x, y = y, label = label), vjust = 0.5)
-  q
+
   return(q)
 }
