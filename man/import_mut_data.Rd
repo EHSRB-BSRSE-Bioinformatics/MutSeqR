@@ -134,11 +134,7 @@ Output Column Definitions:
 \item \code{varlen}: The length (in bp) of the variant.
 \item \code{total_depth}: The total read depth at this position, excluding
 N-calls.
-\item \code{vaf}: The variant allele fraction. Calculated as
 \code{alt_depth}/\code{depth_col} where \code{depth_col} can be \code{total_depth} or \code{depth}.
-\item \code{is_germline}: TRUE or FALSE. Flags ostensible germline mutations
-(\code{vaf} > \code{vaf_cutoff}).
-\item \code{ref_depth}: The total read depth at the position calling for the
 reference allele. Calculated as \code{depth_col} - \code{alt_depth} where
 \code{depth_col} can be \code{total_depth}or \code{depth}.
 \item \code{subtype}: The substitution type for the snv variant
