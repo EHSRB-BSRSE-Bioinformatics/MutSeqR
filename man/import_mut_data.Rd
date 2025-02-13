@@ -8,10 +8,10 @@ import_mut_data(
   mut_file,
   mut_sep = "\\t",
   is_0_based_mut = TRUE,
-  sample_data_file = NULL,
+  sample_data = NULL,
   sd_sep = "\\t",
-  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
-  custom_regions_file = NULL,
+  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none"),
+  custom_regions = NULL,
   rg_sep = "\\t",
   is_0_based_rg = TRUE,
   range_buffer = 0,
@@ -55,32 +55,28 @@ Default is tab-delimited.}
 position coordinates in the mutation data are 0 based (TRUE) or
 1 based (FALSE). If TRUE, positions will be converted to 1-based.}
 
-\item{sample_data_file}{"filepath". A file containing
-\code{custom_regions_file} target region coordinates are 0 based (TRUE)
-or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.
-additional sample metadata (dose, tissue, timepoint, etc.).
-This can be either a data frame object or a file path to a file.}
+\item{sample_data}{An optional file containing additional sample
+metadata (dose, timepoint, etc.). This can be a data frame or a file path.}
 
 \item{sd_sep}{The delimiter for importing sample metadata table.
 Default is tab-delimited.}
 
-\item{regions}{Values are \verb{c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom_interval", "none")}.
+\item{regions}{Values are \verb{c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom", "none")}.
 Indicates the target panel used for Duplex Sequencing.
 The argument refers to the TS Mutagenesis panel of the
 specified species, or to a custom panel. If "custom",
 provide the file path of your regions file in
-\code{custom_regions_file}.}
+\code{custom_regions}.}
 
-\item{custom_regions_file}{"filepath". If \code{regions} is set to
-"custom_interval", provide  the file containing regions metadata.
-Required columns are \code{contig}, \code{start}, and \code{end}. This can be either
-a data frame object or a file path to a file.}
+\item{custom_regions}{If \code{regions} is set to
+"custom", provide  the regions metadata. Can be a file path or a
+data frame.Required columns are \code{contig}, \code{start}, and \code{end}.}
 
-\item{rg_sep}{The delimiter for importing the \code{custom_regions_file}.
+\item{rg_sep}{The delimiter for importing the \code{custom_regions}.
 Default is tab-delimited.}
 
 \item{is_0_based_rg}{A logical variable. Indicates whether the
-position coordinates in the custom regions file are 0 based (TRUE) or
+position coordinates in the custom_regions are 0 based (TRUE) or
 1 based (FALSE). If TRUE, positions will be converted to 1-based.}
 
 \item{range_buffer}{An integer >= 0. Extend the range of your regions
@@ -113,13 +109,6 @@ examples. You can change one or more of these.}
 
 \item{output_granges}{A logical variable; whether you want the mutation
 data to output as a GRanges object. Default output (FALSE) is as a dataframe.}
-
-\item{vaf_cutoff}{The function will add \code{is_germline} column
-that identifies ostensibly germline variants using a cutoff
-for variant allele fraction (VAF). There is no default value
-provided, but generally a value of 0.1 (i.e., 10\%) is a good
-starting point. Setting this will flag variants that are
-present at a frequency greater than this value at a given site.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the

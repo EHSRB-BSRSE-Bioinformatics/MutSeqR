@@ -37,8 +37,8 @@ params:
     label: "Select a mutagenesis panel"
     input: select
     value: "TSpanel_mouse"
-    choices: ["TSpanel_mouse", "TSpanel_human", "TSpanel_rat", "custom_interval", "none"]
-  custom_regions_file:
+    choices: ["TSpanel_mouse", "TSpanel_human", "TSpanel_rat", "custom", "none"]
+  custom_regions:
     label: "If you are using a custom panel, please supply a regions file"
     input: file
     value: NULL
@@ -130,10 +130,10 @@ if(params$mut_file_type == "mut") {
 mutation_data <-
   import_mut_data(mut_file = params$mut_data,
                   mut_sep = params$mut_sep,
-                  sample_data_file = params$sample_data,
+                  sample_data = params$sample_data,
                   sd_sep = params$sd_sep,
                   regions = params$regions,
-                  custom_regions_file = params$custom_regions_file,
+                  custom_regions = params$custom_regions,
                   rg_sep = params$rg_sep,
                   is_0_based = params$is_0_based,
                   vaf_cutoff = params$vaf_cutoff)
@@ -141,10 +141,10 @@ mutation_data <-
   mutation_data <- 
     read_vcf(vcf_file = params$mut_data,
             mut_sep = params$mut_sep,
-            sample_data_file = params$sample_data,
+            sample_data = params$sample_data,
             sd_sep = params$sd_sep,
             regions = params$regions,
-            custom_regions_file = params$custom_regions_file,
+            custom_regions = params$custom_regions,
             rg_sep = params$rg_sep,
             is_0_based = params$is_0_based,
             species = params$species,
@@ -163,7 +163,7 @@ if(class(mutation_data) == "list") {
 ```{r write_ref_and_muts}
 # Write a reference FASTA file...
 my_regions <- get_seq(regions = params$regions,
-                      custom_regions_file = params$custom_regions_file,
+                      custom_regions = params$custom_regions,
                       genome = params$genome,
                       padding = 0)
 write_reference_fasta(ref_ranges = my_regions, fasta_out = file.path(output_dir, "reference.fasta"))

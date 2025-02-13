@@ -6,10 +6,10 @@
 \usage{
 import_vcf_data(
   vcf_file,
-  sample_data_file = NULL,
+  sample_data = NULL,
   sd_sep = "\\t",
-  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
-  custom_regions_file = NULL,
+  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none"),
+  custom_regions = NULL,
   rg_sep = "\\t",
   range_buffer = 0,
   genome = NULL,
@@ -44,27 +44,27 @@ Equivalent to \code{depth}.
 \item INFO \code{SVLEN}: Length of the structural variant in base pairs.
 }}
 
-\item{sample_data_file}{An optional file containing additional sample
+\item{sample_data}{An optional file containing additional sample
 metadata (dose, timepoint, etc.). This can be a data frame or a file path.}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables.
 Default is tab-delimited}
 
 \item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat" ,
-"custom_interval" or "none". The 'TSpanel_' argument refers to the TS
+"custom" or "none". The 'TSpanel_' argument refers to the TS
 Mutagenesis panel of the specified species, or to a custom regions
-interval file. If set to 'custom_interval', please provide the file path in
-custom_regions_file and the genome assembly version of the reference
+interval file. If set to 'custom', please provide the file path in
+custom_regions and the genome assembly version of the reference
 genome using the 'genome' parameter. If you are not using a targeted
 approach, set regions to none, and supply the species and genome
 assembly of the reference genome using the 'species' and 'genome'
 parameters respectively.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom_interval,
+\item{custom_regions}{"filepath". If regions is set to custom,
 provide the file path for the file containing regions metadata.
 Required columns are "contig", "start", and "end"}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file.
+\item{rg_sep}{The delimiter for importing the custom_regions.
 Default is tab-delimited}
 
 \item{range_buffer}{An integer >= 0 .Required if using a targetted

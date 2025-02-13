@@ -43,7 +43,7 @@ Set the `vaf_cutoff` to flag ostensibly germline mutations that have a **variant
 #### Variants within target regions
 Supply a regions interval list of genomic ranges of interest and filter out mutations occuring outside of these regions. If you are targetting or are interested in a known range of genomic regions, these regions may be specified using the `regions` parameter. Any variant that occurs outside of the specified ranges will be filtered out of the variant file and returned in a seperate data frame. This includes variants that partially extend outside of the regions such as large insertions/deletions or structural variants. You may choose to retain some or all of these variants using the `range_buffer` parameter. Setting this parameter to an integer will extend the range of the genomic regions in which a variant can occur by the specified number of base-pairs.
 
-The `regions` parameter can be set to one of TwinStrand's DuplexSeq™ Mutagenesis Panels; *TSpanel_mouse*, *TSpanel_human*, or *TSpanel_rat*. If you are using an alternative panel then you may set the `regions` parameter to  "custom_interval" and  you will add your target regions' metadata using a `custom_regions_file`. Use parameters to indicate your file's file path, delimiter, and whether the region ranges coordinates are 0-based or 1-based. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify a regions list, then set the `regions` parameter to *none*.
+The `regions` parameter can be set to one of TwinStrand's DuplexSeq™ Mutagenesis Panels; *TSpanel_mouse*, *TSpanel_human*, or *TSpanel_rat*. If you are using an alternative panel then you may set the `regions` parameter to  "custom" and  you will add your target regions' metadata using a `custom_regions_file`. Use parameters to indicate your file's file path, delimiter, and whether the region ranges coordinates are 0-based or 1-based. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify a regions list, then set the `regions` parameter to *none*.
 ### Importing .vcf files
 `import_vcf_data` General usage: Indicate the file path to your **.vcf** or **.vcf.gz** file(s) using the `vcf_file` parameter. This can be either a single file or a directory containing multiple files. Should you provide a directory, then all files within will be bound into a single data frame. You may provide sample metadata uing the `sample_data_file` parameter. This parameter can take a R data frame, or it can read in a file if provided with a filepath. If using a filepath, specify the proper delimiter using the `sd_sep` parameter. Set the `vaf_cutoff` to flag ostensibly germline mutations that have a variant allele fraction greater than this parameter. Finally, load in the metadata for an interval list of genomic target regions using the `regions` parameter. 
 
@@ -133,7 +133,7 @@ mutation_data <-
   import_vcf_data(vcf_file = mut_data,
                   sample_data_file = sample_data,
                   vaf_cutoff = 0.1,
-                  regions = "custom_interval", 
+                  regions = "custom", 
                   custom_regions_file = my_regions,
                   rg_sep = "\t", # tab-delimited
                   is_0_based = FALSE, # Ranges are 1-based 
@@ -208,7 +208,7 @@ mut_data <- import_mut_data(
               mut_file = mut,
               sample_data_file = sample_data,
               vaf_cutoff = 0.1,
-              regions = "custom_interval",
+              regions = "custom",
               custom_regions_file = my_regions,
               is_0_based = FALSE # Ranges are 1-based 
               )

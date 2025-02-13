@@ -30,23 +30,23 @@
 #'  - FORMAT `VD`: Variant Depth. Equivalent to `alt_depth`.
 #'  - INFO `SVTYPE`: Structural variant types; INV DUP DEL INS FUS.
 #'  - INFO `SVLEN`: Length of the structural variant in base pairs.
-#' @param sample_data_file An optional file containing additional sample
+#' @param sample_data An optional file containing additional sample
 #' metadata (dose, timepoint, etc.). This can be a data frame or a file path.
 #' @param sd_sep The delimiter for importing sample metadata tables.
 #' Default is tab-delimited
 #' @param regions "TSpanel_human", "TSpanel_mouse", "TSpanel_rat" ,
-#' "custom_interval" or "none". The 'TSpanel_' argument refers to the TS
+#' "custom" or "none". The 'TSpanel_' argument refers to the TS
 #' Mutagenesis panel of the specified species, or to a custom regions
-#' interval file. If set to 'custom_interval', please provide the file path in
-#' custom_regions_file and the genome assembly version of the reference
+#' interval file. If set to 'custom', please provide the file path in
+#' custom_regions and the genome assembly version of the reference
 #' genome using the 'genome' parameter. If you are not using a targeted
 #' approach, set regions to none, and supply the species and genome
 #' assembly of the reference genome using the 'species' and 'genome'
 #' parameters respectively.
-#' @param custom_regions_file "filepath". If regions is set to custom_interval,
+#' @param custom_regions "filepath". If regions is set to custom,
 #'  provide the file path for the file containing regions metadata.
 #'  Required columns are "contig", "start", and "end"
-#' @param rg_sep The delimiter for importing the custom_regions_file.
+#' @param rg_sep The delimiter for importing the custom_regions.
 #' Default is tab-delimited
 #' @param genome The genome assembly of the reference genome.
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
@@ -76,10 +76,10 @@
 #'
 import_vcf_data <- function(
     vcf_file,
-    sample_data_file = NULL,
+    sample_data = NULL,
     sd_sep = "\t",
-    regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
-    custom_regions_file = NULL,
+    regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none"),
+    custom_regions = NULL,
     rg_sep = "\t",
     range_buffer = 0,
     genome = NULL,
@@ -181,21 +181,21 @@ import_vcf_data <- function(
   row.names(dat) <- NULL
 
   # Join with sample metadata if provided
-  if (!is.null(sample_data_file)) {
-    if (is.data.frame(sample_data_file)) {
-      sampledata <- sample_data_file
+  if (!is.null(sample_data)) {
+    if (is.data.frame(sample_data)) {
+      sampledata <- sample_data
       if (nrow(sampledata) == 0) {
         stop("Error: The sample data frame you've provided is empty")
       }
-    } else if (is.character(sample_data_file)) {
-      sample_file <- file.path(sample_data_file)
+    } else if (is.character(sample_data)) {
+      sample_file <- file.path(sample_data)
       if (!file.exists(sample_file)) {
         stop("Error: The sample data file path you've specified is invalid")
       }
       if (file.info(sample_file)$size == 0) {
         stop("Error: You are trying to import an empty sample data file")
       }
-      sampledata <- read.delim(file.path(sample_data_file),
+      sampledata <- read.delim(file.path(sample_data),
                                sep = sd_sep,
                                header = TRUE)
       if (ncol(sampledata) <= 1) {
@@ -204,7 +204,7 @@ import_vcf_data <- function(
                             the delimiter used for the data you are importing.")
       }
     } else {
-      stop("Error: sample_data_file must be a character string or a data frame")
+      stop("Error: sample_data must be a character string or a data frame")
     }
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
@@ -247,7 +247,7 @@ import_vcf_data <- function(
   if (regions != "none") {
 
     # load regions file
-      regions_df <- MutSeqR::load_regions_file(regions, custom_regions_file, rg_sep)
+      regions_df <- MutSeqR::load_regions_file(regions, custom_regions, rg_sep)
       regions_df$in_regions <- TRUE
 
     # Apply range buffer

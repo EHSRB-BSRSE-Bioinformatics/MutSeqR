@@ -6,7 +6,7 @@
 \usage{
 import_genomic_vcf(
   vcf_file,
-  sample_data_file,
+  sample_data,
   sd_sep,
   species,
   genome,
@@ -38,7 +38,7 @@ field or as the header to the FORMAT field.
 \item \code{SVLEN}: Length of the structural variant in base pairs.
 }}
 
-\item{sample_data_file}{An optional file containing additional sample
+\item{sample_data}{An optional file containing additional sample
 metadata (dose, timepoint, etc.). This can be a data frame or a file path.}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables.

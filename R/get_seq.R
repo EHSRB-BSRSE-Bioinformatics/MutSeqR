@@ -2,13 +2,13 @@
 #'
 #' Create a GRanges object from the target metadata and import raw nucleotide 
 #' sequences from the UCSC database. https://genome.ucsc.edu
-#' @param regions "TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom_interval". The argument refers to the 
+#' @param regions "TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom". The argument refers to the 
 #' TS Mutagenesis panel of the specified species, or to a custom panel. 
-#' If custom, provide file path in custom_regions_file.
-#' @param custom_regions_file "filepath". If regions is set to custom_interval, 
-#' provide the file path for the tab-delimited file containing regions metadata. 
+#' If custom, provide custom region intervals in custom_regions.
+#' @param custom_regions If regions is set to custom,
+#' provide regions metadata. Can be a file path or a data frame.
 #' Required columns are "contig", "start", and "end".
-#' @param rg_sep The delimiter for importing the custom_regions_file. 
+#' @param rg_sep The delimiter for importing the custom_regions. 
 #' The default is tab-delimited.
 #' @param genome If a custom regions file is provided, indicate the genome 
 #' assembly for the reference genome. Please refer to the UCSC genomes. 
@@ -27,14 +27,14 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @export
 get_seq <- function(regions,
-                    custom_regions_file = NULL,
+                    custom_regions = NULL,
                     rg_sep = "\t",
                     genome = NULL,
                     is_0_based = TRUE,
                     padding = 0) {
 
   regions_df <- MutSeqR::load_regions_file(regions = regions,
-                                           custom_regions_file = custom_regions_file,
+                                           custom_regions = custom_regions,
                                            rg_sep = rg_sep)
 
   if (is_0_based) {
@@ -54,7 +54,7 @@ get_seq <- function(regions,
       genome <- "mm10"
     } else if (regions == "TSpanel_rat") {
       genome <- "rn6"
-    } else if (regions == "custom_interval") {
+    } else if (regions == "custom") {
       genome <- genome
       }
     

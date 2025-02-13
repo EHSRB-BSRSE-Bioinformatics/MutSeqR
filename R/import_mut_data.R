@@ -31,34 +31,24 @@
 #' @param is_0_based_mut A logical variable. Indicates whether the
 #' position coordinates in the mutation data are 0 based (TRUE) or
 #' 1 based (FALSE). If TRUE, positions will be converted to 1-based.
-#' @param sample_data_file "filepath". A file containing
-#' `custom_regions_file` target region coordinates are 0 based (TRUE)
-#' or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.
-#' additional sample metadata (dose, tissue, timepoint, etc.).
-#' This can be either a data frame object or a file path to a file.
+#' @param sample_data An optional file containing additional sample
+#' metadata (dose, timepoint, etc.). This can be a data frame or a file path.
 #' @param sd_sep The delimiter for importing sample metadata table.
 #' Default is tab-delimited.
-#' @param vaf_cutoff The function will add `is_germline` column
-#' that identifies ostensibly germline variants using a cutoff
-#' for variant allele fraction (VAF). There is no default value
-#' provided, but generally a value of 0.1 (i.e., 10%) is a good
-#' starting point. Setting this will flag variants that are
-#' present at a frequency greater than this value at a given site.
 #' @param regions Values are `c("TSpanel_human", "TSpanel_mouse",
-#' "TSpanel_rat" "custom_interval", "none")`.
+#' "TSpanel_rat" "custom", "none")`.
 #' Indicates the target panel used for Duplex Sequencing.
 #' The argument refers to the TS Mutagenesis panel of the
 #' specified species, or to a custom panel. If "custom",
 #' provide the file path of your regions file in
-#' `custom_regions_file`.
-#' @param custom_regions_file "filepath". If `regions` is set to
-#' "custom_interval", provide  the file containing regions metadata.
-#' Required columns are `contig`, `start`, and `end`. This can be either
-#' a data frame object or a file path to a file.
-#' @param rg_sep The delimiter for importing the `custom_regions_file`.
+#' `custom_regions`.
+#' @param custom_regions If `regions` is set to
+#' "custom", provide  the regions metadata. Can be a file path or a
+#' data frame.Required columns are `contig`, `start`, and `end`.
+#' @param rg_sep The delimiter for importing the `custom_regions`.
 #' Default is tab-delimited.
 #' @param is_0_based_rg A logical variable. Indicates whether the
-#' position coordinates in the custom regions file are 0 based (TRUE) or
+#' position coordinates in the custom_regions are 0 based (TRUE) or
 #' 1 based (FALSE). If TRUE, positions will be converted to 1-based.
 #' @param range_buffer An integer >= 0. Extend the range of your regions
 #' in both directions by the given amount. Ex. Structural variants and
@@ -132,10 +122,10 @@
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
                             is_0_based_mut = TRUE,
-                            sample_data_file = NULL,
+                            sample_data = NULL,
                             sd_sep = "\t",
-                            regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
-                            custom_regions_file = NULL,
+                            regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none"),
+                            custom_regions = NULL,
                             rg_sep = "\t",
                             is_0_based_rg = TRUE,
                             range_buffer = 0,
@@ -162,8 +152,8 @@ import_mut_data <- function(mut_file,
   if (!is.numeric(range_buffer) || range_buffer < 0) {
     stop("Error: The range buffer must be a non-negative number")
   }
-  if (!regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none")) {
-    stop("Error: regions must be 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', 'custom_interval' or 'none")
+  if (!regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none")) {
+    stop("Error: regions must be 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', 'custom' or 'none")
   }
   if (!is.logical(is_0_based_mut) || !is.logical(is_0_based_rg)) {
     stop("Error: is_0_based must be a logical variable")
@@ -179,13 +169,13 @@ import_mut_data <- function(mut_file,
   }
 
   # Validate custom regions file if regions is set to "custom"
-  if (regions == "custom_interval") {
-    if (is.null(custom_regions_file)) {
-      stop("Error: You have set regions to 'custom_interval', but have not
+  if (regions == "custom") {
+    if (is.null(custom_regions)) {
+      stop("Error: You have set regions to 'custom', but have not
       provided a custom regions file!")
     }
-    if (is.character(custom_regions_file)) {
-      rg_file <- file.path(custom_regions_file)
+    if (is.character(custom_regions)) {
+      rg_file <- file.path(custom_regions)
       if (!file.exists(rg_file)) {
         stop("Error: The custom regions file path you've specified is invalid")
       }
@@ -261,21 +251,21 @@ import_mut_data <- function(mut_file,
   }
   ## Sample Data File
   # Validate and join sample data file if provided
-  if (!is.null(sample_data_file)) {
-    if (is.data.frame(sample_data_file)) {
-      sampledata <- sample_data_file
+  if (!is.null(sample_data)) {
+    if (is.data.frame(sample_data)) {
+      sampledata <- sample_data
       if (nrow(sampledata) == 0) {
         stop("Error: The sample data frame you've provided is empty")
       }
-    } else if (is.character(sample_data_file)) {
-      sample_file <- file.path(sample_data_file)
+    } else if (is.character(sample_data)) {
+      sample_file <- file.path(sample_data)
       if (!file.exists(sample_file)) {
         stop("Error: The sample data file path you've specified is invalid")
       }
       if (file.info(sample_file)$size == 0) {
         stop("Error: You are trying to import an empty sample data file")
       }
-      sampledata <- read.delim(file.path(sample_data_file),
+      sampledata <- read.delim(file.path(sample_data),
                                sep = sd_sep,
                                header = TRUE)
       if (ncol(sampledata) <= 1) {
@@ -284,7 +274,7 @@ import_mut_data <- function(mut_file,
              the delimiter used for the data you are importing.")
       }
     } else {
-      stop("Error: sample_data_file must be a character string or a data frame")
+      stop("Error: sample_data must be a character string or a data frame")
     }
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
@@ -340,7 +330,7 @@ import_mut_data <- function(mut_file,
   if (regions != "none") {
 
     # load regions file
-      regions_df <- MutSeqR::load_regions_file(regions, custom_regions_file, rg_sep)
+      regions_df <- MutSeqR::load_regions_file(regions, custom_regions, rg_sep)
       regions_df$in_regions <- TRUE
 
     # Apply range buffer
@@ -381,7 +371,7 @@ import_mut_data <- function(mut_file,
     # Use sequences of provided regions to populate the context column:
     if (!context_exists) {
       sequences <- MutSeqR::get_seq(regions = regions,
-                                    custom_regions_file = custom_regions_file,
+                                    custom_regions = custom_regions,
                                     rg_sep = rg_sep,
                                     genome = genome,
                                     is_0_based = is_0_based_rg,
@@ -401,12 +391,12 @@ import_mut_data <- function(mut_file,
           genome <- "mm10"
         } else if (regions == "TSpanel_rat") {
           genome <- "rn6"
-        } else if (regions == "custom_interval") {
+        } else if (regions == "custom") {
           genome <- genome
         }
 
-        sequences_outside_regions <- MutSeqR::get_seq(regions = "custom_interval",
-                                                      custom_regions_file = rows_outside_regions,
+        sequences_outside_regions <- MutSeqR::get_seq(regions = "custom",
+                                                      custom_regions = rows_outside_regions,
                                                       rg_sep = NULL,
                                                       genome = genome,
                                                       is_0_based = FALSE,

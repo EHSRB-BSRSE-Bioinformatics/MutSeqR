@@ -22,7 +22,7 @@ the sample/cohort names, and a column containing the response variable.}
 sample/cohort names.}
 
 \item{response_col}{The name of the column in data that contains the
-response variable. Typical response variables can be the subtype frequency,
+response variable. Typical response variables can be the subtype mf,
 proportion, or count.}
 
 \item{subtype_col}{The name of the column in data that contains the

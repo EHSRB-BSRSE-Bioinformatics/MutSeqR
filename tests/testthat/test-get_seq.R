@@ -13,7 +13,7 @@ test_that("get_seq retrieves sequences and creates GRanges object", {
       sep = "\t", row.names = FALSE
     ) 
 
-  gr <- get_seq(regions = "custom", custom_regions_file = tmpfile, genome = "mm10", is_0_based = FALSE)
+  gr <- get_seq(regions = "custom", custom_regions = tmpfile, genome = "mm10", is_0_based = FALSE)
   
   # Check if the result is a GRanges object
   expect_true(is(gr, "GRanges"))
@@ -42,7 +42,7 @@ tmpfile <- tempfile(fileext = ".txt")
   ) 
   
   gr <- get_seq(regions = "custom", 
-                custom_regions_file = tmpfile, 
+                custom_regions = tmpfile, 
                 genome = "mm10", 
                 is_0_based =  TRUE)
   

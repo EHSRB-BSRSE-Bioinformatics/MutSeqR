@@ -11,13 +11,13 @@ test_that("spectra_comparison works as expected", {
   )
   
   # Create a contrast table file
-  contrast_table_file <- tempfile(fileext = ".txt")
+  contrasts <- tempfile(fileext = ".txt")
   write.table(
     data.frame(
       V1 = c("0:bone_marrow", "25:bone_marrow", "50:bone_marrow", "100:bone_marrow"),
       V2 = c("0:liver", "25:liver", "50:liver", "100:liver")
     ),
-    file = contrast_table_file,
+    file = contrasts,
     sep = "\t", row.names = FALSE, col.names = FALSE  # Remove column names
   )
 
@@ -27,7 +27,7 @@ test_that("spectra_comparison works as expected", {
                                muts = "dose_sum_min",
                                subtype_col = "normalized_subtype",
                                group = c("dose", "tissue"),
-                               contrast_table_file = contrast_table_file)
+                               contrasts = contrasts)
   
   # Check if the result is a data frame
   expect_equal(class(result), "data.frame", info = "Check if the result is a data frame")

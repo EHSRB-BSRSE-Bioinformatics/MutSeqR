@@ -65,18 +65,18 @@
 #' data must contain a total_depth value for every sequenced base (including
 #' variants AND no-variant calls). If set to FALSE, pre-calculated per-group
 #' total_depth values may be supplied at the desired subtype_resolution
-#' using the precalc_depth_file parameter. Alternatively, if no per-group
+#' using the precalc_depth_data parameter. Alternatively, if no per-group
 #' total_depth is available, per-group mutation counts and will be calculated,
 #' but mutation_frequency will not. In such cases, mutation subtype proportions
 #' will not be normalized to the total_depth.
-#' @param precalc_depth_file A data frame of a file path to a text file
+#' @param precalc_depth_data A data frame of a file path to a text file
 #' containing pre-calculated per-group total_depth values. This data frame
 #' should contain the columns for the desired grouping variable
 #' and the reference context at the desired subtype resolution (if applicable).
 #' The precalculated total_depth column(s) should be called one or both of
 #' 'group_depth' and 'subtype_depth'. See the subtype_resolution
 #' parameter for more information on the mutation subtype columns.
-#' @param d_sep The delimiter used in the precalc_depth_file, if applicable.
+#' @param d_sep The delimiter used in the precalc_depth_data, if applicable.
 #' Default is "\t".
 #' @param summary A logical variable, whether to return a summary table
 #' (i.e., where only relevant columns for frequencies and groupings are
@@ -191,10 +191,10 @@
 #' mf_example_precalc <- calculate_mf(mutation_data = example_data,
 #'                                          cols_to_group = "sample",
 #'                                          calculate_depth = FALSE,
-#'                                          precalc_depth_file = sample_depth_example)
+#'                                          precalc_depth_data = sample_depth_example)
 #' # Use a precalculated depth file for 6 base mutation frequencies per sample.
 #' # the base_6 resolution uses reference context 'normalized_ref'; C or T.
-#' # Our precalc_depth_file needs group_depth (depth per sample) and the subtype_depth (depth per sample AND per normalized_ref)
+#' # Our precalc_depth_data needs group_depth (depth per sample) and the subtype_depth (depth per sample AND per normalized_ref)
 #' # We will create the example precalc_depth file_for the base_6 resolution from the mf_6_example for simplicity.
 #' sample_subtype_depth_example <- mf_6_example %>%
 #'  dplyr::select(sample, normalized_ref, group_depth, subtype_depth) %>%
@@ -203,7 +203,7 @@
 #'                                            cols_to_group = "sample",
 #'                                            subtype_resolution = "base_6",
 #'                                            calculate_depth = FALSE,
-#'                                            precalc_depth_file = sample_subtype_depth_example)
+#'                                            precalc_depth_data = sample_subtype_depth_example)
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
 #' select distinct ungroup
 #' @importFrom magrittr %>%
@@ -219,21 +219,21 @@
 # TO DO: variant types, allow users to use -mnv (ex) to exclude a subtype from the calculation, rather than list
 # all the ones they want to include.
 calculate_mf <- function(mutation_data,
-                               cols_to_group = "sample",
-                               subtype_resolution = "none",
-                               variant_types = c("snv",
-                                                 "deletion",
-                                                 "insertion",
-                                                 "complex",
-                                                 "mnv",
-                                                 "sv",
-                                                 "ambiguous",
-                                                 "uncategorized"),
-                               calculate_depth = TRUE,
-                               precalc_depth_file = NULL,
-                               d_sep = "\t",
-                               summary = TRUE,
-                               retain_metadata_cols = NULL) {
+                         cols_to_group = "sample",
+                         subtype_resolution = "none",
+                         variant_types = c("snv",
+                                           "deletion",
+                                           "insertion",
+                                           "complex",
+                                           "mnv",
+                                           "sv",
+                                           "ambiguous",
+                                           "uncategorized"),
+                         calculate_depth = TRUE,
+                         precalc_depth_data = NULL,
+                         d_sep = "\t",
+                         summary = TRUE,
+                         retain_metadata_cols = NULL) {
 
   # Validate Parameters
   # Check if data is provided as GRanges: if so, convert to data frame.
@@ -328,16 +328,16 @@ calculate_mf <- function(mutation_data,
       dplyr::ungroup()
     depth_exists <- TRUE
   } else {
-    if (!is.null(precalc_depth_file)) {
-      if (is.data.frame(precalc_depth_file)) {
-        depth_df <- precalc_depth_file
-      } else if (is.character(precalc_depth_file)) {
-        depth_file <- file.path(precalc_depth_file)
+    if (!is.null(precalc_depth_data)) {
+      if (is.data.frame(precalc_depth_data)) {
+        depth_df <- precalc_depth_data
+      } else if (is.character(precalc_depth_data)) {
+        depth_file <- file.path(precalc_depth_data)
         if (!file.exists(depth_file)) {
-          stop("The precalc_depth_file does not exist.")
+          stop("The precalc_depth_data does not exist.")
         }
         if (file.info(depth_file)$size == 0) {
-          stop("Error: You are trying to import an empty precalc_depth_file")
+          stop("Error: You are trying to import an empty precalc_depth_data")
         }
         depth_df <- read.delim(file.path(depth_file),
                                sep = d_sep,
@@ -348,7 +348,7 @@ calculate_mf <- function(mutation_data,
               the delimiter used for the data you are importing.")
         }
       } else {
-        stop("precalc_depth_file must be NULL, a data frame, or a file path.")
+        stop("precalc_depth_data must be NULL, a data frame, or a file path.")
       }
       # check for required columns in depth_df
       # If they are just using snvs, maybe don't require group_depth
@@ -361,7 +361,7 @@ calculate_mf <- function(mutation_data,
       }
       missing_columns <- setdiff(required_columns, colnames(depth_df))
       if (length(missing_columns) > 0) {
-        stop("Missing columns in precalc_depth_file: ",
+        stop("Missing columns in precalc_depth_data: ",
              paste(missing_columns, collapse = ", "), "\n")
       }
       # Merge depth_df with mut_freq_table

@@ -6,7 +6,7 @@
 \usage{
 get_seq(
   regions,
-  custom_regions_file = NULL,
+  custom_regions = NULL,
   rg_sep = "\\t",
   genome = NULL,
   is_0_based = TRUE,
@@ -14,15 +14,15 @@ get_seq(
 )
 }
 \arguments{
-\item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom_interval". The argument refers to the
+\item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide file path in custom_regions_file.}
+If custom, provide custom region intervals in custom_regions.}
 
-\item{custom_regions_file}{"filepath". If regions is set to custom_interval,
-provide the file path for the tab-delimited file containing regions metadata.
+\item{custom_regions}{If regions is set to custom,
+provide regions metadata. Can be a file path or a data frame.
 Required columns are "contig", "start", and "end".}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file.
+\item{rg_sep}{The delimiter for importing the custom_regions.
 The default is tab-delimited.}
 
 \item{genome}{If a custom regions file is provided, indicate the genome

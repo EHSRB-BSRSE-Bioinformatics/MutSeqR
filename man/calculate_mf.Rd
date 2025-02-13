@@ -11,7 +11,7 @@ calculate_mf(
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "sv", "ambiguous",
     "uncategorized"),
   calculate_depth = TRUE,
-  precalc_depth_file = NULL,
+  precalc_depth_data = NULL,
   d_sep = "\\t",
   summary = TRUE,
   retain_metadata_cols = NULL
@@ -79,12 +79,12 @@ per-group total_depth from the mutation data. If set to TRUE, the mutation
 data must contain a total_depth value for every sequenced base (including
 variants AND no-variant calls). If set to FALSE, pre-calculated per-group
 total_depth values may be supplied at the desired subtype_resolution
-using the precalc_depth_file parameter. Alternatively, if no per-group
+using the precalc_depth_data parameter. Alternatively, if no per-group
 total_depth is available, per-group mutation counts and will be calculated,
 but mutation_frequency will not. In such cases, mutation subtype proportions
 will not be normalized to the total_depth.}
 
-\item{precalc_depth_file}{A data frame of a file path to a text file
+\item{precalc_depth_data}{A data frame of a file path to a text file
 containing pre-calculated per-group total_depth values. This data frame
 should contain the columns for the desired grouping variable
 and the reference context at the desired subtype resolution (if applicable).
@@ -92,7 +92,7 @@ The precalculated total_depth column(s) should be called one or both of
 'group_depth' and 'subtype_depth'. See the subtype_resolution
 parameter for more information on the mutation subtype columns.}
 
-\item{d_sep}{The delimiter used in the precalc_depth_file, if applicable.
+\item{d_sep}{The delimiter used in the precalc_depth_data, if applicable.
 Default is "\t".}
 
 \item{summary}{A logical variable, whether to return a summary table
@@ -222,10 +222,10 @@ sample_depth_example <- data.frame(sample = c("dna00973.1", "dna00974.1",
 mf_example_precalc <- calculate_mf(mutation_data = example_data,
                                          cols_to_group = "sample",
                                          calculate_depth = FALSE,
-                                         precalc_depth_file = sample_depth_example)
+                                         precalc_depth_data = sample_depth_example)
 # Use a precalculated depth file for 6 base mutation frequencies per sample.
 # the base_6 resolution uses reference context 'normalized_ref'; C or T.
-# Our precalc_depth_file needs group_depth (depth per sample) and the subtype_depth (depth per sample AND per normalized_ref)
+# Our precalc_depth_data needs group_depth (depth per sample) and the subtype_depth (depth per sample AND per normalized_ref)
 # We will create the example precalc_depth file_for the base_6 resolution from the mf_6_example for simplicity.
 sample_subtype_depth_example <- mf_6_example \%>\%
  dplyr::select(sample, normalized_ref, group_depth, subtype_depth) \%>\%
@@ -234,5 +234,5 @@ mf_6_example_precalc <- calculate_mf(mutation_data = example_data,
                                            cols_to_group = "sample",
                                            subtype_resolution = "base_6",
                                            calculate_depth = FALSE,
-                                           precalc_depth_file = sample_subtype_depth_example)
+                                           precalc_depth_data = sample_subtype_depth_example)
 }

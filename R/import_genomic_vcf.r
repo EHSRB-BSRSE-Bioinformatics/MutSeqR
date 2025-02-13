@@ -36,7 +36,7 @@
 #' - SUGGESTED INFO FIELDS:
 #'  - `SVTYPE`: Structural variant types; INV DUP DEL INS FUS.
 #'  - `SVLEN`: Length of the structural variant in base pairs.
-#' @param sample_data_file An optional file containing additional sample
+#' @param sample_data An optional file containing additional sample
 #' metadata (dose, timepoint, etc.). This can be a data frame or a file path.
 #' @param sd_sep The delimiter for importing sample metadata tables.
 #' Default is tab-delimited.
@@ -56,7 +56,7 @@
 #' @return a data frame of your imported mutation data.
 #' @export
 import_genomic_vcf <- function(vcf_file,
-                               sample_data_file,
+                               sample_data,
                                sd_sep,
                                species,
                                genome,
@@ -147,10 +147,10 @@ import_genomic_vcf <- function(vcf_file,
 
   # Bind sample data
   # Do not throw errors because loading vcfs takes priority.
-  if (!is.null(sample_data_file)) {
+  if (!is.null(sample_data)) {
     message("Importing the sample data...\n")
-    if (is.data.frame(sample_data_file)) {
-      sampledata <- sample_data_file
+    if (is.data.frame(sample_data)) {
+      sampledata <- sample_data
       if (nrow(sampledata == 0)) {
         warning("Could not join Sample data to the Mutation data because
         the sample data frame you've provided is empty.")
@@ -164,8 +164,8 @@ import_genomic_vcf <- function(vcf_file,
           dat <- dplyr::left_join(dat, sampledata)
         }
       }
-    } else if (is.character(sample_data_file)) {
-      sample_file <- file.path(sample_data_file)
+    } else if (is.character(sample_data)) {
+      sample_file <- file.path(sample_data)
       if (!file.exists(sample_file)) {
         warning("Could not join Sample data to the Mutation data because
         the sample data file path that you provided is invalid")
@@ -196,7 +196,7 @@ import_genomic_vcf <- function(vcf_file,
       }
     } else {
       warning("Could not join Sample data to Mutation data because the
-      sample_data_file must be either a data frame or a file path.")
+      sample_data must be either a data frame or a file path.")
     }
   }
   dat <- rename_columns(dat)

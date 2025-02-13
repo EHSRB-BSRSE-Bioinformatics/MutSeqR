@@ -328,7 +328,7 @@ filter_mut <- function(mutation_data,
   ######## Regions Filter #####################################################
   if (!is.null(regions)) {
     message("Applying region filter...")
-    regions_df <- MutSeqR::load_regions_file("custom_interval", regions, rg_sep)
+    regions_df <- MutSeqR::load_regions_file("custom", regions, rg_sep)
     regions_df$in_regions <- TRUE
     colnames(regions_df) <- paste0("TO_REMOVE_", colnames(regions_df))
 

@@ -40,7 +40,7 @@ test_that("import_mut_data function correctly imports mutation data from default
   # Call the import_mut_data function on the test data
   mut_data <- import_mut_data(mut_file = tmpfile, 
                               regions = "custom", 
-                              custom_regions_file = tmpfile2,
+                              custom_regions = tmpfile2,
                               vaf_cutoff = 0.1,
                               output_granges = TRUE)
   
@@ -110,7 +110,7 @@ test_that("import_mut_data function fails to import mutation data from an empty 
   )
   
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = empty_file, regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = empty_file, regions = "custom", custom_regions = tmpfile2),
                "Error: You are trying to import an empty file", fixed=TRUE,
                info = "Check if we get an error message when imported file is empty")
 
@@ -218,14 +218,14 @@ test_that("import_mut_data function fails to import mutation data from an incomp
 
 # A 
   error <- tryCatch({
-    import_mut_data(mut_file = tmpfileA, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+    import_mut_data(mut_file = tmpfileA, vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2)},
     error = function(e) e$message)
   expected_error <- "Some required columns are missing or their synonyms are not found:  contig, sample, context"
   expect_equal(error, expected_error,
                info = "Check if we get an error message when imported file has missing columns")
 # B
    error <- tryCatch({
-    import_mut_data(mut_file = tmpfileB,vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+    import_mut_data(mut_file = tmpfileB,vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2)},
   error = function(e) e$message)
   expected_error <- paste(
     "Function stopped: NA values were found within the following required
@@ -235,7 +235,7 @@ expect_equal(error, expected_error,
                info = "Check if we get an error message when imported file NA values in required columns")
 # C  
 error <- tryCatch({
-  import_mut_data(mut_file = tmpfileC, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+  import_mut_data(mut_file = tmpfileC, vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2)},
   error = function(e) e$message)
 expected_error <- paste0("Required columns are missing or could not be determined:
               depth column ('depth' and 'no_calls' OR 'total_depth')")
@@ -244,7 +244,7 @@ expect_equal(error, expected_error,
   
 # D
  error <- tryCatch({
-  import_mut_data(mut_file = tmpfileD,  vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2)},
+  import_mut_data(mut_file = tmpfileD,  vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2)},
   error = function(e) e$message) 
 expected_error <- paste0("Required columns are missing or could not be determined:
           depth column ('depth' OR 'total_depth')")
@@ -287,18 +287,18 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
   )
   
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = invalid_file, vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = invalid_file, vaf_cutoff = 0.1,  regions = "custom", custom_regions = tmpfile2),
                "Error: The file path you've specified is invalid",
                info = "Check that we get an error message when an incorrect file path is specified")
   
-  expect_error(import_mut_data(mut_file = "",  vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = "",  vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2),
                "Error: The file path you've specified is invalid",
                info = "Check that we get an error message when a blank path is specified")
   
-  expect_error(import_mut_data(mut_file = is.null(), vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = is.null(), vaf_cutoff = 0.1,  regions = "custom", custom_regions = tmpfile2),
                info = "Check if we get an error message when input is NULL")
   
-  expect_error(import_mut_data(mut_file = is.na(), vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = is.na(), vaf_cutoff = 0.1,  regions = "custom", custom_regions = tmpfile2),
                info = "Check if we get an error message when input is NA")
   
 
@@ -344,7 +344,7 @@ test_that("import_mut_data function correctly imports mutation data when file co
   )
   
   # Call the import_mut_data function on the test data
-  mut_data <- import_mut_data(mut_file = tmpfile, vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2)
+  mut_data <- import_mut_data(mut_file = tmpfile, vaf_cutoff = 0.1,  regions = "custom", custom_regions = tmpfile2)
   
   expect_equal(names(mut_data), c(
     "contig", "start", "end", "width", "strand", "sample", "context", "subtype", 
@@ -423,7 +423,7 @@ test_that("import_mut_data function correctly imports mutation data from a folde
   )
   
   # Call the import_mut_data function on the test data
-  mut_data <- import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2, output_granges = TRUE)
+  mut_data <- import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1,  regions = "custom", custom_regions = tmpfile2, output_granges = TRUE)
 
   expect_true(is(mut_data, "GRanges"), info = "Check if the resulting object is a granges object")
   expect_equal(NROW(mut_data), 4, info = "Check if the resulting object has the correct number of rows")  
@@ -453,7 +453,7 @@ test_that("import_mut_data function correctly throws and error when it imports m
   )
 
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2),
                "Error: The folder you've specified is empty", fixed=TRUE,
                info = "Check if we get an error message when imported folder is empty")
 
@@ -484,7 +484,7 @@ test_that("import_mut_data function fails to import mutation data if an invalid 
   )
   
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = invalid_folder, vaf_cutoff = 0.1, regions = "custom", custom_regions_file = tmpfile2),
+  expect_error(import_mut_data(mut_file = invalid_folder, vaf_cutoff = 0.1, regions = "custom", custom_regions = tmpfile2),
                "Error: The file path you've specified is invalid", fixed=TRUE,
                info = "Check that we get an error message when an incorrect folder path is specified")
   
@@ -520,7 +520,7 @@ test_that("import_mut_data function correctly imports mutation data from a folde
   )
   
   # Call the import_mut_data function on the test data
-  expect_error(import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1,  regions = "custom", custom_regions_file = tmpfile2), 
+  expect_error(import_mut_data(mut_file = test_folder, vaf_cutoff = 0.1,  regions = "custom", custom_regions = tmpfile2), 
                "Error: All the files in the specified directory are empty", fixed=TRUE,
                info = "Check that we are unable to process mut data if all of the files in the specified folder are empty")
   

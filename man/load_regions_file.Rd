@@ -4,18 +4,18 @@
 \alias{load_regions_file}
 \title{Imports the regions file}
 \usage{
-load_regions_file(regions, custom_regions_file = NULL, rg_sep = "\\t")
+load_regions_file(regions, custom_regions = NULL, rg_sep = "\\t")
 }
 \arguments{
-\item{regions}{"TSpanel_human", "TSpanel_mouse", 'TSpanel_rat', or "custom_interval". The argument refers to the
+\item{regions}{"TSpanel_human", "TSpanel_mouse", 'TSpanel_rat', or "custom". The argument refers to the
 TS Mutagenesis panel of the specified species, or to a custom panel. If custom,
-provide file path in custom_regions_file.}
+provide file path in custom_regions.}
 
-\item{custom_regions_file}{"filepath". If regions is set to 'custom_interval',
-provide the file path for the tab-delimited file containing regions metadata.
+\item{custom_regions}{If regions is set to 'custom',
+provide the regions metadata. Can be either a file path or a data frame.
 Required columns are "contig", "start", and "end".}
 
-\item{rg_sep}{The delimiter for importing the custom_regions_file. The default is tab-delimited}
+\item{rg_sep}{The delimiter for importing the custom_regions. The default is tab-delimited}
 }
 \description{
 A helper function to import the regions metadata file. It is used in import_mut_data and get_seq.
