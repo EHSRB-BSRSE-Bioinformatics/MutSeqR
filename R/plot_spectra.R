@@ -1,21 +1,33 @@
 #' Transition-transversion plot
-#' @description Given a data frame construct a plot displaying the
+#' @description Given mf data, construct a plot displaying the
 #' mutation subtypes observed in a cohort.
-#' @param mutation_data A data frame containing the mutation data. This data must
-#' include a column containing the mutation subtypes, a column containing
-#' the sample/cohort names, and a column containing the response variable.
-#' Typical response variables can be the subtype frequency, proportion, or
-#' count.
-#' @param group_col The name of the column in data that contains the
-#' sample/cohort names.
-#' @param response The name of the column in data that contains the
-#' response variable. Typical response variables can be the subtype frequency,
-#' proportion, or count.
+#' @param mf_data A data frame containing the mutation frequency data at the
+#' desired subtype resolution. This is obtained using the 'calculate_mf'
+#' function with subtype_resolution set to the desired resolution.
+#' Data must include a column containing the group_col,
+#' a column containing the mutation subtypes, a column containing the desired
+#' response variable (mf, proportion, sum) for the desired mf_type
+#' (min or max), and if applicable, a column containing the variable by which
+#' to order the samples/groups.
+#' @param group_col The name of the column(s) in the mf data that contains the
+#' sample/group names. This will generally be the same values used for the
+#' cols_to_group argument in the calculate_mf function. However, you may
+#' also use groups that are at a higher level of the aggregation in mf_data.
+#' @param subtype_resolution The subtype resolution of the mf data.
+#' Options are `base_6`, `base_12`, `base_96`, `base_192`, or `type`.
+#' Default is `base_6`.
+#' @param response The desired response variable to be plotted. Options are
+#' mf, proportion, or sum. Default is `proportion`. Your mf_data must contain
+#' columns with the name of your desired response: `mf_min`, `mf_max`,
+#' `proportion_min`, `proportion_max`, `sum_min`, and `sum_max`.
+#' @param mf_type The mutation counting method to use. Options are min or max.
+#' Default is `min`.
 #' @param group_order The method for ordering the samples within the plot.
 #' Options include:
 #' \itemize{
 #'   \item `none`: No ordering is performed. Default.
-#'   \item `smart`: Groups are ordered based on the group names.
+#'   \item `smart`: Groups are automatically ordered based on the group names
+#' (alphabetical, numerical)
 #'   \item `arranged`: Groups are ordered based on one or more factor column(s)
 #' in mf_data. Column names are passed to the function using the
 #' `group_order_input`.
@@ -43,27 +55,44 @@
 #' data. The default is a set of colors from the RColorBrewer package.
 #' @param x_lab The label for the x-axis. Default is the value of `group_col`.
 #' @param y_lab The label for the y-axis. Default is the value of `response_col`.
-#' @param mf_type The type of mutation frequency to use. Default is `min`.
-#' @param variant_types A character vector of the mutation types to include.
-#' @param subtype_resolution The resolution of the mutation spectra. Default is `base_6`.
 #' @import patchwork
 #' @import ggplot2
 #' @importFrom dplyr select arrange across all_of
 #' @export
+#' @examples 
+#' # Load example data
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#'
+#' # Example 1: plot the proportion of 6-based mutation subtypes for each sample, organized by dose group:
+#'
+#' # Calculate the mutation frequency data at the 6-base resolution. Retain the dose_group column to use for ordering the samples.
+#' mf_data <- calculate_mf(mutation_data = example_data,
+#'                         cols_to_group = "sample",
+#'                         subtype_resolution = "base_6",
+#'                         retain_metadata_cols = "dose_group")
+#' # Set the desired order for the dose_group levels.
+#' mf_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+#' # Plot the mutation spectra
+#' plot <- plot_spectra(mf_data = mf_data,
+#'                      group_col = "sample",
+#'                      subtype_resolution = "base_6",
+#'                      response = "proportion",
+#'                      group_order = "arranged",
+#'                      group_order_input = "dose_group")
+#' 
+#' # Example 2: plot the proportion of 6-based mutation subtypes for each sample, ordered by hierarchical clustering:
+#' plot <- plot_spectra(mf_data = mf_data,
+#'                      group_col = "sample",
+#'                      subtype_resolution = "base_6",
+#'                      response = "proportion",
+#'                      group_order = "clustered")
 
-plot_spectra <- function(mutation_data,
+plot_spectra <- function(mf_data,
                          group_col = "sample",
                          subtype_resolution = "base_6",
-                         response = c("frequency", "proportion", "sum"),
-                         mf_type = c("min", "max"),
-                         variant_types = c("snv",
-                                           "deletion",
-                                           "insertion",
-                                           "complex",
-                                           "mnv",
-                                           "sv",
-                                           "ambiguous",
-                                           "uncategorized"),
+                         response = "proportion",
+                         mf_type = "min",
                          group_order = "none",
                          group_order_input = NULL,
                          dist = "cosine",
@@ -82,30 +111,15 @@ plot_spectra <- function(mutation_data,
       stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
     }
   }
-
- metadata_cols <- NULL
-if (group_order == "arranged") {
- # retain columns to arrange the data.
- # If the group_order_input contains the group_col, remove it.
- metadata_cols <- group_order_input[!group_order_input %in% group_col]
-}
-  mf_data <- MutSeqR::calculate_mf(mutation_data = mutation_data,
-                                         cols_to_group = group_col,
-                                         subtype_resolution = subtype_resolution,
-                                         variant_types = variant_types,
-                                         retain_metadata = metadata_cols)
-
-  group_col_prefix <- paste(group_col, collapse = "_")
-
   # Desginate the response column
   if (response == "proportion") {
     response_col <- paste0("proportion_", mf_type)
-  } else if (response == "frequency") {
+  } else if (response == "mf") {
     response_col <- paste0("mf_", mf_type)
   } else if (response == "sum") {
     response_col <- paste0("sum_", mf_type)
   } else {
-    stop("response must be one of 'frequency', 'proportion', or 'sum'")
+    stop("response must be one of 'mf', 'proportion', or 'sum'")
   }
   # concatenate multiple group columns into one
   if (length(group_col) > 1) {
@@ -173,7 +187,9 @@ if (group_order == "arranged") {
                  "mnv" = "pink",
                  "deletion" = "black",
                  "insertion" = "grey",
-                 "symbolic" = "purple")
+                 "sv" = "purple",
+                 "ambiguous" = "darkgrey",
+                 "uncategorized" = "white")
     } else if (subtype_resolution == "base_12") {
       # Sanger colours for 12 base spectra
       palette <- c(
@@ -192,7 +208,9 @@ if (group_order == "arranged") {
                     "mnv" = "hotpink",
                     "deletion" = "yellow",
                     "insertion" = "purple",
-                    "symbolic" = "azure2")
+                    "symbolic" = "azure2",
+                    "ambiguous" = "darkgrey",
+                    "uncategorized" = "white")
     } else if (subtype_resolution == "base_96") {
       base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
       palette <- colorRampPalette(base_colors)(101)
@@ -258,7 +276,7 @@ if (group_order == "arranged") {
 #' @param group_col The name of the column in data that contains the
 #' sample/cohort names.
 #' @param response_col The name of the column in data that contains the
-#' response variable. Typical response variables can be the subtype frequency,
+#' response variable. Typical response variables can be the subtype mf,
 #' proportion, or count.
 #' @param subtype_col The name of the column in data that contains the
 #' mutation subtypes.

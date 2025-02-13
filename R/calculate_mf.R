@@ -215,6 +215,9 @@
 # FIX: precalc depth file, subtype resolution, needs a reference_context value of N for non-snv mutations. 
 # This should not be necessary. As long as they include the group_depth, it should work. Update the example
 # once this is fixed.
+
+# TO DO: variant types, allow users to use -mnv (ex) to exclude a subtype from the calculation, rather than list
+# all the ones they want to include.
 calculate_mf <- function(mutation_data,
                                cols_to_group = "sample",
                                subtype_resolution = "none",

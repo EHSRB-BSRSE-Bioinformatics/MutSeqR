@@ -21,7 +21,7 @@
 #' @import ggplot2
 #' @export
 #' 
-## TO DO: fix awkward legend facetting 
+## TO DO: fix awkward legend facetting
 plot_bubbles <- function(mutation_data,
                          size_by = "alt_depth",
                          facet_col = NULL,
@@ -44,7 +44,9 @@ plot_bubbles <- function(mutation_data,
                     "mnv" = "pink",
                     "deletion" = "black",
                     "insertion" = "grey",
-                    "symbolic" = "purple")
+                    "sv" = "purple",
+                    "ambiguous" = "darkgrey",
+                    "uncategorized" = "white")
   } else if (color_by == "subtype") {
     plotcolors <- c("A>C" = "limegreen",
                     "A>G" = "forestgreen",
@@ -61,7 +63,9 @@ plot_bubbles <- function(mutation_data,
                     "mnv" = "hotpink",
                     "deletion" = "yellow",
                     "insertion" = "purple",
-                    "symbolic" = "azure2")
+                    "sv" = "azure2",
+                    "ambiguous" = "darkgrey",
+                    "uncategorized" = "white")
   } else if (color_by == "trinucleotide_subtype") {
     plotcolors <- NULL
   } else {
@@ -136,7 +140,7 @@ plot_bubbles <- function(mutation_data,
   }
   
   if (!is.null(facet_col)) {
-    p <- p + facet_wrap(~facet)
+    p <- p + facet_wrap(~facet, ncol = 2)
   }
   
   # Generate a size legend within the same plot
