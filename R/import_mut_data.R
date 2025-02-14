@@ -276,13 +276,6 @@ import_mut_data <- function(mut_file,
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
   }
 
-  #Trim and lowercase column headings
-  colnames(dat) <- tolower(gsub("\\.+", "", # deals with middle periods
-                                gsub("(\\.+)?$", "", #trailing periods
-                                     gsub("^((X\\.+)|(\\.+))?", "", #beginning X. & periods
-                                          colnames(dat))),
-                                perl = TRUE))
-
   # Rename columns to default.
   # Add custom column names to default list
   if (!is.null(custom_column_names)) {
