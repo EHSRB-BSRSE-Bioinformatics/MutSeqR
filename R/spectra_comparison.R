@@ -51,30 +51,35 @@
 #' 50:bone_marrow	50:liver
 #'
 #' 100:bone_marrow 100:liver
+#' @examples 
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
 #'
+#' # Example 1: compare 6-base mutation spectra between dose groups
+#'
+#' # Calculate the mutation frequency data at the 6-base resolution
+#' mf_data <- calculate_mf(mutation_data = example_data,
+#'                         cols_to_group = "dose_group",
+#'                         subtype_resolution = "base_6")
+#' # Create the contrasts table
+#' contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
+#'                          col2 = rep("Control", 3))
+#' # Run the comparison
+#' spectra_comparison(mf_data = mf_data,
+#'                    cols_to_group = "dose_group",
+#'                    subtype_resolution = "base_6",
+#'                    mf_type = "min",
+#'                    contrasts = contrasts)
 #' @importFrom dplyr select mutate
 #' @importFrom stats pchisq pf r2dtable
 
-spectra_comparison <- function(mutation_data,
+spectra_comparison <- function(mf_data,
                                cols_to_group,
                                subtype_resolution = "base_6",
-                               variant_types = c("snv",
-                                                 "deletion",
-                                                 "insertion",
-                                                 "complex",
-                                                 "mnv",
-                                                 "sv",
-                                                 "ambiguous",
-                                                 "uncategorized"),
                                mf_type = "min",
                                contrasts,
                                cont_sep = "\t") {
   
-  mf_data <- MutSeqR::calculate_mf(mutation_data = mutation_data,
-                                         cols_to_group = cols_to_group,
-                                         subtype_resolution = subtype_resolution,
-                                         variant_types = variant_types,
-                                         summary = TRUE)
   # Prepare Data
   sum_col <- paste0("sum_", mf_type)
   ## Find the subtype column
@@ -95,12 +100,12 @@ spectra_comparison <- function(mutation_data,
   # Extract data for each group
   filtered_data <- list()
   for (i in seq_along(groups)) {
-    group = groups[i]
+    group <- groups[i]
     df_i <- mut_spectra %>%
-      filter(group_col == group)
+      dplyr::filter(.data$group_col == group)
     filtered_data[[i]] <- df_i
   }
- 
+
   # G2 Statistic - Likelihood Ratio Statistic
   ## Piegorsch and Bailer 1994 doi: 10.1093/genetics/136.1.403.
   G2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234){
@@ -111,7 +116,7 @@ spectra_comparison <- function(mutation_data,
     G2 <- 0
     for(k in 1:ncol(x)){
       flag <- x[,k] > 0
-      G2 <- G2 + t(x[flag,k]) %*% log(x[flag,k]/e[flag,k])	
+      G2 <- G2 + t(x[flag,k]) %*% log(x[flag,k]/e[flag,k])
     }
     G2 <- 2*G2
     R <- nrow(x)-1
@@ -190,6 +195,6 @@ spectra_comparison <- function(mutation_data,
   results$adjP <- MutSeqR::sidak(results$p.value)$SidakP
   results$sign <- ""
  results$sign[results$adjP < 0.05] <- "***"
-  
+
   return(results)
 }

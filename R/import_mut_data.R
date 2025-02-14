@@ -55,19 +55,19 @@
 #' indels may start outside of the regions. Adjust the range_buffer to
 #' include these variants in your regions.
 #' @param genome The genome assembly of the reference genome. This is only
-#' required if your data does not include a context column. Sequences will
-#' be retrieved for the given reference genome to populate the context column.
-#' For a complete list, refer to https://genome.ucsc.edu.
+#' required if your data does not include a context column. The
+#' function will install a BS genome for the given species/genome/masked to
+#' populate the context column.
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 #' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
 #' @param species The species of your data. Required if
-#' your data does not include a context column and regions = "none". The
+#' your data does not include a context column. The
 #' function will install a BS genome for the given species/genome/masked to
 #' populate the context column. The species can be the common name of the
 #' species or the scientific name. Ex. "human" or "Homo sapiens".
 #' @param masked_BS_genome A logical value. Required when using a BS genome
 #' to poulate the context column. Whether to use the masked version of the
-#' BS genome (TRUE) or not (FALSE).
+#' BS genome (TRUE) or not (FALSE). Default is FALSE.
 #' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
 #'  digest the mutation data table properly. Typical defaults are set, but can
@@ -135,19 +135,15 @@ import_mut_data <- function(mut_file,
                             custom_column_names = NULL,
                             output_granges = FALSE) {
 ### TO DO #####
-# **** Context for deletions, insertions, and MNVs is wrong.
-  ## When position is +1, it centers within the variant, not around the start position.
 # Remove VAF cutoff - done
 # Remove regions filtering - done
 # Modify context column addition - done
 # remove adding a filter column - done
-# I removed ref_depth - add back in. total depth - alt depth. - done
 # Clean up parameter validation and reorder.
 # Remove rsids parameter  -done
 # update README
 # remove alt-depth as requirement and add alt_depth = 1 if it's not there. - done
-# check if signatures work after changes w no depth.
-## In proast, check that 2 responses work at a time.
+
 
   if (!is.numeric(range_buffer) || range_buffer < 0) {
     stop("Error: The range buffer must be a non-negative number")
@@ -367,60 +363,8 @@ import_mut_data <- function(mut_file,
       warning("Warning: ", false_count, " rows were outside of the specified regions.\n
         To remove these rows, use the filter_mut() function")
     }
-    # Create a context column, if needed
-    # Use sequences of provided regions to populate the context column:
-    if (!context_exists) {
-      sequences <- MutSeqR::get_seq(regions = regions,
-                                    custom_regions = custom_regions,
-                                    rg_sep = rg_sep,
-                                    genome = genome,
-                                    is_0_based = is_0_based_rg,
-                                    padding = 1 + range_buffer)
-      sequences <- sequences %>%
-        plyranges::select("seq_start", "seq_end", "sequence")
-
-      if (false_count > 0) { # handle sequences outside of regions
-        rows_outside_regions <- mut_ranges %>%
-          plyranges::filter(in_regions == FALSE) %>%
-          as.data.frame() %>%
-          dplyr::rename("contig" = "seqnames")
-
-        if (regions == "TSpanel_human") {
-          genome <- "hg38"
-        } else if (regions == "TSpanel_mouse") {
-          genome <- "mm10"
-        } else if (regions == "TSpanel_rat") {
-          genome <- "rn6"
-        } else if (regions == "custom") {
-          genome <- genome
-        }
-
-        sequences_outside_regions <- MutSeqR::get_seq(regions = "custom",
-                                                      custom_regions = rows_outside_regions,
-                                                      rg_sep = NULL,
-                                                      genome = genome,
-                                                      is_0_based = FALSE,
-                                                      padding = 1)
-        sequences_outside_regions <- sequences_outside_regions %>%
-          plyranges::select("seq_start", "sequence")
-        sequences <- c(sequences, sequences_outside_regions)
-      }
-      # Join the sequences to the mutation data
-      mut_ranges <- plyranges::join_overlap_left(mut_ranges,
-                                                 sequences,
-                                                 suffix = c("", "_seq"))
-      mut_ranges <- mut_ranges %>%
-        plyranges::mutate(start_string = start - seq_start + 1,
-                          context = substr(sequence,
-                                           start_string - 1,
-                                           start_string + 1)) %>%
-        plyranges::select(-seq_start, -sequence, -start_string)
-      message("Populating context column with sequences from https://genome.ucsc.edu")
-    }
-    # Turn data back into a dataframe
-    dat <- as.data.frame(mut_ranges) %>%
-      dplyr::rename(contig = "seqnames")
-  } else { # Populate the context using BSgenomes
+  }
+    # Create a context column, if needed: BSGenome
     if (!context_exists) {
       if (is.null(genome) || is.null(species)) {
         stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
@@ -429,25 +373,24 @@ import_mut_data <- function(mut_file,
                                        genome = genome,
                                        masked = masked_BS_genome)
 
-      extract_context <- function(mutations,
-                                  bsgenome,
-                                  upstream = 1,
-                                  downstream = 1) {
-        # Resize the mut_ranges to include the context
-        expanded_ranges <- GenomicRanges::resize(x = mut_ranges,
-                                                width = upstream + downstream + 1,
-                                                fix = "center")
+      extract_context <- function(mut_gr,
+                                  bsgenome) {
+      # Resize the mut_ranges to include the context
+        expanded_ranges <- GenomicRanges::GRanges(seqnames = seqnames(mut_gr),
+                                                  ranges = IRanges::IRanges(start = start(mut_gr) - 1, 
+                                                  end = start(mut_gr) + 1), 
+                                                  strand = BioGenerics::strand(mut_gr))
         # Extract the sequences from the BSgenome
         sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
         # Return the sequences
         return(sequences)
       }
+      message("Retrieving context sequences from the reference genome: ", ref_genome)
       context <- extract_context(mut_ranges, ref_genome)
       mut_ranges$context <- context
-      dat <- as.data.frame(mut_ranges) %>%
-        dplyr::rename(contig = "seqnames")
     }
-  }
+    dat <- as.data.frame(mut_ranges) %>%
+      dplyr::rename(contig = "seqnames")
 
   # Create is_known based on ID col, if present
   if ("id" %in% colnames(dat)) {

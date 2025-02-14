@@ -85,21 +85,21 @@ indels may start outside of the regions. Adjust the range_buffer to
 include these variants in your regions.}
 
 \item{genome}{The genome assembly of the reference genome. This is only
-required if your data does not include a context column. Sequences will
-be retrieved for the given reference genome to populate the context column.
-For a complete list, refer to https://genome.ucsc.edu.
+required if your data does not include a context column. The
+function will install a BS genome for the given species/genome/masked to
+populate the context column.
 Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
 \item{species}{The species of your data. Required if
-your data does not include a context column and regions = "none". The
+your data does not include a context column. The
 function will install a BS genome for the given species/genome/masked to
 populate the context column. The species can be the common name of the
 species or the scientific name. Ex. "human" or "Homo sapiens".}
 
 \item{masked_BS_genome}{A logical value. Required when using a BS genome
 to poulate the context column. Whether to use the masked version of the
-BS genome (TRUE) or not (FALSE).}
+BS genome (TRUE) or not (FALSE). Default is FALSE.}
 
 \item{custom_column_names}{A list of names to specify the meaning of column
 headers. Since column names can vary with data, this might be necessary to

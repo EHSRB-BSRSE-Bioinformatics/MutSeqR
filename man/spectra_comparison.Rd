@@ -5,20 +5,15 @@
 \title{Compare the overall mutation spectra between groups}
 \usage{
 spectra_comparison(
-  mutation_data,
+  mf_data,
   cols_to_group,
   subtype_resolution = "base_6",
-  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "sv", "ambiguous",
-    "uncategorized"),
   mf_type = "min",
   contrasts,
   cont_sep = "\\t"
 )
 }
 \arguments{
-\item{mutation_data}{A data frame containing the mutation data. This
-is the output from import_mut_data or import_vcf_data.}
-
 \item{cols_to_group}{A character vector of the column names in the mutation
 data that you want to group by. Ex. c("dose", "tissue"). This
 function will sum the mutations across groups before running the comparison.}
@@ -26,9 +21,6 @@ function will sum the mutations across groups before running the comparison.}
 \item{subtype_resolution}{The resolution of the mutation spectra to be
 compared. Options include "base_6", "base_12", "base_96", and "base_192" and "type".
 See calculate_mf for more details.}
-
-\item{variant_types}{A character vector of the mutation types to include
-in the comparison. Default is all types of mutations.}
 
 \item{mf_type}{The type of mutation frequency to use. Default is "min".}
 
@@ -43,6 +35,12 @@ are represented in each entry for the table. See details for examples.}
 
 \item{cont_sep}{The delimiter used to import the contrasts table.
 Default is tab.}
+
+\item{mutation_data}{A data frame containing the mutation data. This
+is the output from import_mut_data or import_vcf_data.}
+
+\item{variant_types}{A character vector of the mutation types to include
+in the comparison. Default is all types of mutations.}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with
@@ -76,4 +74,24 @@ the contrast table would look like:
 50:bone_marrow	50:liver
 
 100:bone_marrow 100:liver
+}
+\examples{
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+
+# Example 1: compare 6-base mutation spectra between dose groups
+
+# Calculate the mutation frequency data at the 6-base resolution
+mf_data <- calculate_mf(mutation_data = example_data,
+                        cols_to_group = "dose_group",
+                        subtype_resolution = "base_6")
+# Create the contrasts table
+contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
+                         col2 = rep("Control", 3))
+# Run the comparison
+spectra_comparison(mf_data = mf_data,
+                   cols_to_group = "dose_group",
+                   subtype_resolution = "base_6",
+                   mf_type = "min",
+                   contrasts = contrasts)
 }

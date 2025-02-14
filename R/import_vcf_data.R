@@ -114,7 +114,8 @@ import_vcf_data <- function(
 
   # Read and bind vcfs from folder
   if (file.info(vcf_file)$isdir == TRUE) {
-    vcf_files <- list.files(path = vcf_file, pattern = "\\.(vcf|gvcf)$", full.names = TRUE)
+    vcf_files <- list.files(path = vcf_file, pattern = "\\.(vcf|gvcf)(\\.gz)?$", full.names = TRUE)
+    # FIX: add check for empty file list.
     # Initialize an empty VCF object to store the combined data
     vcf <- NULL
     # Read and combine VCF files
@@ -177,6 +178,11 @@ import_vcf_data <- function(
       geno_df[[field_name]] <- field
     }
   }
+  # Ensure info and geno do not have the same columns
+  common_cols <- intersect(colnames(info), colnames(geno_df))
+  info <- info[, !(colnames(info) %in% common_cols), drop = FALSE]
+
+  # Combine data frames
   dat <- cbind(dat, geno_df, info)
   row.names(dat) <- NULL
 
@@ -294,24 +300,24 @@ import_vcf_data <- function(
                                      genome = genome,
                                      masked = masked_BS_genome)
 
-    extract_context <- function(mutations,
-                                bsgenome,
-                                upstream = 1,
-                                downstream = 1) {
+    extract_context <- function(mut_gr,
+                                bsgenome) {
       # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::resize(x = mutations,
-                                               width = upstream + downstream + 1,
-                                               fix = "center")
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = seqnames(mut_gr),
+                                                ranges = IRanges::IRanges(start = start(mut_gr) - 1, 
+                                                end = start(mut_gr) + 1), 
+                                                strand = BioGenerics::strand(mut_gr))
       # Extract the sequences from the BSgenome
       sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
       # Return the sequences
       return(sequences)
     }
+    message("Retrieving context sequences from the reference genome: ", ref_genome)
     context <- extract_context(mut_ranges, ref_genome)
     mut_ranges$context <- context
-    dat <- as.data.frame(mut_ranges) %>%
-      dplyr::rename(contig = "seqnames")
   }
+  dat <- as.data.frame(mut_ranges) %>%
+    dplyr::rename(contig = "seqnames")
 
   # Create is_known based on ID col, if present
   if ("id" %in% colnames(dat)) {
