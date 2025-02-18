@@ -150,7 +150,7 @@ example_data <- readRDS(example_file)
 filter_example_1 <- filter_mut(mutation_data = example_data,
                                correct_depth = TRUE,
                                vaf_cutoff = 0.01)
-## Remove rows outside of specified regions (TSpanel_mouse)
+## Remove rows outside of specified regions (TwinStand Mouse Mutagenesis Panel)
 filter_example_2 <- filter_mut(mutation_data = example_data,
                                correct_depth = TRUE,
                                vaf_cutoff = 0.01,

@@ -4,7 +4,6 @@
 #' @param mut_table mutation data
 #' @param op Default is MutSeqR::op, a list of options (see also, op, TODO)
 #' @importFrom data.table as.data.table
-#' @export
 migrate_mut <- function(mut_table, op = MutSeqR::op) {
   mut_table <- data.table::as.data.table(mut_table)
   

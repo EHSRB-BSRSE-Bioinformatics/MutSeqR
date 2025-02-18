@@ -11,7 +11,6 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim
 #' @importFrom S4Vectors mcols
-#' @export
 get_region_seqs <- function(species) {
 
   # Step 1 - Import the regions of interest

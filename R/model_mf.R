@@ -139,6 +139,68 @@
 #' - point_estimates: the point estimates for the fixed effects.
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
+#' @examples
+#' # Example 1: Model MFmin by dose
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' mf_example <- calculate_mf(mutation_data = example_data,
+#'                            cols_to_group = "sample",
+#'                           retain_metadata_cols = "dose")
+#' # Create a contrasts table to define pairwise comparisons
+#' # We will compare all treated groups to the control group
+#' contrasts <- data.frame(col1 = c("12.5", "25", "50"),
+#'                         col2 = c("0", "0", "0"))
+#' # Fit the model
+#' model1 <- model_mf(mf_data = mf_example,
+#'                    fixed_effects = "dose",
+#'                    reference_level = "0",
+#'                    muts = "sum_min",
+#'                    total_count = "group_depth",
+#'                    contrasts = contrasts)
+#' # Check residuals
+#' # The row with the maximum residual in absolute value is:
+#' # sample dose  sum_min sum_max mf_min  mf_max  group_depth residuals
+#' # 14 dna00986.1  25  160 197 9.255848e-07  1.139626e-06  172863681 0.451438
+#' # General rule: residuals with an absolute value greater than 4 are considered outliers.
+#' # and should be investigated further/removed.
+#' # The residuals histogram and QQ plot will help you assess the normality of the residuals.
+#' # Model Summary
+#' model1$summary
+#' # Dispersion parameter should be low. High values indicate overdispersion.
+#' # Point Estimates: Mean MFmin by dose
+#' model1$point_estimates
+#' # Pairwise Comparisons
+#' model1$pairwise_comparisons
+#' # All treated doses exhibited a significant increase in mutation frequency compared to the control.
+#' 
+#' # Example 2: Model MFmin by dose and genomic target
+#' # We will compare the treated groups to the control group for each genomic target
+#' # Calculate MF
+#' mf_example2 <- calculate_mf(mutation_data = example_data,
+#'                             cols_to_group = c("sample", "label"),
+#'                             retain_metadata_cols = "dose")
+#' # Create a contrasts table to define pairwise comparisons
+#' combinations <- expand.grid(dose = unique(mf_example2$dose), label = unique(mf_example2$label))
+#' combinations <- combinations[combinations$dose != 0, ]
+#' combinations$col1 <- with(combinations, paste(dose, label, sep=":"))
+#' combinations$col2 <- with(combinations, paste("0", label, sep=":"))
+#' contrasts2 <- combinations[, c("col1", "col2")]
+#' # Fit the model
+#' # Fixed effects of dose and label
+#' # Random effect of sample
+#' # Control the optimizer for convergence issues
+#' model2 <- model_mf(mf_data = mf_example2,
+#'                    fixed_effects = c("dose", "label"),
+#'                    random_effects = "sample",
+#'                    reference_level = c("0", "chr1"),
+#'                    muts = "sum_min",
+#'                    total_count = "group_depth",
+#'                    contrasts = contrasts2,
+#'                    control = lme4::glmerControl(optimizer = "bobyqa",
+#'                                                 optCtrl = list(maxfun = 2e5)))
+#' model2$summary # Fits a GLMM
+#' model2$point_estimates
+#' model2$pairwise_comparisons
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom lme4 glmer
