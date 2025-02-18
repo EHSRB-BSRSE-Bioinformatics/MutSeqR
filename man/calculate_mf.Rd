@@ -69,10 +69,15 @@ separated by \code{context_with_mutation}, i.e. the 192-base trinucleotide
 context. Ex A\[G>A\]A. The reference context is \code{context}.
 }}
 
-\item{variant_types}{Include these variant types in mutation counts.
-A vector of one or more variation_types. Options are:
-"snv", "complex", "deletion", "insertion", "mnv", "symbolic", "no_variant".
-Default includes all variants.}
+\item{variant_types}{Use this parameter to choose which variation types
+to include in the mutation counts. Provide a character vector of the variation
+types that you want to include. Alternatively, provide a character vector
+of the variation types that you want to exclude preceded by "-". Options are:
+"snv", "complex", "deletion", "insertion", "mnv", "sv", "ambiguous",
+"uncategorized". Ex. inclusion: "snv", exclusion: "-snv".
+Default includes all variants. For calculate_depth = TRUE: Regardless of
+whether or not a variant is included in the mutation counts, the total_depth
+for that position will be counted.}
 
 \item{calculate_depth}{A logical variable, whether to calculate the
 per-group total_depth from the mutation data. If set to TRUE, the mutation
@@ -128,21 +133,19 @@ using the "max" method for mutaiton counting. All identical mutations
 within a sample are assumed to be idenpendant mutational evens and are
 included in the mutation frequency calculation.
 \item \code{mf_min}: The mutation frequency calculated using the "min"
-method for mutation counting. All identical mutations within a samples are
-assumed to be the result of clonal expansion and are thus only counted
-once.
+method for mutation counting. mf_min = sum_min / depth.
 \item \code{mf_max}: The mutation frequency calculated using the "max"
-method for mutaiton counting. All identical mutations within a sample are
-assumed to be idenpendant mutational evens and are included in the
-mutation frequency calculation.
+method for mutation counting. mf_max = sum_max / depth.
 \item \code{proportion_min}: The proportion of each mutation
-subtype within the group, normalized to its read depth. Calculated
+subtype within the group, normalized to the depth. Calculated
 using the "min" method. This is only calculated if \code{subtype_resolution}
-is not "none".
+is not "none". If no depth is calculated or provided, proportion is
+calculated without normalization to the depth.
 \item \code{proportion_max}: The proportion of each mutation
 subtype within the group, normalized to its read depth. Calculated
 using the "max" method. This is only calculated if \code{subtype_resolution}
-is not "none".
+is not "none". If no depth is calculated or provided, proportion is
+calculated without normalization to the depth.
 }
 }
 \description{
@@ -161,40 +164,43 @@ and maximum independent methods for counting mutations.
 example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
 example_data <- readRDS(example_file)
 
-# Basic Usage: Calculate mutation frequency by sample.
+# Example 1 Calculate mutation frequency by sample.
 # Calculate depth from the mutation data
 mf_example <- calculate_mf(mutation_data = example_data,
-                                 cols_to_group = "sample")
-# Calculate the trinucleotide mutation proportions for each dose
+                           cols_to_group = "sample")
+# Example 2: Calculate the trinucleotide mutation proportions for each dose
 mf_96_example <- calculate_mf(mutation_data = example_data,
-                                    cols_to_group = "dose",
-                                    subtype_resolution = "base_96",
-                                    variant_types  = "snv")
-# Calculate the mean mutation frequency for each 6 base subtype per dose
+                              cols_to_group = "dose",
+                              subtype_resolution = "base_96",
+                              variant_types  = "snv")
+# Example 3: Calculate the mean mutation frequency for each 6 base subtype
+# per dose
+# calculate_mf does not calculate mean mutation frequency for
+# groups; this function only sums mutations across groups. Thus, if you are
+# interested in calculating the mean of a group, this must be done
+# separately.
 # First, calculate 6 base MF per sample. Retain the dose column.
 mf_6_example <- calculate_mf(mutation_data = example_data,
-                                   cols_to_group = "sample",
-                                   subtype_resolution = "base_6",
-                                   retain_metadata_cols = "dose")
+                             cols_to_group = "sample",
+                             subtype_resolution = "base_6",
+                             retain_metadata_cols = "dose")
 # Note: NA values in retain_metadata_cols. When we create a summary table
 # that includes mutation subtypes, there may occasionally be NA values in
 # the metadata columns. This is because the mutation data does not contain
 # any mutations (filtered or not) for that particular subtype within the
-# given group.
-# For example, our example_data does not contain any ambiguous mutations, so
-# the dose column is NA for all ambiguous mutations in the summary table.
-# This will not affect our mean mutation frequency calculations.
+# given group. For example, our example_data does not contain any ambiguous
+# or uncategorized mutations, so the dose column is NA for all those
+# mutations in the summary table. This will not affect downstream analyses.
 
-# Calculate the mean mutation frequency for each 6 base subtype per dose
+# Calculate the mean MF for each 6 base subtype per dose
 mf_6_mean_example <- mf_6_example \%>\%
  dplyr::group_by(dose, normalized_subtype) \%>\%
- dplyr::summarise(mean_mf_min = mean(mf_min), se_mf_min = sd(mf_min) / sqrt(n()),
-                 mean_mf_max = mean(mf_max), se_mf_max = sd(mf_max) / sqrt(n()))
-# Note: calculate_mf does not calculate mean mutation frequency for
-# groups; this function only sums mutations across groups. Thus, if you are
-# interested in calculating the mean of a group, this must be done separately.
+ dplyr::summarise(mean_mf_min = mean(mf_min),
+                  se_mf_min = sd(mf_min) / sqrt(n()),
+                  mean_mf_max = mean(mf_max),
+                  se_mf_max = sd(mf_max) / sqrt(n()))
 
-# Calculate MF using a precalculated depth file
+# Example 4: Calculate MF using precalculated depth data
 sample_depth_example <- data.frame(sample = c("dna00973.1", "dna00974.1",
                                               "dna00975.1", "dna00976.1",
                                               "dna00977.1", "dna00978.1",
@@ -220,13 +226,17 @@ sample_depth_example <- data.frame(sample = c("dna00973.1", "dna00974.1",
                                                    743311822, 799605045,
                                                    677693752, 701163532))
 mf_example_precalc <- calculate_mf(mutation_data = example_data,
-                                         cols_to_group = "sample",
-                                         calculate_depth = FALSE,
-                                         precalc_depth_data = sample_depth_example)
-# Use a precalculated depth file for 6 base mutation frequencies per sample.
-# the base_6 resolution uses reference context 'normalized_ref'; C or T.
-# Our precalc_depth_data needs group_depth (depth per sample) and the subtype_depth (depth per sample AND per normalized_ref)
-# We will create the example precalc_depth file_for the base_6 resolution from the mf_6_example for simplicity.
+                                   cols_to_group = "sample",
+                                   calculate_depth = FALSE,
+                                   precalc_depth_data = sample_depth_example)
+
+# Example 5: Calculate MF using precalculated depth data for 6 base
+# mutation subtypes per sample.
+# The base_6 resolution uses reference context 'normalized_ref'; C or T.
+# Our precalc_depth_data needs group_depth (depth per sample) and the
+# subtype_depth (depth per sample AND per normalized_ref)
+# We will create the example precalc_depth data for the base_6 resolution
+# from results of Example 3 for simplicity.
 sample_subtype_depth_example <- mf_6_example \%>\%
  dplyr::select(sample, normalized_ref, group_depth, subtype_depth) \%>\%
  unique()

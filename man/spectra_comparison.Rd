@@ -79,7 +79,7 @@ the contrast table would look like:
 example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
 example_data <- readRDS(example_file)
 
-# Example 1: compare 6-base mutation spectra between dose groups
+# Example: compare 6-base mutation spectra between dose groups
 
 # Calculate the mutation frequency data at the 6-base resolution
 mf_data <- calculate_mf(mutation_data = example_data,

@@ -1,6 +1,6 @@
 #' Plot the trinucleotide spectrum
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
-#' a given group based on the mutation data. All plots are exported. 
+#' a given group based on the mutation data. All plots are exported.
 #' @param mf_96_data A data frame containing the mutation frequency data at the 96-base resolution.
 #' This should be obtained using the 'calculate_mf' with subtype_resolution set to 'base_96'.
 #' Generally, cols_to_group should be the same as 'group_col'.
