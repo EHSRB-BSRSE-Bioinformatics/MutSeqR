@@ -174,6 +174,12 @@ filter_mut <- function(mutation_data,
                        is_0_based_rg = TRUE,
                        rm_filtered_mut_from_depth = FALSE,
                        return_filtered_rows = FALSE) {
+# clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
+# This value determines the fraction of reads that
+# is considered a constitutional variant. If a mutation is present at a
+# fraction higher than this value, the reference base will be swapped,
+# and the alt_depth recalculated. 0.3 (30%) would be a sane default?
+  
   # import mut will add in_regions column that can be used to filter. Make sure this doesn't interfere with regions filter
   if (return_filtered_rows) {
     rm_rows <- data.frame()

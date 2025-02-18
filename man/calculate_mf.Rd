@@ -23,19 +23,21 @@ Required columns are listed below.
 Synonymous names for these columns are accepted.
 \itemize{
 \item \code{contig}: The reference sequence name.
-\item \code{start}: 0-based start position of the feature in contig.
+\item \code{start}: 1-based start position of the feature.
 \item \code{sample}: The sample name.
 \item \code{alt_depth}: The read depth supporting the alternate allele.
-\item total_depth: The total read depth at this position (excluding N-calls).
 \item \code{variation_type}: The category to which this variant is assigned.
 \item subtype_col: The column containing the mutation subtype. This
 column depends on the \code{subtype_resolution} parameter.
 \item reference context: The column containing the referene base(s) for the
 mutation. This column depends on the \code{subtype_resolution} parameter.
-\item metadata_cols for grouping: all columns across which you want to calculate
+\item cols to group: all columns across which you want to calculate
 the mutation frequency. Ex. \code{c("tissue", "dose")}. These columns should be listed
 in cols_to_group.
-}}
+}
+It is also required to include the total_depth column if you are calculating
+depth from the mutation data. If you are using precalculated depth data, the
+total_depth column is not required.}
 
 \item{cols_to_group}{A vector of grouping variables: this should be the
 groups of interest that you want to calculate a frequency for.
@@ -62,7 +64,8 @@ T>A, T>C, T>G. The reference context is \code{short_ref}.
 \item "base_96" calculates mutation frequencies across all
 selected grouping columns for each variation_type with snv mutations
 separated by \code{normalized_context_with_mutation}, i.e. the 96-base
-trinucleotide context. Ex. A\[C>T\]A. The reference context is \code{normalized_context}.
+trinucleotide context. Ex. A\[C>T\]A. The reference context is
+\code{normalized_context}.
 \item "base_192" calculates mutation frequencies across all
 selected grouping columns for each variation_type with snv mutations
 separated by \code{context_with_mutation}, i.e. the 192-base trinucleotide
@@ -75,7 +78,7 @@ types that you want to include. Alternatively, provide a character vector
 of the variation types that you want to exclude preceded by "-". Options are:
 "snv", "complex", "deletion", "insertion", "mnv", "sv", "ambiguous",
 "uncategorized". Ex. inclusion: "snv", exclusion: "-snv".
-Default includes all variants. For calculate_depth = TRUE: Regardless of
+Default includes all variants. For \code{calculate_depth = TRUE}: Regardless of
 whether or not a variant is included in the mutation counts, the total_depth
 for that position will be counted.}
 
@@ -85,17 +88,21 @@ data must contain a total_depth value for every sequenced base (including
 variants AND no-variant calls). If set to FALSE, pre-calculated per-group
 total_depth values may be supplied at the desired subtype_resolution
 using the precalc_depth_data parameter. Alternatively, if no per-group
-total_depth is available, per-group mutation counts and will be calculated,
-but mutation_frequency will not. In such cases, mutation subtype proportions
+total_depth is available, per-group mutation counts will be calculated,
+but mutation frequency will not. In such cases, mutation subtype proportions
 will not be normalized to the total_depth.}
 
-\item{precalc_depth_data}{A data frame of a file path to a text file
+\item{precalc_depth_data}{A data frame or a file path to a text file
 containing pre-calculated per-group total_depth values. This data frame
-should contain the columns for the desired grouping variable
+should contain the columns for the desired grouping variable(s)
 and the reference context at the desired subtype resolution (if applicable).
 The precalculated total_depth column(s) should be called one or both of
-'group_depth' and 'subtype_depth'. See the subtype_resolution
-parameter for more information on the mutation subtype columns.}
+\code{group_depth} and \code{subtype_depth}. \code{group_depth} is used for subtype
+resolutions of "none", "type", and all non-snv mutations in "base_6",
+"base_12", "base_96", and "base_192". \code{subtype_depth} is used for snv
+mutations in "base_6", "base_12", "base_96", and "base_192". You can
+access a list of context values for each subtype resolution using
+\code{MutSeqR::context_list$your_subtype_resolution}.}
 
 \item{d_sep}{The delimiter used in the precalc_depth_data, if applicable.
 Default is "\t".}
@@ -109,13 +116,7 @@ additional flexibility to power users.}
 \item{retain_metadata_cols}{a character vector that contains the names of the
 metadata columns that you would like to retain in the summary table.
 This may be useful for plotting your summary data. Ex. retain the "dose"
-column when summarising by "sample".
-
-clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
-This value determines the fraction of reads that
-is considered a constitutional variant. If a mutation is present at a
-fraction higher than this value, the reference base will be swapped,
-and the alt_depth recalculated. 0.3 (30\%) would be a sane default?}
+column when summarising by "sample".}
 }
 \value{
 A data frame with the mutation frequency calculated. If summary
@@ -154,8 +155,6 @@ dataframe with the results. Mutation frequency is # mutations / total bases,
 but this can be subset in different ways: e.g., by mutation context. In this
 case, it is necessary to change the denominator of total bases to reflect
 the sequencing depth at the proper reference bases under consideration.
-}
-\details{
 Additionally, by default, the operation is run by default using both the minimum
 and maximum independent methods for counting mutations.
 }
@@ -236,13 +235,14 @@ mf_example_precalc <- calculate_mf(mutation_data = example_data,
 # Our precalc_depth_data needs group_depth (depth per sample) and the
 # subtype_depth (depth per sample AND per normalized_ref)
 # We will create the example precalc_depth data for the base_6 resolution
-# from results of Example 3 for simplicity.
+# from Example 3 results for simplicity.
 sample_subtype_depth_example <- mf_6_example \%>\%
  dplyr::select(sample, normalized_ref, group_depth, subtype_depth) \%>\%
- unique()
+ unique() \%>\%
+dplyr::filter(normalized_ref != "N")
 mf_6_example_precalc <- calculate_mf(mutation_data = example_data,
-                                           cols_to_group = "sample",
-                                           subtype_resolution = "base_6",
-                                           calculate_depth = FALSE,
-                                           precalc_depth_data = sample_subtype_depth_example)
+                                     cols_to_group = "sample",
+                                     subtype_resolution = "base_6",
+                                     calculate_depth = FALSE,
+                                     precalc_depth_data = sample_subtype_depth_example)
 }
