@@ -6,6 +6,8 @@
 #' @param x_effect If there are multiple fixed effects in the model, specify
 #' the fixed effect to plot on the x-axis. The other will be used in the fill
 #' aesthetic. Currently, only 2 fixed effects are supported.
+#' @param ref_effect The fixed effect to use as the reference level when adding
+#' significance labels.
 #' @param plot_error_bars Logical. If TRUE, the estimated standard error will
 #' be added to the plot.
 #' @param plot_signif Logical. If TRUE, will add significance labels based on
@@ -32,7 +34,7 @@
 #' a model that has a single fixed effect, you can specify colors for "fill" and
 #' "color" using a named vector. Likewise, when plotting a model with two fixed
 #' effects, you can specify colors for the levels within your fill variable.
-#'
+#' @details See model_mf() for examples.
 #' @return A ggplot object.
 #' @export
 #' @importFrom dplyr select ends_with filter mutate group_by summarize left_join

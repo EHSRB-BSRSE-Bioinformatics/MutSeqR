@@ -157,21 +157,22 @@
 #'                    muts = "sum_min",
 #'                    total_count = "group_depth",
 #'                    contrasts = contrasts)
-#' # Check residuals
-#' # The row with the maximum residual in absolute value is:
-#' # sample dose  sum_min sum_max mf_min  mf_max  group_depth residuals
-#' # 14 dna00986.1  25  160 197 9.255848e-07  1.139626e-06  172863681 0.451438
-#' # General rule: residuals with an absolute value greater than 4 are considered outliers.
-#' # and should be investigated further/removed.
 #' # The residuals histogram and QQ plot will help you assess the normality of the residuals.
-#' # Model Summary
-#' model1$summary
-#' # Dispersion parameter should be low. High values indicate overdispersion.
-#' # Point Estimates: Mean MFmin by dose
-#' model1$point_estimates
-#' # Pairwise Comparisons
-#' model1$pairwise_comparisons
+#' model1$summary # Model Summary
+#' model1$point_estimates # Point Estimates: Mean MFmin by dose
+#' model1$pairwise_comparisons # Pairwise Comparisons
 #' # All treated doses exhibited a significant increase in mutation frequency compared to the control.
+#' 
+#' # Plot the results using plot_model_mf()
+#' plot <- plot_model_mf(model1,
+#'                       plot_type = "bar",
+#'                       x_effect = "dose",
+#'                       plot_error_bars = TRUE,
+#'                       plot_signif = TRUE,
+#'                       x_order = c("0", "12.5", "25", "50"),
+#'                       x_label = "Dose (mg/kg-bw/d)",
+#'                       y_label = "Estimated Mean Mutation Frequency (mutations/bp)",
+#'                       plot_title = "")
 #' 
 #' # Example 2: Model MFmin by dose and genomic target
 #' # We will compare the treated groups to the control group for each genomic target
@@ -201,6 +202,34 @@
 #' model2$summary # Fits a GLMM
 #' model2$point_estimates
 #' model2$pairwise_comparisons
+#' 
+#' # Plot the results using plot_model_mf()
+#' # Define the order of the labels for the x-axis
+#' label_order <- model2$point_estimates %>%
+#'  dplyr::filter(dose == "50") %>%
+#'  dplyr::arrange(Estimate) %>%
+#'  dplyr::pull(label)
+#' # Define the order of the doses for the fill
+#' dose_order <- c("0", "12.5", "25", "50")
+#' plot <- plot_model_mf(model = model2,
+#'                       plot_type = "bar",
+#'                       x_effect = "label", # specify which fixed effect should be plotted on the x-axis
+#'                       plot_error_bars = TRUE,
+#'                       plot_signif = TRUE,
+#'                       ref_effect = "dose", # specify the fixed effect to base the significance labels on.
+#'                       x_order = label_order,
+#'                       fill_order = dose_order,
+#'                       x_label = "Target",
+#'                       y_label = "Mutation Frequency (mutations/bp)",
+#'                       fill_label = "Dose", # specify which fixed effect should be used as the fill
+#'                       plot_title = "",
+#'                       custom_palette = c("#ef476f",
+#'                                          "#ffd166",
+#'                                          "#06d6a0",
+#'                                          "#118ab2"))
+#' # The output is a ggplot object and can be modified using ggplot2 functions.
+#' # For example, to rotate the x-axis labels by 90 degrees, use the following code:
+#' plot <- plot + theme(axis.text.x = element_text(angle = 90))
 #' @importFrom magrittr %>%
 #' @importFrom doBy esticon
 #' @importFrom lme4 glmer
