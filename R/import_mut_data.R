@@ -1,51 +1,62 @@
-#' Import a .mut file
+#' Import tabular mutation data
 #'
-#' Imports a .mut file into the local R environment.
-#' @param mut_file "filepath". The .mut file containing mutation
-#' data to be imported. This can be either a data frame object or a filepath
-#' to a file or directory. If you specify a folder, the function will
-#' attempt to read all files in the folder and combine them into
-#' a single data frame. Required columns are listed below.
-#' Synonymous names for these columns are accepted.
+#' Imports tabular mutation file into the local R environment.
+#' @param mut_file The mutation data file(s) to be imported.
+#' This can be either a data frame object or a filepath
+#' to a file or directory. If you specify a directory, the function will
+#' attempt to read all files in the directory and combine them into
+#' a single data frame. Mutation data should consist of a row for each
+#' variant. Required columns are listed below.
 #' \itemize{
-#'      \item `contig`: The reference sequence name.
-#'      \item `start`: 0-based start position of the feature in contig.
-#'      \item `end`: half-open end position of the feature in contig.
+#'      \item `contig`: The name of the reference sequence.
+#'      \item `start`: The start position of the feature.
+#'      \item `end`: The half-open end position of the feature.
 #'      \item `sample`: The sample name.
 #'      \item `ref`: The reference allele at this position
 #'      \item `alt`: The left-aligned, normalized, alternate allele at this
-#' position.
+#' position. Multiple alt alleles called for a single position should be
+#' represented as separate rows in the table.
 #' }
 #' The following columns are not required, but are recommended for full
 #' package functionality:
 #' \itemize{
 #'   \item `alt_depth`: The read depth supporting the alternate allele. If
-#' not included, the function will assume a value of 1.
-#'    \item depth col: The total read depth at this position. This column can
-#' be `total_depth` (excluding N-calls) or `depth`(including N-calls; if
-#' `total_depth` is not available.
+#' not included, the function will add this column, assuming a value of 1.
+#'    \item `total_depth`: The total read depth at this position, excluding
+#' no-calls (N calls). If not present, the function will attempt to calculate
+#' the `total_depth` as `depth` - `no_calls`. If no_calls is not present, the
+#' function will use `depth` as the `total_depth.`
+#'    \item `depth`: The total read depth at this position, including no-calls.
+#'    \item `no_calls`: The number of no-calls (N-calls) at this position.
 #' }
-
-#' @param mut_sep The delimiter for importing the .mut file.
+#' We recommend that files include a record for every sequenced
+#' position, regardless of whether a variant was called, along with the
+#' `total_depth` for each record. This enables site-specific depth calculations
+#' required for some downstream analyses.
+#' @param mut_sep The delimiter for importing the mutation file.
 #' Default is tab-delimited.
 #' @param is_0_based_mut A logical variable. Indicates whether the
 #' position coordinates in the mutation data are 0 based (TRUE) or
 #' 1 based (FALSE). If TRUE, positions will be converted to 1-based.
 #' @param sample_data An optional file containing additional sample
 #' metadata (dose, timepoint, etc.). This can be a data frame or a file path.
-#' @param sd_sep The delimiter for importing sample metadata table.
+#' Metadata will be joined with the mutation data based on the sample column.
+#' Required columns are `sample` and any additional columns you wish to
+#' include.
+#' @param sd_sep The delimiter for importing sample data.
 #' Default is tab-delimited.
-#' @param regions Values are `c("TSpanel_human", "TSpanel_mouse",
-#' "TSpanel_rat" "custom", "none")`.
-#' Indicates the target panel used for Duplex Sequencing.
-#' The argument refers to the TS Mutagenesis panel of the
-#' specified species, or to a custom panel. If "custom",
-#' provide the file path of your regions file in
-#' `custom_regions`.
+#' @param regions An optional file containing metadata of genomic regions.
+#' Region metadata will be joined with mutation data and variants will be
+#' checked for overlap with the regions. Metadata for TwinStrand Mutagenesis
+#' Panels are stored in the package files and can be accessed using the values
+#' `TSpanel_human`, `TSpanel_mouse`, and `TSpanel_rat`. If you have a custom
+#' range of genomic regions, set the value to `custom` and provide the regions
+#' file using the `custom_regions` argument. If you do not wish to include
+#' region metadata, set value to `none`.
 #' @param custom_regions If `regions` is set to
 #' "custom", provide  the regions metadata. Can be a file path or a
-#' data frame.Required columns are `contig`, `start`, and `end`.
-#' @param rg_sep The delimiter for importing the `custom_regions`.
+#' data frame. Required columns are `contig`, `start`, and `end`.
+#' @param rg_sep The delimiter for importing the `custom_regions` file.
 #' Default is tab-delimited.
 #' @param is_0_based_rg A logical variable. Indicates whether the
 #' position coordinates in the custom_regions are 0 based (TRUE) or
@@ -53,27 +64,28 @@
 #' @param range_buffer An integer >= 0. Extend the range of your regions
 #' in both directions by the given amount. Ex. Structural variants and
 #' indels may start outside of the regions. Adjust the range_buffer to
-#' include these variants in your regions.
-#' @param genome The genome assembly of the reference genome. This is only
+#' include these variants in your region's ranges.
+#' @param genome The genome assembly version of the reference genome. This is
 #' required if your data does not include a context column. The
-#' function will install a BS genome for the given species/genome/masked to
-#' populate the context column.
+#' function will install a BS genome for the given species/genome/masked
+#' arguments to populate the context column.
 #' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 #' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
-#' @param species The species of your data. Required if
-#' your data does not include a context column. The
-#' function will install a BS genome for the given species/genome/masked to
-#' populate the context column. The species can be the common name of the
-#' species or the scientific name. Ex. "human" or "Homo sapiens".
+#' @param species The species. Required if your data does not include a
+#' context column. The function will install a BS genome for the given
+#' species/genome/masked to populate the context column. The species can
+#' be the common name of the species or the scientific name.
+#' Ex. "human" or "Homo sapiens".
 #' @param masked_BS_genome A logical value. Required when using a BS genome
 #' to poulate the context column. Whether to use the masked version of the
 #' BS genome (TRUE) or not (FALSE). Default is FALSE.
 #' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
-#'  digest the mutation data table properly. Typical defaults are set, but can
-#'  be substituted in the form of `list(total_depth = "my_custom_depth_name",
-#'  sample = "my_custom_sample_column_name")`. For a comprehensive list, see
-#'  examples. You can change one or more of these.
+#'  digest the mutation data properly. Typical defaults are set, but can
+#'  be substituted in the form of `list(contig = "my_custom_contig_name",
+#'  sample = "my_custom_sample_column_name")`. You can change one or more of
+#' these. Set column synonyms are defined in MutSeqR::op$column and will
+#' automatically be changed to their default value.
 #' @param output_granges A logical variable; whether you want the mutation
 #' data to output as a GRanges object. Default output (FALSE) is as a dataframe.
 #' @returns A table where each row is a mutation, and columns indicate the
@@ -83,34 +95,54 @@
 #'
 #' Output Column Definitions:
 #' \itemize{
-#'      \item `nchar_ref`: The length (in bp) of the reference allele.
-#'      \item `nchar_alt`: The length (in bp) of the alternate allele.
-#'      \item `varlen`: The length (in bp) of the variant.
-#'      \item `total_depth`: The total read depth at this position, excluding
-#' N-calls.
-#' `alt_depth`/`depth_col` where `depth_col` can be `total_depth` or `depth`.
-#' reference allele. Calculated as `depth_col` - `alt_depth` where
-#' `depth_col` can be `total_depth`or `depth`.
-#'      \item `subtype`: The substitution type for the snv variant
-#' (12-base spectrum; e.g. A>C)
-#'      \item `short_ref`: The reference base at this position.
-#'      \item `normalized_subtype`: The C/T-based substitution type for the
-#' snv variant (6-base spectrum; e.g. A>C -> T>G).
-#'      \item `normalized_ref`: The reference base in C/T-base notation for
-#' this position (e.g. A -> T).
-#'      \item `context_with_mutation`: The substitution type fo the snv variant
+#' \item `short_ref`: The reference base at the start position.
+#' \item `normalized_ref`: The short_ref in C/T-base notation for
+#' this position (e.g. A -> T, G -> C).
+#' \item `context` The trinucleotide context at this position. Consists
+#' of the reference base and the two flanking bases (e.g. TAC).
+#' \item `normalized_context`: The trinucleotide context in C/T base
+#' notation for this position (e.g. TAG -> CTA).
+#'  \item `variation_type` The type of variant (snv, mnv, insertion,
+#' deletion, complex, sv, no_variant, ambiguous, uncategorized).
+#' \item `subtype` The substitution type for the snv variant (12-base spectrum;
+#' e.g. A>C).
+#' \item `normalized_subtype` The C/T-based substitution type for the snv
+#' variant (6-base spectrum; e.g. A>C -> T>G).
+#' \item `context_with_mutation`: The substitution type for the snv variant
 #' including the two flanking nucleotides (192-trinucleotide spectrum;
 #' e.g. `T[A>C]G`)
-#'      \item `normalized_context_with_mutation`: The C/T-based substitution
-#' type for the snv variant including the two flanking nucleotide
-#' (96-base spectrum e.g. `T[A>C]G` -> `C[T>G]A`)
-#'      \item `normalized_context`: The trinucleotide context in C/T base
-#' notation for this position (e.g. TAG -> CTA).
-#'      \item `gc_content`: % GC of the trinucleotide context at this position.
-#'      \item `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
-#'     \item `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is
+#' \item `normalized_context_with_mutation`: The C/T-based substitution
+#' type for the snv variant including the two flanking nucleotides
+#' (96-base spectrum e.g. `T[A>C]G` -> `C[T>G]A`).
+#' \item `nchar_ref`: The length (in bp) of the reference allele.
+#' \item `nchar_alt`: The length (in bp) of the alternate allele.
+#' \item `varlen`: The length (in bp) of the variant.
+#' \item `ref_depth`: The depth of the reference allele. Calculated as
+#' `total_depth` - `alt_depth`, if applicable.
+#' \item `vaf` : The variant allele fraction. Calculated as
+#' `alt_depth`/`total_depth`.
+#' \item `gc_content`: % GC of the trinucleotide context at this position.
+#' \item `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
+#' \item `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is
 #' the same as that of at least one other row for the same sample.
 #' }
+#' @examples
+#' # Example: Import a single mutation file. This library was sequenced using
+#' the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+#' targets = 48kb of sequence.
+#' example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' # We will create an example metadata table for this data.
+#' sample_meta <- data.frame(sample = "dna00996.1",
+#'                           dose = "50",
+#'                           dose_group = "High")
+#' # Import the data
+#' imported_example_data <- import_mut_data(mut_file = example_data,
+#'                                          sample_data = sample_meta,
+#'                                          regions = "TSpanel_mouse",
+#'                                          genome = "mm10",
+#'                                          species = "mouse",
+#'                                          masked_BS_genome = FALSE)
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub str_count
@@ -118,13 +150,16 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim read.table
 #' @importFrom rlang .data
+#' @importFrom BiocGenerics strand
+#' @importFrom IRanges IRanges
+#' @importFrom Biostrings getSeq
 #' @export
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
                             is_0_based_mut = TRUE,
                             sample_data = NULL,
                             sd_sep = "\t",
-                            regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none"),
+                            regions = "none",
                             custom_regions = NULL,
                             rg_sep = "\t",
                             is_0_based_rg = TRUE,
@@ -357,28 +392,28 @@ import_mut_data <- function(mut_file,
         To remove these rows, use the filter_mut() function")
     }
   }
-    # Create a context column, if needed: BSGenome
-    if (!context_exists) {
-      if (is.null(genome) || is.null(species)) {
-        stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
-      }
-      ref_genome <- install_ref_genome(organism = species,
-                                       genome = genome,
-                                       masked = masked_BS_genome)
+  # Create a context column, if needed: BSGenome
+  if (!context_exists) {
+    if (is.null(genome) || is.null(species)) {
+      stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
+    }
+    ref_genome <- install_ref_genome(organism = species,
+                                     genome = genome,
+                                     masked = masked_BS_genome)
 
-      extract_context <- function(mut_gr,
-                                  bsgenome) {
-      # Resize the mut_ranges to include the context
-        expanded_ranges <- GenomicRanges::GRanges(seqnames = seqnames(mut_gr),
-                                                  ranges = IRanges::IRanges(start = start(mut_gr) - 1, 
-                                                  end = start(mut_gr) + 1), 
-                                                  strand = BioGenerics::strand(mut_gr))
-        # Extract the sequences from the BSgenome
-        sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
-        # Return the sequences
-        return(sequences)
-      }
-      message("Retrieving context sequences from the reference genome: ", ref_genome)
+    extract_context <- function(mut_gr,
+                                bsgenome) {
+    # Resize the mut_ranges to include the context
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = seqnames(mut_gr),
+                                                ranges = IRanges::IRanges(start = start(mut_gr) - 1, 
+                                                end = start(mut_gr) + 1), 
+                                                strand = BiocGenerics::strand(mut_gr))
+      # Extract the sequences from the BSgenome
+      sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
+      # Return the sequences
+      return(sequences)
+    }
+      message("Retrieving context sequences from BSgenome")
       context <- extract_context(mut_ranges, ref_genome)
       mut_ranges$context <- context
     }
