@@ -20,7 +20,7 @@ migrate_mut <- function(mut_table, op = MutSeqR::op) {
       colnames(mut_table)[matching_column_indices] <- op[[required_column]]
     }
   }
-  
+
   return(mut_table)
 }
 

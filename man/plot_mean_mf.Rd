@@ -87,14 +87,33 @@ olours to specific groups. Fill labels will be constructed by the following comp
 \item fill_col value. Name colours to match the fill labels. Default is NULL. If no
 custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
 will be the same colour, different shades.
-@return a ggplot object
 }}
 
 \item{xlab}{The x-axis label. Default is the value of group_col.}
 
 \item{ylab}{The y-axis label. Default is "Mutation Frequency (mutations/bp)".}
 }
+\value{
+a ggplot object
+}
 \description{
 This function calculates the mean mutation frequency across
 samples for given groups and plots the results.
+}
+\examples{
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+example_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+mf <- calculate_mf(mutation_data = example_data,
+                   cols_to_group = "sample",
+                   subtype_resolution = "none",
+                   retain_metadata_cols = "dose_group")
+plot <- plot_mean_mf(mf_data = mf,
+                     group_col = "dose_group",
+                     mf_type = "min",
+                     plot_type = "line",
+                     fill_col = "dose_group",
+                     plot_error_bars = TRUE,
+                     plot_indiv_vals = TRUE,
+                     add_labels = "none")
 }

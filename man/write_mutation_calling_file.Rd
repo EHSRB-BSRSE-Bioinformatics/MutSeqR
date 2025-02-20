@@ -2,34 +2,53 @@
 % Please edit documentation in R/get_sigprofiler_input.R
 \name{write_mutation_calling_file}
 \alias{write_mutation_calling_file}
-\title{Write the mutation calling file to input into the sigprofiler web application}
+\title{Write the mutation calling file to input into the SigProfiler Assignment
+web application.}
 \usage{
 write_mutation_calling_file(
   mutation_data,
-  project_name = "test",
+  project_name = "Example",
   project_genome = "GRCm38",
   output_path = NULL
 )
 }
 \arguments{
-\item{mutation_data}{The GRanges object containing the mutation data.
-The output of import_mut_data() or read_vcf().}
+\item{mutation_data}{The object containing the mutation data.
+The output of import_mut_data() or import_vcf_data().}
 
-\item{project_name}{The name of the project; used to get mutation data
-into the required .txt format for SigProfiler}
+\item{project_name}{The name of the project. Default is "Example".}
 
-\item{project_genome}{A string describing the reference genome to use
-(e.g., GRCh38, GRCm38)}
+\item{project_genome}{The reference genome to use.
+(e.g., Human: GRCh38, Mouse mm10: GRCm38)}
 
-\item{output_path}{The path to save the output file. Default is NULL.
-See import_mut_data() or read_vcf() for more details.}
+\item{output_path}{The path to save the output file. If NULL, files
+will be saved in the current working directory. Default is NULL.}
 }
 \value{
-a .txt file that can be uploaded to the sigprofiler web application
-as "Mutational calling file"
-Filters out ostensibly germline mutations identified in mutation data.
+a .txt file that can be uploaded to the SigProfiler Assignment web
+application (https://cancer.sanger.ac.uk/signatures/assignment/) as a
+"Mutational calling file".
 }
 \description{
-Creates a .txt file from mutation data that can be used for mutational signatures
-analysis using the SigProfiler web application.Cannot group higher than sample.
+Creates a .txt file from mutation data that can be used for mutational
+signatures analysis using the SigProfiler Assignment web application.
+Currently only supports SBS analysis i.e. snvs.
+}
+\details{
+Mutations will be be filtered for SNVs. Mutations flagged in
+\code{filter_mut} will be excluded from the output.
+}
+\examples{
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+temp_output <- tempdir()
+write_mutation_calling_file(mutation_data = example_data,
+                            project_name = "Example",
+                            project_genome = "GRCm38",
+                            output_path = temp_output)
+list.files(temp_output)
+# The file is saved in the temporary directory
+# To view the file, use the following code:
+## output_file <- file.path(temp_output, "mutation_calling_file.txt")
+## file.show(output_file
 }

@@ -37,6 +37,23 @@
 #' @param y_lab The label for the y axis.
 #' @param title The title of the plot.
 #' @return A ggplot object
+#' @examples
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' example_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+#' mf <- calculate_mf(mutation_data = example_data,
+#'                    cols_to_group = "sample",
+#'                    subtype_resolution = "none",
+#'                    retain_metadata_cols = "dose_group")
+#' plot <- plot_mf(mf_data = mf,
+#'                 group_col = "sample",
+#'                 plot_type = "bar",
+#'                 mf_type = "min",
+#'                 fill_col = "dose_group",
+#'                 group_order = "arranged",
+#'                 group_order_input = "dose_group",
+#'                 labels = "count",
+#'                 title = "Mutation Frequency per Sample")
 #' @import ggplot2
 #' @importFrom dplyr arrange across all_of rename
 #' @export

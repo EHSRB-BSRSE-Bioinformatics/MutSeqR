@@ -33,7 +33,7 @@ plot_bubbles <- function(mutation_data,
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
   }
-  
+
   if (color_by == "normalized_subtype") {
     plotcolors <- c("C>A" = "#3288BD",
                     "C>G" = "#99D594",

@@ -46,3 +46,15 @@ Region ranges coordinates will become 1-based.
 Create a GRanges object from the target metadata and import raw nucleotide
 sequences from the UCSC database. https://genome.ucsc.edu
 }
+\examples{
+# Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
+regions_seq <- get_seq(regions = "TSpanel_mouse")
+# Example 2: Retrieve the sequences for custom regions
+# We will load the TSpanel_human regions file as an example
+regions <- load_regions_file("TSpanel_human")
+regions_seq <- get_seq(regions = "custom",
+                       custom_regions = regions,
+                       genome = "hg38",
+                       is_0_based = TRUE,
+                       padding = 0)
+}

@@ -33,8 +33,7 @@
 #' For instance, getting the frequency by `sample`. Other options might
 #' include `dose`, `locus`, or, `c("sample","locus")`. All listed variables
 #' must be a column in the mutation_data.
-#' @param subtype_resolution The resolution at which the frequencies are
-#' calculated. Options are
+#' @param subtype_resolution The resolution of the mutation subtypes. Options are
 #'  \itemize{
 #'        \item "none" calculates mutation frequencies across all selected
 #' grouping columns.

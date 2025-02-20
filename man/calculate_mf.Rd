@@ -45,8 +45,7 @@ For instance, getting the frequency by \code{sample}. Other options might
 include \code{dose}, \code{locus}, or, \code{c("sample","locus")}. All listed variables
 must be a column in the mutation_data.}
 
-\item{subtype_resolution}{The resolution at which the frequencies are
-calculated. Options are
+\item{subtype_resolution}{The resolution of the mutation subtypes. Options are
 \itemize{
 \item "none" calculates mutation frequencies across all selected
 grouping columns.

@@ -54,7 +54,23 @@
 #' 3. fill_col value. Name colours to match the fill labels. Default is NULL. If no
 #' custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
 #' will be the same colour, different shades.
-#'  @return a ggplot object
+#' @return a ggplot object
+#' @examples
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' example_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+#' mf <- calculate_mf(mutation_data = example_data,
+#'                    cols_to_group = "sample",
+#'                    subtype_resolution = "none",
+#'                    retain_metadata_cols = "dose_group")
+#' plot <- plot_mean_mf(mf_data = mf,
+#'                      group_col = "dose_group",
+#'                      mf_type = "min",
+#'                      plot_type = "line",
+#'                      fill_col = "dose_group",
+#'                      plot_error_bars = TRUE,
+#'                      plot_indiv_vals = TRUE,
+#'                      add_labels = "none")
 #' @import ggplot2
 #' @importFrom dplyr across all_of arrange rename group_by summarize
 #' @export

@@ -5,7 +5,7 @@
 #' sequencing
 #' 
 #' @param df The summary data frame containing the mutation frequencies
-#' @param x Column name that specifies the mutation count (e.g., mut_depth) 
+#' @param x Column name that specifies the mutation count (e.g., mut_depth)
 #' @param n Column name that specifies the sequencing depth (e.g., total_depth)
 #' @param conf.level Confidence interval to calculate, default 95% (0.95)
 #' @param method The method used by binom::binom.confint to calculate intervals.

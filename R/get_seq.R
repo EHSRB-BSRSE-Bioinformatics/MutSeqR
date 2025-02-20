@@ -22,6 +22,17 @@
 #' in seq_start and seq_end. Default is 0.
 #' @return a GRanges object with sequences and metadata of targeted regions. 
 #' Region ranges coordinates will become 1-based.
+#' @examples
+#' # Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
+#' regions_seq <- get_seq(regions = "TSpanel_mouse")
+#' # Example 2: Retrieve the sequences for custom regions
+#' # We will load the TSpanel_human regions file as an example
+#' regions <- load_regions_file("TSpanel_human")
+#' regions_seq <- get_seq(regions = "custom",
+#'                        custom_regions = regions,
+#'                        genome = "hg38",
+#'                        is_0_based = TRUE,
+#'                        padding = 0)
 #' @importFrom httr content content_type GET
 #' @importFrom xml2 read_xml xml_text xml_find_first
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
