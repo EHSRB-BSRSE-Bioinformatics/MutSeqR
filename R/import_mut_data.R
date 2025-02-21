@@ -127,9 +127,9 @@
 #' the same as that of at least one other row for the same sample.
 #' }
 #' @examples
-#' # Example: Import a single mutation file. This library was sequenced using
-#' the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
-#' targets = 48kb of sequence.
+#' # Example: Import a single mutation file. This library was sequenced with
+#' # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
+#' # consists of 20 2.4kb targets = 48kb of sequence.
 #' example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' # We will create an example metadata table for this data.

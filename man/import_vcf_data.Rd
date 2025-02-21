@@ -2,15 +2,16 @@
 % Please edit documentation in R/import_vcf_data.R
 \name{import_vcf_data}
 \alias{import_vcf_data}
-\title{Import a vcf file}
+\title{Import a VCF file}
 \usage{
 import_vcf_data(
   vcf_file,
   sample_data = NULL,
   sd_sep = "\\t",
-  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none"),
+  regions = "none",
   custom_regions = NULL,
   rg_sep = "\\t",
+  is_0_based_rg = FALSE,
   range_buffer = 0,
   genome = NULL,
   species = NULL,
@@ -19,83 +20,158 @@ import_vcf_data(
 )
 }
 \arguments{
-\item{vcf_file}{The path to the genomic .vcf or .vcf.gz file(s)  to be imported. If
-you specify a folder, the function will attempt to read all files in the
-folder and combine them into on dataset. Multisample vcf files are not
-supported; vcf files must contain one sample each. Required fields are
-listed below
+\item{vcf_file}{The path to the .vcf (.gvcf, gzip, bgzip) to be
+imported. If you specify a directory, the function will
+attempt to read all files in the directory and combine them into
+a single table. VCF files should follow the VCF specifications,
+version 4.5. Multisample VCF files are not supported; VCF files
+must contain one sample each. Required fields are listed below.
 \itemize{
-\item FIXED FIELDS:
-\item \code{CHROM}: The reference sequence name.Equivalent to \code{contig}
-\item \code{POS}: 0-based start position of the feature in contig.
-\item \code{REF}: The reference allele at this position
+\item \verb{FIXED FIELDS}
+\item \code{CHROM}: The name of the reference sequence. Equivalent to \code{contig}.
+\item \code{POS}: The 1-based start position of the feature. Equivalent to  \code{start}.
+\item \code{REF}: The reference allele at this position.
 \item \code{ALT}: The left-aligned, normalized, alternate allele at this position.
-\item INFO FIELDS
-\item \code{END}: The half-open end position of the feature in contig.
+Multiple alt alleles called for a single position should be represented as
+separate rows in the table.
+\item \verb{INFO FIELDS}
+\item \code{END}: The half-open end position of the feature.
 \item \code{sample}: An identifying field for your samples; either in the INFO
 field or as the header to the FORMAT field.
-\item SUGGESTED FIELDS:
-\item FORMAT \code{AD}: The allelic depths for the reference and alternate alleles in the
-order listed.
-\item FORMAT \code{DP}: The total read depth at this position (including N-calls).
-Equivalent to \code{depth}.
-\item FORMAT \code{VD}: Variant Depth. Equivalent to \code{alt_depth}.
-\item INFO \code{SVTYPE}: Structural variant types; INV DUP DEL INS FUS.
-\item INFO \code{SVLEN}: Length of the structural variant in base pairs.
-}}
+}
+The following FORMAT fields are not required, but are recommended for full
+package functionality:
+\itemize{
+\item \code{AD}: The allelic depths for the reference and alternate allele
+in the order listed. The sum of AD is equivalent to the \code{total_depth}
+(read depth at this position excluding N-calls).
+\item \code{DP}: The read depth at this position (including N-calls).
+Equivalent to \code{depth}. Note that in many VCF files, the DP field
+is defined as \code{total_depth}. However, in most cases, the DP field
+includes N-calls.
+\item \code{VD}: The read depth supporting the alternate allele. If
+not included, the function will add this column, assuming a value of 1.
+Equivalent to \code{alt_depth}.
+}
+We recommend that files include a record for every sequenced
+position, regardless of whether a variant was called, along with the
+\code{AD} for each record. This enables site-specific depth calculations
+required for some downstream analyses. AD is used to calculate the \code{total_depth}
+(the read depth excluding No-calls). If AD is not available, the \code{DP} field
+will be used as the \code{total_depth}.}
 
 \item{sample_data}{An optional file containing additional sample
-metadata (dose, timepoint, etc.). This can be a data frame or a file path.}
+metadata (dose, timepoint, etc.). This can be a data frame or a file path.
+Metadata will be joined with the mutation data based on the sample column.
+Required columns are \code{sample} and any additional columns you wish to
+include.}
 
 \item{sd_sep}{The delimiter for importing sample metadata tables.
-Default is tab-delimited}
+Default is tab-delimited.}
 
-\item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat" ,
-"custom" or "none". The 'TSpanel_' argument refers to the TS
-Mutagenesis panel of the specified species, or to a custom regions
-interval file. If set to 'custom', please provide the file path in
-custom_regions and the genome assembly version of the reference
-genome using the 'genome' parameter. If you are not using a targeted
-approach, set regions to none, and supply the species and genome
-assembly of the reference genome using the 'species' and 'genome'
-parameters respectively.}
+\item{regions}{An optional file containing metadata of genomic regions.
+Region metadata will be joined with mutation data and variants will be
+checked for overlap with the regions. Metadata for TwinStrand Mutagenesis
+Panels are stored in the package files and can be accessed using the values
+\code{TSpanel_human}, \code{TSpanel_mouse}, and \code{TSpanel_rat}. If you have a custom
+range of genomic regions, set the value to \code{custom} and provide the regions
+file using the \code{custom_regions} argument. If you do not wish to include
+region metadata, set value to \code{none}.}
 
-\item{custom_regions}{"filepath". If regions is set to custom,
-provide the file path for the file containing regions metadata.
-Required columns are "contig", "start", and "end"}
+\item{custom_regions}{If \code{regions} is set to
+"custom", provide  the regions metadata. Can be a file path or a
+data frame. Required columns are \code{contig}, \code{start}, and \code{end}.}
 
-\item{rg_sep}{The delimiter for importing the custom_regions.
-Default is tab-delimited}
+\item{rg_sep}{The delimiter for importing the \code{custom_regions.}
+Default is tab-delimited.}
 
-\item{range_buffer}{An integer >= 0 .Required if using a targetted
-approach.  Use the range-buffer to extend the range outside
-of a region within which a variant can occur. The default is 0 nucleotides
-outside of region ranges. Ex. Structural variants and indels may start
-outside of the regions. Adjust the range_buffer to include these variants
-in the target sequencies.}
+\item{is_0_based_rg}{A logical variable. Indicates whether the
+position coordinates in the \code{custom_regions} are 0 based (TRUE) or
+1 based (FALSE). If TRUE, positions will be converted to 1-based.}
 
-\item{genome}{The genome assembly of the reference genome.
+\item{range_buffer}{Extend the range of your regions
+in both directions by the given amount. Ex. Structural variants and
+indels may start outside of the regions. Adjust the \code{range_buffer} to
+include these variants in your region's ranges.}
+
+\item{genome}{The genome assembly version of the reference genome. This is
+required if your data does not include a context column. The
+function will install a BS genome for the given species/genome/masked
+arguments to populate the context column.
 Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
 Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
-\item{species}{The species of the reference genome. Required if
-regions is set to none. The value can be the common name of the species
-or the scientific name. Ex. "human" or "Homo sapiens".}
+\item{species}{The species. Required if your data does not include a
+context column. The function will install a BS genome for the given
+species/genome/masked to populate the context column. The species can
+be the common name of the species or the scientific name.
+Ex. "human" or "Homo sapiens".}
+
+\item{masked_BS_genome}{A logical value. Required when using a BS genome
+to poulate the context column. Whether to use the masked version of the
+BS genome (TRUE) or not (FALSE). Default is FALSE.}
 
 \item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation
 data to output as a GRanges object. Default output is as a dataframe.}
 }
 \value{
-A data frame or a GRanges object where each row is a mutation,
-and columns indicate the location, type, and other data.
+A table where each row is a mutation, and columns indicate the
+location, type, and other data. If \code{output_granges} is set to TRUE, the
+mutation data will be returned as a GRanges object, otherwise mutation
+data is returned as a dataframe.
+
+Output Column Definitions:
+\itemize{
+\item \code{short_ref}: The reference base at the start position.
+\item \code{normalized_ref}: The short_ref in C/T-base notation for
+this position (e.g. A -> T, G -> C).
+\item \code{context} The trinucleotide context at this position. Consists
+of the reference base and the two flanking bases (e.g. TAC).
+\item \code{normalized_context}: The trinucleotide context in C/T base
+notation for this position (e.g. TAG -> CTA).
+\item \code{variation_type} The type of variant (snv, mnv, insertion,
+deletion, complex, sv, no_variant, ambiguous, uncategorized).
+\item \code{subtype} The substitution type for the snv variant (12-base spectrum;
+e.g. A>C).
+\item \code{normalized_subtype} The C/T-based substitution type for the snv
+variant (6-base spectrum; e.g. A>C -> T>G).
+\item \code{context_with_mutation}: The substitution type for the snv variant
+including the two flanking nucleotides (192-trinucleotide spectrum;
+e.g. \verb{T[A>C]G})
+\item \code{normalized_context_with_mutation}: The C/T-based substitution
+type for the snv variant including the two flanking nucleotides
+(96-base spectrum e.g. \verb{T[A>C]G} -> \verb{C[T>G]A}).
+\item \code{nchar_ref}: The length (in bp) of the reference allele.
+\item \code{nchar_alt}: The length (in bp) of the alternate allele.
+\item \code{varlen}: The length (in bp) of the variant.
+\item \code{ref_depth}: The depth of the reference allele. Calculated as
+\code{total_depth} - \code{alt_depth}, if applicable.
+\item \code{vaf} : The variant allele fraction. Calculated as
+\code{alt_depth}/\code{total_depth}.
+\item \code{gc_content}: \% GC of the trinucleotide context at this position.
+\item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
+\item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
+the same as that of at least one other row for the same sample.
+}
 }
 \description{
-The function reads the genomic vcf file(s) and extracts the
-data into a dataframe. The function also reads in sample metadata
-if provided and joins it with the mutation data. An interval list of genomic
-regions can be provided to filter out variants that occur outside of the
-defined regions' ranges. The function will use the reference genome to
-extract the trinucleotide context of every position in the mutation data.
-The function can output the mutation data as a dataframe or a granges
-object.
+The function reads VCF file(s) and extracts the
+data into a dataframe.
+}
+\examples{
+# Example: Import a single bg-zipped vcf file. This library was sequenced
+# with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
+# consists of 20 2.4kb targets = 48kb of sequence.
+example_file <- system.file("extdata", "example_import_vcf_data_cleaned.vcf.bgz", package = "MutSeqR")
+# We will create an example metadata table for this data.
+sample_meta <- data.frame(sample = "dna00996.1",
+                          dose = "50",
+                          dose_group = "High")
+# Import the data
+imported_example_data <- import_vcf_data(vcf_file = example_file,
+                                         sample_data = sample_meta,
+                                         regions = "TSpanel_mouse",
+                                         genome = "mm10",
+                                         species = "mouse",
+                                         masked_BS_genome = FALSE)
 }
