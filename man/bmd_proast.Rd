@@ -2,7 +2,7 @@
 % Please edit documentation in R/bmd_proast.r
 \name{bmd_proast}
 \alias{bmd_proast}
-\title{bmd_proast}
+\title{BMD modeling using PROAST}
 \usage{
 bmd_proast(
   mf_data,
@@ -66,7 +66,9 @@ If summary is TRUE, a data frame of final results. If summary is
 FALSE, a list of the raw results from the PROAST analysis.
 }
 \description{
-Calculate the BMD of continuous, individual-level data.
+Calculate the benchmark dose (BMD) of continuous,
+individual-level data with optional model averaging. This function
+is intended to model the dose-response of mutation frequency.
 This function is an extension of the PROAST software (copyright RIVM
 National Institute for Public Health and the Environment).
 }

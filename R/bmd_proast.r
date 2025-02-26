@@ -1,5 +1,7 @@
-#' bmd_proast
-#' @description Calculate the BMD of continuous, individual-level data.
+#' BMD modeling using PROAST
+#' @description Calculate the benchmark dose (BMD) of continuous,
+#' individual-level data with optional model averaging. This function
+#' is intended to model the dose-response of mutation frequency.
 #' This function is an extension of the PROAST software (copyright RIVM
 #' National Institute for Public Health and the Environment).
 #' @param mf_data A data frame containing the data to be analyzed. This can
