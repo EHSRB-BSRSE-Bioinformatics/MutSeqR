@@ -4,6 +4,7 @@
 #' @param response_col The column with the response values
 #' @param label_col The column with the labels for the radar plot.
 #' @param facet_col The column with the group to facet the radar plots.
+#' @param indiv_y A logical indicating whether to use individual y-axis scales for each plot.
 #' @importFrom tidyr pivot_wider
 #' @importFrom dplyr select filter
 #' 
@@ -13,9 +14,10 @@
 
 # radar chart
 plot_radar <- function(mf_data,
-                      response_col,
-                      label_col,
-                      facet_col) {
+                       response_col,
+                       label_col,
+                       facet_col,
+                       indiv_y = TRUE) {
 
   if (!requireNamespace("fmsb")) {
     stop("You need the package fmsb to run this function.")
@@ -33,6 +35,12 @@ plot_radar <- function(mf_data,
     plot_data[[facet_col]] <- as.factor(plot_data[[facet_col]])
     # Get levels
     facet_levels <- levels(plot_data[[facet_col]])
+
+    global_max <- if (!indiv_y) {
+      max(plot_data %>% dplyr::ungroup() %>% dplyr::select(-{{facet_col}}), na.rm = TRUE) * 1.1
+    } else {
+      NULL
+    }
   
   # Set up the layout for the plots
   n_plots <- length(facet_levels)
@@ -49,11 +57,11 @@ plot_radar <- function(mf_data,
 
     count <- ncol(df_i)
     # Add rows for max and min values
-    max <- max(df_i, na.rm = TRUE) * 1.1
-    max_row <- rep(max, count)
+    max_value <- if (is.null(global_max)) max(df_i, na.rm = TRUE) * 1.1 else global_max
+    max_row <- rep(max_value, count)
     min_row <- rep(0, count)
     df <- rbind(max_row, min_row, df_i)
-    axis_labels <- seq(from = 0, to = max, length.out = 5)
+    axis_labels <- seq(from = 0, to = max_value, length.out = 5)
     axis_labels <- sprintf("%.1e", axis_labels)
     title <- paste(facet_col, facet)
     plot <- fmsb::radarchart(df = df,
@@ -63,7 +71,7 @@ plot_radar <- function(mf_data,
                 caxiscol = "grey",
                 vlabels = NULL, # variable labels
                 axislabcol = "grey",
-                vlcex = 0.7,  # variable label font size
+                vlcex = 1.2,  # variable label font size
                 title = title,
                 pcol = "black", # color of the polygon
                 pfcol = NULL, # color of the polygon fill

@@ -37,7 +37,7 @@ Data may be response per individual or summarised across dose groups.
 Options are ("individual", "summary"). Default is "individual".}
 
 \item{dose_col}{The column in mf_data containing the dose data. Default is
-"dose".}
+"dose". Values must be numeric.}
 
 \item{response_col}{The column(s) in mf_data containing the mutation
 frequency data. For summarised data types, this should be the mean response

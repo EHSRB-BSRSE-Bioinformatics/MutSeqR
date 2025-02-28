@@ -4,7 +4,7 @@
 \alias{plot_radar}
 \title{Create a radar plot}
 \usage{
-plot_radar(mf_data, response_col, label_col, facet_col)
+plot_radar(mf_data, response_col, label_col, facet_col, indiv_y = TRUE)
 }
 \arguments{
 \item{mf_data}{A data frame with the data to plot}
@@ -14,6 +14,8 @@ plot_radar(mf_data, response_col, label_col, facet_col)
 \item{label_col}{The column with the labels for the radar plot.}
 
 \item{facet_col}{The column with the group to facet the radar plots.}
+
+\item{indiv_y}{A logical indicating whether to use individual y-axis scales for each plot.}
 }
 \value{
 A radar plot
