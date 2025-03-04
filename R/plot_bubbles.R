@@ -45,7 +45,6 @@
 #'
 ## TO DO:
 ## fix awkward legend facetting
-## Fix vaf
 plot_bubbles <- function(mutation_data,
                          size_by = "alt_depth",
                          facet_col = NULL,
@@ -104,9 +103,22 @@ plot_bubbles <- function(mutation_data,
     stop("facet_col must be a character vector")
   }
 
+  # Scale the size_by column if needed:
+  # scale so smallest value is just above 1
+  sizeby <- mutation_data[[size_by]]
+  if (min(sizeby) < 1) {
+    min_non_zero_value <- min(sizeby[sizeby > 0])
+    scale_factor <- 10^(-floor(log10(min_non_zero_value)))
+    scale_factor <- ifelse(min_non_zero_value * scale_factor < 1,
+                           scale_factor * 10,
+                           scale_factor)
+  } else {
+    scale_factor <- 1
+  }
+  mutation_data[[size_by]] <- mutation_data[[size_by]] * scale_factor
   x <- mutation_data %>%
-    dplyr::filter(!.data$variation_type %in% "no_variant" &
-                  .data$filter_mut == FALSE) %>%
+    dplyr::filter(.data$variation_type != "no_variant" &
+                    .data$filter_mut == FALSE) %>%
     dplyr::arrange(!!rlang::sym(color_by))
   data <- data.frame(group = paste(x$sample,
                                    x$contig,
@@ -141,22 +153,33 @@ plot_bubbles <- function(mutation_data,
     })
     data2 <- do.call(rbind, circles)
   } else {
-    circles <- packcircles::circleProgressiveLayout(data, sizecol = "response", sizetype = 'area')
+    circles <- packcircles::circleProgressiveLayout(data,
+                                                    sizecol = "response",
+                                                    sizetype = "area")
     circles$radius <- circle_spacing * circles$radius
     data2 <- cbind(data, circles)
   }
 
-  vertices <- packcircles::circleLayoutVertices(data2, npoints = circle_resolution, idcol = "group", xysizecols = c("x", "y", "radius"))
+  vertices <- packcircles::circleLayoutVertices(data2,
+                                               npoints = circle_resolution,
+                                               idcol = "group",
+                                               xysizecols = c("x", "y", "radius"))
 
-  plot_data <- dplyr::left_join(vertices, data2, by = c("id" = "group"), suffix = c(".circle_coords", ".circle_centres"))
+  plot_data <- dplyr::left_join(vertices,
+                                data2,
+                                by = c("id" = "group"),
+                                suffix = c(".circle_coords", ".circle_centres"))
 
   # Create the main plot with bubbles
   p <- ggplot() +
     geom_polygon(data = plot_data,
-                 aes(x = x.circle_coords, y = y.circle_coords, group = id, fill = color_column),
+                 aes(x = x.circle_coords,
+                     y = y.circle_coords,
+                     group = id,
+                     fill = color_column),
                  colour = if(is.null(circle_outline) || circle_outline == "none") NA else circle_outline) +
     theme_void() +
-    labs(fill = "Mutation type") +
+    labs(fill = color_by) +
     theme(legend.position = "right") +
     coord_equal()
 
@@ -167,46 +190,57 @@ plot_bubbles <- function(mutation_data,
   } else {
     p <- p + scale_fill_manual(values = plotcolors, breaks = names(plotcolors))
   }
-  
+
   if (!is.null(facet_col)) {
     p <- p + facet_wrap(~facet, ncol = 2)
   }
-  
+
   # Generate a size legend within the same plot
   unique_responses <- sort(unique(data$response))
   num_legend_circles <- min(5, length(unique_responses))  # Up to 5 elements
-  selected_indices <- seq(1, length(unique_responses), length.out = num_legend_circles) %>% round()
+  selected_indices <- seq(1,
+                          length(unique_responses),
+                          length.out = num_legend_circles) %>%
+    round()
   selected_sizes <- unique_responses[selected_indices]
-  
+
   # Calculate the range of x-values in the data and determine the center point of the x-axis
   x_range <- range(data2$x, na.rm = TRUE)
   x_center <- mean(x_range)
-  
+
   # Calculate the total length of the legend
   legend_gap <- max(data2$radius) * 2  # Adjust gap based on maximum circle radius
   legend_width <- legend_gap * (num_legend_circles - 1)
-  
+
   # Adjust legend positions to be centered about x_center
   legend_start <- x_center - (legend_width / 2)
-  legend_positions <- seq(legend_start, by = legend_gap, length.out = num_legend_circles)
-  
+  legend_positions <- seq(legend_start,
+                          by = legend_gap,
+                          length.out = num_legend_circles)
+
   size_legend_df <- data.frame(
     x = legend_positions,
     y = rep(min(data2$y) - legend_gap, num_legend_circles),
     radius = circle_spacing * sqrt(selected_sizes / pi),
-    label = as.character(selected_sizes)
+    label = selected_sizes / scale_factor
   )
+  size_legend_df <- size_legend_df %>%
+    dplyr::mutate(label = ifelse(.data$label < 1,
+                                 sprintf("%#.2e", label),
+                                 as.character(label)))
   legend_data <- packcircles::circleLayoutVertices(size_legend_df, idcol = NULL, xysizecols = 1:3)
   if (!is.null(facet_col)) {
     legend_data$facet <- factor("Legend", levels = all_facet_levels)
     size_legend_df$facet <- factor("Legend", levels = all_facet_levels)
   }
-   # Overlay the size legend on the main plot
+  # Overlay the size legend on the main plot
   q <- p +
     geom_polygon(data = legend_data,
                  aes(x = x, y = y, group = "label"),
                  fill = "grey80") +
-    geom_text(data = size_legend_df, aes(x = x, y = y, label = label), vjust = 0.5)
+    geom_text(data = size_legend_df,
+              aes(x = x, y = y + max(radius)*1.2, label = label),
+              vjust = 0.5)
 
   return(q)
 }
