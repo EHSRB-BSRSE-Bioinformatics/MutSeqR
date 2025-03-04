@@ -11,32 +11,61 @@ plot_bubbles(
   color_by = "normalized_subtype",
   circle_spacing = 1,
   circle_outline = "none",
-  circle_resolution = 50
+  circle_resolution = 50,
+  circle_palette = NULL
 )
 }
 \arguments{
 \item{mutation_data}{Data frame containing the mutation data.}
 
-\item{size_by}{A string with the column name by which to size the circles.
+\item{size_by}{The column name by which to size the circles.
 Recommended values are "alt_depth" or "vaf".}
 
-\item{facet_col}{A string with the column name by which to facet .
+\item{facet_col}{The column name by which to facet .
 If NULL, no facetting will be done. Default is NULL.}
 
-\item{color_by}{Character vector specifying how to color the mutations.
-Accepted values are "normalized_subtype", "subtype", and
-"trinucleotide_subtype". NOT FULLY IMPLEMENTED - open to any column name. Ex. contig}
+\item{color_by}{The column name by which to colour the mutations. Default is
+"normalized_subtype".}
 
-\item{circle_spacing}{Numerical value to adjust the spacing between circles.}
+\item{circle_spacing}{Numerical value to adjust the spacing between circles.
+Default is 1.}
 
-\item{circle_outline}{Color for the circle outline. Default is "none", resulting in no outline color. Other accepted values are colors in the R language.}
+\item{circle_outline}{Colour for the circle outline. Default is "none",
+resulting in no outline colour. Other accepted values are colours in the R
+language.}
 
-\item{circle_resolution}{Number of points to use for the circle resolution. Default is 50.}
+\item{circle_resolution}{Number of points to use for the circle resolution.
+Default is 50.}
+
+\item{circle_palette}{Circle colours are generated using
+/code{RColorBrewer::brewer.pal(n=8, name = "Set1")}. If you want to use a
+different \code{brewer.pal} palette, you can specify it here. Default is NULL;
+"Set1". \verb{color_by =} "normalized_subtype" and "subtype" have a default color
+palette to match the MutSeqR plot_spectra() function but these can also be
+changed to the specified brewer.pal palette. See
+\code{\link[RColorBrewer]{brewer.pal}} for palette options. You may
+visualize the palettes at the ColorBrewer website:
+\url{https://colorbrewer2.org/}.}
 }
 \value{
 A ggplot object with the bubble plot, facetted if specified.
 }
 \description{
 Produces a ggplot object of bubble plots from given mutation data.
-Optionally, bubble plots can be facetted by a specified column.
+Optionally, bubble plots can be facetted and
+coloured by a specified column.
+}
+\details{
+The function will plot a circle for each mutation in
+\code{mutation_data}. Mutations flagged by the \code{filter_mut} column will be
+excluded from the plot. The size of the circle is determined by the
+\code{size_by} parameter. Sizing by the "alt_depth" or the "vaf" will give users
+the ability to visualize the the distribution of recurrent mutations within
+their data with large multiplets having a large circle.
+}
+\examples{
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+plot <- plot_bubbles(mutation_data = example_data,
+                     facet_col = "dose_group")
 }

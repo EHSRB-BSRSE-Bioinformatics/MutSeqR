@@ -1,40 +1,65 @@
 #' Generate Bubble Plots
 #'
 #' Produces a ggplot object of bubble plots from given mutation data.
-#' Optionally, bubble plots can be facetted by a specified column.
+#' Optionally, bubble plots can be facetted and
+#' coloured by a specified column.
 #'
 #' @param mutation_data Data frame containing the mutation data.
-#' @param size_by A string with the column name by which to size the circles.
+#' @param size_by The column name by which to size the circles.
 #' Recommended values are "alt_depth" or "vaf".
-#' @param facet_col A string with the column name by which to facet .
+#' @param facet_col The column name by which to facet .
 #' If NULL, no facetting will be done. Default is NULL.
-#' @param color_by Character vector specifying how to color the mutations.
-#' Accepted values are "normalized_subtype", "subtype", and
-#' "trinucleotide_subtype". NOT FULLY IMPLEMENTED - open to any column name. Ex. contig
+#' @param color_by The column name by which to colour the mutations. Default is
+#' "normalized_subtype".
 #' @param circle_spacing Numerical value to adjust the spacing between circles.
-#' @param circle_outline Color for the circle outline. Default is "none", resulting in no outline color. Other accepted values are colors in the R language.
-#' @param circle_resolution Number of points to use for the circle resolution. Default is 50.
-#'
+#' Default is 1.
+#' @param circle_outline Colour for the circle outline. Default is "none",
+#' resulting in no outline colour. Other accepted values are colours in the R
+#' language.
+#' @param circle_resolution Number of points to use for the circle resolution.
+#' Default is 50.
+#' @param circle_palette Circle colours are generated using
+#' /code{RColorBrewer::brewer.pal(n=8, name = "Set1")}. If you want to use a
+#' different `brewer.pal` palette, you can specify it here. Default is NULL;
+#' "Set1". `color_by =` "normalized_subtype" and "subtype" have a default color
+#' palette to match the MutSeqR plot_spectra() function but these can also be
+#' changed to the specified brewer.pal palette. See
+#' \code{\link[RColorBrewer]{brewer.pal}} for palette options. You may
+#' visualize the palettes at the ColorBrewer website:
+#' \url{https://colorbrewer2.org/}.
+#' @details The function will plot a circle for each mutation in
+#' `mutation_data`. Mutations flagged by the `filter_mut` column will be
+#' excluded from the plot. The size of the circle is determined by the
+#' `size_by` parameter. Sizing by the "alt_depth" or the "vaf" will give users
+#' the ability to visualize the the distribution of recurrent mutations within
+#' their data with large multiplets having a large circle.
 #' @return A ggplot object with the bubble plot, facetted if specified.
-#'
+#' @examples
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' plot <- plot_bubbles(mutation_data = example_data,
+#'                      facet_col = "dose_group")
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
 #' @export
-#' 
-## TO DO: fix awkward legend facetting
+#'
+## TO DO:
+## fix awkward legend facetting
+## Fix vaf
 plot_bubbles <- function(mutation_data,
                          size_by = "alt_depth",
                          facet_col = NULL,
                          color_by = "normalized_subtype",
                          circle_spacing = 1,
                          circle_outline = "none",
-                         circle_resolution = 50) {
+                         circle_resolution = 50,
+                         circle_palette = NULL) {
 
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
   }
 
-  if (color_by == "normalized_subtype") {
+  if (color_by == "normalized_subtype" && is.null(circle_palette)) {
     plotcolors <- c("C>A" = "#3288BD",
                     "C>G" = "#99D594",
                     "C>T" = "#E6F598",
@@ -47,7 +72,7 @@ plot_bubbles <- function(mutation_data,
                     "sv" = "purple",
                     "ambiguous" = "darkgrey",
                     "uncategorized" = "white")
-  } else if (color_by == "subtype") {
+  } else if (color_by == "subtype" && is.null(circle_palette)) {
     plotcolors <- c("A>C" = "limegreen",
                     "A>G" = "forestgreen",
                     "A>T" = "darkgreen",
@@ -66,10 +91,13 @@ plot_bubbles <- function(mutation_data,
                     "sv" = "azure2",
                     "ambiguous" = "darkgrey",
                     "uncategorized" = "white")
-  } else if (color_by == "trinucleotide_subtype") {
-    plotcolors <- NULL
   } else {
     plotcolors <- NULL
+    if (is.null(circle_palette)) {
+      palette <- "Set1"
+    } else {
+      palette <- circle_palette
+    }
   }
 
   if (!is.null(facet_col) && !is.character(facet_col)) {
@@ -91,6 +119,7 @@ plot_bubbles <- function(mutation_data,
                      color_column = x[[color_by]])
 
   data <- data %>% dplyr::arrange("color_column")
+  data$color_column <- factor(data$color_column)
 
   if (!is.null(facet_col)) {
     if (is.factor(x[[facet_col]])) {
@@ -104,7 +133,7 @@ plot_bubbles <- function(mutation_data,
     # Pack circles for each facet level
     circles <- lapply(seq_along(original_facet_levels), function(i) {
       facet_level <- original_facet_levels[[i]]
-      filtered_data <- data %>% filter(facet == facet_level)
+      filtered_data <- data %>% dplyr::filter(.data$facet == facet_level)
       circle_layout <- packcircles::circleProgressiveLayout(filtered_data, sizecol = "response", sizetype = 'area')
       circle_layout$radius <- circle_spacing * circle_layout$radius
       data2 <- cbind(filtered_data, circle_layout)
@@ -116,11 +145,11 @@ plot_bubbles <- function(mutation_data,
     circles$radius <- circle_spacing * circles$radius
     data2 <- cbind(data, circles)
   }
-  
+
   vertices <- packcircles::circleLayoutVertices(data2, npoints = circle_resolution, idcol = "group", xysizecols = c("x", "y", "radius"))
-  
-  plot_data <- left_join(vertices, data2, by = c("id" = "group"), suffix = c(".circle_coords", ".circle_centres"))
-  
+
+  plot_data <- dplyr::left_join(vertices, data2, by = c("id" = "group"), suffix = c(".circle_coords", ".circle_centres"))
+
   # Create the main plot with bubbles
   p <- ggplot() +
     geom_polygon(data = plot_data,
@@ -130,10 +159,10 @@ plot_bubbles <- function(mutation_data,
     labs(fill = "Mutation type") +
     theme(legend.position = "right") +
     coord_equal()
-  
+
   if (is.null(plotcolors)) {
     num_colors <- length(unique(plot_data$color_column))
-    color_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set1"))(num_colors)
+    color_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, name = palette))(num_colors)
     p <- p + scale_fill_manual(values = color_palette)
   } else {
     p <- p + scale_fill_manual(values = plotcolors, breaks = names(plotcolors))

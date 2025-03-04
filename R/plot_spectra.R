@@ -192,8 +192,7 @@ plot_spectra <- function(mf_data,
                  "uncategorized" = "white")
     } else if (subtype_resolution == "base_12") {
       # Sanger colours for 12 base spectra
-      palette <- c(
-                    "A>C" = "limegreen",
+      palette <- c("A>C" = "limegreen",
                     "A>G" = "forestgreen",
                     "A>T" = "darkgreen",
                     "C>A" = "skyblue1",
