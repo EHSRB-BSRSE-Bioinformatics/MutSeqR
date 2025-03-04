@@ -4,46 +4,89 @@
 #' is intended to model the dose-response of mutation frequency.
 #' This function is an extension of the PROAST software (copyright RIVM
 #' National Institute for Public Health and the Environment).
-#' @param mf_data A data frame containing the data to be analyzed. This can
-#' be created using \code{calculate_mf(cols_to_group = "sample",
-#' retain_metadata_cols = [dose_col], summary = TRUE)}.
-#' @param dose_col The name of the column in mf_data that contains the dose.
-#' Must be a numeric value.
-#' @param response_col The name of the column(s) in mf_data that contains the
-#' mutation frequency. Ex. \code{c("sample_MF_min", "sample_MF_max")}.
-#' @param covariate_col The name of the column in mf_data that contains the
-#' covariate. If no covariate is present, set to \code{NULL}.
-#' @param CES The critical effect size of the Benchmark response. The BMR in
-#' continuous data is defined as a [CES]-percent change in mean response
-#' (relative to the controls). Default is 0.5 (i.e. 50% change).
-#' @param adjust_CES_to_group_SD A logical value indicating whether the group
-#' standard deviation should be used as the CES.
+#' @param mf_data A data frame containing the data to be analyzed. Data should
+#' be individual for each sample. Required columns are the column containing
+#' the dose `dose_col` the column(s) containing the mutation frequency
+#' `response_col`, and the column containing the covariate `covariate_col`,
+#' if applicable.
+#' @param dose_col The column in `mf_data` containing the dose data. Values
+#' must be numeric. Default is "dose".
+#' @param response_col The column(s) in `mf_data` containing the mutation
+#' frequency. Multiple `response_col`s can be provided. Default is "mf_min".
+#' @param covariate_col The column in `mf_data` containing the covariate.
+#' If no covariate is present, set to \code{NULL} (default).
+#' @param bmr The Benchmark Response value. The BMR is defined as a
+#' [bmr]-percent change in mean response relative to the controls.
+#' Default is 0.5 (50% change).
+#' @param adjust_bmr_to_group_sd A logical value indicating whether the group
+#' standard deviation should be used as the BMR. If TRUE, the BMR will be
+#' bet set to one standard deviation above the control group mean. Default is
+#' FALSE.
 #' @param model_averaging A logical value indicating whether confidence
-#' intervals should be calculated using model averaging.
+#' intervals should be calculated using model averaging. Default is TRUE
+#' (recommended).
 #' @param num_bootstraps The number of bootstrap resamples to be used in the
-#' model averaging. Default is 200.
+#' model averaging. Default is 200 (recommended).
 #' @param summary A logical value indicating whether a summary of the results
 #' should be returned. If FALSE, raw results from the PROAST analysis are
 #' returned.
-#' @param plot_results A logical value indicating whether the results should
-#' be plotted. Plots can either be saved as a svg to the output_path or
-#' displayed in the R plot viewer.
-#' @param output_path The filepath to save the plots' .svg files. If NULL, the
-#' plots will be saved in the current working directory.
-#' @param output_type svg or none. If svg, the plots will be saved as .svg files
-#' in the output_path. If none, the plots will NOT be saved, but be displayed in
-#' plot viewer.
+#' @param plot_results A logical value indicating whether to plot the BMD models
+#' and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
+#' save plots to the `output_path`.
+#' @param output_path The file path indicating where to save the plots.
+#' If NULL, the plots will be saved to the working directory. Default is NULL.
 #' @return If summary is TRUE, a data frame of final results. If summary is
 #' FALSE, a list of the raw results from the PROAST analysis.
-#' @export
-#' @importFrom dplyr arrange filter mutate pull rename
+#' 
+#' The summary will include the following for each response variable and
+#' covariate subgroup (if applicable):
+#'  \itemize{
+#'    \item `Model`: The m3 or m5 model selected for each model family
+#' (Exponential, Hill, Inverse Exponential, LogNormal).
+#'    \item `Response`: The response variable.
+#'    \item `Covariate`: The covariate subgroup, if applicable.
+#'    \item `bmr`: The specified Benchmark Response.
+#'    \item `BMD`: The Benchmark Dose, in original dose units, estimated for
+#' the given model.
+#'    \item `BMDL`: The lower bound of the 90% confidence interval for the BMD,
+#' calculated by the profile likelihood method.
+#'    \item `BMDU`: The upper bound of the 90% confidence interval for the BMD,
+#' calculated by the profile likelihood method.
+#'   \item `AIC`: The Akaike Information Criterion for the selected model.
+#' Lower values indicate a better fit. It is advised to choose the BMD value
+#' from the model with the lowest AIC.
+#'  \item `weights`: The weight of the model in the model averaging process,
+#' if applicable.
+#' \item `Model averaging`: The BMDL and BMDU calculated by the bootstrap
+#' method if \code{model_averaging = TRUE}.
+#' }
+#' If there is no significant response in the data, the function will return an
+#' empty data frame.
+#'
+#' If \code{plot_results = TRUE} the function will create the following plots
+#' for each response variable: 
+#'  \itemize{
+#'   \item Model Plots. The following plot will be created for each model
+#' family (Exponential, Hill, Inverse Exponential, LogNormal): The fitted curve
+#' of the selected (3 or 5) model. Data is log-transformed. Individual data
+#' points are plotted using small triangles. The geometric mean (median) at
+#' each dose is plotted as a large triangle. The BMD is indicated by the
+#' dotted line. If applicable, the covariate subgroup is indicated by color.
+#' \item ma.plot If \code{model_averaging = TRUE}, the bootstrap curves based
+#' on model averaging. The geometric mean (median) at each dose is plotted as
+#' a large triangle. Data is log-transformed.
+#' \item cleveland plot if \code{model_averaging = TRUE} The BMD estimate
+#' for each model is plotted with error bars representing the 90% confidence
+#' interval. The size of the point represents the model weight assigned during
+#' model averaging, based on the AIC.
+#' }
 #' @details This function is a  modified version of the original interactive
 #' PROAST software (\url{https://www.rivm.nl/en/proast} that allows for batch
 #' processing of data. The function is designed to be used with the output of
-#' the \code{calculate_mf} function for the purpose of calculating the
+#' \code{calculate_mf} for the purpose of calculating the
 #' Benchmark Dose of mutation frequency data. As such, some functionality of
 #' the original PROAST software has been removed.
-#' 
+#'
 #' This function will accept continuous data, with an observation for each
 #' individual subject. It is assumed that data are lognormally distributed.
 #' The response data is log-transformed, then back-transformed after the
@@ -57,66 +100,6 @@
 #' \code{model_averaging = TRUE}. It is recommended to use 200 bootstraps for
 #' model averaging.
 #'
-#' The function gives you the option to return either a summary of the results
-#' or the raw results output from the PROAST analysis. The summary will include
-#' the following for each response variable and covariate subgroup (if
-#' applicable):
-#'  \itemize{
-#'    \item `Selected.Model`: The m3 or m5 model selected for each model family
-#' (Exponential, Hill, Inverse Exponential, LogNormal).
-#'    \item `Response`: The response variable.
-#'    \item `Covariate`: The covariate subgroup, if applicable.
-#'    \item `CES`: The critical effect size of the Benchmark Response.
-#'    \item `CED`: The Benchmark Dose, in original dose units, estimated for
-#' the given model.
-#'    \item `CEDL`: The lower bound of the 90% confidence interval for the BMD,
-#' calculated by the profile likelihood method.
-#'    \item `CEDU`: The upper bound of the 90% confidence interval for the BMD,
-#' calculated by the profile likelihood method.
-#'   \item `AIC`: The Akaike Information Criterion for the selected model.
-#' Lower values indicate a better fit. It is advised to choose the BMD value
-#' from the model with the lowest AIC.
-#'  \item `Log.Likelihood`: the log-likelihood of the given model.
-#'  \item `Var`: The residual variance around the fitted curve on the
-#' natural log-scale.
-#'  \item `a`: Model Parameter - the background response
-#'  \item `d`: Model Parameter - the slope of the curve.
-#'  \item `weights`: The weight of the model in the model averaging process,
-#' if applicable.
-#' }
-#' If there is no significant response in the data, the function will return an
-#' empty data frame.
-#' 
-#' If \code{plot_results = TRUE} the function will create the following plots
-#' for each response variable:
-#'  \itemize{
-#'    \item Expon. The fitted curve of the selected (3 or 5) exponential model.
-#' Data is log-transformed. Individual data points are plotted using small
-#' triangles. The geometric mean (median) at each dose is plotted as a large
-#' triangle. The BMD is indicated by the dotted line. If applicable, the
-#' covariate subgroup is indicated by color.
-#'   \item Hill. The fitted curve of the selected (3 or 5) Hill model.
-#' Data is log-transformed. Individual data points are plotted using small
-#' triangles. The geometric mean (median) at each dose is plotted as a large
-#' triangle. The BMD is indicated by the dotted line. If applicable, the
-#' covariate subgroup is indicated by color.
-#'  \item InvExpon. The fitted curve of the selected (3 or 5) Inverse-exponential model.
-#' Data is log-transformed. Individual data points are plotted using small
-#' triangles. The geometric mean (median) at each dose is plotted as a large
-#' triangle. The BMD is indicated by the dotted line. If applicable, the
-#' covariate subgroup is indicated by color.
-#' \item LN. The fitted curve of the selected (3 or 5) LogNormal model.
-#' Data is log-transformed. Individual data points are plotted using small
-#' triangles. The geometric mean (median) at each dose is plotted as a large
-#' triangle. The BMD is indicated by the dotted line. If applicable, the
-#' covariate subgroup is indicated by color.
-#' \item ma.plot for \code{model_averaging = TRUE} The bootstrap curves based
-#' on model averaging. The geometric mean (median) at each dose is plotted as
-#' a large triangle. Data is log-transformed.
-#' \item cleveland plot for \code{model_averaging = TRUE} The BMD estimate
-#' for each model is plotted with error bars representing the 90% confidence
-#' interval. The size of the point represents the model weight.
-#' }
 #' To replicate these results in the PROAST interactive software,
 #' select the following menu options:
 #' \enumerate{
@@ -132,9 +115,9 @@
 #'    \item Give number of factor serving as potential covariate (e.g.sex)
 #' type 0 if none. \emph{# : covariate_col}
 #'    \item Do you want to adjust CES to within group SD?
-#' \emph{1: no, 2: yes | adjust_CES_to_group_SD: FALSE/TRUE}
+#' \emph{1: no, 2: yes | adjust_bmr_to_group_sd: FALSE/TRUE}
 #'    \item Give value for CES (always positive) type 0 to avoid calculation
-#' of CIs. \emph{CES}
+#' of CIs. \emph{bmr}
 #'    \item Do you want to calculate the BMD confidence interval by model
 #' averaging? \emph{1: no 2: yes | model_averaging: FALSE/TRUE}
 #'    \item give number of bootstrap runs for calculating BMD confidence
@@ -142,18 +125,33 @@
 #'    \item Which models do you want to be fitted?
 #' \emph{4 : previous option with lognormal DR model added}
 #' }
+#' @examples
+#' # Calculate the BMD for a 50% increase in mutation frequency from control
+#' # With Model averaging.
+#' # For the purpose of this example, num_bootstraps is set to 5 to reduce
+#' # run time. 200 bootstraps is recommended.
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
+#' bmd <- bmd_proast(mf_data = mf,
+#'                   dose_col = "dose",
+#'                   response_col = c("mf_min", "mf_max"),
+#'                   bmr = 0.5,
+#'                   model_averaging = TRUE,
+#'                   num_bootstraps = 5)
+#' @export
+#' @importFrom dplyr arrange filter mutate pull rename
 bmd_proast <- function(mf_data,
                        dose_col = "dose",
                        response_col = "mf_min",
                        covariate_col = NULL,
-                       CES = 0.5,
-                       adjust_CES_to_group_SD = FALSE,
+                       bmr = 0.5,
+                       adjust_bmr_to_group_sd = FALSE,
                        model_averaging = TRUE,
                        num_bootstraps = 200,
                        summary = TRUE,
                        plot_results = FALSE,
-                       output_path = NULL,
-                       output_type = "none") {
+                       output_path = NULL) {
 
   if (!dose_col %in% colnames(mf_data)) {
     stop("Dose column not found in mf_data")
@@ -171,13 +169,13 @@ bmd_proast <- function(mf_data,
   if (!is.numeric(mf_data[[dose_col]])) {
     stop("Dose column must be numeric")
   }
-  if (plot_results == TRUE && model_averaging == TRUE && output_type == "svg") {
+  if (plot_results == TRUE && model_averaging == TRUE) {
     if (!require("svglite", quietly = TRUE)) {
-      stop("The 'svglite' package is required to save model averaging plots as svgs. Please install to use this functionality.")
-}
+      stop("The 'svglite' package is required to save model averaging plots. Please install to use this functionality.")
+    }
   }
 
-  CES_sd <- as.numeric(adjust_CES_to_group_SD) + 1
+  bmr_sd <- as.numeric(adjust_bmr_to_group_sd) + 1
 
   if (is.null(covariate_col)) {
     covariate <- 0
@@ -193,8 +191,8 @@ bmd_proast <- function(mf_data,
                       indep_var_choice = dose_col,
                       Vyans_input = response_col,
                       covariates = covariate,
-                      custom_CES = CES,
-                      adjust_CES_to_group_SD = CES_sd,
+                      custom_CES = bmr,
+                      adjust_CES_to_group_SD = bmr_sd,
                       model_selection = "previous option with lognormal DR model added",
                       lower_dd = NULL,
                       upper_dd = NULL,
@@ -206,88 +204,47 @@ bmd_proast <- function(mf_data,
   if (plot_results == TRUE) {
     f.plot.result(results[[1]],
                   output_path = output_path,
-                  output_type = output_type,
                   model_averaging = FALSE)
 
     if (model_averaging == TRUE) {
       f.plot.result(results[[1]],
                     output_path = output_path,
-                    output_type = output_type,
                     model_averaging = TRUE)
 
       # Cleveland plot: all models w weights
-      results_df <- results[[2]] %>%
-        dplyr::mutate(CED = as.numeric(CED),
-                      CEDL = as.numeric(CEDL),
-                      CEDU = as.numeric(CEDU))
-
-      for (i in unique(results_df$Response)) {
-        c.plot.df <- results_df %>%
-          dplyr::filter(Response == i)
-
-        if (!is.null(covariate_col)) {
-          c.plot.df <- c.plot.df %>%
-            dplyr::rename(Model = "Selected.Model")
-          c.plot.df$Selected.Model <- paste(c.plot.df$Model, c.plot.df$Covariate)
-          model_order <- c.plot.df %>%
-            dplyr::arrange(Covariates, weights) %>%
-            dplyr::pull(Selected.Model)
-          c.plot.df$Selected.Model <- factor(c.plot.df$Selected.Model,
-                                             levels = model_order)
-        } else {
-          model_order <- c.plot.df %>%
-            dplyr::filter(.data$Selected.Model != "Model averaging") %>%
-            dplyr::arrange(weights) %>%
-            dplyr::pull(Selected.Model)
-          
-          c.plot.df <- c.plot.df %>%
-            dplyr::mutate(Selected.Model = factor(Selected.Model,
-                                                  levels = c(unique(model_order),
-                                                             "Model averaging")))
-          c.plot.df$Model <- c.plot.df$Selected.Model
-        }
-        # assign dummy values to Model averaging,
-        # making sure it is in range of the other CEDL and CEDU.
-        c.plot.df$weights[c.plot.df$Model == "Model averaging"] <- NA
-        c.plot.df$CED[c.plot.df$Model == "Model averaging"] <- with(subset(c.plot.df, Model == "Model averaging"), (CEDL + CEDU) / 2)
-
-        c <- ggplot(c.plot.df, aes(x = CED, y = Selected.Model)) +
-          geom_errorbar(aes(xmin = CEDL, xmax = CEDU),
-                        color = "gray",
-                        width = 0.1) +
-          geom_point(aes(size = weights),
-                     color = "red") +
-          scale_size_continuous(guide = "none") +
-          ggplot2::theme(panel.background = ggplot2::element_blank(),
-                         axis.line = ggplot2::element_line(),
-                         panel.grid = ggplot2::element_blank(),
-                         axis.ticks.x = ggplot2::element_line(),
-                         axis.ticks.y = ggplot2::element_line()) +
-          ggplot2::xlab(paste("BMD Estimate for", i)) +
-          ggplot2::ylab("Model") +
-          ggtitle("BMD by Selected Model (Sorted by Weights)")
-        if (output_type == "svg") {
-          file_name <- file.path(output_path, paste0("PROAST_", i , "_cleveland.svg"))
-          ggsave(filename = file_name, plot = c, device = "svg")
-        } else if (output_type == "none") {
-          # Determine the operating system to open the plot in the correct viewer
-          os <- Sys.info()[["sysname"]]
-          # Open the plot in the correct viewer
-          if (os == "Windows") {
-            windows(width = 8, height = 6)
-          } else if (os == "Darwin") {  # Darwin is macOS
-            quartz(width = 8, height = 6)
-          } else if (os == "Linux") {
-            X11(width = 8, height = 6)
-          }
-          print(c)
-          dev.flush()
-        }
-      }
+      cleveland_plot(results, covariate_col = covariate_col, output_path = output_path)
     }
-  }
+    }
   if (summary == TRUE) {
-    return(results[[2]])
+    # Select the BMD with the lowest AIC for each response
+    # If they have the same AIC, take the mean.
+    dat <- results[[2]] %>%
+      dplyr::rename(BMD = "CED",
+                    BMDL = "CEDL",
+                    BMDU = "CEDU",
+                    Model = "Selected.Model",
+                    BMR = "CES") %>%
+      dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
+    # dat$AIC <- as.numeric(dat$AIC)
+    # dat$BMD <- as.numeric(dat$BMD)
+    # dat_best <- dat %>%
+    #   dplyr::select("Response", "BMD", "AIC", "weights", "BMR") %>%
+    #   dplyr::group_by(Response) %>%
+    #   dplyr::filter(AIC == min(AIC, na.rm = TRUE)) %>%
+    #   dplyr::summarise(BMD = mean(BMD, na.rm = TRUE),
+    #                    AIC = dplyr::first(AIC, na_rm = TRUE),
+    #                    weights = dplyr::first(weights, na_rm = TRUE),
+    #                    BMR = dplyr::first(BMR, na_rm = TRUE)) %>%
+    #   dplyr::ungroup()
+    # dat_best$Model <- "Best_Fit"
+    # if (model_averaging == TRUE) {
+    #   dat_avg <- dat %>%
+    #     dplyr::filter(.data$Model == "Model averaging") %>%
+    #     dplyr::select("Response", "BMDL", "BMDU")
+    #   dat_best <- dplyr::left_join(dat_best, dat_avg, by = "Response")
+    #   dat <- rbind(dat, dat_best)
+    # } 
+    return(dat)
   } else {
     return(results[[1]])
   }

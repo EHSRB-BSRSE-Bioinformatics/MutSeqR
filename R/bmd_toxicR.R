@@ -1,6 +1,6 @@
 #' BMD modeling using ToxicR
-#' @description Calculate the benchmark dose for continuous dose-response data
-#' with optional model averaging. This function is intended to model the
+#' @description Calculate the benchmark dose (BMD) for continuous dose-response
+#' data with optional model averaging. This function is intended to model the
 #' dose-response of mutation frequency using the ToxicR software.
 #' @param mf_data A data frame containing the dose-response data. Data may
 #' be individual for each sample or averaged over dose groups.
@@ -13,8 +13,8 @@
 #' @param data_type A string specifying the type of response data.
 #' Data may be response per individual or summarised across dose groups.
 #' Options are ("individual", "summary"). Default is "individual".
-#' @param dose_col The column in mf_data containing the dose data. Default is
-#' "dose". Values must be numeric.
+#' @param dose_col The column in `mf_data` containing the dose data. Values
+#' must be numeric. Default is "dose".
 #' @param response_col The column(s) in mf_data containing the mutation
 #' frequency data. For summarised data types, this should be the mean response
 #' for each dose group. Multiple `response_col`s can be provided.
@@ -87,8 +87,8 @@
 #' each model): exp-aerts, invexp-aerts, hill-aerts, lognormal-aerts,
 #' gamma-efsa, LMS, probit-aerts, and logistic-aerts. See
 #' \link[ToxicR]{ma_continuous_fit} for more details.
-#' 
-#' 
+#'
+#'
 #'  BMR types for continuous models:
 #'  \itemize{
 #'    \item Relative deviation (default; `bmr_type = "rel"`). This defines the
