@@ -26,10 +26,22 @@
 #' @param python_version The version of python installed on the user's
 #' computer.
 #' @returns Creates a subfolder "SigProfiler" in the output directory with
-#' SigProfiler tools results. See the Readme for more information on the
-#' output files.
+#' SigProfiler tools results. For a complete breakdown of the results, see the
+#' Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
+#' [group] > matrices > output > Assignment_Solution > Activities >
+#' SampleReconstruction > WebPNGs.
+#' These plots show a summary of the signature assignment results for each
+#' group. In each plot, the top left panel represents the base_96 mutation
+#' count for the group. The bottom left panel represents the reconstructed
+#' profile. Below the reconstruction are the solution statistics that indicate
+#' the goodness of fit of the reconstructed profile to the observed profile.
+#' (Recommended cosine similarity > 0.9). The panels on the right represent the
+#' SBS signatures that contribute to the reconstructed profile. The signature
+#' name and its contribution % are shown in the panel. A high contribution
+#' means a high association of the signature with the group's mutation
+#' spectra.
 #' @details Mutation data will be filtered to only include SNVs. Variants
-#' flagged by the filter_mut column will be excluded. 
+#' flagged by the filter_mut column will be excluded.
 #' @examples
 #' \dontrun{ 
 #' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
@@ -89,7 +101,12 @@ signature_fitting <- function(mutation_data,
       reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
       # Install required packages
       # Patched version of pandas and scipy to avoid dependency errors: binom_test
-      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator", "SigProfilerAssignment", "SigProfilerExtractor", "pandas==1.5.3", "scipy==1.11.4"))
+      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator",
+                                                 "SigProfilerAssignment",
+                                                 "SigProfilerExtractor",
+                                                 "pandas==1.5.3",
+                                                 "scipy==1.11.4",
+                                                 "pypdf==4.3.1"))
     } else {
       # User chose not to install the packages
       cat("Installation aborted by the user.\n")
