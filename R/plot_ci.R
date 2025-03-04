@@ -13,6 +13,13 @@
 #' @param log_scale A logical value indicating if the x-axis should be in
 #' log10 scale. Default is false.
 #' @return a ggplot object
+#' @examples
+#' # Plot results from PROAST and ToxicR
+#' dat <- data.frame(Response = c("PROAST MF Min", "PROAST MF Max", "ToxicR MF Min", "ToxicR MF Max"),
+#'                   BMD = c(NA, NA, 9.641894, 8.100164),
+#'                   BMDL = c(7.38, 2.98, 8.032936,5.463013),
+#'                   BMDU = c(10.9, 7.68, 10.97636, 10.04638))
+#' plot <- plot_ci(dat)
 #' @export
 #' @importFrom dplyr arrange pull mutate group_by ungroup across where desc
 #' @importFrom tidyr pivot_longer

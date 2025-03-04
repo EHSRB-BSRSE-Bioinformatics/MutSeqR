@@ -142,6 +142,9 @@
 #' bmd <- bmd_toxicr(mf_data = mf,
 #'                   dose_col = "dose",
 #'                   response_col = c("mf_min", "mf_max"))
+#' # Plot the results using plot_ci()
+#' plot <- plot_ci(bmd, order = "asc", log_scale = FALSE)
+#' 
 #' # Summary data with Model averaging.
 #' mf_sum <- mf %>%
 #'  dplyr::group_by(dose) %>%

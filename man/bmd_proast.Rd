@@ -176,4 +176,9 @@ bmd <- bmd_proast(mf_data = mf,
                   bmr = 0.5,
                   model_averaging = TRUE,
                   num_bootstraps = 5)
+# Plot the Model Averaging 90\% CI using plot_ci()
+plot_df <- bmd \%>\%
+ dplyr::filter(Model == "Model averaging") \%>\%
+ dplyr::select(Response, BMD, BMDL, BMDU)
+plot <- plot_ci(plot_df, order = "asc", log_scale = FALSE)
 }
