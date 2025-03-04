@@ -42,8 +42,6 @@
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
 #' @export
-#'
-## TO DO:
 ## fix awkward legend facetting
 plot_bubbles <- function(mutation_data,
                          size_by = "alt_depth",
@@ -56,6 +54,9 @@ plot_bubbles <- function(mutation_data,
 
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
+  }
+  if (!requireNamespace("packcircles")) {
+    stop("You need the package packcircles to run this function.")
   }
 
   if (color_by == "normalized_subtype" && is.null(circle_palette)) {
@@ -161,9 +162,9 @@ plot_bubbles <- function(mutation_data,
   }
 
   vertices <- packcircles::circleLayoutVertices(data2,
-                                               npoints = circle_resolution,
-                                               idcol = "group",
-                                               xysizecols = c("x", "y", "radius"))
+                                                npoints = circle_resolution,
+                                                idcol = "group",
+                                                xysizecols = c("x", "y", "radius"))
 
   plot_data <- dplyr::left_join(vertices,
                                 data2,
@@ -192,7 +193,7 @@ plot_bubbles <- function(mutation_data,
   }
 
   if (!is.null(facet_col)) {
-    p <- p + facet_wrap(~facet, ncol = 2)
+    p <- p + facet_wrap(~facet)
   }
 
   # Generate a size legend within the same plot
@@ -239,7 +240,7 @@ plot_bubbles <- function(mutation_data,
                  aes(x = x, y = y, group = "label"),
                  fill = "grey80") +
     geom_text(data = size_legend_df,
-              aes(x = x, y = y + max(radius)*1.2, label = label),
+              aes(x = x, y = y + max(radius) * 1.2, label = label),
               vjust = 0.5)
 
   return(q)
