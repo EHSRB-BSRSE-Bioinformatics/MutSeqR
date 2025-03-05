@@ -2,21 +2,36 @@
 % Please edit documentation in R/write_reference_fasta.R
 \name{write_reference_fasta}
 \alias{write_reference_fasta}
-\title{Write FASTA file of reference sequences}
+\title{Write FASTA file of reference sequences.}
 \usage{
-write_reference_fasta(ref_ranges, fasta_out = "./reference_output.fasta")
+write_reference_fasta(regions_gr, output_path = NULL)
 }
 \arguments{
-\item{ref_ranges}{A GRanges object including the sequences of the reference
-regions included for the data.}
+\item{regions_gr}{A GRanges object including the sequences of the reference
+regions included for the data. This can be generated from the \code{get_seq}
+function.}
 
-\item{fasta_out}{The path for the FASTA file output.}
+\item{output_path}{The directory where the FASTA file should be written.
+Default is NULL, which will write the file to the current working directory.}
 }
 \value{
-Writes a FASTA reference file to be used in downstream applications.
+Writes a FASTA reference file "reference_output.fasta".
+If multiple ranges are included in the GRanges object, the sequences will be
+written to a single FASTA file. Sequences names will be the seqnames
+(contig) of the range.
 }
 \description{
-In some cases, you might want to generate an arbitrary multi-sequence FASTA
-file from GRanges including the reference sequences. This function allows you
-to do this.
+Write FASTA file of reference sequences.
+}
+\details{
+Generate an arbitrary multi-sequence FASTA file from GRanges
+including the reference sequences.
+}
+\examples{
+\dontrun{
+# Write FASTA files for the 20 genomic target sequences
+# of TwinStrand's Mouse Mutagenesis Panel.
+rg <- get_seq("TSpanel_mouse")
+write_reference_fasta(rg, output_path = NULL)
+}
 }
