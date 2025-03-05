@@ -1,23 +1,21 @@
 #' Plot the trinucleotide spectrum
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
 #' a given group based on the mutation data. All plots are exported.
-#' @param mf_96_data A data frame containing the mutation frequency data at the 96-base resolution.
+#' @param mf_96 A data frame containing the mutation frequency data at the 96-base resolution.
 #' This should be obtained using the 'calculate_mf' with subtype_resolution set to 'base_96'.
 #' Generally, cols_to_group should be the same as 'group_col'.
 #' @param response A character string specifying the type of response to plot.
 #' Must be one of 'frequency', 'proportion', or 'sum'.
 #' @param mf_type A character string specifying the mutation count method to
 #' plot. Must be one of 'min' or 'max'. Default is 'min'.
-#' @param group_col A character string specifying the column(s) in 'mf_96_data'
+#' @param group_col A character string specifying the column(s) in 'mf_96'
 #' to group the data by. Default is 'sample'. The sum, proportion, or frequency
 #' will be plotted for all unique levels of this
 #' group. You can specify more than one column to group by. Generally the same as
 #' the 'cols_to_group' parameter in 'calculate_mf' when generating mf_96_data.
-#' @param max_y A character string specifying the max response value for the y-axis.
-#' Must be one of 'individual' or 'group'.'individual' will adjust the maximum y-axis
-#' value for each level of the group independently of the others. 'group' will set the
-#' maximum y-axis value based on the entire dataset such that all plots will have the
-#' same scale. Default is 'group'.
+#' @param indiv_y A logical value specifying whether the the max response value
+#' for the y-axis should be scaled independently for each group (TRUE) or scaled
+#' the same for all groups (FALSE). Default is FALSE.
 #' @param output_path A character string specifying the path to save the output plot.
 #' Default is NULL. This will create an output directory in the current working
 #' directory.
@@ -45,19 +43,19 @@
 #'                             variant_types = "snv")
 #' # Plot the trinucleotide proportions for each dose group
 #' # Scale y-axis the same for all groups
-#' plot_trinucleotide(mf_96_data = mf_96,
+#' plot_trinucleotide(mf_96 = mf_96,
 #'                    response = "proportion",
 #'                    mf_type = "min",
 #'                    group_col = "dose_group",
-#'                    max_y = "group",
+#'                    indiv_y = FALSE,
 #'                    output_path = temp_output)
 #' # Plot the trinucleotide sums for each dose group
 #' # Scale y-axis the differently for each group
-#' plot_trinucleotide(mf_96_data = mf_96,
+#' plot_trinucleotide(mf_96 = mf_96,
 #'                    response = "sum",
 #'                    mf_type = "min",
 #'                    group_col = "dose_group",
-#'                    max_y = "individual",
+#'                    indiv_y = TRUE,
 #'                    output_path = temp_output)
 #'
 #' # Plot the mean mutation frequency for each dose group
@@ -69,11 +67,11 @@
 #' mean_mf_96 <- mf_96_sample %>%
 #'  dplyr::group_by(dose_group, normalized_context_with_mutation) %>%
 #'  dplyr::summarise(mf_min = mean(mf_min), .groups = "drop_last")
-#' plot_trinucleotide(mf_96_data = mean_mf_96,
+#' plot_trinucleotide(mf_96 = mean_mf_96,
 #'                    response = "frequency",
 #'                    mf_type = "min",
 #'                    group_col = "dose_group",
-#'                    max_y = "individual",
+#'                    indiv_y = TRUE,
 #'                    output_path = temp_output)
 #' list.files(temp_output)
 #' # Note: The plots are saved as image files in the temporary directory.
@@ -86,11 +84,11 @@
 
 #' @export
 
-plot_trinucleotide <- function(mf_96_data,
-                               response = c("frequency", "proportion", "sum"),
+plot_trinucleotide <- function(mf_96,
+                               response = "proportion",
                                mf_type = "min",
                                group_col = "dose",
-                               max_y = c("individual", "group"),
+                               indiv_y = FALSE,
                                sum_totals = TRUE,
                                output_path = NULL,
                                output_type = "tiff") {
@@ -142,7 +140,7 @@ plot_trinucleotide <- function(mf_96_data,
   group_levels <- unique(data$group)
 
   # Determine y_max for all levels of the group
-  if (max_y == "group") {
+  if (!indiv_y) {
     if (response == "proportion") {
       y_max <- ceiling(max(data$response) * 10) / 10
       y_lab <- "Proportion of Mutations"
@@ -198,7 +196,7 @@ plot_trinucleotide <- function(mf_96_data,
     cex.axistext <- 0.4
 
     # Determine y_max for each level of the group seperately.
-    if (max_y == "individual") {
+    if (indiv_y) {
       if (response == "proportion") {
         y_max <- ceiling(max(plot_data$response) * 10) / 10
         y_lab <- "Proportion of Mutations"
