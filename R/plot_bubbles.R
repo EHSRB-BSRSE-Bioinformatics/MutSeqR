@@ -145,8 +145,8 @@ plot_bubbles <- function(mutation_data,
   x_center <- mean(x_range)
   
   # Calculate the total length of the legend
-  legend_width <- legend_gap * (num_legend_circles - 1)
   legend_gap <- max(data2$radius) * 2  # Adjust gap based on maximum circle radius
+  legend_width <- legend_gap * (num_legend_circles - 1)
   
   # Adjust legend positions to be centered about x_center
   legend_start <- x_center - (legend_width / 2)
