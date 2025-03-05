@@ -8,53 +8,83 @@ get_seq(
   regions,
   custom_regions = NULL,
   rg_sep = "\\t",
-  genome = NULL,
   is_0_based = TRUE,
-  padding = 0
+  species = NULL,
+  genome = NULL,
+  masked = FALSE,
+  padding = 0,
+  ucsc = FALSE
 )
 }
 \arguments{
-\item{regions}{"TSpanel_human", "TSpanel_mouse", "TSpanel_rat, or "custom". The argument refers to the
-TS Mutagenesis panel of the specified species, or to a custom panel.
-If custom, provide custom region intervals in custom_regions.}
+\item{regions}{The file containing the genomic regions. Regions TwinStrand
+Mutagenesis Panels are stored in the package files and can be accessed using
+the values \code{TSpanel_human}, \code{TSpanel_mouse}, and \code{TSpanel_rat}. If you have
+a custom range of genomic regions, set the value to \code{custom} and provide the
+regions file using the \code{custom_regions} argument.}
 
-\item{custom_regions}{If regions is set to custom,
-provide regions metadata. Can be a file path or a data frame.
-Required columns are "contig", "start", and "end".}
+\item{custom_regions}{If \code{regions = "custom"}, provide  the genomic ranges.
+Can be a file path or a data frame. Required columns are \code{contig}, \code{start},
+and \code{end}.}
 
-\item{rg_sep}{The delimiter for importing the custom_regions.
-The default is tab-delimited.}
+\item{rg_sep}{The delimiter for importing the custom_regions. The default is
+tab-delimited.}
 
-\item{genome}{If a custom regions file is provided, indicate the genome
-assembly for the reference genome. Please refer to the UCSC genomes.
-Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
-Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
+\item{is_0_based}{A logical variable. Indicates whether the position
+coordinates in the \code{custom_regions} are 0 based (TRUE) or 1 based (FALSE).
+If TRUE, positions will be converted to 1-based. Need not be supplied for
+TSpanels.}
 
-\item{is_0_based}{TRUE or FALSE. Indicates whether the target region
-coordinates are 0 based (TRUE) or 1 based (FALSE). If TRUE, ranges will be converted
-to 1-based.}
+\item{species}{The species for which to retrieve the sequences.
+Species may be given as the scientific name or the common name.
+Ex. "Human", "Homo sapien". Used to choose the appropriate
+BS genome. Need not be supplied for TSpanels.}
+
+\item{genome}{The genome assembly version for which to retrieve the
+sequencies. Used to choose the appropriate genome (BS genome or UCSC).
+Ex. hg38, hg19, mm10, mm39, rn6, rn7. Need not be supplied for TSpanels.}
+
+\item{masked}{A logical value indicating whether to use the masked version
+of the BS genome when retrieving sequences. Default is FALSE.}
 
 \item{padding}{An integer value by which the function will extend the range
-of the target sequence on both sides. Modified region ranges will be reported
-in seq_start and seq_end. Default is 0.}
+of the target sequence on both sides. Start and end coordinates will be
+adjusted accordingly. Default is 0.}
+
+\item{ucsc}{A logical value. If TRUE, the function will retrieve the
+sequences from the UCSC genome browser using an API. If FALSE, the function
+will retrieve sequencies using the appropriate BSgenome package, which will
+be installed as needed.}
 }
 \value{
-a GRanges object with sequences and metadata of targeted regions.
-Region ranges coordinates will become 1-based.
+a GRanges object with sequences of targeted regions. Region ranges
+coordinates will become 1-based.
 }
 \description{
-Create a GRanges object from the target metadata and import raw nucleotide
-sequences from the UCSC database. https://genome.ucsc.edu
+Create a GRanges object from the genomic target ranges and import raw
+nucleotide sequences.
+}
+\details{
+Consult
+\code{available.genomes(splitNameParts=FALSE, type=getOption("pkgType"))}
+for a full list of the available BS genomes and their associated
+species/genome/masked values. The BSgenome package will be installed if
+not already available. If using the UCSC API, the function will retrieve
+the sequences from the UCSC genome browser using the DAS API. See the
+UCSC website for available genomes: \url{https://genome.ucsc.edu}.
 }
 \examples{
 # Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
 regions_seq <- get_seq(regions = "TSpanel_mouse")
+
 # Example 2: Retrieve the sequences for custom regions
 # We will load the TSpanel_human regions file as an example
-regions <- load_regions_file("TSpanel_human")
+human <- load_regions_file("TSpanel_human")
 regions_seq <- get_seq(regions = "custom",
-                       custom_regions = regions,
-                       genome = "hg38",
+                       custom_regions = human,
                        is_0_based = TRUE,
+                       species = "human",
+                       genome = "hg38",
+                       masked = FALSE,
                        padding = 0)
 }

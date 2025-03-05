@@ -21,7 +21,7 @@ load_regions_file <- function(regions,
   } else if (regions == "TSpanel_rat") {
     regions_df <- read.table(system.file("extdata", "rat_mutagenesis_panel_rn6.txt", package = "MutSeqR"), header = TRUE)
   } else if (regions == "custom") {
-    
+
     if (!is.null(custom_regions)) {
       if (is.data.frame(custom_regions)) {
         regions_df <- custom_regions
