@@ -15,7 +15,7 @@
 #' model_mf output and write them to separate sheets in the Excel workbook.
 #' @returns A saved Excel workbook.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' mf1 <- calculate_mf(example_data,

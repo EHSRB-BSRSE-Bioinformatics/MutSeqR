@@ -27,9 +27,9 @@ write_reference_fasta <- function(regions_gr,
   } else {
     output_dir <- file.path(output_path, "reference_output.fasta")
   }
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir)
-    output_dir <- file.path(output_dir, "reference_output.fasta")
+  if (!dir.exists(output_path)) {
+    dir.create(output_path)
+    output_dir <- file.path(output_path, "reference_output.fasta")
   }
   ref <- regions_gr$sequence
   # Convert to DNAStringSet
