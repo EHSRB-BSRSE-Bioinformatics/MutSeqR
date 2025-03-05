@@ -306,14 +306,14 @@ model_mf <- function(mf_data,
     model <- stats::glm(model_formula,
       family = "quasibinomial",
       data = mf_data,
-      ...
+   #   ...
     )
     if(summary(model)$dispersion < 1) {
       warning("The dispersion parameter is less than 1. Switching to a bionomial distribution.")
       model <- stats::glm(model_formula,
         family = "binomial",
         data = mf_data,
-        ...
+    #    ...
       )
     }
   }
@@ -408,12 +408,28 @@ model_mf <- function(mf_data,
       if (ncol(contrast_table) <= 1) {
         stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
       }
+      if (ncol(contrast_table) > 2) {
+        stop("Your contrast_table has more than two columns. See the documentation for proper formatting.")
+      }
     }
   model_matrix <- as.data.frame(model_matrix)
   contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
 
-    # Create an empty list to store the result of matrix subtractions
-    result_list <- list()
+  valid_contrasts <- function(contrasts_table, fixed_levels) {
+    split_values <- strsplit(as.character(unlist(contrasts_table)), ":")
+    all_values <- unlist(split_values)
+    unique_values <- unique(all_values)
+    l <- as.character(unlist(fixed_levels))
+    valid <- all(unique_values %in% l)
+    return(valid)
+  }
+  valid <- valid_contrasts(contrast_table, fixed_effects_levels)
+  if (!valid) {
+    stop("The contrast table contains values that are not present in the mf_data.\n",
+         "Please ensure that the contrast table values match the levels of the fixed effects.")
+  }
+  # Create an empty list to store the result of matrix subtractions
+  result_list <- list()
 
   # Loop through each row in contrast_table
   for (i in seq_len(nrow(contrast_table))) {
