@@ -9,7 +9,10 @@ plot_ci(
   order = "none",
   custom_order = NULL,
   nudge = 0.3,
-  log_scale = FALSE
+  log_scale = FALSE,
+  x_lab = NULL,
+  y_lab = NULL,
+  title = NULL
 )
 }
 \arguments{
@@ -29,6 +32,14 @@ Default is 0.3.}
 
 \item{log_scale}{A logical value indicating if the x-axis should be in
 log10 scale. Default is false.}
+
+\item{x_lab}{A character string with the x-axis label. Default is "BMD" or
+"log10(BMD)" if log_scale is TRUE.}
+
+\item{y_lab}{A character string with the y-axis label. Default is "Response".}
+
+\item{title}{A character string with the plot title. Default is "BMD with
+90\% Confidence Intervals".}
 }
 \value{
 a ggplot object

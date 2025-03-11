@@ -12,6 +12,11 @@
 #' Default is 0.3.
 #' @param log_scale A logical value indicating if the x-axis should be in
 #' log10 scale. Default is false.
+#' @param x_lab A character string with the x-axis label. Default is "BMD" or
+#' "log10(BMD)" if log_scale is TRUE.
+#' @param y_lab A character string with the y-axis label. Default is "Response".
+#' @param title A character string with the plot title. Default is "BMD with
+#' 90% Confidence Intervals".
 #' @return a ggplot object
 #' @examples
 #' # Plot results from PROAST and ToxicR
@@ -30,7 +35,10 @@ plot_ci <- function(data,
                     order = "none",
                     custom_order = NULL,
                     nudge = 0.3,
-                    log_scale = FALSE) {
+                    log_scale = FALSE,
+                    x_lab = NULL,
+                    y_lab = NULL,
+                    title = NULL) {
 
   if (order == "asc") {
     response_order <- data %>%
@@ -63,7 +71,7 @@ plot_ci <- function(data,
       dplyr::ungroup() %>%
       dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 2))) %>%
       tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
-    x_lab <- "log10(BMD)"
+    if (is.null(x_lab)) {x_lab <- "log10(BMD)"}
   } else {
     results_bmd_df_plot <- data %>%
       dplyr::group_by(.data$Response) %>%
@@ -71,9 +79,13 @@ plot_ci <- function(data,
       dplyr::ungroup() %>%
       dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 1))) %>%
       tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
-    x_lab <- "BMD"
+    if (is.null(x_lab)) {x_lab <- "BMD"}
   }
   nudge_value <- nudge
+
+  if (is.null(y_lab)) {y_lab <- "Response"}
+  if (is.null(title)) {title <- "BMD with 90% Confidence Intervals"}
+
 
   g <- ggplot(results_bmd_df_plot,
               ggplot2::aes(x = results_bmd_df_plot$value,
@@ -99,8 +111,8 @@ plot_ci <- function(data,
                                                 nudge_value, -nudge_value),
                        hjust = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
                                               0, 1), na.rm = TRUE) +
-    ggplot2::labs(x = x_lab, y = "Response",
-                  title = paste0("BMD with 90% Confidence Intervals"),
+    ggplot2::labs(x = x_lab, y = y_lab,
+                  title = title,
                   color = NULL) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
                                                        vjust = 0.5,
