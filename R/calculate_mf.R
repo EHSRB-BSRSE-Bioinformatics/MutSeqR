@@ -522,7 +522,7 @@ calculate_mf <- function(mutation_data,
   }
 
   if (depth_exists) {
-    if (!is.null(precalc_depth_data)) { 
+    if (!is.null(precalc_depth_data) && !is.na(MutSeqR::denominator_dict[[subtype_resolution]])) {
       ref_values <- unique(depth_df[[MutSeqR::denominator_dict[[subtype_resolution]]]])
       if (!"N" %in% ref_values) {
         n_depth <- depth_df %>%
