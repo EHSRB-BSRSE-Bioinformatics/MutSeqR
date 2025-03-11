@@ -191,7 +191,9 @@ import_vcf_data <- function(vcf_file,
 
   # Read and bind vcfs from folder
   if (file.info(vcf_file)$isdir == TRUE) {
-    vcf_files <- list.files(path = vcf_file, pattern = "\\.(vcf|gvcf)\\.(bgz|gz)$", full.names = TRUE)
+    vcf_files <- list.files(path = vcf_file,
+                            pattern = "\\.g?vcf(\\.bgz|\\.gz)?$",
+                            full.names = TRUE)
     # FIX: add check for empty file list.
     # Initialize an empty VCF object to store the combined data
     vcf <- NULL
