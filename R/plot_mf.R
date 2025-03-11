@@ -237,7 +237,7 @@ plot_mf <- function(mf_data,
   labels <- ggplot2::geom_text(ggplot2::aes(label = label),
                                position = label_position,
                                vjust = -0.5,
-                               size = 4,
+                               size = 3,
                                color = "black")
   } else if (plot_type == "point") {
     pos <- ggplot2::position_jitter(width = 0.1,
