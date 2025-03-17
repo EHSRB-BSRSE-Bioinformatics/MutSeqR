@@ -7,7 +7,7 @@
 #' the fixed effect to plot on the x-axis. The other will be used in the fill
 #' aesthetic. Currently, only 2 fixed effects are supported.
 #' @param ref_effect The fixed effect to use as the reference level when adding
-#' significance labels.
+#' significance labels. Only applicable if using two fixed effects.
 #' @param plot_error_bars Logical. If TRUE, the estimated standard error will
 #' be added to the plot.
 #' @param plot_signif Logical. If TRUE, will add significance labels based on

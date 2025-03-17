@@ -64,14 +64,15 @@ model uses the \code{glm} function.}
 \value{
 Model results are output as a list. Included are:
 \itemize{
-\item model_data: the supplied mf_data with added column for model residuals.
+\item model_data: the supplied mf_data with added column for the Pearson's
+residuals of the model.
 \item summary: the summary of the model.
 \item anova: the analysis of variance for models with two or more effects. \link[car]{Anova}\code{(model) }
-\item residuals_histogram: the model residuals plotted as a histogram. This is
+\item residuals_histogram: the Pearson's residuals plotted as a histogram. This is
 used to check whether the variance is normally distributed. A symmetric
 bell-shaped histogram, evenly distributed around zero indicates that the
 normality assumption is likely to be true.
-\item residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
+\item residuals_qq_plot: the Pearson's residuals plotted in a quantile-quantile plot.
 For a normal distribution, we expect points to roughly follow the y=x line.
 \item point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects.
 \item point_estimates: the point estimates for the fixed effects.

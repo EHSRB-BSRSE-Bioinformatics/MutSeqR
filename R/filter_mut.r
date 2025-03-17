@@ -31,18 +31,18 @@
 #' @param snv_in_germ_mnv Filter out snv variants that overlap with
 #' germline mnv variants within the same samples. mnv variants will be
 #' considered germline if their vaf > vaf_cutoff. Default is FALSE.
-#' @param custom_filter_col The name of the column in mutation_data to apply a
-#' custom filter to. This column will be checked for specific values, as defined
-#' by \code{custom_filter_val}. If any row in this column contains one of the
-#' specified values, that row will either be flagged in the
-#' \code{filter_mut column} or, if specified by \code{custom_filter_rm},
-#' removed from mutation_data.
 #' @param rm_abnormal_vaf A logical value. If TRUE, rows in
 #' \code{mutation_data} with a variant allele fraction (VAF) between 0.05 and
 #' 0.45 or between 0.55 and 0.95 will be removed. We expect variants to have a
 #' VAF ~0. 0.5, or 1, reflecting rare somatic mutations, heterozygous germline
 #' mutations, and homozygous germline mutations, respectively. Default is
 #' FALSE.
+#' @param custom_filter_col The name of the column in mutation_data to apply a
+#' custom filter to. This column will be checked for specific values, as defined
+#' by \code{custom_filter_val}. If any row in this column contains one of the
+#' specified values, that row will either be flagged in the
+#' \code{filter_mut column} or, if specified by \code{custom_filter_rm},
+#' removed from mutation_data.
 #' @param custom_filter_val A set of values used to filter rows in
 #' \code{mutation_data} based on \code{custom_filter_col}. If a row in
 #' \code{custom_filter_col} matches any value in \code{custom_filter_val},

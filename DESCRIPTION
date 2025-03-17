@@ -21,7 +21,7 @@ Authors@R: c(
     person("Carole", "Yauk", , "Carole.Yauk@uottawa.ca", role = "ctb",
            comment = c(ORCID = "0000-0002-6725-3454"))
   )
-Description: Standard methods for analysis of mutation data following ecNGS 
+Description: Standard methods for analysis of mutation data following ECS 
     for the purpose of mutagencity assessment. Functions include importing 
     the mutation lists provided by a variant caller, and a set of analytical 
     tools for statistical testing and visualization of mutation data;

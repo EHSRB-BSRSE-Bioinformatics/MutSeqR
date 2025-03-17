@@ -126,14 +126,15 @@
 #'                                                              tol = 3e-3,
 #'                                                              relTol = NULL))`
 #' @returns Model results are output as a list. Included are:
-#' - model_data: the supplied mf_data with added column for model residuals.
+#' - model_data: the supplied mf_data with added column for the Pearson's
+#' residuals of the model.
 #' - summary: the summary of the model.
 #' - anova: the analysis of variance for models with two or more effects. \link[car]{Anova}`(model) `
-#' - residuals_histogram: the model residuals plotted as a histogram. This is
+#' - residuals_histogram: the Pearson's residuals plotted as a histogram. This is
 #' used to check whether the variance is normally distributed. A symmetric
 #' bell-shaped histogram, evenly distributed around zero indicates that the
 #' normality assumption is likely to be true.
-#' - residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
+#' - residuals_qq_plot: the Pearson's residuals plotted in a quantile-quantile plot.
 #'  For a normal distribution, we expect points to roughly follow the y=x line.  
 #' - point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
 #' - point_estimates: the point estimates for the fixed effects.
@@ -202,7 +203,7 @@
 #' model2$summary # Fits a GLMM
 #' model2$point_estimates
 #' model2$pairwise_comparisons
-#' 
+#'
 #' # Plot the results using plot_model_mf()
 #' # Define the order of the labels for the x-axis
 #' label_order <- model2$point_estimates %>%
@@ -325,11 +326,7 @@ model_mf <- function(mf_data,
   }
 
   # Check residuals
-  if(!is.null(random_effects)) {
-    mf_data$residuals <- stats::residuals(model)
-  } else {
-    mf_data$residuals <- model$residuals
-  }
+  mf_data$residuals <- stats::residuals(model, type = "pearson")
 
   # Print the row with the maximum residual
   max_residual_index <- which.max(abs(mf_data$residuals))

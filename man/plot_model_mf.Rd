@@ -45,7 +45,7 @@ plotted value has been contrasted against multiple references, then it will
 gain multiple symbols for each significance difference.}
 
 \item{ref_effect}{The fixed effect to use as the reference level when adding
-significance labels.}
+significance labels. Only applicable if using two fixed effects.}
 
 \item{x_order}{A character vector indicating the order of the levels for the
 x_effect.}
