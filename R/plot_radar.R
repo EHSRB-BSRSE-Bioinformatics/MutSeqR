@@ -70,7 +70,7 @@ plot_radar <- function(mf_data,
                 sep = 5, # number of axis ticks
                 caxiscol = "grey",
                 vlabels = NULL, # variable labels
-                axislabcol = "grey",
+                axislabcol = "#797777",
                 vlcex = 1.2,  # variable label font size
                 title = title,
                 pcol = "black", # color of the polygon
