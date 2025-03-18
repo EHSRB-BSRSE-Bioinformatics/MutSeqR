@@ -72,7 +72,7 @@
 #'                         subtype_resolution = "base_6",
 #'                         retain_metadata_cols = "dose_group")
 #' # Set the desired order for the dose_group levels.
-#' mf_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+#' mf_data$dose_group <- factor(mf_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
 #' # Plot the mutation spectra
 #' plot <- plot_spectra(mf_data = mf_data,
 #'                      group_col = "sample",
