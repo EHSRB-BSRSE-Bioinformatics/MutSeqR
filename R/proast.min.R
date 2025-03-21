@@ -291,7 +291,7 @@ f.proast <- function(odt = list(),
                              detection_limit = detection_limit)
     }
     if (ans.all$cont) 
-        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, CES = CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
+        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
     else quit <- f.cat(ans.all,
                        interactive_mode = interactive_mode,
                        add_nonzero_val_to_dat = add_nonzero_val_to_dat,
