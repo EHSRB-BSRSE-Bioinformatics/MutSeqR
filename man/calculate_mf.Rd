@@ -104,7 +104,7 @@ access a list of context values for each subtype resolution using
 \code{MutSeqR::context_list$your_subtype_resolution}.}
 
 \item{d_sep}{The delimiter used in the precalc_depth_data, if applicable.
-Default is "\t".}
+Default is tab-delimited.}
 
 \item{summary}{A logical variable, whether to return a summary table
 (i.e., where only relevant columns for frequencies and groupings are
@@ -194,9 +194,9 @@ mf_6_example <- calculate_mf(mutation_data = example_data,
 mf_6_mean_example <- mf_6_example \%>\%
  dplyr::group_by(dose, normalized_subtype) \%>\%
  dplyr::summarise(mean_mf_min = mean(mf_min),
-                  se_mf_min = sd(mf_min) / sqrt(n()),
+                  se_mf_min = sd(mf_min) / sqrt(dplyr::n()),
                   mean_mf_max = mean(mf_max),
-                  se_mf_max = sd(mf_max) / sqrt(n()))
+                  se_mf_max = sd(mf_max) / sqrt(dplyr::n()))
 
 # Example 4: Calculate MF using precalculated depth data
 sample_depth_example <- data.frame(sample = c("dna00973.1", "dna00974.1",

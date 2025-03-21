@@ -55,8 +55,6 @@
 #'                        genome = "hg38",
 #'                        masked = FALSE,
 #'                        padding = 0)
-#' @importFrom httr content content_type GET
-#' @importFrom xml2 read_xml xml_text xml_find_first
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @export
 get_seq <- function(regions,
@@ -68,7 +66,12 @@ get_seq <- function(regions,
                     masked = FALSE,
                     padding = 0,
                     ucsc = FALSE) {
-
+  if (ucsc && !requireNamespace("xml2", quietly = TRUE)) {
+    stop("The 'xml2' package is required for UCSC API access.")
+  }
+  if (ucsc && !requireNamespace("httr", quietly = TRUE)) {
+    stop("The 'httr' package is required for UCSC API access.")
+  }
   regions_df <- MutSeqR::load_regions_file(regions = regions,
                                            custom_regions = custom_regions,
                                            rg_sep = rg_sep)

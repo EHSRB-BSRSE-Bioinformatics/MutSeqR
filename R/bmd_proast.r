@@ -16,7 +16,7 @@
 #' @param covariate_col The column in `mf_data` containing the covariate.
 #' If no covariate is present, set to \code{NULL} (default).
 #' @param bmr The Benchmark Response value. The BMR is defined as a
-#' [bmr]-percent change in mean response relative to the controls.
+#' bmr-percent change in mean response relative to the controls.
 #' Default is 0.5 (50% change).
 #' @param adjust_bmr_to_group_sd A logical value indicating whether the group
 #' standard deviation should be used as the BMR. If TRUE, the BMR will be
@@ -37,7 +37,7 @@
 #' If NULL, the plots will be saved to the working directory. Default is NULL.
 #' @return If summary is TRUE, a data frame of final results. If summary is
 #' FALSE, a list of the raw results from the PROAST analysis.
-#' 
+#'
 #' The summary will include the following for each response variable and
 #' covariate subgroup (if applicable):
 #'  \itemize{
@@ -64,7 +64,7 @@
 #' empty data frame.
 #'
 #' If \code{plot_results = TRUE} the function will create the following plots
-#' for each response variable: 
+#' for each response variable:
 #'  \itemize{
 #'   \item Model Plots. The following plot will be created for each model
 #' family (Exponential, Hill, Inverse Exponential, LogNormal): The fitted curve
@@ -174,11 +174,6 @@ bmd_proast <- function(mf_data,
   if (!is.numeric(mf_data[[dose_col]])) {
     stop("Dose column must be numeric")
   }
-  if (plot_results == TRUE && model_averaging == TRUE) {
-    if (!require("svglite", quietly = TRUE)) {
-      stop("The 'svglite' package is required to save model averaging plots. Please install to use this functionality.")
-    }
-  }
 
   bmr_sd <- as.numeric(adjust_bmr_to_group_sd) + 1
 
@@ -219,7 +214,7 @@ bmd_proast <- function(mf_data,
       # Cleveland plot: all models w weights
       cleveland_plot(results, covariate_col = covariate_col, output_path = output_path)
     }
-    }
+  }
   if (summary == TRUE) {
     # Select the BMD with the lowest AIC for each response
     # If they have the same AIC, take the mean.
@@ -248,7 +243,7 @@ bmd_proast <- function(mf_data,
     #     dplyr::select("Response", "BMDL", "BMDU")
     #   dat_best <- dplyr::left_join(dat_best, dat_avg, by = "Response")
     #   dat <- rbind(dat, dat_best)
-    # } 
+    # }
     return(dat)
   } else {
     return(results[[1]])

@@ -50,29 +50,36 @@
 #' Options are `ward.D`, `ward.D2`, `single`, `complete`, `average` (= UPGMA),
 #' `mcquitty` (= WPGMA), `median` (= WPGMC) or `centroid` (= UPGMC). The default
 #' is `Ward.D`. See \link[stats]{hclust} for details.
-#' @param palette A named vector of colors to be used for the mutation subtypes.
-#' The names of the vector should correspond to the mutation subtypes in the
-#' data. The default is a set of colors from the RColorBrewer package.
+#' @param custom_palette A named vector of colors to be used for the mutation
+#' subtypes. The names of the vector should correspond to the mutation subtypes
+#' in the data. Alternatively, you can specify a color palette from the
+#' RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+#' options. You may visualize the palettes at the ColorBrewer website:
+#' \url{https://colorbrewer2.org/}. Default is `NULL`.
 #' @param x_lab The label for the x-axis. Default is the value of `group_col`.
 #' @param y_lab The label for the y-axis. Default is the value of `response_col`.
-#' @import patchwork
 #' @import ggplot2
 #' @importFrom dplyr select arrange across all_of
 #' @export
-#' @examples 
+#' @examples
 #' # Load example data
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #'
-#' # Example 1: plot the proportion of 6-based mutation subtypes for each sample, organized by dose group:
+#' # Example 1: plot the proportion of 6-based mutation subtypes
+#' # for each sample, organized by dose group:
 #'
-#' # Calculate the mutation frequency data at the 6-base resolution. Retain the dose_group column to use for ordering the samples.
+#' # Calculate the mutation frequency data at the 6-base resolution.
+#' # Retain the dose_group column to use for ordering the samples.
 #' mf_data <- calculate_mf(mutation_data = example_data,
 #'                         cols_to_group = "sample",
 #'                         subtype_resolution = "base_6",
 #'                         retain_metadata_cols = "dose_group")
 #' # Set the desired order for the dose_group levels.
-#' mf_data$dose_group <- factor(mf_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+#' mf_data$dose_group <- factor(mf_data$dose_group,
+#'                              levels = c("Control", "Low", "Medium", "High"))
 #' # Plot the mutation spectra
 #' plot <- plot_spectra(mf_data = mf_data,
 #'                      group_col = "sample",
@@ -80,8 +87,9 @@
 #'                      response = "proportion",
 #'                      group_order = "arranged",
 #'                      group_order_input = "dose_group")
-#' 
-#' # Example 2: plot the proportion of 6-based mutation subtypes for each sample, ordered by hierarchical clustering:
+#'
+#' # Example 2: plot the proportion of 6-based mutation subtypes
+#' # for each sample, ordered by hierarchical clustering:
 #' plot <- plot_spectra(mf_data = mf_data,
 #'                      group_col = "sample",
 #'                      subtype_resolution = "base_6",
@@ -97,19 +105,25 @@ plot_spectra <- function(mf_data,
                          group_order_input = NULL,
                          dist = "cosine",
                          cluster_method = "ward.D",
-                         palette = NULL,
+                         custom_palette = NULL,
                          x_lab = NULL,
                          y_lab = NULL) {
-  
- # check package dependencies
+
+  # check package dependencies
   if (group_order == "clustered") {
-      if (!requireNamespace("ggh4x", quietly = TRUE)) {
+    if (!requireNamespace("ggh4x", quietly = TRUE)) {
       stop("Package ggh4x is required when using the 'clustered' group_order option. Please install the package using 'install.packages('ggh4x')'")
+    }
+    if (!requireNamespace("patchwork", quietly = TRUE)) {
+      stop("Package patchwork is required when using the 'clustered' group_order option. Please install the package using 'install.packages('patchwork')'")
     }
   } else if (group_order == "smart") {
     if (!requireNamespace("gtools", quietly = TRUE)) {
       stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
     }
+  }
+  if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
+    stop("Package RColorBrewer is required for generating the default color palette. Please install the package using 'install.packages('RColorBrewer')'")
   }
   # Desginate the response column
   if (response == "proportion") {
@@ -175,53 +189,41 @@ plot_spectra <- function(mf_data,
   plot_data$subtype <- factor(plot_data$subtype,
                               levels = subtype_order)
 
-  if (is.null(palette)) {
-    if(subtype_resolution == "base_6") {
-      # Standard palette for simple spectra
-    palette <- c("C>A" = "#3288BD",
-                 "C>G" = "#99D594",
-                 "C>T" = "#E6F598",
-                 "T>A" = "#FEE08B",
-                 "T>C" = "#FC8D59",
-                 "T>G" = "#D53E4F",
-                 "mnv" = "pink",
-                 "deletion" = "black",
-                 "insertion" = "grey",
-                 "sv" = "purple",
-                 "ambiguous" = "darkgrey",
-                 "uncategorized" = "white")
+  if (is.null(custom_palette)) {
+    palette_types <- RColorBrewer::brewer.pal(8, "BrBG")
+    names(palette_types) <- c("complex", "deletion", "insertion", "mnv", "snv",
+                              "sv", "ambiguous", "uncategorized")
+    if (subtype_resolution == "base_6") {
+      palette_snv <- RColorBrewer::brewer.pal(6, "Spectral")
+      names(palette_snv) <- c("T>G", "T>C", "T>A", "C>T", "C>G", "C>A")
+      palette <- c(palette_snv, palette_types)
     } else if (subtype_resolution == "base_12") {
       # Sanger colours for 12 base spectra
-      palette <- c("A>C" = "limegreen",
-                    "A>G" = "forestgreen",
-                    "A>T" = "darkgreen",
-                    "C>A" = "skyblue1",
-                    "C>G" = "dodgerblue2",
-                    "C>T" = "darkblue",
-                    "G>A" = "grey28",
-                    "G>C" = "grey25",
-                    "G>T" = "grey0",
-                    "T>A" = "red2",
-                    "T>C" = "red3",
-                    "T>G" = "red4",
-                    "mnv" = "hotpink",
-                    "deletion" = "yellow",
-                    "insertion" = "purple",
-                    "symbolic" = "azure2",
-                    "ambiguous" = "darkgrey",
-                    "uncategorized" = "white")
-    } else if (subtype_resolution == "base_96") {
-      base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
-      palette <- colorRampPalette(base_colors)(101)
-    } else if (subtype_resolution == "base_192") {
-      base_colors <- c("red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "olivedrab1", "cyan", "magenta")
-      palette <- colorRampPalette(base_colors)(297)
-    } else if(subtype_resolution == "type") {
-      palette <- c("mnv" = "pink",
-                   "deletion" = "black",
-                   "insertion" = "grey",
-                   "symbolic" = "purple",
-                   "snv" = "blue")
+      palette_snv <- c(RColorBrewer::brewer.pal(3, "Reds"),
+                       RColorBrewer::brewer.pal(3, "Greys"),
+                       RColorBrewer::brewer.pal(3, "Blues"),
+                       RColorBrewer::brewer.pal(3, "Greens"))
+      names(palette_snv) <- c("T>G", "T>C", "T>A", "G>T", "G>C", "G>A",
+                              "C>T", "C>G", "C>A", "A>T", "A>G", "A>C")
+      palette <- c(palette_snv, palette_types)
+    } else if (subtype_resolution == "type") {
+      palette <- palette_types
+    } else {
+      num_colors <- length(unique(plot_data$subtype))
+      palette <- colorRampPalette(RColorBrewer::brewer.pal(11, name = "Spectral"))(num_colors)
+    }
+  } else {
+    if (any(custom_palette %in% rownames(RColorBrewer::brewer.pal.info))) {
+      num_colors <- length(unique(plot_data$subtype))
+      max_colors <- RColorBrewer::brewer.pal.info[custom_palette, "maxcolors"]
+      if (num_colors > max_colors) {
+        palette <- colorRampPalette(RColorBrewer::brewer.pal(n = max_colors, name = custom_palette))(num_colors)
+      } else {
+        palette <- RColorBrewer::brewer.pal(n = num_colors,
+                                            name = custom_palette)
+      }
+    } else {
+      palette <- custom_palette
     }
   }
   # Axis labels
@@ -288,47 +290,47 @@ plot_spectra <- function(mf_data,
 #' @importFrom stats hclust dist as.dist
 #' @details The cosine distance measure represents the inverted cosine
 #' similarity between samples:
-#' 
+#'
 #'\eqn{\text{Cosine Dissimilarity} = 1 - \frac{\mathbf{A} \cdot \mathbf{B}}{\| \mathbf{A} \| \cdot \| \mathbf{B} \|}}
-#' 
+#'
 #' This equation calculates the cosine dissimilarity between two vectors A and B. 
 #' @return A dendrogram object representing the hierarchical clustering of the
 #' samples.
 cluster_spectra <- function(mf_data = mf_data,
-                    group_col = "sample",
-                    response_col = "proportion_min",
-                    subtype_col = "normalized_subtype",
-                    dist = "cosine",
-                    cluster_method = "ward.D") {
+                            group_col = "sample",
+                            response_col = "proportion_min",
+                            subtype_col = "normalized_subtype",
+                            dist = "cosine",
+                            cluster_method = "ward.D") {
 
-# Get unique samples and subtypes
-unique_samples <- unique(mf_data[[group_col]])
-unique_subtypes <- unique(mf_data[[subtype_col]])
-# Pivot Wide
-mat <- matrix(0, nrow = length(unique_samples),
-              ncol = length(unique_subtypes),
-              dimnames = list(unique_samples, unique_subtypes))
-mf_data$subtype <- as.character(mf_data$subtype)
-mf_data$group <- as.character(mf_data$group)
-for (i in seq_len(nrow(mf_data))) {
-  mat[mf_data[[group_col]][i], mf_data[[subtype_col]][i]] <- mf_data[[response_col]][i]
-}
-
-if (dist == "cosine") {
-# Calculate the cosine similarity between samples
-cos_sim <- matrix(0, nrow = length(unique_samples),
-                  ncol = length(unique_samples))
-rownames(cos_sim) <- colnames(cos_sim) <- unique_samples
-  for (i in seq_along(unique_samples)) {
-  for (j in seq_along(unique_samples)) {
-    cos_sim[i, j] <- sum(mat[i, ] * mat[j, ]) / (sqrt(sum(mat[i, ]^2)) * sqrt(sum(mat[j, ]^2)))
+  # Get unique samples and subtypes
+  unique_samples <- unique(mf_data[[group_col]])
+  unique_subtypes <- unique(mf_data[[subtype_col]])
+  # Pivot Wide
+  mat <- matrix(0, nrow = length(unique_samples),
+                ncol = length(unique_subtypes),
+                dimnames = list(unique_samples, unique_subtypes))
+  mf_data$subtype <- as.character(mf_data$subtype)
+  mf_data$group <- as.character(mf_data$group)
+  for (i in seq_len(nrow(mf_data))) {
+    mat[mf_data[[group_col]][i], mf_data[[subtype_col]][i]] <- mf_data[[response_col]][i]
   }
-}
-  d <- stats::as.dist(1 - cos_sim)
-} else {
+
+  if (dist == "cosine") {
+    # Calculate the cosine similarity between samples
+    cos_sim <- matrix(0, nrow = length(unique_samples),
+                      ncol = length(unique_samples))
+    rownames(cos_sim) <- colnames(cos_sim) <- unique_samples
+    for (i in seq_along(unique_samples)) {
+      for (j in seq_along(unique_samples)) {
+        cos_sim[i, j] <- sum(mat[i, ] * mat[j, ]) / (sqrt(sum(mat[i, ]^2)) * sqrt(sum(mat[j, ]^2)))
+      }
+    }
+    d <- stats::as.dist(1 - cos_sim)
+  } else {
     d <- stats::dist(mat, method = dist)
-} 
-# Perform hierarchical clustering
-hc <- stats::hclust(d, method = cluster_method)
-return(hc)
+  }
+  # Perform hierarchical clustering
+  hc <- stats::hclust(d, method = cluster_method)
+  return(hc)
 }

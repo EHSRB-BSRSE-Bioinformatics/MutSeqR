@@ -181,8 +181,8 @@ plot_model_mf <- function(model,
     if (nref == 1) {
       symbols_pool <- c("*")
     } else if (nref > 1 && nref <= 13) {
-      symbols_pool <- c(strsplit("*†‡¥¢¤●Ø@#$%&", "")[[1]])
-    } else if (nref > 13 && nref <= 26) {
+      symbols_pool <- c("*", "+", "++", "Y", "c", "$", "o", "0", "@", "#", "%", "&")
+    } else if (nref > 12 && nref <= 26) {
       symbols_pool <- c(letters)
     } else {
       warning("Too many reference levels. Cannot add distinct significance labels.")

@@ -28,49 +28,57 @@ Description: Standard methods for analysis of mutation data following ECS
     comparison to COSMIC and/or germline signatures; etc.
 License: MIT + file LICENSE
 Depends:
-    R (>= 3.4.0)
+    R (>= 3.5.0)
 biocViews:
 Imports:
-    binom,
+    BiocGenerics,
     BiocManager,
     Biostrings,
-    BSgenome,
-    car,
-    data.table,
-    doBy,
     dplyr,
-    GenomeInfoDb,
     GenomicRanges,
     ggplot2,
     here,
-    httr,
     IRanges,
-    lme4,
     magrittr,
-    openxlsx,
-    patchwork,
     plyranges,
-    reticulate,
     rlang,
     S4Vectors,
     stringr,
     SummarizedExperiment,
     tidyr,
-    VariantAnnotation,
-    xml2
+    VariantAnnotation
 Suggests:
+    binom,
+    BSgenome,
     BSgenome.Hsapiens.UCSC.hg38,
     BSgenome.Mmusculus.UCSC.mm10,
+    car,
+    colorspace,
+    doBy,
+    fmsb,
+    fs,
+    GenomeInfoDb,
     GenVisR,
+    ggh4x,
+    ggrepel,
+    gtools,
+    httr,
     knitr,
+    lme4,
+    openxlsx,
     packcircles,
+    patchwork,
+    RColorBrewer,
+    reticulate,    
     rmarkdown,
-    sigminer,
+    scales,
+    shiny,
     SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
     ToxicR,
     trackViewer,
-    fs
+    yaml,
+    xml2
 Config/reticulate: list( packages = list( list(package =
     "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),
     list(package = "SigProfilerMatrixGenerator") ) )

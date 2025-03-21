@@ -8,7 +8,7 @@ get_CpG_mutations(
   regions,
   mut_data,
   variant_types = c("snv", "insertion", "deletion", "mnv", "symbolic"),
-  include_no_variants = T,
+  include_no_variants = TRUE,
   motif = "CG"
 )
 }

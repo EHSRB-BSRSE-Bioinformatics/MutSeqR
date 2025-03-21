@@ -42,38 +42,38 @@
 #' `glmer` function is used when a `random_effect` is supplied, otherwise, the 
 #' model uses the `glm` function.
 #' @export
-#' 
+#'
 #' @details
-#' 
+#'
 #' `fixed_effects` are variables that have a direct and constant effect on the 
 #' dependent variable (ie mutation frequency).They are typically the experimental 
 #' factors or covariates of interest for their impact on the dependent variable.
 #' One or more fixed_effect may be provided. If you are providing more than one 
-#' fixed effect, avoid using correlated variables; each fixed effect must 
+#' fixed effect, avoid using correlated variables; each fixed effect must
 #' independently predict the dependent variable. 
 #' Ex. `fixed_effects = c("dose", "genomic_target", "tissue", "age", etc)`.
 #' 
 #' Interaction terms enable you to examine whether the relationship between the
-#' dependent and independent variable changes based on the value of another 
-#' independent variable. In other words, if an interaction is significant, then 
-#' the relationship between the fixed effects is not constant across all levels 
+#' dependent and independent variable changes based on the value of another
+#' independent variable. In other words, if an interaction is significant, then
+#' the relationship between the fixed effects is not constant across all levels
 #' of each variable. Ex. Consider investigating the effect of dose group and tissue
-#' on mutation frequency. An interaction between dose and tissue would capture 
-#' whether the dose response differs between tissues. 
-#' 
+#' on mutation frequency. An interaction between dose and tissue would capture
+#' whether the dose response differs between tissues.
+#'
 #' `random_effects` account for the unmeasured sources of statistical variance that 
 #' affect certain groups in the data. They help account for unobserved
 #' heterogeneity or correlation within groups. Ex. If your model uses repeated
-#' measures within a sample, `random_effects = "sample"`. 
-#' 
+#' measures within a sample, `random_effects = "sample"`.
+#'
 #' Setting a `reference_level` for your fixed effects enhances the interpretability
 #' of the model. Ex. Consider a `fixed_effect` "dose" with levels 0, 25, 50, and 100 mg/kg. 
 #' Intuitively, the reference_level would refer to the  negative control dose, "0" 
-#' since we are interested in testing how the treatment might change mutation 
+#' since we are interested in testing how the treatment might change mutation
 #' frequency relative to the control.
-#' 
+#'
 #' Examples of `contrasts`:
-#' 
+#'
 #' If you have a `fixed_effect` "dose" with dose groups 0, 25, 50, 100, 
 #' then the first column would contain the treated groups (25, 50, 100), while 
 #' the second column would be 0, thus comparing each treated group to the control group. 
@@ -142,7 +142,9 @@
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 #' @examples
 #' # Example 1: Model MFmin by dose
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' mf_example <- calculate_mf(mutation_data = example_data,
 #'                            cols_to_group = "sample",
@@ -158,12 +160,14 @@
 #'                    muts = "sum_min",
 #'                    total_count = "group_depth",
 #'                    contrasts = contrasts)
-#' # The residuals histogram and QQ plot will help you assess the normality of the residuals.
+#' # The residuals histogram and QQ plot will help you assess the normality
+#' # of the residuals.
 #' model1$summary # Model Summary
 #' model1$point_estimates # Point Estimates: Mean MFmin by dose
 #' model1$pairwise_comparisons # Pairwise Comparisons
-#' # All treated doses exhibited a significant increase in mutation frequency compared to the control.
-#' 
+#' # All treated doses exhibited a significant increase in mutation frequency
+#' # compared to the control.
+#'
 #' # Plot the results using plot_model_mf()
 #' plot <- plot_model_mf(model1,
 #'                       plot_type = "bar",
@@ -172,17 +176,20 @@
 #'                       plot_signif = TRUE,
 #'                       x_order = c("0", "12.5", "25", "50"),
 #'                       x_label = "Dose (mg/kg-bw/d)",
-#'                       y_label = "Estimated Mean Mutation Frequency (mutations/bp)",
+#'                       y_label = "Estimated Mean MF (mutations/bp)",
 #'                       plot_title = "")
 #' 
 #' # Example 2: Model MFmin by dose and genomic target
-#' # We will compare the treated groups to the control group for each genomic target
+#' # We will compare the treated groups to the control group for each genomic
+#' # target
+#' 
 #' # Calculate MF
 #' mf_example2 <- calculate_mf(mutation_data = example_data,
 #'                             cols_to_group = c("sample", "label"),
 #'                             retain_metadata_cols = "dose")
 #' # Create a contrasts table to define pairwise comparisons
-#' combinations <- expand.grid(dose = unique(mf_example2$dose), label = unique(mf_example2$label))
+#' combinations <- expand.grid(dose = unique(mf_example2$dose),
+#'                             label = unique(mf_example2$label))
 #' combinations <- combinations[combinations$dose != 0, ]
 #' combinations$col1 <- with(combinations, paste(dose, label, sep=":"))
 #' combinations$col2 <- with(combinations, paste("0", label, sep=":"))
@@ -199,7 +206,7 @@
 #'                    total_count = "group_depth",
 #'                    contrasts = contrasts2,
 #'                    control = lme4::glmerControl(optimizer = "bobyqa",
-#'                                                 optCtrl = list(maxfun = 2e5)))
+#'                                        optCtrl = list(maxfun = 2e5)))
 #' model2$summary # Fits a GLMM
 #' model2$point_estimates
 #' model2$pairwise_comparisons
@@ -214,27 +221,25 @@
 #' dose_order <- c("0", "12.5", "25", "50")
 #' plot <- plot_model_mf(model = model2,
 #'                       plot_type = "bar",
-#'                       x_effect = "label", # specify which fixed effect should be plotted on the x-axis
+#'                       x_effect = "label",
 #'                       plot_error_bars = TRUE,
 #'                       plot_signif = TRUE,
-#'                       ref_effect = "dose", # specify the fixed effect to base the significance labels on.
+#'                       ref_effect = "dose",
 #'                       x_order = label_order,
 #'                       fill_order = dose_order,
 #'                       x_label = "Target",
-#'                       y_label = "Mutation Frequency (mutations/bp)",
-#'                       fill_label = "Dose", # specify which fixed effect should be used as the fill
+#'                       y_label = "MF (mutations/bp)",
+#'                       fill_label = "Dose",
 #'                       plot_title = "",
 #'                       custom_palette = c("#ef476f",
 #'                                          "#ffd166",
 #'                                          "#06d6a0",
 #'                                          "#118ab2"))
-#' # The output is a ggplot object and can be modified using ggplot2 functions.
-#' # For example, to rotate the x-axis labels by 90 degrees, use the following code:
-#' plot <- plot + theme(axis.text.x = element_text(angle = 90))
+#' # The output is a ggplot object and can be modified using ggplot2
+#' # functions. For example, to rotate the x-axis labels by 90 degrees,
+#' # use the following code:
+#' p <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 #' @importFrom magrittr %>%
-#' @importFrom doBy esticon
-#' @importFrom lme4 glmer
-#' @importFrom car Anova
 #' @importFrom graphics abline boxplot hist par
 #' @importFrom stats as.formula model.matrix qqnorm relevel residuals
 #' @export
@@ -249,6 +254,15 @@ model_mf <- function(mf_data,
   cont_sep = "\t",
   ...
 ) {
+  if (!requireNamespace("doBy", quietly = TRUE)) {
+    stop("Package doBy is required. Please install from CRAN.")
+  }
+  if (length(fixed_effects) > 1 && !requireNamespace("car", quietly = TRUE)) {
+    stop("Package car is required for models with multiple fixed effects. Please install from CRAN.")
+  }
+  if (!is.null(random_effects) && !requireNamespace("lme4", quietly = TRUE)) {
+    stop("Package lme4 is required for models with random effects. Please install from CRAN.")
+  }
   # Convert muts and total_count to numeric to avoid integer overflow
   mf_data[[muts]] <- as.numeric(mf_data[[muts]])
   mf_data[[total_count]] <- as.numeric(mf_data[[total_count]])

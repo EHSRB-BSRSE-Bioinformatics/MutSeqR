@@ -14,7 +14,7 @@ plot_spectra(
   group_order_input = NULL,
   dist = "cosine",
   cluster_method = "ward.D",
-  palette = NULL,
+  custom_palette = NULL,
   x_lab = NULL,
   y_lab = NULL
 )
@@ -78,9 +78,12 @@ Options are \code{ward.D}, \code{ward.D2}, \code{single}, \code{complete}, \code
 \code{mcquitty} (= WPGMA), \code{median} (= WPGMC) or \code{centroid} (= UPGMC). The default
 is \code{Ward.D}. See \link[stats]{hclust} for details.}
 
-\item{palette}{A named vector of colors to be used for the mutation subtypes.
-The names of the vector should correspond to the mutation subtypes in the
-data. The default is a set of colors from the RColorBrewer package.}
+\item{custom_palette}{A named vector of colors to be used for the mutation
+subtypes. The names of the vector should correspond to the mutation subtypes
+in the data. Alternatively, you can specify a color palette from the
+RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+options. You may visualize the palettes at the ColorBrewer website:
+\url{https://colorbrewer2.org/}. Default is \code{NULL}.}
 
 \item{x_lab}{The label for the x-axis. Default is the value of \code{group_col}.}
 
@@ -92,18 +95,23 @@ mutation subtypes observed in a cohort.
 }
 \examples{
 # Load example data
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 
-# Example 1: plot the proportion of 6-based mutation subtypes for each sample, organized by dose group:
+# Example 1: plot the proportion of 6-based mutation subtypes
+# for each sample, organized by dose group:
 
-# Calculate the mutation frequency data at the 6-base resolution. Retain the dose_group column to use for ordering the samples.
+# Calculate the mutation frequency data at the 6-base resolution.
+# Retain the dose_group column to use for ordering the samples.
 mf_data <- calculate_mf(mutation_data = example_data,
                         cols_to_group = "sample",
                         subtype_resolution = "base_6",
                         retain_metadata_cols = "dose_group")
 # Set the desired order for the dose_group levels.
-mf_data$dose_group <- factor(mf_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+mf_data$dose_group <- factor(mf_data$dose_group,
+                             levels = c("Control", "Low", "Medium", "High"))
 # Plot the mutation spectra
 plot <- plot_spectra(mf_data = mf_data,
                      group_col = "sample",
@@ -112,7 +120,8 @@ plot <- plot_spectra(mf_data = mf_data,
                      group_order = "arranged",
                      group_order_input = "dose_group")
 
-# Example 2: plot the proportion of 6-based mutation subtypes for each sample, ordered by hierarchical clustering:
+# Example 2: plot the proportion of 6-based mutation subtypes
+# for each sample, ordered by hierarchical clustering:
 plot <- plot_spectra(mf_data = mf_data,
                      group_col = "sample",
                      subtype_resolution = "base_6",

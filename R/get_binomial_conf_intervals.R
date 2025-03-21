@@ -23,7 +23,6 @@
 #' confint <- get_binom_ci(mf_data = mf,
 #'                         sum_col = "sum_min",
 #'                         depth_col = "group_depth")
-#' @importFrom binom binom.confint
 #' @importFrom dplyr bind_rows rename select
 #' @export
 get_binom_ci <- function(mf_data,
@@ -31,6 +30,9 @@ get_binom_ci <- function(mf_data,
                          depth_col = "group_depth",
                          conf_level = 0.95,
                          method = "wilson") {
+  if (!requireNamespace("binom", quietly = TRUE)) {
+    stop("The binom package is required to calculate binomial confidence intervals.")
+  }
   if (length(method) != 1 || method == "all") {
     stop("Must select only one method.")
   }

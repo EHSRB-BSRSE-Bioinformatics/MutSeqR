@@ -42,8 +42,8 @@
 #' data points (only if plot_indiv_vals = TRUE). Default is "none".
 #' @param plot_title The title of the plot. Default is
 #' "Mean Mutation Frequency".
-#' @param xlab The x-axis label. Default is the value of group_col.
-#' @param ylab The y-axis label. Default is "Mutation Frequency (mutations/bp)".
+#' @param x_lab The x-axis label. Default is the value of group_col.
+#' @param y_lab The y-axis label. Default is "Mutation Frequency (mutations/bp)".
 #' @param scale_y_axis The scale of the y axis. Either "linear" or "log".
 #' Default is "linear".
 #' @param custom_palette A custom color palette to use for the plot. Input a
@@ -56,9 +56,13 @@
 #' will be the same colour, different shades.
 #' @return a ggplot object
 #' @examples
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
-#' example_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+#' example_data$dose_group <- factor(example_data$dose_group,
+#'                                   levels = c("Control", "Low",
+#'                                              "Medium", "High"))
 #' mf <- calculate_mf(mutation_data = example_data,
 #'                    cols_to_group = "sample",
 #'                    subtype_resolution = "none",
@@ -97,6 +101,11 @@ plot_mean_mf <- function(mf_data,
   if (add_labels %in% c("indiv_count", "indiv_MF") && !requireNamespace("ggrepel", quietly = TRUE)) {
     stop("Package ggrepel is required when using the 'indiv_count' or 'indiv_MF' add_labels options. Please install the package using 'install.packages('ggrepel')'")
   }
+
+  if (is.null(custom_palette) && !requireNamespace("colorspace", quietly = TRUE)) {
+    stop("Package colorspace is required when using default color palette. Please install the package using 'install.packages('colorspace')'")
+  }
+
   if (!plot_indiv_vals && add_labels %in% c("indiv_count", "indiv_MF")) {
   stop("plot_indiv_vals must be TRUE when add_labels is set to 'indiv_count' or 'indiv_MF'")
   }
@@ -259,7 +268,9 @@ plot_mean_mf <- function(mf_data,
     # Function to generate lighter/darker shades
     generate_shades <- function(color, steps = 2) {
       # Blend the input color with white to generate lighter shades
-      shades <- colorspace::lighten(color, amount = seq(0, 0.5, length.out = steps))
+      shades <- colorspace::lighten(color,
+                                    amount = seq(0, 0.5,
+                                    length.out = steps))
      return(shades)
     }
     # Generate shades for min/max

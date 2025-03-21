@@ -35,7 +35,7 @@ frequency. Multiple \code{response_col}s can be provided. Default is "mf_min".}
 If no covariate is present, set to \code{NULL} (default).}
 
 \item{bmr}{The Benchmark Response value. The BMR is defined as a
-\link{bmr}-percent change in mean response relative to the controls.
+bmr-percent change in mean response relative to the controls.
 Default is 0.5 (50\% change).}
 
 \item{adjust_bmr_to_group_sd}{A logical value indicating whether the group

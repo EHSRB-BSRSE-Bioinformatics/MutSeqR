@@ -7,7 +7,7 @@
 #' @param indiv_y A logical indicating whether to use individual y-axis scales for each plot.
 #' @importFrom tidyr pivot_wider
 #' @importFrom dplyr select filter
-#' 
+#'
 #' @return A radar plot
 #' @export
 
@@ -80,6 +80,6 @@ plot_radar <- function(mf_data,
                 cglcol = "grey",
                 cglty = 1,
                 cglwd = 0.7)
-    }
+  }
   graphics::layout(1)
 }

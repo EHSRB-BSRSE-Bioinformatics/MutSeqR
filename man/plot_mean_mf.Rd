@@ -75,6 +75,10 @@ data points (only if plot_indiv_vals = TRUE). Default is "none".}
 \item{scale_y_axis}{The scale of the y axis. Either "linear" or "log".
 Default is "linear".}
 
+\item{x_lab}{The x-axis label. Default is the value of group_col.}
+
+\item{y_lab}{The y-axis label. Default is "Mutation Frequency (mutations/bp)".}
+
 \item{plot_title}{The title of the plot. Default is
 "Mean Mutation Frequency".}
 
@@ -88,10 +92,6 @@ olours to specific groups. Fill labels will be constructed by the following comp
 custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
 will be the same colour, different shades.
 }}
-
-\item{xlab}{The x-axis label. Default is the value of group_col.}
-
-\item{ylab}{The y-axis label. Default is "Mutation Frequency (mutations/bp)".}
 }
 \value{
 a ggplot object
@@ -101,9 +101,13 @@ This function calculates the mean mutation frequency across
 samples for given groups and plots the results.
 }
 \examples{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
-example_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+example_data$dose_group <- factor(example_data$dose_group,
+                                  levels = c("Control", "Low",
+                                             "Medium", "High"))
 mf <- calculate_mf(mutation_data = example_data,
                    cols_to_group = "sample",
                    subtype_resolution = "none",

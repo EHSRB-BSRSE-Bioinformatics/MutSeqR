@@ -28,8 +28,9 @@
 #' @export
 get_CpG_mutations <- function(regions, mut_data,
                               variant_types = c("snv","insertion", "deletion", "mnv","symbolic"),
-                              include_no_variants = T,
+                              include_no_variants = TRUE,
                               motif = "CG") {
+
   # Step 3 - find all the CpG sites within those regions identified
   all_CpGs <- list()
   for (i in seq_along(regions)) {
@@ -82,10 +83,13 @@ get_CpG_mutations <- function(regions, mut_data,
 #' from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
-#' @importFrom GenomeInfoDb seqnames
 #' @importFrom IRanges IRanges ranges
 #' @export
 get_CpG_regions <- function(regions, motif = "CG") {
+  
+  if (!requireNamespace("GenomeInfoDb", quietly = TRUE)) {
+    stop("Package GenomeInfoDb is required. Please install from Bioconductor.")
+  }
   all_CpGs <- list()
   for (i in seq_along(regions)) {
     CpG_sites <- Biostrings::matchPattern(

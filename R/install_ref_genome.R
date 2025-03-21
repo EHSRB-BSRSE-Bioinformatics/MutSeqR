@@ -5,12 +5,13 @@
 #' This can be the scientific name or a common name. For example Homo Sapiens, H. sapiens, or human
 #' @param genome The reference genome assembly version. Ex. hg18, mm10, rn6.
 #' @param masked Logical value. Whether to search for the 'masked' BSgenome. Default is FALSE.
-#' @importFrom BSgenome available.genomes installed.genomes getBSgenome
 #' @importFrom BiocManager install
 #' @export
 #' @return a BSgenome object
 install_ref_genome <- function(organism, genome, masked = FALSE) {
-
+  if (!requireNamespace("BSgenome", quietly = TRUE)) {
+    stop("Package BSgenome is required. Please install from Bioconductor.")
+  }
   # Common name mapping
   name_map <- list(
     "Alyrata" = "arabidopsis lyrata",

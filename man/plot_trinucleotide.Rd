@@ -64,9 +64,9 @@ temp_output <- tempdir()
 
 # Calculate the mutation frequency data at the 96-base resolution
 mf_96 <- calculate_mf(mutation_data = example_data,
-                            cols_to_group = "dose_group",
-                            subtype_resolution = "base_96",
-                            variant_types = "snv")
+                      cols_to_group = "dose_group",
+                      subtype_resolution = "base_96",
+                      variant_types = "snv")
 # Plot the trinucleotide proportions for each dose group
 # Scale y-axis the same for all groups
 plot_trinucleotide(mf_96 = mf_96,
@@ -74,30 +74,6 @@ plot_trinucleotide(mf_96 = mf_96,
                    mf_type = "min",
                    group_col = "dose_group",
                    indiv_y = FALSE,
-                   output_path = temp_output)
-# Plot the trinucleotide sums for each dose group
-# Scale y-axis the differently for each group
-plot_trinucleotide(mf_96 = mf_96,
-                   response = "sum",
-                   mf_type = "min",
-                   group_col = "dose_group",
-                   indiv_y = TRUE,
-                   output_path = temp_output)
-
-# Plot the mean mutation frequency for each dose group
-mf_96_sample <- calculate_mf(mutation_data = example_data,
-                                   cols_to_group = "sample",
-                                   subtype_resolution = "base_96",
-                                   variant_types = "snv",
-                                   retain_metadata_cols = "dose_group")
-mean_mf_96 <- mf_96_sample \%>\%
- dplyr::group_by(dose_group, normalized_context_with_mutation) \%>\%
- dplyr::summarise(mf_min = mean(mf_min), .groups = "drop_last")
-plot_trinucleotide(mf_96 = mean_mf_96,
-                   response = "frequency",
-                   mf_type = "min",
-                   group_col = "dose_group",
-                   indiv_y = TRUE,
                    output_path = temp_output)
 list.files(temp_output)
 # Note: The plots are saved as image files in the temporary directory.

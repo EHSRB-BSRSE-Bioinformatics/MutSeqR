@@ -126,7 +126,9 @@
 #' # Example: Import a single bg-zipped vcf file. This library was sequenced
 #' # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 #' # consists of 20 2.4kb targets = 48kb of sequence.
-#' example_file <- system.file("extdata", "example_import_vcf_data_cleaned.vcf.bgz", package = "MutSeqR")
+#' example_file <- system.file("extdata",
+#'                             "example_import_vcf_data_cleaned.vcf.bgz",
+#'                             package = "MutSeqR")
 #' # We will create an example metadata table for this data.
 #' sample_meta <- data.frame(sample = "dna00996.1",
 #'                           dose = "50",
@@ -543,7 +545,7 @@ import_vcf_data <- function(vcf_file,
     gr <-  GenomicRanges::makeGRangesFromDataFrame(
       df = dat,
       keep.extra.columns = TRUE,
-      seqnames.field = "seqnames",
+      seqnames.field = "contig",
       start.field = "start",
       end.field = "end",
       starts.in.df.are.0based =  FALSE)

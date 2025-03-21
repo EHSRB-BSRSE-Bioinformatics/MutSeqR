@@ -2,8 +2,11 @@
 #'
 #' spectra_comparison compares the mutation spectra of groups using a
 #' modified contingency table approach.
-#' @param mutation_data A data frame containing the mutation data. This
-#' is the output from import_mut_data or import_vcf_data.
+#' @param mf_data A data frame containing the MF data. This
+#' is the output from calculate_mf(). MF data should be at the
+#' desired subtype resolution. Data should be calculated for
+#' the same columns as the `cols_to_group` argument. Required columns
+#' are the cols_to_group columns, the subtype column, and sum_min or sum_max.
 #' @param cols_to_group The column names of the variables across which the
 #' mutations were summed. by. Ex. c("dose", "tissue"). This
 #' function will sum the mutations across groups before running the comparison.
@@ -57,7 +60,7 @@
 #'                         cols_to_group = "dose_group")
 #' # Create the contrasts table
 #' contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
-#'                          col2 = rep("Control", 3))
+#'                         col2 = rep("Control", 3))
 #' # Run the comparison
 #' spectra_comparison(mf_data = mf_data,
 #'                    cols_to_group = "dose_group",

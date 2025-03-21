@@ -77,9 +77,13 @@ A ggplot object
 This function creates a plot of the mutation frequency.
 }
 \examples{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
-example_data$dose_group <- factor(example_data$dose_group, levels = c("Control", "Low", "Medium", "High"))
+example_data$dose_group <- factor(example_data$dose_group,
+                                  levels = c("Control", "Low",
+                                             "Medium", "High"))
 mf <- calculate_mf(mutation_data = example_data,
                    cols_to_group = "sample",
                    subtype_resolution = "none",
