@@ -12,7 +12,7 @@ plot_bubbles(
   circle_spacing = 1,
   circle_outline = "none",
   circle_resolution = 50,
-  circle_palette = NULL
+  custom_palette = NULL
 )
 }
 \arguments{
@@ -37,15 +37,12 @@ language.}
 \item{circle_resolution}{Number of points to use for the circle resolution.
 Default is 50.}
 
-\item{circle_palette}{Circle colours are generated using
-/code{RColorBrewer::brewer.pal(n=8, name = "Set1")}. If you want to use a
-different \code{brewer.pal} palette, you can specify it here. Default is NULL;
-"Set1". \verb{color_by =} "normalized_subtype" and "subtype" have a default color
-palette to match the MutSeqR plot_spectra() function but these can also be
-changed to the specified brewer.pal palette. See
-\code{\link[RColorBrewer]{brewer.pal}} for palette options. You may
-visualize the palettes at the ColorBrewer website:
-\url{https://colorbrewer2.org/}.}
+\item{custom_palette}{A named vector of colors to be used for the mutation
+subtypes. The names of the vector should correspond to the levels in
+color_by. Alternatively, you can specify a color palette from the
+RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+options. You may visualize the palettes at the ColorBrewer website:
+\url{https://colorbrewer2.org/}. Default is \code{NULL}.}
 }
 \value{
 A ggplot object with the bubble plot, facetted if specified.
@@ -57,7 +54,7 @@ coloured by a specified column.
 }
 \details{
 The function will plot a circle for each mutation in
-\code{mutation_data}. Mutations flagged by the \code{is_germline} column will be
+\code{mutation_data}. Mutations flagged by the \code{filter_mut} column will be
 excluded from the plot. The size of the circle is determined by the
 \code{size_by} parameter. Sizing by the "alt_depth" or the "vaf" will give users
 the ability to visualize the the distribution of recurrent mutations within

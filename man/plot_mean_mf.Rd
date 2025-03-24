@@ -7,6 +7,7 @@
 plot_mean_mf(
   mf_data,
   group_col = "dose",
+  fill_col = NULL,
   mf_type = "both",
   plot_type = "line",
   plot_error_bars = TRUE,
@@ -23,10 +24,14 @@ plot_mean_mf(
 }
 \arguments{
 \item{mf_data}{A data frame containing the mutation frequency data. This is
-obtained from the calculate_mut_freq function with SUMMARY = TRUE.}
+obtained from the calculate_mf function with SUMMARY = TRUE.}
 
 \item{group_col}{The column in mf_data by which to calculate the mean.
 Ex. "dose" or c("dose", "tissue").}
+
+\item{fill_col}{The column in mf_data by which to fill the color. Default is NULL.
+fill_col must be a variable of equal or higher level to group_col. fill_col
+may equal group_col.}
 
 \item{mf_type}{The type of mutation frequency to plot. Options are "min",
 "max", "both", or "stacked". If "both", the min and max mutation
@@ -70,19 +75,49 @@ data points (only if plot_indiv_vals = TRUE). Default is "none".}
 \item{scale_y_axis}{The scale of the y axis. Either "linear" or "log".
 Default is "linear".}
 
+\item{x_lab}{The x-axis label. Default is the value of group_col.}
+
+\item{y_lab}{The y-axis label. Default is "Mutation Frequency (mutations/bp)".}
+
 \item{plot_title}{The title of the plot. Default is
 "Mean Mutation Frequency".}
 
-\item{custom_palette}{A custom color palette to use for the plot. Values that
-can be customized include "Mean", "Individual", "Mean min", "Mean max",
-"Individual min", and "Individual max". Default is NULL.
-@return a ggplot object}
-
-\item{xlab}{The x-axis label. Default is the value of group_col.}
-
-\item{ylab}{The y-axis label. Default is "Mutation Frequency (mutations/bp)".}
+\item{custom_palette}{A custom color palette to use for the plot. Input a
+character vector of colours. Input a named character vector to specify
+olours to specific groups. Fill labels will be constructed by the following components
+\enumerate{
+\item "Mean/Individual" if plot_indiv_vals = TRUE, fill labels will specify Mean/Individual values.
+\item "min/max" if mf_type = "both" or "stacked", fill labels will specify min/max values.
+\item fill_col value. Name colours to match the fill labels. Default is NULL. If no
+custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
+will be the same colour, different shades.
+}}
+}
+\value{
+a ggplot object
 }
 \description{
 This function calculates the mean mutation frequency across
 samples for given groups and plots the results.
+}
+\examples{
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
+example_data <- readRDS(example_file)
+example_data$dose_group <- factor(example_data$dose_group,
+                                  levels = c("Control", "Low",
+                                             "Medium", "High"))
+mf <- calculate_mf(mutation_data = example_data,
+                   cols_to_group = "sample",
+                   subtype_resolution = "none",
+                   retain_metadata_cols = "dose_group")
+plot <- plot_mean_mf(mf_data = mf,
+                     group_col = "dose_group",
+                     mf_type = "min",
+                     plot_type = "line",
+                     fill_col = "dose_group",
+                     plot_error_bars = TRUE,
+                     plot_indiv_vals = TRUE,
+                     add_labels = "none")
 }

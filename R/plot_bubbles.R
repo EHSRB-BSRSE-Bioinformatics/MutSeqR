@@ -18,17 +18,14 @@
 #' language.
 #' @param circle_resolution Number of points to use for the circle resolution.
 #' Default is 50.
-#' @param circle_palette Circle colours are generated using
-#' /code{RColorBrewer::brewer.pal(n=8, name = "Set1")}. If you want to use a
-#' different `brewer.pal` palette, you can specify it here. Default is NULL;
-#' "Set1". `color_by =` "normalized_subtype" and "subtype" have a default color
-#' palette to match the MutSeqR plot_spectra() function but these can also be
-#' changed to the specified brewer.pal palette. See
-#' \code{\link[RColorBrewer]{brewer.pal}} for palette options. You may
-#' visualize the palettes at the ColorBrewer website:
-#' \url{https://colorbrewer2.org/}.
+#' @param custom_palette A named vector of colors to be used for the mutation
+#' subtypes. The names of the vector should correspond to the levels in
+#' color_by. Alternatively, you can specify a color palette from the
+#' RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+#' options. You may visualize the palettes at the ColorBrewer website:
+#' \url{https://colorbrewer2.org/}. Default is `NULL`.
 #' @details The function will plot a circle for each mutation in
-#' `mutation_data`. Mutations flagged by the `is_germline` column will be
+#' `mutation_data`. Mutations flagged by the `filter_mut` column will be
 #' excluded from the plot. The size of the circle is determined by the
 #' `size_by` parameter. Sizing by the "alt_depth" or the "vaf" will give users
 #' the ability to visualize the the distribution of recurrent mutations within
@@ -50,7 +47,7 @@ plot_bubbles <- function(mutation_data,
                          circle_spacing = 1,
                          circle_outline = "none",
                          circle_resolution = 50,
-                         circle_palette = NULL) {
+                         custom_palette = NULL) {
 
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
@@ -59,44 +56,58 @@ plot_bubbles <- function(mutation_data,
     stop("You need the package packcircles to run this function.")
   }
 
-  if (color_by == "normalized_subtype" && is.null(circle_palette)) {
-    plotcolors <- c("C>A" = "#3288BD",
-                    "C>G" = "#99D594",
-                    "C>T" = "#E6F598",
-                    "T>A" = "#FEE08B",
-                    "T>C" = "#FC8D59",
-                    "T>G" = "#D53E4F",
-                    "mnv" = "pink",
-                    "deletion" = "black",
-                    "insertion" = "grey",
-                    "sv" = "purple",
-                    "ambiguous" = "darkgrey",
-                    "uncategorized" = "white")
-  } else if (color_by == "subtype" && is.null(circle_palette)) {
-    plotcolors <- c("A>C" = "limegreen",
-                    "A>G" = "forestgreen",
-                    "A>T" = "darkgreen",
-                    "C>A" = "skyblue1",
-                    "C>G" = "dodgerblue2",
-                    "C>T" = "darkblue",
-                    "G>A" = "grey28",
-                    "G>C" = "grey25",
-                    "G>T" = "grey0",
-                    "T>A" = "red2",
-                    "T>C" = "red3",
-                    "T>G" = "red4",
-                    "mnv" = "hotpink",
-                    "deletion" = "yellow",
-                    "insertion" = "purple",
-                    "sv" = "azure2",
-                    "ambiguous" = "darkgrey",
-                    "uncategorized" = "white")
-  } else {
-    plotcolors <- NULL
-    if (is.null(circle_palette)) {
-      palette <- "Set1"
+  if (is.null(custom_palette)) {
+    if (color_by == "variation_type") {
+      palette <- RColorBrewer::brewer.pal(8, "BrBG")
+      names(palette) <- c("complex", "deletion", "insertion", "mnv", "snv",
+                          "sv", "ambiguous", "uncategorized")
+    } else if (color_by == "normalized_subtype") {
+      palette <- c(RColorBrewer::brewer.pal(7, "BrBG"),
+                   RColorBrewer::brewer.pal(6, "Spectral"))
+      names(palette) <- c("complex", "deletion", "insertion", "mnv", "sv",
+                          "ambiguous", "uncategorized",
+                          "T>G", "T>C", "T>A", "C>T", "C>G", "C>A")
+      mutation_data$normalized_subtype <- factor(mutation_data$normalized_subtype,
+                                                 levels = c("C>A", "C>G",
+                                                            "C>T", "T>A",
+                                                            "T>C", "T>G",
+                                                            "complex", "deletion",
+                                                            "insertion", "mnv",
+                                                            "sv", "ambiguous",
+                                                            "uncategorized"))
+    } else if (color_by == "subtype") {
+      palette <- c(RColorBrewer::brewer.pal(7, "BrBG"),
+                   RColorBrewer::brewer.pal(3, "Reds"),
+                   RColorBrewer::brewer.pal(3, "Greys"),
+                   RColorBrewer::brewer.pal(3, "Blues"),
+                   RColorBrewer::brewer.pal(3, "Greens"))
+      names(palette) <- c("complex", "deletion", "insertion", "mnv", "sv",
+                          "ambiguous", "uncategorized",
+                          "T>G", "T>C", "T>A", "G>T", "G>C", "G>A",
+                          "C>T", "C>G", "C>A", "A>T", "A>G", "A>C")
+      mutation_data$subtype <- factor(mutation_data$subtype,
+                                      levels = c("A>C", "A>G", "A>T", "C>A",
+                                                 "C>G", "C>T", "G>A", "G>C",
+                                                 "G>T", "T>A", "T>C", "T>G",
+                                                 "complex", "deletion",
+                                                 "insertion", "mnv", "sv",
+                                                 "ambiguous", "uncategorized"))
     } else {
-      palette <- circle_palette
+      num_colors <- length(unique(mutation_data[[color_by]]))
+      palette <- colorRampPalette(RColorBrewer::brewer.pal(11, name = "Spectral"))(num_colors)
+    }
+  } else {
+    if (any(custom_palette %in% rownames(RColorBrewer::brewer.pal.info))) {
+      num_colors <- length(unique(mutation_data[[color_by]]))
+      max_colors <- RColorBrewer::brewer.pal.info[custom_palette, "maxcolors"]
+      if (num_colors > max_colors) {
+        palette <- colorRampPalette(RColorBrewer::brewer.pal(n = max_colors, name = custom_palette))(num_colors)
+      } else {
+        palette <- RColorBrewer::brewer.pal(n = num_colors,
+                                            name = custom_palette)
+      }
+    } else {
+      palette <- custom_palette
     }
   }
 
@@ -119,7 +130,7 @@ plot_bubbles <- function(mutation_data,
   mutation_data[[size_by]] <- mutation_data[[size_by]] * scale_factor
   x <- mutation_data %>%
     dplyr::filter(.data$variation_type != "no_variant" &
-                    .data$is_germline == FALSE) %>%
+                    .data$filter_mut == FALSE) %>%
     dplyr::arrange(!!rlang::sym(color_by))
   data <- data.frame(group = paste(x$sample,
                                    x$contig,
@@ -182,15 +193,8 @@ plot_bubbles <- function(mutation_data,
     theme_void() +
     labs(fill = color_by) +
     theme(legend.position = "right") +
-    coord_equal()
-
-  if (is.null(plotcolors)) {
-    num_colors <- length(unique(plot_data$color_column))
-    color_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, name = palette))(num_colors)
-    p <- p + scale_fill_manual(values = color_palette)
-  } else {
-    p <- p + scale_fill_manual(values = plotcolors, breaks = names(plotcolors))
-  }
+    coord_equal() +
+    scale_fill_manual(values = palette)
 
   if (!is.null(facet_col)) {
     p <- p + facet_wrap(~facet)

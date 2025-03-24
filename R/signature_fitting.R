@@ -1,56 +1,87 @@
-# For this to work there are a few dependencies that must be met.
-# You must first install python dependencies, OR use the venv approach that is the default method here.
-# TO DO: SigProfiler packages are in suggests; write a feature that will ask users if they want to install them. 
-
-#' Run COSMIC signatures comparison
+#' Run COSMIC signatures comparison using SigProfilerAssignment
 #'
-#' After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
-#' @param mutation_data A data frame, imported from a .mut file
-#' @param project_name The name of the project; used to get mutation data into the required .txt format for SigProfiler
-#' @param project_genome A string describing the reference genome to use; 
-#' e.g. GRCh37, GRCH38, mm10, mm9, rn6
-#' output_path The directory where output results should be written. *not a parameter of the function
-#' @param env_name The name of the virtual environment. This will be created on first use. 
-#' @param group The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)
-#' @param output_path The filepath to thedirectory in which the output folder will be created to store results.
-#' @param python_version The version of python to be used. 
-#' @param python_path The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.
-#' @param python_home The path to the conda virtual environment that contains the required python dependencies
-#' @returns Creates a subfolder in the output directory with SigProfiler tools results.
-#'  SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
+#' @details Assign COSMIC SBS signatures to mutation data using
+#' SigProfilerAssignment. Data is cleaned and formatted for input into
+#' SigProfiler tools. This function will create a virtual environment using
+#' reticulate to run python, as this is a requirement for the SigProfiler suite
+#' of tools. Note that it will also install several python dependencies using
+#' a conda virtual environment on first use. Please be aware of the
+#' implications of this. For advanced use, it is suggested to use the
+#' SigProfiler python tools directly in python as described in their
+#' respective documentation. Users must have python installed on their
+#' computer to use this function.
+#' @param mutation_data A data frame containing mutation data.
+#' @param project_name The name of the project. This is used to format
+#' the data into required .txt format for SigProfiler tools.
+#' @param project_genome The reference genome to use. On first use, the
+#' function will install the genome using SigProfilerMatrixGeneratorR::install.
+#' e.x. GRCh37, GRCH38, mm10, mm9, rn6
+#' @param env_name The name of the virtual environment. This will be created on
+#' first use.
+#' @param group The column in the mutation data used to aggregate groups.
+#' Signature assignment will be performed on each group separately.
+#' @param output_path The filepath to the directory in which the output folder
+#' will be created to store results. Default is NULL. This will store results
+#' in the current working directory.
+#' @param python_version The version of python installed on the user's
+#' computer.
+#' @returns Creates a subfolder "SigProfiler" in the output directory with
+#' SigProfiler tools results. For a complete breakdown of the results, see the
+#' Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
+#' [group] > matrices > output > Assignment_Solution > Activities >
+#' SampleReconstruction > WebPNGs.
+#' These plots show a summary of the signature assignment results for each
+#' group. In each plot, the top left panel represents the base_96 mutation
+#' count for the group. The bottom left panel represents the reconstructed
+#' profile. Below the reconstruction are the solution statistics that indicate
+#' the goodness of fit of the reconstructed profile to the observed profile.
+#' (Recommended cosine similarity > 0.9). The panels on the right represent the
+#' SBS signatures that contribute to the reconstructed profile. The signature
+#' name and its contribution % are shown in the panel. A high contribution
+#' means a high association of the signature with the group's mutation
+#' spectra.
+#' @details Mutation data will be filtered to only include SNVs. Variants
+#' flagged by the filter_mut column will be excluded.
+#' @examples
+#' \dontrun{
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' signature_fitting(mutation_data = example_data,
+#'                   project_name = "Example",
+#'                   project_genome = "mm10",
+#'                   env_name = "MutSeqR",
+#'                   group = "dose",
+#'                   python_version = "3.11")
+#' }
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate
 #' @importFrom utils write.table
 #' @importFrom rlang .data
-#' @import reticulate
 #' @import stringr
 #' @export
-#' 
+#'
 signature_fitting <- function(mutation_data,
                               project_name = "Default",
                               project_genome = "GRCh38",
                               env_name = "MutSeqR",
                               group = "sample",
                               output_path = NULL,
-                              python_version = "3.11", # We should test with other versions
-                              python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe", #"/usr/bin/python3.9"
-                              python_home = "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate") {
+                              python_version) {
   if (!requireNamespace("reticulate")) {
     stop("Reticulate not installed: you need this to run SigProfiler tools in R.")
+  }
+  if (!requireNamespace("SigProfilerMatrixGeneratorR")) {
+    stop("SigProfilerMatrixGeneratorR not installed: you need this to run SigProfiler tools in R. Install using devtools::install_github('AlexandrovLab/SigProfilerMatrixGeneratorR')")
   }
   message("Note: This function requires python to be installed on the users 
           computer. If you do not have python installed, you can do so using: 
           reticulate::install_python().
-          \n\nThis function will create a virtual environment using reticulate to 
-          run python, as this is a requirement for the SigProfiler suite of tools.
-          Note that it will also install several python dependencies using
-          a conda virtual environment on first use. Please be aware of the 
-          implications of this. For advanced use, it is suggested to
-          use the SigProfiler python tools directly in python as described
-          in their respective documentation.")
-
-  # Only run this once, not every time that the function is called
-  #python_version <- "3.11:latest
+          \n\nThis function will create a virtual environment using reticulate
+          to run python. Note that it will also install several python
+          dependencies using a conda virtual environment on first use. Please
+          be aware of the implications of this. For advanced use, it is
+          suggested to use the SigProfiler python tools directly in python as
+          described in their respective documentation.")
 
   installed_envs <- reticulate::virtualenv_list()
   # Check if MutSeqR virtualenv already exists
@@ -65,12 +96,16 @@ signature_fitting <- function(mutation_data,
                               title = "Confirmation", choices = c("Yes", "No"))
 
     if (user_input == 1) {
-      # User chose to install the packages
-      # Virtualenv doesn't exist, set it up
+      # Create venv and install packages
       reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
       # Install required packages
-        # Patched version of pandas and scipy to avoid dependency errors: binom_test
-      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator", "SigProfilerAssignment", "SigProfilerExtractor", "pandas==1.5.3", "scipy==1.11.4"))
+      # Patched version of pandas and scipy to avoid dependency errors: binom_test
+      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator",
+                                                 "SigProfilerAssignment",
+                                                 "SigProfilerExtractor",
+                                                 "pandas==1.5.3",
+                                                 "scipy==1.11.4",
+                                                 "pypdf==4.3.1"))
     } else {
       # User chose not to install the packages
       cat("Installation aborted by the user.\n")
@@ -80,13 +115,9 @@ signature_fitting <- function(mutation_data,
 
   # reticulate::install_python(version = python_version)
   reticulate::use_virtualenv(env_name)
-  
-  # This will only install the genome if it's not found in the current env
-  if (!requireNamespace("SigProfilerMatrixGeneratorR")) {
-    stop("SigProfilerMatrixGeneratorR not installed: you need this to run SigProfiler tools in R. Install using devtools::install_github('AlexandrovLab/SigProfilerMatrixGeneratorR')")
-  }
+
   SigProfilerMatrixGeneratorR::install(project_genome)
-  signatures_python_code <- system.file('extdata', 'signatures.py',
+  signatures_python_code <- system.file("extdata", "signatures.py",
                                         package = "MutSeqR")
   reticulate::source_python(signatures_python_code)
 
@@ -98,7 +129,7 @@ signature_fitting <- function(mutation_data,
   # Check if "id" column exists
   if (!"id" %in% colnames(signature_data)) {
     # If not, create "id" column and populate with "."
-   signature_data$id <- "."
+    signature_data$id <- "."
   }
 
   # Check if "seqnames" column exists (ie if it came from a GRanges)
@@ -109,7 +140,7 @@ signature_fitting <- function(mutation_data,
 
   signature_data <- signature_data %>%
     dplyr::filter(.data$variation_type %in% "snv") %>%
-    dplyr::filter(.data$is_germline == FALSE) %>%   
+    dplyr::filter(.data$filter_mut == FALSE) %>%
     dplyr::select(all_of(group), "id", "variation_type", "contig", "start", "end", "ref", "alt") %>%
     dplyr::rename(
       "Samples" = all_of(group),

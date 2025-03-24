@@ -5,46 +5,53 @@
 \title{Transition-transversion plot}
 \usage{
 plot_spectra(
-  mutation_data,
+  mf_data,
   group_col = "sample",
   subtype_resolution = "base_6",
-  response = c("frequency", "proportion", "sum"),
-  mf_type = c("min", "max"),
-  variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "symbolic"),
+  response = "proportion",
+  mf_type = "min",
   group_order = "none",
   group_order_input = NULL,
   dist = "cosine",
   cluster_method = "ward.D",
-  palette = NULL,
+  custom_palette = NULL,
   x_lab = NULL,
   y_lab = NULL
 )
 }
 \arguments{
-\item{mutation_data}{A data frame containing the mutation data. This data must
-include a column containing the mutation subtypes, a column containing
-the sample/cohort names, and a column containing the response variable.
-Typical response variables can be the subtype frequency, proportion, or
-count.}
+\item{mf_data}{A data frame containing the mutation frequency data at the
+desired subtype resolution. This is obtained using the 'calculate_mf'
+function with subtype_resolution set to the desired resolution.
+Data must include a column containing the group_col,
+a column containing the mutation subtypes, a column containing the desired
+response variable (mf, proportion, sum) for the desired mf_type
+(min or max), and if applicable, a column containing the variable by which
+to order the samples/groups.}
 
-\item{group_col}{The name of the column in data that contains the
-sample/cohort names.}
+\item{group_col}{The name of the column(s) in the mf data that contains the
+sample/group names. This will generally be the same values used for the
+cols_to_group argument in the calculate_mf function. However, you may
+also use groups that are at a higher level of the aggregation in mf_data.}
 
-\item{subtype_resolution}{The resolution of the mutation spectra. Default is \code{base_6}.}
+\item{subtype_resolution}{The subtype resolution of the mf data.
+Options are \code{base_6}, \code{base_12}, \code{base_96}, \code{base_192}, or \code{type}.
+Default is \code{base_6}.}
 
-\item{response}{The name of the column in data that contains the
-response variable. Typical response variables can be the subtype frequency,
-proportion, or count.}
+\item{response}{The desired response variable to be plotted. Options are
+mf, proportion, or sum. Default is \code{proportion}. Your mf_data must contain
+columns with the name of your desired response: \code{mf_min}, \code{mf_max},
+\code{proportion_min}, \code{proportion_max}, \code{sum_min}, and \code{sum_max}.}
 
-\item{mf_type}{The type of mutation frequency to use. Default is \code{min}.}
-
-\item{variant_types}{A character vector of the mutation types to include.}
+\item{mf_type}{The mutation counting method to use. Options are min or max.
+Default is \code{min}.}
 
 \item{group_order}{The method for ordering the samples within the plot.
 Options include:
 \itemize{
 \item \code{none}: No ordering is performed. Default.
-\item \code{smart}: Groups are ordered based on the group names.
+\item \code{smart}: Groups are automatically ordered based on the group names
+(alphabetical, numerical)
 \item \code{arranged}: Groups are ordered based on one or more factor column(s)
 in mf_data. Column names are passed to the function using the
 \code{group_order_input}.
@@ -71,15 +78,53 @@ Options are \code{ward.D}, \code{ward.D2}, \code{single}, \code{complete}, \code
 \code{mcquitty} (= WPGMA), \code{median} (= WPGMC) or \code{centroid} (= UPGMC). The default
 is \code{Ward.D}. See \link[stats]{hclust} for details.}
 
-\item{palette}{A named vector of colors to be used for the mutation subtypes.
-The names of the vector should correspond to the mutation subtypes in the
-data. The default is a set of colors from the RColorBrewer package.}
+\item{custom_palette}{A named vector of colors to be used for the mutation
+subtypes. The names of the vector should correspond to the mutation subtypes
+in the data. Alternatively, you can specify a color palette from the
+RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+options. You may visualize the palettes at the ColorBrewer website:
+\url{https://colorbrewer2.org/}. Default is \code{NULL}.}
 
 \item{x_lab}{The label for the x-axis. Default is the value of \code{group_col}.}
 
 \item{y_lab}{The label for the y-axis. Default is the value of \code{response_col}.}
 }
 \description{
-Given a data frame construct a plot displaying the
+Given mf data, construct a plot displaying the
 mutation subtypes observed in a cohort.
+}
+\examples{
+# Load example data
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
+example_data <- readRDS(example_file)
+
+# Example 1: plot the proportion of 6-based mutation subtypes
+# for each sample, organized by dose group:
+
+# Calculate the mutation frequency data at the 6-base resolution.
+# Retain the dose_group column to use for ordering the samples.
+mf_data <- calculate_mf(mutation_data = example_data,
+                        cols_to_group = "sample",
+                        subtype_resolution = "base_6",
+                        retain_metadata_cols = "dose_group")
+# Set the desired order for the dose_group levels.
+mf_data$dose_group <- factor(mf_data$dose_group,
+                             levels = c("Control", "Low", "Medium", "High"))
+# Plot the mutation spectra
+plot <- plot_spectra(mf_data = mf_data,
+                     group_col = "sample",
+                     subtype_resolution = "base_6",
+                     response = "proportion",
+                     group_order = "arranged",
+                     group_order_input = "dose_group")
+
+# Example 2: plot the proportion of 6-based mutation subtypes
+# for each sample, ordered by hierarchical clustering:
+plot <- plot_spectra(mf_data = mf_data,
+                     group_col = "sample",
+                     subtype_resolution = "base_6",
+                     response = "proportion",
+                     group_order = "clustered")
 }

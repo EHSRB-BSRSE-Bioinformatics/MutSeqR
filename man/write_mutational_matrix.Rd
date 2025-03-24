@@ -7,45 +7,55 @@
 write_mutational_matrix(
   mutation_data,
   group = "dose",
-  matrices = "base_96",
+  subtype_resolution = "base_96",
   mf_type = "min",
-  filter = "somatic",
   output_path = NULL
 )
 }
 \arguments{
-\item{mutation_data}{The GRanges object containing the mutation data.
-The output of import_mut_data() or read_vcf().}
+\item{mutation_data}{The object containing the mutation data.
+The output of import_mut_data() or import_vcf_data().}
 
 \item{group}{The column in the mutation data used to aggregate groups
-(e.g., sample, tissue, dose)}
+(e.g., sample, tissue, dose).}
 
-\item{matrices}{At what resolution should the snv mutation counts be
-calculated? Options are "base_96", 1536?, 384?, 6144?, DINUC? 6, 24, INDEL
-TO DO: add more matrices options.}
+\item{subtype_resolution}{The resolution of the mutation subtypes. Options
+are "base_6" or "base_96". Default is "base_96".}
 
-\item{mf_type}{Mutation counting method. Options are "min" or "max".
-Minimum Independent Frequency (min): All identical mutations within a
-sample are assumed to be the result of clonal expansion and are thus
-only counted once. Maximum Independent Frequency (max): All identical
-mutations within a sample are assumed to be idenpendant mutational evens
-and are included in the mutation frequency calculation. Note that this
-does not apply for germline variants. Default is "min".
-TO DO: clonality cut_off?}
+\item{mf_type}{The mutation counting method to use. Options are "min" or
+"max". Default is "min".}
 
-\item{filter}{Parameter allows you to choose to filter for only somatic
-or germline mutations.}
-
-\item{output_path}{The path to save the output file. Default is NULL,
-which will save the file in the current working directory.
-Values = c("somatic", "germline", "none). "none" will leave the data unfiltered.}
+\item{output_path}{The path to save the output file. If not provided, the
+file will be saved in the current working directory. Default is NULL.}
 }
 \value{
-a .txt file that can be uploaded to the sigprofiler web application
-as "Mutational Matrix"
+a .txt file that can be uploaded to the SigProfiler Assignment web
+application (https://cancer.sanger.ac.uk/signatures/assignment/) as
+a "Mutational Matrix".
 }
 \description{
-Creates a .txt file from mutation data that can be used for mutational signatures
-analysis using the SigProfiler web application. Can handle group analyses
-(ex dose, tissue, etc). Currently only supports snv.
+Creates a .txt file from mutation data that can be used for mutational
+signatures analysis using the SigProfiler web application. Can handle
+group analyses (ex dose, tissue, etc). Currently only supports SBS matrices
+i.e. snvs.
+}
+\details{
+Mutations will be be filtered for SNVs. Mutations flagged in
+\code{filter_mut} will be excluded from the output. Mutations will be summed
+across the groups specified in the \code{group} argument.
+}
+\examples{
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+temp_output <- tempdir()
+write_mutational_matrix(mutation_data = example_data,
+                        group = "dose_group",
+                        subtype_resolution = "base_96",
+                        mf_type = "min",
+                        output_path = temp_output)
+list.files(temp_output)
+# The file is saved in the temporary directory
+# To view the file, use the following code:
+## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
+## file.show(output_file)
 }

@@ -2,16 +2,14 @@
 #'
 #' spectra_comparison compares the mutation spectra of groups using a
 #' modified contingency table approach.
-#' @param mutation_data A data frame containing the mutation data. This
-#' is the output from import_mut_data or import_vcf_data.
-#' @param cols_to_group A character vector of the column names in the mutation
-#' data that you want to group by. Ex. c("dose", "tissue"). This
+#' @param mf_data A data frame containing the MF data. This
+#' is the output from calculate_mf(). MF data should be at the
+#' desired subtype resolution. Data should be calculated for
+#' the same columns as the `cols_to_group` argument. Required columns
+#' are the cols_to_group columns, the subtype column, and sum_min or sum_max.
+#' @param cols_to_group The column names of the variables across which the
+#' mutations were summed. by. Ex. c("dose", "tissue"). This
 #' function will sum the mutations across groups before running the comparison.
-#' @param subtype_resolution The resolution of the mutation spectra to be
-#' compared. Options include "base_6", "base_12", "base_96", and "base_192" and "type".
-#' See calculate_mut_freq for more details.
-#' @param variant_types A character vector of the mutation types to include
-#' in the comparison. Default is all types of mutations.
 #' @param contrasts a filepath to a tab-delimited `.txt` file OR a dataframe that
 #' will specify the comparisons to be made between groups. The table must
 #' consist of two columns. The first column will be a level within your group
@@ -51,39 +49,48 @@
 #' 50:bone_marrow	50:liver
 #'
 #' 100:bone_marrow 100:liver
+#' @examples 
+#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_data <- readRDS(example_file)
 #'
+#' # Example: compare 6-base mutation spectra between dose groups
+#'
+#' # Calculate the mutation frequency data at the 6-base resolution
+#' mf_data <- calculate_mf(mutation_data = example_data,
+#'                         cols_to_group = "dose_group",
+#'                          subtype_resolution = "base_6")
+#' # Create the contrasts table
+#' contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
+#'                         col2 = rep("Control", 3))
+#' # Run the comparison
+#' spectra_comparison(mf_data = mf_data,
+#'                    cols_to_group = "dose_group",
+#'                    mf_type = "min",
+#'                    contrasts = contrasts)
 #' @importFrom dplyr select mutate
 #' @importFrom stats pchisq pf r2dtable
 
-spectra_comparison <- function(mutation_data,
+spectra_comparison <- function(mf_data,
                                cols_to_group,
-                               subtype_resolution = "base_6",
-                               variant_types =  c("snv",
-                                                 "deletion",
-                                                 "insertion",
-                                                 "complex",
-                                                 "mnv",
-                                                 "symbolic"),
                                mf_type = "min",
                                contrasts,
                                cont_sep = "\t") {
-  
-  mf_data <- MutSeqR::calculate_mut_freq(mutation_data = mutation_data,
-                                         cols_to_group = cols_to_group,
-                                         subtype_resolution = subtype_resolution,
-                                         variant_types = variant_types,
-                                         filter_germ = TRUE,
-                                         summary = TRUE)
+
   # Prepare Data
-  ## Find the sum columns for the mutation counts
-  freq_col_prefix <- paste(cols_to_group, collapse = "_")
-  pattern <- paste0(freq_col_prefix, "_sum_", mf_type)
-  matching_col <- grep(pattern, names(mf_data), value = TRUE)
+  sum_col <- paste0("sum_", mf_type)
   ## Find the subtype column
-  subtype_col <- MutSeqR::subtype_dict[[subtype_resolution]]
+  subtype_col <- colnames(mf_data)[which(colnames(mf_data) %in%
+      c("variation_type",
+        "normalized_subtype",
+        "subtype",
+        "normalized_context_with_mutation",
+        "context_with_mutation"))]
+  if (length(subtype_col) == 0) {
+    stop("No subtype column found in the mf_data")
+  }
   ## Select the necessary columns
   mut_spectra <- mf_data %>%
-    dplyr::select(dplyr::all_of(c( cols_to_group, subtype_col, matching_col)))
+    dplyr::select(dplyr::all_of(c(cols_to_group, subtype_col, sum_col)))
   ## Create a single group column
   mut_spectra <- mut_spectra %>%
     dplyr::mutate(group_col = do.call(paste,
@@ -91,39 +98,39 @@ spectra_comparison <- function(mutation_data,
                                                       dplyr::all_of(cols_to_group)),
                                         sep = ":"))) %>%
     dplyr::select(-all_of(cols_to_group))
-  
+
   # All groups
   groups <- unique(mut_spectra$group_col)
   # Extract data for each group
   filtered_data <- list()
   for (i in seq_along(groups)) {
-    group = groups[i]
+    group <- groups[i]
     df_i <- mut_spectra %>%
-      filter(group_col == group)
+      dplyr::filter(.data$group_col == group)
     filtered_data[[i]] <- df_i
   }
- 
+
   # G2 Statistic - Likelihood Ratio Statistic
   ## Piegorsch and Bailer 1994 doi: 10.1093/genetics/136.1.403.
   G2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234){
     N <- sum(x)
     r <- apply(x, 1, sum)
     c <- apply(x, 2, sum)
-    e <- r %*% t(c)/N
+    e <- r %*% t(c) / N
     G2 <- 0
     for(k in 1:ncol(x)){
       flag <- x[,k] > 0
-      G2 <- G2 + t(x[flag,k]) %*% log(x[flag,k]/e[flag,k])	
+      G2 <- G2 + t(x[flag,k]) %*% log(x[flag,k]/e[flag,k])
     }
     G2 <- 2*G2
-    R <- nrow(x)-1
-    df <- R * (ncol(x)-1)
-    if(monte.carlo == FALSE){
-      if(N/R > 20){
-        p.value <- 1-pchisq(G2, df)
+    R <- nrow(x) - 1
+    df <- R * (ncol(x) - 1)
+    if (monte.carlo == FALSE) {
+      if (N / R > 20) {
+        p.value <- 1 - pchisq(G2, df)
         message("Using chi-squared distribution to compute p-value")
-      } else{
-        p.value <- 1-pf(G2/R, R, N-df)
+      } else {
+        p.value <- 1 - pf(G2 / R, R, N - df)
         message("Using F-distribution to compute p-value")
       }
     } else {
@@ -139,16 +146,16 @@ spectra_comparison <- function(mutation_data,
         N <- sum(x)
         r <- apply(x, 1, sum)
         c <- apply(x, 2, sum)
-        e <- r %*% t(c)/N
+        e <- r %*% t(c) / N
         G2.t <- 0
         for(j in 1:ncol(x)){
-          flag <- x[,j] > 0
-          G2.t <- G2.t + t(x[flag,j]) %*% log(x[flag,j]/e[flag,j])	
+          flag <- x[, j] > 0
+          G2.t <- G2.t + t(x[flag, j]) %*% log(x[flag, j] / e[flag, j])
         }
-        ref.dist[k] <- 2*G2.t
-      } 
-      flag <- ref.dist >= G2[1,1]
-      p.value <- length(ref.dist[flag])/10000
+        ref.dist[k] <- 2 * G2.t
+      }
+      flag <- ref.dist >= G2[1, 1]
+      p.value <- length(ref.dist[flag]) / 10000
     }
     data.frame(G2 = G2, p.value = p.value)
   }
@@ -167,7 +174,7 @@ spectra_comparison <- function(mutation_data,
   }
 
   contrast_data <- list()
-  # Loop over the rows of the contrasts table and select 
+  # Loop over the rows of the contrasts table and select
   # the corresponding data frames from the 'filtered_data' list.
   # Combine the mut counts of both dataframes into one.
   for (i in seq_len(nrow(contrast_table))) {
@@ -185,13 +192,16 @@ spectra_comparison <- function(mutation_data,
   for (i in seq_len(length(contrast_data))) {
     result <- G2(contrast_data[[i]])
     contrast_str <- paste(contrast_table[i, 1], "vs", contrast_table[i, 2])
-    results <- rbind(results, data.frame(contrasts = contrast_str, G2 = result$G2, p.value = result$p.value, stringsAsFactors = FALSE))
+    results <- rbind(results, data.frame(contrasts = contrast_str,
+                                         G2 = result$G2,
+                                         p.value = result$p.value,
+                                         stringsAsFactors = FALSE))
   }
 
   # Apply the Holm-Sidak correction for multiple comparisons
   results$adjP <- MutSeqR::sidak(results$p.value)$SidakP
   results$sign <- ""
- results$sign[results$adjP < 0.05] <- "***"
-  
+  results$sign[results$adjP < 0.05] <- "***"
+
   return(results)
 }

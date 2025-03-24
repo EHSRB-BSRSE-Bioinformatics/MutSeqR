@@ -1,7 +1,7 @@
 #' Plot the Mutation Frequency
 #' @description This function creates a plot of the mutation frequency.
 #' @param mf_data A data frame containing the mutation frequency data. This is
-#' obtained from the calculate_mut_freq function with SUMMARY = TRUE.
+#' obtained from the calculate_mf function with SUMMARY = TRUE.
 #' @param group_col The name of the column containing the sample/group names
 #' for the x-axis.
 #' @param plot_type The type of plot to create. Options are "bar" or "point".
@@ -37,6 +37,27 @@
 #' @param y_lab The label for the y axis.
 #' @param title The title of the plot.
 #' @return A ggplot object
+#' @examples
+#' example_file <- system.file("extdata",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' example_data$dose_group <- factor(example_data$dose_group,
+#'                                   levels = c("Control", "Low",
+#'                                              "Medium", "High"))
+#' mf <- calculate_mf(mutation_data = example_data,
+#'                    cols_to_group = "sample",
+#'                    subtype_resolution = "none",
+#'                    retain_metadata_cols = "dose_group")
+#' plot <- plot_mf(mf_data = mf,
+#'                 group_col = "sample",
+#'                 plot_type = "bar",
+#'                 mf_type = "min",
+#'                 fill_col = "dose_group",
+#'                 group_order = "arranged",
+#'                 group_order_input = "dose_group",
+#'                 labels = "count",
+#'                 title = "Mutation Frequency per Sample")
 #' @import ggplot2
 #' @importFrom dplyr arrange across all_of rename
 #' @export
@@ -91,12 +112,10 @@ plot_mf <- function(mf_data,
 
   if (mf_type %in% c("min", "max")) {
     # response column
-    MF_column_pattern <- paste0(".*(_MF_", mf_type, ")$")
-    response_col <- names(mf_data)[grepl(MF_column_pattern, names(mf_data))]
+    response_col <- paste0("mf_", mf_type)
 
     # sum column
-    sum_column_pattern <- paste0(".*(_sum_", mf_type, ")$")
-    found_count_col <- names(mf_data)[grepl(sum_column_pattern, names(mf_data))]
+    found_count_col <- paste0("sum_", mf_type)
 
     plot_data <- mf_data %>%
       dplyr::rename(group_col = dplyr::all_of(group_col)) %>%
@@ -104,24 +123,8 @@ plot_mf <- function(mf_data,
       dplyr::rename(sum_col = dplyr::all_of(found_count_col))
     max_y <- max(plot_data$mf_col) * 1.1
   } else {
-    # response columns
-    MF_min_column_pattern <- paste0(".*(_MF_min", ")$")
-    min_mf_col <- names(mf_data)[grepl(MF_min_column_pattern, names(mf_data))]
-    MF_max_column_pattern <- paste0(".*(_MF_max", ")$")
-    max_mf_col <- names(mf_data)[grepl(MF_max_column_pattern, names(mf_data))]
-
-    # sum columns
-    sum_min_column_pattern <- paste0(".*(_sum_min", ")$")
-    min_count_col <- names(mf_data)[grepl(sum_min_column_pattern, names(mf_data))]
-    sum_max_column_pattern <- paste0(".*(_sum_max", ")$")
-    max_count_col <- names(mf_data)[grepl(sum_max_column_pattern, names(mf_data))]
-
     plot_data <- mf_data %>%
-      dplyr::rename(group_col = dplyr::all_of(group_col)) %>%
-      dplyr::rename(mf_min = dplyr::all_of(min_mf_col)) %>%
-      dplyr::rename(mf_max = dplyr::all_of(max_mf_col)) %>%
-      dplyr::rename(sum_min = dplyr::all_of(min_count_col)) %>%
-      dplyr::rename(sum_max = dplyr::all_of(max_count_col))
+      dplyr::rename(group_col = dplyr::all_of(group_col))
 
     if (mf_type == "stacked") {
       plot_data <- transform(plot_data, mf_max = plot_data$mf_max - plot_data$mf_min)
@@ -238,7 +241,7 @@ plot_mf <- function(mf_data,
   labels <- ggplot2::geom_text(ggplot2::aes(label = label),
                                position = label_position,
                                vjust = -0.5,
-                               size = 4,
+                               size = 3,
                                color = "black")
   } else if (plot_type == "point") {
     pos <- ggplot2::position_jitter(width = 0.1,

@@ -44,6 +44,9 @@ different symbol will be used for each unique reference level. If a single
 plotted value has been contrasted against multiple references, then it will
 gain multiple symbols for each significance difference.}
 
+\item{ref_effect}{The fixed effect to use as the reference level when adding
+significance labels. Only applicable if using two fixed effects.}
+
 \item{x_order}{A character vector indicating the order of the levels for the
 x_effect.}
 
@@ -70,4 +73,7 @@ A ggplot object.
 \description{
 Provide a visualization of the point estimates derived using
 model_mf()
+}
+\details{
+See model_mf() for examples.
 }

@@ -2,11 +2,12 @@
 % Please edit documentation in R/plot_trinucleotide_heatmap.R
 \name{plot_trinucleotide_heatmap}
 \alias{plot_trinucleotide_heatmap}
-\title{Create a heatmap plot}
+\title{Create a heatmap plot of mutation subtype proportions.}
 \usage{
 plot_trinucleotide_heatmap(
   mf_data,
-  group_var = "dose",
+  group_col = "sample",
+  facet_col = "dose",
   mf_type = "min",
   mut_proportion_scale = "turbo",
   max = 0.2,
@@ -15,30 +16,59 @@ plot_trinucleotide_heatmap(
 )
 }
 \arguments{
-\item{mf_data}{The data file}
+\item{mf_data}{A data frame containing the mutation frequency data at the
+desired base resolution. This is obtained using the 'calculate_mf' with
+subtype_resolution set to the desired resolution. cols_to_group
+should be the same as 'group_col'.}
 
-\item{group_var}{The variable to group by.}
+\item{group_col}{The variable to group by.}
 
-\item{mf_type}{The type of mutation frequency to plot. Options are "min" or "max". (Default: "min")}
+\item{facet_col}{The variable to facet by.}
 
-\item{mut_proportion_scale}{The scale option for the mutation proportion. Options are passed to viridis::scale_fill_viridis_c.
-One of # inferno, magma, plasma, viridis, cividis, turbo, mako, or rocket. We highly reccomend the default for its ability to
-disciminate hard to see patterns. (Default: "turbo")}
+\item{mf_type}{The type of mutation frequency to plot. Options are "min" or
+"max". (Default: "min")}
 
-\item{max}{Maximum value used for plotting the relative contributions.
-Contributions that are higher will have the maximum colour. (Default: 0.2)}
+\item{mut_proportion_scale}{The scale option for the mutation proportion.
+Options are passed to viridis::scale_fill_viridis_c.
+One of # inferno, magma, plasma, viridis, cividis, turbo, mako, or rocket.
+We highly reccomend the default for its ability to disciminate hard to see
+patterns. (Default: "turbo")}
 
-\item{rescale_data}{Logical value indicating whether to rescale the mutation proportions to increase the dynamic range of colors shown on the plot. (Default: TRUE)}
+\item{max}{Maximum value used for plotting the proportions.
+Proportions that are higher will have the maximum colour. (Default: 0.2)}
 
-\item{condensed}{More condensed plotting format. Default = F.}
+\item{rescale_data}{Logical value indicating whether to rescale the mutation
+proportions to increase the dynamic range of colors shown on the plot.
+(Default: TRUE)}
+
+\item{condensed}{More condensed plotting format. Default = FALSE.}
 }
 \value{
 A ggplot object representing the heatmap plot.
 }
 \description{
-This function creates a heatmap plot using the provided data file.
+This function creates a heatmap plot of subtype proportions for
+a given grouping variable. The groups may be facetted by a second variable.
+Mutation sums for each facet group and normalized subtype are calculated
+and displayed.
 }
 \examples{
-create_heatmap(mutation_data, dose, "inferno")
+# Plot the trinucleotide proportions per sample, facetted by dose group.
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
+example_data <- readRDS(example_file)
+# define dose_group order
+example_data$dose_group <- factor(example_data$dose_group,
+                                  levels = c("Control", "Low",
+                                             "Medium", "High"))
+mf_96 <- calculate_mf(example_data,
+                      cols_to_group = "sample",
+                      variant_types = "snv",
+                      subtype_resolution = "base_96",
+                      retain_metadata_cols = "dose_group")
+plot <- plot_trinucleotide_heatmap(mf_96,
+                                  group_col = "sample",
+                                  facet_col = "dose_group")
 
 }

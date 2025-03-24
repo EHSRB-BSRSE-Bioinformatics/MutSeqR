@@ -2,7 +2,7 @@
 % Please edit documentation in R/signature_fitting.R
 \name{signature_fitting}
 \alias{signature_fitting}
-\title{Run COSMIC signatures comparison}
+\title{Run COSMIC signatures comparison using SigProfilerAssignment}
 \usage{
 signature_fitting(
   mutation_data,
@@ -11,37 +11,76 @@ signature_fitting(
   env_name = "MutSeqR",
   group = "sample",
   output_path = NULL,
-  python_version = "3.11",
-  python_path = "~/../../AppData/Local/Programs/Python/Python310/python.exe",
-  python_home =
-    "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/.virtualenvs/r-reticulate"
+  python_version
 )
 }
 \arguments{
-\item{mutation_data}{A data frame, imported from a .mut file}
+\item{mutation_data}{A data frame containing mutation data.}
 
-\item{project_name}{The name of the project; used to get mutation data into the required .txt format for SigProfiler}
+\item{project_name}{The name of the project. This is used to format
+the data into required .txt format for SigProfiler tools.}
 
-\item{project_genome}{A string describing the reference genome to use;
-e.g. GRCh37, GRCH38, mm10, mm9, rn6
-output_path The directory where output results should be written. *not a parameter of the function}
+\item{project_genome}{The reference genome to use. On first use, the
+function will install the genome using SigProfilerMatrixGeneratorR::install.
+e.x. GRCh37, GRCH38, mm10, mm9, rn6}
 
-\item{env_name}{The name of the virtual environment. This will be created on first use.}
+\item{env_name}{The name of the virtual environment. This will be created on
+first use.}
 
-\item{group}{The column in the mutation data used to aggregate groups (e.g., sample ID, tissue, dose)}
+\item{group}{The column in the mutation data used to aggregate groups.
+Signature assignment will be performed on each group separately.}
 
-\item{output_path}{The filepath to thedirectory in which the output folder will be created to store results.}
+\item{output_path}{The filepath to the directory in which the output folder
+will be created to store results. Default is NULL. This will store results
+in the current working directory.}
 
-\item{python_version}{The version of python to be used.}
-
-\item{python_path}{The path to the version of python to be used with reticulate. It is important that this version of python meets the dependencies, including the SigProfiler python tools.}
-
-\item{python_home}{The path to the conda virtual environment that contains the required python dependencies}
+\item{python_version}{The version of python installed on the user's
+computer.}
 }
 \value{
-Creates a subfolder in the output directory with SigProfiler tools results.
-SigProfilerMatrixGeneratorR  SigProfilerMatrixGeneratorR install
+Creates a subfolder "SigProfiler" in the output directory with
+SigProfiler tools results. For a complete breakdown of the results, see the
+Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
+\link{group} > matrices > output > Assignment_Solution > Activities >
+SampleReconstruction > WebPNGs.
+These plots show a summary of the signature assignment results for each
+group. In each plot, the top left panel represents the base_96 mutation
+count for the group. The bottom left panel represents the reconstructed
+profile. Below the reconstruction are the solution statistics that indicate
+the goodness of fit of the reconstructed profile to the observed profile.
+(Recommended cosine similarity > 0.9). The panels on the right represent the
+SBS signatures that contribute to the reconstructed profile. The signature
+name and its contribution \% are shown in the panel. A high contribution
+means a high association of the signature with the group's mutation
+spectra.
 }
 \description{
-After cleaning the mutation data input, runs several Alexandrov Lab tools for COSMIC signature analysis (assigns signatures to best explain the input data).
+Run COSMIC signatures comparison using SigProfilerAssignment
+}
+\details{
+Assign COSMIC SBS signatures to mutation data using
+SigProfilerAssignment. Data is cleaned and formatted for input into
+SigProfiler tools. This function will create a virtual environment using
+reticulate to run python, as this is a requirement for the SigProfiler suite
+of tools. Note that it will also install several python dependencies using
+a conda virtual environment on first use. Please be aware of the
+implications of this. For advanced use, it is suggested to use the
+SigProfiler python tools directly in python as described in their
+respective documentation. Users must have python installed on their
+computer to use this function.
+
+Mutation data will be filtered to only include SNVs. Variants
+flagged by the filter_mut column will be excluded.
+}
+\examples{
+\dontrun{
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+signature_fitting(mutation_data = example_data,
+                  project_name = "Example",
+                  project_genome = "mm10",
+                  env_name = "MutSeqR",
+                  group = "dose",
+                  python_version = "3.11")
+}
 }

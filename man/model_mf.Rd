@@ -11,8 +11,8 @@ model_mf(
   test_interaction = TRUE,
   random_effects = NULL,
   reference_level,
-  muts = "sample_sum_min",
-  total_count = "sample_group_depth",
+  muts = "sum_min",
+  total_count = "group_depth",
   contrasts = NULL,
   cont_sep = "\\t",
   ...
@@ -22,7 +22,7 @@ model_mf(
 \item{mf_data}{The data frame containing the mutation frequency data.
 Mutation counts and total sequencing depth should be summarized per sample
 alongside columns for your fixed effects.
-This data can be obtained using \code{calculate_mut_freq(summary=TRUE)}.}
+This data can be obtained using \code{calculate_mf(summary=TRUE)}.}
 
 \item{fixed_effects}{The name(s) of the column(s) that will act as the
 fixed_effects (factor/independent variable) for modelling mutation frequency.}
@@ -64,14 +64,15 @@ model uses the \code{glm} function.}
 \value{
 Model results are output as a list. Included are:
 \itemize{
-\item model_data: the supplied mf_data with added column for model residuals.
+\item model_data: the supplied mf_data with added column for the Pearson's
+residuals of the model.
 \item summary: the summary of the model.
 \item anova: the analysis of variance for models with two or more effects. \link[car]{Anova}\code{(model) }
-\item residuals_histogram: the model residuals plotted as a histogram. This is
+\item residuals_histogram: the Pearson's residuals plotted as a histogram. This is
 used to check whether the variance is normally distributed. A symmetric
 bell-shaped histogram, evenly distributed around zero indicates that the
 normality assumption is likely to be true.
-\item residuals_qq_plot: the model residuals plotted in a quantile-quantile plot.
+\item residuals_qq_plot: the Pearson's residuals plotted in a quantile-quantile plot.
 For a normal distribution, we expect points to roughly follow the y=x line.
 \item point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects.
 \item point_estimates: the point estimates for the fixed effects.
@@ -166,4 +167,104 @@ checking during model fitting. This is done through the \code{control} argument 
 the \code{lme4::glmer} function. The default tolerance is tol = 0.002. Add this
 argument as an extra argument in the \code{model_mf} function.
 Ex. \code{control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", tol = 3e-3, relTol = NULL))}
+}
+\examples{
+# Example 1: Model MFmin by dose
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
+example_data <- readRDS(example_file)
+mf_example <- calculate_mf(mutation_data = example_data,
+                           cols_to_group = "sample",
+                          retain_metadata_cols = "dose")
+# Create a contrasts table to define pairwise comparisons
+# We will compare all treated groups to the control group
+contrasts <- data.frame(col1 = c("12.5", "25", "50"),
+                        col2 = c("0", "0", "0"))
+# Fit the model
+model1 <- model_mf(mf_data = mf_example,
+                   fixed_effects = "dose",
+                   reference_level = "0",
+                   muts = "sum_min",
+                   total_count = "group_depth",
+                   contrasts = contrasts)
+# The residuals histogram and QQ plot will help you assess the normality
+# of the residuals.
+model1$summary # Model Summary
+model1$point_estimates # Point Estimates: Mean MFmin by dose
+model1$pairwise_comparisons # Pairwise Comparisons
+# All treated doses exhibited a significant increase in mutation frequency
+# compared to the control.
+
+# Plot the results using plot_model_mf()
+plot <- plot_model_mf(model1,
+                      plot_type = "bar",
+                      x_effect = "dose",
+                      plot_error_bars = TRUE,
+                      plot_signif = TRUE,
+                      x_order = c("0", "12.5", "25", "50"),
+                      x_label = "Dose (mg/kg-bw/d)",
+                      y_label = "Estimated Mean MF (mutations/bp)",
+                      plot_title = "")
+
+# Example 2: Model MFmin by dose and genomic target
+# We will compare the treated groups to the control group for each genomic
+# target
+
+# Calculate MF
+mf_example2 <- calculate_mf(mutation_data = example_data,
+                            cols_to_group = c("sample", "label"),
+                            retain_metadata_cols = "dose")
+# Create a contrasts table to define pairwise comparisons
+combinations <- expand.grid(dose = unique(mf_example2$dose),
+                            label = unique(mf_example2$label))
+combinations <- combinations[combinations$dose != 0, ]
+combinations$col1 <- with(combinations, paste(dose, label, sep=":"))
+combinations$col2 <- with(combinations, paste("0", label, sep=":"))
+contrasts2 <- combinations[, c("col1", "col2")]
+# Fit the model
+# Fixed effects of dose and label
+# Random effect of sample
+# Control the optimizer for convergence issues
+model2 <- model_mf(mf_data = mf_example2,
+                   fixed_effects = c("dose", "label"),
+                   random_effects = "sample",
+                   reference_level = c("0", "chr1"),
+                   muts = "sum_min",
+                   total_count = "group_depth",
+                   contrasts = contrasts2,
+                   control = lme4::glmerControl(optimizer = "bobyqa",
+                                       optCtrl = list(maxfun = 2e5)))
+model2$summary # Fits a GLMM
+model2$point_estimates
+model2$pairwise_comparisons
+
+# Plot the results using plot_model_mf()
+# Define the order of the labels for the x-axis
+label_order <- model2$point_estimates \%>\%
+ dplyr::filter(dose == "50") \%>\%
+ dplyr::arrange(Estimate) \%>\%
+ dplyr::pull(label)
+# Define the order of the doses for the fill
+dose_order <- c("0", "12.5", "25", "50")
+plot <- plot_model_mf(model = model2,
+                      plot_type = "bar",
+                      x_effect = "label",
+                      plot_error_bars = TRUE,
+                      plot_signif = TRUE,
+                      ref_effect = "dose",
+                      x_order = label_order,
+                      fill_order = dose_order,
+                      x_label = "Target",
+                      y_label = "MF (mutations/bp)",
+                      fill_label = "Dose",
+                      plot_title = "",
+                      custom_palette = c("#ef476f",
+                                         "#ffd166",
+                                         "#06d6a0",
+                                         "#118ab2"))
+# The output is a ggplot object and can be modified using ggplot2
+# functions. For example, to rotate the x-axis labels by 90 degrees,
+# use the following code:
+p <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 }

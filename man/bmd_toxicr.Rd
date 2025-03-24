@@ -2,33 +2,205 @@
 % Please edit documentation in R/bmd_toxicR.R
 \name{bmd_toxicr}
 \alias{bmd_toxicr}
-\title{Fit a BMD model for mutation frequency data}
+\title{BMD modeling using ToxicR}
 \usage{
 bmd_toxicr(
   mf_data,
+  data_type = "individual",
   dose_col = "dose",
-  response_col = c("sample_MF_min", "sample_MF_max"),
-  model_types = c("hill", "exp-3", "exp-5", "power", "polynomial"),
-  BMR = 0.5
+  response_col = c("mf_min", "mf_max"),
+  sd_col = NULL,
+  n_col = NULL,
+  bmr_type = "rel",
+  bmr = 0.5,
+  model = "exp-aerts",
+  alpha = 0.05,
+  model_averaging = TRUE,
+  plot_results = FALSE,
+  ma_summary = FALSE,
+  output_path = NULL,
+  ...
 )
 }
 \arguments{
-\item{mf_data}{A data frame with columns "dose" and "MFmin"}
+\item{mf_data}{A data frame containing the dose-response data. Data may
+be individual for each sample or averaged over dose groups.
+Required columns for individual data are the column containing the dose
+\code{dose_col} and the column(s) containing the mutation frequency data
+\code{response_col}(s). Summary data must include the \code{dose_col}, the
+\code{response_col}(s) containing the mean response for each dose group,
+the \code{sd_col} containing the standard deviation of the response data,
+and the \code{n_col} containing the sample size for each dose group.}
 
-\item{dose_col}{A character string specifying the column in data to be used to identify dose.}
+\item{data_type}{A string specifying the type of response data.
+Data may be response per individual or summarised across dose groups.
+Options are ("individual", "summary"). Default is "individual".}
 
-\item{response_col}{A character string specifying the column in data to be used to identify response.}
+\item{dose_col}{The column in \code{mf_data} containing the dose data. Values
+must be numeric. Default is "dose".}
 
-\item{model_types}{A string specifying the model type.
-Options are "hill", "exp-3","exp-5", "power", "polynomial"}
+\item{response_col}{The column(s) in mf_data containing the mutation
+frequency data. For summarised data types, this should be the mean response
+for each dose group. Multiple \code{response_col}s can be provided.}
 
-\item{BMR}{A numeric value specifying the benchmark response.
-Default is 0.5.}
+\item{sd_col}{The column in mf_data containing the standard deviation of
+the summarised response data. This is only required for
+\code{data_type = "summary"}. If multiple response columns are provided,
+multiple \code{sd_col}s should be provided in the same order. Default is NULL.}
+
+\item{n_col}{The column in mf_data containing the sample size of each dose
+group. This is only required for \code{data_type = "summary"}. If multiple
+response columns are provided, multiple \code{n_col}s should be provided in the
+same order. Default is NULL.}
+
+\item{bmr_type}{The type of benchmark response. Options are: "rel", "sd",
+"hybrid", "abs". Default is "rel". See details for more information.}
+
+\item{bmr}{A numeric value specifying the benchmark response. The bmr is
+defined in relation to the calculation requested in bmr_type. Default is 0.5.}
+
+\item{model}{The model type to use. Options are "all" or
+a vector of model types. Default is "exp-aerts", the Exponential model.
+See details for available models. Note that model averaging will use
+a pre-defined model set. See details for more information.}
+
+\item{alpha}{The specified nominal coverage rate for computation of
+the lower and upper confidence intervals for the benchmark dose
+(BMDL, BMDU). The confidence level is calculated as
+\eqn{100\times(1-2\alpha)\% }. The default is 0.05 (90\% CI).}
+
+\item{model_averaging}{A logical value indicating whether to use model
+averaging. Default is TRUE (recommended).}
+
+\item{plot_results}{A logical value indicating whether to plot the BMD models
+and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
+save plots to the \code{output_path}.}
+
+\item{ma_summary}{A logical value indicating whether to return the summary
+of the model averaging results. Default is FALSE.}
+
+\item{output_path}{The file path indicating where to save the plots.
+If NULL, the plots will be saved to the working directory. Default is NULL.}
+
+\item{...}{Additional arguments to be passed to the model fitting function.
+For more information, see \link[ToxicR]{single_continuous_fit} or
+\link[ToxicR]{ma_continuous_fit} if model averaging.}
 }
 \value{
-A list with the following components:
+If \code{model_averaging = FALSE}, the function returns a data frame
+with the BMD values and the \eqn{100\times(1-2\alpha)\% } confidence
+intervals (BMDL, BMDU)for each response column and each model listed. The
+AIC value is calculated for each model to compare fits. The AIC is
+calculated as maximum likelihood + 2 * degrees of freedom. If
+\code{plot_results = TRUE}, the function will plot all fitted models to the
+data and save them to the \code{output_path}.
+
+If \code{model_averaging = TRUE}, the function returns a data frame with the
+BMD values and the \eqn{100\times(1-2\alpha)\% } confidence intervals
+(BMDL, BMDU) for each response column calculated using model averaging.
+If \code{ma_summary = TRUE}, the function will return the posterior probabilities
+used in the model averaging. If \code{plot_results = TRUE}, the function will plot
+the model averaged model to the data and save it to the \code{output_path}.
+The function will also make a Cleveland plot, saved to the  \code{output_path}.
+Here, the BMDs are plotted for each model in the set alongside the model
+averaged BMD. The BMD is represented by a red dot. The size of the dot is
+scaled on the model probability with the Model Average having a value of
+100\%. The BMDL and BMDU are expressed as interval bars.
 }
 \description{
-This function fits a continuous BMD model to
-dose-response data for mutation frequency.
+Calculate the benchmark dose (BMD) for continuous dose-response
+data with optional model averaging. This function is intended to model the
+dose-response of mutation frequency using the ToxicR software.
+}
+\details{
+Available model types for single model fitting are:
+\itemize{
+\item \code{"exp-aerts"}: \eqn{f(x) = a(1 + (c-1)(1-\exp(-bx^{d}))) }
+\item \code{"invexp-aerts"}: \eqn{f(x) = a(1 + (c-1)(\exp(-bx^{-d})))}
+\item \code{"gamma-aerts"}: \eqn{f(x) = a(1 + (c-1)(Gamma(bx^d;xi)))}
+\item \code{"invgamma-aerts"}:
+\eqn{f(x) = a(1 + (c-1)(1-Gamma(bx^{-d};xi)))}
+\item \code{"hill-aerts"}:
+\eqn{f(x) = a(1 + (c-1)(1-\frac{b^d}{b^d + x^d}))}
+\item \code{"lomax-aerts"}:
+\eqn{f(x) = a\left\{1 + (c-1)(1-\left(\frac{b}{b+x^d} \right)^\xi) \right\}}
+\item \code{"invlomax-aerts"}:
+\eqn{f(x) = a\left\{1 + (c-1)(\left(\frac{b}{b+x^{-d}} \right))^\xi \right\}}
+\item \code{"lognormal-aerts"}:
+\eqn{f(x) = a\left\{1 + (c-1)\left(\Phi( \ln(b) + d\times \ln(x))\right) \right\}}
+\item \code{"logskew-aerts"}:
+\eqn{f(x) = a\left\{1 + (c-1)\left(\Phi_{SN}( \ln(b) + d\times \ln(x); \xi )\right) \right\}}
+\item \code{"invlogskew-aerts"}:
+\eqn{f(x) = a\left\{1 + (c-1)\left(1 - \Phi_{SN}( \ln(b) - d\times \ln(x); \xi )\right) \right\}}
+\item \code{"logistic-aerts"}:
+\eqn{f(x) = \frac{c}{1 + \exp(-a - b\times x^d)} }
+\item \code{"probit-aerts"}:
+\eqn{f(x) = c\left(\Phi(a + b\times x^d)\right) }
+\item \code{"LMS"}: \eqn{f(x) = a(1 + (c-1)(1 - \exp(-bx - dx^2)))}
+\item \code{"gamma-efsa"}: \eqn{f(x) = a(1 + (c-1)(Gamma(bx; d)))}
+}
+Here: \eqn{\Phi(\cdot)} is the standard normal distribution and
+\eqn{\Phi_{SN}(\cdot;\cdot)} is the skew-normal distribution.
+See \link[ToxicR]{single_continuous_fit} for more details.
+
+Model averaging is done over the the model set described in The European
+Food Safety Authority's (2022) Guidance on the use of the benchmark dose
+approach in risk assessment. These models are (normal then lognormal for
+each model): exp-aerts, invexp-aerts, hill-aerts, lognormal-aerts,
+gamma-efsa, LMS, probit-aerts, and logistic-aerts. See
+\link[ToxicR]{ma_continuous_fit} for more details.
+
+BMR types for continuous models:
+\itemize{
+\item Relative deviation (default; \code{bmr_type = "rel"}). This defines the
+BMD as the dose that changes the control mean/median a certain
+percentage from the background dose. It is the dose that
+solves \eqn{\mid f(dose) - f(0) \mid = (1 \pm BMR) f(0)}
+\item Standard deviation (\code{bmr_type = "sd"}). This defines the BMD as
+the dose associated with the mean/median changing a specified number of
+standard deviations from the mean at the control dose. It is the
+dose that solves \eqn{\mid f(dose)-f(0) \mid = BMR \times \sigma}
+\item Absolute deviation (\code{bmr_type="abs"}). This defines the BMD
+as an absolute change from the control dose of zero by a specified amount.
+That is the BMD is the dose that solves the equation
+\eqn{\mid f(dose) - f(0) \mid = BMR}.
+\item Hybrid deviation (\code{bmr_type = "hybrid"}). This defines the
+BMD that changes the probability of an adverse event by a stated amount
+relative to no exposure (i.e 0).  That is, it is the dose that solves
+\eqn{\frac{Pr(X > x| dose) - Pr(X >x|0)}{Pr(X < x|0)} = BMR}.
+For this definition,
+\eqn{Pr(X < x|0) = 1 - Pr(X > X|0) = \pi_0}, where \eqn{0 \leq \pi_0 < 1}
+is defined by the user as "point_p," and it defaults to 0.01.  Note: this
+discussion assumed increasing data. The fitter determines the direction
+of the data and inverts the probability statements for decreasing data.
+}
+}
+\examples{
+# Calculate the BMD for a 50\% increase in mutation frequency from control
+# Individual data with Model averaging.
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
+example_data <- readRDS(example_file)
+mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
+bmd <- bmd_toxicr(mf_data = mf,
+                  dose_col = "dose",
+                  response_col = c("mf_min", "mf_max"))
+# Plot the results using plot_ci()
+plot <- plot_ci(bmd, order = "asc", log_scale = FALSE)
+
+# Summary data with Model averaging.
+mf_sum <- mf \%>\%
+ dplyr::group_by(dose) \%>\%
+ dplyr::summarise(mean_mf_min = mean(mf_min),
+                  sd_min = sd(mf_min),
+                  n_min = dplyr::n(),
+                  mean_mf_max = mean(mf_max),
+                  sd_max = sd(mf_max),
+                  n_max = dplyr::n())
+bmd <- bmd_toxicr(mf_data = mf_sum,
+                  dose_col = "dose",
+                  response_col = c("mean_mf_min", "mean_mf_max"),
+                  sd_col = c("sd_min", "sd_max"),
+                  n_col = c("n_min", "n_max"))
 }

@@ -21,15 +21,18 @@
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges start end
 #' @importFrom IRanges IRanges ranges
-#' @importFrom GenomeInfoDb seqnames
 #' @importFrom dplyr filter mutate
 #' @importFrom plyranges find_overlaps
 #' @importFrom rlang .data
 #' @export
 get_CpG_mutations <- function(regions, mut_data,
                               variant_types = c("snv","insertion", "deletion", "mnv","symbolic"),
-                              include_no_variants = T,
+                              include_no_variants = TRUE,
                               motif = "CG") {
+
+   if (!requireNamespace("GenomeInfoDb", quietly = TRUE)) {
+    stop("Package GenomeInfoDb is required. Please install from Bioconductor.")
+  }
   # Step 3 - find all the CpG sites within those regions identified
   all_CpGs <- list()
   for (i in seq_along(regions)) {
@@ -82,10 +85,13 @@ get_CpG_mutations <- function(regions, mut_data,
 #' from the larger object provided to the function).
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
-#' @importFrom GenomeInfoDb seqnames
 #' @importFrom IRanges IRanges ranges
 #' @export
 get_CpG_regions <- function(regions, motif = "CG") {
+  
+  if (!requireNamespace("GenomeInfoDb", quietly = TRUE)) {
+    stop("Package GenomeInfoDb is required. Please install from Bioconductor.")
+  }
   all_CpGs <- list()
   for (i in seq_along(regions)) {
     CpG_sites <- Biostrings::matchPattern(
@@ -139,16 +145,16 @@ annotate_CpG_sites <- function(mut_data,
 #' Summarize CpG sites
 #' 
 #' Creates a summary table of CpG sites based on groupings of interest. This is
-#' basically a convenience function that wraps `calculate_mut_freqs()` over CpG
+#' basically a convenience function that wraps `calculate_mfs()` over CpG
 #' data (or any data). See the documentation for that function for parameters. 
 #' It is up to the user to supply proper data to the function.
 #' @param cpg_muts A data frame containing CpG mutations 
 #' TO DO: cpg_muts = df "cpg_mutations" is created in the .Rmd file, but is not created by any other function. 
-#' @param ... Additional arguments to calculate_mut_freqs()
+#' @param ... Additional arguments to calculate_mfs()
 #' @export
 make_CpG_summary_table <- function(cpg_muts, ...) {
     # Verify that cpg_muts has a 
   # Do we even need a special function for this? Might get by with 
-  # calculate_mut_freqs().
+  # calculate_mfs().
   
 }

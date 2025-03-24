@@ -2,112 +2,124 @@
 % Please edit documentation in R/import_mut_data.R
 \name{import_mut_data}
 \alias{import_mut_data}
-\title{Import a .mut file}
+\title{Import tabular mutation data}
 \usage{
 import_mut_data(
   mut_file,
   mut_sep = "\\t",
-  rsids = FALSE,
-  sample_data_file = NULL,
+  is_0_based_mut = TRUE,
+  sample_data = NULL,
   sd_sep = "\\t",
-  vaf_cutoff,
-  range_buffer = 0,
-  regions = c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom_interval", "none"),
-  custom_regions_file = NULL,
+  regions = "none",
+  custom_regions = NULL,
   rg_sep = "\\t",
-  is_0_based = TRUE,
-  depth_calc = "take_del",
+  is_0_based_rg = TRUE,
+  range_buffer = 0,
+  genome = NULL,
+  species = NULL,
+  masked_BS_genome = FALSE,
   custom_column_names = NULL,
   output_granges = FALSE
 )
 }
 \arguments{
-\item{mut_file}{"filepath". The .mut file containing mutation
-data to be imported. This can be either a data frame object or a filepath
-to a file or directory. If you specify a folder, the function will
-attempt to read all files in the folder and combine them into
-a single data frame. Required columns are listed below.
-Synonymous names for these columns are accepted.
+\item{mut_file}{The mutation data file(s) to be imported.
+This can be either a data frame object or a filepath
+to a file or directory. If you specify a directory, the function will
+attempt to read all files in the directory and combine them into
+a single data frame. Mutation data should consist of a row for each
+variant. Required columns are listed below.
 \itemize{
-\item \code{contig}: The reference sequence name.
-\item \code{start}: 0-based start position of the feature in contig.
-\item \code{end}: half-open end position of the feature in contig.
+\item \code{contig}: The name of the reference sequence.
+\item \code{start}: The start position of the feature.
+\item \code{end}: The half-open end position of the feature.
 \item \code{sample}: The sample name.
 \item \code{ref}: The reference allele at this position
 \item \code{alt}: The left-aligned, normalized, alternate allele at this
-position.
-\item \code{alt_depth}: The read depth supporting the alternate allele.
-\item depth col: The total read depth at this position. This column can
-be \code{total_depth} (excluding N-calls) or \code{depth}(including N-calls; if
-\code{total_depth} is not available).
-\item \code{variation_type}: The category to which this variant is assigned.
-\item \code{context}: The local reference trinucleotide context at this
-position (e.g. ATC - not necessarily the transcript codon)
-}}
+position. Multiple alt alleles called for a single position should be
+represented as separate rows in the table.
+}
+The following columns are not required, but are recommended for full
+package functionality:
+\itemize{
+\item \code{alt_depth}: The read depth supporting the alternate allele. If
+not included, the function will add this column, assuming a value of 1.
+\item \code{total_depth}: The total read depth at this position, excluding
+no-calls (N calls). If not present, the function will attempt to calculate
+the \code{total_depth} as \code{depth} - \code{no_calls}. If no_calls is not present, the
+function will use \code{depth} as the \code{total_depth.}
+\item \code{depth}: The total read depth at this position, including no-calls.
+\item \code{no_calls}: The number of no-calls (N-calls) at this position.
+}
+We recommend that files include a record for every sequenced
+position, regardless of whether a variant was called, along with the
+\code{total_depth} for each record. This enables site-specific depth calculations
+required for some downstream analyses.}
 
-\item{mut_sep}{The delimiter for importing the .mut file.
+\item{mut_sep}{The delimiter for importing the mutation file.
 Default is tab-delimited.}
 
-\item{rsids}{A logical variable; whether or not the .mut file
-contains rsID information (existing SNPs).}
+\item{is_0_based_mut}{A logical variable. Indicates whether the
+position coordinates in the mutation data are 0 based (TRUE) or
+1 based (FALSE). If TRUE, positions will be converted to 1-based.}
 
-\item{sample_data_file}{An optional file containing
-additional sample metadata (dose, tissue, timepoint, etc.).
-This can be either a data frame object or a file path to a file.}
+\item{sample_data}{An optional file containing additional sample
+metadata (dose, timepoint, etc.). This can be a data frame or a file path.
+Metadata will be joined with the mutation data based on the sample column.
+Required columns are \code{sample} and any additional columns you wish to
+include.}
 
-\item{sd_sep}{The delimiter for importing sample metadata table.
+\item{sd_sep}{The delimiter for importing sample data.
 Default is tab-delimited.}
 
-\item{vaf_cutoff}{The function will add \code{is_germline} column
-that identifies ostensibly germline variants using a cutoff
-for variant allele fraction (VAF). There is no default value
-provided, but generally a value of 0.1 (i.e., 10\%) is a good
-starting point. Setting this will flag variants that are
-present at a frequency greater than this value at a given site.}
+\item{regions}{An optional file containing metadata of genomic regions.
+Region metadata will be joined with mutation data and variants will be
+checked for overlap with the regions. Metadata for TwinStrand Mutagenesis
+Panels are stored in the package files and can be accessed using the values
+\code{TSpanel_human}, \code{TSpanel_mouse}, and \code{TSpanel_rat}. If you have a custom
+range of genomic regions, set the value to \code{custom} and provide the regions
+file using the \code{custom_regions} argument. If you do not wish to include
+region metadata, set value to \code{none}.}
 
-\item{range_buffer}{An integer >= 0. Variants that occur outside of
-the defined regions' ranges will be filtered out. Use the range-buffer
-to extend the range within which a variant can occur. The default is
-1 nucleotide outside of region ranges. Ex. Structural variants and
+\item{custom_regions}{If \code{regions} is set to
+"custom", provide  the regions metadata. Can be a file path or a
+data frame. Required columns are \code{contig}, \code{start}, and \code{end}.}
+
+\item{rg_sep}{The delimiter for importing the \code{custom_regions} file.
+Default is tab-delimited.}
+
+\item{is_0_based_rg}{A logical variable. Indicates whether the
+position coordinates in the custom_regions are 0 based (TRUE) or
+1 based (FALSE). If TRUE, positions will be converted to 1-based.}
+
+\item{range_buffer}{An integer >= 0. Extend the range of your regions
+in both directions by the given amount. Ex. Structural variants and
 indels may start outside of the regions. Adjust the range_buffer to
-include these variants. Rows that were filtered out of the mutation
-data will be returned in a separate data frame.}
+include these variants in your region's ranges.}
 
-\item{regions}{Values are \verb{c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat" "custom_interval", "none")}.
-Indicates the target panel used for Duplex Sequencing.
-The argument refers to the TS Mutagenesis panel of the
-specified species, or to a custom panel. If "custom",
-provide the file path of your regions file in
-\code{custom_regions_file}.}
+\item{genome}{The genome assembly version of the reference genome. This is
+required if your data does not include a context column. The
+function will install a BS genome for the given species/genome/masked
+arguments to populate the context column.
+Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
+Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
 
-\item{custom_regions_file}{"filepath". If \code{regions} is set to "custom_interval",
-provide  the file containing regions metadata.
-Required columns are \code{contig}, \code{start}, and \code{end}.
-This can be either a data frame object or a file path to a file.}
+\item{species}{The species. Required if your data does not include a
+context column. The function will install a BS genome for the given
+species/genome/masked to populate the context column. The species can
+be the common name of the species or the scientific name.
+Ex. "human" or "Homo sapiens".}
 
-\item{rg_sep}{The delimiter for importing the \code{custom_regions_file}.
-Default is tab-delimited.}
-
-\item{is_0_based}{A logical variable. Indicates whether the
-\code{custom_regions_file} target region coordinates are 0 based (TRUE)
-or 1 based (FALSE). If TRUE, ranges will be converted to 1-based.}
-
-\item{depth_calc}{Values are \code{c("take_del", "take_mean")}. In the instance
-when there are two or more calls at the same location within a sample, and
-the depths differ, this parameter chooses the method for resolving the
-difference. This occurs when a deletion is called in the data. It will be
-called alongside a no_variant. "take_mean" calculates the depth column by
-taking the mean of all depths in the group. "take_del" calculates the depth
-column by choosing only the depth of the deletion in the group, or if no
-deletion is present, the complex variant. If there is no deletion or
-complex variant, then it takes the mean of the depths within the group.
-Default is "take_del". depth_col = \code{total_depth} or \code{depth}.}
+\item{masked_BS_genome}{A logical value. Required when using a BS genome
+to poulate the context column. Whether to use the masked version of the
+BS genome (TRUE) or not (FALSE). Default is FALSE.}
 
 \item{custom_column_names}{A list of names to specify the meaning of column
 headers. Since column names can vary with data, this might be necessary to
-digest the mutation data table properly. Typical defaults are set, but can
-be substituted in the form of \code{list(total_depth = "my_custom_depth_name", sample = "my_custom_sample_column_name")}. For a comprehensive list, see
-examples. You can change one or more of these.}
+digest the mutation data properly. Typical defaults are set, but can
+be substituted in the form of \code{list(contig = "my_custom_contig_name", sample = "my_custom_sample_column_name")}. You can change one or more of
+these. Set column synonyms are defined in MutSeqR::op$column and will
+automatically be changed to their default value.}
 
 \item{output_granges}{A logical variable; whether you want the mutation
 data to output as a GRanges object. Default output (FALSE) is as a dataframe.}
@@ -116,45 +128,60 @@ data to output as a GRanges object. Default output (FALSE) is as a dataframe.}
 A table where each row is a mutation, and columns indicate the
 location, type, and other data. If \code{output_granges} is set to TRUE, the
 mutation data will be returned as a GRanges object, otherwise mutation
-data is returned as a dataframe. If the mutation data contains rows that
-are filtered out of the specified regions, results will be returned as a
-list. The first element will be the mutation data called \code{mut_dat} and
-the second element will be the rows that were filtered from the data called
-\code{rows_outside_regions}. If no rows are filtered out, the results will be
-returned as a single dataframe or GRanges object.
+data is returned as a dataframe.
 
 Output Column Definitions:
 \itemize{
-\item \code{nchar_ref}: The length (in bp) of the reference allele.
-\item \code{nchar_alt}: The length (in bp) of the alternate allele.
-\item \code{varlen}: The length (in bp) of the variant.
-\item \code{total_depth}: The total read depth at this position, excluding
-N-calls.
-\item \code{vaf}: The variant allele fraction. Calculated as
-\code{alt_depth}/\code{depth_col} where \code{depth_col} can be \code{total_depth} or \code{depth}.
-\item \code{is_germline}: TRUE or FALSE. Flags ostensible germline mutations
-(\code{vaf} > \code{vaf_cutoff}).
-\item \code{ref_depth}: The total read depth at the position calling for the
-reference allele. Calculated as \code{depth_col} - \code{alt_depth} where
-\code{depth_col} can be \code{total_depth}or \code{depth}.
-\item \code{subtype}: The substitution type for the snv variant
-(12-base spectrum; e.g. A>C)
-\item \code{short_ref}: The reference base at this position.
-\item \code{normalized_subtype}: The C/T-based substitution type for the
-snv variant (6-base spectrum; e.g. A>C -> T>G).
-\item \code{normalized_ref}: The reference base in C/T-base notation for
-this position (e.g. A -> T).
-\item \code{context_with_mutation}: The substitution type fo the snv variant
+\item \code{short_ref}: The reference base at the start position.
+\item \code{normalized_ref}: The short_ref in C/T-base notation for
+this position (e.g. A -> T, G -> C).
+\item \code{context} The trinucleotide context at this position. Consists
+of the reference base and the two flanking bases (e.g. TAC).
+\item \code{normalized_context}: The trinucleotide context in C/T base
+notation for this position (e.g. TAG -> CTA).
+\item \code{variation_type} The type of variant (snv, mnv, insertion,
+deletion, complex, sv, no_variant, ambiguous, uncategorized).
+\item \code{subtype} The substitution type for the snv variant (12-base spectrum;
+e.g. A>C).
+\item \code{normalized_subtype} The C/T-based substitution type for the snv
+variant (6-base spectrum; e.g. A>C -> T>G).
+\item \code{context_with_mutation}: The substitution type for the snv variant
 including the two flanking nucleotides (192-trinucleotide spectrum;
 e.g. \verb{T[A>C]G})
 \item \code{normalized_context_with_mutation}: The C/T-based substitution
-type for the snv variant including the two flanking nucleotide
-(96-base spectrum e.g. \verb{T[A>C]G} -> \verb{C[T>G]A})
-\item \code{normalized_context}: The trinucleotide context in C/T base
-notation for this position (e.g. TAG -> CTA).
+type for the snv variant including the two flanking nucleotides
+(96-base spectrum e.g. \verb{T[A>C]G} -> \verb{C[T>G]A}).
+\item \code{nchar_ref}: The length (in bp) of the reference allele.
+\item \code{nchar_alt}: The length (in bp) of the alternate allele.
+\item \code{varlen}: The length (in bp) of the variant.
+\item \code{ref_depth}: The depth of the reference allele. Calculated as
+\code{total_depth} - \code{alt_depth}, if applicable.
+\item \code{vaf} : The variant allele fraction. Calculated as
+\code{alt_depth}/\code{total_depth}.
 \item \code{gc_content}: \% GC of the trinucleotide context at this position.
+\item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
+\item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
+the same as that of at least one other row for the same sample.
 }
 }
 \description{
-Imports a .mut file into the local R environment.
+Imports tabular mutation file into the local R environment.
+}
+\examples{
+# Example: Import a single mutation file. This library was sequenced with
+# Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
+# consists of 20 2.4kb targets = 48kb of sequence.
+example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+# We will create an example metadata table for this data.
+sample_meta <- data.frame(sample = "dna00996.1",
+                          dose = "50",
+                          dose_group = "High")
+# Import the data
+imported_example_data <- import_mut_data(mut_file = example_data,
+                                         sample_data = sample_meta,
+                                         regions = "TSpanel_mouse",
+                                         genome = "mm10",
+                                         species = "mouse",
+                                         masked_BS_genome = FALSE)
 }

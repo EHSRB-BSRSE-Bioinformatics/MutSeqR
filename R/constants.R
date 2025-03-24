@@ -8,66 +8,55 @@ op <- list()
 op$column <- list()
 op$column$alternate <- "alt"
 op$column$alt_value <- "alt"
-op$column$alt_depth <- "alt_depth"
 op$column$alt_read_depth <- "alt_depth"
 op$column$var_depth <- "alt_depth"
 op$column$variant_depth <- "alt_depth"
+op$column$vd <- "alt_depth"
 op$column$sequence_context <- "context"
 op$column$trinucleotide_context <- "context"
 op$column$flanking_sequence <- "context"
-op$column$contig <- "contig"
 op$column$chr <- "contig"
 op$column$chromosome <- "contig"
 op$column$seqnames <- "contig"
-op$column$depth <- "depth"
-op$column$end <- "end"
+op$column$dp <- "depth"
 op$column$end_position <- "end"
-op$column$is_snp <- "is_snp"
-op$column$lower_ci <- "lower_ci"
-op$column$mut_depth <- "mut_depth"
-op$column$mut_freq <- "mut_freq"
 op$column$n_calls <- "no_calls"
 op$column$n_depth <- "no_calls"
 op$column$no_depth <- "no_calls"
 op$column$reference <- "ref"
 op$column$ref_value <- "ref"
-op$column$sample <- "sample"
 op$column$sample_name <- "sample"
 op$column$sample_id <- "sample"
-op$column$start <- "start"
 op$column$pos <- "start"
 op$column$position <- "start"
-op$column$mutation_subtype <- "subtype"
 op$column$total_depth <- "total_depth"
 op$column$informative_somatic_depth <- "total_depth"
-op$column$upper_ci <- "upper_ci"
-op$column$vaf <- "vaf"
-op$column$type <- "variation_type"
-op$column$mutation_type <- "variation_type"
-op$column$variant_type <- "variation_type"
 op$site$columns <- c("contig", "start")
 op$mut_count_method <- "min"
 op$processed_required_mut_cols <-
   c("alt_depth",
-    "total_depth",
     "variation_type",
     "subtype",
+    "normalized_subtype",
+    "context_with_mutation",
+    "normalized_context_with_mutation",
+    "normalized_ref",
+    "short_ref",
     "context",
-    "vaf")
+    "normalized_context")
 op$base_required_mut_cols <-
   c("contig",
     "start",
     "end",
     "sample",
     "ref",
-    "alt",
-    "alt_depth")
+    "alt")
 op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 
 #' Values accepted for mutation subtypes
 #'
 #' These values are used to enable user input to translate to columns in a
-#' mut file 
+#' mut file
 #'
 #' @format A vector with corresponding values
 #' @export
@@ -156,4 +145,33 @@ denominator_dict <- c(
   "base_12" = "short_ref",
   "base_96" = "normalized_context",
   "base_192" = "context"
+)
+#' A list of reference contexts at different resolutions
+#' @format A list with corresponding values
+#' @export
+context_list <- list(
+  none = NA,
+  type = NA,
+  base_6 = c("C", "T"),
+  base_12 = c("A", "C", "G", "T"),
+  base_96 = c("ACA", "ACC", "ACG", "ACT", "ATA", "ATC", "ATG", "ATT",
+              "CCA", "CCC", "CCG", "CCT", "CTA", "CTC", "CTG", "CTT",
+              "GCA", "GCC", "GCG", "GCT", "GTA", "GTC", "GTG", "GTT",
+              "TCA", "TCC", "TCG", "TCT", "TTA", "TTC", "TTG", "TTT"),
+  base_192 = c("AAA", "AAC", "AAG", "AAT",
+               "ACA", "ACC", "ACG", "ACT",
+               "AGA", "AGC", "AGG", "AGT",
+               "ATA", "ATC", "ATG", "ATT",
+               "CAA", "CAC", "CAG", "CAT",
+               "CCA", "CCC", "CCG", "CCT",
+               "CGA", "CGC", "CGG", "CGT",
+               "CTA", "CTC", "CTG", "CTT",
+               "GAA", "GAC", "GAG", "GAT",
+               "GCA", "GCC", "GCG", "GCT",
+               "GGA", "GGC", "GGG", "GGT",
+               "GTA", "GTC", "GTG", "GTT",
+               "TAA", "TAC", "TAG", "TAT",
+               "TCA", "TCC", "TCG", "TCT",
+               "TGA", "TGC", "TGG", "TGT",
+               "TTA", "TTC", "TTG", "TTT")
 )

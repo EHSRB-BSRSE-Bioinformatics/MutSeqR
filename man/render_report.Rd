@@ -18,7 +18,3 @@ None
 This function reads a configuration file in YAML format, extracts the parameters,
 and renders an R Markdown document using the specified parameters.
 }
-\examples{
-read_config_and_render("config.yaml", "output.html")
-
-}

@@ -8,9 +8,6 @@
 #'
 #' @return None
 #'
-#' @examples
-#' read_config_and_render("config.yaml", "output.html")
-#'
 #' @importFrom utils install.packages
 #' @export
 render_report <- function(config_filepath, output_file) {
