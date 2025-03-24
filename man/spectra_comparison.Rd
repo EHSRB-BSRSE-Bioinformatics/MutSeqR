@@ -78,7 +78,8 @@ example_data <- readRDS(example_file)
 
 # Calculate the mutation frequency data at the 6-base resolution
 mf_data <- calculate_mf(mutation_data = example_data,
-                        cols_to_group = "dose_group")
+                        cols_to_group = "dose_group",
+                         subtype_resolution = "base_6")
 # Create the contrasts table
 contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
                         col2 = rep("Control", 3))

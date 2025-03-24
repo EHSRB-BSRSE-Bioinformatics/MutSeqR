@@ -21,7 +21,6 @@
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges start end
 #' @importFrom IRanges IRanges ranges
-#' @importFrom GenomeInfoDb seqnames
 #' @importFrom dplyr filter mutate
 #' @importFrom plyranges find_overlaps
 #' @importFrom rlang .data
@@ -31,6 +30,9 @@ get_CpG_mutations <- function(regions, mut_data,
                               include_no_variants = TRUE,
                               motif = "CG") {
 
+   if (!requireNamespace("GenomeInfoDb", quietly = TRUE)) {
+    stop("Package GenomeInfoDb is required. Please install from Bioconductor.")
+  }
   # Step 3 - find all the CpG sites within those regions identified
   all_CpGs <- list()
   for (i in seq_along(regions)) {
