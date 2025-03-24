@@ -2,6 +2,18 @@
   [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
   <!-- badges: end -->
   
+# Change Report:
+Major changes on 2025-03-24
+- *filter_mut()* function added to workflow. This function filters the mutation_data: germline identification via vaf_cutoff, depth correction, and filtering variants based on regions have all been moved from the import functions to filter_mut(). calculate_mf(), plot_bubbles(), and signature_fitting() filter out variants using the filter_mut column instead of the is_germline column.
+- calculate_mut_freq() is renamed to calculate_mf()
+- total_depth and depth are no longer required for import
+- calculate_mf() no longer requires depth. Users may choose to 1) calculate depth from mutation data, 2) supply precalculated depth values in a separate table, 3) No depth, mf is not calculated, only mutation sums.
+- plot_spectra, plot_trinucleotide, and spectra_comparison are now supplied with mf_data instead of the mutation data.
+- Example data has been added: Currently 44Mb
+
+  
+For full details on function utility, see below.
+
 # MutSeqR: Error-corrected Next-Generation Sequencing (ECS) Analysis For Mutagenicity Assessment
 
 ## What is ECS?
