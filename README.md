@@ -331,11 +331,18 @@ Upon import of mutation data, columns are created that facilitate the grouping o
 | `base_192` | `context_with_mutation` | `context` |
 
 The function will also calculate the the proportion of mutations for each subtype, normalized to the `total_depth`:
+
+
 $$P_s = \frac{\left(\frac{M_s}{D_s}\right)}{\sum_s \left(\frac{M_s}{D_s}\right)}$$
+
+
 Where $P_s$ is the normalized mutation proportion for subtype $s$. $M_s$ is the group mutation sum for subtype $s$. $D_s$ is the group sum of the `subtype_depth` for subtype $s$.
 
 If total_depth is not available for the mutation data, `calculate_mf()` will return the subtype mutation counts per group. It will also calculate subtype proportion, without normalizing to the total_depth:
+
 $$P'_s = \frac{M_s}{M_{total}}$$
+
+
 Where, $P'_s$ is the non-normalized mutation proportion of subtype $s$. $M_s$ is the group mutation sum for subtype $s$. $M_{total}$ is the total mutation sum for the group.
 
 
