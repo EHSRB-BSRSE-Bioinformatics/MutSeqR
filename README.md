@@ -474,7 +474,7 @@ plot <- plot_mf(mf_data = mf_data,
                 group_order_input = "dose_group")
 
 ```
-![plot_mf](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot3.10.png)
+![plot_mf](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot3.10.png)
 
 
 Calculate and plot the mean MF for a user-defined group using `plot_mean_mf()`.
@@ -490,7 +490,7 @@ plot_mean <- plot_mean_mf(mf_data = mf_data,
                           plot_indiv_vals = TRUE,
                           add_labels = "none")
 ```
-![plot_mean_mf](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot3.11.png)
+![plot_mean_mf](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot3.11.png)
 
 ## Generalized Linear Modelling
 An important component of analysing mutagencity data is how MF changes based on experimental variables.
@@ -583,7 +583,7 @@ model_by_dose$summary
 model_by_dose$point_estimates
 model_by_dose$pairwise_comparisons
 ```
-![model_mf diagnostic plots](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot4.1.png)
+![model_mf diagnostic plots](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot4.1.png)
 
 *Example 4.2. Model the effects of dose and genomic locus on MF. Seqencing for the example data was done on a panel of 20 genomic targets. We will determine if the MF of each BaP dose group is significantly different from the Control individually for all 20 targets. In this model, dose group and target label will be our fixed effects. We include the interaction between the two fixed effects. Because sample will be a repeated measure, we will use it as a random effect.*
 ```{r}
@@ -631,7 +631,7 @@ model_by_target$anova
 model_by_target$point_estimates
 model_by_target$pairwise_comparisons
 ```
-![model_mf diagnostic plots](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot4.2.png)
+![model_mf diagnostic plots](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot4.2.png)
 
 ### Visualize Model Results
 Plot the results of `model_mf()` using `plot_model_mf()`. This function will create a bar or line plot of the point estimates. Users can include the estimated standard error as error bars with `plot_error_bars` and add significance labels based on the pairwise comparisons with `plot_signif`. The function can plot model results with up to two fixed effects. Users must specify which fixed effect should be represented on the x-axis with `x_effect`.
@@ -651,7 +651,7 @@ plot <- plot_model_mf(model_by_dose,
                       x_label = "Dose Group",
                       y_label = "Estimated Mean Mutation Frequency (mutations/bp)")
 ```
-![plot_model_mf Dose Model](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot4.1.2.png)
+![plot_model_mf Dose Model](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot4.1.2.png)
 
 *Example 4.2. model by dose and genomic locus. In this example, we only made comparisons between dose groups. For each contrast, we held the label (target) constant. Thus, we will set the ref_effect to dose_group so that significance labels are generated to indicate differences in dose, not label.*
 ```{r}
@@ -683,7 +683,7 @@ plot <- plot_model_mf(model = model_by_target,
                                          "#118ab2"))
 plot <- plot + ggplot2::theme(axis.text.x = element_text(angle = 90))
 ```
-![plot_model_mf Dose and Target Model](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot4.2.2.png)
+![plot_model_mf Dose and Target Model](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot4.2.2.png)
 
 ## Benchmark Dose Modelling
 Dose-response models are essential for quatitative risk assessment of mutagenicity, as they provide a framework to evaluate the levels at which exposure to a substance might cause an adverse effect. The **benchmark dose** (BMD) is a dose that produces a predetermined change in the measured response, defined as the **benchmark response** (BMR). The BMD is used as a point of departure to derive human health-based guidance values to inform regulatory risk assessment such as the reference dose (RfD), the derived no-effect level (DNEL) or the acceptable daily intake (ADI).
@@ -809,7 +809,7 @@ plot <- plot_ci(data = plot_results,
                 x_lab = "Dose (mg/kg-bw/d)",
                 y_lab = "BMD Method")
 ```
-![BMD CI plot](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot5.3.png)
+![BMD CI plot](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot5.3.png)
 
 ## Mutation Spectra Analysis
 The mutation spectra is the pattern of mutation subtypes within a sample or group. The mutation spectra can inform on the mechanisms involved in mutagenesis.
@@ -1101,7 +1101,7 @@ plot <- plot_spectra(mf_data = mf_data,
                      x_lab = "Dose Group",
                      y_lab = "Subtype Proportion")                       
 ```
-![plot_spectra](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot6.5.png)
+![plot_spectra](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot6.5.png)
 
 *Example 6.6. Plot the base_6 mutation spectra per sample, with hierarchical clustering. For this example we have created a new sample column with more intuitive sample names: new_sample_id. These names correspond to their associated dose groups. We will see that samples largly cluster within their dose groups.*
 ```{r}
@@ -1125,7 +1125,7 @@ plot <- plot_spectra(mf_data = mf_data,
                      x_lab = "Sample",
                      y_lab = "Subtype Proportion")                          
 ```                        
-![plot_spectra with Clustering](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot6.6.png)
+![plot_spectra with Clustering](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot6.6.png)
 
 The 96-base SNV mutation subtypes can be vizualised using `plot_trinucleotide()`. This function creates a bar plot of the 96-base SNV spectrum for all levels of a user-defined group. Data can represent subtype mutation count (`sum`), frequency (`mf`), or `proportion`. Aesthetics are consistent with COSMIC trinucleotide plots. Plots are automatically saved to the specified output directory.
 
@@ -1149,7 +1149,7 @@ plot_trinucleotide(mf_96 = mf_data,
                    mf_type = "min",
                    output_path = "file.path.to.output.folder")                       
 ```
-![plot_trinucleotide High Dose](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot6.7.png)
+![plot_trinucleotide High Dose](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot6.7.png)
 
 
 Another option for vizualizing the base-96 mutation spectra is `plot_trinucleotide_heatmap()`. This function creates a heatmap of the 96-base SNV proportions. Plots can be facetted by additional grouping variables. Heatmaps are useful for making comparisons between experimental variables when information density becomes too high to represent using traditional plots.
@@ -1177,7 +1177,7 @@ plot <- plot_trinucleotide_heatmap(mf_data = mf_data,
                                    group_col = "sample",
                                    facet_col = "dose_group")            
 ```
-![plot_trinucleotide_heatmap](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot6.8.png)
+![plot_trinucleotide_heatmap](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot6.8.png)
 
 ## Visualize Recurrent Mutations
 `plot_bubbles` is used to visually represent the distribution and density of recurrent mutations. Each mutation is in a given group is represented by a bubble whose size is scaled on either the `alt_depth` or the `vaf`. Thus a highly reccurent mutation is represented by a large bubble. These plots make it easy to determine if MFmax is driven by a few highly recurrent mutations versus serveral moderately recurrent mutations.
@@ -1195,7 +1195,7 @@ plot <- plot_bubbles(mutation_data = example_data,
                      facet_col = "dose_group",
                      color_by = "normalized_subtype")
 ```
-![plot_bubbles](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/smm_seq/inst/extdata/Example_files/plot7.png)
+![plot_bubbles](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot7.png)
 
 ## Retrieve Sequences of genomic target regions
 `get_seq()` will retrive raw nucleotide sequences for specified genomic intervals. This function will install an appropriate BS genome library to retrieve sequences based on species, genome, and masked parameter.
