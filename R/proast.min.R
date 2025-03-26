@@ -1,12 +1,6 @@
 # Concatenated files for minimal proast package
 #' Run dose-response modeling using PROAST.
-#' @param odt The data.
-#' @param ans.all The results from a previous run of PROAST. If you have already run PROAST and want to continue with the same data, provide the results here.
-#' @param er A TRUE/FALSE value specifying whether you want to run the analysis from the beginning (i.e., TRUE) or continue from a previous run (i.e., FALSE).
-#' @param resize A TRUE/FALSE value specifying whether you want to resize the graphics window. Default is FALSE.
-#' @param scale.ans A TRUE/FALSE value specifying whether you want to scale the response data. Default is FALSE.
-#' @param const.var A TRUE/FALSE value specifying whether you want to use a constant variance. Default is FALSE.
-#' @param show.warnings A TRUE/FALSE value specifying whether you want to show warnings. Default is FALSE.
+#'
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
 #' @param datatype Non-interactive mode parameter. What type of response data do you want to consider? Options are 'continuous, individual data'.
 #' @param model_choice Non-interactive mode parameter. Do you want to fit a single model or fit various nested families of models? Options are 'single model', 'select model 3 or 5 from various families of models', 'select model 3 from various nested families of models', 'select model 5 from various nested families of models', 'select model 15 in terms of RPF'. Recommended: 'select model 3 or 5 from various families of models'.
@@ -3873,7 +3867,7 @@ f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, 
             filename <- paste0(filename, "_", name.wapp)
         }
         if (svg.plots & is.null(filename)) {
-            grDevices::svg(paste(plotprefix, name.wapp, ".svg", sep = ""), 
+            svg(paste(plotprefix, name.wapp, ".svg", sep = ""), 
                 aa, bb)
         } else if (output_type == "jpeg") {
             filename <- paste0(filename, ".jpeg")
@@ -13455,7 +13449,8 @@ parse_PROAST_output <- function(result) {
         message("Handling model averaging case")
         ma_info <- result[[i]]$MA
         ma_response <- result[[i]]$res.name
-        ma_row <- c("Model averaging", "N/A", "N/A",
+        ma_ced <- median(ma_info$ced.ma.matr)
+        ma_row <- c("Model averaging", model$CES, ma_ced,
                     ma_info$conf.int.ma$BMDlower.ma,
                     ma_info$conf.int.ma$BMDupper.ma,
                     "N/A", "N/A", "N/A", "N/A", "N/A", ma_response)
@@ -13528,7 +13523,9 @@ parse_PROAST_output <- function(result) {
           message("Handling model averaging case for ", subgroup)
           ma_info <- result[[i]]$MA
           ma_response <- result[[i]]$res.name
-          ma_row <- c("Model averaging", subgroup, "N/A", "N/A",
+          covar_no <- which(subgroups == subgroup)
+          ma_ced <- median(ma_info$ced.ma.matr[, covar_no])
+          ma_row <- c("Model averaging", subgroup, model$CES, ma_ced,
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDlower.ma,
           ma_info$conf.int.ma[ma_info$conf.int.ma$subgroup == subgroup,]$BMDupper.ma,
           "N/A", "N/A", "N/A", "N/A", "N/A", ma_response)
@@ -13536,10 +13533,12 @@ parse_PROAST_output <- function(result) {
 
           # Model weights
           model_names <- ma_info$Vmodelname
-          model_weights[[length(model_weights) + 1]] <- data.frame('Selected Model' = model_names,
-                                                               'Response' = rep(ma_response, length(model_names)),
-                                                               'Covariates' = rep(subgroup, length(model_names)),
-                                                               weights = ma_info$Vweight$weight)
+          model_weights[[length(model_weights) + 1]] <- data.frame(
+            'Selected Model' = model_names,
+            'Response' = rep(ma_response, length(model_names)),
+            'Covariates' = rep(subgroup, length(model_names)),
+            weights = ma_info$Vweight$weight
+          )
         }
       }
     }
