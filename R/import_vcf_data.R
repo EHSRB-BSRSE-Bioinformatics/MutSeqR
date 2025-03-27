@@ -50,23 +50,22 @@
 #' Default is tab-delimited.
 #' @param regions An optional file containing metadata of genomic regions.
 #' Region metadata will be joined with mutation data and variants will be
-#' checked for overlap with the regions. Metadata for TwinStrand Mutagenesis
-#' Panels are stored in the package files and can be accessed using the values
-#' `TSpanel_human`, `TSpanel_mouse`, and `TSpanel_rat`. If you have a custom
-#' range of genomic regions, set the value to `custom` and provide the regions
-#' file using the `custom_regions` argument. If you do not wish to include
-#' region metadata, set value to `none`.
-#' @param custom_regions If `regions` is set to
-#' "custom", provide  the regions metadata. Can be a file path or a
-#' data frame. Required columns are `contig`, `start`, and `end`.
-#' @param rg_sep The delimiter for importing the `custom_regions.`
-#' Default is tab-delimited.
-#' @param is_0_based_rg A logical variable. Indicates whether the
-#' position coordinates in the `custom_regions` are 0 based (TRUE) or
-#' 1 based (FALSE). If TRUE, positions will be converted to 1-based.
-#' @param range_buffer Extend the range of your regions
+#' checked for overlap with the regions. `regions` can be either a file path,
+#' a data frame, or a GRanges object. File paths will be read using the rg_sep.
+#' Users can also choose from the built-in TwinStrand's Mutagenesis Panels by
+#' inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat". Required
+#' columns for the regions file are "contig", "start", and "end". For a GRanges
+#' object, the required columns are "seqnames", "start", and "end". Default is
+#' NULL.
+#' @param rg_sep The delimiter for importing the custom_regions. The default is
+#' tab-delimited "\t".
+#' @param is_0_based_rg A logical variable. Indicates whether the position
+#' coordinates in `regions` are 0 based (TRUE) or 1 based (FALSE).
+#' If TRUE, positions will be converted to 1-based (start + 1).
+#' Need not be supplied for TSpanels. Default is TRUE.
+#' @param padding Extend the range of your regions
 #' in both directions by the given amount. Ex. Structural variants and
-#' indels may start outside of the regions. Adjust the `range_buffer` to
+#' indels may start outside of the regions. Adjust the `padding` to
 #' include these variants in your region's ranges.
 #' @param genome The genome assembly version of the reference genome. This is
 #' required if your data does not include a context column. The
@@ -150,17 +149,17 @@
 #' @importFrom Biostrings getSeq
 #' @importFrom IRanges IRanges
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
-#' @importFrom BiocGenerics strand
+#' @importFrom BiocGenerics strand start end
+#' @importFrom GenomeInfoDb seqnames
 #' @export
 #'
 import_vcf_data <- function(vcf_file,
                             sample_data = NULL,
                             sd_sep = "\t",
                             regions = "none",
-                            custom_regions = NULL,
                             rg_sep = "\t",
                             is_0_based_rg = FALSE,
-                            range_buffer = 0,
+                            padding = 0,
                             genome = NULL,
                             species = NULL,
                             masked_BS_genome = FALSE,
@@ -308,7 +307,7 @@ import_vcf_data <- function(vcf_file,
   required_columns <- setdiff(op$base_required_mut_cols, "alt")
   columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
   na_columns_required <- intersect(columns_with_na,
-                                  required_columns)
+                                   required_columns)
   if (length(na_columns_required) > 0) {
     stop(paste0("Error: NA values were found within the following required
                 column(s): ", paste(na_columns_required, collapse = ", "),
@@ -331,35 +330,20 @@ import_vcf_data <- function(vcf_file,
     end.field = "end"
   )
 
-  if (regions != "none") {
+  if (!is.null(regions)) {
 
     # load regions file
-      regions_df <- MutSeqR::load_regions_file(regions, custom_regions, rg_sep)
-      regions_df$in_regions <- TRUE
-
+    regions_gr <- MutSeqR::load_regions_file(regions,
+                                             rg_sep,
+                                             is_0_based_rg)
+    regions_gr$in_regions <- TRUE
     # Apply range buffer
-    regions_df <- regions_df %>%
-      dplyr::mutate(start = .data$start - range_buffer,
-                    end = .data$end + range_buffer)
-
-    # adjust start position to be 1-based for TSpanels
-    if (regions %in% c("TSpanel_mouse", "TSpanel_human", "TSpanel_rat")) {
-      is_0_based_rg <- TRUE
-    }
-
-    # Turn region data into GRanges
-    region_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-      df = regions_df,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = is_0_based_rg
-    )
+    BiocGenerics::start(regions_gr) <- pmax(BiocGenerics::start(regions_gr) - padding, 1)
+    BiocGenerics::end(regions_gr) <- BiocGenerics::end(regions_gr) + padding
 
     # Join mutation data and region data using overlap
     mut_ranges <- plyranges::join_overlap_left_within_directed(mut_ranges,
-                                                               region_ranges,
+                                                               regions_gr,
                                                                suffix = c("",
                                                                           "_regions"))
 
@@ -384,9 +368,11 @@ import_vcf_data <- function(vcf_file,
     extract_context <- function(mut_gr,
                                 bsgenome) {
       # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = seqnames(mut_gr),
-                                                ranges = IRanges::IRanges(start = start(mut_gr) - 1, 
-                                                end = start(mut_gr) + 1), 
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = GenomeInfoDb::seqnames(mut_gr),
+                                                ranges = IRanges::IRanges(
+                                                  start = BiocGenerics::start(mut_gr) - 1,
+                                                  end = BiocGenerics::start(mut_gr) + 1
+                                                ),
                                                 strand = BiocGenerics::strand(mut_gr))
       # Extract the sequences from the BSgenome
       sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
@@ -484,7 +470,7 @@ import_vcf_data <- function(vcf_file,
   total_depth_exists <- "total_depth" %in% colnames(dat)
   depth_exists <- "depth" %in% colnames(dat)
   no_calls_exists <- "no_calls" %in% colnames(dat)
-  ad_columns <- grep("^ad_", colnames(dat), value = TRUE)
+  ad_columns <- grep("^AD_", colnames(dat), value = TRUE)
 
   if (!total_depth_exists) {
     if (no_calls_exists && depth_exists) {
@@ -496,13 +482,10 @@ import_vcf_data <- function(vcf_file,
       if (depth_exists) {
         dat <- dat %>%
           dplyr::mutate(
-            total_depth = .data$depth,
-            vaf = .data$alt_depth / .data$total_depth)
+            total_depth = .data$depth)
         warning("Could not find total_depth column.\n
-          Could not calculate total_depth\n
-          No Allelic Depth (AD) field.\n
-          The 'total_depth' will be set to 'depth' (DP)\n
-          You can review the definitions of each column in the README")
+          Could not calculate total_depth: No Allelic Depth (AD) field.\n
+          The 'total_depth' will be set to 'depth' (DP). You can review the definitions of each column in the README")
       } else {
         warning("Could not find an appropriate depth column.\n
             Some package functionality may be limited.\n")
@@ -538,7 +521,7 @@ import_vcf_data <- function(vcf_file,
 
   # Add empty filter column
   if (!"filter_mut" %in% colnames(dat)) {
-   dat$filter_mut <- FALSE
+    dat$filter_mut <- FALSE
   }
 
   if (output_granges) {
@@ -549,7 +532,7 @@ import_vcf_data <- function(vcf_file,
       start.field = "start",
       end.field = "end",
       starts.in.df.are.0based =  FALSE)
-      return(gr)
+    return(gr)
   } else {
     return(dat)
   }

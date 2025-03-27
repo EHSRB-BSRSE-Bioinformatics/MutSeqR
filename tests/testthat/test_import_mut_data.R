@@ -36,8 +36,7 @@ test_that("import_mut_data function correctly imports mutation data", {
 
   # Call the import_mut_data function on the test data
   mut_data <- import_mut_data(mut_file = tmpfile,
-                              regions = "custom",
-                              custom_regions = tmpfile2,
+                              regions = tmpfile2,
                               species = "mouse",
                               genome = "mm10",
                               output_granges = FALSE)

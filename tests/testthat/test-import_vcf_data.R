@@ -11,10 +11,10 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
 
   # Call the import_mut_data function on the test data
   mut_data <- suppressWarnings(import_vcf_data(vcf_file = test_file,
-                              regions = "TSpanel_mouse",
-                              species = "mouse",
-                              genome = "mm10",
-                              output_granges = FALSE))
+                                               regions = "TSpanel_mouse",
+                                               species = "mouse",
+                                               genome = "mm10",
+                                               output_granges = FALSE))
 
   expect_true(is(mut_data, "data.frame"),
               info = "Check if the resulting object is a data frame")

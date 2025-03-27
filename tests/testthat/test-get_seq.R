@@ -12,8 +12,7 @@ test_that("get_seq retrieves sequences and creates GRanges object", {
   sep = "\t", row.names = FALSE
   )
 
-  gr <- get_seq(regions = "custom",
-                custom_regions = tmpfile,
+  gr <- get_seq(regions = tmpfile,
                 species = "mouse",
                 genome = "mm10",
                 is_0_based = FALSE)

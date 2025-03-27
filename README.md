@@ -3,6 +3,9 @@
   <!-- badges: end -->
   
 # Change Report:
+Changes: 2025-03-27
+- Removed custom_regions parameter. Utility is now incorporated by regions parameter.
+
 Major changes on 2025-03-24
 - *filter_mut()* function added to workflow. This function filters the mutation_data: germline identification via vaf_cutoff, depth correction, and filtering variants based on regions have all been moved from the import functions to filter_mut(). calculate_mf(), plot_bubbles(), and signature_fitting() filter out variants using the filter_mut column instead of the is_germline column.
 - calculate_mut_freq() is renamed to calculate_mf()
@@ -141,8 +144,8 @@ imported_example_data <- import_mut_data(mut_file = example_data,
 ```
 
 #### Variants within target regions
-Similar to sample metadata, you may supply a file containing the metadata of genomic regions to the `regions` & `custom_regions` parameters. Region metadata will be joined with mutation data by checking for overlap between the target region ranges and the position of the record.
-The `regions` parameter can be set to one of TwinStrand's DuplexSeq™ Mutagenesis Panels; *TSpanel_mouse*, *TSpanel_human*, or *TSpanel_rat*. If you are using an alternative panel then you may set the `regions` parameter to  "custom" and  you will add your target regions' metadata using a `custom_regions`. You may supply your custom_regions file as either a data frame or a file path, which will be read in. Required columns are `contig`, `start`, and `end`. Use parameters to indicate your file's delimiter and whether the region coordinates are 0-based or 1-based. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify regions, then set the `regions` parameter to *none*.
+Similar to sample metadata, you may supply a file containing the metadata of genomic regions to the `regions` parameter. Region metadata will be joined with mutation data by checking for overlap between the target region ranges and the position of the record.
+The `regions` parameter can be either a file path, a data frame, or a GRanges object. File paths will be read using the `rg_sep`. Users can also choose from the built-in TwinStrand DuplexSeq™ Mutagenesis Panels by inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat". Required columns for the regions file are "contig", "start", and "end". In a GRanges object, the required columns are "seqnames", "start", and "end". Users must indicate whether the region coordinates are 0-based or 1-based with `is_0_based_rg`. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify regions, then set the `regions` parameter to NULL (default).
 
 *Example 1.3. Add the metadata for TwinStrand's Mouse Mutagenesis panel to our example vcf file.*
 ```{r}
@@ -153,7 +156,7 @@ imported_example_data <- import_vcf_data(vcf_file = example_file,
                                          masked_BS_genome = FALSE,
                                          regions = "TSpanel_mouse")
 ```                                         
-*To see an example of the region files, you can load the TSpanels:*
+*To see an example of the region files, you can load the TSpanels. This will output a GRanges object.*
 ```{r}
 region_example <- load_regions_file("TSpanel_mouse")
 ```
@@ -215,7 +218,7 @@ The `filter_mut()` function offers some filtering options to ensure the quality 
 Users may use the `filter_mut()` function to flag or remove variants based on their own custom columns. Any record that contains the `custom_filter_val`value within the `custom_filter_col` column of the mutation data will be either flagged in the `filter_mut` column or, if specified by the `custom_filter_rm` parameter, removed from the mutation data.
 
 ### Filtering by Regions
-Users may remove rows that are either within or outside of specified genomic regions. Provide the region ranges to the `regions` parameter. This may be provided as either a file path or a data frame. `regions` must contain `contig`, `start`, and `end`.  The function will check whether each record falls within the given regions. Users can define how this filter should be used with `regions_filter`. `region_filter = "remove_within"` will remove all rows whose positions overlaps with the provided regions. `region_filter = "keep_within"` will remove all rows whose positions are outside of the provided regions. By default, records that are > 1bp must start and end within the regions to count as being within the region. `allow_half_overlap = TRUE` allow records that only start or end within the regions but extend outside of them to be counted as being within the region.
+Users may remove rows that are either within or outside of specified genomic regions. Provide the region ranges to the `regions` parameter. This may be provided as either a file path, data frame, or a GRanges object. `regions` must contain `contig` (or `seqnames` for GRanges), `start`, and `end`.  The function will check whether each record falls within the given regions. Users can define how this filter should be used with `regions_filter`. `region_filter = "remove_within"` will remove all rows whose positions overlaps with the provided regions. `region_filter = "keep_within"` will remove all rows whose positions are outside of the provided regions. By default, records that are > 1bp must start and end within the regions to count as being within the region. `allow_half_overlap = TRUE` allow records that only start or end within the regions but extend outside of them to be counted as being within the region. Twinstrand Mutagenesis Panels may be used by setting `regions` to one of "TSpanel_human", "TSpanel_mouse", or "TSpanel_rat".
 
 ### Retain your filtered rows
 `return_filtered_rows = TRUE` The function will return both the filtered mutation data and the rows that were removed/flagged in a seperate data frame. The two dataframes will be returned inside of a list, with names `mutation_data` and `filtered_rows`. Default is FALSE.
@@ -227,7 +230,7 @@ Users may remove rows that are either within or outside of specified genomic reg
 - *Depth correction*
 - *Filter germline variants: vaf < 0.01*
 - *Filter snvs overlapping with germline variants and have their `alt_depth` removed from their `total_depth`.*
-- *Remove records outside of the TwinStrand Mouse Mutagenesis Panel. Here we are using `load_regions_file() `to grab the TSpanel_mouse regions from the package files*
+- *Remove records outside of the TwinStrand Mouse Mutagenesis Panel.*
 - *Filter variants that contain "EndRepairFillInArtifact" in the "filter" column. Their `alt_depth` will be removed from their `total_depth`.*
 ```{r}
 # load the example data
@@ -241,7 +244,7 @@ filtered_example_mutation_data <- filter_mut(
   mutation_data = example_data,
   correct_depth = TRUE,
   vaf_cutoff = 0.01,
-  regions = load_regions_file("TSpanel_mouse"),
+  regions = "TSpanel_mouse",
   regions_filter = "keep_within",
   custom_filter_col = "filter",
   custom_filter_val = "EndRepairFillInArtifact",
@@ -1207,7 +1210,7 @@ plot <- plot_bubbles(mutation_data = example_data,
 ## Retrieve Sequences of genomic target regions
 `get_seq()` will retrive raw nucleotide sequences for specified genomic intervals. This function will install an appropriate BS genome library to retrieve sequences based on species, genome, and masked parameter.
 
-TwinStrand's Mutagenesis Panels are stored in package files and can easily be retrieved. 
+Supply regions with a file path, data frame or GRanges object containing the specified genomic intervals. TwinStrand's Mutagenesis Panels are stored in package files and can easily be retrieved. 
 
 Sequences are returned within a *GRanges* object.
 
@@ -1220,9 +1223,8 @@ regions_seq <- get_seq(regions = "TSpanel_mouse")
 ```{r}
 # We will load the TSpanel_human regions file as an example
 human <- load_regions_file("TSpanel_human")
-regions_seq <- get_seq(regions = "custom",
-                       custom_regions = human,
-                       is_0_based = TRUE,
+regions_seq <- get_seq(regions = human,
+                       is_0_based_rg = FALSE,
                        species = "human",
                        genome = "hg38",
                        masked = FALSE,

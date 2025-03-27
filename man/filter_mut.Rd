@@ -79,12 +79,13 @@ that match any value in custom_filter_val will be removed from the
 mutation_data. If FALSE, filter_mut will be set to TRUE for those rows.}
 
 \item{regions}{Remove rows that are within or outside of specified regions.
-Provide either a data frame or a file path of the specified intervals. Your
-regions must contain "contig", "start", and "end".  Use the
-\code{regions_filter} parameter to specify whether rows within the regions
-should be kept versus removed. To use one of the TSpanels, set the regions
-parameter as follows: \code{regions = load_regions_file("TSpanel_mouse")}.
-Change the species as needed for human/rat.}
+\code{regions} can be either a file path, a data frame, or a GRanges object
+containing the genomic ranges by which to filter. File paths will be read
+using the rg_sep. Users can also choose from the built-in TwinStrand's
+Mutagenesis Panels by inputting "TSpanel_human",  "TSpanel_mouse", or
+"TSpanel_rat". Required columns for the regions file are "contig", "start",
+and "end". In a GRanges object, the required columns are "seqnames",
+"start", and "end".}
 
 \item{regions_filter}{Specifies how the provided \code{regions} should be
 applied to \code{mutation_data}. Acceptable values are "remove_within" or
@@ -98,12 +99,13 @@ in your \code{regions}, but extend outside of them in either direction will
 be included in the filter. If FALSE, only rows that start and end within the
 \code{regions} will be included in the filter. Default is FALSE.}
 
-\item{rg_sep}{The delimiter for importing the \code{regions} file, if
-applicable. Default is tab-delimited.}
+\item{rg_sep}{The delimiter for importing the custom_regions. The default is
+tab-delimited "\t".}
 
-\item{is_0_based_rg}{A logical value indicating whether the genomic intervals
-you provided in \code{regions} are 0_based. Set this to TRUE if you are
-using one of the TSpanels.}
+\item{is_0_based_rg}{A logical variable. Indicates whether the position
+coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).
+If TRUE, positions will be converted to 1-based (start + 1).
+Need not be supplied for TSpanels. Default is TRUE.}
 
 \item{rm_filtered_mut_from_depth}{A logical value. If TRUE, the function will
 subtract the \code{alt_depth} of rows that were flagged by the
@@ -143,35 +145,38 @@ value for the no_variant is removed.
 }
 \examples{
 # Load example data
-example_file <- system.file("extdata", "example_mutation_data.rds", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "example_mutation_data.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 # Filter the data
-## Basic Usage: correct the depth and filter out germline variants
+# Basic Usage: correct the depth and filter out germline variants
 filter_example_1 <- filter_mut(mutation_data = example_data,
                                correct_depth = TRUE,
                                vaf_cutoff = 0.01)
-## Remove rows outside of specified regions (TwinStand Mouse Mutagenesis Panel)
+# Remove rows outside of the TwinStand Mouse Mutagenesis Panel regions
 filter_example_2 <- filter_mut(mutation_data = example_data,
                                correct_depth = TRUE,
                                vaf_cutoff = 0.01,
-                               regions = load_regions_file("TSpanel_mouse"),
+                               regions = "TSpanel_mouse",
                                regions_filter = "keep_within")
-## Apply a custom filter to flag rows with "EndRepairFillInArtifact" in the column 'filter'
+# Apply a custom filter to flag rows with "EndRepairFillInArtifact"
+# in the column 'filter'
 filter_example_3 <- filter_mut(mutation_data = example_data,
                                correct_depth = TRUE,
                                vaf_cutoff = 0.01,
-                               regions = load_regions_file("TSpanel_mouse"),
+                               regions = "TSpanel_mouse",
                                regions_filter = "keep_within",
                                custom_filter_col = "filter",
                                custom_filter_val = "EndRepairFillInArtifact",
                                custom_filter_rm = FALSE)
-## Flag snv variants that overlap with germline mnv variants.
-## Subtract the alt_depth of these variants from their total_depth (treat them as N-calls).
-## Return all the flagged/removed rows in a seperate data frame
+# Flag snv variants that overlap with germline mnv variants.
+# Subtract the alt_depth of these variants from their total_depth (treat them as N-calls).
+# Return all the flagged/removed rows in a seperate data frame
 filter_example_4 <- filter_mut(mutation_data = example_data,
                                correct_depth = TRUE,
                                vaf_cutoff = 0.01,
-                               regions = load_regions_file("TSpanel_mouse"),
+                               regions = "TSpanel_mouse",
                                regions_filter = "keep_within",
                                custom_filter_col = "filter",
                                custom_filter_val = "EndRepairFillInArtifact",
