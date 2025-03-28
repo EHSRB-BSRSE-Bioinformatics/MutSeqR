@@ -218,9 +218,7 @@ import_mut_data <- function(mut_file,
         stop("Error: All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning(paste("Warning: The following files in the specified
-                      directory are empty and will not be imported: ",
-                      empty_list_str))
+        warning(paste("Warning: The following files in the specified directory are empty and will not be imported: ", empty_list_str))
       }
 
       # Remove empty files from mut_files
@@ -344,14 +342,13 @@ import_mut_data <- function(mut_file,
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions.\n
-        To remove these rows, use the filter_mut() function")
+      warning("Warning: ", false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
     }
   }
   # Create a context column, if needed: BSGenome
   if (!context_exists) {
     if (is.null(genome) || is.null(species)) {
-      stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
+      stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the appropriate BS genome.")
     }
     ref_genome <- install_ref_genome(organism = species,
                                      genome = genome,
@@ -467,15 +464,10 @@ import_mut_data <- function(mut_file,
   }
   if (!total_depth_exists && !no_calls_exists && depth_exists) {
     dat <- dplyr::rename(dat, total_depth = "depth")
-    warning("Could not find total_depth column.\n
-            Could not calculate total_depth\n
-            Will use depth column as total_depth\n
-            Renamed 'depth' to 'total_depth'.\n 
-            You can review the definitions of each column in the README")
+    warning("Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n")
   }
   if (!total_depth_exists && !depth_exists) {
-    warning("Could not find an appropriate depth column.\n
-            Some package functionality may be limited.\n")
+    warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
   }
 
   # Check for duplicated rows
@@ -485,15 +477,11 @@ import_mut_data <- function(mut_file,
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose
-    position was the same as that of at least one other row for the same
-    sample.")
+    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to
-      overlapping positions. Use the filter_mut() function to correct the
-      total_depth for these instances.")
+      warning("The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances.")
     }
   }
 

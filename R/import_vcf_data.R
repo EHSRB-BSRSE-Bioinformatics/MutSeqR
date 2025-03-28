@@ -352,8 +352,7 @@ import_vcf_data <- function(vcf_file,
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions.\n
-        To remove these rows, use the filter_mut() function")
+      warning("Warning: ", false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function")
     }
   }
   # Create a context column, if needed
@@ -483,12 +482,9 @@ import_vcf_data <- function(vcf_file,
         dat <- dat %>%
           dplyr::mutate(
             total_depth = .data$depth)
-        warning("Could not find total_depth column.\n
-          Could not calculate total_depth: No Allelic Depth (AD) field.\n
-          The 'total_depth' will be set to 'depth' (DP). You can review the definitions of each column in the README")
+        warning("Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README")
       } else {
-        warning("Could not find an appropriate depth column.\n
-            Some package functionality may be limited.\n")
+        warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
       }
     }
   }
@@ -500,15 +496,11 @@ import_vcf_data <- function(vcf_file,
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose
-    position was the same as that of at least one other row for the same
-    sample.")
+    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to
-      overlapping positions. Use the filter_mut() function to correct the
-      total_depth for these instances.")
+      warning("The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances.")
     }
   }
 
