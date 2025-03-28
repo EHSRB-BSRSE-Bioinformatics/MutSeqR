@@ -68,6 +68,10 @@ params:
     label: "The file path to the mutation data."
     input: text
     value: "mut"
+  mut_sep:
+    label: "The delimiter to import the mutation data"
+    input: text
+    value: "\t"
   sample_data:
     label: "The file path to the sample metadata."
     input: text
@@ -156,11 +160,9 @@ Report prepared for: `r params$researcher_name`
 ***
 
 ```{r retrieve-parameter-profiles}
-profile_params <- get_params(profile = params$ecs_profile,
-                             custom_regions = params$custom_regions,
-                             custom_filtering_regions = params$custom_filtering_regions)
-params <- c(params, profile_params)
-
+ecs_params <- get_params(profile = params$ecs_profile,
+                         custom_regions = params$custom_regions,
+                         custom_regions_filter = params$custom_regions_filter)
 ```
 ## Import the Mutation Data
 
@@ -175,10 +177,10 @@ if (params$file_type == "table") {
   mutation_data <- withCallingHandlers(
     import_mut_data(mut_file = params$mutation_file,
                     mut_sep = params$mut_sep,
-                    is_0_based_mut = params$is_0_based_mut,
+                    is_0_based_mut = ecs_params$is_0_based_mut,
                     sample_data = params$sample_data,
                     sd_sep = params$sd_sep,
-                    regions = params$regions,
+                    regions = ecs_params$regions,
                     rg_sep = params$rg_sep,
                     is_0_based_rg = params$is_0_based_rg,
                     species = params$species,
@@ -187,18 +189,18 @@ if (params$file_type == "table") {
       warnings_list <<- c(warnings_list, w$message)
     }
   )
-  params$no_depth <- any(grepl(no_depth_warning,
-                               warnings_list,
-                               fixed = TRUE))
-  params$correct_depth <- any(grepl(correct_depth_warning,
-                                    warnings_list,
-                                    fixed = TRUE))
+  no_depth <- any(grepl(no_depth_warning,
+                        warnings_list,
+                        fixed = TRUE))
+  correct_depth <- any(grepl(correct_depth_warning,
+                             warnings_list,
+                             fixed = TRUE))
 } else if (params$mut_file_type == "vcf") {
   mutation_data <- withCallingHandlers(
     import_vcf_data(vcf_file = params$mutation_file,
                     sample_data = params$sample_data,
                     sd_sep = params$sd_sep,
-                    regions = params$regions,
+                    regions = ecs_params$regions,
                     rg_sep = params$rg_sep,
                     is_0_based_rg = params$is_0_based_rg,
                     species = params$species,
@@ -207,57 +209,57 @@ if (params$file_type == "table") {
       warnings_list <<- c(warnings_list, w$message)
     }
   )
-  params$no_depth <- any(grepl(no_depth_warning, warnings_list, fixed = TRUE))
-  params$correct_depth <- any(grepl(correct_depth_warning,
-                                    warnings_list,
-                                    fixed = TRUE))
+  no_depth <- any(grepl(no_depth_warning, warnings_list, fixed = TRUE))
+  correct_depth <- any(grepl(correct_depth_warning,
+                             warnings_list,
+                             fixed = TRUE))
 }
 
 
 ```
 
 # Filter Mutation Data
-Flagging variants with a VAF > than `r params$vaf_cutoff`
+Flagging variants with a VAF > than `r ecs_params$vaf_cutoff`
 
-Flagging SNVs that overlap with germline MNVs: `r params$snv_in_germ_mnv`
+Flagging SNVs that overlap with germline MNVs: `r ecs_params$snv_in_germ_mnv`
 
-Removing variants with an abnormal VAF: `r params$rm_abnormal_vaf`
+Removing variants with an abnormal VAF: `r ecs_params$rm_abnormal_vaf`
 
-Using a custom filter: `r !is.null(params$custom_filter_col)`
-```{r echo=FALSE, eval=!is.null(params$custom_filter_col)}
-cat("Filtering on column: ", params$custom_filter_col, " with value: ", params$custom_filter_val)
-cat("Variants are ", ifelse(params$custom_filter_rm, " removed", "flagged"), " when value matched: ", params$custom_filter_val)
+Using a custom filter: `r !is.null(ecs_params$custom_filter_col)`
+```{r echo=FALSE, eval=!is.null(ecs_params$custom_filter_col)}
+cat("Filtering on column: ", ecs_params$custom_filter_col, " with value: ", ecs_params$custom_filter_val)
+cat("Variants are ", ifelse(ecs_params$custom_filter_rm, " removed", "flagged"), " when value matched: ", ecs_params$custom_filter_val)
 ``` 
 
-Removing records based on a regions file: `r !is.null(params$filtering_regions)`
-```{r echo=FALSE, eval=!is.null(params$filtering_regions)}
-cat("Filtering on regions file: ", params$filtering_regions)
-cat("Records within the specified filtering regions are", ifelse(params$regions_filter == "keep_within", " retained", " removed"), " from the dataset.")
-cat("Records must start and end within regions to be included: ", !params$allow_half_overlap)
+Removing records based on a regions file: `r !is.null(ecs_params$filtering_regions)`
+```{r echo=FALSE, eval=!is.null(ecs_params$filtering_regions)}
+cat("Filtering on regions file: ", ecs_params$filtering_regions)
+cat("Records within the specified filtering regions are", ifelse(ecs_params$regions_filter == "keep_within", " retained", " removed"), " from the dataset.")
+cat("Records must start and end within regions to be included: ", !ecs_params$allow_half_overlap)
 
 ```
 
-Flagged variants (except germline) have their alt_depth subtracted from their total_depth: `r params$rm_filtered_mut_from_depth`
+Flagged variants (except germline) have their alt_depth subtracted from their total_depth: `r ecs_params$rm_filtered_mut_from_depth`
 
 Flagged variants are not included in the mutation counts, but their total_depth is retained for frequency calculations.
 All filtered records are returned in *filtered_variants.xlsx.*
 
-Correcting the total_depth for overlapping positions: `r params$correct_depth`
+Correcting the total_depth for overlapping positions: `r correct_depth`
 ```{r filter-mutation-data, echo=TRUE, message=TRUE}
 filtered_mutation_data <- filter_mut(mutation_data,
-                                     correct_depth = params$correct_depth,
-                                     vaf_cutoff = params$vaf_cutoff,
-                                     snv_in_germ_mnv = params$snv_in_germ_mnv,
-                                     rm_abnormal_vaf = params$rm_abnormal_vaf,
-                                     custom_filter_col = params$custom_filter_col,
-                                     custom_filter_val = params$custom_filter_val,
-                                     custom_filter_rm = params$custom_filter_rm,
-                                     regions = params$filtering_regions,
+                                     correct_depth = correct_depth,
+                                     vaf_cutoff = ecs_params$vaf_cutoff,
+                                     snv_in_germ_mnv = ecs_params$snv_in_germ_mnv,
+                                     rm_abnormal_vaf = ecs_params$rm_abnormal_vaf,
+                                     custom_filter_col = ecs_params$custom_filter_col,
+                                     custom_filter_val = ecs_params$custom_filter_val,
+                                     custom_filter_rm = ecs_params$custom_filter_rm,
+                                     regions = ecs_params$filtering_regions,
                                      rg_sep = params$rg_sep_filter,
-                                     regions_filter = params$regions_filter,
-                                     allow_half_overlap = params$allow_half_overlap,
+                                     regions_filter = ecs_params$regions_filter,
+                                     allow_half_overlap = ecs_params$allow_half_overlap,
                                      is_0_based_rg = params$is_0_based_rg_filter,
-                                     rm_filtered_mut_from_depth = params$rm_filtered_mut_from_depth,
+                                     rm_filtered_mut_from_depth = ecs_params$rm_filtered_mut_from_depth,
                                      return_filtered_data = TRUE)
 filtered_variants <- filtered_mutation_data$filtered_rows
 write_excel(data = filtered_variants,

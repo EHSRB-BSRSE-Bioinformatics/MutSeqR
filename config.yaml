@@ -2,7 +2,6 @@
 DS_TSpanel:
   ecs_technology: Duplex Sequencing
   is_0_based_mut: yes
-  mut_sep: "\t"
   vaf_cutoff: 0.01
   snv_in_germ_mnv: yes
   rm_abnormal_vaf: no
@@ -18,7 +17,6 @@ DS_TSpanel:
 DS_custom:
   ecs_technology: Duplex Sequencing
   is_0_based_mut: yes
-  mut_sep: "\t"
   vaf_cutoff: 0.01
   snv_in_germ_mnv: yes
   rm_abnormal_vaf: no
