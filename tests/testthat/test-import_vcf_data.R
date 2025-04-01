@@ -4,7 +4,7 @@ library(testthat)
 test_that("import_vcf_datafunction correctly imports vcf files", {
   # Create temporary test file with example mutation data
 
-  test_file <- system.file("extdata",
+  test_file <- system.file("extdata", "Example_files",
                            "example_import_vcf_data_cleaned.vcf.bgz",
                            package = "MutSeqR")
 

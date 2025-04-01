@@ -30,7 +30,9 @@
 #' subtype_resolution = "base_96".
 #' @examples
 #' # Load example data
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #'
 #' # Use a temporary directory to save the example plots.

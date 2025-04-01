@@ -129,7 +129,9 @@
 #' }
 #' @examples
 #' # Load example data
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #'
 #' # Example 1 Calculate mutation frequency by sample.

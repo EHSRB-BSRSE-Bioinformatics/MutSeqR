@@ -1,0 +1,17 @@
+Duplex_Sequencing:
+  ecs_technology: Duplex Sequencing
+  is_0_based_mut: yes
+  rg_sep: "/t"
+  is_0_based_rg: yes
+  vaf_cutoff: 0.01
+  snv_in_germ_mnv: yes
+  rm_abnormal_vaf: no
+  custom_filter_col: filter
+  custom_filter_val: EndRepairFillInArtifact
+  custom_filter_rm: no
+  regions_filter: "keep_within"
+  allow_half_overlap: no
+  rm_filtered_mut_from_depth: yes
+  caculate_depth: yes
+  do_regions_analysis: yes
+  region_col: label

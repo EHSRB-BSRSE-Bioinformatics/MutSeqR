@@ -1,0 +1,15 @@
+params:
+  projectdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/" # The project Directory. If Null, will use the working-directory.
+  outputdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/example_output" # The output Directory If Null, will use the working directory.
+  project_title: "MutSeqR Analysis" # The Project Title
+  researcher_name: "FirstName LastName" # The name of the lead researcher
+  user_name: "FirstName LastName" # The name of the one running the analysis
+  project_description: "This is a test of the Rmd report generation" # Optional description of the project.
+  config_profile: "Duplex Sequencing Mouse Mutagenesis Panel" # Load a config file of default parameters for a given profile. Currently only supports Duplex Sequencing analysis. Sub Mouse for Human or Rat.
+  species: "mouse" # The species of the model organism.
+  genome: "mm10" # The reference genome.
+  file_type: "table" # Format of the mutation data to be imported: table or vcf.
+  mutation_file: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/mut" # The file path to the mutation data. Directory or single file.
+  mut_sep: "/t" # The delimiter for importing mutation data in table format. Default is tab-delimited.
+  sample_data: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/sample_data.txt" # The file path to the sample metadata.
+  sd_sep: "/t" # The delimiter for importing the sample metadata. Default is tab-delimited.

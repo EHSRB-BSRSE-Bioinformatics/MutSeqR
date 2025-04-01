@@ -19,7 +19,9 @@
 #' `filter_mut` will be excluded from the output.
 #' @importFrom dplyr rename filter select mutate relocate
 #' @examples
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' temp_output <- tempdir()
 #' write_mutation_calling_file(mutation_data = example_data,
@@ -138,7 +140,9 @@ write_mutation_calling_file <- function(mutation_data,
 #' `filter_mut` will be excluded from the output. Mutations will be summed
 #' across the groups specified in the `group` argument.
 #' @examples
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' temp_output <- tempdir()
 #' write_mutational_matrix(mutation_data = example_data,

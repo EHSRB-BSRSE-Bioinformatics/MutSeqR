@@ -112,7 +112,10 @@ Specify the appropriate BS genome with which to populate the context column by s
 
 *Example 1.1. Import the example .vcf.bgz file. Provided is the genomic vcf.gz file for sample dna00996.1. It is comprised of a record for all 48K positions sequenced for the Mouse Mutagenesis Panel with the alt_depth and the tota_depth values for each record.*
 ```{r}
-example_file <- system.file("extdata", "example_import_vcf_data_cleaned.vcf.bgz", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "Example_files",
+                            "example_import_vcf_data_cleaned.vcf.bgz",
+                            package = "MutSeqR")
 sample_metadata <- data.frame(sample = "dna00996.1",
                           dose = "50",
                           dose_group = "High")
@@ -127,7 +130,10 @@ imported_example_data <- import_vcf_data(vcf_file = example_file,
 
 *Example 1.2. Import the example tabular data. This is the equivalent file to the example vcf file. It is stored as an .rds file. We will load the data frame and supply it the `import_mut_data`. The mut_file parameter can accept file paths or data frames as input.*
 ```{r}
-example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "Example_files",
+                            "example_import_mut_data.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 sample_metadata <- data.frame(sample = "dna00996.1",
                               dose = "50",
@@ -234,7 +240,7 @@ Users may remove rows that are either within or outside of specified genomic reg
 - *Filter variants that contain "EndRepairFillInArtifact" in the "filter" column. Their `alt_depth` will be removed from their `total_depth`.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -275,7 +281,7 @@ Mutation counts and `total_depth` are summed across groups that can be designate
 *Example 3.1. Calculate mutation sums and frequencies per sample. The file example_mutation_data_filtered.rds is the output of filter_mut() from Example 2*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -425,12 +431,12 @@ mf_data <- calculate_mf(
   cols_to_group = "sample",
   subtype_resolution = "base_6",
   calculate_depth = FALSE,
-  precalc_depth = system.file("extdata",
+  precalc_depth = system.file("extdata", "Example_files",
                               "precalc_depth_base_6_example.text",
                               package = "MutSeqR")
 )
 # To view the example precalc depth file:
-depth <- read.table(file = system.file("extdata", "precalc_depth_base_6_example.text", package = "MutSeqR"), header = TRUE)
+depth <- read.table(file = system.file("extdata", "Example_files", "precalc_depth_base_6_example.text", package = "MutSeqR"), header = TRUE)
 View(depth)
 ```
 
@@ -458,7 +464,7 @@ You can visualize the results of `calculate_mf` using the `plot_mf()` and `plot_
 *Example 3.10. Plot the Min and Max MF per sample, coloured and ordered by dose group.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -566,7 +572,7 @@ The function will output a list of results.
 *Example 4.1. Model the effect of dose on MF. Our example data consists of 24 mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups are : Control, Low, Medium, and High. We will determine if the MFmin of each BaP dose group is significantly increased from that of the Control group.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -598,7 +604,7 @@ model_by_dose$pairwise_comparisons
 *Example 4.2. Model the effects of dose and genomic locus on MF. Seqencing for the example data was done on a panel of 20 genomic targets. We will determine if the MF of each BaP dose group is significantly different from the Control individually for all 20 targets. In this model, dose group and target label will be our fixed effects. We include the interaction between the two fixed effects. Because sample will be a repeated measure, we will use it as a random effect.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -724,7 +730,7 @@ The function will output a data frame of final results, including a BMD estimate
 *Example 5.1. Calculate the BMD with model averaging for a 50% relative increase in MF from control. This will be calculated for both MFmin and MFmax*.
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -780,7 +786,7 @@ The function will return the BMD with its upper and lower confidence intervals f
 *Example 5.2. Calculate the BMD with model averaging for a 50% relative increase in MF from control. This will be calculated for both MFmin and MFmax*.
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -843,7 +849,7 @@ The function will output the $G^{2}$ statistic and p-value for each specified co
 *Example 6.1. In our example data, we are studying the mutagenic effect of BaP. Our samples were exposed to three doses of a BaP (Low, Medium, High), or to the vehicle control (Control). We will compare the base_6 snv subtypes, alongside non-snv variants, of each of the three dose groups to the control. In this way we can investigate if exposure to BaP leads to significant spectral differences.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -904,7 +910,7 @@ The virtual environment can be specified with the `env_name` parameter. If no su
 *Example 6.2. Determine the COSMIC SBS signatures associated with each BaP dose group.*
 ```{r}
 # Load the example data.
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1046,7 +1052,7 @@ Users may choose to use the [SigProfiler Webtool](https://cancer.sanger.ac.uk/si
 *Example 6.3. Analyze the COSMIC SBS signatures contributing to each of the 24 samples using the SigProfiler Web Tool. Output a mutation calling file that can be uploaded to the webtool.*
 ```{r}
 # Load example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1064,7 +1070,7 @@ write_mutation_calling_file(mutation_data = example_data,
 
  *Example 6.4.  Analyze the COSMIC SBS signatures contributing to each dose group using the SigProfiler Web Tool. Output a mutational matrix that can be uploaded to the webtool.*
 ```{r}
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1084,7 +1090,7 @@ The mutation spectra can be visualized with  `plot_spectra` which will create a 
 *Example 6.5. Plot the base_6 proportions for each dose group.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1116,7 +1122,7 @@ plot <- plot_spectra(mf_data = mf_data,
 *Example 6.6. Plot the base_6 mutation spectra per sample, with hierarchical clustering. For this example we have created a new sample column with more intuitive sample names: new_sample_id. These names correspond to their associated dose groups. We will see that samples largly cluster within their dose groups.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1142,7 +1148,7 @@ The 96-base SNV mutation subtypes can be vizualised using `plot_trinucleotide()`
 *Example 6.7. plot the base_96 mutation spectra proportions for each dose group.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1167,7 +1173,7 @@ Another option for vizualizing the base-96 mutation spectra is `plot_trinucleoti
 *Example 6.8. Plot the 96-base SNV spectrum for each sample, facetted by dose group.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1196,7 +1202,7 @@ Plots can be facetted by user-defined groups, and bubbles can be coloured by any
 *Example 7. Plot mutations per dose group, bubbles coloured by base-6 subtype*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1245,7 +1251,7 @@ In addition to data frames, `write_excel()` will also extract the mf_data, point
 *Example 9.1. Write MF data to excel workbook.*
 ```{r}
 # Load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1291,7 +1297,7 @@ write_excel(model,
 Mutation data can be written to a VCF file for downstream applications with `write_vcf_from_mut()`.
 
 ```{r}
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

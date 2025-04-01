@@ -27,18 +27,24 @@ load_regions_file <- function(regions,
   } else if (is.character(regions)) {
     if (regions == "TSpanel_human") {
       regions_df <- read.table(system.file("extdata",
+                                           "inputs",
+                                           "metadata",
                                            "human_mutagenesis_panel_hg38.txt",
                                            package = "MutSeqR"),
                                header = TRUE)
       is_0_based_rg <- TRUE
     } else if (regions == "TSpanel_mouse") {
       regions_df <- read.table(system.file("extdata",
+                                           "inputs",
+                                           "metadata",
                                            "mouse_mutagenesis_panel_mm10.txt",
                                            package = "MutSeqR"),
                                header = TRUE)
       is_0_based_rg <- TRUE
     } else if (regions == "TSpanel_rat") {
       regions_df <- read.table(system.file("extdata",
+                                           "inputs",
+                                           "metadata",
                                            "rat_mutagenesis_panel_rn6.txt",
                                            package = "MutSeqR"),
                                header = TRUE)

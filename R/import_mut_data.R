@@ -129,7 +129,9 @@
 #' # Example: Import a single mutation file. This library was sequenced with
 #' # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 #' # consists of 20 2.4kb targets = 48kb of sequence.
-#' example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_import_mut_data.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' # We will create an example metadata table for this data.
 #' sample_meta <- data.frame(sample = "dna00996.1",

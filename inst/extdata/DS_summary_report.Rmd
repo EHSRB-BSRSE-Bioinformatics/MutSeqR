@@ -12,86 +12,18 @@ output:
   pdf_document:
     toc: yes
 params:
-  projectdir:
-    label: "The Project Directory"
-    input: text
-    value: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse"
-  output_path:
-    label: "The output directory"
-    input: text
-    value: "example_output"
-  project_title:
-    label: "Title of the project"
-    input: text
-    value: "MutSeqR Analysis"
-  researcher_name:
-    label: "Name of the lead researcher."
-    input: text
-    value: "FirstName LastName"
-  user_name:
-    label: "The name of the person running the analysis." 
-    input: text
-    value: "FirstName LastName"
-  project_description:
-    label: "Description of the project, optional."
-    input: text
-    value: "This is a test of the Rmd report generation"
-  ecs_profile:
-    label: "Use a preset profile for a given ECS technology."
-    input: select
-    choices: ["Duplex Sequencing Human Mutagenesis Panel", 
-              "Duplex Sequencing Mouse Mutagenesis Panel",
-              "Duplex Sequencing Rat Mutagenesis Panel",
-              "Duplex Sequencing Custom Panel",
-              "Non-targeted Sequencing",
-              "Custom Parameters"]
-    value: Duplex Sequencing Mouse Mutagenesis Panel"
-  analysis_profile:
-    label: "Use preset parameters for a given analysis profile."
-    input: select
-    choices: ["dose-response analysis", "one factor analysis"]
-    value: "dose-response analysis"
-  species: 
-    label: "Model Species"
-    input: text
-    value: "mouse"
-  genome:
-    label: "The reference genome"
-    input: text
-    value: "mm10"
-  file_type:
-    label: "Type of mutation data file"
-    input: select
-    choices: ["table", "vcf"]
-    value: "table"
-  mutation_file:
-    label: "The file path to the mutation data."
-    input: text
-    value: "mut"
-  mut_sep:
-    label: "The delimiter to import the mutation data"
-    input: text
-    value: "\t"
-  sample_data:
-    label: "The file path to the sample metadata."
-    input: text
-    value: "sample_data.txt"
-  sd_sep:
-    label: "The delimiter to import the sample data file."
-    input: text
-    value: "\t"
   custom_regions:
     label: "Provide the file path to your regions file (for Custom panels)."
     input: text
     value: NULL
   rg_sep:
-    label: "The delimiter to import the (custom) regions file."
+    label: "The delimiter to import the custom regions file."
     input: text
     value: "\t"
   is_0_based_rg:
-    label: "The regions file is 0-based"
+    label: "The cutsom regions file is 0-based"
     input: checkbox
-    value: "TRUE"
+    value: TRUE
   custom_filtering_regions:
     label: "Provide the file path to your regions file that will be used for filtering (for Custom panels)."
     input: text
@@ -102,13 +34,13 @@ params:
     choices: ["keep_within", "remove_within"]
     value: "keep_within"
   rg_sep_filter:
-    label: "The delimiter to import the (custom) regions file for filtering."
+    label: "The delimiter to import the custom regions file for filtering."
     input: text
     value: "\t"
   is_0_based_rg_filter:
     label: "The custom_filtering_regions file is 0-based"
     input: checkbox
-    value: "TRUE"
+    value: TRUE
 ---
 
 ```{r load_libraries, warning=F, echo=F}
@@ -122,24 +54,28 @@ if (!rmarkdown::pandoc_available()) {
 }
 ```
 
-```{r Set Directories}
-if (is.null(params$projectdir)) {
+```{r Set Directories, message=TRUE}
+if (is.null(params$projectdir) || params$projectdir == "") {
   project_dir <- file.path(here::here())
 } else {
   project_dir <- file.path(params$projectdir)
 }
+
+message("Project Directory: ", project_dir)
+
 if (!dir.exists(project_dir)) {
-  dir.create(project_dir)
+  dir.create(project_dir, recursive = TRUE, showWarnings = TRUE)
 }
 knitr::opts_knit$set(root.dir = project_dir)
 
-if (is.null(params$output_path)) {
-  output_dir <- file.path(project_dir, "output")
+if (is.null(params$output_path) || params$output_path == "") {
+  output_dir <- file.path(project_dir)
 } else {
   output_dir <- file.path(params$output_path)
 }
+message("Output Directory: ", output_dir)
 if (!dir.exists(output_dir)) {
-  dir.create(output_dir)
+  dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
 }
 ```
 
@@ -159,14 +95,16 @@ Report prepared for: `r params$researcher_name`
 
 ***
 
-```{r retrieve-parameter-profiles}
-ecs_params <- get_params(profile = params$ecs_profile,
-                         custom_regions = params$custom_regions,
-                         custom_regions_filter = params$custom_regions_filter)
+```{r retrieve-parameter-profiles, echo = TRUE}
+
+print(params)
+print(ecs_params)
+correct_depth <- TRUE
 ```
+
 ## Import the Mutation Data
 
-```{r import-data, echo = TRUE}
+```{r import-data, echo = TRUE, eval = FALSE}
 
 no_depth_warning <- "Could not find an appropriate depth column. Some package functionality may be limited.\n"
 correct_depth_warning <-  "The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances."
@@ -232,10 +170,10 @@ cat("Variants are ", ifelse(ecs_params$custom_filter_rm, " removed", "flagged"),
 ``` 
 
 Removing records based on a regions file: `r !is.null(ecs_params$filtering_regions)`
-```{r echo=FALSE, eval=!is.null(ecs_params$filtering_regions)}
+```{r echo=FALSE, eval= !is.null(ecs_params$filtering_regions)}
 cat("Filtering on regions file: ", ecs_params$filtering_regions)
 cat("Records within the specified filtering regions are", ifelse(ecs_params$regions_filter == "keep_within", " retained", " removed"), " from the dataset.")
-cat("Records must start and end within regions to be included: ", !ecs_params$allow_half_overlap)
+# cat("Records must start and end within regions to be included: ", !ecs_params$allow_half_overlap)
 
 ```
 
@@ -245,7 +183,7 @@ Flagged variants are not included in the mutation counts, but their total_depth 
 All filtered records are returned in *filtered_variants.xlsx.*
 
 Correcting the total_depth for overlapping positions: `r correct_depth`
-```{r filter-mutation-data, echo=TRUE, message=TRUE}
+```{r filter-mutation-data, echo=TRUE, message=TRUE, eval = FALSE}
 filtered_mutation_data <- filter_mut(mutation_data,
                                      correct_depth = correct_depth,
                                      vaf_cutoff = ecs_params$vaf_cutoff,
