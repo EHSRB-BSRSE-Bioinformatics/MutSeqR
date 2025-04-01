@@ -1,4 +1,3 @@
-# Profile: Duplex Sequencing on TS Mutagensis Panel.
 DS_TSpanel:
   ecs_technology: Duplex Sequencing
   is_0_based_mut: yes
