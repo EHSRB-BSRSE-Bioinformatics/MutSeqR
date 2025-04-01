@@ -1,34 +1,3 @@
-#' Retrieve and set up parametres for a given analysis profile
-#'
-#' @description This function sets up the parameters for the specified
-#' analysis profile. It also loads specific data.
-#' @param profile the ecs profile
-#' @param species the species
-#' @param custom_regions the custom regions
-#' @param custom_regions_filter the way in whih the filter using the regions.
-#' @return a list of parameters
-#' @export
-get_params <- function(profile, species, custom_regions, custom_regions_filter) {
-  if (!requireNamespace("yaml", quietly = TRUE)) {
-    install.packages("yaml")
-  }
-  message("Reading config file...")
-  config <- yaml::read_yaml(system.file("config.yaml", package = "MutSeqR"), eval.expr = TRUE)
-
-  if (grepl("^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$", profile)) {
-    message("Setting up parameters for Duplex Sequencing on the Mutagenesis Panel...")
-    params <- config$DS_TSpanel
-    params$regions <- paste0("TSpanel_", tolower(sub("Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel", "\\1", profile, perl = TRUE)))
-    params$filtering_regions <- params$regions
-  } else if (profile == "Duplex Sequencing Custom Panel") {
-    message("Setting up parameters for Duplex Sequencing on a Custom Panel...")
-    params <- config$DS_custom
-    params$regions <- custom_regions
-    params$regions_filter <- custom_regions_filter
-  }
-  return(params)
-}
-
 #' Read configuration file and render R Markdown document
 #'
 #' @description This function reads a configuration file in YAML format,
@@ -36,15 +5,18 @@ get_params <- function(profile, species, custom_regions, custom_regions_filter) 
 #' specified parameters.
 #'
 #' @param config_filepath The path to the configuration file.
-
-#' @param output_file The path to the output file.
-#'
+#' @param output_file The name of the output file. Will be saved to the
+#' outputdir in config params.
+#' @param output_format. The format of the output file. Options are
+#' "html_document" (default), "pdf_document", or "all".
 #' @return None
 #'
 #' @importFrom utils install.packages
+#' @importFrom here here
 #' @export
 render_report <- function(config_filepath = "./inst/extdata/inputs/summary_config.yaml",
-                          output_file = "./output.html") {
+                          output_file = "./Rmd_Test.html",
+                          output_format = "html_document") {
   # Check if yaml package is available, install if not
   if (!requireNamespace("yaml", quietly = TRUE)) {
     install.packages("yaml")
@@ -57,10 +29,10 @@ render_report <- function(config_filepath = "./inst/extdata/inputs/summary_confi
 
   # Check if MutSeqR package is available, install if not
   if (!requireNamespace("MutSeqR", quietly = TRUE)) {
-    install.packages("MutSeqR")
+    install.packages("MutSeqR") # Fix: Will depend on where it gets published.
   }
 
-  # take config_filepath and make sure it is a valid file, convert to path if needed
+  # Validate config_filepath
   config_filepath <- normalizePath(config_filepath)
   if (!file.exists(config_filepath)) {
     stop("Config file not found")
@@ -68,17 +40,51 @@ render_report <- function(config_filepath = "./inst/extdata/inputs/summary_confi
 
   # Read the configuration file
   config <- yaml::yaml.load_file(config_filepath)
+  params <- config$params
 
-  # Use provided params or default to list if none provided
-  #params <- ifelse(!is.null(config$params), config$params, list())
+  # Set directories
+  if (is.null(params$projectdir)) {
+    params$projectdir <- here::here()
+  }
+  if (!file.exists(normalizePath(params$projectdir))) {
+    stop("Your project directory doesn't exist")
+  }
+  if (is.null(params$outputdir)) {
+    params$outputdir <- here::here()
+  }
+  if (!file.exists(normalizePath(params$outputdir))) {
+    dir.create(normalizePath(params$outputdir))
+  }
+  # Load the profile config, if applicable.
+  if (params$config_profile != "None") {
+    # Load the config file
+    profile_config <- yaml::yaml.load_file(normalizePath("./inst/extdata/inputs/profile_config.yaml")) # Fix: Change to a system file once testing is complete.
+    if (grepl("^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$",
+              params$config_profile)) {
+      # Join the DS parameters with params list.
+      params <- c(params, profile_config$Duplex_Sequencing)
+      # Define the regions parameter for TS panels.
+      params$regions <- paste0("TSpanel_",
+        tolower(sub("Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel",
+        "\\1", params$config_profile, perl = TRUE))
+      )
+      message("Setting up parameters for Duplex Sequencing on ", params$regions)
+      params$filtering_regions <- params$regions
+    }
+  }
   # Construct the path to the .Rmd file within the installed package directory
   rmd_file <- "DS_summary_report.Rmd"
-  rmd_path <- system.file("extdata", rmd_file, package = "MutSeqR", mustWork = TRUE)
+  rmd_path <- system.file("extdata", rmd_file,
+                          package = "MutSeqR", mustWork = TRUE)
+
   # Rendering the R Markdown document
   rmarkdown::render(
     input = rmd_path,
+    output_dir = params$outputdir,
     output_file = output_file,
-    params = config$params,
-    envir = new.env()
+    output_format = output_format,
+    params = params,
+    envir = new.env(),
+    knit_root_dir = params$projectdir
   )
 }

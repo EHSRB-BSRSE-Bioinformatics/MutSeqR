@@ -29,8 +29,8 @@
 #' @param group_order_input The order of the samples/groups if group_order is
 #' "custom". The column name by which to arrange samples/groups if group_order
 #' is "arranged"
-#' @param labels The data labels to display on the plot. Either "count", "MF", or
-#' "none". Count labels display the number of mutations, MF labels display
+#' @param labels The data labels to display on the plot. Either "count", "MF",
+#' or "none". Count labels display the number of mutations, MF labels display
 #' the mutation frequency.
 #' @param scale_y_axis The scale of the y axis. Either "linear" or "log".
 #' @param x_lab The label for the x axis.

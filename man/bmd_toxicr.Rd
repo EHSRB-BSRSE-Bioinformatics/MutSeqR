@@ -178,7 +178,7 @@ of the data and inverts the probability statements for decreasing data.
 \examples{
 # Calculate the BMD for a 50\% increase in mutation frequency from control
 # Individual data with Model averaging.
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

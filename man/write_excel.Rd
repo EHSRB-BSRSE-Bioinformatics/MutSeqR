@@ -31,7 +31,9 @@ Writes data to an Excel file.
 }
 \examples{
 \dontrun{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata", "Example_files",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 mf1 <- calculate_mf(example_data,
                     cols_to_group = "sample",

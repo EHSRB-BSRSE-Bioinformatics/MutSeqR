@@ -1,11 +1,15 @@
 params:
-  projectdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/" # The project Directory. If Null, will use the working-directory.
-  outputdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/example_output" # The output Directory If Null, will use the working directory.
+# Set up Info
+  projectdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse" # The project directory. If null, will use the current working directory.
+  outputdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/example_output" # The output Directory. If null, will use the current working directory.
   project_title: "MutSeqR Analysis" # The Project Title
   researcher_name: "FirstName LastName" # The name of the lead researcher
   user_name: "FirstName LastName" # The name of the one running the analysis
   project_description: "This is a test of the Rmd report generation" # Optional description of the project.
-  config_profile: "Duplex Sequencing Mouse Mutagenesis Panel" # Load a config file of default parameters for a given profile. Currently only supports Duplex Sequencing analysis. Sub Mouse for Human or Rat.
+# Default Parameter Configuration File:
+# Options: Duplex Sequencing Human Mutagenesis Panel, Duplex Sequencing Mouse Mutagenesis Panel, Duplex Sequencing Rat Mutagenesis Panel, None
+  config_profile: "Duplex Sequencing Mouse Mutagenesis Panel"
+# Data Import:
   species: "mouse" # The species of the model organism.
   genome: "mm10" # The reference genome.
   file_type: "table" # Format of the mutation data to be imported: table or vcf.
@@ -13,3 +17,10 @@ params:
   mut_sep: "/t" # The delimiter for importing mutation data in table format. Default is tab-delimited.
   sample_data: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/sample_data.txt" # The file path to the sample metadata.
   sd_sep: "/t" # The delimiter for importing the sample metadata. Default is tab-delimited.
+# Calculating MF
+# Precalculated depth data is only required for mutation data that does not contain total_depth or depth values for every sequenced site.
+  precalc_depth_data_global: Null # The file path to the precalculated per-sample total_depth data. This is the total number of bases sequenced per sample, used for calculating mutation frequencies. Columns are "sample" and "group_depth".
+  d_sep: "\t" # The delimiter for importing the the precal_depth_data_global. Default is tab-delimited. This will be the same for all precalc-depth-data.
+# Statistical Analysis
+  exp_variable: "dose" # experimental variable
+  exp_variable_order: c(0, 12.5, 25, 50) # Vector. The levels of the experimental variable in the desired order. For plotting purposes.

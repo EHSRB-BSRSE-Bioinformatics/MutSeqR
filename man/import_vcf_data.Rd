@@ -159,7 +159,7 @@ data into a dataframe.
 # Example: Import a single bg-zipped vcf file. This library was sequenced
 # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 # consists of 20 2.4kb targets = 48kb of sequence.
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_import_vcf_data_cleaned.vcf.bgz",
                             package = "MutSeqR")
 # We will create an example metadata table for this data.

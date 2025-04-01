@@ -101,7 +101,7 @@ This function calculates the mean mutation frequency across
 samples for given groups and plots the results.
 }
 \examples{
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

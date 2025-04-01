@@ -170,7 +170,7 @@ Ex. \code{control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning"
 }
 \examples{
 # Example 1: Model MFmin by dose
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

@@ -61,7 +61,9 @@ the ability to visualize the the distribution of recurrent mutations within
 their data with large multiplets having a large circle.
 }
 \examples{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata", "Example_files",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 plot <- plot_bubbles(mutation_data = example_data,
                      facet_col = "dose_group")

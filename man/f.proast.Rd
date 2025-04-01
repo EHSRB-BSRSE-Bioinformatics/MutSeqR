@@ -35,20 +35,6 @@ f.proast(
 )
 }
 \arguments{
-\item{odt}{The data.}
-
-\item{ans.all}{The results from a previous run of PROAST. If you have already run PROAST and want to continue with the same data, provide the results here.}
-
-\item{er}{A TRUE/FALSE value specifying whether you want to run the analysis from the beginning (i.e., TRUE) or continue from a previous run (i.e., FALSE).}
-
-\item{resize}{A TRUE/FALSE value specifying whether you want to resize the graphics window. Default is FALSE.}
-
-\item{scale.ans}{A TRUE/FALSE value specifying whether you want to scale the response data. Default is FALSE.}
-
-\item{const.var}{A TRUE/FALSE value specifying whether you want to use a constant variance. Default is FALSE.}
-
-\item{show.warnings}{A TRUE/FALSE value specifying whether you want to show warnings. Default is FALSE.}
-
 \item{interactive_mode}{A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.}
 
 \item{datatype}{Non-interactive mode parameter. What type of response data do you want to consider? Options are 'continuous, individual data'.}

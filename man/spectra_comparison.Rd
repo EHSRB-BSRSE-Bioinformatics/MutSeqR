@@ -71,7 +71,9 @@ the contrast table would look like:
 100:bone_marrow 100:liver
 }
 \examples{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata", "Example_files",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 
 # Example: compare 6-base mutation spectra between dose groups

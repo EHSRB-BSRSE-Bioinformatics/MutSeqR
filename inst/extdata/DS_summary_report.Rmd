@@ -11,36 +11,6 @@ output:
     code_download: yes
   pdf_document:
     toc: yes
-params:
-  custom_regions:
-    label: "Provide the file path to your regions file (for Custom panels)."
-    input: text
-    value: NULL
-  rg_sep:
-    label: "The delimiter to import the custom regions file."
-    input: text
-    value: "\t"
-  is_0_based_rg:
-    label: "The cutsom regions file is 0-based"
-    input: checkbox
-    value: TRUE
-  custom_filtering_regions:
-    label: "Provide the file path to your regions file that will be used for filtering (for Custom panels)."
-    input: text
-    value: NULL
-  custom_regions_filter:
-    label: "How would you like to use your regions for filtering?"
-    input: select
-    choices: ["keep_within", "remove_within"]
-    value: "keep_within"
-  rg_sep_filter:
-    label: "The delimiter to import the custom regions file for filtering."
-    input: text
-    value: "\t"
-  is_0_based_rg_filter:
-    label: "The custom_filtering_regions file is 0-based"
-    input: checkbox
-    value: TRUE
 ---
 
 ```{r load_libraries, warning=F, echo=F}
@@ -48,40 +18,11 @@ set.seed(3135)
 library(MutSeqR)
 library(here)
 library(knitr)
-
-if (!rmarkdown::pandoc_available()) {
-  stop("Please install pandoc to use this report template.")
-}
-```
-
-```{r Set Directories, message=TRUE}
-if (is.null(params$projectdir) || params$projectdir == "") {
-  project_dir <- file.path(here::here())
-} else {
-  project_dir <- file.path(params$projectdir)
-}
-
-message("Project Directory: ", project_dir)
-
-if (!dir.exists(project_dir)) {
-  dir.create(project_dir, recursive = TRUE, showWarnings = TRUE)
-}
-knitr::opts_knit$set(root.dir = project_dir)
-
-if (is.null(params$output_path) || params$output_path == "") {
-  output_dir <- file.path(project_dir)
-} else {
-  output_dir <- file.path(params$output_path)
-}
-message("Output Directory: ", output_dir)
-if (!dir.exists(output_dir)) {
-  dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
-}
 ```
 
 ```{r setup}
 has_description <- !is.null(params$project_description)
-description_text <- paste("Purpose or report:", params$project_description)
+description_text <- paste("Purpose of the report:", params$project_description)
 ```
 
 # `r params$project_title` Summary Report {-}
@@ -93,18 +34,12 @@ Report prepared for: `r params$researcher_name`
 
 `r if(has_description) {description_text}`
 
+Report saved to : `r params$outputdir`
+
 ***
-
-```{r retrieve-parameter-profiles, echo = TRUE}
-
-print(params)
-print(ecs_params)
-correct_depth <- TRUE
-```
-
 ## Import the Mutation Data
 
-```{r import-data, echo = TRUE, eval = FALSE}
+```{r import-data, echo=TRUE, warning=TRUE, message=FALSE}
 
 no_depth_warning <- "Could not find an appropriate depth column. Some package functionality may be limited.\n"
 correct_depth_warning <-  "The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances."
@@ -115,10 +50,10 @@ if (params$file_type == "table") {
   mutation_data <- withCallingHandlers(
     import_mut_data(mut_file = params$mutation_file,
                     mut_sep = "\t",
-                    is_0_based_mut = ecs_params$is_0_based_mut,
+                    is_0_based_mut = params$is_0_based_mut,
                     sample_data = params$sample_data,
                     sd_sep = "\t",
-                    regions = ecs_params$regions,
+                    regions = params$regions,
                     rg_sep = "\t",
                     is_0_based_rg = params$is_0_based_rg,
                     species = params$species,
@@ -138,7 +73,7 @@ if (params$file_type == "table") {
     import_vcf_data(vcf_file = params$mutation_file,
                     sample_data = params$sample_data,
                     sd_sep = "\t",
-                    regions = ecs_params$regions,
+                    regions = params$regions,
                     rg_sep = "\t",
                     is_0_based_rg = params$is_0_based_rg,
                     species = params$species,
@@ -157,55 +92,107 @@ if (params$file_type == "table") {
 ```
 
 # Filter Mutation Data
-Flagging variants with a VAF > than `r ecs_params$vaf_cutoff`
+Flagging variants with a VAF > than `r params$vaf_cutoff` as germline.
 
-Flagging SNVs that overlap with germline MNVs: `r ecs_params$snv_in_germ_mnv`
+Flagging SNVs that overlap with germline MNVs: `r params$snv_in_germ_mnv`
 
-Removing variants with an abnormal VAF: `r ecs_params$rm_abnormal_vaf`
+Removing variants with an abnormal VAF: `r params$rm_abnormal_vaf`
 
-Using a custom filter: `r !is.null(ecs_params$custom_filter_col)`
-```{r echo=FALSE, eval=!is.null(ecs_params$custom_filter_col)}
-cat("Filtering on column: ", ecs_params$custom_filter_col, " with value: ", ecs_params$custom_filter_val)
-cat("Variants are ", ifelse(ecs_params$custom_filter_rm, " removed", "flagged"), " when value matched: ", ecs_params$custom_filter_val)
+Using a custom filter: `r !is.null(params$custom_filter_col)`
+
+```{r echo=FALSE, eval=!is.null(params$custom_filter_col), results='asis'}
+cat("Applying Custom Filter to column: '", params$custom_filter_col, "'. ",
+    "Records are ", ifelse(params$custom_filter_rm, " removed", "flagged"),
+    " when the value matches '", params$custom_filter_val, "'", sep = "")
 ``` 
 
-Removing records based on a regions file: `r !is.null(ecs_params$filtering_regions)`
-```{r echo=FALSE, eval= !is.null(ecs_params$filtering_regions)}
-cat("Filtering on regions file: ", ecs_params$filtering_regions)
-cat("Records within the specified filtering regions are", ifelse(ecs_params$regions_filter == "keep_within", " retained", " removed"), " from the dataset.")
-# cat("Records must start and end within regions to be included: ", !ecs_params$allow_half_overlap)
+Removing records based on a regions file: `r !is.null(params$filtering_regions)`
 
+```{r echo=FALSE, eval= !is.null(params$filtering_regions), results='asis'}
+cat("Filtering records using regions file: ", params$filtering_regions, ".",
+    " Records within the specified filtering regions are",
+    ifelse(params$regions_filter == "keep_within",
+           " retained in", " removed from"),
+    " the dataset. Records must start and end within regions to be included: ",
+    !params$allow_half_overlap,
+    sep = "")
 ```
 
-Flagged variants (except germline) have their alt_depth subtracted from their total_depth: `r ecs_params$rm_filtered_mut_from_depth`
+Flagged variants (except germline) have their alt_depth subtracted from their total_depth: `r params$rm_filtered_mut_from_depth`
 
 Flagged variants are not included in the mutation counts, but their total_depth is retained for frequency calculations.
 All filtered records are returned in *filtered_variants.xlsx.*
 
 Correcting the total_depth for overlapping positions: `r correct_depth`
-```{r filter-mutation-data, echo=TRUE, message=TRUE, eval = FALSE}
+```{r filter-mutation-data, echo=TRUE, message=TRUE}
 filtered_mutation_data <- filter_mut(mutation_data,
                                      correct_depth = correct_depth,
-                                     vaf_cutoff = ecs_params$vaf_cutoff,
-                                     snv_in_germ_mnv = ecs_params$snv_in_germ_mnv,
-                                     rm_abnormal_vaf = ecs_params$rm_abnormal_vaf,
-                                     custom_filter_col = ecs_params$custom_filter_col,
-                                     custom_filter_val = ecs_params$custom_filter_val,
-                                     custom_filter_rm = ecs_params$custom_filter_rm,
-                                     regions = ecs_params$filtering_regions,
-                                     rg_sep = "\t",
-                                     regions_filter = ecs_params$regions_filter,
-                                     allow_half_overlap = ecs_params$allow_half_overlap,
-                                     is_0_based_rg = params$is_0_based_rg_filter,
-                                     rm_filtered_mut_from_depth = ecs_params$rm_filtered_mut_from_depth,
-                                     return_filtered_data = TRUE)
+                                     vaf_cutoff = params$vaf_cutoff,
+                                     snv_in_germ_mnv = params$snv_in_germ_mnv,
+                                     rm_abnormal_vaf = params$rm_abnormal_vaf,
+                                     custom_filter_col = params$custom_filter_col,
+                                     custom_filter_val = params$custom_filter_val,
+                                     custom_filter_rm = params$custom_filter_rm,
+                                     regions = params$filtering_regions,
+                                     rg_sep = params$filtering_rg_sep,
+                                     regions_filter = params$regions_filter,
+                                     allow_half_overlap = params$allow_half_overlap,
+                                     is_0_based_rg = params$filtering_is_0_based_rg,
+                                     rm_filtered_mut_from_depth = params$rm_filtered_mut_from_depth,
+                                     return_filtered_rows = TRUE)
 filtered_variants <- filtered_mutation_data$filtered_rows
 write_excel(data = filtered_variants,
-            output_path = output_dir,
+            output_path = params$outputdir,
             workbook_name = "filtered_variants")
 filtered_mutation_data <- filtered_mutation_data$mutation_data
 ```
 
+# Calculating Per-Sample Mutation Frequency
+```{r calculate-global-mf-sample, echo=TRUE, message=FALSE}
+mf_data <- calculate_mf(mutation_data = filtered_mutation_data,
+                        cols_to_group = "sample",
+                        subtype_resolution = "none",
+                        variant_types = c("-ambiguous", "-uncategorized"),
+                        calculate_depth = !no_depth,
+                        precalc_depth_data = params$precalc_depth_data_global,
+                        d_sep = params$d_sep,
+                        summary = TRUE,
+                        retain_metadata_cols = params$exp_variable)
+plot_max <- all(mf_data$mf_min != mf_data$mf_max)
+# Fix this - i think the levels are wrong!!
+mf_data[[params$exp_variable]] <- factor(mf_data[[params$exp_variable]],
+                                         levels = params$exp_variable_order)
+print(mf_data)
+```
+
+```{r plot-mf, echo=TRUE, eval=FALSE}
+plot1 <- plot_mf(mf_data = mf_data,
+                 group_col = "sample",
+                 plot_type = "bar",
+                 mf_type = ifelse(plot_max, "both", "min"),
+                 group_order = ifelse(is.null(params$exp_variable),
+                                      "smart",
+                                      "arranged"),
+                 group_order_input = params$exp_variable,
+                 fill_col = params$exp_variable,
+                 labels = "count",
+                 x_lab = "Sample",
+                 y_lab = "Mutation Frequency (mutations/bp)")
+plot1
+```
+```{r plot-mean-mf, eval = FALSE}
+# eval = !is.null(params$exp_variable)
+plot2 <- plot_mean_mf(mf_data = mf_data,
+                      group_col = params$exp_variable,
+                      fill_col = params$exp_variable,
+                      mf_type = ifelse(plot_max, "both", "min"),
+                      plot_type = "line",
+                      plot_error_bars = TRUE,
+                      plot_indiv_vals = TRUE,
+                      group_order = "none",
+                      add_labels = "mean_count")
+plot2
+```
 
 ## CpG Mutations
 

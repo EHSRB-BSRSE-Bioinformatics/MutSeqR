@@ -74,7 +74,9 @@ flagged by the filter_mut column will be excluded.
 }
 \examples{
 \dontrun{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata", "Example_files",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 signature_fitting(mutation_data = example_data,
                   project_name = "Example",

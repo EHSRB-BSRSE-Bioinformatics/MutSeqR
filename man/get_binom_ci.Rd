@@ -38,7 +38,9 @@ not part of MutSeqR's recommended workflow, but is provided here for
 users who wish to use it.
 }
 \examples{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata", "Example_files",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 mf <- calculate_mf(example_data)
 confint <- get_binom_ci(mf_data = mf,
