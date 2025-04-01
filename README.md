@@ -1238,7 +1238,7 @@ plot <- plot_radar(mf_data = mean,
                    facet_col = "dose_group",
                    indiv_y = FALSE)
 ```
-
+![radar plot](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot8.png)
 ## Retrieve Sequences of genomic target regions
 `get_seq()` will retrive raw nucleotide sequences for specified genomic intervals. This function will install an appropriate BS genome library to retrieve sequences based on species, genome, and masked parameter.
 
