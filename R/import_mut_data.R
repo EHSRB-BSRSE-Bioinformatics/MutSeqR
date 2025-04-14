@@ -426,10 +426,10 @@ import_mut_data <- function(mut_file,
   }
   # Create variation_type
   if (!"variation_type" %in% colnames(dat)) {
-    dat$variation_type <- mapply(classify_variation, dat$ref, dat$alt)
+    dat$variation_type <- mapply(MutSeqR::classify_variation, dat$ref, dat$alt)
   } else {
     dat <- dplyr::rename(dat, original_variation_type = "variation_type")
-    dat$variation_type <- mapply(classify_variation, dat$ref, dat$alt)
+    dat$variation_type <- mapply(MutSeqR::classify_variation, dat$ref, dat$alt)
   }
 
   # Define substitution dictionary to normalize to pyrimidine context
