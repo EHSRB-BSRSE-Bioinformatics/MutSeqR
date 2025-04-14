@@ -1,7 +1,7 @@
 params:
 # Set up Info
   projectdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse" # The project directory. If null, will use the current working directory.
-  outputdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/example_output" # The output Directory. If null, will use the current working directory.
+  outputdir: "example_output" # The output Directory. If null, will use the current working directory.
   project_title: "MutSeqR Analysis" # The Project Title
   researcher_name: "FirstName LastName" # The name of the lead researcher
   user_name: "FirstName LastName" # The name of the one running the analysis
@@ -13,14 +13,26 @@ params:
   species: "mouse" # The species of the model organism.
   genome: "mm10" # The reference genome.
   file_type: "table" # Format of the mutation data to be imported: table or vcf.
-  mutation_file: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/mut" # The file path to the mutation data. Directory or single file.
+  mutation_file: "mut" # The file path to the mutation data. Directory or single file.
   mut_sep: "/t" # The delimiter for importing mutation data in table format. Default is tab-delimited.
-  sample_data: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse/sample_data.txt" # The file path to the sample metadata.
+  sample_data: "sample_data.txt" # The file path to the sample metadata.
   sd_sep: "/t" # The delimiter for importing the sample metadata. Default is tab-delimited.
 # Calculating MF
 # Precalculated depth data is only required for mutation data that does not contain total_depth or depth values for every sequenced site.
   precalc_depth_data_global: Null # The file path to the precalculated per-sample total_depth data. This is the total number of bases sequenced per sample, used for calculating mutation frequencies. Columns are "sample" and "group_depth".
+  precalc_depth_data_base6: Null # The file path to the precalculated per-sample total_depth data in the base_6 context. This is the total number of C and T bases sequenced for each sample. Columns are "sample", "normalized_ref", and "subtype_depth". If using an exp_variable, please also include it in this table.
+  precalc_depth_data_base96: Null # The file path to the precalculated per-sample total_depth data in the base_96 context. This is the total number bases sequenced per sample for each of the 32 possible trinucleotide contexts in their pyrimidine notation. Columns are "sample", "normalized_context", and "subtype_depth". If using an exp_variable, please also include it in this table.
+  precalc_depth_data_rg: Null # The file path to the precalculated per-sample total_depth data for each target region. This is the total number of bases sequenced per sample for each region. Columns are "sample", 'region_col', "group_depth". Only applicable if performing  regions analysis.
   d_sep: "\t" # The delimiter for importing the the precal_depth_data_global. Default is tab-delimited. This will be the same for all precalc-depth-data.
 # Statistical Analysis
   exp_variable: "dose" # experimental variable
-  exp_variable_order: c(0, 12.5, 25, 50) # Vector. The levels of the experimental variable in the desired order. For plotting purposes.
+  exp_variable_order: [0, 12.5, 25, 50] # Vector. The levels of the experimental variable in the desired order. For plotting purposes.
+  reference_level: 0 # The reference level of your experimental variable. Ex. the vehicle control for dose groups.
+  contrasts: "contrasts.txt" # The contrasts table specifying pairwise comparisons between levels of the experimental variable. Requires 2 columns, no header.
+  cont_sep: "\t" # The delimiter for importing the contrasts table.
+  bmd: TRUE # A logical variable indicating whether to run a BMD analysis. Assumes the exp_variable is dose/concentration (numeric).
+  bmr: 0.5 # The benchmark response for the bmd analysis. Defined as a bmr-% increase in MF from the reference level.
+  bmd_method: "proast" # Options: "proast", "toxicr" The method for running the bmd analysis.
+# Signature Analysis
+  run_sigfitting: TRUE # A logical variable indicating whether to run signature_fitting. Will create a virtual environment to run python on first use.
+  python_version: 3.11 # The python version for signature fitting

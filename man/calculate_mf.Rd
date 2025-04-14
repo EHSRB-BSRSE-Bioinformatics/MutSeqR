@@ -95,7 +95,7 @@ will not be normalized to the total_depth.}
 containing pre-calculated per-group total_depth values. This data frame
 should contain the columns for the desired grouping variable(s)
 and the reference context at the desired subtype resolution (if applicable).
-The precalculated total_depth column(s) should be called one or both of
+The precalculated total_depth column(s) should be called one of
 \code{group_depth} and \code{subtype_depth}. \code{group_depth} is used for subtype
 resolutions of "none", "type", and all non-snv mutations in "base_6",
 "base_12", "base_96", and "base_192". \code{subtype_depth} is used for snv

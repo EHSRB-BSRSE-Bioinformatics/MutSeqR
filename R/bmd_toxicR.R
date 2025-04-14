@@ -291,7 +291,7 @@ bmd_toxicr <- function(mf_data,
                                        BMR_TYPE = bmr_type,
                                        alpha = alpha,
                                        ...)
-      bmd <- data.frame(model_names = "Model Averaging",
+      bmd <- data.frame(model_names = "Model averaging",
                         BMD = fit$bmd[1],
                         BMDL = fit$bmd[2],
                         BMDU = fit$bmd[3])

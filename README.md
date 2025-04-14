@@ -637,9 +637,8 @@ model_by_target <- model_mf(mf_data = mf_data,
   total_count = "group_depth",
   contrasts = contrasts2,
   reference_level = c("Control", "chr1"),
-  control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
-                                                               tol = 3e-3,
-                                                               relTol = NULL))
+  control = lme4::glmerControl(optimizer = "bobyqa",
+                                  optCtrl = list(maxfun = 2e5))
   )
 # View the results
 model_by_target$summary

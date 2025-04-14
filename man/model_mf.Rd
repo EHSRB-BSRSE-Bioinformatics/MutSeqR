@@ -27,8 +27,8 @@ This data can be obtained using \code{calculate_mf(summary=TRUE)}.}
 \item{fixed_effects}{The name(s) of the column(s) that will act as the
 fixed_effects (factor/independent variable) for modelling mutation frequency.}
 
-\item{test_interaction}{a logical value. Whether or not your model should include
-the interaction between the \code{fixed_effects}.}
+\item{test_interaction}{a logical value. Whether or not your model should
+include the interaction between the \code{fixed_effects}.}
 
 \item{random_effects}{The name of the column(s) to be analysed as a
 random effect in the model. Providing this effect will cause the function to
@@ -44,18 +44,19 @@ relation to the reference_level as deviations from the baseline effect.}
 \item{total_count}{The column containing the sequencing depth per sample.}
 
 \item{contrasts}{a data frame or a  filepath to a file that will
-provide the information necessary to make pairwise comparisons between groups.
-The table must consist of two columns. The first column will be a group within
-your fixed_effects and the second column must be the group that it will be
-compared to.  The values must correspond to entries in your
-mf_data column for each fixed effect. Put the group that you expect to have the higher
-mutation frequency in the 1st column and the group that you expect to have a
-lower mutation frequency in the second column. For multiple fixed effects,
-separate the levels of each \code{fixed_effect} of a group with a colon. Ensure
-that all \code{fixed_effects} are represented in each entry for the table.
+provide the information necessary to make pairwise comparisons between
+groups. The table must consist of two columns. The first column will be a
+group within your fixed_effects and the second column must be the group that
+it will be compared to.  The values must correspond to entries in your
+mf_data column for each fixed effect. Put the group that you expect to have
+the higher mutation frequency in the 1st column and the group that you expect
+to have a lower mutation frequency in the second column. For multiple fixed
+effects, separate the levels of each \code{fixed_effect} of a group with a colon.
+Ensure that all \code{fixed_effects} are represented in each entry for the table.
 See \code{details} for examples.}
 
-\item{cont_sep}{The delimiter for importing the contrast table file. Default is tab-delimited.}
+\item{cont_sep}{The delimiter for importing the contrast table file.
+Default is tab-delimited.}
 
 \item{...}{Extra arguments for \link[stats]{glm}  or \link[lme4]{glmer}. The
 \code{glmer} function is used when a \code{random_effect} is supplied, otherwise, the
@@ -81,31 +82,32 @@ For a normal distribution, we expect points to roughly follow the y=x line.
 }
 }
 \description{
-\code{model_mf} will fit a linear model to analyse the effect(s) of given factor(s)
-on mutation frequency and perform specified pairwise comparisons. This function
-will fit either a generalized linear model (\link[stats]{glm}) or, if supplied
-random effects, a generalized linear mixed-effects model (\link[lme4]{glmer}) .
-Pairwise comparisons are conducted using the doBy library (\link[doBy]{esticon})
-and estimates are then back-transformed. The delta method is  employed to
-approximate the  back-transformed standard-errors. A Sidak  correction
-is applied to adjust p-values for multiple comparisons.
+\code{model_mf} will fit a linear model to analyse the effect(s) of given
+factor(s)  on mutation frequency and perform specified pairwise comparisons.
+This function will fit either a generalized linear model (\link[stats]{glm})
+or, if supplied random effects, a generalized linear mixed-effects model
+(\link[lme4]{glmer}). Pairwise comparisons are conducted using the doBy
+library (\link[doBy]{esticon}) and estimates are then back-transformed. The
+delta method is  employed to approximate the  back-transformed
+standard-errors. A Sidak correction is applied to adjust p-values for
+multiple comparisons.
 }
 \details{
 \code{fixed_effects} are variables that have a direct and constant effect on the
-dependent variable (ie mutation frequency).They are typically the experimental
-factors or covariates of interest for their impact on the dependent variable.
-One or more fixed_effect may be provided. If you are providing more than one
-fixed effect, avoid using correlated variables; each fixed effect must
-independently predict the dependent variable.
+dependent variable (ie mutation frequency).They are typically the
+experimental factors or covariates of interest for their impact on the
+dependent variable. One or more fixed_effect may be provided. If you are
+providing more than one fixed effect, avoid using correlated variables;
+each fixed effect must independently predict the dependent variable.
 Ex. \code{fixed_effects = c("dose", "genomic_target", "tissue", "age", etc)}.
 
 Interaction terms enable you to examine whether the relationship between the
 dependent and independent variable changes based on the value of another
 independent variable. In other words, if an interaction is significant, then
 the relationship between the fixed effects is not constant across all levels
-of each variable. Ex. Consider investigating the effect of dose group and tissue
-on mutation frequency. An interaction between dose and tissue would capture
-whether the dose response differs between tissues.
+of each variable. Ex. Consider investigating the effect of dose group and
+tissue on mutation frequency. An interaction between dose and tissue would
+capture whether the dose response differs between tissues.
 
 \code{random_effects} account for the unmeasured sources of statistical variance that
 affect certain groups in the data. They help account for unobserved

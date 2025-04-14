@@ -6,7 +6,8 @@
 \usage{
 render_report(
   config_filepath = "./inst/extdata/inputs/summary_config.yaml",
-  output_file = "./output.html"
+  output_file = "./Rmd_Test.html",
+  output_format = "html_document"
 )
 }
 \arguments{

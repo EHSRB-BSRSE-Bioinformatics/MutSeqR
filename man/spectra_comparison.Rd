@@ -20,8 +20,7 @@ the same columns as the \code{cols_to_group} argument. Required columns
 are the cols_to_group columns, the subtype column, and sum_min or sum_max.}
 
 \item{cols_to_group}{The column names of the variables across which the
-mutations were summed. by. Ex. c("dose", "tissue"). This
-function will sum the mutations across groups before running the comparison.}
+mutations were summed. by. Ex. c("dose", "tissue").}
 
 \item{mf_type}{The type of mutation frequency to use. Default is "min".}
 

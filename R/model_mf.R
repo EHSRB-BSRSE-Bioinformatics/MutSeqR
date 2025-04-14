@@ -1,22 +1,23 @@
 #' Perform linear modelling on mutation frequency for given
 #' fixed and random effects
 #'
-#' `model_mf` will fit a linear model to analyse the effect(s) of given factor(s) 
-#' on mutation frequency and perform specified pairwise comparisons. This function
-#' will fit either a generalized linear model (\link[stats]{glm}) or, if supplied 
-#' random effects, a generalized linear mixed-effects model (\link[lme4]{glmer}) . 
-#' Pairwise comparisons are conducted using the doBy library (\link[doBy]{esticon}) 
-#' and estimates are then back-transformed. The delta method is  employed to
-#' approximate the  back-transformed standard-errors. A Sidak  correction
-#' is applied to adjust p-values for multiple comparisons.
+#' `model_mf` will fit a linear model to analyse the effect(s) of given
+#' factor(s)  on mutation frequency and perform specified pairwise comparisons.
+#' This function will fit either a generalized linear model (\link[stats]{glm})
+#' or, if supplied random effects, a generalized linear mixed-effects model
+#' (\link[lme4]{glmer}). Pairwise comparisons are conducted using the doBy
+#' library (\link[doBy]{esticon}) and estimates are then back-transformed. The
+#' delta method is  employed to approximate the  back-transformed
+#' standard-errors. A Sidak correction is applied to adjust p-values for
+#' multiple comparisons.
 #' @param mf_data The data frame containing the mutation frequency data.
 #' Mutation counts and total sequencing depth should be summarized per sample
 #' alongside columns for your fixed effects.
 #' This data can be obtained using `calculate_mf(summary=TRUE)`.
 #' @param fixed_effects The name(s) of the column(s) that will act as the
 #' fixed_effects (factor/independent variable) for modelling mutation frequency.
-#' @param test_interaction a logical value. Whether or not your model should include 
-#' the interaction between the `fixed_effects`.
+#' @param test_interaction a logical value. Whether or not your model should
+#' include the interaction between the `fixed_effects`.
 #' @param random_effects The name of the column(s) to be analysed as a
 #' random effect in the model. Providing this effect will cause the function to
 #' fit a generalized linear mixed-effects model.
@@ -27,39 +28,39 @@
 #' @param muts The column containing the mutation count per sample.
 #' @param total_count The column containing the sequencing depth per sample.
 #' @param contrasts a data frame or a  filepath to a file that will
-#' provide the information necessary to make pairwise comparisons between groups. 
-#' The table must consist of two columns. The first column will be a group within 
-#' your fixed_effects and the second column must be the group that it will be 
-#' compared to.  The values must correspond to entries in your 
-#' mf_data column for each fixed effect. Put the group that you expect to have the higher 
-#' mutation frequency in the 1st column and the group that you expect to have a 
-#' lower mutation frequency in the second column. For multiple fixed effects, 
-#' separate the levels of each `fixed_effect` of a group with a colon. Ensure 
-#' that all `fixed_effects` are represented in each entry for the table. 
+#' provide the information necessary to make pairwise comparisons between
+#' groups. The table must consist of two columns. The first column will be a
+#' group within your fixed_effects and the second column must be the group that
+#' it will be compared to.  The values must correspond to entries in your 
+#' mf_data column for each fixed effect. Put the group that you expect to have
+#' the higher mutation frequency in the 1st column and the group that you expect
+#' to have a lower mutation frequency in the second column. For multiple fixed
+#' effects, separate the levels of each `fixed_effect` of a group with a colon.
+#' Ensure that all `fixed_effects` are represented in each entry for the table.
 #' See `details` for examples.
-#' @param cont_sep The delimiter for importing the contrast table file. Default is tab-delimited.
-#' @param ... Extra arguments for \link[stats]{glm}  or \link[lme4]{glmer}. The 
-#' `glmer` function is used when a `random_effect` is supplied, otherwise, the 
+#' @param cont_sep The delimiter for importing the contrast table file.
+#' Default is tab-delimited.
+#' @param ... Extra arguments for \link[stats]{glm}  or \link[lme4]{glmer}. The
+#' `glmer` function is used when a `random_effect` is supplied, otherwise, the
 #' model uses the `glm` function.
 #' @export
 #'
 #' @details
-#'
-#' `fixed_effects` are variables that have a direct and constant effect on the 
-#' dependent variable (ie mutation frequency).They are typically the experimental 
-#' factors or covariates of interest for their impact on the dependent variable.
-#' One or more fixed_effect may be provided. If you are providing more than one 
-#' fixed effect, avoid using correlated variables; each fixed effect must
-#' independently predict the dependent variable. 
+#' `fixed_effects` are variables that have a direct and constant effect on the
+#' dependent variable (ie mutation frequency).They are typically the
+#' experimental factors or covariates of interest for their impact on the
+#' dependent variable. One or more fixed_effect may be provided. If you are
+#' providing more than one fixed effect, avoid using correlated variables;
+#' each fixed effect must independently predict the dependent variable.
 #' Ex. `fixed_effects = c("dose", "genomic_target", "tissue", "age", etc)`.
-#' 
+#'
 #' Interaction terms enable you to examine whether the relationship between the
 #' dependent and independent variable changes based on the value of another
 #' independent variable. In other words, if an interaction is significant, then
 #' the relationship between the fixed effects is not constant across all levels
-#' of each variable. Ex. Consider investigating the effect of dose group and tissue
-#' on mutation frequency. An interaction between dose and tissue would capture
-#' whether the dose response differs between tissues.
+#' of each variable. Ex. Consider investigating the effect of dose group and
+#' tissue on mutation frequency. An interaction between dose and tissue would
+#' capture whether the dose response differs between tissues.
 #'
 #' `random_effects` account for the unmeasured sources of statistical variance that 
 #' affect certain groups in the data. They help account for unobserved
@@ -321,14 +322,14 @@ model_mf <- function(mf_data,
     model <- stats::glm(model_formula,
       family = "quasibinomial",
       data = mf_data,
-   #   ...
+      ...
     )
     if(summary(model)$dispersion < 1) {
       warning("The dispersion parameter is less than 1. Switching to a bionomial distribution.")
       model <- stats::glm(model_formula,
         family = "binomial",
         data = mf_data,
-    #    ...
+        ...
       )
     }
   }

@@ -156,7 +156,7 @@
 import_vcf_data <- function(vcf_file,
                             sample_data = NULL,
                             sd_sep = "\t",
-                            regions = "none",
+                            regions = NULL,
                             rg_sep = "\t",
                             is_0_based_rg = FALSE,
                             padding = 0,
@@ -164,7 +164,6 @@ import_vcf_data <- function(vcf_file,
                             species = NULL,
                             masked_BS_genome = FALSE,
                             output_granges = FALSE) {
-
   vcf_file <- file.path(vcf_file)
 
   # Check if a sample identifier is already present in the INFO field
@@ -221,8 +220,8 @@ import_vcf_data <- function(vcf_file,
   # Extract and Clean alt column
   ## May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
   alt <- VariantAnnotation::alt(vcf)
-  alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
-  alt <- IRanges::CharacterList(alt_values_clean)
+ # alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
+  alt <- IRanges::CharacterList(alt)
 
   # Extract mutation data into a dataframe
   dat <- data.frame(
