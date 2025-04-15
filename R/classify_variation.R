@@ -4,7 +4,8 @@
 #' @param ref The reference allele.
 #' @param alt The alternate allele.
 #' @return A character indicating the type of variation.
-#'
+#' @export
+#' 
 classify_variation <- function(ref, alt) {
   no_variant_indicators <- c(".", "", "<NON_REF>")
   structural_indicators <- c("<DEL>", "<INS>", "<DUP>", "<INV>", "<FUS>",

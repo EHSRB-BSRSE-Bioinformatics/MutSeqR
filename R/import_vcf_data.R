@@ -222,7 +222,7 @@ import_vcf_data <- function(vcf_file,
   # Extract and Clean alt column
   ## May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
   alt <- VariantAnnotation::alt(vcf)
-  alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
+  alt_values_clean <- lapply(as.list(alt), function(x) x[as.character(x) != "<NON_REF>"])
   alt <- IRanges::CharacterList(alt_values_clean)
 
   # Extract mutation data into a dataframe

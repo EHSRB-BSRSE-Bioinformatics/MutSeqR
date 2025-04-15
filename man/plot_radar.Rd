@@ -15,11 +15,46 @@ plot_radar(mf_data, response_col, label_col, facet_col, indiv_y = TRUE)
 
 \item{facet_col}{The column with the group to facet the radar plots.}
 
-\item{indiv_y}{A logical indicating whether to use individual y-axis scales for each plot.}
+\item{indiv_y}{A logical indicating whether to use individual y-axis scales
+for each plot.}
 }
 \value{
 A radar plot
 }
 \description{
 Create a radar plot
+}
+\examples{
+# Plot the mean MFmin of each genomic target per dose group
+# Order the genomic targets by their genic context.
+#Load the example data and calculate MF
+example_file <- system.file("extdata",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
+example_data <- readRDS(example_file)
+mf <- calculate_mf(mutation_data = example_data,
+                   cols_to_group = c("sample", "label"),
+                   retain_metadata_cols = c("dose_group", "genic_context"))
+# Define the order of the genomic targets
+label_order <- mf \%>\% dplyr::arrange(genic_context) \%>\%
+  pull(label) \%>\%
+  unique()
+# Calculate the mean MF per dose_group for each target.
+mean <- mf \%>\%
+  dplyr::group_by(dose_group, label) \%>\%
+  dplyr::summarise(mean = mean(mf_min))
+# Set the order of each column
+mean$dose_group <- factor(mean$dose_group,
+                          levels = c("Control",
+                                     "Low",
+                                     "Medium",
+                                     "High"))
+mean$label <- factor(mean$label,
+                     levels = label_order)
+# Plot
+plot <- plot_radar(mf_data = mean,
+                   response_col = "mean",
+                   label_col = "label",
+                   facet_col = "dose_group",
+                   indiv_y = FALSE)
 }
