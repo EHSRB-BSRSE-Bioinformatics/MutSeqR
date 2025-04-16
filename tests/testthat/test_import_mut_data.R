@@ -1,60 +1,40 @@
-library(testthat)
-library(fs)
-
-# Define test cases for import_mut_data function
-test_that("import_mut_data function correctly imports mutation data", {
-  # Create temporary test file with example mutation data
-  tmpfile <- tempfile(fileext = ".mut")
-  write.table(
-    data.frame(
-      sample = c("mouse1", "mouse2", "mouse1", "mouse2"),
-      contig = c("chr1", "chr1", "chr2", "chr2"),
-      start = c(69304225, 69304240, 50833424, 50833439),
-      end = c(69304226, 69304241, 50833425, 50833440),
-      total_depth = c(50, 100, 75, 150),
-      alt_depth = c(1, 20, 30, 50),
-      ref = c("C", "G", "T", "AA"),
-      alt = c("T", "A", ".", "A")
-    ),
-    file = tmpfile,
-    sep = "\t", row.names = FALSE
-  )
-
-  #create a temporary custom regions file
-  tmpfile2 <- tempfile(fileext = ".mut")
-  write.table(
-    data.frame(
-      contig = c("chr1", "chr2"),
-      start = c(69304217, 50833175),
-      end = c(69306617, 50835575),
-      description = c("region_330", "region_4547"),
-      location_relative_to_genes = c("intergenic", "intergenic")
-    ),
-    file = tmpfile2,
-    sep = "\t", row.names = FALSE
-  )
-
-  # Call the import_mut_data function on the test data
-  mut_data <- import_mut_data(mut_file = tmpfile,
+test_that("import simple_mut_import.txt", {
+  file <- file.path("./testdata/simple_mut_import.txt")
+  #file <- system.file("testdata", "simple_mut_import.txt", package = "MutSeqR")
+  regions <- data.frame(contig = c("chr1", "chr2"),
+                        start = c(101, 201),
+                        end = c(110, 210),
+                        rg_metadata = c("R1", "R2"))
+  sampledata <- data.frame(sample = c("sample1", "sample2", "sample3"),
+                           sd_metadata = c("A", "B", "C"))
+  mut_data <- import_mut_data(mut_file = file,
+                              sample_data = sampledata,
                               regions = "custom",
-                              custom_regions = tmpfile2,
-                              species = "mouse",
-                              genome = "mm10",
-                              output_granges = FALSE)
+                              custom_regions = regions)
 
-  expect_true(is(mut_data, "data.frame"),
-              info = "Check if the resulting object is a data frame")
-  expect_equal(NROW(mut_data), 4,
-               info = "Check if the resulting object has the correct number of rows")
-  expect_true(all(c("short_ref", "normalized_ref", "context",
-                    "normalized_context", "variation_type", "subtype",
-                    "normalized_subtype", "context_with_mutation",
-                    "normalized_context_with_mutation", "nchar_ref",
-                    "nchar_alt", "varlen", "ref_depth", "vaf", "gc_content",
-                    "row_has_duplicate") %in% colnames(mut_data)),
-              info = "Check if the resulting object has the correct columns")
-
-  # Clean up temporary file
-  unlink(tmpfile)
-  unlink(tmpfile2)
+  expect_s3_class(mut_data, "data.frame") # check class
+  colnames <- c(MutSeqR::op$base_required_mut_cols,
+                MutSeqR::op$processed_required_mut_cols, # subtype/context cols
+                "total_depth", "ref_depth", "vaf", # depth cols
+                "nchar_ref", "nchar_alt", "varlen",
+                "gc_content", "row_has_duplicate",
+                "rg_metadata", "in_regions", "sd_metadata", # metadata cols
+                "strand", "width") # added by GRanges
+                # is_known not added without ID col
+  expect_named(mut_data, colnames, ignore.order = TRUE) # check columns
+  expect_true(nrow(mut_data) == 36) # check row #
+  expect_equal(sum(mut_data$in_regions), 35) # 1 row outside regions
+  expect_equal(sum(mut_data$row_has_duplicate), 10) # 10 overlaping positions
+  # check classify_variation
+  expect_equal(mut_data$variation_type,
+               c("snv", "no_variant", "snv", "snv", "no_variant",
+                 "no_variant", "deletion", "no_variant", "snv", "insertion",
+                 "sv", "no_variant", "insertion", "mnv", "mnv", "mnv", "snv",
+                 "no_variant", "snv", "snv", "no_variant", "snv", "complex",
+                 "no_variant", "snv", "sv", "ambiguous", "no_variant",
+                 "insertion", "snv", "no_variant", "no_variant", "deletion",
+                 "snv", "no_variant", "mnv"))
+  # expect_warning("1 rows were outside of the specified regions. To remove these rows, use the filter_mut() function")
+  # expect_warning(mut_data, "10 rows were found whose position was the same as that of at least one other row for the same sample\\.")
+  # expect_warning(mut_data, "The total_depth may be double-counted in some instances due to overlapping positions\\. Use the filter_mut\\(\\) function to correct the total_depth for these instances\\.")
 })

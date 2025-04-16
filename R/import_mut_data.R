@@ -388,8 +388,7 @@ import_mut_data <- function(mut_file,
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions.\n
-        To remove these rows, use the filter_mut() function")
+      warning(false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function")
     }
   }
   # Create a context column, if needed: BSGenome
@@ -528,15 +527,11 @@ import_mut_data <- function(mut_file,
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose
-    position was the same as that of at least one other row for the same
-    sample.")
+    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to
-      overlapping positions. Use the filter_mut() function to correct the
-      total_depth for these instances.")
+      warning("The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances.")
     }
   }
 
