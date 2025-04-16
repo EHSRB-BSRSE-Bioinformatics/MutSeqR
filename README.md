@@ -44,7 +44,7 @@ library(MutSeqR)
 
 ## Data import
 
-The main goal of MutSeqR is to generate summary statistics, visualizations, exploratory analyses, and other post-processing tasks such as mutational signature analysis or generalized linear modeling. Mutation data should be supplied as a table of variants with their genomic positions. Mutation data can be imported as either VCF files or as tabular data using the functions `import_vcf_data` and `import_mut_data`, respectively. It is reccomended that files include a record for every sequenced position, regardless of whether a variant was called or not, along with the `total_depth` for each record. This enables site-specific depth calculations that are required for the calculation of mutation subtype frequencies ad other site-specific frequemcies. The data set can be pared down later to include only mutations of interest (SNVs, indels, SVs, or any combination). 
+The main goal of MutSeqR is to generate summary statistics, visualizations, exploratory analyses, and other post-processing tasks such as mutational signature analysis or generalized linear modeling. Mutation data should be supplied as a table of variants with their genomic positions. Mutation data can be imported as either VCF files or as tabular data using the functions `import_vcf_data` and `import_mut_data`, respectively. It is reccomended that files include a record for every sequenced position, regardless of whether a variant was called or not, along with the `total_depth` for each record. This enables site-specific depth calculations that are required for the calculation of mutation subtype frequencies and other site-specific frequencies. The data set can be pared down later to include only mutations of interest (SNVs, indels, SVs, or any combination). 
 
 Required columns for mutation data import:
 | **Column** | **VCF Specification** | **Definition** |
@@ -59,7 +59,7 @@ Required columns for mutation data import:
 | alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
 | total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
 
-VCF files should follow the VCF specification (version 4.5; Danecek et al. 2011). VCF files may be bg/g-zipped. Multiple sample VCF files are not supported. Multiple alt alleles called for a single position should be represented as sseparate rows in the data. All extra columns, INFO fields, and FORMAT fields will be retained upon import.
+VCF files should follow the VCF specification (version 4.5; Danecek et al. 2011). VCF files may be bg/g-zipped. Each individual VCF file should contain the mutation data for a single sample. Multiple alt alleles called for a single position should be represented as sseparate rows in the data. All extra columns, INFO fields, and FORMAT fields will be retained upon import.
 
 Upon import, records are categorized within the `variation_type` column based on their REF and ALT. Categories are listed below.
 | variation_type | Definition |
