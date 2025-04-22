@@ -215,9 +215,9 @@ spectra_comparison <- function(mf_data,
   }
 
   # Apply the Holm-Sidak correction for multiple comparisons
-  results$adjP <- MutSeqR::sidak(results$p.value)$SidakP
-  results$sign <- ""
-  results$sign[results$adjP < 0.05] <- "***"
+  results$adj_p.value <- MutSeqR::sidak(results$p.value)$SidakP
+  results$Significance <- ""
+  results$Significance[results$adj_p.value < 0.05] <- "***"
 
   return(results)
 }
