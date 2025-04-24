@@ -8,7 +8,7 @@ import_vcf_data(
   vcf_file,
   sample_data = NULL,
   sd_sep = "\\t",
-  regions = "none",
+  regions = NULL,
   rg_sep = "\\t",
   is_0_based_rg = FALSE,
   padding = 0,

@@ -6,7 +6,7 @@
 \usage{
 spectra_comparison(
   mf_data,
-  cols_to_group,
+  exp_variable,
   mf_type = "min",
   contrasts,
   cont_sep = "\\t"
@@ -15,23 +15,23 @@ spectra_comparison(
 \arguments{
 \item{mf_data}{A data frame containing the MF data. This
 is the output from calculate_mf(). MF data should be at the
-desired subtype resolution. Data should be calculated for
-the same columns as the \code{cols_to_group} argument. Required columns
-are the cols_to_group columns, the subtype column, and sum_min or sum_max.}
+desired subtype resolution. Required columns are the exp_variable column(s),
+the subtype column, and sum_min or sum_max.}
 
-\item{cols_to_group}{The column names of the variables across which the
-mutations were summed. by. Ex. c("dose", "tissue").}
+\item{exp_variable}{The column names of the experimental variable(s) to be
+compared.}
 
-\item{mf_type}{The type of mutation frequency to use. Default is "min".}
+\item{mf_type}{The type of mutation frequency to use. Default is "min"
+(recommended).}
 
-\item{contrasts}{a filepath to a tab-delimited \code{.txt} file OR a dataframe that
-will specify the comparisons to be made between groups. The table must
-consist of two columns. The first column will be a level within your group
-column and the second column must be the group level that it will be
-compared to. All values must correspond to entries in your \code{cols_to_group}
-column. For more than one \code{group} variable, separate the levels of
-each group with a colon. Ensure that all \code{groups} listed in cols_to_group
-are represented in each entry for the table. See details for examples.}
+\item{contrasts}{a filepath to a file OR a dataframe that specifies the
+comparisons to be made between levels of the exp_variable(s) The table must
+consist of two columns, each containing a level of the exp_variable. The
+level in the first column will compared to the level in the second column
+for each row in contrasts. When using more than one exp_variable, separate
+the levels of each variable with a colon. Ensure that all variables listed
+in exp_variable are represented in each entry for the table. See details for
+examples.}
 
 \item{cont_sep}{The delimiter used to import the contrasts table.
 Default is tab.}
@@ -45,48 +45,60 @@ spectra_comparison compares the mutation spectra of groups using a
 modified contingency table approach.
 }
 \details{
+This function creates an R * 2 contigency table of the subtype counts, where
+R is the number of subtypes for the 2 groups being compared. The G2 likelihood
+ratio statistic is used to evaluate whether the proportion
+(count/group total) of each mutation subtype equals that of the other group.
+
+The G2 statistic refers to a chi-squared distribution to compute the p-value
+for large sample sizes. When N / (R-1) < 20, where N is the total mutation
+counts across both groups, the function will use a F-distribution to compute
+the p-value in order to reduce false positive rates.
+
+The comparison assumes independance among the observations, as such, it is
+highly recommended to use mf_type = "min".
+
 Examples of \code{contrasts}:
-If you have \code{group = "dose"} with dose groups 0, 25, 50, 100. The first
-column would contain the treated groups (25, 50, 100), while the second
-column would be 0, thus comparing each treated group to the control group.
+For 'exp_variable = "dose"` with dose groups 0, 12.5, 25, 50, compare each
+treated dose to the control:
+
+12.5 0
 
 25 0
 
 50 0
 
-100 0
-
-Ex. Consider two grouping variables \code{group = c("dose", "tissue")};
-with levels dose (0, 25, 50, 100) and tissue("bone_marrow", "liver").
+Ex. Consider two 'exp_variables = c("dose", "tissue")`;
+with levels dose (0, 12.5, 25, 50) and tissue("bone_marrow", "liver").
 To compare the mutation spectra between tissues for each dose group,
 the contrast table would look like:
 
 0:bone_marrow	0:liver
 
+12.5:bone_marrow	12.5:liver
+
 25:bone_marrow	25:liver
 
 50:bone_marrow	50:liver
-
-100:bone_marrow 100:liver
 }
 \examples{
+# Load the example data
 example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
 
 # Example: compare 6-base mutation spectra between dose groups
-
 # Calculate the mutation frequency data at the 6-base resolution
 mf_data <- calculate_mf(mutation_data = example_data,
-                        cols_to_group = "dose_group",
+                        exp_variable = "dose_group",
                          subtype_resolution = "base_6")
 # Create the contrasts table
 contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
                         col2 = rep("Control", 3))
 # Run the comparison
 spectra_comparison(mf_data = mf_data,
-                   cols_to_group = "dose_group",
+                   exp_variable = "dose_group",
                    mf_type = "min",
                    contrasts = contrasts)
 }
