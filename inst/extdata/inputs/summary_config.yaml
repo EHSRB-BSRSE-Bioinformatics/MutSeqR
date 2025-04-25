@@ -1,7 +1,8 @@
 params:
 # Set up Info
-  projectdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse" # The project directory. If null, will use the current working directory.
-  outputdir: "example_output" # The output Directory. If null, will use the current working directory.
+# All file paths will be imported following the 
+  projectdir: "C:/Users/adodge/OneDrive - HC-SC PHAC-ASPC/Documents/DupSeq R Package Building/Paper/Project_1_BM_BaP_Mouse" # The  working directory for file paths. If null, will use the current working directory.
+  outputdir: "RMD_test_output" # The output Directory. If null, will use the project directory.
   project_title: "MutSeqR Analysis" # The Project Title
   researcher_name: "FirstName LastName" # The name of the lead researcher
   user_name: "FirstName LastName" # The name of the one running the analysis

@@ -18,4 +18,3 @@ Duplex_Sequencing:
   rm_filtered_mut_from_depth: yes
   do_regions_analysis: yes
   region_col: label
-
