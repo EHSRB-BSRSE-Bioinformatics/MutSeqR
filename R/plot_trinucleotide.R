@@ -1,9 +1,10 @@
 #' Plot the trinucleotide spectrum
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
-#' a given group based on the mutation data. All plots are exported.
-#' @param mf_96 A data frame containing the mutation frequency data at the 96-base resolution.
-#' This should be obtained using the 'calculate_mf' with subtype_resolution set to 'base_96'.
-#' Generally, cols_to_group should be the same as 'group_col'.
+#' a given group based on the mutation data.
+#' @param mf_96 A data frame containing the mutation frequency data at the
+#' 96-base resolution. This should be obtained using the 'calculate_mf' with
+#' subtype_resolution set to 'base_96'. Generally, cols_to_group should be the
+#' same as 'group_col'.
 #' @param response A character string specifying the type of response to plot.
 #' Must be one of 'frequency', 'proportion', or 'sum'.
 #' @param mf_type A character string specifying the mutation count method to
@@ -11,55 +12,52 @@
 #' @param group_col A character string specifying the column(s) in 'mf_96'
 #' to group the data by. Default is 'sample'. The sum, proportion, or frequency
 #' will be plotted for all unique levels of this
-#' group. You can specify more than one column to group by. Generally the same as
-#' the 'cols_to_group' parameter in 'calculate_mf' when generating mf_96_data.
+#' group. You can specify more than one column to group by. Generally the same
+#' as the 'cols_to_group' parameter in 'calculate_mf' when generating mf_96.
 #' @param indiv_y A logical value specifying whether the the max response value
 #' for the y-axis should be scaled independently for each group (TRUE) or scaled
 #' the same for all groups (FALSE). Default is FALSE.
-#' @param output_path A character string specifying the path to save the output plot.
-#' Default is NULL. This will create an output directory in the current working
-#' directory.
+#' @param output_path An optional file path to an output directory. If provided,
+#' the plots will be automatically exported using the graphics device
+#' specified in output_type. The function will create the output directory if it
+#' doesn't already exist. If NULL, plots will not be exported. Default is NULL.
 #' @param output_type A character string specifying the type of output file.
-#' Options are  'jpeg', 'pdf', 'png', 'svg', or 'tiff'. Default is 'svg'.
-#' @param sum_totals A logical value specifying whether to sum the total mutations.
+#' Options are  'jpeg', 'pdf', 'png', 'svg', or 'tiff'. Default is 'tiff'.
+#' @param sum_totals A logical value specifying whether to sum the total
+#' mutations. Default is TRUE.
+#' @return A named list of trinucleotide plots.
 #' @importFrom dplyr arrange group_by mutate summarise
 #' @importFrom stringr str_extract str_c
 
-#' @details The function plots the trinucleotide spectrum for all levels of a given
-#' group from the provided mf_96 data; the output of calculate_mf with
+#' @details The function plots the trinucleotide spectrum for all levels of a
+#' given group from the provided mf_96 data; the output of calculate_mf with
 #' subtype_resolution = "base_96".
 #' @examples
 #' # Load example data
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
+#' example_file <- system.file(
+#'  "extdata", "Example_files",
+#'  "example_mutation_data_filtered.rds",
+#'  package = "MutSeqR"
+#' )
 #' example_data <- readRDS(example_file)
 #'
-#' # Use a temporary directory to save the example plots.
-#' temp_output <- tempdir()
-#'
 #' # Calculate the mutation frequency data at the 96-base resolution
-#' mf_96 <- calculate_mf(mutation_data = example_data,
-#'                       cols_to_group = "dose_group",
-#'                       subtype_resolution = "base_96",
-#'                       variant_types = "snv")
+#' mf_96 <- calculate_mf(
+#'  mutation_data = example_data,
+#'  cols_to_group = "dose_group",
+#'  subtype_resolution = "base_96",
+#'  variant_types = "snv"
+#' )
 #' # Plot the trinucleotide proportions for each dose group
 #' # Scale y-axis the same for all groups
-#' plot_trinucleotide(mf_96 = mf_96,
-#'                    response = "proportion",
-#'                    mf_type = "min",
-#'                    group_col = "dose_group",
-#'                    indiv_y = FALSE,
-#'                    output_path = temp_output)
-#' list.files(temp_output)
-#' # Note: The plots are saved as image files in the temporary directory.
-#' # To view the plots, use the following code:
-#' ## if (!requireNamespace("tiff", quietly = TRUE)) install.packages("tiff")
-#' ## library(tiff)
-#' ## example_plot <- file.path(temp_output, "plot_Control_trinucleotide_proportion.tiff")
-#' ## image <- tiff::readTIFF(example_plot)
-#' ## plot(as.raster(image))
-
+#' plots <- plot_trinucleotide(
+#'  mf_96 = mf_96,
+#'  response = "proportion",
+#'  mf_type = "min",
+#'  group_col = "dose_group",
+#'  indiv_y = FALSE,
+#'  output_path = NULL
+#' )
 #' @export
 
 plot_trinucleotide <- function(mf_96,
@@ -70,16 +68,21 @@ plot_trinucleotide <- function(mf_96,
                                sum_totals = TRUE,
                                output_path = NULL,
                                output_type = "tiff") {
-  # Output directory
-  if (is.null(output_path)) {
-    output_dir <- file.path(here::here(), "output")
-  } else {
+  save_plots <- !is.null(output_path)
+  if (save_plots) {
     output_dir <- file.path(output_path)
+    if (!dir.exists(output_dir)) dir.create(output_dir)
   }
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir)
-  }
-
+  # # Open new plotting window if not saving plots
+  # if (is.null(output_path)) {
+  #   if (.Platform$OS.type == "windows") {
+  #     grDevices::windows(width = 8, height = 3.5)
+  #   } else if (Sys.info()["sysname"] == "Darwin") {
+  #     grDevices::quartz(width = 8, height = 3.5)
+  #   } else {
+  #     grDevices::X11(width = 8, height = 3.5)
+  #   }
+  # }
   # Desginate the response column
   if (response == "proportion") {
     response_col <- paste0("proportion_", mf_type)
@@ -136,6 +139,11 @@ plot_trinucleotide <- function(mf_96,
       y_lab <- "Sum of Mutations"
     }
   }
+  # Initialise plot list
+  group_levels <- unique(data$group)
+  plot_list <- vector("list", length(group_levels))
+  names(plot_list) <- group_levels
+
   # Loop over all levels in group
   for (i in seq_along(group_levels)) {
     plot_data <- data[data$group == group_levels[i], ]
@@ -197,27 +205,32 @@ plot_trinucleotide <- function(mf_96,
     ylim <- c(0, y_max)
     y_axis_labels <- seq(0, y_max, by = y_max / 5)
 
-    # Define the filename
-    filename <- paste0(output_dir, "/plot_", group_levels[i], "_trinucleotide_", response)
-    if (output_type == "jpeg") {
-      filename <- paste0(filename, ".jpeg")
-      grDevices::jpeg(filename, width = 7, height = 3.5, units = "in", res = 300)
-    } else if (output_type == "pdf") {
-      filename <- paste0(filename, ".pdf")
-      grDevices::pdf(filename, width = 7, height = 3.5)
-    } else if (output_type == "png") {
-      filename <- paste0(filename, ".png")
-      grDevices::png(filename, width = 7, height = 3.5, units = "in", res = 300)
-    } else if (output_type == "tiff") {
-      filename <- paste0(filename, ".tiff")
-      grDevices::tiff(filename, width = 7, height = 3.5, units = "in", res = 300)
-    } else if (output_type == "svg") {
-      filename <- paste0(filename, ".svg")
-      grDevices::svg(filename, width = 7, height = 3.5)
+    # open graphics device if saving
+    device_opened <- FALSE
+    if (save_plots) {
+      filename <- paste0(output_dir, "/plot_", group_levels[i], "_trinucleotide_", response)
+      if (output_type == "jpeg") {
+        filename <- paste0(filename, ".jpeg")
+        grDevices::jpeg(filename, width = 7, height = 3.5, units = "in", res = 300)
+      } else if (output_type == "pdf") {
+        filename <- paste0(filename, ".pdf")
+        grDevices::pdf(filename, width = 7, height = 3.5)
+      } else if (output_type == "png") {
+        filename <- paste0(filename, ".png")
+        grDevices::png(filename, width = 7, height = 3.5, units = "in", res = 300)
+      } else if (output_type == "tiff") {
+        filename <- paste0(filename, ".tiff")
+        grDevices::tiff(filename, width = 7, height = 3.5, units = "in", res = 300)
+      } else if (output_type == "svg") {
+        filename <- paste0(filename, ".svg")
+        grDevices::svg(filename, width = 7, height = 3.5)
+      }
+      device_opened <- TRUE
     }
 
     # Create the plot
-    bp <- graphics::barplot(plot_data$response, # height of bars
+    bp <- graphics::barplot(
+      plot_data$response, # height of bars
       main = title,
       names.arg = NULL,
       xlab = "Mutation Type",
@@ -230,7 +243,7 @@ plot_trinucleotide <- function(mf_96,
       border = NA,
       space = 2,
       cex.main = cex.axistext * 2
-      )
+    )
 
     # Add horizontal gridlines
     xlim <- graphics::par("usr")[1:2]
@@ -240,36 +253,44 @@ plot_trinucleotide <- function(mf_96,
     }
 
     # Now draw the bars over the gridlines
-    bp <- graphics::barplot(plot_data$response,
-                  col = rearr.colours,
-                  beside = TRUE,
-                  border = NA,
-                  space = 2,
-                  add = TRUE,
-                  axes = FALSE)
+    bp <- graphics::barplot(
+      plot_data$response,
+      col = rearr.colours,
+      beside = TRUE,
+      border = NA,
+      space = 2,
+      add = TRUE,
+      axes = FALSE
+    )
 
     # Add x-labels manually so they are closer to the bars
-    graphics::text(x = bp,
-         y = par("usr")[3] * 0.90,
-         labels = xlabels,
-         srt = 90, adj = 1,
-         xpd = TRUE,
-         cex = cex.axistext,
-         family = "mono")
+    graphics::text(
+      x = bp,
+      y = par("usr")[3] * 0.90,
+      labels = xlabels,
+      srt = 90, adj = 1,
+      xpd = TRUE,
+      cex = cex.axistext,
+      family = "mono"
+    )
     # Add x-axis line
-    graphics::lines(x = c(min(bp[,1]) - 1.2, max(bp[length(bp), ]) + 0.3),
-          y = c(par("usr")[3], par("usr")[3]),
-          lwd = 1,
-          col = "gray")
+    graphics::lines(
+      x = c(min(bp[, 1]) - 1.2, max(bp[length(bp), ]) + 0.3),
+      y = c(par("usr")[3], par("usr")[3]),
+      lwd = 1,
+      col = "gray"
+    )
 
     # Draw custom y-axis
-    graphics::axis(side = 2,
-         at = y_axis_labels,
-         col = "gray",
-         col.axis = "black",
-         pos = min(bp[,1]) - 1.2,
-         cex.axis = cex.axistext,
-         las = 1)
+    graphics::axis(
+      side = 2,
+      at = y_axis_labels,
+      col = "gray",
+      col.axis = "black",
+      pos = min(bp[,1]) - 1.2,
+      cex.axis = cex.axistext,
+      las = 1
+    )
 
     # Add subtype labels and coloured rectangles
     graphics::par(xpd = TRUE) # allow plotting outside the plot region
@@ -292,6 +313,10 @@ plot_trinucleotide <- function(mf_96,
     graphics::text(bp[72], text_y, labels[5], cex = cex.axistext*1.2, col = "black", font = 2)
     graphics::text(bp[88], text_y, labels[6], cex = cex.axistext*1.2, col = "black", font = 2)
 
-    grDevices::dev.off()
+    # save the plots to a list
+    plot_list[[i]] <- recordPlot()
+    # Turn off gr device
+    if (device_opened) grDevices::dev.off()
   }
+  return(plot_list)
 }
