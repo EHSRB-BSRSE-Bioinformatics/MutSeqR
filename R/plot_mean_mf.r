@@ -310,7 +310,7 @@ plot_mean_mf <- function(mf_data,
         generate_shades(color)  # Lighter for min, darker for max
       })
       palette <- unlist(lapply(names(palette), function(name) {
-        setNames(palette[[name]], paste(c("min", "max"), name))
+        setNames(palette[[name]], paste(c("max", "min"), name))
       }), recursive = FALSE)
     }
     # Generate shades for mean/indiv
