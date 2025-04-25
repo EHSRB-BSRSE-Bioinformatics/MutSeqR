@@ -50,11 +50,16 @@ render_report <- function(config_filepath = "./inst/extdata/inputs/summary_confi
     stop("Your project directory doesn't exist")
   }
   if (is.null(params$outputdir)) {
-    params$outputdir <- here::here()
+    params$outputdir <- params$projectdir
   }
-  if (!file.exists(normalizePath(params$outputdir))) {
-    dir.create(normalizePath(params$outputdir))
+  if (!file.exists(normalizePath(params$outputdir))) { # check for path from current wd
+    output_path <- file.path(params$projectdir, params$outputdir)
+    if (!file.exists(normalizePath(output_path))) { # check for path from projectdir
+      dir.create(normalizePath(output_path)) # create as needed, within projectdir
+    }
+    params$outputdir <- normalizePath(output_path) # set the param
   }
+
   # Load the profile config, if applicable.
   if (params$config_profile != "None") {
     # Load the config file
@@ -76,7 +81,8 @@ render_report <- function(config_filepath = "./inst/extdata/inputs/summary_confi
   rmd_file <- "DS_summary_report.Rmd"
   rmd_path <- system.file("extdata", rmd_file,
                           package = "MutSeqR", mustWork = TRUE)
-
+message("project directory", params$projectdir)
+message("output directory:", params$outputdir)
   # Rendering the R Markdown document
   rmarkdown::render(
     input = rmd_path,
