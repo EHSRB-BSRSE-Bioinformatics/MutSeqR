@@ -13,7 +13,6 @@
 #' \itemize{
 #'      \item `contig`: The reference sequence name.
 #'      \item `start`: 1-based start position of the feature.
-#'      \item `sample`: The sample name.
 #'      \item `alt_depth`: The read depth supporting the alternate allele.
 #'      \item `variation_type`: The category to which this variant is assigned.
 #'      \item subtype_col: The column containing the mutation subtype. This
@@ -59,12 +58,12 @@
 #' context. Ex A\\[G>A\\]A. The reference context is `context`.
 #'  }
 #' @param variant_types Use this parameter to choose which variation types
-#' to include in the mutation counts. Provide a character vector of the variation
-#' types that you want to include. Alternatively, provide a character vector
-#' of the variation types that you want to exclude preceded by "-". Options are:
-#'  "snv", "complex", "deletion", "insertion", "mnv", "sv", "ambiguous",
-#' "uncategorized". Ex. inclusion: "snv", exclusion: "-snv".
-#'  Default includes all variants. For `calculate_depth = TRUE`: Regardless of
+#' to include in the mutation counts. Provide a character vector of the
+#' variation types that you want to include. Alternatively, provide a
+#' character vector of the variation types that you want to exclude preceded
+#' by "-". Options are: "snv", "complex", "deletion", "insertion", "mnv", "sv",
+#' "ambiguous", "uncategorized". Ex. inclusion: "snv", exclusion: "-snv".
+#' Default includes all variants. For `calculate_depth = TRUE`: Regardless of
 #' whether or not a variant is included in the mutation counts, the total_depth
 #' for that position will be counted.
 #' @param calculate_depth A logical variable, whether to calculate the
@@ -293,11 +292,13 @@ calculate_mf <- function(mutation_data,
   # Rename columns in mutation_data to default
   mutation_data <- MutSeqR::rename_columns(mutation_data)
   # Check for all required columns
-  required_columns <- c("sample",
-                        "alt_depth",
-                        "variation_type",
-                        "filter_mut",
-                        cols_to_group)
+  required_columns <- c(
+   # "sample",
+    "alt_depth",
+    "variation_type",
+    "filter_mut",
+    cols_to_group
+  )
   if (calculate_depth) {
     required_columns <- c(required_columns, "total_depth")
   }

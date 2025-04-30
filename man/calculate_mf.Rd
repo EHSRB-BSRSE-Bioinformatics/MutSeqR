@@ -24,7 +24,6 @@ Synonymous names for these columns are accepted.
 \itemize{
 \item \code{contig}: The reference sequence name.
 \item \code{start}: 1-based start position of the feature.
-\item \code{sample}: The sample name.
 \item \code{alt_depth}: The read depth supporting the alternate allele.
 \item \code{variation_type}: The category to which this variant is assigned.
 \item subtype_col: The column containing the mutation subtype. This
@@ -72,11 +71,11 @@ context. Ex A\[G>A\]A. The reference context is \code{context}.
 }}
 
 \item{variant_types}{Use this parameter to choose which variation types
-to include in the mutation counts. Provide a character vector of the variation
-types that you want to include. Alternatively, provide a character vector
-of the variation types that you want to exclude preceded by "-". Options are:
-"snv", "complex", "deletion", "insertion", "mnv", "sv", "ambiguous",
-"uncategorized". Ex. inclusion: "snv", exclusion: "-snv".
+to include in the mutation counts. Provide a character vector of the
+variation types that you want to include. Alternatively, provide a
+character vector of the variation types that you want to exclude preceded
+by "-". Options are: "snv", "complex", "deletion", "insertion", "mnv", "sv",
+"ambiguous", "uncategorized". Ex. inclusion: "snv", exclusion: "-snv".
 Default includes all variants. For \code{calculate_depth = TRUE}: Regardless of
 whether or not a variant is included in the mutation counts, the total_depth
 for that position will be counted.}
