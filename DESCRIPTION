@@ -1,35 +1,56 @@
 Package: MutSeqR
-Title: Analysis of error-corrected Next-Generation Sequencing Data for Mutation Detection
-Version: 0.0.0.9000
+Title: Analysis of Error-Corrected Sequencing Data for Mutation Detection
+Version: 0.99.0
 Authors@R: c(
-    person("Matthew J.", "Meier", , "matthew.meier@hc-sc.gc.ca", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-8199-8754")),
-    person("Annette E.", "Dodge", , "annette.dodge@hc-sc.gc.ca", role = "aut",
-           comment = c(ORCID = "0000-0002-0446-9055")),
-    person("Andrew", "Williams", , "andrew.williams#hc-sc.gc.ca", role = "aut",
-           comment = c(ORCID = "0000-0002-7637-7686")),
-    person("Elena", "Esina", , role = "aut",
-           comment = c(ORCID = "0009-0002-3443-378X")),
-    person("Danielle", "LeBlanc", , "danielle.leblanc@hc-sc.gc.ca", role = "ctb",
-           comment = c(ORCID = "0000-0002-3847-8371")),
-    person("Geronimo", "Matteo", , role = "ctb",
-           comment = c(ORCID = "0000-0003-0819-4471")),
-    person("David M.", "Schuster", , role = "ctb",
-           comment = c(ORCID = "0009-0001-6316-4358")),
-    person("Francesco", "Marchetti", , "francesco.marchetti@hc-sc.gc.ca", role = "ctb",
-            comment = c(ORCID = "0000-0002-9435-4867")),
-    person("Carole", "Yauk", , "Carole.Yauk@uottawa.ca", role = "ctb",
-           comment = c(ORCID = "0000-0002-6725-3454"))
+    person("Matthew J.", "Meier",
+      email = "matthew.meier@hc-sc.gc.ca",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0001-8199-8754")
+    ),
+    person("Annette E.", "Dodge",
+      email = "annette.dodge@hc-sc.gc.ca",
+      role = "aut",
+      comment = c(ORCID = "0000-0002-0446-9055")
+    ),
+    person("Andrew", "Williams",
+      role = "aut",
+      comment = c(ORCID = "0000-0002-7637-7686")
+    ),
+    person("Elena", "Esina", 
+      role = "aut",
+      comment = c(ORCID = "0009-0002-3443-378X")
+    ),
+    person("Danielle", "LeBlanc",
+      role = "ctb",
+      comment = c(ORCID = "0000-0002-3847-8371")
+    ),
+    person("Geronimo", "Matteo",
+      role = "ctb",
+      comment = c(ORCID = "0000-0003-0819-4471")
+    ),
+    person("David M.", "Schuster",
+      role = "ctb",
+      comment = c(ORCID = "0009-0001-6316-4358")
+    ),
+    person("Francesco", "Marchetti",
+      role = "ctb",
+      comment = c(ORCID = "0000-0002-9435-4867")
+    ),
+    person("Carole", "Yauk",
+      role = "ctb",
+      comment = c(ORCID = "0000-0002-6725-3454")
+    )
   )
-Description: Standard methods for analysis of mutation data following ECS 
-    for the purpose of mutagencity assessment. Functions include importing 
-    the mutation lists provided by a variant caller, and a set of analytical 
-    tools for statistical testing and visualization of mutation data;
-    comparison to COSMIC and/or germline signatures; etc.
+Description: Standard methods for analysis of mutation data following error-
+    corrected sequencing (ECS) for the purpose of mutagencity assessment.
+    Functions include importing the mutation lists provided by a variant
+    caller, and a set of analytical tools for statistical testing and
+    visualization of mutation data; comparison to COSMIC and/or germline
+    signatures; etc.
 License: MIT + file LICENSE
 Depends:
     R (>= 3.5.0)
-biocViews:
+biocViews: Software
 Imports:
     BiocGenerics,
     BiocManager,
@@ -50,6 +71,7 @@ Imports:
     VariantAnnotation
 Suggests:
     binom,
+    BiocStyle,
     BSgenome,
     BSgenome.Hsapiens.UCSC.hg38,
     BSgenome.Mmusculus.UCSC.mm10,
@@ -79,6 +101,7 @@ Suggests:
     trackViewer,
     yaml,
     xml2
+VignetteBuilder: knitr
 Config/reticulate: list( packages = list( list(package =
     "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),
     list(package = "SigProfilerMatrixGenerator") ) )
@@ -86,3 +109,6 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+BugReports: https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues
+
+

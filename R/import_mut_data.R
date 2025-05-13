@@ -81,8 +81,8 @@
 #' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
 #'  digest the mutation data properly. Typical defaults are set, but can
-#'  be substituted in the form of `list(contig = "my_custom_contig_name",
-#'  sample = "my_custom_sample_column_name")`. You can change one or more of
+#'  be substituted in the form of `list(my_custom_contig_name = "contig",
+#'  my_custom_sample_column_name = "sample")`. You can change one or more of
 #' these. Set column synonyms are defined in MutSeqR::op$column and will
 #' automatically be changed to their default value.
 #' @param output_granges A logical variable; whether you want the mutation
