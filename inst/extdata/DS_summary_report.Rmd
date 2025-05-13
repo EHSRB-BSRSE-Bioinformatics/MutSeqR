@@ -380,7 +380,7 @@ plot4.12 <- hist(model_data$residuals,
 ### Residuals QQ Plot
 
 ```{r glm-qq-caption, eval=!is.null(params$exp_variable), include=FALSE}
-caption <- paste(
+caption <- paste0(
   "GLM residuals of MFmin modelled as an effect of ",
   params$exp_variable, " expressed as a quantile-quantile plot.",
   " Y is the pearson's residuals of the model in ascending order",
@@ -480,7 +480,7 @@ if (params$bmd_method == "proast") {
                     response_col = response_col,
                     bmr = params$bmr,
                     model_averaging = TRUE,
-                    num_bootstraps = 2, # Change to 200 once testing is done
+                    num_bootstraps = 2, # parameterize this. 50/200
                     plot_results = TRUE,
                     output_path = params$outputdir)
 } else if (params$bmd_method == "toxicr") {
@@ -698,36 +698,123 @@ plot5.15 <- plot_spectra(mf_data = mf6_expv,
 plot5.15
 ```
 
-## 96-Base Trinucleotide Spectrum
+## 96-Base Trinucleotide Spectrum {.tabset}
 
-```{r trinucleotide-plots}
-##** We want these to display in the report.
-## I don't know how i will get each plot to tabset....
+### Trinucleotide Spectra per Sample
 
-# Aggregate the depth across the experimental variable
-if (!is.null(params$precalc_depth_data_base96) && !is.null(params$exp_variable)) {
-  precalc_depth_data_base96 <- params$precalc_depth_data_base96 %>%
-    dplyr::group_by(normalized_context,
-                    dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-    dplyr::summarize(subtype_depth = sum(subtype_depth))
-}
+```{r trinuc-per-sample, message=FALSE}
 mf96 <- calculate_mf(
   mutation_data = filtered_mutation_data,
-  cols_to_group = ifelse(is.null(params$exp_variable),
-                         "sample", params$exp_variable),
+  cols_to_group = "sample",
   subtype_resolution = "base_96",
   variant_types = "snv",
   calculate_depth = !no_depth,
   precalc_depth_data = params$precalc_depth_data_base96,
   d_sep = params$d_sep
 )
-plot_trinucleotide(
-  mf_96 = mf96,
+# Add expv separately to prevent NANs in data
+if (!is.null(params$exp_variable)) {
+  mf96 <- dplyr::left_join(mf96, sample_exp_map, by = "sample")
+}
+DT::datatable(
+  mf96,
+  caption = "96-base Mutation Frequnecy per Sample",
+  options = list(
+    columnDefs = list(
+      list(targets = c("mf_min", "mf_max"),
+           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+    ),
+    rowCallback = JS(
+      "function(row, data, dataIndex) {
+        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }"
+    )
+  )
+) %>%
+  DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+```
+
+### Trinucleotide Spectra per `r params$exp_variable`
+
+```{r trinuc-spectra-expc, eval=!is.null(params$exp_variable)}
+# Precalc_depth: Aggregate across the experimental variable
+if (!is.null(params$precalc_depth_data_base96)) {
+  precalc_depth_data_base96 <- params$precalc_depth_data_base96 %>%
+    dplyr::group_by(normalized_context,
+                    dplyr::across(dplyr::all_of(params$exp_variable))) %>%
+    dplyr::summarize(subtype_depth = sum(subtype_depth))
+} else {
+  precalc_depth_data_base96 <- NULL
+}
+# Calculate subtype sums and proportions for the experimental variable
+mf96_expv <- calculate_mf(
+  mutation_data = filtered_mutation_data,
+  cols_to_group = params$exp_variable,
+  subtype_resolution = "base_96",
+  variant_types = "snv",
+  calculate_depth = !no_depth,
+  precalc_depth_data = precalc_depth_data_base96,
+  d_sep = params$d_sep
+)
+# Calculate the mean subtype MF for the experimental variable
+mf96_expv_mean <- mf96 %>%
+  dplyr::group_by(normalized_context_with_mutation,
+                  dplyr::across(dplyr::all_of(params$exp_variable))) %>%
+  dplyr::summarize(mean_mf_min = mean(mf_min),
+                   se_mf_min = sd(mf_min) / dplyr::n(),
+                   mean_mf_max = mean(mf_max),
+                   se_mf_max = sd(mf_max) / dplyr::n())
+
+mf96_expv <- dplyr::left_join(mf96_expv, mf96_expv_mean,
+                              by = c(params$exp_variable,
+                                     "normalized_context_with_mutation")) %>%
+  dplyr::select(-"mf_min", -"mf_max")
+
+DT::datatable(
+  mf96_expv,
+  caption = paste("96-base Mutation Frequency per", params$exp_variable),
+  options = list(
+    columnDefs = list(
+      list(targets = c("mean_mf_min", "se_mf_min", "mean_mf_max", "se_mf_max"),
+           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+    ),
+    rowCallback = JS(
+      "function(row, data, dataIndex) {
+        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }"
+    )
+  )
+) %>%
+  DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+```
+
+## Trinucleotide Plots
+
+```{r trinuc-plots-caption, include=FALSE}
+caption <- paste0(
+  "96-base trinucleotide spectra (minimum) per ",
+  if (is.null(params$exp_variable)) "Sample" else params$exp_variable,
+  ". Bars are the proportion of SNV subtypes within their trinucleotide context",
+  if (!no_depth) " normalized to the sequencing depth. ",
+  "Bars are coloured based on SNV subtype. Data labels indicate the total",
+  " number of mutations for each SNV subtype"
+)
+```
+
+```{r trinuc-plots, fig.show='hide'} 
+if (is.null(params$exp_variable)) { # some how make these plots tabs
+  data <- mf96
+  group_col <- "sample"
+} else {
+  data <- mf96_expv
+  group_col <- params$exp_variable
+}
+plots <- plot_trinucleotide(
+  mf_96 = data,
   response = "proportion",
   mf_type = "min",
-  group_col = ifelse(is.null(params$exp_variable),
-                     "sample", params$exp_variable),
-  output_path = params$outputdir
+  group_col = group_col,
+  output_path = NULL
 )
 ```
 
@@ -829,7 +916,18 @@ model_rg <- model_mf(
 
 ## Residuals Histogram
 
-```{r glmm-residuals-hist, eval=params$do_regions_analysis}
+```{r glmm-hist-caption, eval=params$do_regions_analysis, include=FALSE}
+caption <- paste0(
+  "GLMM residuals of MFmin modelled as an effect of ",
+  params$region_col,
+  if (!is.null(params$exp_variable)) " and", params$exp_variable,
+  ". X is pearson's residuals, y is frequency.",
+  " Plotted to validate model assumptions. n = ",
+  nrow(mf_rg)
+)
+```
+
+```{r glmm-residuals-hist, eval=params$do_regions_analysis, fig.cap=caption}
 model_rg_data <- model_rg$model_data
 hist_data <- hist(model_rg_data$residuals, plot = FALSE)
 ylim_max <- max(hist_data$counts) + 1
@@ -842,7 +940,20 @@ plot6.3 <- hist(model_rg_data$residuals,
 
 ## Residuals QQ Plot
 
-```{r glmm-residuals-qq, eval=params$do_regions_analysis}
+```{r glmm-qq-caption, eval=params$do_regions_analysis, include=FALSE}
+caption <- paste0(
+  "GLMM residuals of MFmin modelled as an effect of ",
+  params$region_col,
+  if (!is.null(params$exp_variable)) " and ", params$exp_variable,
+  ". Expressed as a quantile-quantile plot.",
+  " Y is the pearson's residuals of the model in ascending order",
+  " x is the quantiles of standard normal distribution for n of ",
+  nrow(mf_rg),
+  ". Plotted to validate model assumptions."
+)
+```
+
+```{r glmm-residuals-qq, eval=params$do_regions_analysis, fig.cap=caption}
 qqplot6.4 <- stats::qqnorm(
   model_rg_data$residuals,
   main = "QQ Plot of Residuals"
@@ -901,7 +1012,18 @@ fig_width <- 8
 fig_height <- 6
 ```
 
-```{r plot-glmm, eval=params$do_regions_analysis, fig.width=fig_width, fig.height=fig_height}
+```{r plot6.7-caption, eval=params$do_regions_analysis, include=FALSE}
+caption <- paste0(
+  "Mean Mutation Frequency Minimum (mutations/bp) per ",
+  params$region_col,
+  if (!is.null(params$exp_variable)) " and ", params$exp_variable,
+  " estimated using a generalized linear mixed model.",
+  " Error bars are the S.E.M.",
+  if (plot_signif) " Symbols indicate significance differences (p < 0.05) between ", params$exp_variable, " levels for individual genomic regions."
+)
+```
+
+```{r plot-glmm, eval=params$do_regions_analysis, fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
 # Define parameters for plot
 if (!is.null(params$exp_variable)) {
   # rg ordered by expv level with highest avg mf
@@ -943,50 +1065,282 @@ plot6.7 <- plot_model_mf(model = model_rg,
 plot6.7
 ```
 
+# Recurring mutations {.tabset}
 
+## Recurring Mutations Whole Data
+
+```{r, recurrent-mutations}
+
+recurring_mutations <- filtered_mutation_data %>%
+  dplyr::filter(!variation_type %in% "no_variant",
+                filter_mut == FALSE) %>%
+  dplyr::group_by(contig, start, end, subtype) %>%
+  dplyr::tally() %>%
+  dplyr::arrange(-n) %>%
+  dplyr::filter(n > 1)
+
+no_recur <- nrow(recurring_mutations)
+no_recur_sum <- sum(recurring_mutations_sample$n)
+```
+
+Within the entire dataset, `r no_recur` mutations were found to occur in more than one sample.
+Recurrent mutations between samples are observed at the same genomic position, with the same (normalized) subtype.
+These mutations accounted for `r no_recur_sum` of total mutations (Minimum Mutation Counting Method).
+
+## Recurrent Mutations Lolliplot
+```{r lolliplot-caption, eval=params$do_regions_analysis}
+caption <- paste(
+  "Recurrent mutations across genomic positions within each contig. Y is",
+  "recurrence (n) a specific mutation (coloured by normalized subtype) is",
+  "observed at each genomic position (X, start position). Only mutations with",
+  "recurrence > 2 are displayed for clarity."
+)
+```
+
+```{r lolliplot-recur, eval=params$do_regions_analysis, fig.cap=caption, fig.width=12, fig.height=6}
+plot_data <- filtered_mutation_data %>%
+  dplyr::filter(!variation_type %in% "no_variant",
+                filter_mut == FALSE) %>%
+  dplyr::group_by(
+    .data[[params$region_col]], start, end, normalized_subtype
+  ) %>%
+  dplyr::tally() %>%
+  dplyr::arrange(-n) %>%
+  dplyr::filter(n > 1)
+unique_contigs <- unique(plot_data[[params$region_col]])
+plot_data$normalized_subtype <- factor(
+  plot_data$normalized_subtype, # change to subtype colours
+  levels = c(
+    "complex", "deletion", "insertion", "mnv", "sv",
+    "C>A", "C>G", "C>T", "T>A", "T>C", "T>G"
+  )
+)
+palette <- c(
+  RColorBrewer::brewer.pal(5, "BrBG"),
+  RColorBrewer::brewer.pal(6, "Spectral")
+)
+names(palette) <- c(
+  "complex", "deletion", "insertion", "mnv", "sv",
+  "T>G", "T>C", "T>A", "C>T", "C>G", "C>A"
+)
+
+plot_list <- list()
+for (contig_name in unique_contigs) {
+  df <- filter(plot_data, .data[[params$region_col]] == contig_name)
+
+  p <- ggplot(df, aes(x = start, y = n)) +
+    # Lollipop stick: line from (x, 0) to (x, n)
+    geom_segment(aes(x = start, xend = start, y = 0, yend = n),
+                 linewidth = 0.3,
+                 show.legend = FALSE,
+                 color = "black") +
+    # Lollipop "candy": the point
+    geom_point(aes(fill = normalized_subtype), shape = 21, size = 3) +
+    scale_fill_manual(values = palette) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+    labs(
+      title = paste("Recurrent Mutations on", contig_name),
+      x = "Genomic Position (start)",
+      y = "Recurrence (n)",
+      color = "Normalized Subtype"
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid = element_blank(),
+      axis.line = element_line(color = "black"),
+      axis.ticks = element_line(color = "black"),
+      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
+    )
+  plot_list[[as.character(contig_name)]] <- p
+}
+plot_list
+```
+
+## Recurring Mutations Within Samples: Mutations with >1 alternate allele
+
+```{r, recur-per-sample}
+recurring_mutations_sample <- filtered_mutation_data %>%
+  dplyr::filter(!variation_type %in% "no_variant",
+                filter_mut == FALSE) %>%
+  dplyr::group_by(contig, start, end, sample) %>%
+  dplyr::tally() %>%
+  dplyr::arrange(-n) %>%
+  dplyr::filter(n > 1)
+
+recur_mut_sample_summary <- recurring_mutations_sample %>%
+  dplyr::mutate(alt_depth = n, variation_type = "snv", filter_mut = FALSE) %>%
+  calculate_mf(calculate_depth = FALSE) %>%
+  dplyr::rename(
+    multi_allelic_site_count = sum_min,
+    total_recurring_mutations = sum_max
+  )
+total <- recur_mut_sample_summary %>%
+  dplyr::summarise(
+    sample = "total",
+    multi_allelic_site_count = sum(multi_allelic_site_count),
+    total_recurring_mutations = sum(total_recurring_mutations)
+  )
+recur_mut_sample_summary <- rbind(recur_mut_sample_summary, total)
+DT::datatable(recur_mut_sample_summary,
+  caption = "Number of recurrent mutations per sample.
+  multi_allelic_site_count is the number of genomic positions (contig/start/end) where multiple distinct alternate alleles were observed within a given sample.
+  total_recurring_mutations is the total number of recurrent mutations (Minimum Count Method) per sample.")
+
+no_recur <- nrow(recurring_mutations_sample)
+no_recur_sum <- sum(recurring_mutations_sample$n)
+```
+
+For each sample, we identified genomic sites where multiple distinct alternate alleles were called at the same position.
+A total of `r no_recur` such positions was observed across the entire data set, accounting for `r no_recur_sum` of total mutations (Minimum Mutation Counting Method).
+
+## Recurring Mutations Within `r params$exp_variable`
+
+```{recur-per-expv, eval=!is.null(params$exp_variable)}
+recurring_mutations_expv <- filtered_mutation_data %>%
+  dplyr::filter(!variation_type %in% "no_variant",
+                filter_mut == FALSE) %>%
+  dplyr::group_by(
+    contig, start, end,
+    .data[[params$exp_variable]],
+    variation_type, # just to add it to the df
+    subtype
+  ) %>%
+  dplyr::tally() %>%
+  dplyr::arrange(-n) %>%
+  dplyr::filter(n > 1)
+
+recur_mut_expv_summary <- recurring_mutations_expv %>%
+  dplyr::mutate(alt_depth = n, filter_mut = FALSE) %>%
+  calculate_mf(
+    cols_to_group = params$exp_variable,
+    calculate_depth = FALSE
+  ) %>%
+  dplyr::rename(
+    recurrent_mutation_events = sum_min,
+    total_recurring_mutations = sum_max
+  )
+total <- recur_mut_expv_summary %>%
+  dplyr::summarise(
+    recurrent_mutation_events = sum(recurrent_mutation_events),
+    total_recurring_mutations = sum(total_recurring_mutations)
+  ) %>%
+  mutate(!!params$exp_variable := "total")
+recur_mut_expv_summary <- rbind(recur_mut_expv_summary, total)
+
+caption <- paste(
+  "Number of recurrent mutations per", params$exp_variable,
+  "recurrent_mutation_events is the number of times a mutation of the same (normalized) subtype and genomic position was called within each ",
+  params$exp_variable, ".",
+  "total_recurring_mutations is the total number of mutations per",
+  params$exp_variable, "that were recurrent."
+)
+DT::datatable(recur_mut_expv_summary,
+  caption = caption)
+no_recur <- nrow(recurring_mutations_expv)
+no_recur_sum <- sum(recurring_mutations_expv$n)
+
+```
+
+```{r recurrent-rsids, eval= "id" %in% colnames(filtered_mutation_data)}
+recurring_mutations_rsid <- filtered_mutation_data %>%
+  dplyr::filter(!variation_type %in% "no_variant") %>%
+  dplyr::group_by(dplyr::id) %>%
+  dplyr::tally() %>%
+  dplyr::arrange(-n)
+```
+
+## Bubble Plot
+```{r plot-bubbles}
+plot7.2 <- plot_bubbles(
+  mutation_data = filtered_mutation_data,
+  size_by = alt_depth,
+  facet_col = params$exp_variable
+)
+plot7.2
+```
 
 # CpG Mutations
 
+For each subtype, # of the subtype at CpG sites divided by the total number of that subtype.
+
 
 ```{r cpg-mutations, eval=FALSE}
+# Annotate Mutation Data for CpG sites:
+mut_data_cpgs <- annotate_cpg_sites(mutation_data = filtered_mutation_data) %>%
+  dplyr::filter(CpG_site == TRUE)
+# For counting, make rows distinct in case of duplicated positions.
+mut_data_cpgs_distinct <- mut_data_cpgs %>%
+  dplyr::distinct(sample, contig, start, .keep_all = TRUE)
+# Number of CpG dinucleotides per sample:
+n_cpgs_per_sample <- table(
+  factor(mut_data_cpgs_distinct$sample,
+         levels = unique(filtered_mutation_data$sample))
+) / 2
+# Dinucleotides = sites ?  / 2
+# Explain how this is working (calculating the sites)
+
+cpg_summary_global <- calculate_mf(
+  mutation_data = mut_data_cpgs,
+  cols_to_group = "sample",
+  calculate_depth = FALSE,
+  retain_metadata_cols = params$exp_variable
+)
+cpg_summary_global <- merge(
+  cpg_summary_global,
+  as.data.frame(n_cpgs_per_sample),
+  by.x = "sample",
+  by.y = "Var1",
+  all.x = TRUE
+) %>%
+  dplyr::rename(n_CpG_sites = Freq, cpg_mut = sum_min) %>%
+  dplyr::select(-sum_max) %>%
+  dplyr::mutate(prct_mutated_CpG_sites = cpg_mut / n_CpG_sites * 100)
+cpg_summary_global <- dplyr::left_join(mf_data, cpg_summary_global) %>%
+  dplyr::select(-sum_max, -mf_min, -mf_max, -group_depth) %>%
+  dplyr::rename(total_mut = sum_min) %>%
+  dplyr::mutate(pct_muts_at_CpG = 100 * cpg_mut / total_mut)
+
+# Above we are calculating the Percent of CpG sites that were mutated within a sample
+# And the Percent of Mutations in the samples that are at CpG sites.
+# For the former, we have summed the number of CpG site mutations irrespective
+# of which dinucleotide it came from. So maybe we want a unique count of
+# how many of the unique CpG sites were mutated?
+
 # Create a GRanges object, containing all mutation data, but a column added
 # to indicate whether the 'context' column contains a CpG site (i.e., is the
 # mutation at a CpG site or not)
-mutation_data_cpgs <- annotate_CpG_sites(mutation_data)
-cpg_mutations <- get_CpG_mutations(my_regions, mutation_data)
-# Returns CpG sites of your regions, it has nothing to do with mutation data
-cpg_sites <- get_CpG_regions(my_regions)
-# Total number of CpG sites
-nrow(as.data.frame(cpg_sites)) # could also use %>% count() %>% pull()
-n_samples <- length(unique(as.data.frame(mutation_data)[["sample"]]))
+mutation_data_cpgs <- annotate_cpg_sites(filtered_mutation_data)
+cpg_mutations <- as.data.frame(mutation_data_cpgs) %>%
+dplyr::filter(
+  CpG_site == TRUE,
+  filter_mut == FALSE)
+cpg_sites <- get_cpg_regions(my_regions)
 
 # Testing general function for this application...
-cpg_summary_subtype <- calculate_mf(data = as.data.frame(cpg_mutations),
+cpg_summary_subtype <- calculate_mf(mutation_data = cpg_mutations,
                                     subtype_resolution = "base_6",
-                                    vaf_cutoff = params$vaf_cutoff,
-                                    summary = T,
-                                    cols_to_group = c("sample"))
-                                       
-
+                                    cols_to_group = "sample",
+                                    calculate_depth = FALSE)
+                                    
 # Mutations at CpG sites...
 cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
-  add_count(dose, alt_depth, name = "total_muts_per_group") %>%
-  ungroup()#%>%
-  group_by(subtype, !!ensym(params$group_var), total_muts_per_group) %>%
+  dplyr::add_count(dose, alt_depth, name = "total_muts_per_group") %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(subtype, dose, total_muts_per_group) %>%
+  dplyr::tally() %>%
+  dplyr::mutate(numeric_pct_cpg = 100 * dplyr::n() / (nrow(as.data.frame(cpg_sites)) * n_samples)) %>%
+  dplyr::mutate(proportional_pct_cpg = 100*(100*dplyr::n()/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
+
+# # Mutations at CpG sites, broken down by trinucleotide mutation context
+cpg_summary_context <- as.data.frame(cpg_mutations) %>%
+  group_by(!!ensym(group_var)) %>%
+  add_count(alt_depth, name = "total_muts_per_group") %>%
+  ungroup() %>%
+  group_by(context_with_mutation, !!ensym(params$group_var), total_muts_per_group) %>%
   tally() %>%
   mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
   mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
 
-# # Mutations at CpG sites, broken down by trinucleotide mutation context
-# cpg_summary_context <- as.data.frame(cpg_mutations) %>%
-#   group_by(!!ensym(group_var)) %>%
-#   add_count(alt_depth, name = "total_muts_per_group") %>%
-#   ungroup() %>%
-#   group_by(context_with_mutation, !!ensym(params$group_var), total_muts_per_group) %>%
-#   tally() %>%
-#   mutate(numeric_pct_cpg = 100*n/(nrow(as.data.frame(cpg_sites))*n_samples)) %>%
-#   mutate(proportional_pct_cpg = 100*(100*n/total_muts_per_group)/(nrow(as.data.frame(cpg_sites))*n_samples))
-# 
 # cpg_base_12_pct <- as.data.frame(mutation_data_cpgs) %>%
 #   group_by(CpG_site, subtype, !!ensym(params$group_var)) %>%
 #   tally() %>% 
@@ -1030,29 +1384,6 @@ cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
 #                       output_path = output_dir,
 #                       workbook_name = "cpg_tables")
 
-```
-
-# Recurring mutations
-
-Are any mutations observed in more than one sample?
-
-```{r, eval=FALSE}
-
-recurring_mutations <- mutation_data_cpgs %>%
-  group_by(contig,start,end) %>%
-  filter(!variation_type %in% "no_variant") %>%
-  tally() %>%
-  arrange(-n)
-
-recurring_mutations_group <- mutation_data_cpgs %>%
-  group_by(contig,start,end,sample) %>%
-  tally() %>%
-  arrange(-n)
-
-recurring_mutations_rsid <- mutation_data_cpgs %>%
-  group_by(id) %>%
-  tally() %>%
-  arrange(-n)
 ```
 
 
