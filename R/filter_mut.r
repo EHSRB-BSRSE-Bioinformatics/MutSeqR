@@ -252,16 +252,16 @@ filter_mut <- function(mutation_data,
         hits <- S4Vectors::queryHits(overlaps)
         hits_indices <- c(hits_indices, which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")[hits])
       }
-      mutation_data$snv_mnv_overlaps <- FALSE
-      mutation_data$snv_mnv_overlaps[hits_indices] <- TRUE
+      mutation_data$snv_in_germ_mnv <- FALSE
+      mutation_data$snv_in_germ_mnv[hits_indices] <- TRUE
       mutation_data <- mutation_data %>%
-        dplyr::mutate(filter_mut = ifelse(.data$snv_mnv_overlaps == TRUE,
+        dplyr::mutate(filter_mut = ifelse(.data$snv_in_germ_mnv == TRUE,
                                           TRUE, .data$filter_mut),
-                      filter_reason = ifelse(.data$snv_mnv_overlaps == TRUE,
+                      filter_reason = ifelse(.data$snv_in_germ_mnv == TRUE,
                                              ifelse(.data$filter_reason == "", "snv_in_germ_mnv",
                                                     paste0(.data$filter_reason, "|snv_in_germ_mnv")),
                                             .data$filter_reason))
-      snv_in_germ_mnv_count <- sum(mutation_data$snv_mnv_overlaps == TRUE)
+      snv_in_germ_mnv_count <- sum(mutation_data$snv_in_germ_mnv == TRUE)
       message("Found ", snv_in_germ_mnv_count, " SNVs overlapping with germline MNVs.")
     }
   }
