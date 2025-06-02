@@ -5,8 +5,8 @@
 \title{Read configuration file and render R Markdown document}
 \usage{
 render_report(
-  config_filepath = "./inst/extdata/inputs/summary_config.yaml",
-  output_file = "./Rmd_Test.html",
+  config_filepath,
+  output_file = "./MutSeqR_Summary_Report.html",
   output_format = "html_document"
 )
 }
