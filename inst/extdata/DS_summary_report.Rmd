@@ -36,6 +36,8 @@ Report prepared by: `r params$user_name`
 
 Report prepared for: `r params$researcher_name`
 
+Sequencing technology: `r params$ecs_technology`
+
 `r if(has_description) {description_text}`
 
 Output saved to : `r params$outputdir`
@@ -96,6 +98,20 @@ entries <- nrow(mutation_data)
 
 ```
 
+```{r check-calc-depth, eval=!no_depth, echo=FALSE, results='asis'}
+no_variants_present <- "no_variant" %in% unique(mutation_data$variation_type)
+if (!no_variants_present) {
+  cat("WARNING! The imported mutation data contains a total_depth column",
+    "but does not contain no_variant sites. Group depth and mutation",
+    "frequencies may not be accurate if the mutation data does not contain",
+    "total_depth values for ~ every sequenced site ~. Consider",
+    "removing the total_depth column and precalculating the per-sample depth",
+    "(see precalc_depth_data) if it is not possible to import all sequenced",
+    "sites into R."
+  )
+}
+```
+
 Imported `r entries` rows from `r file.path(params$projectdir, params$mutation_file)`.
 
 Mutation data has `r sample_no` samples.
@@ -152,21 +168,23 @@ the mutation data.
 ^1^ *Only applicable for mutation data that contains an appropriate total_depth column.*
 
 ```{r filter-mutation-data, message=TRUE, results='asis'}
-filtered_mutation_data <- filter_mut(mutation_data,
-                                     correct_depth = correct_depth,
-                                     vaf_cutoff = params$vaf_cutoff,
-                                     snv_in_germ_mnv = params$snv_in_germ_mnv,
-                                     rm_abnormal_vaf = params$rm_abnormal_vaf,
-                                     custom_filter_col = params$custom_filter_col,
-                                     custom_filter_val = params$custom_filter_val,
-                                     custom_filter_rm = params$custom_filter_rm,
-                                     regions = params$filtering_regions,
-                                     rg_sep = params$filtering_rg_sep,
-                                     regions_filter = params$regions_filter,
-                                     allow_half_overlap = params$allow_half_overlap,
-                                     is_0_based_rg = params$filtering_is_0_based_rg,
-                                     rm_filtered_mut_from_depth = params$rm_filtered_mut_from_depth,
-                                     return_filtered_rows = TRUE)
+filtered_mutation_data <- filter_mut(
+  mutation_data,
+  correct_depth = correct_depth,
+  vaf_cutoff = params$vaf_cutoff,
+  snv_in_germ_mnv = params$snv_in_germ_mnv,
+  rm_abnormal_vaf = params$rm_abnormal_vaf,
+  custom_filter_col = params$custom_filter_col,
+  custom_filter_val = params$custom_filter_val,
+  custom_filter_rm = params$custom_filter_rm,
+  regions = params$filtering_regions,
+  rg_sep = params$filtering_rg_sep,
+  regions_filter = params$regions_filter,
+  allow_half_overlap = params$allow_half_overlap,
+  is_0_based_rg = params$filtering_is_0_based_rg,
+  rm_filtered_mut_from_depth = params$rm_filtered_mut_from_depth,
+  return_filtered_rows = TRUE
+)
 filtered_variants <- filtered_mutation_data$filtered_rows
 write_excel(data = filtered_variants,
             output_path = params$outputdir,
@@ -228,6 +246,8 @@ DT::datatable(mf_data,
     )
   )
 )
+# Results List for Export
+Results <- list("Global MF per Sample" = mf_data)
 ```
 
 ## Plot Mutation Frequency per Sample
@@ -353,6 +373,11 @@ cat("Dispersion Parameter taken to be :", model$summary$dispersion)
 if (!is.null(params$contrasts) && any(model$pairwise_comparisons$Significance == "***")) {
   plot_signif <- TRUE
 }
+# Save the model results
+write_excel(data = model,
+            output_path = params$outputdir,
+            workbook_name = "Generalized Linear Model Results",
+            model_results = TRUE)
 ```
 
 ### Residuals Histogram
@@ -503,6 +528,7 @@ if (params$bmd_method == "proast") {
 ```{r bmd-results, eval=params$bmd}
 DT::datatable(bmd) %>%
   DT::formatRound(columns = 3:8, digits = 2)
+Results[["BMD Results"]] <- bmd
 ```
 
 ### BMD Confidence Interval Plot
@@ -560,6 +586,8 @@ DT::datatable(
   )
 ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+
+Results[["6-base MF per Sample"]] <- mf6
 ```
 
 ### Hierarchical Clustering of Samples
@@ -639,6 +667,8 @@ DT::datatable(
   )
 ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+
+Results[["6-base MF per Exp-variable"]] <- mf6_expv
 ```
 
 ### 6-base Spectral Comparison
@@ -667,6 +697,7 @@ DT::datatable(
 ) %>%
   DT::formatRound(columns = "G2", digits = 2)
 
+Results[["6-base Spectral Comparison"]] <- base6_comp
 ```
 
 ### Plot 6-base Mutation Spectra per `r params$exp_variable`
@@ -732,6 +763,7 @@ DT::datatable(
   )
 ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+Results[["96-base MF per Sample"]] <- mf96
 ```
 
 ### Trinucleotide Spectra per `r params$exp_variable`
@@ -786,9 +818,13 @@ DT::datatable(
   )
 ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+
+Results[["96-base MF per Exp Variable"]] <- mf96_expv
 ```
 
-## Trinucleotide Plots
+##
+
+## Trinucleotide Plots {.tabset}
 
 ```{r trinuc-plots-caption, include=FALSE}
 caption <- paste0(
@@ -801,8 +837,8 @@ caption <- paste0(
 )
 ```
 
-```{r trinuc-plots, fig.show='hide'} 
-if (is.null(params$exp_variable)) { # some how make these plots tabs
+```{r trinuc-plots, fig.keep='none'}
+if (is.null(params$exp_variable)) {
   data <- mf96
   group_col <- "sample"
 } else {
@@ -816,6 +852,16 @@ plots <- plot_trinucleotide(
   group_col = group_col,
   output_path = NULL
 )
+```
+
+
+```{r display-plots, echo=FALSE, results = 'asis'}
+for (i in seq_along(plots)) {
+  cat("### Plot ", names(plots)[i], "\n")
+  plots[i]
+  cat("\n\n")
+  cat(caption, "\n\n")
+}
 ```
 
 ## Signature Analysis
@@ -865,6 +911,8 @@ DT::datatable(
     )
   )
 )
+
+Results[["MF per Target Region"]] <- mf_rg
 ```
 
 ## Generalized Linear Mixed Model
@@ -911,6 +959,13 @@ model_rg <- model_mf(
   control = lme4::glmerControl(optimizer = "bobyqa",
     optCtrl = list(maxfun = 2e5)
   )
+)
+# Save the results.
+write_excel(
+  data = model_rg,
+  output_path = params$outputdir,
+  workbook_name = "Regions Analysis GLMM",
+  model_results = TRUE
 )
 ```
 
@@ -1071,7 +1126,7 @@ plot6.7
 
 ```{r, recurrent-mutations}
 
-recurring_mutations <- filtered_mutation_data %>%
+recurring_mutations_all <- filtered_mutation_data %>%
   dplyr::filter(!variation_type %in% "no_variant",
                 filter_mut == FALSE) %>%
   dplyr::group_by(contig, start, end, subtype) %>%
@@ -1079,8 +1134,8 @@ recurring_mutations <- filtered_mutation_data %>%
   dplyr::arrange(-n) %>%
   dplyr::filter(n > 1)
 
-no_recur <- nrow(recurring_mutations)
-no_recur_sum <- sum(recurring_mutations_sample$n)
+no_recur <- nrow(recurring_mutations_all)
+no_recur_sum <- sum(recurring_mutations_all$n)
 ```
 
 Within the entire dataset, `r no_recur` mutations were found to occur in more than one sample.
@@ -1195,7 +1250,7 @@ A total of `r no_recur` such positions was observed across the entire data set, 
 
 ## Recurring Mutations Within `r params$exp_variable`
 
-```{recur-per-expv, eval=!is.null(params$exp_variable)}
+```{r recur-per-expv, eval=!is.null(params$exp_variable)}
 recurring_mutations_expv <- filtered_mutation_data %>%
   dplyr::filter(!variation_type %in% "no_variant",
                 filter_mut == FALSE) %>%
@@ -1244,7 +1299,7 @@ no_recur_sum <- sum(recurring_mutations_expv$n)
 ```{r recurrent-rsids, eval= "id" %in% colnames(filtered_mutation_data)}
 recurring_mutations_rsid <- filtered_mutation_data %>%
   dplyr::filter(!variation_type %in% "no_variant") %>%
-  dplyr::group_by(dplyr::id) %>%
+  dplyr::group_by(id) %>%
   dplyr::tally() %>%
   dplyr::arrange(-n)
 ```
@@ -1253,7 +1308,7 @@ recurring_mutations_rsid <- filtered_mutation_data %>%
 ```{r plot-bubbles}
 plot7.2 <- plot_bubbles(
   mutation_data = filtered_mutation_data,
-  size_by = alt_depth,
+  size_by = "alt_depth",
   facet_col = params$exp_variable
 )
 plot7.2
@@ -1386,5 +1441,12 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 
 ```
 
+```{r output-Results}
+write_excel(
+  data = Results,
+  output_path = params$outputdir,
+  workbook_name = "MutSeqR Summary Report Results"
+)
+```
 
 <div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
