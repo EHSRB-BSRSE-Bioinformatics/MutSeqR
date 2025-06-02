@@ -72,9 +72,10 @@ write_excel <- function(data,
     }
     model_dfs <- list(
       model_data = data$model_data,
-      point_estimates = data$point_estimates)
+      point_estimates = data$point_estimates
+    )
     if ("pairwise_comparisons" %in% names(data)) {
-      model_data$pairwise_comparisons <- data$pairwise_comparisons
+      model_dfs$pairwise_comparisons <- data$pairwise_comparisons
     }
     data <- model_dfs
   }
