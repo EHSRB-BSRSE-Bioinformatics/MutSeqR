@@ -2616,15 +2616,22 @@ includes:
 - Mutation data Import
 - Mutation data Filtering
 - Calculation of Global Mutation Frequencies per Sample
-- Visualization of mutation frequencies per Sample and Mean mutation frequencies per experimental group.
-- Generalized Linear Modeling of Mutation Frequency (min) as an effect of the experimental variable.
-- Optional Benchmark Dose Modeling of mutation frequency across a dose or concentration variable.
-- Calculation of Mutation Subtype Frequencies and Proportions at the base-6 and base-96 resolutions.
+- Visualization of mutation frequencies per Sample and Mean mutation
+frequencies per experimental group.
+- Generalized Linear Modeling of Mutation Frequency (min) as an effect of
+the experimental variable.
+- Optional Benchmark Dose Modeling of mutation frequency across a dose or
+concentration variable.
+- Calculation of Mutation Subtype Frequencies and Proportions at the base-6
+and base-96 resolutions.
 - Comparison of base-6 mutation spectra between experimental groups.
-- Visualization of base-6 subtype proportions per sample with hierarchical clustering
+- Visualization of base-6 subtype proportions per sample with hierarchical
+clustering
 - Visualization of base-6 subtype proportions per experimental group.
 - Visualization of base-96 subtype proportions per experimental group.
 - Mutation signature analysis per experimental group.
+- Generalized Linear Mixed Modeling of mutation frequency as an effect of
+specified genomic regions and the experimental group.
 - Visualization of multiplet mutations per experimental group.
 
 All figures will be included in the report. Data frames included in the report
@@ -2638,10 +2645,8 @@ the .yaml file and save it.
 
 ```{r download-yaml, eval=FALSE}
 config <- system.file("extdata", "inputs", "summary_config.yaml", package = "MutSeqR")
-file.copy(from = config, to = "C:/Users/adodge/Downloads")
+file.copy(from = config, to = "path/to/summary_config.yaml")
 ```
-
-Description of the parameters here
 
 Users can then render the report using MutSeqR's render_report().
 Provide the function with the .yaml file using the `config_file_path`
@@ -2654,6 +2659,192 @@ render_report(config_file_path = "path/to/summary_config.yaml",
               output_file = "path/to/output_file.html",
               output_format = "html_document")
 ```
+
+## Parameters
+
+Below is a description of the parameters set in summary_config.yaml.
+Parameters are catagerised by their function.
+
+System Set Up
+
+- *projectdir*: The working directory for the project. All filepaths will be
+imported from the projectdir. If NULL, the current working directory will be
+used.
+- *outputdir*: The output directory where output files will be saved. If NULL,
+the projectdir will be used.
+
+Project Details
+
+- *project_title*: The project title.
+- *research_name*: The name of the principle investigator for the project.
+- *user_name*: The name of the one running the analysis.
+- *project_description*: Optional description of the project.
+
+Workflow Profile
+
+- *config_profile* : Choose a workflow profile to load pre-defined parameters.
+Current options are "Duplex Sequencing Mouse Mutagenesis Panel",
+"Duplex Sequencing Human Mutagenesis Panel", 
+"Duplex Sequencing Rat Mutagenesis Panel", and "None". Pre-defined parameters are set to
+handle data import and filtering. More profiles coming soon. If not using a
+pre-defined profile ("None"), users must fill out the Custom_Profile_Params
+(see below).
+
+Data Import
+
+- *species*: The species of the model organism. This can be the common name or
+ the scientific name. Ex. "Mouse" or "Mus musculus".
+- *genome*: The reference genome. This is used to populate the sequence context
+column. Ex. "mm10".
+- *file_type*: The format of the mutation data to be imported. Options are table
+or vcf.
+- *mutation_file*: The file path to the mutation data file(s). This can be an
+individual file or a directory containing multiple files. The file path will be
+read as projectdir/mutation_file.
+- *mut_sep*: The delimiter for importing tabular mutation data. Ex. "\t" is
+tab-delimited.
+- *sample_data*: An optional file path to the sample metadata that will be joined
+with the mutation data. Set to NULL if not importing metadata. The file path will
+be read as projectdir/sample_data.
+- *sd_sep*: The delimiter for importing the sample_data file. Ex. "\t" is
+tab-delimited.
+
+Calculating MF
+
+Precalculated-depth files: The Summary_Report will automatically check during
+import whether the mutation data contains a depth column (total_depth or
+depth). If a depth column does not exist, per-sample precalculated depth can be
+provided for any subtype resolution to calculate mutation frequencies. If an
+exp_variable is provided, the Summary_Report will automatically sum the
+per-sample depths to obtain the depth per experimental group as needed.
+
+*In order for MutSeqR to calculate the depth from the mutation data, the*
+*data must have the depth-value for **every sequenced site**. It is not*
+*sufficient to calculate the depth from a list of variants. No-variant sites*
+*must be included. The Summary Report will check for a total_depth column, but it will*
+*not check whether no_variant sites are included. If it finds a total_depth*
+*column, it will proceed to calculate the depth from the mutation data*.
+
+
+- *precalc_depth_data_global*: Optional file path to the precalculated per-sample
+total_depth data. This is the total number of bases sequenced per sample, used
+for calculating mutation frequencies. Columns are "sample" and "group_depth".
+If using an exp_variable (see below), please also include it in this table.
+The file path will be read as projectdir/precalc_depth_data_global.
+- *precalc_depth_data_base6*: Optional file path to the precalculated per-sample
+total_depth data in the base_6 context. This is the total number of C and T
+bases sequenced for each sample. Columns are "sample", "normalized_ref", and
+"subtype_depth". If using an exp_variable (see below), please also include it
+in this table. The file path will be read as
+projectdir/precalc_depth_data_base6.
+- *precalc_depth_data_base96*: Optional file path to the precalculated
+per-sample total_depth data in the base_96 context. This is the total
+number bases sequenced per sample for each of the 32 possible trinucleotide
+contexts in their pyrimidine notation. Columns are "sample",
+"normalized_context", and "subtype_depth". If using an exp_variable,
+please also include it in this table. The file path will be read as
+projectdir/precalc_depth_data_base96. 
+- *precalc_depth_data_rg*: Optional file path to the precalculated
+per-sample total_depth data for each target region. This is the total
+number of bases sequenced per sample for each region. Columns are "sample",
+'region_col', "group_depth". Only applicable if performing  regions analysis.
+The file path will be read as projectdir/precalc_depth_data_rg.
+- *d_sep*: The delimiter for importing the precalc_depth_data files.
+
+Statistical Analysis
+
+The Summary Report will run several analyses to investigate the effect
+of a specified experimental variable on mutation frequency and spectra.
+
+- *exp_variable*: Optional. The experimental variable of interest. This
+argument should refer to a column in your mutation data or sample_data.
+The Summary Report does not support the analysis of multiple exp_variables;
+supply only one column name. Ex. "dose". If NULL, statistical analyses will
+be skipped.
+- *exp_variable_order*: A vector specifying the unique levels of the
+exp_variable in the order desired for plotting.
+- *reference_level*: The reference level of the exp_variable. Ex. the vehicle
+control group for a chemical dose. This value must match one of the levels
+within the exp_variable column.
+- *contrasts*: An optional file path to the contrasts table specifying
+pairwise comparisons between levels of the experimental variable.
+Required 2 columns, no header. This contrasts table will be used for
+Generalized Linear Modeling of MFmin by the exp_variable (model_mf),
+Generalized Linear Mixed Modeling of MFmin by the exp_variable and
+target regions, if using a targeted panel (model_mf), and comparing
+the base_6 mutation spectra between exp_variable levels
+(spectra_comparison). The file path will be read as
+projectdir/contrasts. If NULL, spectra_comparison will be skipped,
+and the GLM/GLMM will return only the model estimates per exp_variable.
+- *cont_sep*: the delimiter for importing the contrasts file.
+- *bmd*: A logical variable indicating whether to run a BMD analysis on
+the MF data. If TRUE, the exp_variable must refer to numeric dose or
+concentration values.
+- *bmr*: A numeric value indicating the benchmark response for the bmd analysis.
+The Summary Report defines the bmr as a bmr-% increase in MF from the reference
+level. Default is 0.5.
+- *bmd_method*: The method for running the BMD analysis. Optionsare "proast" or
+"toxicr".
+- *run_sigfitting*: A logical variable indicating whether to run
+signature_fitting. If an exp_variable is provided,the signature analysis
+will be performed per exp_variable level, otherwise it will be performed per
+sample. If TRUE, this will create a virtual environment to run python on first
+use.
+- *python_version*: The python version installed on the operating system.
+
+Custom Profile Parameters
+
+Users who do not wish to use one of the pre-defined parameter profiles may
+still run the Summary Report by filling out the Custom_Profile_Params.
+If using one of the config_profiles, users should skip this section.
+
+- *ecs_technology*: The technology used to generate the data.
+- *is_0_based_mut*: A logical variable indicating whether the genomic
+coordinates of the tabular mutation data are 0-based (TRUE), or 1-based (FALSE).
+- *regions*: An optional file path to the regions metadata file. The file must
+contain columns "contig", "start", "end" in addition to the metadata.
+- *is_0_based_rg*: A logical variable indicating whether the genomic
+coordinates of the regions file are 0-based (TRUE), or 1-based (FALSE).
+- *rg_sep*: The delimiter for importing the regions file.
+- *vaf_cutoff*: A numeric value from 0-1. Will flag variants with a VAF >
+vaf_cutoff as germline variants and filter them from mutation counts.
+- *snv_in_germ_mnv*: A logical variable indicating whether filter_mut should
+flag SNVs that overlap with germline MNVs for filtering.
+- *rm_abnormal_vaf*: A logical variable indicaring whether filter_mut should
+remove records where the VAF is between 0.05-0.45 or between 0.55-0.95.
+- *custom_filter_col*: A column name used by filter_mut to apply a custom filter
+to the specified column.
+- *custom_filter_val*: The value in custom_filter_col by which to filter.
+- *custom_filter_rm*: A logical variable indicating whether records that
+contain the custom_filter_val within the custom_filter_col should be removed
+(TRUE) or flagged (FALSE).
+- *filtering_regions*:  Optional file path to regions file by which to filter
+variants. Must contain the contig, start, and end of each region. The file
+path will be read as projectdir/filtering_regions.
+- *filtering_rg_sep*: The delimiter for importing the filtering_regions file.
+- *regions_filter*: "keep_within" will remove any records that fall outside of
+the filtering_regions. "remove_within" will remove records that fall inside of
+the filtering_regions.
+- *allow_half_overlap*: A logical variable indicating whether to include records
+that half overlap with the regions. If FALSE, the start and end position of the
+record must fall within the region interval to be counted as "falling in the
+region". If TRUE, records that start/end within the region interval, but extend
+outside of it will be counted as "falling inside the region".
+- *filtering_is_0_based_rg*: A logical variable indicating whether the genomic
+coordinates of the filtering_regions are 0-based (TRUE) or 1-based (FALSE).
+- *rm_filtered_mut_from_depth*: A logical variable indicating whether the
+alt_depth of variants flagged during the filtering process should be removed
+from their total_depth values. This does not apply to records flagged as
+germline variants.
+- *do_regions_analysis*: A logical variable indicating whether to perform
+Generalized Linear Mixed Modeling of the data by sequencing target. This is
+applicable to data sets that used a targeted panel or has specific regions
+of interest.
+- *region_col*: The column name that uniquely identifies each target region
+for the regions_analysis. This column must be present in the mutation_data
+or in the regions metadata file.
+
+## Output
 
 
 # References
