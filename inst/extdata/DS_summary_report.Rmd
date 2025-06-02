@@ -822,8 +822,6 @@ DT::datatable(
 Results[["96-base MF per Exp Variable"]] <- mf96_expv
 ```
 
-##
-
 ## Trinucleotide Plots {.tabset}
 
 ```{r trinuc-plots-caption, include=FALSE}
@@ -837,7 +835,7 @@ caption <- paste0(
 )
 ```
 
-```{r trinuc-plots, fig.keep='none'}
+```{r trinuc-plots, fig.show='hide'}
 if (is.null(params$exp_variable)) {
   data <- mf96
   group_col <- "sample"
@@ -854,11 +852,10 @@ plots <- plot_trinucleotide(
 )
 ```
 
-
-```{r display-plots, echo=FALSE, results = 'asis'}
+```{r display-plots, echo=FALSE, results = 'asis', fig.width=12, fig.height=6}
 for (i in seq_along(plots)) {
   cat("### Plot ", names(plots)[i], "\n")
-  plots[i]
+  print(plots[i])
   cat("\n\n")
   cat(caption, "\n\n")
 }
