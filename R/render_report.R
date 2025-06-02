@@ -14,9 +14,11 @@
 #' @importFrom utils install.packages
 #' @importFrom here here
 #' @export
-render_report <- function(config_filepath = "./inst/extdata/inputs/summary_config.yaml",
-                          output_file = "./Rmd_Test.html",
-                          output_format = "html_document") {
+render_report <- function(
+  config_filepath,
+  output_file = "./MutSeqR_Summary_Report.html",
+  output_format = "html_document"
+) {
   # Check if yaml package is available, install if not
   if (!requireNamespace("yaml", quietly = TRUE)) {
     install.packages("yaml")
@@ -76,6 +78,8 @@ render_report <- function(config_filepath = "./inst/extdata/inputs/summary_confi
       message("Setting up parameters for Duplex Sequencing on ", params$regions)
       params$filtering_regions <- params$regions
     }
+  } else {
+    params <- c(params, config$Custom_Profile_Params)
   }
   # Construct the path to the .Rmd file within the installed package directory
   rmd_file <- "DS_summary_report.Rmd"
