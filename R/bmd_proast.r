@@ -227,25 +227,6 @@ bmd_proast <- function(mf_data,
                     Model = "Selected.Model",
                     BMR = "CES") %>%
       dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
-    # dat$AIC <- as.numeric(dat$AIC)
-    # dat$BMD <- as.numeric(dat$BMD)
-    # dat_best <- dat %>%
-    #   dplyr::select("Response", "BMD", "AIC", "weights", "BMR") %>%
-    #   dplyr::group_by(Response) %>%
-    #   dplyr::filter(AIC == min(AIC, na.rm = TRUE)) %>%
-    #   dplyr::summarise(BMD = mean(BMD, na.rm = TRUE),
-    #                    AIC = dplyr::first(AIC, na_rm = TRUE),
-    #                    weights = dplyr::first(weights, na_rm = TRUE),
-    #                    BMR = dplyr::first(BMR, na_rm = TRUE)) %>%
-    #   dplyr::ungroup()
-    # dat_best$Model <- "Best_Fit"
-    # if (model_averaging == TRUE) {
-    #   dat_avg <- dat %>%
-    #     dplyr::filter(.data$Model == "Model averaging") %>%
-    #     dplyr::select("Response", "BMDL", "BMDU")
-    #   dat_best <- dplyr::left_join(dat_best, dat_avg, by = "Response")
-    #   dat <- rbind(dat, dat_best)
-    # }
     return(dat)
   } else {
     return(results[[1]])
