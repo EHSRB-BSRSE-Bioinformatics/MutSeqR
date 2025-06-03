@@ -3744,8 +3744,19 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
 
 
 
-f.graph.window <- function(nr.pl = 1, nr.gr = 1, WAPP = FALSE, title = "", name.wapp = NA, 
-    plotprefix = NA, quick.ans, svg.plots = FALSE, output = TRUE, filename = NULL, output_type = NULL) {
+f.graph.window <- function(
+  nr.pl = 1,
+  nr.gr = 1,
+  WAPP = FALSE,
+  title = "",
+  name.wapp = NA, 
+  plotprefix = NA,
+  quick.ans,
+  svg.plots = FALSE,
+  output = TRUE,
+  filename = NULL,
+  output_type = NULL
+) {
     if ("track" %in% ls(envir = .GlobalEnv)) 
         print("f.graph.window")
     if (nr.pl > 64) 
@@ -8703,159 +8714,176 @@ f.mtext <- function(ans.all, display_plots = TRUE) {
 
 
 
-f.boot.ma <- function(ans.all, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE, filename = NULL, output_type = NULL) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.boot.ma")
-    if (ans.all$seed.bt != 0) 
-        set.seed(ans.all$seed.bt)
+f.boot.ma <- function(
+  ans.all,
+  interactive_mode = TRUE,
+  results_env = NULL,
+  display_plots = TRUE,
+  filename = NULL,
+  output_type = NULL
+) {
+  if ("track" %in% ls(envir = .GlobalEnv)) {
+    print("f.boot.ma")
+  }
+  if (ans.all$seed.bt != 0) {
+    set.seed(ans.all$seed.bt)
+  }
+  date.0 <- date()
+  with(ans.all, {
+    nr.gr <- max(ans.all$covariate)
+    if (dtype != 2) {
+      dum.contr <- xy.lim[1] / 10
+      xline <- exp(seq(
+        from = logb(2 * dum.contr),
+        to = logb(xy.lim[3]), length = 1000
+      ))
+      name.wapp <- paste("c", yans, "ma.plot", sep = "")
+      if (display_plots) {
+        f.graph.window(
+          1,
+          WAPP = WAPP,
+          title = "bootstrap curves based on model averaging",
+          name.wapp = name.wapp,
+          plotprefix = ans.all$plotprefix,
+          svg.plots = svg.plots,
+          output = output, filename = filename,
+          output_type = output_type)
+      }
+      if (!cont)
+          ans.all$xy.lim[4:5] <- c(0, 1)
+      ans.all$xy.lim[1] <- dum.contr
+      ans.all$heading <- ""
+      if (covar.no == 0) 
+          ans.all$color <- ans.all$color[-1]
+      if (!cont) 
+          f.plot.frq(ans.all)
+      if (cont) {
+          ans.all$fct2 <- covariate
+          ans.all$plt.mns <- 3
+          ans.all$heading <- ""
+          ans.all$y.min <- f.plot.con(ans.all, display_plots = display_plots)$y.lim.plt[1]
+      }
+      if (display_plots) {
+          title(main = "bootstrap curves \nbased on model averaging", 
+          cex.main = 1)
+      }
+    } else {
+      xline <- NA
+    }
+    ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE, display_plots = display_plots)
+    cat("\n The weights used in model averaging are:\n")
+    print(ans.all$MA$Vweight)
     date.0 <- date()
-    with(ans.all, {
-        nr.gr <- max(ans.all$covariate)
-        if (dtype != 2) {
-            dum.contr <- xy.lim[1]/10
-            xline <- exp(seq(from = logb(2 * dum.contr), to = logb(xy.lim[3]), 
-                length = 1000))
-            name.wapp <- paste("c", yans, "ma.plot", sep = "")
-            if (display_plots) {
-                f.graph.window(1, WAPP = WAPP, title = "bootstrap curves based on model averaging", 
-                name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
-                svg.plots = svg.plots, output = output, filename = filename,
-            output_type = output_type)
-            }
-            if (!cont) 
-                ans.all$xy.lim[4:5] <- c(0, 1)
-            ans.all$xy.lim[1] <- dum.contr
-            ans.all$heading <- ""
-            if (covar.no == 0) 
-                ans.all$color <- ans.all$color[-1]
-            if (!cont) 
-                f.plot.frq(ans.all)
-            if (cont) {
-                ans.all$fct2 <- covariate
-                ans.all$plt.mns <- 3
-                ans.all$heading <- ""
-                ans.all$y.min <- f.plot.con(ans.all, display_plots = display_plots)$y.lim.plt[1]
-            }
-            if (display_plots) {
-                title(main = "bootstrap curves \nbased on model averaging", 
-                cex.main = 1)
-            }
+    cat("\nStart of MA bootstrap runs ...\n")
+    ans.all.bt <- ans.all
+    ans.all.bt$output <- FALSE
+    if (dtype %in% c(2, 4, 6)) {
+        yy.true <- ans.all$MA$yy.ma
+        ans.all.bt$x <- ans.all$MA$xx.ma
+        ans.all.bt$nn <- ans.all$MA$nn.ma
+        ans.all.bt$covariate <- ans.all$MA$covar.ma
+    }
+    if (cont) {
+        ans.all.bt$xx.ma <- ans.all$MA$xx.ma
+        ans.all.bt$yy.ma <- ans.all$MA$yy.ma
+        ans.all.bt$nn.ma <- as.numeric(ans.all$MA$nn.ma)
+        ans.all.bt$covar.ma <- ans.all$MA$covar.ma
+        if (dtype %in% c(1, 10, 25, 26, 250, 260)) 
+            ans.all.bt$sigma.ma <- ans.all$MA$sigma.ma
+        if (dtype %in% c(5, 15)) {
+            ans.all.bt$inter.sigma.ma <- ans.all$MA$inter.sigma.ma
+            ans.all.bt$intra.sigma.ma <- ans.all$MA$intra.sigma.ma
         }
-        else xline <- NA
-        ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE, display_plots = display_plots)
-        cat("\n The weights used in model averaging are:\n")
-        print(ans.all$MA$Vweight)
-        date.0 <- date()
-        cat("\nStart of MA bootstrap runs ...\n")
-        ans.all.bt <- ans.all
-        ans.all.bt$output <- FALSE
-        if (dtype %in% c(2, 4, 6)) {
-            yy.true <- ans.all$MA$yy.ma
-            ans.all.bt$x <- ans.all$MA$xx.ma
-            ans.all.bt$nn <- ans.all$MA$nn.ma
-            ans.all.bt$covariate <- ans.all$MA$covar.ma
+        ans.all.bt <- f.prepare.boot(ans.all.bt)
+    }
+    ans.all.bt$gui <- TRUE
+    ans.all.bt$no.CI <- TRUE
+    ans.all.bt$full.ans <- 2
+    Vced.ma <- numeric()
+    ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
+    if (!WAPP && output) 
+        cat("run ")
+    for (ii in (1:nr.boot.ma)) {
+        if (!WAPP && output) 
+            cat(" ", ii)
+        else cat("run", ii, "\n")
+        if (efsa.tool) 
+            shiny::incProgress(1/nr.boot.ma, detail = paste("bootstrap", 
+              ii, "out of", nr.boot.ma))
+        ans.all.bt$dtype <- ans.all$dtype
+        if (!cont) {
+            yy.true.tmp <- yy.true
+            if (dtype == 6) {
+              beta <- (alfa.mle * (1 - yy.true))/yy.true
+              yy.true.tmp <- rbeta(length(x), alfa.mle, beta)
+            }
+            ans.all.bt$kk <- rbinom(length(x), ans.all$MA$nn, 
+              yy.true.tmp)
+            ans.all.bt$y <- ans.all.bt$kk/ans.all$MA$nn
         }
         if (cont) {
-            ans.all.bt$xx.ma <- ans.all$MA$xx.ma
-            ans.all.bt$yy.ma <- ans.all$MA$yy.ma
-            ans.all.bt$nn.ma <- as.numeric(ans.all$MA$nn.ma)
-            ans.all.bt$covar.ma <- ans.all$MA$covar.ma
-            if (dtype %in% c(1, 10, 25, 26, 250, 260)) 
-                ans.all.bt$sigma.ma <- ans.all$MA$sigma.ma
-            if (dtype %in% c(5, 15)) {
-                ans.all.bt$inter.sigma.ma <- ans.all$MA$inter.sigma.ma
-                ans.all.bt$intra.sigma.ma <- ans.all$MA$intra.sigma.ma
-            }
-            ans.all.bt <- f.prepare.boot(ans.all.bt)
+            ans.all.bt$y <- f.gener.con(ans.all.bt)
+            ans.all.bt$yy <- ans.all.bt$y
         }
-        ans.all.bt$gui <- TRUE
-        ans.all.bt$no.CI <- TRUE
-        ans.all.bt$full.ans <- 2
-        Vced.ma <- numeric()
-        ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
-        if (!WAPP && output) 
-            cat("run ")
-        for (ii in (1:nr.boot.ma)) {
-            if (!WAPP && output) 
-                cat(" ", ii)
-            else cat("run", ii, "\n")
-            if (efsa.tool) 
-                shiny::incProgress(1/nr.boot.ma, detail = paste("bootstrap", 
-                  ii, "out of", nr.boot.ma))
-            ans.all.bt$dtype <- ans.all$dtype
-            if (!cont) {
-                yy.true.tmp <- yy.true
-                if (dtype == 6) {
-                  beta <- (alfa.mle * (1 - yy.true))/yy.true
-                  yy.true.tmp <- rbeta(length(x), alfa.mle, beta)
-                }
-                ans.all.bt$kk <- rbinom(length(x), ans.all$MA$nn, 
-                  yy.true.tmp)
-                ans.all.bt$y <- ans.all.bt$kk/ans.all$MA$nn
-            }
-            if (cont) {
-                ans.all.bt$y <- f.gener.con(ans.all.bt)
-                ans.all.bt$yy <- ans.all.bt$y
-            }
-            if (dtype == 2) 
-                ans.all.bt$y <- ans.all.bt$kk
-            if (cont) 
-                if (any(c(!ans.all$EXP$trend, !ans.all$HILL$trend, 
-                  !ans.all$INVEXP$trend, !ans.all$LOG$trend))) 
-                  ans.all.bt$quick.ans <- 4
-            if (!cont) 
-                ans.all.bt <- f.select.cat(ans.all.bt, output = FALSE, interactive_mode = interactive_mode)
-            if (cont) {
-                ans.all.bt$fct4 <- rep(1, length(ans.all.bt$x))
-                ans.all.bt$dtype <- 1
-                ans.all.bt$dtype.0 <- 1
-                ans.all.bt$output <- FALSE
-                ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
-            }
-            Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
-            ced.ma.matr[ii, ] <- Vced.ma
+        if (dtype == 2) 
+            ans.all.bt$y <- ans.all.bt$kk
+        if (cont) 
+            if (any(c(!ans.all$EXP$trend, !ans.all$HILL$trend, 
+              !ans.all$INVEXP$trend, !ans.all$LOG$trend))) 
+              ans.all.bt$quick.ans <- 4
+        if (!cont) 
+            ans.all.bt <- f.select.cat(ans.all.bt, output = FALSE, interactive_mode = interactive_mode)
+        if (cont) {
+            ans.all.bt$fct4 <- rep(1, length(ans.all.bt$x))
+            ans.all.bt$dtype <- 1
+            ans.all.bt$dtype.0 <- 1
+            ans.all.bt$output <- FALSE
+            ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
         }
-        Vlower.ma <- numeric()
-        Vupper.ma <- numeric()
-        for (jj in 1:nr.gr) {
-            Vlower.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
-                (1 - conf.lev)/2, na.rm = TRUE), 3)
-            Vupper.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
-                (1 + conf.lev)/2, na.rm = TRUE), 3)
-        }
-        ans.all$MA$nr.boot.ma <- nr.boot.ma
-        ans.all$MA$Vlower.ma <- Vlower.ma
-        ans.all$MA$Vupper.ma <- Vupper.ma
-        ans.all$MA$conf.lev <- conf.lev
-        ans.all$MA$conf.int.ma <- data.frame(subgroup = covar.txt, 
+        Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
+        ced.ma.matr[ii, ] <- Vced.ma
+    }
+    Vlower.ma <- numeric()
+    Vupper.ma <- numeric()
+    for (jj in 1:nr.gr) {
+        Vlower.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
+            (1 - conf.lev)/2, na.rm = TRUE), 3)
+        Vupper.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
+            (1 + conf.lev)/2, na.rm = TRUE), 3)
+    }
+    ans.all$MA$nr.boot.ma <- nr.boot.ma
+    ans.all$MA$Vlower.ma <- Vlower.ma
+    ans.all$MA$Vupper.ma <- Vupper.ma
+    ans.all$MA$conf.lev <- conf.lev
+    ans.all$MA$conf.int.ma <- data.frame(subgroup = covar.txt, 
+        BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
+    if (nr.gr == 1) 
+        ans.all$MA$conf.int.ma <- data.frame(subgroup = "all", 
             BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
-        if (nr.gr == 1) 
-            ans.all$MA$conf.int.ma <- data.frame(subgroup = "all", 
-                BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
-        ans.all$MA$ced.ma.matr <- ced.ma.matr
-        CI.row.ma <- numeric()
-        for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], 
-            Vupper.ma[ii])
-        ans.all$MA$CI.row.ma <- CI.row.ma
-        if (dtype != 2) {
-            ans.all$show <- f.show.ma(ans.all)
-            ans.all$output <- FALSE
-            f.mtext(ans.all, display_plots = display_plots)
-            ans.all$output <- TRUE
-        }
-        if (!ans.all$gui) {
-            cat("\n\nduration of bootstrap calculations:\n")
-            print(date.0)
-            print(date())
-        }
-        if (any(is.na(ced.ma.matr))) 
-            cat("\n\nATTENTION: \n        There are NAs in the vector of bootstrap CEDs, this indicates a problem in interpolation\n\n")
-        if (WAPP) 
-            dev.off()
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.boot.ma: END")
-        return(ans.all)
-    })
+    ans.all$MA$ced.ma.matr <- ced.ma.matr
+    CI.row.ma <- numeric()
+    for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], 
+        Vupper.ma[ii])
+    ans.all$MA$CI.row.ma <- CI.row.ma
+    if (dtype != 2) {
+        ans.all$show <- f.show.ma(ans.all)
+        ans.all$output <- FALSE
+        f.mtext(ans.all, display_plots = display_plots)
+        ans.all$output <- TRUE
+    }
+    if (!ans.all$gui) {
+        cat("\n\nduration of bootstrap calculations:\n")
+        print(date.0)
+        print(date())
+    }
+    if (any(is.na(ced.ma.matr))) 
+        cat("\n\nATTENTION: \n        There are NAs in the vector of bootstrap CEDs, this indicates a problem in interpolation\n\n")
+    if (WAPP) 
+        dev.off()
+    if ("track" %in% ls(envir = .GlobalEnv)) 
+        print("f.boot.ma: END")
+    return(ans.all)
+  })
 }
 
 
@@ -12636,318 +12664,423 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 
 
 
-f.plot.gui <- function(ans.all, HTML = FALSE, model.summ = TRUE, display_plots = TRUE, results_env = NULL, output_type = NULL, filename = NULL, interactive_mode = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.plot.gui")
-    WAPP <- ans.all$WAPP
-    if (ans.all$dtype == 3) 
-        ans.all$displ.no <- 0
-    if (ans.all$cont || ans.all$dtype == 3) {
-        if (ans.all$plot.type %in% c(9, 10)) {
-            if (ans.all$dtype %in% c(10, 15, 250, 260)) {
-                cat("\n residual plots not possible for summary data\n")
-                return(invisible())
-            }
-            if (ans.all$model.fam == 0) {
-                cat("\n\nATTENTION: first select a single model when plotting residuals\n\n")
-                return(invisible())
-            }
-        }
-        if (length(ans.all$xans) > 1) {
-            ans.all$plt.mns <- 3
-            ans.all$CI.plt <- TRUE
-        }
-        if (ans.all$model.fam == 0 && length(ans.all$SINGMOD) == 
-            0) {
-            if (!HTML) {
-                if (ans.all$nr.models == 1)
-                  f.graph.window(1)
-                else {
-                  if (WAPP & !ans.all$svg.plots) 
-                    .gw.size <- c(800, 400)
-                  else if (WAPP & ans.all$svg.plots) 
-                    .gw.size <- c(8, 4)
-                  else .gw.size <- c(7, 3)
-                  name.wapp <- paste("a", ans.all$yans, "exphill", 
-                    sep = "")
-                  if (display_plots) {
-                    f.create.graphwin(.gw.size[1], .gw.size[2], 
-                    WAPP = WAPP, title = "", name.wapp = name.wapp, 
-                    plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots,
-                    output_type = output_type, filename = filename)
-                  }
-                  par(mfcol = c(1, 2))
-                  par(mar = c(5.5, 4.8, 4, 12))
-                  par(cex.main = 1.2)
-                  par(cex.sub = 1)
-                  par(cex.lab = 1.5)
-                  par(cex = 0.6)
-                }
-                y.pos <- 0
-                assign(".ypos", y.pos, immediate = T, pos = 1)
-            }
-            ans.all.plt <- ans.all
-            ans.all.plt$heading <- ""
-            if (ans.all$EXP$trend == FALSE) 
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$NULL.model)
-            else ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$EXP)
-            if (model.summ) 
-                if (ans.all$dtype == 3) 
-                  ans.all.plt$show <- f.show.cat(ans.all.plt)
-                else ans.all.plt$show <- f.show.con(ans.all.plt)
-            ans.all <- f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
-            if (ans.all$dtype == 3) 
-                title(main = "Exponential model", font.main = 2.5)
-            if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
-                1) 
-                title(main = "\n\nExponential model", font.main = 2.5)
-            if (ans.all$nr.models > 1) {
-                ans.all.plt <- ans.all
-                if (ans.all$HILL$trend == FALSE) 
-                  ans.all.plt <- f.move.sublist(ans.all.plt, 
-                    ans.all$NULL.model)
-                else ans.all.plt <- f.move.sublist(ans.all.plt, 
-                  ans.all$HILL)
-                y.pos <- 95
-                assign(".ypos", y.pos, immediate = T, pos = 1)
-                ans.all.plt$yleg <- ""
-                if (model.summ) 
-                  if (ans.all$dtype == 3) 
-                    ans.all.plt$show <- f.show.cat(ans.all.plt)
-                  else ans.all.plt$show <- f.show.con(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
-                if (ans.all$dtype == 3) 
-                  title(main = "Hill model", font.main = 2)
-                if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
-                  1) 
-                  title(main = "\n\nHill model", font.main = 2)
-            }
-            if (ans.all$nr.models > 2) {
-                if (WAPP) 
-                  dev.off()
-                name.wapp <- paste("a", ans.all$yans, "invlogn", 
-                  sep = "")
-                if (display_plots) {
-                  f.create.graphwin(.gw.size[1], .gw.size[2], WAPP = WAPP, 
-                    title = "", name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
-                    svg.plots = ans.all$svg.plots,
-                    output_type = output_type, filename = filename)
-                  par(mfcol = c(1, 2))
-                  par(mar = c(5.5, 4.8, 4, 12))
-                  par(cex.main = 1.2)
-                  par(cex.sub = 1)
-                  par(cex.lab = 1.5)
-                  par(cex = 0.6)
-                }
-            }
-            if (ans.all$nr.models > 2) {
-                ans.all.plt <- ans.all
-                if (ans.all$INVEXP$trend == FALSE) 
-                  ans.all.plt <- f.move.sublist(ans.all.plt, 
-                    ans.all$NULL.model)
-                else ans.all.plt <- f.move.sublist(ans.all.plt, 
-                  ans.all$INVEXP)
-                y.pos <- 95
-                assign(".ypos", y.pos, immediate = T, pos = 1)
-                ans.all.plt$yleg <- ""
-                if (model.summ) 
-                  if (ans.all$dtype == 3) 
-                    ans.all.plt$show <- f.show.cat(ans.all.plt)
-                  else ans.all.plt$show <- f.show.con(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
-                if (ans.all$dtype == 3) 
-                  title(main = "inverse expon model", font.main = 2)
-                if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
-                  1) 
-                  title(main = "\n\ninverse expon model", font.main = 2)
-            }
-            if (ans.all$nr.models > 3) {
-                ans.all.plt <- ans.all
-                if (ans.all$LOGN$trend == FALSE) 
-                  ans.all.plt <- f.move.sublist(ans.all.plt, 
-                    ans.all$NULL.model)
-                else ans.all.plt <- f.move.sublist(ans.all.plt, 
-                  ans.all$LOGN)
-                y.pos <- 95
-                assign(".ypos", y.pos, immediate = T, pos = 1)
-                ans.all.plt$yleg <- ""
-                if (model.summ) 
-                  if (ans.all$dtype == 3) 
-                    ans.all.plt$show <- f.show.cat(ans.all.plt)
-                  else ans.all.plt$show <- f.show.con(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = F, display_plots = display_plots)
-                if (ans.all$dtype == 3) 
-                  title(main = "LN model", font.main = 2)
-                if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 
-                  1) 
-                  title(main = "\n\nLN model", font.main = 2)
-            }
-        }
-        if (ans.all$model.fam > 0 || length(ans.all$SINGMOD) > 
-            0) {
-            if (HTML || WAPP) {
-                new.window <- F
-                name.wapp <- paste("a", ans.all$yans, "singmod")
-                f.graph.window(1, WAPP = WAPP, name.wapp = name.wapp, 
-                  plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
-            }
-            else {
-                new.window <- T
-                y.pos <- 0
-                assign(".ypos", y.pos, immediate = T, pos = 1)
-            }
-            ans.all.plt <- ans.all
-            if (length(ans.all$SINGMOD) > 0) 
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$SINGMOD)
-            else switch(ans.all$model.fam, {
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$EXP)
-                title.tmp <- "Exponential model"
-            }, {
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$HILL)
-                title.tmp <- "Hill model"
-            }, {
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$INVEXP)
-                title.tmp <- "Inverse exponential model"
-            }, {
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$LOGN)
-                title.tmp <- "Lognormal DR model"
-            })
-            if (0) 
-                if (ans.all.plt$trend == FALSE) 
-                  ans.all.plt <- f.move.sublist(ans.all.plt, 
-                    ans.all$NULL.model)
-            ans.all.plt$heading <- ""
-            if (model.summ) 
-                if (ans.all$dtype == 3) 
-                  ans.all.plt$show <- f.show.cat(ans.all.plt)
-                else ans.all.plt$show <- f.show.con(ans.all.plt)
-            f.plot.all(ans.all.plt, new.window = new.window, display_plots = display_plots)
-            if (ans.all$dtype == 3) 
-                title(main = title.tmp, font.main = 2.5)
-        }
-    }
-    if (!ans.all$cont && ans.all$dtype != 3) {
-        if (ans.all$gui && !ans.all$WAPP) {
-            if (ans.all$model.fam > 0) {
-                ans.all$model.ans <- ans.all$model.fam
-            }
-        }
-        if (ans.all$model.fam == 0) {
-            if (!HTML) {
-                name.wapp <- paste("a", ans.all$yans, "setofmod", 
-                  sep = "")
-                f.graph.window(9, WAPP = WAPP, title = "quantal models", 
-                  name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
-                  svg.plots = ans.all$svg.plots)
-            }
-            count <- 0
-            nr.models <- length(ans.all$model.list) - 2
-            for (ii in 1:nr.models) {
-                ans.all.plt <- ans.all
-                name <- ans.all$model.list[ii]
-                if (0) {
-                  if (ans.all[[name]]$trend) 
-                    ans.all.plt <- f.move.sublist(ans.all.plt, 
-                      ans.all[[name]])
-                  else {
-                    ans.all.plt <- f.move.sublist(ans.all.plt, 
-                      ans.all$NULL.model)
-                    ans.all.plt$modelname <- ans.all[[name]]$modelname
-                  }
-                }
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all[[name]])
-                ans.all.plt$heading <- ""
-                if (ans.all$dtype == 2) 
-                  ans.all.plt$CI.plt <- FALSE
-                count <- count + 1
-                xleg <- ans.all.plt$xleg
-                yleg <- ans.all.plt$y.leg
-                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
-                title(main = paste(ans.all.plt$modelname, "--"), 
-                  cex = 0.5)
-            }
-            if (ans.all$LVM) {
-                ans.all.plt <- ans.all
-                ans.all.plt$model.type <- 2
-                if (0) 
-                  if (ans.all$EXP$trend) 
-                    ans.all.plt <- f.move.sublist(ans.all.plt, 
-                      ans.all$EXP)
-                  else {
-                    ans.all.plt <- f.move.sublist(ans.all.plt, 
-                      ans.all$NULL.model)
-                    ans.all.plt$modelname <- ans.all[[name]]$modelname
-                  }
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$EXP)
-                ans.all.plt$heading <- ""
-                if (ans.all$dtype == 2) 
-                  ans.all.plt$CI.plt <- FALSE
-                count <- count + 1
-                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
-                title(main = ans.all$EXP$modelname, cex = 0.5)
-                ans.all.plt <- ans.all
-                ans.all.plt$model.type <- 2
-                if (1) 
-                  ans.all.plt <- f.move.sublist(ans.all.plt, 
-                    ans.all$HILL)
-                else ans.all.plt <- f.move.sublist(ans.all.plt, 
-                  ans.all$NULL.model)
-                ans.all.plt$heading <- ""
-                if (ans.all$dtype == 2) 
-                  ans.all.plt$CI.plt <- FALSE
-                count <- count + 1
-                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
-                title(main = ans.all$HILL$modelname, cex = 0.5)
-            }
-            if (count < 9) {
-                plot(1:3, 1:3, col = 0, yaxt = "n", xlab = "", 
-                  ylab = "", type = "n")
-                text(1.2, 2.9, ans.all$odt.name, adj = 0)
-                text(1.2, 2.5, "x-axis:", adj = 0)
-                text(1.2, 2.3, xleg, adj = 0)
-                text(1.2, 2.1, "y-axis:", adj = 0)
-                text(1.2, 1.9, yleg, adj = 0)
-                text(1.2, 1.2, paste("PROAST version", ans.all$PRversion), 
-                  adj = 0)
-            }
-            else mtext(ans.all$xleg, side = 1)
-        }
-        if (ans.all$model.fam > 0) {
-            if (!HTML) 
-                name.wapp <- paste("a", ans.all$yans, "singmod")
-            f.graph.window(1, WAPP = WAPP, name.wapp = name.wapp, 
-                plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
-            if (ans.all$model.ans %in% 1:9) {
-                ii <- ans.all$model.ans
-                ans.all.plt <- ans.all
-                name <- ans.all$model.list[ii]
-                ans.all.plt <- f.move.sublist(ans.all.plt, ans.all[[name]])
-                if (ans.all$dtype == 2) 
-                  ans.all.plt$CI.plt <- FALSE
-                if (model.summ) 
-                  ans.all.plt$show <- f.show.cat(ans.all.plt)
-                f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
-            }
-        }
-    }
-    if (ans.all$dtype != 3) 
-        if (length(ans.all$gr.txt) > 1) 
-            f.explain.marks(ans.all)
-    if (WAPP)
-        dev.off()
-    if ("track" %in% ls(envir = .GlobalEnv))
-        print("f.plot.gui:  END")
-    if (interactive_mode == FALSE) {
-      if (!is.null(results_env)) {
-        if (length(ans.all$Vyans) > 1) {
-          ans.all$res.name <- ans.all$varnames[ans.all$yans]
-          assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
-        } else {
-          assign("plot_result", ans.all, envir = results_env)
-        }
+#' Manages plotting for PROAST
+#' @description Runs through the plotting functions depending on data type
+#' and plot type.
+#' @param ans.all The proast object that gets passed to all functions.
+#' @param HTML I don't know what this does but keep it FALSE
+#' @param model.summ I don't knkow what this does either, but keep it TRUE
+#' @param display_plots A logical variable - whether we want to display
+#' the plots or not.
+#' @param results_env environment
+#' @param output_type The format that you wish to export the plots as.
+#' @param filename
+#' @param interactive_mode
+#' @param record_plots A logical variable indicating whether you want to record
+#' the plots and return them as a list instead of exporting them. This parameter
+#' should only be used when running the function indenpently or within f.plot.result.
+#' It will disrupt f.proast(), so keep the default as FALSE.
+f.plot.gui <- function(
+  ans.all,
+  HTML = FALSE,
+  model.summ = TRUE,
+  display_plots = TRUE,
+  results_env = NULL,
+  output_type = NULL,
+  filename = NULL,
+  interactive_mode = TRUE,
+  record_plots = FALSE
+) {
+  if ("track" %in% ls(envir = .GlobalEnv)) {
+    print("f.plot.gui")
+  }
+  WAPP <- ans.all$WAPP
+
+# Record Plots: just overide some of the parameters. Hacky - can fix later
+# Record Plots should only be set for plotting - not for running the entire proast workflow
+if (record_plots) {
+  WAPP <- FALSE
+  display_plots <- TRUE
+  model.summ <- TRUE
+  HTML <- FALSE
+  plot_list <- list()
+}
+
+  if (ans.all$dtype == 3) {
+    ans.all$displ.no <- 0
+  }
+  if (ans.all$cont || ans.all$dtype == 3) { # Run this chunk for continuous Data.
+    if (ans.all$plot.type %in% c(9, 10)) {
+      if (ans.all$dtype %in% c(10, 15, 250, 260)) {
+        cat("\n residual plots not possible for summary data\n")
+        return(invisible())
+      }
+      if (ans.all$model.fam == 0) {
+        cat("\n\nATTENTION: first select a single model when plotting residuals\n\n")
+        return(invisible())
       }
     }
-    return(ans.all)
+    if (length(ans.all$xans) > 1) {
+      ans.all$plt.mns <- 3
+      ans.all$CI.plt <- TRUE
+    }
+    if (ans.all$model.fam == 0 && length(ans.all$SINGMOD) == 0) {
+      if (!HTML) { # This chunk opens the first graphics window for cont. plots
+        if (ans.all$nr.models == 1) {
+          f.graph.window(1)
+        } else {
+          if (WAPP & !ans.all$svg.plots) {
+            .gw.size <- c(800, 400)
+          } else if (WAPP & ans.all$svg.plots) {
+            .gw.size <- c(8, 4)
+          } else {
+            .gw.size <- c(7, 3)
+          }
+          name.wapp <- paste("a", ans.all$yans, "exphill", sep = "")
+          if (display_plots) {
+            f.create.graphwin(
+              .gw.size[1],
+              .gw.size[2],
+              WAPP = WAPP,
+              title = "",
+              name.wapp = name.wapp,
+              plotprefix = ans.all$plotprefix,
+              svg.plots = ans.all$svg.plots,
+              output_type = output_type,
+              filename = filename
+            )
+          }
+          par(mfcol = c(1, 2))
+          par(mar = c(5.5, 4.8, 4, 12))
+          par(cex.main = 1.2)
+          par(cex.sub = 1)
+          par(cex.lab = 1.5)
+          par(cex = 0.6)
+        }
+        y.pos <- 0
+        assign(".ypos", y.pos, immediate = TRUE, pos = 1)
+      }
+      ans.all.plt <- ans.all
+      ans.all.plt$heading <- ""
+      if (ans.all$EXP$trend == FALSE) {
+        ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$NULL.model)
+      } else {
+        ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$EXP)
+      }
+      if (model.summ) {
+        if (ans.all$dtype == 3) {
+          ans.all.plt$show <- f.show.cat(ans.all.plt)
+        } else {
+          ans.all.plt$show <- f.show.con(ans.all.plt)
+        }
+      }
+      ans.all <- f.plot.all( # Plot Expon
+        ans.all.plt,
+        new.window = FALSE,
+        display_plots = display_plots
+      )
+      if (ans.all$dtype == 3) {
+        title(main = "Exponential model", font.main = 2.5)
+      }
+      if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 1) {
+        title(main = "\n\nExponential model", font.main = 2.5)
+      }
+
+      # Record the Expon plot, if we are not making more plots
+      if (ans.all$nr.models == 1 && record_plots) {
+        plot_list$Expon <- recordPlot()
+      }
+
+      if (ans.all$nr.models > 1) { # This chunk makes the HILL plot
+        ans.all.plt <- ans.all
+        if (ans.all$HILL$trend == FALSE) {
+          ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$NULL.model)
+        } else {
+          ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$HILL)
+        }
+        y.pos <- 95
+        assign(".ypos", y.pos, immediate = T, pos = 1)
+        ans.all.plt$yleg <- ""
+        if (model.summ) {
+          if (ans.all$dtype == 3) {
+            ans.all.plt$show <- f.show.cat(ans.all.plt)
+          } else {
+            ans.all.plt$show <- f.show.con(ans.all.plt)
+          }
+        }
+        f.plot.all( # Plot Hill
+          ans.all.plt,
+          new.window = FALSE,
+          display_plots = display_plots
+        )
+        if (ans.all$dtype == 3) {
+          title(main = "Hill model", font.main = 2)
+        }
+        if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 1) {
+          title(main = "\n\nHill model", font.main = 2)
+        }
+      } # Done Hill
+
+      #   Record the Expon/Hill Plot for Continuous Data
+      if (record_plots) {
+        plot_list$Expon_HILL <- recordPlot()
+      }
+
+      if (ans.all$nr.models > 2) {
+        if (WAPP) {
+          dev.off()
+        }
+        name.wapp <- paste("a", ans.all$yans, "invlogn", sep = "")
+        if (display_plots) {
+          f.create.graphwin( # Create a new Graphics window to house InvE and LN
+            .gw.size[1],
+            .gw.size[2],
+            WAPP = WAPP,
+            title = "",
+            name.wapp = name.wapp,
+            plotprefix = ans.all$plotprefix,
+            svg.plots = ans.all$svg.plots,
+            output_type = output_type,
+            filename = filename
+          )
+          par(mfcol = c(1, 2))
+          par(mar = c(5.5, 4.8, 4, 12))
+          par(cex.main = 1.2)
+          par(cex.sub = 1)
+          par(cex.lab = 1.5)
+          par(cex = 0.6)
+        }
+      }
+      if (ans.all$nr.models > 2) { # This chunk plots the InvExp Plot
+        ans.all.plt <- ans.all
+        if (ans.all$INVEXP$trend == FALSE) {
+          ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$NULL.model)
+        } else {
+          ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$INVEXP)
+        }
+        y.pos <- 95
+        assign(".ypos", y.pos, immediate = TRUE, pos = 1)
+        ans.all.plt$yleg <- ""
+        if (model.summ) {
+          if (ans.all$dtype == 3) {
+            ans.all.plt$show <- f.show.cat(ans.all.plt)
+          } else {
+            ans.all.plt$show <- f.show.con(ans.all.plt)
+          }
+        }
+        f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots) # PLOT InvExp
+        if (ans.all$dtype == 3) {
+          title(main = "inverse expon model", font.main = 2)
+        }
+        if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 1) {
+          title(main = "\n\ninverse expon model", font.main = 2)
+        }
+      }
+
+      # Save the InvExpon Plot if we are not continuing with the LN
+      if (ans.all$nr.models == 3 && record_plots) {
+        plot_list$InvExp <- recordPlot()
+      }
+
+      if (ans.all$nr.models > 3) { # THIS CHUNK PLOTS THE LN  
+        ans.all.plt <- ans.all
+        if (ans.all$LOGN$trend == FALSE) {
+          ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$NULL.model)
+        } else {
+          ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$LOGN)
+        }
+        y.pos <- 95
+        assign(".ypos", y.pos, immediate = TRUE, pos = 1)
+        ans.all.plt$yleg <- ""
+        if (model.summ) {
+          if (ans.all$dtype == 3) {
+            ans.all.plt$show <- f.show.cat(ans.all.plt)
+          } else {
+            ans.all.plt$show <- f.show.con(ans.all.plt)
+          }
+        }
+        f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots) # PLOT LN
+        if (ans.all$dtype == 3) {
+          title(main = "LN model", font.main = 2)
+        }
+        if (length(ans.all$xans) > 1 && max(ans.all$fct1) > 1) {
+          title(main = "\n\nLN model", font.main = 2)
+        }
+      }
+      # Save the InvExpon/LN plot
+      if (record_plots) {
+        plot_list$InvExp_LN <- recordPlot()
+      }
+    }
+    if (ans.all$model.fam > 0 || length(ans.all$SINGMOD) > 
+        0) {
+        if (HTML || WAPP) {
+            new.window <- F
+            name.wapp <- paste("a", ans.all$yans, "singmod")
+            f.graph.window(1, WAPP = WAPP, name.wapp = name.wapp, 
+              plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
+        }
+        else {
+            new.window <- T
+            y.pos <- 0
+            assign(".ypos", y.pos, immediate = T, pos = 1)
+        }
+        ans.all.plt <- ans.all
+        if (length(ans.all$SINGMOD) > 0) 
+            ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$SINGMOD)
+        else switch(ans.all$model.fam, {
+            ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$EXP)
+            title.tmp <- "Exponential model"
+        }, {
+            ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$HILL)
+            title.tmp <- "Hill model"
+        }, {
+            ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$INVEXP)
+            title.tmp <- "Inverse exponential model"
+        }, {
+            ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$LOGN)
+            title.tmp <- "Lognormal DR model"
+        })
+        if (0) 
+            if (ans.all.plt$trend == FALSE) 
+              ans.all.plt <- f.move.sublist(ans.all.plt, 
+                ans.all$NULL.model)
+        ans.all.plt$heading <- ""
+        if (model.summ) 
+            if (ans.all$dtype == 3) 
+              ans.all.plt$show <- f.show.cat(ans.all.plt)
+            else ans.all.plt$show <- f.show.con(ans.all.plt)
+        f.plot.all(ans.all.plt, new.window = new.window, display_plots = display_plots)
+        if (ans.all$dtype == 3) 
+            title(main = title.tmp, font.main = 2.5)
+    }
+  }
+  if (!ans.all$cont && ans.all$dtype != 3) {
+      if (ans.all$gui && !ans.all$WAPP) {
+          if (ans.all$model.fam > 0) {
+              ans.all$model.ans <- ans.all$model.fam
+          }
+      }
+      if (ans.all$model.fam == 0) {
+          if (!HTML) {
+              name.wapp <- paste("a", ans.all$yans, "setofmod", 
+                sep = "")
+              f.graph.window(9, WAPP = WAPP, title = "quantal models", 
+                name.wapp = name.wapp, plotprefix = ans.all$plotprefix, 
+                svg.plots = ans.all$svg.plots)
+          }
+          count <- 0
+          nr.models <- length(ans.all$model.list) - 2
+          for (ii in 1:nr.models) {
+              ans.all.plt <- ans.all
+              name <- ans.all$model.list[ii]
+              if (0) {
+                if (ans.all[[name]]$trend) 
+                  ans.all.plt <- f.move.sublist(ans.all.plt, 
+                    ans.all[[name]])
+                else {
+                  ans.all.plt <- f.move.sublist(ans.all.plt, 
+                    ans.all$NULL.model)
+                  ans.all.plt$modelname <- ans.all[[name]]$modelname
+                }
+              }
+              ans.all.plt <- f.move.sublist(ans.all.plt, ans.all[[name]])
+              ans.all.plt$heading <- ""
+              if (ans.all$dtype == 2) 
+                ans.all.plt$CI.plt <- FALSE
+              count <- count + 1
+              xleg <- ans.all.plt$xleg
+              yleg <- ans.all.plt$y.leg
+              f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
+              title(main = paste(ans.all.plt$modelname, "--"), 
+                cex = 0.5)
+          }
+          if (ans.all$LVM) {
+              ans.all.plt <- ans.all
+              ans.all.plt$model.type <- 2
+              if (0) 
+                if (ans.all$EXP$trend) 
+                  ans.all.plt <- f.move.sublist(ans.all.plt, 
+                    ans.all$EXP)
+                else {
+                  ans.all.plt <- f.move.sublist(ans.all.plt, 
+                    ans.all$NULL.model)
+                  ans.all.plt$modelname <- ans.all[[name]]$modelname
+                }
+              ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$EXP)
+              ans.all.plt$heading <- ""
+              if (ans.all$dtype == 2) 
+                ans.all.plt$CI.plt <- FALSE
+              count <- count + 1
+              f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
+              title(main = ans.all$EXP$modelname, cex = 0.5)
+              ans.all.plt <- ans.all
+              ans.all.plt$model.type <- 2
+              if (1) 
+                ans.all.plt <- f.move.sublist(ans.all.plt, 
+                  ans.all$HILL)
+              else ans.all.plt <- f.move.sublist(ans.all.plt, 
+                ans.all$NULL.model)
+              ans.all.plt$heading <- ""
+              if (ans.all$dtype == 2) 
+                ans.all.plt$CI.plt <- FALSE
+              count <- count + 1
+              f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
+              title(main = ans.all$HILL$modelname, cex = 0.5)
+          }
+          if (count < 9) {
+              plot(1:3, 1:3, col = 0, yaxt = "n", xlab = "", 
+                ylab = "", type = "n")
+              text(1.2, 2.9, ans.all$odt.name, adj = 0)
+              text(1.2, 2.5, "x-axis:", adj = 0)
+              text(1.2, 2.3, xleg, adj = 0)
+              text(1.2, 2.1, "y-axis:", adj = 0)
+              text(1.2, 1.9, yleg, adj = 0)
+              text(1.2, 1.2, paste("PROAST version", ans.all$PRversion), 
+                adj = 0)
+          }
+          else mtext(ans.all$xleg, side = 1)
+      }
+      if (ans.all$model.fam > 0) {
+          if (!HTML) 
+              name.wapp <- paste("a", ans.all$yans, "singmod")
+          f.graph.window(1, WAPP = WAPP, name.wapp = name.wapp, 
+              plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
+          if (ans.all$model.ans %in% 1:9) {
+              ii <- ans.all$model.ans
+              ans.all.plt <- ans.all
+              name <- ans.all$model.list[ii]
+              ans.all.plt <- f.move.sublist(ans.all.plt, ans.all[[name]])
+              if (ans.all$dtype == 2) 
+                ans.all.plt$CI.plt <- FALSE
+              if (model.summ) 
+                ans.all.plt$show <- f.show.cat(ans.all.plt)
+              f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
+          }
+      }
+  }
+  if (ans.all$dtype != 3) 
+      if (length(ans.all$gr.txt) > 1) 
+          f.explain.marks(ans.all)
+  if (WAPP)
+      dev.off()
+  if ("track" %in% ls(envir = .GlobalEnv))
+      print("f.plot.gui:  END")
+  if (interactive_mode == FALSE) {
+    if (!is.null(results_env)) {
+      if (length(ans.all$Vyans) > 1) {
+        ans.all$res.name <- ans.all$varnames[ans.all$yans]
+        assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
+      } else {
+        assign("plot_result", ans.all, envir = results_env)
+      }
+    }
+  }
+  # Return the plots
+  if (record_plots) {
+    return(plot_list)
+  }
+  return(ans.all)
 }
 
 
@@ -13603,64 +13736,107 @@ parse_PROAST_output <- function(result) {
 
 
 
-f.plot.result <- function(proast_results_list,
-                          output_path = NULL,
-                          output_type = "svg",
-                          prefix = NULL,
-                          model_averaging = FALSE) {
+#' Plot the PROAST results
+#' @description Independently generate the model plots from the raw results.
+#' @param proast_results_list The raw results list. This is the output of
+#' f.proast [[1]]
+#' @param output_path The file path to the output directory. If the output_path
+#' is NULL, it will save it to the working directory. If the output_path
+#' doesn't exist, it will be created.
+#' @param output_type The file type to export the plots. Options are 'svg',
+#' 'jpeg', 'pdf', 'png', 'tiff', or 'none'. If "none", the plots
+#' will be displayed to the graphics window, recorded with recordPlot(), and
+#' returned as a list.
+#' @param prefix A custom prefix to append to the file names. Default is
+#' "PROAST_".
+#' @param model_averaging A logical variable indicating whether you want to
+#' generate the model averaging figure  (TRUE) or the plots of the individual
+#' models (FALSE). You plot one or the other, not both.  Plotting the model
+#' averaging figure will require the function to re-run the bootstrapping so
+#' it might take a while. You may think this seems rather inefficient. Well,
+#' it is, but I'm too tired to fix it, so we all just have to deal with it for
+#' now.
+#' @return Generates plots. Either saves them to an output path or records them
+#' and returns them as a list.
+f.plot.result <- function(
+  proast_results_list,
+  output_path = NULL,
+  output_type = "svg",
+  prefix = NULL,
+  model_averaging = FALSE
+) {
+
+  # Validate the output_type
+  if (!output_type %in% c("none", "jpeg", "pdf", "png", "svg", "tiff")) {
+    stop("Invalid output_type. Must be one of none, jpeg, pdf, png, svg, tiff")
+  }
 
   if (model_averaging == FALSE) {
     result <- proast_results_list[grepl("plot_result", names(proast_results_list))]
   } else {
-    if (model_averaging == TRUE) {
-      result <- proast_results_list[grepl("model_averaging", names(proast_results_list))]
+    result <- proast_results_list[grepl("model_averaging", names(proast_results_list))]
+  }
+
+  # Set up output directory and file names
+  if (output_type != "none") {
+    # Output directory
+    if (is.null(output_path)) {
+      output_dir <- file.path(here::here(), "output")
     } else {
-      stop("Invalid choice for model averaging. If you want to plot model averaging results, set it to TRUE, otherwise, set it to FALSE")
+      output_dir <- file.path(output_path)
     }
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir)
+    }
+    # Output filename
+    if (!is.null(prefix)) {
+      filename <- file.path(output_dir, paste0("PROAST_", prefix))
+    } else {
+      filename <- file.path(output_dir, paste0("PROAST"))
+    }
+  } else { # Initialize list to store results
+    plot_list <- list()
   }
 
-  # Output directory
-  if (is.null(output_path)) {
-    output_dir <- file.path(here::here(), "output")
-  } else {
-    output_dir <- file.path(output_path)
-  }
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir)
-  }
-
-  # Output filename
-  if (!is.null(prefix)) {
-    filename <- file.path(output_dir, paste0("PROAST_", prefix))
-  } else {
-    filename <- file.path(output_dir, paste0("PROAST"))
-  }
   for (i in seq_along(result)) {
-    res <- result[[i]]
+    res <- result[[i]] # loop through the response_cols
     if (output_type == "svg") {
       res$svg.plots <- TRUE
     }
-    if (!is.null(output_type) && !output_type == "none") {
+    if (output_type != "none") {
       message("Setting WAPP to TRUE")
       res$WAPP <- TRUE
       if (model_averaging == FALSE) {
-        f.plot.gui(res, filename = filename, output_type = output_type, interactive_mode = FALSE)
-      } else {
-        if (model_averaging == TRUE) {
-          f.boot.ma(res, filename = filename, output_type = output_type)
-        } else {
-         stop("Invalid choice for model averaging. If you want to plot model averaging results, set it to TRUE, otherwise, set it to FALSE")
-        }
+        f.plot.gui(
+          res,
+          filename = filename,
+          output_type = output_type,
+          interactive_mode = FALSE
+        )
+      } else { # Model averaging
+        f.boot.ma(
+          res,
+          filename = filename,
+          output_type = output_type
+        )
       }
-    } else { # When output type isn't set
+    } else { # When output type isn't set, record the plots
       if (model_averaging == FALSE) {
-        f.plot.gui(res, interactive_mode = FALSE)
+        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE)
       } else {
-        if (model_averaging == TRUE) {
-          f.boot.ma(res)
-        }
+        plots <- list()
+        f.boot.ma(res, display_plots = TRUE)
+        plots$MA <- recordPlot()
       }
+      # Add Response to plot names
+      new_names <- paste0(i, "_", names(plots))
+      names(plots) <- new_names
+      # Add plots to the master list
+      plot_list <- c(plot_list, plots)
     }
+  }
+  if (output_type == "none") {
+    return(plot_list)
   }
 }
 
