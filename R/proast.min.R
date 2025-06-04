@@ -13826,10 +13826,11 @@ f.plot.result <- function(
       } else {
         plots <- list()
         f.boot.ma(res, display_plots = TRUE)
-        plots$MA <- recordPlot()
+        plots$boostrap_curves <- recordPlot()
       }
       # Add Response to plot names
-      new_names <- paste0(i, "_", names(plots))
+      response <- res$varnames[res$yans]
+      new_names <- paste0(response, "_", names(plots))
       names(plots) <- new_names
       # Add plots to the master list
       plot_list <- c(plot_list, plots)
