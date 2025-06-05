@@ -416,8 +416,8 @@ calculate_mf <- function(mutation_data,
                                       .data$sum_max / .data$group_depth,
                                       .data$sum_max / .data$subtype_depth),
                       mf_min = ifelse(!!rlang::sym(MutSeqR::subtype_dict[[subtype_resolution]]) %in% MutSeqR::subtype_list$type,
-                                      .data$sum_min / .data$subtype_depth,
-                                      .data$sum_min / .data$group_depth)) %>%
+                                      .data$sum_min / .data$group_depth,
+                                      .data$sum_min / .data$subtype_depth)) %>%
         dplyr::ungroup()
     }
     summary_cols <- c(numerator_groups,

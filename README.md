@@ -47,7 +47,7 @@ library(MutSeqR)
 
 ## Data import
 
-The main goal of MutSeqR is to generate summary statistics, visualizations, exploratory analyses, and other post-processing tasks such as mutational signature analysis or generalized linear modeling. Mutation data should be supplied as a table of variants with their genomic positions. Mutation data can be imported as either VCF files or as tabular data using the functions `import_vcf_data` and `import_mut_data`, respectively. It is reccomended that files include a record for every sequenced position, regardless of whether a variant was called or not, along with the `total_depth` for each record. This enables site-specific depth calculations that are required for the calculation of mutation subtype frequencies ad other site-specific frequemcies. The data set can be pared down later to include only mutations of interest (SNVs, indels, SVs, or any combination). 
+The main goal of MutSeqR is to generate summary statistics, visualizations, exploratory analyses, and other post-processing tasks such as mutational signature analysis or generalized linear modeling. Mutation data should be supplied as a table of variants with their genomic positions. Mutation data can be imported as either VCF files or as tabular data using the functions `import_vcf_data` and `import_mut_data`, respectively. It is reccomended that files include a record for every sequenced position, regardless of whether a variant was called or not, along with the `total_depth` for each record. This enables site-specific depth calculations that are required for the calculation of mutation subtype frequencies and other site-specific frequencies. The data set can be pared down later to include only mutations of interest (SNVs, indels, SVs, or any combination). 
 
 Required columns for mutation data import:
 | **Column** | **VCF Specification** | **Definition** |
@@ -62,7 +62,7 @@ Required columns for mutation data import:
 | alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
 | total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
 
-VCF files should follow the VCF specification (version 4.5; Danecek et al. 2011). VCF files may be bg/g-zipped. Multiple sample VCF files are not supported. Multiple alt alleles called for a single position should be represented as sseparate rows in the data. All extra columns, INFO fields, and FORMAT fields will be retained upon import.
+VCF files should follow the VCF specification (version 4.5; Danecek et al. 2011). VCF files may be bg/g-zipped. Each individual VCF file should contain the mutation data for a single sample. Multiple alt alleles called for a single position should be represented as sseparate rows in the data. All extra columns, INFO fields, and FORMAT fields will be retained upon import.
 
 Upon import, records are categorized within the `variation_type` column based on their REF and ALT. Categories are listed below.
 | variation_type | Definition |
@@ -1195,7 +1195,7 @@ plot <- plot_trinucleotide_heatmap(mf_data = mf_data,
 ![plot_trinucleotide_heatmap](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot6.8.png)
 
 ## Visualize Recurrent Mutations
-`plot_bubbles` is used to visually represent the distribution and density of recurrent mutations. Each mutation is in a given group is represented by a bubble whose size is scaled on either the `alt_depth` or the `vaf`. Thus a highly reccurent mutation is represented by a large bubble. These plots make it easy to determine if MFmax is driven by a few highly recurrent mutations versus serveral moderately recurrent mutations.
+`plot_bubbles()` is used to visually represent the distribution and density of recurrent mutations. Each mutation is in a given group is represented by a bubble whose size is scaled on either the `alt_depth` or the `vaf`. Thus a highly reccurent mutation is represented by a large bubble. These plots make it easy to determine if MFmax is driven by a few highly recurrent mutations versus serveral moderately recurrent mutations.
 Plots can be facetted by user-defined groups, and bubbles can be coloured by any variable of interest to help discern patterns in mutation recurrence.
 
 *Example 7. Plot mutations per dose group, bubbles coloured by base-6 subtype*
@@ -1212,6 +1212,41 @@ plot <- plot_bubbles(mutation_data = example_data,
 ```
 ![plot_bubbles](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot7.png)
 
+## Radar/Spider plots
+`plot_radar()` creates a radar/spider plot to visualize differences in MF across many variables. These plots can be facetted by a second variable.
+*Example 8. Plot mean MFmin per dose group for each genomic target, ordered by the genic context of the target.*
+```{r}
+# Load the data
+example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_data <- readRDS(example_file)
+# Calculate the MF per genomic target ("label")
+mf <- calculate_mf(mutation_data = example_data,
+                   cols_to_group = c("sample", "label"),
+                   retain_metadata_cols = c("dose_group", "genic_context"))
+# Order the genomic targets by their genic context
+label_order <- mf %>% dplyr::arrange(genic_context) %>%
+  dplyr::pull(label) %>%
+  unique()
+# Calculate the mean MFmin per dose group for each target
+mean <- mf %>%
+  dplyr::group_by(dose_group, label) %>%
+  dplyr::summarise(mean = mean(mf_min))
+# Define factor levels for ordering
+mean$dose_group <- factor(mean$dose_group,
+                          levels = c("Control",
+                                     "Low",
+                                     "Medium",
+                                     "High"))
+mean$label <- factor(mean$label,
+                     levels = label_order)
+# Plot
+plot <- plot_radar(mf_data = mean,
+                   response_col = "mean",
+                   label_col = "label",
+                   facet_col = "dose_group",
+                   indiv_y = FALSE)
+```
+![radar plot](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot8.png)
 ## Retrieve Sequences of genomic target regions
 `get_seq()` will retrive raw nucleotide sequences for specified genomic intervals. This function will install an appropriate BS genome library to retrieve sequences based on species, genome, and masked parameter.
 
@@ -1219,12 +1254,12 @@ Supply regions with a file path, data frame or GRanges object containing the spe
 
 Sequences are returned within a *GRanges* object.
 
-*Example 8.1. Retrieve the sequences for our example's target panel, TwinStrand's Mouse Mutagenesis Panel*
+*Example 9.1. Retrieve the sequences for our example's target panel, TwinStrand's Mouse Mutagenesis Panel*
 ```{r}
 regions_seq <- get_seq(regions = "TSpanel_mouse")
 ```
 
-*Example 8.2. Retrieve sequences for a custom interval of regions. We will use the Human Mutagenesis Panel as an example.*
+*Example 9.2. Retrieve sequences for a custom interval of regions. We will use the Human Mutagenesis Panel as an example.*
 ```{r}
 # We will load the TSpanel_human regions file as an example
 human <- load_regions_file("TSpanel_human")
@@ -1247,7 +1282,7 @@ Users can easily output data frames to an Excel workbook with `write_excel()`. T
 
 In addition to data frames, `write_excel()` will also extract the mf_data, point_estimates, and pairwise_comparisons from `model_mf()` output to write to an excel workbook. Set `model_results` to TRUE if supplying the function with the output to model_mf().
 
-*Example 9.1. Write MF data to excel workbook.*
+*Example 10.1. Write MF data to excel workbook.*
 ```{r}
 # Load the example data
 example_file <- system.file("extdata", "Example_files",
@@ -1280,7 +1315,7 @@ write_excel(list, output_path, workbook_name = "test_list")
 
 ```
 
-*Example 9.2. Export model results*
+*Example 10.2. Export model results*
 ```{r}
 # Run the model
 model  <- model_mf(mf1,
