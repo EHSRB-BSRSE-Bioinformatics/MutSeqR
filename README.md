@@ -3,6 +3,9 @@
   <!-- badges: end -->
   
 # Change Report:
+Changes: 2025-03-27
+- Removed custom_regions parameter. Utility is now incorporated by regions parameter.
+
 Major changes on 2025-03-24
 - *filter_mut()* function added to workflow. This function filters the mutation_data: germline identification via vaf_cutoff, depth correction, and filtering variants based on regions have all been moved from the import functions to filter_mut(). calculate_mf(), plot_bubbles(), and signature_fitting() filter out variants using the filter_mut column instead of the is_germline column.
 - calculate_mut_freq() is renamed to calculate_mf()
@@ -109,7 +112,10 @@ Specify the appropriate BS genome with which to populate the context column by s
 
 *Example 1.1. Import the example .vcf.bgz file. Provided is the genomic vcf.gz file for sample dna00996.1. It is comprised of a record for all 48K positions sequenced for the Mouse Mutagenesis Panel with the alt_depth and the tota_depth values for each record.*
 ```{r}
-example_file <- system.file("extdata", "example_import_vcf_data_cleaned.vcf.bgz", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "Example_files",
+                            "example_import_vcf_data_cleaned.vcf.bgz",
+                            package = "MutSeqR")
 sample_metadata <- data.frame(sample = "dna00996.1",
                           dose = "50",
                           dose_group = "High")
@@ -124,7 +130,10 @@ imported_example_data <- import_vcf_data(vcf_file = example_file,
 
 *Example 1.2. Import the example tabular data. This is the equivalent file to the example vcf file. It is stored as an .rds file. We will load the data frame and supply it the `import_mut_data`. The mut_file parameter can accept file paths or data frames as input.*
 ```{r}
-example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
+example_file <- system.file("extdata",
+                            "Example_files",
+                            "example_import_mut_data.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 sample_metadata <- data.frame(sample = "dna00996.1",
                               dose = "50",
@@ -141,8 +150,8 @@ imported_example_data <- import_mut_data(mut_file = example_data,
 ```
 
 #### Variants within target regions
-Similar to sample metadata, you may supply a file containing the metadata of genomic regions to the `regions` & `custom_regions` parameters. Region metadata will be joined with mutation data by checking for overlap between the target region ranges and the position of the record.
-The `regions` parameter can be set to one of TwinStrand's DuplexSeq™ Mutagenesis Panels; *TSpanel_mouse*, *TSpanel_human*, or *TSpanel_rat*. If you are using an alternative panel then you may set the `regions` parameter to  "custom" and  you will add your target regions' metadata using a `custom_regions`. You may supply your custom_regions file as either a data frame or a file path, which will be read in. Required columns are `contig`, `start`, and `end`. Use parameters to indicate your file's delimiter and whether the region coordinates are 0-based or 1-based. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify regions, then set the `regions` parameter to *none*.
+Similar to sample metadata, you may supply a file containing the metadata of genomic regions to the `regions` parameter. Region metadata will be joined with mutation data by checking for overlap between the target region ranges and the position of the record.
+The `regions` parameter can be either a file path, a data frame, or a GRanges object. File paths will be read using the `rg_sep`. Users can also choose from the built-in TwinStrand DuplexSeq™ Mutagenesis Panels by inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat". Required columns for the regions file are "contig", "start", and "end". In a GRanges object, the required columns are "seqnames", "start", and "end". Users must indicate whether the region coordinates are 0-based or 1-based with `is_0_based_rg`. Mutation data and region coordinates will be converted to 1-based. If you do not wish to specify regions, then set the `regions` parameter to NULL (default).
 
 *Example 1.3. Add the metadata for TwinStrand's Mouse Mutagenesis panel to our example vcf file.*
 ```{r}
@@ -153,7 +162,7 @@ imported_example_data <- import_vcf_data(vcf_file = example_file,
                                          masked_BS_genome = FALSE,
                                          regions = "TSpanel_mouse")
 ```                                         
-*To see an example of the region files, you can load the TSpanels:*
+*To see an example of the region files, you can load the TSpanels. This will output a GRanges object.*
 ```{r}
 region_example <- load_regions_file("TSpanel_mouse")
 ```
@@ -215,7 +224,7 @@ The `filter_mut()` function offers some filtering options to ensure the quality 
 Users may use the `filter_mut()` function to flag or remove variants based on their own custom columns. Any record that contains the `custom_filter_val`value within the `custom_filter_col` column of the mutation data will be either flagged in the `filter_mut` column or, if specified by the `custom_filter_rm` parameter, removed from the mutation data.
 
 ### Filtering by Regions
-Users may remove rows that are either within or outside of specified genomic regions. Provide the region ranges to the `regions` parameter. This may be provided as either a file path or a data frame. `regions` must contain `contig`, `start`, and `end`.  The function will check whether each record falls within the given regions. Users can define how this filter should be used with `regions_filter`. `region_filter = "remove_within"` will remove all rows whose positions overlaps with the provided regions. `region_filter = "keep_within"` will remove all rows whose positions are outside of the provided regions. By default, records that are > 1bp must start and end within the regions to count as being within the region. `allow_half_overlap = TRUE` allow records that only start or end within the regions but extend outside of them to be counted as being within the region.
+Users may remove rows that are either within or outside of specified genomic regions. Provide the region ranges to the `regions` parameter. This may be provided as either a file path, data frame, or a GRanges object. `regions` must contain `contig` (or `seqnames` for GRanges), `start`, and `end`.  The function will check whether each record falls within the given regions. Users can define how this filter should be used with `regions_filter`. `region_filter = "remove_within"` will remove all rows whose positions overlaps with the provided regions. `region_filter = "keep_within"` will remove all rows whose positions are outside of the provided regions. By default, records that are > 1bp must start and end within the regions to count as being within the region. `allow_half_overlap = TRUE` allow records that only start or end within the regions but extend outside of them to be counted as being within the region. Twinstrand Mutagenesis Panels may be used by setting `regions` to one of "TSpanel_human", "TSpanel_mouse", or "TSpanel_rat".
 
 ### Retain your filtered rows
 `return_filtered_rows = TRUE` The function will return both the filtered mutation data and the rows that were removed/flagged in a seperate data frame. The two dataframes will be returned inside of a list, with names `mutation_data` and `filtered_rows`. Default is FALSE.
@@ -227,11 +236,11 @@ Users may remove rows that are either within or outside of specified genomic reg
 - *Depth correction*
 - *Filter germline variants: vaf < 0.01*
 - *Filter snvs overlapping with germline variants and have their `alt_depth` removed from their `total_depth`.*
-- *Remove records outside of the TwinStrand Mouse Mutagenesis Panel. Here we are using `load_regions_file() `to grab the TSpanel_mouse regions from the package files*
+- *Remove records outside of the TwinStrand Mouse Mutagenesis Panel.*
 - *Filter variants that contain "EndRepairFillInArtifact" in the "filter" column. Their `alt_depth` will be removed from their `total_depth`.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -241,7 +250,7 @@ filtered_example_mutation_data <- filter_mut(
   mutation_data = example_data,
   correct_depth = TRUE,
   vaf_cutoff = 0.01,
-  regions = load_regions_file("TSpanel_mouse"),
+  regions = "TSpanel_mouse",
   regions_filter = "keep_within",
   custom_filter_col = "filter",
   custom_filter_val = "EndRepairFillInArtifact",
@@ -272,7 +281,7 @@ Mutation counts and `total_depth` are summed across groups that can be designate
 *Example 3.1. Calculate mutation sums and frequencies per sample. The file example_mutation_data_filtered.rds is the output of filter_mut() from Example 2*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -422,12 +431,12 @@ mf_data <- calculate_mf(
   cols_to_group = "sample",
   subtype_resolution = "base_6",
   calculate_depth = FALSE,
-  precalc_depth = system.file("extdata",
+  precalc_depth = system.file("extdata", "Example_files",
                               "precalc_depth_base_6_example.text",
                               package = "MutSeqR")
 )
 # To view the example precalc depth file:
-depth <- read.table(file = system.file("extdata", "precalc_depth_base_6_example.text", package = "MutSeqR"), header = TRUE)
+depth <- read.table(file = system.file("extdata", "Example_files", "precalc_depth_base_6_example.text", package = "MutSeqR"), header = TRUE)
 View(depth)
 ```
 
@@ -455,7 +464,7 @@ You can visualize the results of `calculate_mf` using the `plot_mf()` and `plot_
 *Example 3.10. Plot the Min and Max MF per sample, coloured and ordered by dose group.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -563,7 +572,7 @@ The function will output a list of results.
 *Example 4.1. Model the effect of dose on MF. Our example data consists of 24 mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups are : Control, Low, Medium, and High. We will determine if the MFmin of each BaP dose group is significantly increased from that of the Control group.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -595,7 +604,7 @@ model_by_dose$pairwise_comparisons
 *Example 4.2. Model the effects of dose and genomic locus on MF. Seqencing for the example data was done on a panel of 20 genomic targets. We will determine if the MF of each BaP dose group is significantly different from the Control individually for all 20 targets. In this model, dose group and target label will be our fixed effects. We include the interaction between the two fixed effects. Because sample will be a repeated measure, we will use it as a random effect.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -628,9 +637,8 @@ model_by_target <- model_mf(mf_data = mf_data,
   total_count = "group_depth",
   contrasts = contrasts2,
   reference_level = c("Control", "chr1"),
-  control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
-                                                               tol = 3e-3,
-                                                               relTol = NULL))
+  control = lme4::glmerControl(optimizer = "bobyqa",
+                                  optCtrl = list(maxfun = 2e5))
   )
 # View the results
 model_by_target$summary
@@ -721,7 +729,7 @@ The function will output a data frame of final results, including a BMD estimate
 *Example 5.1. Calculate the BMD with model averaging for a 50% relative increase in MF from control. This will be calculated for both MFmin and MFmax*.
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -777,7 +785,7 @@ The function will return the BMD with its upper and lower confidence intervals f
 *Example 5.2. Calculate the BMD with model averaging for a 50% relative increase in MF from control. This will be calculated for both MFmin and MFmax*.
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -840,7 +848,7 @@ The function will output the $G^{2}$ statistic and p-value for each specified co
 *Example 6.1. In our example data, we are studying the mutagenic effect of BaP. Our samples were exposed to three doses of a BaP (Low, Medium, High), or to the vehicle control (Control). We will compare the base_6 snv subtypes, alongside non-snv variants, of each of the three dose groups to the control. In this way we can investigate if exposure to BaP leads to significant spectral differences.*
 ```{r}
 # load example data:
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -901,7 +909,7 @@ The virtual environment can be specified with the `env_name` parameter. If no su
 *Example 6.2. Determine the COSMIC SBS signatures associated with each BaP dose group.*
 ```{r}
 # Load the example data.
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1043,7 +1051,7 @@ Users may choose to use the [SigProfiler Webtool](https://cancer.sanger.ac.uk/si
 *Example 6.3. Analyze the COSMIC SBS signatures contributing to each of the 24 samples using the SigProfiler Web Tool. Output a mutation calling file that can be uploaded to the webtool.*
 ```{r}
 # Load example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1061,7 +1069,7 @@ write_mutation_calling_file(mutation_data = example_data,
 
  *Example 6.4.  Analyze the COSMIC SBS signatures contributing to each dose group using the SigProfiler Web Tool. Output a mutational matrix that can be uploaded to the webtool.*
 ```{r}
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1081,7 +1089,7 @@ The mutation spectra can be visualized with  `plot_spectra` which will create a 
 *Example 6.5. Plot the base_6 proportions for each dose group.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1113,7 +1121,7 @@ plot <- plot_spectra(mf_data = mf_data,
 *Example 6.6. Plot the base_6 mutation spectra per sample, with hierarchical clustering. For this example we have created a new sample column with more intuitive sample names: new_sample_id. These names correspond to their associated dose groups. We will see that samples largly cluster within their dose groups.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1139,7 +1147,7 @@ The 96-base SNV mutation subtypes can be vizualised using `plot_trinucleotide()`
 *Example 6.7. plot the base_96 mutation spectra proportions for each dose group.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1164,7 +1172,7 @@ Another option for vizualizing the base-96 mutation spectra is `plot_trinucleoti
 *Example 6.8. Plot the 96-base SNV spectrum for each sample, facetted by dose group.*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1193,7 +1201,7 @@ Plots can be facetted by user-defined groups, and bubbles can be coloured by any
 *Example 7. Plot mutations per dose group, bubbles coloured by base-6 subtype*
 ```{r}
 # load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1242,7 +1250,7 @@ plot <- plot_radar(mf_data = mean,
 ## Retrieve Sequences of genomic target regions
 `get_seq()` will retrive raw nucleotide sequences for specified genomic intervals. This function will install an appropriate BS genome library to retrieve sequences based on species, genome, and masked parameter.
 
-TwinStrand's Mutagenesis Panels are stored in package files and can easily be retrieved. 
+Supply regions with a file path, data frame or GRanges object containing the specified genomic intervals. TwinStrand's Mutagenesis Panels are stored in package files and can easily be retrieved. 
 
 Sequences are returned within a *GRanges* object.
 
@@ -1255,9 +1263,8 @@ regions_seq <- get_seq(regions = "TSpanel_mouse")
 ```{r}
 # We will load the TSpanel_human regions file as an example
 human <- load_regions_file("TSpanel_human")
-regions_seq <- get_seq(regions = "custom",
-                       custom_regions = human,
-                       is_0_based = TRUE,
+regions_seq <- get_seq(regions = human,
+                       is_0_based_rg = FALSE,
                        species = "human",
                        genome = "hg38",
                        masked = FALSE,
@@ -1278,7 +1285,7 @@ In addition to data frames, `write_excel()` will also extract the mf_data, point
 *Example 10.1. Write MF data to excel workbook.*
 ```{r}
 # Load the example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
@@ -1324,7 +1331,7 @@ write_excel(model,
 Mutation data can be written to a VCF file for downstream applications with `write_vcf_from_mut()`.
 
 ```{r}
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

@@ -12,7 +12,9 @@
 #' @returns Writes a VCF file of mutations "mutation_output.vcf".
 #' @examples
 #' \dontrun{
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' write_vcf_from_mut(example_data)
 #' }

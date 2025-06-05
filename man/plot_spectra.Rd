@@ -95,7 +95,7 @@ mutation subtypes observed in a cohort.
 }
 \examples{
 # Load example data
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

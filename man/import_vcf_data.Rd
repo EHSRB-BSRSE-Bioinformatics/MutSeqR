@@ -8,11 +8,10 @@ import_vcf_data(
   vcf_file,
   sample_data = NULL,
   sd_sep = "\\t",
-  regions = "none",
-  custom_regions = NULL,
+  regions = NULL,
   rg_sep = "\\t",
   is_0_based_rg = FALSE,
-  range_buffer = 0,
+  padding = 0,
   genome = NULL,
   species = NULL,
   masked_BS_genome = FALSE,
@@ -71,27 +70,25 @@ Default is tab-delimited.}
 
 \item{regions}{An optional file containing metadata of genomic regions.
 Region metadata will be joined with mutation data and variants will be
-checked for overlap with the regions. Metadata for TwinStrand Mutagenesis
-Panels are stored in the package files and can be accessed using the values
-\code{TSpanel_human}, \code{TSpanel_mouse}, and \code{TSpanel_rat}. If you have a custom
-range of genomic regions, set the value to \code{custom} and provide the regions
-file using the \code{custom_regions} argument. If you do not wish to include
-region metadata, set value to \code{none}.}
+checked for overlap with the regions. \code{regions} can be either a file path,
+a data frame, or a GRanges object. File paths will be read using the rg_sep.
+Users can also choose from the built-in TwinStrand's Mutagenesis Panels by
+inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat". Required
+columns for the regions file are "contig", "start", and "end". For a GRanges
+object, the required columns are "seqnames", "start", and "end". Default is
+NULL.}
 
-\item{custom_regions}{If \code{regions} is set to
-"custom", provide  the regions metadata. Can be a file path or a
-data frame. Required columns are \code{contig}, \code{start}, and \code{end}.}
+\item{rg_sep}{The delimiter for importing the custom_regions. The default is
+tab-delimited "\t".}
 
-\item{rg_sep}{The delimiter for importing the \code{custom_regions.}
-Default is tab-delimited.}
+\item{is_0_based_rg}{A logical variable. Indicates whether the position
+coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).
+If TRUE, positions will be converted to 1-based (start + 1).
+Need not be supplied for TSpanels. Default is TRUE.}
 
-\item{is_0_based_rg}{A logical variable. Indicates whether the
-position coordinates in the \code{custom_regions} are 0 based (TRUE) or
-1 based (FALSE). If TRUE, positions will be converted to 1-based.}
-
-\item{range_buffer}{Extend the range of your regions
+\item{padding}{Extend the range of your regions
 in both directions by the given amount. Ex. Structural variants and
-indels may start outside of the regions. Adjust the \code{range_buffer} to
+indels may start outside of the regions. Adjust the \code{padding} to
 include these variants in your region's ranges.}
 
 \item{genome}{The genome assembly version of the reference genome. This is
@@ -162,7 +159,7 @@ data into a dataframe.
 # Example: Import a single bg-zipped vcf file. This library was sequenced
 # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 # consists of 20 2.4kb targets = 48kb of sequence.
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_import_vcf_data_cleaned.vcf.bgz",
                             package = "MutSeqR")
 # We will create an example metadata table for this data.

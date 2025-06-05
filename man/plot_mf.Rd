@@ -58,8 +58,8 @@ names. The custom vector is passed to the function using the
 "custom". The column name by which to arrange samples/groups if group_order
 is "arranged"}
 
-\item{labels}{The data labels to display on the plot. Either "count", "MF", or
-"none". Count labels display the number of mutations, MF labels display
+\item{labels}{The data labels to display on the plot. Either "count", "MF",
+or "none". Count labels display the number of mutations, MF labels display
 the mutation frequency.}
 
 \item{scale_y_axis}{The scale of the y axis. Either "linear" or "log".}
@@ -77,7 +77,7 @@ A ggplot object
 This function creates a plot of the mutation frequency.
 }
 \examples{
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

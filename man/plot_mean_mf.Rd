@@ -19,19 +19,23 @@ plot_mean_mf(
   x_lab = NULL,
   y_lab = NULL,
   plot_title = NULL,
-  custom_palette = NULL
+  custom_palette = NULL,
+  plot_legend = TRUE
 )
 }
 \arguments{
 \item{mf_data}{A data frame containing the mutation frequency data. This is
 obtained from the calculate_mf function with SUMMARY = TRUE.}
 
-\item{group_col}{The column in mf_data by which to calculate the mean.
-Ex. "dose" or c("dose", "tissue").}
+\item{group_col}{The column(s) in mf_data by which to calculate the mean.
+When supplying more than one column, the values of all group columns will
+be concatenated into a single value by which to calculate the mean. Values
+will be displayed along the x-axis. Ex. "dose" or c("dose", "tissue").}
 
-\item{fill_col}{The column in mf_data by which to fill the color. Default is NULL.
-fill_col must be a variable of equal or higher level to group_col. fill_col
-may equal group_col.}
+\item{fill_col}{An optional column name in the data used to define the fill
+aesthetic in the plot. If fill_col has multiple levels within each group_col
+level, the mean will be calculated for each level of fill_col
+(recommend plot_type = "line" for this use case). Default is NULL.}
 
 \item{mf_type}{The type of mutation frequency to plot. Options are "min",
 "max", "both", or "stacked". If "both", the min and max mutation
@@ -64,7 +68,8 @@ names. The custom vector is passed to the function using the
 
 \item{group_order_input}{The order of the groups if group_order is
 "custom". The column name by which to arrange groups if group_order
-is "arranged".}
+is "arranged". If "custom", and using more than one group_col, values
+are concatenated in the order listed, separated by a "_".}
 
 \item{add_labels}{The data labels to display on the plot. Either
 "indiv_count", "indiv_MF", "mean_count", "mean_MF", or "none".
@@ -77,21 +82,28 @@ Default is "linear".}
 
 \item{x_lab}{The x-axis label. Default is the value of group_col.}
 
-\item{y_lab}{The y-axis label. Default is "Mutation Frequency (mutations/bp)".}
+\item{y_lab}{The y-axis label. Default is "Mutation Frequency
+(mutations/bp)".}
 
 \item{plot_title}{The title of the plot. Default is
 "Mean Mutation Frequency".}
 
 \item{custom_palette}{A custom color palette to use for the plot. Input a
 character vector of colours. Input a named character vector to specify
-olours to specific groups. Fill labels will be constructed by the following components
+olours to specific groups. Fill labels will be constructed by the following
+components
 \enumerate{
-\item "Mean/Individual" if plot_indiv_vals = TRUE, fill labels will specify Mean/Individual values.
-\item "min/max" if mf_type = "both" or "stacked", fill labels will specify min/max values.
-\item fill_col value. Name colours to match the fill labels. Default is NULL. If no
-custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
-will be the same colour, different shades.
+\item "Mean/Individual" if plot_indiv_vals = TRUE, fill labels will specify
+Mean/Individual values.
+\item "min/max" if mf_type = "both" or "stacked", fill labels will specify
+min/max values.
+\item fill_col value. Name colours to match the fill labels. Default is NULL.
+If no custom_palette, a rainbow palette is generated. Min/Max values and
+Mean/Individual values will be the same colour, different shades.
 }}
+
+\item{plot_legend}{Logical. Whether to show the fill (and color) legend.
+Default is TRUE.}
 }
 \value{
 a ggplot object
@@ -101,7 +113,7 @@ This function calculates the mean mutation frequency across
 samples for given groups and plots the results.
 }
 \examples{
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

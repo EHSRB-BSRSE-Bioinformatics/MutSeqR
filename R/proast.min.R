@@ -14127,6 +14127,3 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         dev.off()
     return(CI.matr)
 }
-
-
-

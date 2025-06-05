@@ -47,23 +47,22 @@
 #' Default is tab-delimited.
 #' @param regions An optional file containing metadata of genomic regions.
 #' Region metadata will be joined with mutation data and variants will be
-#' checked for overlap with the regions. Metadata for TwinStrand Mutagenesis
-#' Panels are stored in the package files and can be accessed using the values
-#' `TSpanel_human`, `TSpanel_mouse`, and `TSpanel_rat`. If you have a custom
-#' range of genomic regions, set the value to `custom` and provide the regions
-#' file using the `custom_regions` argument. If you do not wish to include
-#' region metadata, set value to `none`.
-#' @param custom_regions If `regions` is set to
-#' "custom", provide  the regions metadata. Can be a file path or a
-#' data frame. Required columns are `contig`, `start`, and `end`.
-#' @param rg_sep The delimiter for importing the `custom_regions` file.
-#' Default is tab-delimited.
-#' @param is_0_based_rg A logical variable. Indicates whether the
-#' position coordinates in the custom_regions are 0 based (TRUE) or
-#' 1 based (FALSE). If TRUE, positions will be converted to 1-based.
-#' @param range_buffer An integer >= 0. Extend the range of your regions
+#' checked for overlap with the regions. `regions` can be either a file path,
+#' a data frame, or a GRanges object. File paths will be read using the rg_sep.
+#' Users can also choose from the built-in TwinStrand's Mutagenesis Panels by
+#' inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat". Required
+#' columns for the regions file are "contig", "start", and "end". For a GRanges
+#' object, the required columns are "seqnames", "start", and "end". Default is
+#' NULL.
+#' @param rg_sep The delimiter for importing the custom_regions. The default is
+#' tab-delimited "\t".
+#' @param is_0_based_rg A logical variable. Indicates whether the position
+#' coordinates in `regions` are 0 based (TRUE) or 1 based (FALSE).
+#' If TRUE, positions will be converted to 1-based (start + 1).
+#' Need not be supplied for TSpanels. Default is TRUE.
+#' @param padding An integer >= 0. Extend the range of your regions
 #' in both directions by the given amount. Ex. Structural variants and
-#' indels may start outside of the regions. Adjust the range_buffer to
+#' indels may start outside of the regions. Adjust the padding to
 #' include these variants in your region's ranges.
 #' @param genome The genome assembly version of the reference genome. This is
 #' required if your data does not include a context column. The
@@ -82,8 +81,8 @@
 #' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
 #'  digest the mutation data properly. Typical defaults are set, but can
-#'  be substituted in the form of `list(contig = "my_custom_contig_name",
-#'  sample = "my_custom_sample_column_name")`. You can change one or more of
+#'  be substituted in the form of `list(my_custom_contig_name = "contig",
+#'  my_custom_sample_column_name = "sample")`. You can change one or more of
 #' these. Set column synonyms are defined in MutSeqR::op$column and will
 #' automatically be changed to their default value.
 #' @param output_granges A logical variable; whether you want the mutation
@@ -130,7 +129,9 @@
 #' # Example: Import a single mutation file. This library was sequenced with
 #' # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 #' # consists of 20 2.4kb targets = 48kb of sequence.
-#' example_file <- system.file("extdata", "example_import_mut_data.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_import_mut_data.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' # We will create an example metadata table for this data.
 #' sample_meta <- data.frame(sample = "dna00996.1",
@@ -150,41 +151,29 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom utils read.delim read.table
 #' @importFrom rlang .data
-#' @importFrom BiocGenerics strand
+#' @importFrom BiocGenerics strand start end
 #' @importFrom IRanges IRanges
 #' @importFrom Biostrings getSeq
+#' @importFrom GenomeInfoDb seqnames
 #' @export
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
                             is_0_based_mut = TRUE,
                             sample_data = NULL,
                             sd_sep = "\t",
-                            regions = "none",
+                            regions = NULL,
                             custom_regions = NULL,
                             rg_sep = "\t",
                             is_0_based_rg = TRUE,
-                            range_buffer = 0,
+                            padding = 0,
                             genome = NULL,
                             species = NULL,
                             masked_BS_genome = FALSE,
                             custom_column_names = NULL,
                             output_granges = FALSE) {
-### TO DO #####
-# Remove VAF cutoff - done
-# Remove regions filtering - done
-# Modify context column addition - done
-# remove adding a filter column - done
-# Clean up parameter validation and reorder.
-# Remove rsids parameter  -done
-# update README
-# remove alt-depth as requirement and add alt_depth = 1 if it's not there. - done
 
-
-  if (!is.numeric(range_buffer) || range_buffer < 0) {
+  if (!is.numeric(padding) || padding < 0) {
     stop("Error: The range buffer must be a non-negative number")
-  }
-  if (!regions %in% c("TSpanel_human", "TSpanel_mouse", "TSpanel_rat", "custom", "none")) {
-    stop("Error: regions must be 'TSpanel_human', 'TSpanel_mouse', 'TSpanel_rat', 'custom' or 'none")
   }
   if (!is.logical(is_0_based_mut) || !is.logical(is_0_based_rg)) {
     stop("Error: is_0_based must be a logical variable")
@@ -199,22 +188,6 @@ import_mut_data <- function(mut_file,
     stop("Error: output_granges must be a logical variable")
   }
 
-  # Validate custom regions file if regions is set to "custom"
-  if (regions == "custom") {
-    if (is.null(custom_regions)) {
-      stop("Error: You have set regions to 'custom', but have not
-      provided a custom regions file!")
-    }
-    if (is.character(custom_regions)) {
-      rg_file <- file.path(custom_regions)
-      if (!file.exists(rg_file)) {
-        stop("Error: The custom regions file path you've specified is invalid")
-      }
-      if (file.info(rg_file)$size == 0) {
-        stop("Error: You are trying to import an empty custom regions file")
-      }
-    }
-  }
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
     dat <- mut_file
@@ -247,9 +220,7 @@ import_mut_data <- function(mut_file,
         stop("Error: All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning(paste("Warning: The following files in the specified
-                      directory are empty and will not be imported: ",
-                      empty_list_str))
+        warning(paste("Warning: The following files in the specified directory are empty and will not be imported: ", empty_list_str))
       }
 
       # Remove empty files from mut_files
@@ -351,51 +322,35 @@ import_mut_data <- function(mut_file,
     starts.in.df.are.0based = is_0_based_mut
   )
 
-  if (regions != "none") {
-
+  if (!is.null(regions)) {
     # load regions file
-      regions_df <- MutSeqR::load_regions_file(regions, custom_regions, rg_sep)
-      regions_df$in_regions <- TRUE
+    regions_gr <- MutSeqR::load_regions_file(regions,
+                                             rg_sep,
+                                             is_0_based_rg)
+    regions_gr$in_regions <- TRUE
 
-    # Apply range buffer
-    regions_df <- regions_df %>%
-      dplyr::mutate(start = .data$start - range_buffer,
-                    end = .data$end + range_buffer)
-
-    # adjust start position to be 1-based for TSpanels
-    if (regions %in% c("TSpanel_mouse", "TSpanel_human", "TSpanel_rat")) {
-      is_0_based_rg <- TRUE
-    }
-
-    # Turn region data into GRanges
-    region_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-      df = regions_df,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = is_0_based_rg
-    )
+    # Apply padding
+    BiocGenerics::start(regions_gr) <- pmax(BiocGenerics::start(regions_gr) - padding, 1)
+    BiocGenerics::end(regions_gr) <- BiocGenerics::end(regions_gr) + padding
 
     # Join mutation data and region data using overlap
     mut_ranges <- plyranges::join_overlap_left_within_directed(mut_ranges,
-                                                              region_ranges,
-                                                              suffix = c("",
-                                                                         "_regions"))
+                                                               regions_gr,
+                                                               suffix = c("",
+                                                                          "_regions"))
 
     mut_ranges <- mut_ranges %>%
       plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions.\n
-        To remove these rows, use the filter_mut() function")
+      warning("Warning: ", false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
     }
   }
   # Create a context column, if needed: BSGenome
   if (!context_exists) {
     if (is.null(genome) || is.null(species)) {
-      stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
+      stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the appropriate BS genome.")
     }
     ref_genome <- install_ref_genome(organism = species,
                                      genome = genome,
@@ -403,22 +358,23 @@ import_mut_data <- function(mut_file,
 
     extract_context <- function(mut_gr,
                                 bsgenome) {
-    # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = seqnames(mut_gr),
-                                                ranges = IRanges::IRanges(start = start(mut_gr) - 1, 
-                                                end = start(mut_gr) + 1), 
+      # Resize the mut_ranges to include the context
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = GenomeInfoDb::seqnames(mut_gr),
+                                                ranges = IRanges::IRanges(
+                                                  start = BiocGenerics::start(mut_gr) - 1,
+                                                  end = BiocGenerics::start(mut_gr) + 1
+                                                ),
                                                 strand = BiocGenerics::strand(mut_gr))
       # Extract the sequences from the BSgenome
       sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
-      # Return the sequences
       return(sequences)
     }
-      message("Retrieving context sequences from BSgenome")
-      context <- extract_context(mut_ranges, ref_genome)
-      mut_ranges$context <- context
-    }
-    dat <- as.data.frame(mut_ranges) %>%
-      dplyr::rename(contig = "seqnames")
+    message("Retrieving context sequences from BSgenome")
+    context <- extract_context(mut_ranges, ref_genome)
+    mut_ranges$context <- context
+  }
+  dat <- as.data.frame(mut_ranges) %>%
+    dplyr::rename(contig = "seqnames")
 
   # Create is_known based on ID col, if present
   if ("id" %in% colnames(dat)) {
@@ -510,15 +466,10 @@ import_mut_data <- function(mut_file,
   }
   if (!total_depth_exists && !no_calls_exists && depth_exists) {
     dat <- dplyr::rename(dat, total_depth = "depth")
-    warning("Could not find total_depth column.\n
-            Could not calculate total_depth\n
-            Will use depth column as total_depth\n
-            Renamed 'depth' to 'total_depth'.\n 
-            You can review the definitions of each column in the README")
+    warning("Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n")
   }
   if (!total_depth_exists && !depth_exists) {
-    warning("Could not find an appropriate depth column.\n
-            Some package functionality may be limited.\n")
+    warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
   }
 
   # Check for duplicated rows
@@ -528,15 +479,11 @@ import_mut_data <- function(mut_file,
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose
-    position was the same as that of at least one other row for the same
-    sample.")
+    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to
-      overlapping positions. Use the filter_mut() function to correct the
-      total_depth for these instances.")
+      warning("The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances.")
     }
   }
 

@@ -21,13 +21,13 @@ rename_columns <- function(data, column_map = op$column) {
 
   # Create a mapping of normalized names to original names
   norm_to_orig <- setNames(original_colnames, normalized_colnames)
-  
+
   # Initialize new column names (default to original names)
   new_colnames <- original_colnames
-  
+
   # Track which default names have already been assigned
   assigned_defaults <- setNames(rep(FALSE, length(existing_defaults)), existing_defaults)
-  
+
   # Apply renaming rules
   for (synonym in names(column_map)) {
     default_name <- column_map[[synonym]]
@@ -38,7 +38,7 @@ rename_columns <- function(data, column_map = op$column) {
 
       # Only rename the first synonym encountered
       if (!assigned_defaults[[default_name]]) {
-        cat("Expected '", default_name, "' but found '", original_name, "', renaming it.\n")
+        message("Expected '", default_name, "' but found '", original_name, "', renaming it.\n")
         new_colnames[new_colnames == original_name] <- default_name
         assigned_defaults[[default_name]] <- TRUE  # Mark this default as assigned
       }
