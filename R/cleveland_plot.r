@@ -2,8 +2,9 @@
 #' @description Make a Cleveland plot for the PROAST results. Matches ToxicR.
 #' @param results PROAST results object.
 #' @param covariate_col Covariate column name.
-#' @param output_path Output path for the plot. If null, the plot will not be saved.
-#' @return ggplot object.
+#' @param output_path Output path for the plot. If the output_path doesn't
+#' exist, it will be created. If NULL, the plots will not be exported.
+#' @return A list of ggplot objects for each response in results.
 #' @importFrom dplyr arrange filter mutate pull rename
 #' @import ggplot2
 #'
@@ -16,10 +17,6 @@ cleveland_plot <- function(results,
                   CEDL = as.numeric(.data$CEDL),
                   CEDU = as.numeric(.data$CEDU))
   plots <- list()
-  plots <- setNames(
-    vector("list", length(unique(results_df$Response))),
-    unique(results_df$Response)
-  )
   for (i in unique(results_df$Response)) {
     c.plot.df <- results_df %>%
       dplyr::filter(.data$Response == i)
@@ -61,11 +58,17 @@ cleveland_plot <- function(results,
       ggplot2::xlab(paste("BMD Estimate for", i)) +
       ggplot2::ylab("Model") +
       ggtitle("BMD by Selected Model (Sorted by Weights)")
-
-    plots[[i]] <- c
+    plot_name <- paste0(i, "_cleveland")
+    plots[[plot_name]] <- c
     if (!is.null(output_path)) {
       file_name <- file.path(paste0("PROAST_", i, "_cleveland.svg"))
-      ggsave(filename = file_name, plot = c, device = "svg", path = output_path, create.dir = TRUE)
+      ggsave(
+        filename = file_name,
+        plot = c,
+        device = "svg",
+        path = output_path,
+        create.dir = TRUE
+      )
     }
   }
   return(plots)

@@ -74,13 +74,15 @@ averaging. Default is TRUE (recommended).}
 
 \item{plot_results}{A logical value indicating whether to plot the BMD models
 and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
-save plots to the \code{output_path}.}
+save plots to the \code{output_path} or return them as a list alongside the
+summary of the results.}
 
 \item{ma_summary}{A logical value indicating whether to return the summary
 of the model averaging results. Default is FALSE.}
 
 \item{output_path}{The file path indicating where to save the plots.
-If NULL, the plots will be saved to the working directory. Default is NULL.}
+If NULL, the plots will automatically be returned as a list alongside
+the bmd results.}
 
 \item{...}{Additional arguments to be passed to the model fitting function.
 For more information, see \link[ToxicR]{single_continuous_fit} or
@@ -91,21 +93,24 @@ If \code{model_averaging = FALSE}, the function returns a data frame
 with the BMD values and the \eqn{100\times(1-2\alpha)\% } confidence
 intervals (BMDL, BMDU)for each response column and each model listed. The
 AIC value is calculated for each model to compare fits. The AIC is
-calculated as maximum likelihood + 2 * degrees of freedom. If
-\code{plot_results = TRUE}, the function will plot all fitted models to the
-data and save them to the \code{output_path}.
+calculated as maximum likelihood + 2 * degrees of freedom.
 
 If \code{model_averaging = TRUE}, the function returns a data frame with the
 BMD values and the \eqn{100\times(1-2\alpha)\% } confidence intervals
 (BMDL, BMDU) for each response column calculated using model averaging.
 If \code{ma_summary = TRUE}, the function will return the posterior probabilities
-used in the model averaging. If \code{plot_results = TRUE}, the function will plot
-the model averaged model to the data and save it to the \code{output_path}.
-The function will also make a Cleveland plot, saved to the  \code{output_path}.
+used in the model averaging.
+
+If \code{plot_results = TRUE}, the function will plot the fited models or
+the model averaged model to the data. When mode averaging, the
+function will also make a Cleveland plot, saved to the  \code{output_path}.
 Here, the BMDs are plotted for each model in the set alongside the model
 averaged BMD. The BMD is represented by a red dot. The size of the dot is
 scaled on the model probability with the Model Average having a value of
-100\%. The BMDL and BMDU are expressed as interval bars.
+100\%. The BMDL and BMDU are expressed as interval bars. Plots may be
+automatically exported to an output_path. Alternatively, if output_path =
+NULL, the function will return a list that includes summary (the
+data frame contianing the BMD results), and all generated plots.
 }
 \description{
 Calculate the benchmark dose (BMD) for continuous dose-response
@@ -199,6 +204,7 @@ mf_sum <- mf \%>\%
                   sd_max = sd(mf_max),
                   n_max = dplyr::n())
 bmd <- bmd_toxicr(mf_data = mf_sum,
+                  data_type = "summary",
                   dose_col = "dose",
                   response_col = c("mean_mf_min", "mean_mf_max"),
                   sd_col = c("sd_min", "sd_max"),

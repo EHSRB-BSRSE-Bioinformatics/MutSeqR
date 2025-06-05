@@ -484,7 +484,7 @@ plot4.16 <- plot_model_mf(
 plot4.16
 ```
 
-## Benchmark Dose Analysis {.tabset}
+## Benchmark Dose Analysis
 
 Benchmark dose (BMD) was calculated using `r params$bmd_method`.
 
@@ -492,7 +492,7 @@ BMD is the dose at which a `r params$bmr * 100`% in mutation frequency occurs ab
 
 Returns the BMD, and the upper (BMDU) and lower (BMDL) 90% confidence intervals, calculated using model averaging.
 
-```{r bmd-analysis, eval=params$bmd, results='hide'}
+```{r bmd-analysis, eval=params$bmd, results='hide', fig.show = 'hide'}
 if (plot_max) {
   response_col <- c("mf_min", "mf_max")
 } else {
@@ -507,33 +507,181 @@ if (params$bmd_method == "proast") {
                     model_averaging = TRUE,
                     num_bootstraps = 2, # parameterize this. 50/200
                     plot_results = TRUE,
-                    output_path = params$outputdir)
+                    output_path = NULL)
 } else if (params$bmd_method == "toxicr") {
   bmd <- bmd_toxicr(mf_data = mf_data,
                     dose_col = params$exp_variable,
                     response_col = response_col,
                     bmr = params$bmr,
                     plot_results = TRUE,
-                    output_path = params$outputdir,
+                    output_path = NULL,
                     ma_summary = TRUE)
-  bmd$BMR <- params$bmr
-  bmd <- bmd %>%
+  bmd$summary$BMR <- params$bmr
+  bmd$summary <- bmd$summary %>%
     dplyr::select(Model, Response, BMR, BMD, BMDL, BMDU,
-                  post_p, confidence_level)
+                  post_p, confidence_level) %>%
+    dplyr::arrange(desc(Model == "Model averaging"))
 }
 ```
 
 ### BMD Results
 
 ```{r bmd-results, eval=params$bmd}
-DT::datatable(bmd) %>%
+DT::datatable(bmd$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
-Results[["BMD Results"]] <- bmd
+Results[["BMD Results"]] <- bmd$summary
 ```
 
-### BMD Confidence Interval Plot
+### BMD Plots {.tabset}
 
-```{r bmd-plot-caption, eval=params$bmd, include=FALSE}
+```{r bmd-exphill-tab, eval=params$bmd&params$bmd_method=="proast", results='asis'}
+cat("#### Exponential & Hill Models\n\n")
+```
+
+```{r bmd-exphill-cap, eval=params$bmd&params$bmd_method == "proast", include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmin by", params$exp_variable, "following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each", params$exp_variable, "is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmax by", params$exp_variable, "following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each", params$exp_variable, "is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+```
+
+```{r bmd-exphill-plot1, eval=params$bmd&params$bmd_method == "proast", fig.width=12, fig.height=6, fig.cap=caption1}
+replayPlot(bmd$mf_min_Expon_HILL)
+```
+
+```{r bmd-exphill-plot2, eval=params$bmd&params$bmd_method == "proast"&plot_max, fig.width=12, fig.height=6, fig.cap=caption2}
+replayPlot(bmd$mf_max_Expon_HILL)
+```
+
+```{r bmd-invln-tab, eval=params$bmd&params$bmd_method=="proast", results='asis'}
+cat("####  Inverse Exponential & Log-Normal Models\n\n")
+```
+
+```{r bmd-invln-cap, eval=params$bmd&params$bmd_method == "proast", include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmin by", params$exp_variable,
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each", params$exp_variable,
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmax by", params$exp_variable,
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each", params$exp_variable,
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+```
+
+```{r bmd-invln-plot1, eval=params$bmd&params$bmd_method == "proast", fig.width=12, fig.height=6, fig.cap=caption1}
+replayPlot(bmd$mf_min_InvExp_LN)
+```
+
+```{r bmd-invln-plot2, eval=params$bmd&params$bmd_method == "proast"&plot_max, fig.width=12, fig.height=6, fig.cap=caption2}
+replayPlot(bmd$mf_max_InvExp_LN)
+```
+
+```{r bmd-boot-tab, eval=params$bmd&params$bmd_method=="proast", results='asis'}
+cat("####  Bootstrap Curves\n\n")
+```
+
+```{r bmd-boot-cap, eval=params$bmd&params$bmd_method == "proast", include=FALSE}
+caption1 <- paste(
+  "The bootstrap curves based on model averaging. Data is MFmin by",
+  params$exp_variable, "with log-transformation. The geometric mean at each",
+  params$exp_variabe, "is plotted as a triangle. Number of bootstraps =",
+  params$num_bootstraps
+)
+caption2 <- paste(
+  "The bootstrap curves based on model averaging. Data is MFmax by",
+  params$exp_variable, "with log-transformation. The geometric mean at each",
+  params$exp_variabe, "is plotted as a triangle. Number of bootstraps =",
+  params$num_bootstraps
+)
+```
+
+```{r bmd-boot-plot1, eval=params$bmd&params$bmd_method == "proast", fig.cap=caption1}
+replayPlot(bmd$mf_min_boostrap_curves)
+```
+
+```{r bmd-boot-plot2, eval=params$bmd&params$bmd_method == "proast"&plot_max, fig.cap=caption2}
+replayPlot(bmd$mf_max_boostrap_curves)
+```
+
+```{r bmd-ma-tab, eval=params$bmd&params$bmd_method=="toxicr", results='asis'}
+cat("####  Model Averaged Model\n\n")
+```
+
+```{r bmd-ma-cap, eval=params$bmd&params$bmd_method == "toxicr", include=FALSE}
+caption1 <- paste(
+  "The fitted model based on model averaging. Data is MFmin by",
+  params$exp_variable, " The black points are the individual data points.",
+  "The BMD is represented by a black triangle with the 90% confidence",
+  "intervals extending as error bars."
+)
+caption2 <- paste(
+  "The fitted model based on model averaging. Data is MFmAX by",
+  params$exp_variable, " The black points are the individual data points.",
+  "The BMD is represented by a black triangle with the 90% confidence",
+  "intervals extending as error bars."
+)
+```
+
+```{r bmd-ma-plot1, eval=params$bmd&params$bmd_method=="toxicr", fig.cap=caption1}
+bmd$mf_min_ma
+```
+
+```{r bmd-ma-plot2, eval=params$bmd&params$bmd_method=="toxicr"&plot_max, fig.cap=caption2}
+bmd$mf_max_ma
+```
+
+#### Cleveland Plots
+
+```{r bmd-cvd-cap, eval=params$bmd, include=FALSE}
+caption1 <- paste(
+  "MFmin. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging",
+  ifelse(params$bmd_method == "proast",
+    "based on AIC",
+    "based on posterior probability"
+  )
+)
+caption2 <- paste(
+  "MFmax. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging",
+  ifelse(params$bmd_method == "proast",
+    "based on AIC",
+    "based on posterior probability"
+  )
+)
+```
+
+```{r bmd-cvd-plot1, eval=params$bmd, fig.cap=caption1}
+bmd$mf_min_cleveland
+```
+
+```{r bmd-cvd-plot2, eval=params$bmd&plot_max, fig.cap=caption2}
+bmd$mf_max_cleveland
+```
+
+#### Confidence Interval Plot
+
+```{r bmd-ci-cap, eval=params$bmd, include=FALSE}
 caption <- paste(
   "Benchmark dose with 90% confidence intervals representing the dose at which a ",
   params$bmr * 100, " % increase in mutation frequency occurs from reference level.",
@@ -542,8 +690,8 @@ caption <- paste(
 )
 ```
 
-```{r bmd-plot, eval=params$bmd, fig.cap=caption, fig.width=8, fig.height=6}
-bmd <- bmd %>% dplyr::filter(Model == "Model averaging")
+```{r bmd-ci-plot, eval=params$bmd, fig.cap=caption, fig.width=8, fig.height=6}
+bmd <- bmd$summary %>% dplyr::filter(Model == "Model averaging")
 plot4.2 <- plot_ci(bmd)
 plot4.2
 ```
@@ -1056,7 +1204,7 @@ DT::datatable(
 plot_signif <- TRUE
 ```
 
-## Plot
+## Model Plot
 
 ```{r set-plot-size6.7, include=FALSE}
 n_rg <- nrow(rg_levels)
@@ -1117,9 +1265,7 @@ plot6.7 <- plot_model_mf(model = model_rg,
 plot6.7
 ```
 
-# Recurring mutations {.tabset}
-
-## Recurring Mutations Whole Data
+# Mutation Hotspots
 
 ```{r, recurrent-mutations}
 
@@ -1135,11 +1281,12 @@ no_recur <- nrow(recurring_mutations_all)
 no_recur_sum <- sum(recurring_mutations_all$n)
 ```
 
-Within the entire dataset, `r no_recur` mutations were found to occur in more than one sample.
+Within the dataset, `r no_recur` mutations were found to occur in more than one sample.
 Recurrent mutations between samples are observed at the same genomic position, with the same (normalized) subtype.
 These mutations accounted for `r no_recur_sum` of total mutations (Minimum Mutation Counting Method).
 
-## Recurrent Mutations Lolliplot
+## Lollipop Plots {.tabset}
+
 ```{r lolliplot-caption, eval=params$do_regions_analysis}
 caption <- paste(
   "Recurrent mutations across genomic positions within each contig. Y is",
@@ -1149,10 +1296,13 @@ caption <- paste(
 )
 ```
 
-```{r lolliplot-recur, eval=params$do_regions_analysis, fig.cap=caption, fig.width=12, fig.height=6}
+```{r lolliplot, eval=params$do_regions_analysis, fig.cap=caption, fig.width=12, fig.height=6, results='asis'}
+
 plot_data <- filtered_mutation_data %>%
-  dplyr::filter(!variation_type %in% "no_variant",
-                filter_mut == FALSE) %>%
+  dplyr::filter(
+    !variation_type %in% "no_variant",
+    filter_mut == FALSE
+  ) %>%
   dplyr::group_by(
     .data[[params$region_col]], start, end, normalized_subtype
   ) %>%
@@ -1178,9 +1328,9 @@ names(palette) <- c(
 
 plot_list <- list()
 for (contig_name in unique_contigs) {
+  cat("### ", contig_name, "\n\n")
   df <- filter(plot_data, .data[[params$region_col]] == contig_name)
-
-  p <- ggplot(df, aes(x = start, y = n)) +
+  print(ggplot(df, aes(x = start, y = n)) +
     # Lollipop stick: line from (x, 0) to (x, n)
     geom_segment(aes(x = start, xend = start, y = 0, yend = n),
                  linewidth = 0.3,
@@ -1203,14 +1353,13 @@ for (contig_name in unique_contigs) {
       axis.ticks = element_line(color = "black"),
       axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
     )
-  plot_list[[as.character(contig_name)]] <- p
+  )
+  cat("\n")
 }
-plot_list
 ```
 
-## Recurring Mutations Within Samples: Mutations with >1 alternate allele
-
-```{r, recur-per-sample}
+```{r, recur-per-sample, eval=FALSE}
+# Samples with +1 alt allele at a given position
 recurring_mutations_sample <- filtered_mutation_data %>%
   dplyr::filter(!variation_type %in% "no_variant",
                 filter_mut == FALSE) %>%
@@ -1240,17 +1389,21 @@ DT::datatable(recur_mut_sample_summary,
 
 no_recur <- nrow(recurring_mutations_sample)
 no_recur_sum <- sum(recurring_mutations_sample$n)
+
+# For each sample, we identified genomic sites where multiple distinct alternate alleles were called at the same position.
+# A total of r no_recur such positions was observed across the entire data set, accounting for r no_recur_sum of total mutations (Minimum Mutation Counting Method).
+
+
 ```
 
-For each sample, we identified genomic sites where multiple distinct alternate alleles were called at the same position.
-A total of `r no_recur` such positions was observed across the entire data set, accounting for `r no_recur_sum` of total mutations (Minimum Mutation Counting Method).
-
-## Recurring Mutations Within `r params$exp_variable`
+## Mutation Hotspots Within `r params$exp_variable`
 
 ```{r recur-per-expv, eval=!is.null(params$exp_variable)}
 recurring_mutations_expv <- filtered_mutation_data %>%
-  dplyr::filter(!variation_type %in% "no_variant",
-                filter_mut == FALSE) %>%
+  dplyr::filter(
+    !variation_type %in% "no_variant",
+    filter_mut == FALSE
+  ) %>%
   dplyr::group_by(
     contig, start, end,
     .data[[params$exp_variable]],
@@ -1286,37 +1439,38 @@ caption <- paste(
   "total_recurring_mutations is the total number of mutations per",
   params$exp_variable, "that were recurrent."
 )
-DT::datatable(recur_mut_expv_summary,
-  caption = caption)
+DT::datatable(recur_mut_expv_summary, caption = caption)
 no_recur <- nrow(recurring_mutations_expv)
 no_recur_sum <- sum(recurring_mutations_expv$n)
-
 ```
 
-```{r recurrent-rsids, eval= "id" %in% colnames(filtered_mutation_data)}
-recurring_mutations_rsid <- filtered_mutation_data %>%
-  dplyr::filter(!variation_type %in% "no_variant") %>%
-  dplyr::group_by(id) %>%
-  dplyr::tally() %>%
-  dplyr::arrange(-n)
+## Bubble Plot: Multiplet Mutations
+
+```{r bubble-cap, include=FALSE}
+if (is.null(params$exp_variable)) {
+  facet <- "sample"
+} else {
+  facet <- params$exp_variable
+}
+caption <- paste0(
+  "Mutiple mutations per ", facet, ". Each circle represents a mutation,",
+  "coloured by normalized mutation subtype The size of the circle is scaled",
+  "by the mutation's alternative depth."
+)
 ```
 
-## Bubble Plot
-```{r plot-bubbles}
+```{r plot-bubbles, fig.cap=caption, fig.width=12, fig.height=6}
 plot7.2 <- plot_bubbles(
   mutation_data = filtered_mutation_data,
   size_by = "alt_depth",
-  facet_col = params$exp_variable
+  facet_col = facet
 )
 plot7.2
 ```
 
-# CpG Mutations
-
-For each subtype, # of the subtype at CpG sites divided by the total number of that subtype.
-
-
 ```{r cpg-mutations, eval=FALSE}
+# CpG Mutations
+# For each subtype, # of the subtype at CpG sites divided by the total number of that subtype.
 # Annotate Mutation Data for CpG sites:
 mut_data_cpgs <- annotate_cpg_sites(mutation_data = filtered_mutation_data) %>%
   dplyr::filter(CpG_site == TRUE)

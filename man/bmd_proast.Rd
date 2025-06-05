@@ -13,9 +13,9 @@ bmd_proast(
   adjust_bmr_to_group_sd = FALSE,
   model_averaging = TRUE,
   num_bootstraps = 200,
-  summary = TRUE,
   plot_results = FALSE,
-  output_path = NULL
+  output_path = NULL,
+  raw_results = FALSE
 )
 }
 \arguments{
@@ -50,20 +50,21 @@ intervals should be calculated using model averaging. Default is TRUE
 \item{num_bootstraps}{The number of bootstrap resamples to be used in the
 model averaging. Default is 200 (recommended).}
 
-\item{summary}{A logical value indicating whether a summary of the results
-should be returned. If FALSE, raw results from the PROAST analysis are
-returned.}
-
 \item{plot_results}{A logical value indicating whether to plot the BMD models
-and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
-save plots to the \code{output_path}.}
+and/or the Cleveland plots. Default is FALSE. Plots may be exported
+directly to an output_path, or returned within a list to the user.}
 
 \item{output_path}{The file path indicating where to save the plots.
-If NULL, the plots will be saved to the working directory. Default is NULL.}
+If NULL, the plots will automatically be displayed to the graphics
+window and then returned as a list alongside the bmd results.}
+
+\item{raw_results}{A logical value indicating whether to return the raw
+results from the PROAST analysis. If FALSE, data is returned as a
+summary table.}
 }
 \value{
-If summary is TRUE, a data frame of final results. If summary is
-FALSE, a list of the raw results from the PROAST analysis.
+A summmary data frame of final results. If plots or raw results
+are selected, all data will be returned within a list.
 
 The summary will include the following for each response variable and
 covariate subgroup (if applicable):
@@ -91,7 +92,9 @@ If there is no significant response in the data, the function will return an
 empty data frame.
 
 If \code{plot_results = TRUE} the function will create the following plots
-for each response variable:
+for each response variable. The plots will be saved to the output_path.
+If no output_path is provided, then they will be returned within a list
+alongside the summary data frame.
 \itemize{
 \item Model Plots. The following plot will be created for each model
 family (Exponential, Hill, Inverse Exponential, LogNormal): The fitted curve
@@ -99,14 +102,20 @@ of the selected (3 or 5) model. Data is log-transformed. Individual data
 points are plotted using small triangles. The geometric mean (median) at
 each dose is plotted as a large triangle. The BMD is indicated by the
 dotted line. If applicable, the covariate subgroup is indicated by color.
-\item ma.plot If \code{model_averaging = TRUE}, the bootstrap curves based
-on model averaging. The geometric mean (median) at each dose is plotted as
-a large triangle. Data is log-transformed.
+\item bootstrap_curves If \code{model_averaging = TRUE}, the bootstrap
+curves based on model averaging. The geometric mean (median) at each dose
+is plotted as a large triangle. Data is log-transformed.
 \item cleveland plot if \code{model_averaging = TRUE} The BMD estimate
-for each model is plotted with error bars representing the 90\% confidence
-interval. The size of the point represents the model weight assigned during
-model averaging, based on the AIC.
+for each model is plotted as a red point alongside the 90\% confidence
+intervals. The size of the BMD point represents the model weight assigned
+during model averaging, based on the AIC.
 }
+
+If \code{raw_results = TRUE}, the function will return the raw results of
+the PROAST analysis alongside the summary data frame. PROAST raw_results
+is a list of variables and data that is continuously modified as it is
+passed through the proast functions. It can be given to f.proast() to
+resume analysis.
 }
 \description{
 Calculate the benchmark dose (BMD) of continuous,

@@ -1642,7 +1642,7 @@ transformation. PROAST uses four families of nested models: exponential, Hill,
 inverse exponential, and log-normal. The Akaike information criterion (AIC) is
 used to select best fit. BMD confidence intervals are assessed by the Maximum
 Likelihood Profile method, or by model averaging via bootstrapping (recommended).
-BMR values are defined as a user-defined relative increase in MF from the
+BMR values are a user-defined relative increase in MF from the
 control. Alternatively, users may set the BMR as one standard-deviation from
 the control.
 
@@ -1665,13 +1665,16 @@ take some time to run. PROAST model averaging will return the upper and lower
 90% BMD confidence intervals. MutSeqR calculates the model-averaged BMD value
 as the median BMD of all bootstrap runs.
 
-Users may choose to generate model plots with `plot_results`. If TRUE,
-plots will be automatically saved to an output directory specified in
-`output_path`.
+Users may choose to generate model plots with `plot_results`. Plots may be
+automatically saved to an output directory specified in `output_path`.
+Alternatively, when output_path is NULL, plots will automcatically
+be displayed and then returned within a list alongside the BMD
+summary results.
 
 The function will output a data frame of final results, including a BMD
 estimate for each model family and the model averaging results, if applicable.
-Users may access the raw, unparsed PROAST results by setting `summary = FALSE`.
+Users may access the raw, unparsed PROAST results by setting
+`raw_results = TRUE`.
 
 #### Example
 
@@ -1739,7 +1742,7 @@ devtools::install_github("NIEHS/ToxicR")
 ```
 
 *See the ToxicR repository on github for more information on installing the*
-*package. Differences apply for mac users*
+*package.*
 
 #### General Usage: bmd_toxicr
 
@@ -1755,7 +1758,9 @@ confidence level for the upper and lower confidence intervals can be defined
 with the `alpha` parameter (default 90% CI).
 
 Users may choose to generate model plots with `plot_results`. If TRUE, plots
-will be automatically saved to an output directory specified in `output_path`.
+may be automatically saved to an output directory specified in `output_path`.
+Alternatively, if `output_path` is NULL, plots will be returned within a list
+alongside the the BMD results.
 
 The function will return the BMD with its upper and lower confidence intervals
 for each response variable. If model averaging, a breakdown of the model
