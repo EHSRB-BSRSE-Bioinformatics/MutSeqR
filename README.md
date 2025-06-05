@@ -3,6 +3,20 @@
   <!-- badges: end -->
   
 # Change Report:
+Changes: 2025-06-05
+- Summary Report: Users may now run a standardized analysis workflow using render_report().
+- Users may consult the MutSeqR vignette:
+
+```{r}
+  rmarkdown::render(
+    input = system.file("vignette", "vignette.rmd", package="MutSeqR"),
+    output_dir = NULL,
+    output_file = "./Vignette_Rmd",
+    envir = new.env()
+  )
+```
+
+
 Changes: 2025-03-27
 - Removed custom_regions parameter. Utility is now incorporated by regions parameter.
 
