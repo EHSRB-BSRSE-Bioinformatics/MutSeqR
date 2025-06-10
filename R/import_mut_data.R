@@ -162,7 +162,6 @@ import_mut_data <- function(mut_file,
                             sample_data = NULL,
                             sd_sep = "\t",
                             regions = NULL,
-                            custom_regions = NULL,
                             rg_sep = "\t",
                             is_0_based_rg = TRUE,
                             padding = 0,
@@ -170,7 +169,7 @@ import_mut_data <- function(mut_file,
                             species = NULL,
                             masked_BS_genome = FALSE,
                             custom_column_names = NULL,
-                            output_granges = FALSE) {
+                            output_granges = FALSE) {                             
 
   if (!is.numeric(padding) || padding < 0) {
     stop("Error: The range buffer must be a non-negative number")
