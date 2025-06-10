@@ -392,48 +392,6 @@ filter_mut <- function(mutation_data,
     message("Removed ", region_filtered_count, " rows based on regions.")
   }
 
-  ######## Depth Correction ###################################################
-  if (correct_depth) {
-    if (!("total_depth" %in% colnames(mutation_data))) {
-      stop("Error: You have set correct_depth to TRUE but there is no
-      'total_depth' column in your mutation_data.")
-    }
-    message("Correcting depth...")
-    if (correct_depth_to_indel) {
-
-      # priority list for variation types
-      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv",
-                              "sv", "uncategorized", "no_variant")
-
-      # Step 1: Identify the highest priority type for each unique group
-      priority_data <- mutation_data %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::reframe(
-          all_depths_same = dplyr::n_distinct(.data$total_depth) == 1,
-          highest_priority_type = variation_type[which.min(match(variation_type, variation_priority))])
-      # Step 2: Join back to the original data for efficient updates
-      mutation_data <- mutation_data %>%
-        dplyr::left_join(priority_data, by = c("sample", "contig", "start")) %>%
-        dplyr::group_by(sample, contig, start) %>%
-        dplyr::mutate(first_row = dplyr::row_number() == 1) %>%
-        dplyr::ungroup() %>%
-        dplyr::mutate(total_depth = dplyr::case_when(
-                        all_depths_same ~ dplyr::if_else(first_row, total_depth, 0),
-                        variation_type == highest_priority_type ~ total_depth,
-                        TRUE ~ 0)) %>%
-        dplyr::select(-"all_depths_same",
-                      -"highest_priority_type",
-                      -"first_row")
-    } else {
-      mutation_data <- mutation_data %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::mutate(
-          total_depth = dplyr::if_else(row_number() == 1, .data$total_depth, 0)) %>%
-        dplyr::ungroup()
-    }
-    corrected_depth_count <- sum(mutation_data$total_depth == 0)
-    message(corrected_depth_count, " rows had their total_depth corrected.")
-  }
   if (rm_filtered_mut_from_depth) {
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%

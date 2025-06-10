@@ -66,6 +66,14 @@
 #' Default includes all variants. For `calculate_depth = TRUE`: Regardless of
 #' whether or not a variant is included in the mutation counts, the total_depth
 #' for that position will be counted.
+#' @param correct_depth A logical value, only used if `calculate_depth = TRUE`.
+#' If TRUE (default), an internal correction is applied to prevent double-counting
+#' sequencing depth at genomic sites with multiple mutations. Set to FALSE only if
+#' your data has already been processed with `correct_depth()`.
+#' @param correct_depth_by_indel_priority A logical value, passed to the internal
+#' depth correction. If TRUE, depth is retained for the mutation with the highest
+#' indel/variant priority. If FALSE (default), depth is retained for the first
+#' mutation encountered at a site.
 #' @param calculate_depth A logical variable, whether to calculate the
 #' per-group total_depth from the mutation data. If set to TRUE, the mutation
 #' data must contain a total_depth value for every sequenced base (including
@@ -235,6 +243,8 @@ calculate_mf <- function(mutation_data,
                                            "ambiguous",
                                            "uncategorized"),
                          calculate_depth = TRUE,
+                         correct_depth = TRUE,
+                         correct_depth_by_indel_priority = FALSE,
                          precalc_depth_data = NULL,
                          d_sep = "\t",
                          summary = TRUE,
@@ -289,6 +299,34 @@ calculate_mf <- function(mutation_data,
   if (!is.null(retain_metadata_cols) && !is.character(retain_metadata_cols)) {
     stop("retain_metadata_cols must be a character vector.")
   }
+
+  if (calculate_depth && correct_depth) {
+    if (!"total_depth" %in% colnames(mutation_data)) {
+      stop("Error: `correct_depth` is TRUE but 'total_depth' column not found in mutation_data.")
+    }
+
+    message("Performing internal depth correction to prevent double-counting...")
+    dt <- data.table::as.data.table(mutation_data)
+
+    if (correct_depth_by_indel_priority) {
+      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv", "sv", "uncategorized", "no_variant")
+      dt[, priority_order := factor(variation_type, levels = variation_priority, ordered = TRUE)]
+      dt[, total_depth := {
+        group_order <- order(priority_order, na.last = TRUE)
+        corrected_depths <- rep(0, .N)
+        corrected_depths[group_order[1]] <- total_depth[group_order[1]]
+        corrected_depths
+      }, by = .(sample, contig, start)]
+      dt[, priority_order := NULL]
+    } else {
+      dt[, total_depth := c(total_depth[1], rep(0, .N - 1)), by = .(sample, contig, start)]
+    }
+    
+    # Overwrite the input data frame with the corrected version
+    mutation_data <- as.data.frame(dt)
+    message("Internal depth correction complete.")
+  }
+
   # Rename columns in mutation_data to default
   mutation_data <- MutSeqR::rename_columns(mutation_data)
   # Check for all required columns
@@ -603,4 +641,85 @@ calculate_mf <- function(mutation_data,
   } else {
     return(summary_table)
   }
+}
+
+
+#' Correct total depth for unique genomic positions
+#'
+#' @description
+#' This function prevents double-counting of sequencing depth when multiple
+#' mutations are reported at the same genomic position within the same sample.
+#' For each group of rows with the same `sample`, `contig`, and `start`,
+#' it retains the `total_depth` value for only one row and sets the rest to 0.
+#' This is a necessary pre-processing step before calculating mutation frequency
+#' to ensure the denominator (total bases sequenced) is not inflated.
+#'
+#' @details
+#' Running this operation can be computationally intensive on large datasets.
+#' By isolating it in a dedicated function, you can run it once and use the
+#' resulting data frame for multiple downstream analyses, such as calls to
+#' `calculate_mf` with different grouping variables.
+#'
+#' @param mutation_data Your mutation data. Must be a data.frame.
+#' @param by_indel_priority A logical value. If TRUE, the `total_depth` value for
+#' the row with the highest priority `variation_type` is retained. Priority is:
+#' deletion, complex, insertion, snv, mnv, sv, uncategorised, no_variant.
+#' If FALSE (default), the `total_depth` of the first row in the group is retained.
+#'
+#' @return A data.frame with the `total_depth` column corrected.
+#' @examples
+#' # Load example data
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data.rds",
+#'                             package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#'
+#' # Correct the depth
+#' corrected_data <- correct_depth(mutation_data = example_data, by_indel_priority = TRUE)
+#' # Now `corrected_data` can be used for filtering and frequency calculation
+#'
+#' @importFrom data.table as.data.table :=
+#' @export
+correct_depth <- function(mutation_data, by_indel_priority = FALSE) {
+
+  if (!"total_depth" %in% colnames(mutation_data)) {
+    stop("Error: 'total_depth' column not found in mutation_data.")
+  }
+
+  # Use data.table for high performance
+  dt <- data.table::as.data.table(mutation_data)
+
+  message("Correcting depth for unique genomic positions...")
+
+  if (by_indel_priority) {
+    # Define priority list for variation types
+    variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv",
+                            "sv", "uncategorized", "no_variant")
+
+    # Create a factor for ordering
+    dt[, priority_order := factor(variation_type, levels = variation_priority, ordered = TRUE)]
+
+    # Within each group, set total_depth to 0 for all but the highest priority row
+    # The order() function on the priority_order column ensures the highest priority is first
+    dt[, total_depth := {
+      group_order <- order(priority_order, na.last = TRUE)
+      corrected_depths <- rep(0, .N)
+      corrected_depths[group_order[1]] <- total_depth[group_order[1]]
+      corrected_depths
+    }, by = .(sample, contig, start)]
+
+    # Remove the temporary priority column
+    dt[, priority_order := NULL]
+
+  } else {
+    # Simpler case: keep the first row's depth and zero out the rest
+    # This is extremely fast in data.table
+    dt[, total_depth := c(total_depth[1], rep(0, .N - 1)), by = .(sample, contig, start)]
+  }
+
+  corrected_rows <- nrow(dt[total_depth == 0]) - nrow(mutation_data[mutation_data$total_depth == 0, ])
+  message(corrected_rows, " rows had their total_depth set to 0 to prevent double-counting.")
+  
+  # Return a data.frame for consistency with the rest of the package
+  return(as.data.frame(dt))
 }
