@@ -24,7 +24,9 @@ Export your mutation_data to a VCF file for downstream applications.
 }
 \examples{
 \dontrun{
-example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+example_file <- system.file("extdata", "Example_files",
+                            "example_mutation_data_filtered.rds",
+                            package = "MutSeqR")
 example_data <- readRDS(example_file)
 write_vcf_from_mut(example_data)
 }

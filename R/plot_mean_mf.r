@@ -3,11 +3,14 @@
 #' samples for given groups and plots the results.
 #' @param mf_data A data frame containing the mutation frequency data. This is
 #' obtained from the calculate_mf function with SUMMARY = TRUE.
-#' @param group_col The column in mf_data by which to calculate the mean.
-#' Ex. "dose" or c("dose", "tissue").
-#' @param fill_col The column in mf_data by which to fill the color. Default is NULL.
-#' fill_col must be a variable of equal or higher level to group_col. fill_col
-#' may equal group_col.
+#' @param group_col The column(s) in mf_data by which to calculate the mean.
+#' When supplying more than one column, the values of all group columns will
+#' be concatenated into a single value by which to calculate the mean. Values
+#' will be displayed along the x-axis. Ex. "dose" or c("dose", "tissue").
+#' @param fill_col An optional column name in the data used to define the fill
+#' aesthetic in the plot. If fill_col has multiple levels within each group_col
+#' level, the mean will be calculated for each level of fill_col
+#' (recommend plot_type = "line" for this use case). Default is NULL.
 #' @param mf_type The type of mutation frequency to plot. Options are "min",
 #' "max", "both", or "stacked". If "both", the min and max mutation
 #' frequencies are plotted side by side. "stacked" can be chosen for bar
@@ -34,7 +37,8 @@
 #' }
 #' @param group_order_input The order of the groups if group_order is
 #' "custom". The column name by which to arrange groups if group_order
-#' is "arranged".
+#' is "arranged". If "custom", and using more than one group_col, values
+#' are concatenated in the order listed, separated by a "_".
 #' @param add_labels The data labels to display on the plot. Either
 #' "indiv_count", "indiv_MF", "mean_count", "mean_MF", or "none".
 #' Count labels display the number of mutations, MF labels display the mutation
@@ -43,20 +47,26 @@
 #' @param plot_title The title of the plot. Default is
 #' "Mean Mutation Frequency".
 #' @param x_lab The x-axis label. Default is the value of group_col.
-#' @param y_lab The y-axis label. Default is "Mutation Frequency (mutations/bp)".
+#' @param y_lab The y-axis label. Default is "Mutation Frequency
+#' (mutations/bp)".
 #' @param scale_y_axis The scale of the y axis. Either "linear" or "log".
 #' Default is "linear".
 #' @param custom_palette A custom color palette to use for the plot. Input a
 #' character vector of colours. Input a named character vector to specify
-#' olours to specific groups. Fill labels will be constructed by the following components
-#' 1. "Mean/Individual" if plot_indiv_vals = TRUE, fill labels will specify Mean/Individual values.
-#' 2. "min/max" if mf_type = "both" or "stacked", fill labels will specify min/max values.
-#' 3. fill_col value. Name colours to match the fill labels. Default is NULL. If no
-#' custom_palette, a rainbow palette is generated. Min/Max values and Mean/Individual values
-#' will be the same colour, different shades.
+#' olours to specific groups. Fill labels will be constructed by the following
+#' components
+#' 1. "Mean/Individual" if plot_indiv_vals = TRUE, fill labels will specify
+#' Mean/Individual values.
+#' 2. "min/max" if mf_type = "both" or "stacked", fill labels will specify
+#' min/max values.
+#' 3. fill_col value. Name colours to match the fill labels. Default is NULL.
+#' If no custom_palette, a rainbow palette is generated. Min/Max values and
+#' Mean/Individual values will be the same colour, different shades.
+#' @param plot_legend Logical. Whether to show the fill (and color) legend.
+#' Default is TRUE.
 #' @return a ggplot object
 #' @examples
-#' example_file <- system.file("extdata",
+#' example_file <- system.file("extdata", "Example_files",
 #'                             "example_mutation_data_filtered.rds",
 #'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
@@ -93,8 +103,9 @@ plot_mean_mf <- function(mf_data,
                          x_lab = NULL,
                          y_lab = NULL,
                          plot_title = NULL,
-                         custom_palette = NULL) {
-
+                         custom_palette = NULL,
+                         plot_legend = TRUE) {
+  # load required packages
   if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
       stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
   }
@@ -113,12 +124,14 @@ plot_mean_mf <- function(mf_data,
   if (mf_type == "stacked" && plot_error_bars && plot_type == "bar") {
     stop("Error bars are currently not supported with mf_type 'stacked', plot_type 'bar'. Sorry!")
   }
+  # Concat group_col (if applicable)
+  mf_data$group_col <- do.call(paste, c(mf_data[group_col], sep = "_"))
 
-   # axis_labels
+  # axis_labels
   if (!is.null(x_lab)) {
     x_lab <- x_lab
   } else {
-    x_lab <- group_col
+    x_lab <- paste(group_col, collapse = " & ")
   }
   if (!is.null(y_lab)) {
     y_lab <- y_lab
@@ -128,11 +141,11 @@ plot_mean_mf <- function(mf_data,
   # title
   if (is.null(plot_title)) {
     if (mf_type == "min") {
-      title <- paste0("MFmin per ", group_col)
+      title <- paste("MFmin per", paste(group_col, collapse = " & "))
     } else if (mf_type == "max") {
-      title <- paste0("MFmax per ", group_col)
+      title <- paste0("MFmax per ", paste(group_col, collapse = " & "))
     } else {
-      title <- paste0("MF per ", group_col)
+      title <- paste0("MF per ", paste(group_col, collapse = " & "))
     }
   } else {
     title <- plot_title
@@ -140,30 +153,30 @@ plot_mean_mf <- function(mf_data,
 
   # x-axis order
   if (group_order == "none") {
-    mf_data[[group_col]] <- factor(mf_data[[group_col]])
+    mf_data$group_col <- factor(mf_data$group_col)
   } else if (group_order == "smart") {
-    order <- gtools::mixedsort(as.vector(unique(mf_data[[group_col]])))
-    mf_data[[group_col]] <- factor(mf_data[[group_col]], levels = order)
+    order <- gtools::mixedsort(as.vector(unique(mf_data$group_col)))
+    mf_data$group_col <- factor(mf_data$group_col, levels = order)
   } else if (group_order == "arranged") {
     mf_data <- mf_data %>%
       dplyr::arrange(dplyr::across(dplyr::all_of({{group_order_input}})))
-    order <- as.vector(unique(mf_data[[group_col]]))
-    mf_data[[group_col]] <- factor(mf_data[[group_col]], levels = order)
+    order <- as.vector(unique(mf_data$group_col))
+    mf_data$group_col <- factor(mf_data$group_col, levels = order)
   } else if (group_order == "custom") {
-    mf_data[[group_col]] <- factor(mf_data[[group_col]],
-                                   levels = group_order_input)
+    mf_data$group_col <- factor(mf_data$group_col,
+                                levels = group_order_input)
   }
 
-
   # Plot Data
-    ## Make indiv plot data
-  indiv_data <- mf_data %>%
-    dplyr::rename(group_col = dplyr::all_of(group_col))
+  ## Make indiv plot data
+  indiv_data <- mf_data
+
   if (!is.null(fill_col)) {
-    if (group_col == fill_col) {
+    if (fill_col %in% group_col) {
       indiv_data$fill_col <- indiv_data$group_col
     } else {
-      indiv_data <- dplyr::rename(indiv_data, fill_col = dplyr::all_of(fill_col))
+      indiv_data <- dplyr::rename(indiv_data,
+                                  fill_col = dplyr::all_of(fill_col))
     }
   } else {
     indiv_data$fill_col <- "f1ll_c0l"
@@ -171,14 +184,16 @@ plot_mean_mf <- function(mf_data,
   ## Make Group Mean data
   mean_data <- indiv_data %>%
     dplyr::group_by(.data$group_col, .data$fill_col) %>%
-    dplyr::summarize(min_Mean = mean(.data$mf_min, na.rm = TRUE),
-              min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(n()),
-              min_sum_mean = mean(.data$sum_min, na.rm = TRUE),
-              max_Mean = mean(.data$mf_max, na.rm = TRUE),
-              max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(n()),
-              max_sum_mean = mean(.data$sum_max, na.rm = TRUE),
-              .groups = "drop")
-  mean_data <- as.data.frame(mean_data) # Note: loses the fill_col
+    dplyr::summarize(
+      min_Mean = mean(.data$mf_min, na.rm = TRUE),
+      min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(n()),
+      min_sum_mean = mean(.data$sum_min, na.rm = TRUE),
+      max_Mean = mean(.data$mf_max, na.rm = TRUE),
+      max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(n()),
+      max_sum_mean = mean(.data$sum_max, na.rm = TRUE),
+      .groups = "drop"
+    )
+  mean_data <- as.data.frame(mean_data)
 
   ## Set the max y value
   if (mf_type == "min") {
@@ -187,20 +202,33 @@ plot_mean_mf <- function(mf_data,
     y_max <- max(indiv_data$mf_max) * 1.05
   }
 
- ## Rename the columns we want to plot to generic names
+  ## Rename the columns we want to plot to generic names
   if (mf_type == "min") {
-    indiv_data <- dplyr::rename(indiv_data, mf_col = "mf_min", sum_col = "sum_min")
-    mean_data <- dplyr::rename(mean_data, Mean = "min_Mean", SE = "min_SE", mean_sum = "min_sum_mean")
+    indiv_data <- dplyr::rename(indiv_data,
+                                mf_col = "mf_min",
+                                sum_col = "sum_min")
+    mean_data <- dplyr::rename(mean_data,
+                               Mean = "min_Mean",
+                               SE = "min_SE",
+                               mean_sum = "min_sum_mean")
   }
   if (mf_type == "max") {
-    indiv_data <- dplyr::rename(indiv_data, mf_col = "mf_max", sum_col = "sum_max")
-    mean_data <- dplyr::rename(mean_data, Mean = "max_Mean", SE = "max_SE", mean_sum = "max_sum_mean")
+    indiv_data <- dplyr::rename(indiv_data,
+                                mf_col = "mf_max",
+                                sum_col = "sum_max")
+    mean_data <- dplyr::rename(mean_data,
+                               Mean = "max_Mean",
+                               SE = "max_SE",
+                               mean_sum = "max_sum_mean")
   }
-  ### Change MFmax for stacked
+  ### Change MFmax value for stacked bar
   if (mf_type == "stacked" && plot_type == "bar") {
     mean_data$max_og <- mean_data$max_Mean
     mean_data$min_og <- mean_data$min_Mean
-    mean_data <- transform(mean_data, max_Mean = mean_data$max_Mean - mean_data$min_Mean)
+    mean_data <- transform(
+      mean_data,
+      max_Mean = mean_data$max_Mean - mean_data$min_Mean
+    )
   }
   ### Pivot the data to long format for both and stacked options
   if (mf_type %in% c("both", "stacked")) {
@@ -256,9 +284,11 @@ plot_mean_mf <- function(mf_data,
   # Remove the f1ll_c0l placeholder
   mean_data$mean_fill_col <- sub(" f1ll_c0l$", "", mean_data$mean_fill_col)
   indiv_data$indiv_fill_col <- sub(" f1ll_c0l$", "", indiv_data$indiv_fill_col)
-  mean_data$mean_fill_col <- stringr::str_trim(mean_data$mean_fill_col, side = "both")
-  indiv_data$indiv_fill_col <- stringr::str_trim(indiv_data$indiv_fill_col, side = "both")
-   # end fill column
+  mean_data$mean_fill_col <- stringr::str_trim(mean_data$mean_fill_col,
+                                               side = "both")
+  indiv_data$indiv_fill_col <- stringr::str_trim(indiv_data$indiv_fill_col,
+                                                 side = "both")
+  # end fill column
 
   # Palette
   if (is.null(custom_palette)) {
@@ -268,10 +298,11 @@ plot_mean_mf <- function(mf_data,
     # Function to generate lighter/darker shades
     generate_shades <- function(color, steps = 2) {
       # Blend the input color with white to generate lighter shades
-      shades <- colorspace::lighten(color,
-                                    amount = seq(0, 0.5,
-                                    length.out = steps))
-     return(shades)
+      shades <- colorspace::lighten(
+        color,
+        amount = seq(0, 0.5, length.out = steps)
+      )
+      return(shades)
     }
     # Generate shades for min/max
     if (mf_type == "both" || mf_type == "stacked") {
@@ -279,7 +310,7 @@ plot_mean_mf <- function(mf_data,
         generate_shades(color)  # Lighter for min, darker for max
       })
       palette <- unlist(lapply(names(palette), function(name) {
-        setNames(palette[[name]], paste(c("min", "max"), name))
+        setNames(palette[[name]], paste(c("max", "min"), name))
       }), recursive = FALSE)
     }
     # Generate shades for mean/indiv
@@ -302,9 +333,9 @@ plot_mean_mf <- function(mf_data,
   }
   mean_data$mean_fill_col <- sub(" f1ll_c0l$", "", mean_data$mean_fill_col)
   indiv_data$indiv_fill_col <- sub(" f1ll_c0l$", "", indiv_data$indiv_fill_col)
-  
+
   # set the fill_col order for both/stacked.
-  if (mf_type == "both") { # 1. min, 2. max
+  if (mf_type == "both") { # 1. min, 2. max so max is to the right of min
     sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("max", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
     indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
     sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("max", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
@@ -383,14 +414,16 @@ plot_mean_mf <- function(mf_data,
     mean_bar <- NULL
   }
   if (plot_type == "line") {
-    mean_line <- ggplot2::geom_point(data = mean_data,
-                                     aes(x = mean_data$group_col,
-                                         y = mean_data$Mean,
-                                         fill = "black",
-                                         color = mean_data$mean_fill_col),
-                                     shape = "\U2014",
-                                     size = 11,
-                                     position = line_position)
+    mean_line <- ggplot2::geom_point(
+      data = mean_data,
+      aes(x = mean_data$group_col,
+          y = mean_data$Mean,
+          fill = "black",
+          color = mean_data$mean_fill_col),
+      shape = "\U2014",
+      size = 11,
+      position = line_position
+    )
     if (mf_type == "both") {
       error_bar_size <- 0.2
     } else {
@@ -403,16 +436,18 @@ plot_mean_mf <- function(mf_data,
 
   # Error bars
   if (plot_error_bars) {
-    error_bars <- ggplot2::geom_errorbar(data = mean_data,
-                                         aes(x = mean_data$group_col,
-                                             ymin = mean_data$Mean - mean_data$SE,
-                                             ymax = mean_data$Mean + mean_data$SE,
-                                             group = interaction(mean_data$group_col,
-                                                                 mean_data$mean_fill_col)),
-                                         position = error_position,
-                                         width = error_bar_size,
-                                         inherit.aes = FALSE,
-                                         show.legend = FALSE)
+    error_bars <- ggplot2::geom_errorbar(
+      data = mean_data,
+      aes(x = mean_data$group_col,
+          ymin = mean_data$Mean - mean_data$SE,
+          ymax = mean_data$Mean + mean_data$SE,
+          group = interaction(mean_data$group_col,
+                              mean_data$mean_fill_col)),
+      position = error_position,
+      width = error_bar_size,
+      inherit.aes = FALSE,
+      show.legend = FALSE
+    )
   } else {
     error_bars <- NULL
   }
@@ -450,15 +485,17 @@ plot_mean_mf <- function(mf_data,
   }
 
   if (add_labels %in% c("indiv_count", "indiv_MF")) {
-    labels <- ggrepel::geom_text_repel(data = indiv_data,
-                                       ggplot2::aes(x = indiv_data$group_col,
-                                                    y = indiv_data$mf_col,
-                                                    label = label,
-                                                    color = indiv_data$indiv_fill_col),
-                                       size = 2,
-                                       position = indiv_label_position,
-                                       max.overlaps = Inf,
-                                       inherit.aes = FALSE)
+    labels <- ggrepel::geom_text_repel(
+      data = indiv_data,
+      ggplot2::aes(x = indiv_data$group_col,
+                  y = indiv_data$mf_col,
+                  label = label,
+                  color = indiv_data$indiv_fill_col),
+      size = 2,
+      position = indiv_label_position,
+      max.overlaps = Inf,
+      inherit.aes = FALSE
+    )
   } else if (add_labels %in% c("mean_count", "mean_MF")) {
 
     if (mf_type == "stacked" && plot_type == "bar") {
@@ -468,17 +505,22 @@ plot_mean_mf <- function(mf_data,
     }
 
     if (plot_error_bars) {
-      mean_data <- transform(mean_data, label_position = mean_data$label_position + mean_data$SE)
+      mean_data <- transform(
+        mean_data,
+        label_position = mean_data$label_position + mean_data$SE
+      )
     }
-    labels <- ggplot2::geom_text(data = mean_data,
-                                 ggplot2::aes(x = mean_data$group_col,
-                                              y = mean_data$label_position,
-                                              label = label,
-                                              group = interaction(mean_data$group_col, mean_data$mean_fill_col)),
-                                 position = mean_label_position,
-                                 vjust = -0.5,
-                                 size = 4,
-                                 color = "black")
+    labels <- ggplot2::geom_text(
+      data = mean_data,
+      ggplot2::aes(x = mean_data$group_col,
+                  y = mean_data$label_position,
+                  label = label,
+                  group = interaction(mean_data$group_col, mean_data$mean_fill_col)),
+      position = mean_label_position,
+      vjust = -0.5,
+      size = 4,
+      color = "black"
+    )
   } else {
     labels <- NULL
   }
@@ -501,6 +543,9 @@ plot_mean_mf <- function(mf_data,
 
   if (plot_type == "line") {
     p <- p + ggplot2::scale_color_manual(values = palette)
+  }
+  if (!plot_legend) {
+    p <- p + guides(fill = "none", color = "none")
   }
 
   return(p)

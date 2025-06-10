@@ -54,7 +54,7 @@ and displayed.
 }
 \examples{
 # Plot the trinucleotide proportions per sample, facetted by dose group.
-example_file <- system.file("extdata",
+example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)

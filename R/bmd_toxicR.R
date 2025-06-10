@@ -42,11 +42,13 @@
 #' \eqn{100\times(1-2\alpha)\% }. The default is 0.05 (90% CI).
 #' @param plot_results A logical value indicating whether to plot the BMD models
 #' and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
-#' save plots to the `output_path`.
+#' save plots to the `output_path` or return them as a list alongside the
+#' summary of the results.
 #' @param ma_summary A logical value indicating whether to return the summary
 #' of the model averaging results. Default is FALSE.
 #' @param output_path The file path indicating where to save the plots.
-#' If NULL, the plots will be saved to the working directory. Default is NULL.
+#' If NULL, the plots will automatically be returned as a list alongside
+#' the bmd results.
 #' @param ... Additional arguments to be passed to the model fitting function.
 #' For more information, see \link[ToxicR]{single_continuous_fit} or
 #' \link[ToxicR]{ma_continuous_fit} if model averaging.
@@ -117,26 +119,28 @@
 #' with the BMD values and the \eqn{100\times(1-2\alpha)\% } confidence
 #' intervals (BMDL, BMDU)for each response column and each model listed. The
 #' AIC value is calculated for each model to compare fits. The AIC is
-#' calculated as maximum likelihood + 2 * degrees of freedom. If
-#' `plot_results = TRUE`, the function will plot all fitted models to the
-#' data and save them to the `output_path`.
-#'
+#' calculated as maximum likelihood + 2 * degrees of freedom. 
 #'
 #'  If `model_averaging = TRUE`, the function returns a data frame with the
 #' BMD values and the \eqn{100\times(1-2\alpha)\% } confidence intervals
 #' (BMDL, BMDU) for each response column calculated using model averaging.
 #' If `ma_summary = TRUE`, the function will return the posterior probabilities
-#' used in the model averaging. If `plot_results = TRUE`, the function will plot
-#' the model averaged model to the data and save it to the `output_path`.
-#' The function will also make a Cleveland plot, saved to the  `output_path`.
+#' used in the model averaging.
+#' 
+#' If `plot_results = TRUE`, the function will plot the fited models or
+#' the model averaged model to the data. When mode averaging, the
+#' function will also make a Cleveland plot, saved to the  `output_path`.
 #' Here, the BMDs are plotted for each model in the set alongside the model
 #' averaged BMD. The BMD is represented by a red dot. The size of the dot is
 #' scaled on the model probability with the Model Average having a value of
-#' 100%. The BMDL and BMDU are expressed as interval bars.
+#' 100%. The BMDL and BMDU are expressed as interval bars. Plots may be
+#' automatically exported to an output_path. Alternatively, if output_path =
+#' NULL, the function will return a list that includes summary (the
+#' data frame contianing the BMD results), and all generated plots.
 #' @examples
 #' # Calculate the BMD for a 50% increase in mutation frequency from control
 #' # Individual data with Model averaging.
-#' example_file <- system.file("extdata",
+#' example_file <- system.file("extdata", "Example_files",
 #'                             "example_mutation_data_filtered.rds",
 #'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
@@ -157,6 +161,7 @@
 #'                   sd_max = sd(mf_max),
 #'                   n_max = dplyr::n())
 #' bmd <- bmd_toxicr(mf_data = mf_sum,
+#'                   data_type = "summary",
 #'                   dose_col = "dose",
 #'                   response_col = c("mean_mf_min", "mean_mf_max"),
 #'                   sd_col = c("sd_min", "sd_max"),
@@ -184,16 +189,13 @@ bmd_toxicr <- function(mf_data,
     stop("ToxicR is not installed. Please install from https://github.com/NIEHS/ToxicR")
   }
   # Output directory for plots
-  if (plot_results) {
-    if (is.null(output_path)) {
-      output_dir <- file.path(here::here())
-    } else {
-      output_dir <- file.path(output_path)
-    }
-    if (!dir.exists(output_dir)) {
-      dir.create(output_dir)
+  if (plot_results && !is.null(output_path)) {
+    output_path <- file.path(output_path)
+    if (!dir.exists(output_path)) {
+      dir.create(output_path)
     }
   }
+
   # Data: Individual or Summary
   if (data_type == "summary") {
     create_matrices_list <- function(df, response_col, sd_col, n_col) {
@@ -224,7 +226,7 @@ bmd_toxicr <- function(mf_data,
   }
 
   if (!model_averaging) {
-    if (model == "all") {
+    if ("all" %in% model) {
       model_type <- c("exp-aerts", "invexp-aerts", "gamma-aerts",
                       "invgamma-aerts", "hill-aerts", "lomax-aerts",
                       "invlomax-aerts", "lognormal-aerts", "logskew-aerts",
@@ -236,30 +238,36 @@ bmd_toxicr <- function(mf_data,
 
     result_list <- lapply(response_col, function(response) {
       fit_results <- list() # Initialize a list to store the fit results
+      plots_list <- list()
 
       # Select the appropriate y values based on data_type
       y <- if (data_type == "summary") matrices_list[[response]] else mf_data[, response]
 
       # Fit models using lapply
       fit_results <- lapply(model_type, function(modeltype) {
-        fit <- ToxicR::single_continuous_fit(mf_data[, dose_col],
-                                             y,
-                                             model_type = modeltype,
-                                             BMR = bmr,
-                                             BMR_TYPE = bmr_type,
-                                             alpha = alpha,
-                                             ...)
+        fit <- ToxicR::single_continuous_fit(
+          mf_data[, dose_col],
+          y,
+          model_type = modeltype,
+          BMR = bmr,
+          BMR_TYPE = bmr_type,
+          alpha = alpha,
+          ...
+        )
         # Plot results if needed
-        if (plot_results) {
-          plot_file <- file.path(output_dir,
-                                 paste0(response, "_", modeltype, ".svg"))
+        if (plot_results && is.null(output_path)) {
           plot <- plot(fit)
+          plot_name <- paste0(response, "_", modeltype)
+          plots_list[[plot_name]] <<- plot
+        } else if (plot_results && !is.null(output_path)) {
+          plot <- plot(fit)
+          plot_file <- file.path(
+            output_path, paste0(response, "_", modeltype, ".svg")
+          )
           ggsave(plot_file, plot, width = 7, height = 5, dpi = 300)
         }
-
         return(fit)
       })
-
       names(fit_results) <- model_type
 
       # Extract BMD values and create a data frame
@@ -278,58 +286,94 @@ bmd_toxicr <- function(mf_data,
       result_df <- dplyr::bind_rows(bmd_values)
       result_df$Response <- response
       result_df$confidence_level <- paste0((1 - 2 * alpha) * 100, "%")
-      return(result_df)
+      c(list(result_df = result_df), plots_list)
     })
-    results_single <- do.call(rbind, result_list)
-    return(results_single)
-  } else {
+    result_dfs <- lapply(result_list, function(x) x$result_df)
+    results_single <- dplyr::bind_rows(result_dfs)
+    if (plot_results && is.null(output_path)) {
+      plots_list <- unlist(lapply(result_list, function(x) x[-1]), recursive = FALSE)
+      return(c(list(summary = results_single), plots_list))
+    } else {
+      return(results_single)
+    }
+  } else { # Model Averaging:
     results_list <- lapply(response_col, function(response) {
      y <- if (data_type == "summary") matrices_list[[response]] else mf_data[, response]
-      fit <- ToxicR::ma_continuous_fit(mf_data[, dose_col],
-                                       y,
-                                       BMR = bmr,
-                                       BMR_TYPE = bmr_type,
-                                       alpha = alpha,
-                                       ...)
-      bmd <- data.frame(model_names = "Model Averaging",
+      fit <- ToxicR::ma_continuous_fit(
+        mf_data[, dose_col],
+        y,
+        BMR = bmr,
+        BMR_TYPE = bmr_type,
+        alpha = alpha,
+      #  ...
+      )
+      bmd <- data.frame(model_names = "Model averaging",
                         BMD = fit$bmd[1],
                         BMDL = fit$bmd[2],
                         BMDU = fit$bmd[3])
       if (ma_summary) {
         bmd$post_p <- NA
         summary <- summary(fit)$fit_table
-        results <- rbind(summary, bmd)
+        results_df <- rbind(summary, bmd)
       } else {
-        results <- bmd
+        results_df  <- bmd
       }
-      results$Response <- response
-      results$confidence_level <- paste0((1 - 2 * alpha) * 100, "%")
-      results <- dplyr::rename(results, "Model" = "model_names")
-      rownames(results) <- NULL
+      results_df $Response <- response
+      results_df $confidence_level <- paste0((1 - 2 * alpha) * 100, "%")
+      results_df  <- dplyr::rename(results_df, "Model" = "model_names")
+      rownames(results_df) <- NULL
       # Plot results: MA model + cleveland plot
       if (plot_results) {
-        plot_file <- file.path(output_dir, paste0(response, "_ma.svg"))
-        plot <- plot(fit) +
-          ggplot2::theme(panel.background = ggplot2::element_blank(),
-                         axis.line = ggplot2::element_line(),
-                         panel.grid = ggplot2::element_blank(),
-                         axis.ticks.x = ggplot2::element_line())
-        ggsave(plot_file, plot, width = 7, height = 5, dpi = 300)
-        cplot_file <- file.path(output_dir, paste0(response, "_cleveland.svg"))
+        fit_plot <- plot(fit) +
+          ggplot2::theme(
+            panel.background = ggplot2::element_blank(),
+            axis.line = ggplot2::element_line(),
+            panel.grid = ggplot2::element_blank(),
+            axis.ticks.x = ggplot2::element_line()
+          )
         cplot <- ToxicR::cleveland_plot(fit) +
-          ggplot2::theme(panel.background = ggplot2::element_blank(),
-                         axis.line = ggplot2::element_line(),
-                         panel.grid = ggplot2::element_blank(),
-                         axis.ticks.x = ggplot2::element_line(),
-                         axis.ticks.y = ggplot2::element_line()) +
+          ggplot2::theme(
+            panel.background = ggplot2::element_blank(),
+            axis.line = ggplot2::element_line(),
+            panel.grid = ggplot2::element_blank(),
+            axis.ticks.x = ggplot2::element_line(),
+            axis.ticks.y = ggplot2::element_line()
+          ) +
           ggplot2::xlab("BMD Estimate") +
           ggplot2::ylab("Model") +
           ggplot2::ggtitle("BMD per Model")
-        ggsave(cplot_file, cplot, width = 7, height = 5, dpi = 300)
+
+        if (is.null(output_path)) {
+          fit_name <- paste0(response, "_ma")
+          c_name  <- paste0(response, "_cleveland")
+          # Create your list and assign the data frame and plots by name using [[ ]]
+          out <- list(result_df = results_df)
+          out[[fit_name]] <- fit_plot
+          out[[c_name]]   <- cplot
+          return(out)
+        } else {
+          # Save to file, then just return summary
+          fit_plot_file <- file.path(output_path, paste0(response, "_ma.svg"))
+          cplot_file    <- file.path(output_path, paste0(response, "_cleveland.svg"))
+          ggsave(fit_plot_file, fit_plot, width = 7, height = 5, dpi = 300)
+          ggsave(cplot_file, cplot, width = 7, height = 5, dpi = 300)
+          return(list(result_df = results_df))
+        }
+      } else {
+        return(list(result_df = results_df))
       }
-      return(results)
     })
-    results_ma <- do.call(rbind, results_list)
-    return(results_ma)
+    result_dfs <- lapply(results_list, function(x) x[["result_df"]])
+    results_ma <- dplyr::bind_rows(result_dfs)
+    plots_list <- unlist(
+      lapply(results_list, function(x) x[setdiff(names(x), "result_df")]),
+      recursive = FALSE
+    )
+
+    if (plot_results && is.null(output_path)) {
+      return(c(list(summary = results_ma), plots_list))
+    } else {
+      return(results_ma)
+    }
   }
 }

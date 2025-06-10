@@ -4,19 +4,28 @@
 \alias{load_regions_file}
 \title{Imports the regions file}
 \usage{
-load_regions_file(regions, custom_regions = NULL, rg_sep = "\\t")
+load_regions_file(regions, rg_sep = "\\t", is_0_based_rg = TRUE)
 }
 \arguments{
-\item{regions}{"TSpanel_human", "TSpanel_mouse", 'TSpanel_rat', or "custom". The argument refers to the
-TS Mutagenesis panel of the specified species, or to a custom panel. If custom,
-provide file path in custom_regions.}
+\item{regions}{The regions metadata file to import. Can be either a file
+path, a data frame, or a GRanges object. File paths will be read using
+the rg_sep. Users can also choose from the built-in TwinStrand's Mutagenesis
+Panels by inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat".
+Required columns for the regions file are "contig", "start", and "end".
+In a GRanges object, the required columns are "seqnames", "start", and "end".}
 
-\item{custom_regions}{If regions is set to 'custom',
-provide the regions metadata. Can be either a file path or a data frame.
-Required columns are "contig", "start", and "end".}
+\item{rg_sep}{The delimiter for importing the custom_regions. The default is
+tab-delimited "\t".}
 
-\item{rg_sep}{The delimiter for importing the custom_regions. The default is tab-delimited}
+\item{is_0_based_rg}{A logical variable. Indicates whether the position
+coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).
+If TRUE, positions will be converted to 1-based (start + 1).
+Need not be supplied for TSpanels. Default is TRUE.}
+}
+\value{
+a GRanges object of the imported regions metadata file.
 }
 \description{
-A helper function to import the regions metadata file. It is used in import_mut_data and get_seq.
+A helper function to import the regions metadata file and
+return a GRanges object.
 }

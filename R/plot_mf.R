@@ -29,8 +29,8 @@
 #' @param group_order_input The order of the samples/groups if group_order is
 #' "custom". The column name by which to arrange samples/groups if group_order
 #' is "arranged"
-#' @param labels The data labels to display on the plot. Either "count", "MF", or
-#' "none". Count labels display the number of mutations, MF labels display
+#' @param labels The data labels to display on the plot. Either "count", "MF",
+#' or "none". Count labels display the number of mutations, MF labels display
 #' the mutation frequency.
 #' @param scale_y_axis The scale of the y axis. Either "linear" or "log".
 #' @param x_lab The label for the x axis.
@@ -38,7 +38,7 @@
 #' @param title The title of the plot.
 #' @return A ggplot object
 #' @examples
-#' example_file <- system.file("extdata",
+#' example_file <- system.file("extdata", "Example_files",
 #'                             "example_mutation_data_filtered.rds",
 #'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)

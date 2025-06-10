@@ -6,9 +6,8 @@
 \usage{
 get_seq(
   regions,
-  custom_regions = NULL,
   rg_sep = "\\t",
-  is_0_based = TRUE,
+  is_0_based_rg = TRUE,
   species = NULL,
   genome = NULL,
   masked = FALSE,
@@ -17,23 +16,21 @@ get_seq(
 )
 }
 \arguments{
-\item{regions}{The file containing the genomic regions. Regions TwinStrand
-Mutagenesis Panels are stored in the package files and can be accessed using
-the values \code{TSpanel_human}, \code{TSpanel_mouse}, and \code{TSpanel_rat}. If you have
-a custom range of genomic regions, set the value to \code{custom} and provide the
-regions file using the \code{custom_regions} argument.}
+\item{regions}{The regions metadata file to import. Can be either a file
+path, a data frame, or a GRanges object. File paths will be read using
+the rg_sep. Users can also choose from the built-in TwinStrand's Mutagenesis
+Panels by inputting "TSpanel_human",  "TSpanel_mouse", or "TSpanel_rat".
+Required columns for the regions file are "contig", "start", and "end".
+In a GRanges object, the required columns are "seqnames", "start", and
+"end".}
 
-\item{custom_regions}{If \code{regions = "custom"}, provide  the genomic ranges.
-Can be a file path or a data frame. Required columns are \code{contig}, \code{start},
-and \code{end}.}
+\item{rg_sep}{The delimiter for importing the regions file. The default is
+tab-delimited ("\t").}
 
-\item{rg_sep}{The delimiter for importing the custom_regions. The default is
-tab-delimited.}
-
-\item{is_0_based}{A logical variable. Indicates whether the position
-coordinates in the \code{custom_regions} are 0 based (TRUE) or 1 based (FALSE).
-If TRUE, positions will be converted to 1-based. Need not be supplied for
-TSpanels.}
+\item{is_0_based_rg}{A logical variable. Indicates whether the position
+coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).
+If TRUE, positions will be converted to 1-based (start + 1). Need not be
+supplied for TSpanels. Default is TRUE.}
 
 \item{species}{The species for which to retrieve the sequences.
 Species may be given as the scientific name or the common name.
@@ -41,7 +38,7 @@ Ex. "Human", "Homo sapien". Used to choose the appropriate
 BS genome. Need not be supplied for TSpanels.}
 
 \item{genome}{The genome assembly version for which to retrieve the
-sequencies. Used to choose the appropriate genome (BS genome or UCSC).
+sequences. Used to choose the appropriate genome (BS genome or UCSC).
 Ex. hg38, hg19, mm10, mm39, rn6, rn7. Need not be supplied for TSpanels.}
 
 \item{masked}{A logical value indicating whether to use the masked version
@@ -53,12 +50,11 @@ adjusted accordingly. Default is 0.}
 
 \item{ucsc}{A logical value. If TRUE, the function will retrieve the
 sequences from the UCSC genome browser using an API. If FALSE, the function
-will retrieve sequencies using the appropriate BSgenome package, which will
-be installed as needed.}
+will retrieve sequences using the appropriate BSgenome package, which will
+be installed as needed. Default is FALSE.}
 }
 \value{
-a GRanges object with sequences of targeted regions. Region ranges
-coordinates will become 1-based.
+a GRanges object with sequences of targeted regions.
 }
 \description{
 Create a GRanges object from the genomic target ranges and import raw
@@ -79,10 +75,10 @@ regions_seq <- get_seq(regions = "TSpanel_mouse")
 
 # Example 2: Retrieve the sequences for custom regions
 # We will load the TSpanel_human regions file as an example
+# and supply it to the function as a GRanges object.
 human <- load_regions_file("TSpanel_human")
-regions_seq <- get_seq(regions = "custom",
-                       custom_regions = human,
-                       is_0_based = TRUE,
+regions_seq <- get_seq(regions = human,
+                       is_0_based_rg = FALSE,
                        species = "human",
                        genome = "hg38",
                        masked = FALSE,

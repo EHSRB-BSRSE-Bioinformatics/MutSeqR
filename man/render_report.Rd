@@ -4,17 +4,26 @@
 \alias{render_report}
 \title{Read configuration file and render R Markdown document}
 \usage{
-render_report(config_filepath, output_file)
+render_report(
+  config_filepath,
+  output_file = "./MutSeqR_Summary_Report.html",
+  output_format = "html_document"
+)
 }
 \arguments{
 \item{config_filepath}{The path to the configuration file.}
 
-\item{output_file}{The path to the output file.}
+\item{output_file}{The name of the output file. Will be saved to the
+outputdir in config params.}
+
+\item{output_format.}{The format of the output file. Options are
+"html_document" (default), "pdf_document", or "all".}
 }
 \value{
 None
 }
 \description{
-This function reads a configuration file in YAML format, extracts the parameters,
-and renders an R Markdown document using the specified parameters.
+This function reads a configuration file in YAML format,
+extracts the parameters, and renders an R Markdown document using the
+specified parameters.
 }

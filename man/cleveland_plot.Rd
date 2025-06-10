@@ -11,10 +11,11 @@ cleveland_plot(results, covariate_col = NULL, output_path = NULL)
 
 \item{covariate_col}{Covariate column name.}
 
-\item{output_path}{Output path for the plot.}
+\item{output_path}{Output path for the plot. If the output_path doesn't
+exist, it will be created. If NULL, the plots will not be exported.}
 }
 \value{
-ggplot object.
+A list of ggplot objects for each response in results.
 }
 \description{
 Make a Cleveland plot for the PROAST results. Matches ToxicR.

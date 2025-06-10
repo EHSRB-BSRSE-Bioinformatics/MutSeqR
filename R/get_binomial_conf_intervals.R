@@ -17,7 +17,9 @@
 #' @returns A mf data frame with added columns indicating the confidence
 #' intervals.
 #' @examples
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' mf <- calculate_mf(example_data)
 #' confint <- get_binom_ci(mf_data = mf,

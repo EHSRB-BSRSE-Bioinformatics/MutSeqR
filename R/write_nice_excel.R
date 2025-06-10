@@ -16,7 +16,9 @@
 #' @returns A saved Excel workbook.
 #' @examples
 #' \dontrun{
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' mf1 <- calculate_mf(example_data,
 #'                     cols_to_group = "sample",
@@ -70,10 +72,11 @@ write_excel <- function(data,
     }
     model_dfs <- list(
       model_data = data$model_data,
-      point_estimates = data$point_estimates)
-      if ("pairwise_comparisons" %in% names(data)) {
-        model_data$pairwise_comparisons <- data$pairwise_comparisons
-      }
+      point_estimates = data$point_estimates
+    )
+    if ("pairwise_comparisons" %in% names(data)) {
+      model_dfs$pairwise_comparisons <- data$pairwise_comparisons
+    }
     data <- model_dfs
   }
   if (is.data.frame(data)) {
@@ -85,7 +88,7 @@ write_excel <- function(data,
     options("openxlsx.borderColour" = "#4F80BD")
     options("openxlsx.borderStyle" = "thin")
     options("openxlsx.maxWidth" = 50)
-    wb1 <- createWorkbook()
+    wb1 <- openxlsx::createWorkbook()
     dataToWrite <- as.data.frame(data)
     openxlsx::addWorksheet(wb1, workbook_name)
     openxlsx::freezePane(wb1, sheet = 1, firstRow = TRUE, firstActiveCol = 1)
@@ -114,7 +117,7 @@ write_excel <- function(data,
     options("openxlsx.borderColour" = "#4F80BD")
     options("openxlsx.borderStyle" = "thin")
     options("openxlsx.maxWidth" = 50)
-    wb1 <- createWorkbook()
+    wb1 <- openxlsx::createWorkbook()
     for (i in seq_along(data)) {
       dataToWrite <- as.data.frame(data[i])
       openxlsx::addWorksheet(wb1, names(data[i]))

@@ -27,16 +27,17 @@
 #' (recommended).
 #' @param num_bootstraps The number of bootstrap resamples to be used in the
 #' model averaging. Default is 200 (recommended).
-#' @param summary A logical value indicating whether a summary of the results
-#' should be returned. If FALSE, raw results from the PROAST analysis are
-#' returned.
+#' @param raw_results A logical value indicating whether to return the raw
+#' results from the PROAST analysis. If FALSE, data is returned as a
+#' summary table.
 #' @param plot_results A logical value indicating whether to plot the BMD models
-#' and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
-#' save plots to the `output_path`.
+#' and/or the Cleveland plots. Default is FALSE. Plots may be exported
+#' directly to an output_path, or returned within a list to the user.
 #' @param output_path The file path indicating where to save the plots.
-#' If NULL, the plots will be saved to the working directory. Default is NULL.
-#' @return If summary is TRUE, a data frame of final results. If summary is
-#' FALSE, a list of the raw results from the PROAST analysis.
+#' If NULL, the plots will automatically be displayed to the graphics
+#' window and then returned as a list alongside the bmd results.
+#' @return A summmary data frame of final results. If plots or raw results
+#' are selected, all data will be returned within a list.
 #'
 #' The summary will include the following for each response variable and
 #' covariate subgroup (if applicable):
@@ -64,7 +65,9 @@
 #' empty data frame.
 #'
 #' If \code{plot_results = TRUE} the function will create the following plots
-#' for each response variable:
+#' for each response variable. The plots will be saved to the output_path.
+#' If no output_path is provided, then they will be returned within a list
+#' alongside the summary data frame.
 #'  \itemize{
 #'   \item Model Plots. The following plot will be created for each model
 #' family (Exponential, Hill, Inverse Exponential, LogNormal): The fitted curve
@@ -72,14 +75,20 @@
 #' points are plotted using small triangles. The geometric mean (median) at
 #' each dose is plotted as a large triangle. The BMD is indicated by the
 #' dotted line. If applicable, the covariate subgroup is indicated by color.
-#' \item ma.plot If \code{model_averaging = TRUE}, the bootstrap curves based
-#' on model averaging. The geometric mean (median) at each dose is plotted as
-#' a large triangle. Data is log-transformed.
+#' \item bootstrap_curves If \code{model_averaging = TRUE}, the bootstrap
+#' curves based on model averaging. The geometric mean (median) at each dose
+#' is plotted as a large triangle. Data is log-transformed.
 #' \item cleveland plot if \code{model_averaging = TRUE} The BMD estimate
-#' for each model is plotted with error bars representing the 90% confidence
-#' interval. The size of the point represents the model weight assigned during
-#' model averaging, based on the AIC.
+#' for each model is plotted as a red point alongside the 90% confidence
+#' intervals. The size of the BMD point represents the model weight assigned
+#' during model averaging, based on the AIC.
 #' }
+#'
+#' If \code{raw_results = TRUE}, the function will return the raw results of
+#' the PROAST analysis alongside the summary data frame. PROAST raw_results
+#' is a list of variables and data that is continuously modified as it is
+#' passed through the proast functions. It can be given to f.proast() to
+#' resume analysis.
 #' @details This function is a  modified version of the original interactive
 #' PROAST software (\url{https://www.rivm.nl/en/proast} that allows for batch
 #' processing of data. The function is designed to be used with the output of
@@ -130,7 +139,9 @@
 #' # With Model averaging.
 #' # For the purpose of this example, num_bootstraps is set to 5 to reduce
 #' # run time. 200 bootstraps is recommended.
-#' example_file <- system.file("extdata", "example_mutation_data_filtered.rds", package = "MutSeqR")
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #' mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
 #' bmd <- bmd_proast(mf_data = mf,
@@ -146,17 +157,19 @@
 #' plot <- plot_ci(plot_df, order = "asc", log_scale = FALSE)
 #' @export
 #' @importFrom dplyr arrange filter mutate pull rename
-bmd_proast <- function(mf_data,
-                       dose_col = "dose",
-                       response_col = "mf_min",
-                       covariate_col = NULL,
-                       bmr = 0.5,
-                       adjust_bmr_to_group_sd = FALSE,
-                       model_averaging = TRUE,
-                       num_bootstraps = 200,
-                       summary = TRUE,
-                       plot_results = FALSE,
-                       output_path = NULL) {
+bmd_proast <- function(
+  mf_data,
+  dose_col = "dose",
+  response_col = "mf_min",
+  covariate_col = NULL,
+  bmr = 0.5,
+  adjust_bmr_to_group_sd = FALSE,
+  model_averaging = TRUE,
+  num_bootstraps = 200,
+  plot_results = FALSE,
+  output_path = NULL,
+  raw_results = FALSE
+) {
 
   if (!dose_col %in% colnames(mf_data)) {
     stop("Dose column not found in mf_data")
@@ -170,7 +183,7 @@ bmd_proast <- function(mf_data,
   if (model_averaging == TRUE) {
     message("Model averaging is set to TRUE. This may take some time to run.")
   }
-  # ensure that dose is numeric #
+  # ensure that dose is numeric
   if (!is.numeric(mf_data[[dose_col]])) {
     stop("Dose column must be numeric")
   }
@@ -183,69 +196,97 @@ bmd_proast <- function(mf_data,
     covariate <- covariate_col
   }
 
-  results <- f.proast(mf_data,
-                      interactive_mode = FALSE,
-                      datatype = "continuous, individual data",
-                      model_choice = "select model 3 or 5 from various families of models",
-                      setting_choice = "set of models",
-                      indep_var_choice = dose_col,
-                      Vyans_input = response_col,
-                      covariates = covariate,
-                      custom_CES = bmr,
-                      adjust_CES_to_group_SD = bmr_sd,
-                      model_selection = "previous option with lognormal DR model added",
-                      lower_dd = NULL,
-                      upper_dd = NULL,
-                      selected_model = "exponential",
-                      model_averaging = model_averaging,
-                      num_bootstraps = num_bootstraps,
-                      display_plots = FALSE)
+  results <- f.proast(
+    mf_data,
+    interactive_mode = FALSE,
+    datatype = "continuous, individual data",
+    model_choice = "select model 3 or 5 from various families of models",
+    setting_choice = "set of models",
+    indep_var_choice = dose_col,
+    Vyans_input = response_col,
+    covariates = covariate,
+    custom_CES = bmr,
+    adjust_CES_to_group_SD = bmr_sd,
+    model_selection = "previous option with lognormal DR model added",
+    lower_dd = NULL,
+    upper_dd = NULL,
+    selected_model = "exponential",
+    model_averaging = model_averaging,
+    num_bootstraps = num_bootstraps,
+    display_plots = FALSE
+  )
 
   if (plot_results == TRUE) {
-    f.plot.result(results[[1]],
-                  output_path = output_path,
-                  model_averaging = FALSE)
-
-    if (model_averaging == TRUE) {
-      f.plot.result(results[[1]],
-                    output_path = output_path,
-                    model_averaging = TRUE)
-
-      # Cleveland plot: all models w weights
-      cleveland_plot(results, covariate_col = covariate_col, output_path = output_path)
+    if (!is.null(output_path)) { # Export the plots
+      output_path <- file.path(output_path)
+      if (!exists(output_path)) {
+        dir.create(output_path)
+      }
+      f.plot.result(
+        results[[1]],
+        output_path = output_path,
+        output_type = "svg",
+        model_averaging = FALSE
+      )
+      if (model_averaging == TRUE) {
+        f.plot.result(
+          results[[1]],
+          output_path = output_path,
+          output_type = "svg",
+          model_averaging = TRUE
+        )
+        cleveland_plot(
+          results,
+          covariate_col = covariate_col,
+          output_path = output_path
+        )
+      }
+    } else { # return the plots
+      plots <- f.plot.result(
+        results[[1]],
+        output_path = output_path,
+        output_type = "none",
+        model_averaging = FALSE
+      )
+      if (model_averaging == TRUE) {
+        ma_plots <- f.plot.result(
+          results[[1]],
+          output_path = output_path,
+          output_type = "none",
+          model_averaging = TRUE
+        )
+        c_plot <- cleveland_plot(
+          results,
+          covariate_col = covariate_col,
+          output_path = output_path
+        )
+        for (i in seq_along(c_plot)) {
+          dev.new()
+          print(c_plot[[i]])
+        }
+        plots <- c(plots, ma_plots, c_plot)
+      }
     }
   }
-  if (summary == TRUE) {
-    # Select the BMD with the lowest AIC for each response
-    # If they have the same AIC, take the mean.
-    dat <- results[[2]] %>%
-      dplyr::rename(BMD = "CED",
-                    BMDL = "CEDL",
-                    BMDU = "CEDU",
-                    Model = "Selected.Model",
-                    BMR = "CES") %>%
-      dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
-    # dat$AIC <- as.numeric(dat$AIC)
-    # dat$BMD <- as.numeric(dat$BMD)
-    # dat_best <- dat %>%
-    #   dplyr::select("Response", "BMD", "AIC", "weights", "BMR") %>%
-    #   dplyr::group_by(Response) %>%
-    #   dplyr::filter(AIC == min(AIC, na.rm = TRUE)) %>%
-    #   dplyr::summarise(BMD = mean(BMD, na.rm = TRUE),
-    #                    AIC = dplyr::first(AIC, na_rm = TRUE),
-    #                    weights = dplyr::first(weights, na_rm = TRUE),
-    #                    BMR = dplyr::first(BMR, na_rm = TRUE)) %>%
-    #   dplyr::ungroup()
-    # dat_best$Model <- "Best_Fit"
-    # if (model_averaging == TRUE) {
-    #   dat_avg <- dat %>%
-    #     dplyr::filter(.data$Model == "Model averaging") %>%
-    #     dplyr::select("Response", "BMDL", "BMDU")
-    #   dat_best <- dplyr::left_join(dat_best, dat_avg, by = "Response")
-    #   dat <- rbind(dat, dat_best)
-    # }
-    return(dat)
+  # Select the BMD with the lowest AIC for each response
+  # If they have the same AIC, take the mean.
+  summary <- results[[2]] %>%
+    dplyr::rename(BMD = "CED",
+                  BMDL = "CEDL",
+                  BMDU = "CEDU",
+                  Model = "Selected.Model",
+                  BMR = "CES") %>%
+    dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
+  results_list <- list(summary = summary)
+  if (plot_results && is.null(output_path)) {
+    results_list <- c(results_list, plots)
+  }
+  if (raw_results) {
+    results_list$raw_results <- results[[1]]
+  }
+  if (length(results_list) > 1) {
+    return(results_list)
   } else {
-    return(results[[1]])
+    return(summary)
   }
 }
