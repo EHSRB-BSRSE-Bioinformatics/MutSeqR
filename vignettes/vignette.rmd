@@ -226,7 +226,7 @@ imported_example_data <- import_vcf_data(
 **Data Table 1.** Mutation data imported from VCF for sample dna00996.1. Displays the first 6 rows.
 
 ```{r import-vcf-table, echo=FALSE}
-DT::datatable(head(imported_example_data))
+DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
 ### Tabular
@@ -265,7 +265,7 @@ imported_example_data <- import_mut_data(
 **Data Table 2.** Mutation data imported from a data.frame object for sample dna00996.1. Displays the first 6 rows.
 
 ```{r import-mut-table, echo=FALSE}
-DT::datatable(head(imported_example_data))
+DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
 ## Region Metadata
@@ -309,7 +309,7 @@ targets. Displays the first 6 rows. Added columns are 'target_size',
 'label', 'genic_context', 'region_GC_content', 'genome', and 'in_regions'.
 
 ```{r import-mut-table-rg, echo=FALSE}
-DT::datatable(head(imported_example_data))
+DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
 Users can load the example TwinStrand Mutagenesis Panels with load_regions().
@@ -370,7 +370,7 @@ names. Displays the first 6 rows. Custom column names are changed to default
 values.
 
 ```{r import-mut-cust-table, echo=FALSE}
-DT::datatable(head(imported_example_data_custom))
+DT::datatable(head(imported_example_data_custom), options = list(scrollX = TRUE))
 ```
 
 ## Output
@@ -561,7 +561,7 @@ variants that were flagged during filtering.
 ```{r filter-mut-table, echo=FALSE}
 filter_table <- filtered_example_mutation_data %>%
   dplyr::filter(filter_mut == TRUE)
-DT::datatable(head(filter_table))
+DT::datatable(head(filter_table), options = list(scrollX = TRUE))
 ```
 
 # Calculating MF

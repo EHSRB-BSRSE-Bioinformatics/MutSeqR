@@ -236,27 +236,27 @@ plot_spectra <- function(mf_data,
   axis_labels <- ggplot2::labs(x = x_lab, y = y_lab)
 
   # bar plot
-  bar <- ggplot(plot_data, aes(x = .data$group,
+  bar <- ggplot2::ggplot(plot_data, aes(x = .data$group,
                                y = .data$response,
                                fill = .data$subtype,
                                add = FALSE)) +
-    geom_bar(stat = "identity", width = 1) +
-    scale_fill_manual(values = palette) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::scale_fill_manual(values = palette) +
     axis_labels +
-    theme_minimal() +
-    theme(legend.position = "right",
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "right",
           axis.text.x = ggplot2::element_text(angle = 90)) +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.01)))
+    ggplot2::scale_y_continuous(expand = expansion(mult = c(0, 0.01)))
 
   if (group_order == "clustered") {
     plot <-  bar +
       ggh4x::scale_x_dendrogram(hclust = hc, position = "top", labels = NULL,
       ) +
-      theme(axis.ticks.length.x = unit(10, "pt"))
-    x_axis <- ggplot(plot_data, aes(x = .data$group)) +
-      theme_minimal() +
-      labs(x = x_lab) +
-      theme(axis.text.x = ggplot2::element_text(angle = 90),
+      ggplot2::theme(axis.ticks.length.x = unit(10, "pt"))
+    x_axis <- ggplot2::ggplot(plot_data, aes(x = .data$group)) +
+      ggplot2::theme_minimal() +
+      ggplot2::labs(x = x_lab) +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90),
             axis.ticks.length = unit(0.1, "cm"))
 
     layout <- c(patchwork::area(t = 1, l = 1, b = 1, r = 1),

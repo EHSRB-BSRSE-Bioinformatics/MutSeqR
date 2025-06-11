@@ -45,3 +45,5 @@ from*
 data*
 output*
 *.html
+/doc/
+/Meta/
