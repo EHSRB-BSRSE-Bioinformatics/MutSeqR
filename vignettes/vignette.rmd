@@ -794,6 +794,7 @@ mf_data_6 <- calculate_mf(
 ```{r mf-6-table, echo=FALSE}
 DT::datatable(mf_data_6,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -870,6 +871,7 @@ mf_data_types <- calculate_mf(
 ```{r mf-types-table, echo=FALSE}
 DT::datatable(mf_data_types,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -899,6 +901,7 @@ mf_data_96 <- calculate_mf(
 ```{r mf-96_tables, echo=FALSE}
 DT::datatable(mf_data_types,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -1008,6 +1011,7 @@ DT::datatable(depth)
 ```{r mf-precalc2-table, echo=FALSE}
 DT::datatable(mf_data_6_precalc,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
