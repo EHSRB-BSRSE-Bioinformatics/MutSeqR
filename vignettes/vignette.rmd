@@ -703,7 +703,7 @@ mf_data_global <- calculate_mf(
 mean_mf <- mf_data_global %>%
   dplyr::group_by(dose_group) %>%
   dplyr::summarise(mean_mf_min = mean(mf_min),
-                   SE = sd(mf_min) / sqrt(n()))
+                   SE = sd(mf_min) / sqrt(dplyr::n()))
 ```
 
 **Table 8.** Mean Mutation Frequency per Dose Group.

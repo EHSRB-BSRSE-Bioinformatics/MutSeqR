@@ -330,7 +330,7 @@ mf_data <- calculate_mf(
 )
 mean <- mf_data %>%
   dplyr::group_by(dose) %>%
-  dplyr::summarise(mean_mf_min = mean(mf_min), SE = sd(mf_min)/sqrt(n()))
+  dplyr::summarise(mean_mf_min = mean(mf_min), SE = sd(mf_min)/sqrt(dplyr::n()))
 ```
 ### Mutation Subtypes
 Mutations can also be grouped by mutation subtype at varying degrees of resolution using the `subtype_resolution` parameter.

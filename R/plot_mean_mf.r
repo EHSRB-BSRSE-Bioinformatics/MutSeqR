@@ -186,10 +186,10 @@ plot_mean_mf <- function(mf_data,
     dplyr::group_by(.data$group_col, .data$fill_col) %>%
     dplyr::summarize(
       min_Mean = mean(.data$mf_min, na.rm = TRUE),
-      min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(n()),
+      min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(dplyr::n()),
       min_sum_mean = mean(.data$sum_min, na.rm = TRUE),
       max_Mean = mean(.data$mf_max, na.rm = TRUE),
-      max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(n()),
+      max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(dplyr::n()),
       max_sum_mean = mean(.data$sum_max, na.rm = TRUE),
       .groups = "drop"
     )
