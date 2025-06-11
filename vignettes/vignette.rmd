@@ -542,7 +542,6 @@ example_data <- readRDS(example_file)
 # Filter
 filtered_example_mutation_data <- filter_mut(
   mutation_data = example_data,
-  correct_depth = TRUE,
   vaf_cutoff = 0.01,
   regions = "TSpanel_mouse",
   regions_filter = "keep_within",
