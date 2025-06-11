@@ -495,7 +495,7 @@ calculate_mf <- function(mutation_data,
       depth_df <- dplyr::left_join(context_rows_snv, depth_df, by = denominator_groups)
 
       # re-extract the group depth seperately, to make sure we have a complete list of all groups
-      # Do no depend on extracting all group x context combinations from the data as we may end up missing some groups
+      # Do not depend on extracting all group x context combinations from the data as we may end up missing some groups
       depth_df <- dplyr::select(depth_df, -"group_depth")
       group_depth_df <- mut_freq_table %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
