@@ -491,7 +491,7 @@ import_vcf_data <- function(vcf_file,
   # Check for duplicated rows
   dat <- dat %>%
     dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::mutate(row_has_duplicate = n() > 1) %>%
+    dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {

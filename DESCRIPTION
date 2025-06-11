@@ -72,6 +72,7 @@ Imports:
 Suggests:
     binom,
     BiocStyle,
+    bs4Dash,
     BSgenome,
     BSgenome.Hsapiens.UCSC.hg38,
     BSgenome.Mmusculus.UCSC.mm10,
