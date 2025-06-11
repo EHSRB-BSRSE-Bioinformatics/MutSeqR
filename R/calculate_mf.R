@@ -66,14 +66,22 @@
 #' Default includes all variants. For `calculate_depth = TRUE`: Regardless of
 #' whether or not a variant is included in the mutation counts, the total_depth
 #' for that position will be counted.
-#' @param correct_depth A logical value, only used if `calculate_depth = TRUE`.
-#' If TRUE (default), an internal correction is applied to prevent double-counting
-#' sequencing depth at genomic sites with multiple mutations. Set to FALSE only if
-#' your data has already been processed with `correct_depth()`.
-#' @param correct_depth_by_indel_priority A logical value, passed to the internal
-#' depth correction. If TRUE, depth is retained for the mutation with the highest
-#' indel/variant priority. If FALSE (default), depth is retained for the first
-#' mutation encountered at a site.
+#' @param correct_depth A logical value. If TRUE, the function will correct the
+#' \code{total_depth} column in \code{mutation_data} in order to prevent
+#' double-counting the \code{total_depth} values for the same genomic position.
+#' For rows with the same sample contig, and start values, the \code{total_depth}
+#' will be retained for only one row. All other rows in the group will have their
+#' \code{total_depth} set to 0. The default is FALSE
+#' @param correct_depth_by_indel_priority A logical value. If TRUE, during depth
+#' correction, should there be different \code{total_depth} values within a
+#' group of rows with the same sample, contig, and start values, the
+#' \code{total_depth} value for the row with the highest priority
+#' \code{variation_type} will be retained, while the other rows will have their
+#' \code{total_depth} set to 0. \code{variation_type} priority order is:
+#' deletion, complex, insertion, snv, mnv, sv, uncategorised, ambiguous, no_variant.
+#' If FALSE, the \code{total_depth} value for the first row in the group will
+#' be retained, while the other rows will have their \code{total_depth} set to
+#' 0. The default is TRUE.
 #' @param calculate_depth A logical variable, whether to calculate the
 #' per-group total_depth from the mutation data. If set to TRUE, the mutation
 #' data must contain a total_depth value for every sequenced base (including
@@ -134,6 +142,17 @@
 #' is not "none". If no depth is calculated or provided, proportion is
 #' calculated without normalization to the depth.
 #' }
+#' @details
+#' Depth correction is important for preventing double-counting of reads in
+#' mutation data when summing the total_depth across samples or other groups.
+#' Generally, when several mutations have been detected at the same genomic
+#' position, within a sample, the total_depth value will be the same for all of
+#' them. However, in some datasets, whenever a deletion is detected, the data
+#' may contain an additional row with the same genomic position calling a
+#' "no_variant". The total_depth will differ between the deletion and the
+#' no_variant. In these cases, correct_depth_by_indel_priority == TRUE will ensure that
+#' the total_depth value for the deletion is retained, while the total_depth
+#' value for the no_variant is removed.
 #' @examples
 #' # Load example data
 #' example_file <- system.file("extdata", "Example_files",
@@ -145,7 +164,7 @@
 #' # Calculate depth from the mutation data
 #' mf_example <- calculate_mf(mutation_data = example_data,
 #'                            cols_to_group = "sample")
-#' # Example 2: Calculate the trinucleotide mutation proportions for each dose
+#' # Example 2: Calculate the trinucleotide mutation proportions for each dose - TODO - Add correct_depth parameter to examples!
 #' mf_96_example <- calculate_mf(mutation_data = example_data,
 #'                               cols_to_group = "dose",
 #'                               subtype_resolution = "base_96",
