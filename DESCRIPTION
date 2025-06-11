@@ -89,6 +89,7 @@ Suggests:
     httr,
     knitr,
     lme4,
+    magick,
     openxlsx,
     packcircles,
     patchwork,
