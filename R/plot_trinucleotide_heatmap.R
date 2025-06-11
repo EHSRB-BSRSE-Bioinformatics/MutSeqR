@@ -240,7 +240,7 @@ plot_trinucleotide_heatmap <- function(mf_data,
                         y = Group,
                         fill = ProportionPlot)) +
                 ggplot2::geom_raster() +
-                ggplot2::cale_fill_viridis_c(
+                ggplot2::scale_fill_viridis_c(
                   name = "Relative proportion", limits = c(0, max),
                   option = mut_proportion_scale,
                   na.value = "white") +
