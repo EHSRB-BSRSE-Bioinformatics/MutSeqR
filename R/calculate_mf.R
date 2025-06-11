@@ -489,7 +489,7 @@ calculate_mf <- function(mutation_data,
     # Do not depend on the data to have all the possible context rows; we will grab from set list in context_list
     # Missing data will be 0s eventually.
     if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")) {
-      context_rows_snv <- MutSeqR::context_list[[subtype_resolution]] ### TO DO: ADD back in MutSeqR::
+      context_rows_snv <- MutSeqR::context_list[[subtype_resolution]]
       context_rows_snv <- tidyr::expand_grid(group_df, !!paste(MutSeqR::denominator_dict[[subtype_resolution]]) := context_rows_snv)
 
       depth_df <- dplyr::left_join(context_rows_snv, depth_df, by = denominator_groups)
