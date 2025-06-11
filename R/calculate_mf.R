@@ -309,7 +309,7 @@ calculate_mf <- function(mutation_data,
     dt <- data.table::as.data.table(mutation_data)
 
     if (correct_depth_by_indel_priority) {
-      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv", "sv", "uncategorized", "no_variant")
+      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv", "sv", "uncategorized", "ambiguous", "no_variant")
       dt[, priority_order := factor(variation_type, levels = variation_priority, ordered = TRUE)]
       dt[, total_depth := {
         group_order <- order(priority_order, na.last = TRUE)
