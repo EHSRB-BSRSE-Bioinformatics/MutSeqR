@@ -492,7 +492,7 @@ calculate_mf <- function(mutation_data,
       context_rows_snv <- context_list[[subtype_resolution]] ### TO DO: ADD back in MutSeqR::
       context_rows_snv <- tidyr::expand_grid(group_df, !!paste(MutSeqR::denominator_dict[[subtype_resolution]]) := context_rows_snv)
 
-      depth_df <- left_join(context_rows_snv, depth_df, by = denominator_groups)
+      depth_df <- dplyr::left_join(context_rows_snv, depth_df, by = denominator_groups)
 
       # re-extract the group depth seperately, to make sure we have a complete list of all groups
       # Do no depend on extracting all group x context combinations from the data as we may end up missing some groups
