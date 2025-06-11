@@ -1,4 +1,3 @@
-library(testthat)
 # Define test cases for model_mf function
 test_that("model_mf works as expected ", {
   # Create a sample mf_data dataframe
