@@ -1486,6 +1486,7 @@ DT::datatable(
 DT::datatable(
   model_by_target$pairwise_comparisons,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("p.value", "adj_p.value"),
         render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
