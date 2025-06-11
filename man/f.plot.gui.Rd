@@ -19,9 +19,9 @@ f.plot.gui(
 \arguments{
 \item{ans.all}{The proast object that gets passed to all functions.}
 
-\item{HTML}{I don't know what this does but keep it FALSE}
+\item{HTML}{Keep FALSE}
 
-\item{model.summ}{I don't knkow what this does either, but keep it TRUE}
+\item{model.summ}{Keep it TRUE}
 
 \item{display_plots}{A logical variable - whether we want to display
 the plots or not.}
@@ -29,6 +29,11 @@ the plots or not.}
 \item{results_env}{environment}
 
 \item{output_type}{The format that you wish to export the plots as.}
+
+\item{filename}{Name of the file to import}
+
+\item{interactive_mode}{A logical variable that will determine if the session
+runs interactively or scripted}
 
 \item{record_plots}{A logical variable indicating whether you want to record
 the plots and return them as a list instead of exporting them. This parameter

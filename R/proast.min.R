@@ -12668,14 +12668,15 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' @description Runs through the plotting functions depending on data type
 #' and plot type.
 #' @param ans.all The proast object that gets passed to all functions.
-#' @param HTML I don't know what this does but keep it FALSE
-#' @param model.summ I don't knkow what this does either, but keep it TRUE
+#' @param HTML Keep FALSE
+#' @param model.summ Keep it TRUE
 #' @param display_plots A logical variable - whether we want to display
 #' the plots or not.
 #' @param results_env environment
 #' @param output_type The format that you wish to export the plots as.
-#' @param filename
-#' @param interactive_mode
+#' @param filename Name of the file to import
+#' @param interactive_mode A logical variable that will determine if the session
+#' runs interactively or scripted
 #' @param record_plots A logical variable indicating whether you want to record
 #' the plots and return them as a list instead of exporting them. This parameter
 #' should only be used when running the function indenpently or within f.plot.result.
