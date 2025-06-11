@@ -51,4 +51,6 @@ similarity between samples:
 \eqn{\text{Cosine Dissimilarity} = 1 - \frac{\mathbf{A} \cdot \mathbf{B}}{\| \mathbf{A} \| \cdot \| \mathbf{B} \|}}
 
 This equation calculates the cosine dissimilarity between two vectors A and B.
+
+Leaves are sorted using dendsort, if installed, otherwise leaves are unsorted.
 }

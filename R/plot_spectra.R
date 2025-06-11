@@ -293,7 +293,9 @@ plot_spectra <- function(mf_data,
 #'
 #'\eqn{\text{Cosine Dissimilarity} = 1 - \frac{\mathbf{A} \cdot \mathbf{B}}{\| \mathbf{A} \| \cdot \| \mathbf{B} \|}}
 #'
-#' This equation calculates the cosine dissimilarity between two vectors A and B. 
+#' This equation calculates the cosine dissimilarity between two vectors A and B.
+#' 
+#' Leaves are sorted using dendsort, if installed, otherwise leaves are unsorted.
 #' @return A dendrogram object representing the hierarchical clustering of the
 #' samples.
 cluster_spectra <- function(mf_data = mf_data,
@@ -332,5 +334,13 @@ cluster_spectra <- function(mf_data = mf_data,
   }
   # Perform hierarchical clustering
   hc <- stats::hclust(d, method = cluster_method)
+
+  if (!requireNamespace("dendsort", quietly = TRUE)) {
+  warning("Package dendsort not installed; hierarchical clustering will not be dendsorted for leaf optimization.")
   return(hc)
+  }
+  # Use dendsort
+  hc_obj <- dendsort::dendsort(hc)
+  return(hc_obj)
+
 }
