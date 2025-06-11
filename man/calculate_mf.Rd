@@ -11,6 +11,8 @@ calculate_mf(
   variant_types = c("snv", "deletion", "insertion", "complex", "mnv", "sv", "ambiguous",
     "uncategorized"),
   calculate_depth = TRUE,
+  correct_depth = TRUE,
+  correct_depth_by_indel_priority = FALSE,
   precalc_depth_data = NULL,
   d_sep = "\\t",
   summary = TRUE,
@@ -89,6 +91,16 @@ using the precalc_depth_data parameter. Alternatively, if no per-group
 total_depth is available, per-group mutation counts will be calculated,
 but mutation frequency will not. In such cases, mutation subtype proportions
 will not be normalized to the total_depth.}
+
+\item{correct_depth}{A logical value, only used if \code{calculate_depth = TRUE}.
+If TRUE (default), an internal correction is applied to prevent double-counting
+sequencing depth at genomic sites with multiple mutations. Set to FALSE only if
+your data has already been processed with \code{correct_depth()}.}
+
+\item{correct_depth_by_indel_priority}{A logical value, passed to the internal
+depth correction. If TRUE, depth is retained for the mutation with the highest
+indel/variant priority. If FALSE (default), depth is retained for the first
+mutation encountered at a site.}
 
 \item{precalc_depth_data}{A data frame or a file path to a text file
 containing pre-calculated per-group total_depth values. This data frame
