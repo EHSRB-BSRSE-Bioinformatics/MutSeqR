@@ -245,7 +245,7 @@ plot_spectra <- function(mf_data,
     axis_labels +
     theme_minimal() +
     theme(legend.position = "right",
-          axis.text.x = element_text(angle = 90)) +
+          axis.text.x = ggplot2::element_text(angle = 90)) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01)))
 
   if (group_order == "clustered") {
@@ -256,7 +256,7 @@ plot_spectra <- function(mf_data,
     x_axis <- ggplot(plot_data, aes(x = .data$group)) +
       theme_minimal() +
       labs(x = x_lab) +
-      theme(axis.text.x = element_text(angle = 90),
+      theme(axis.text.x = ggplot2::element_text(angle = 90),
             axis.ticks.length = unit(0.1, "cm"))
 
     layout <- c(patchwork::area(t = 1, l = 1, b = 1, r = 1),

@@ -710,7 +710,7 @@ plot <- plot_model_mf(model = model_by_target,
                                          "#ffd166",
                                          "#06d6a0",
                                          "#118ab2"))
-plot <- plot + ggplot2::theme(axis.text.x = element_text(angle = 90))
+plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 ```
 ![plot_model_mf Dose and Target Model](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot4.2.2.png)
 

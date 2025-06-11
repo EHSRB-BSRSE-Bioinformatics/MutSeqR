@@ -240,27 +240,27 @@ plot_trinucleotide <- function(
       ) +
       theme_minimal(base_size = 12) +
       theme(
-        axis.text.x = element_text(angle = 90,
+        axis.text.x = ggplot2::element_text(angle = 90,
           vjust = 1,
           hjust = 1,
           family = "mono", size = rel(0.75),
           margin = margin(t = -14) # decreases the gab between x-axis and the labels.
         ),
-        axis.title.x = element_text(margin = margin(t = 5, b = 0)),
+        axis.title.x = ggplot2::element_text(margin = margin(t = 5, b = 0)),
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_line("gray80"),
         panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank(),
-        plot.title = element_text(hjust = 0.5),
+        plot.title = ggplot2::element_text(hjust = 0.5),
         plot.margin = margin(72, 24, 24, 48),
         legend.position = "none",
         panel.border = element_blank(),
         plot.background = element_blank(),
-        plot.caption = element_text(hjust = 0)
+        plot.caption = ggplot2::element_text(hjust = 0)
       ) + ggtitle(as.character(group_levels[i])) +
       theme(
         plot.title.position = "plot",  # ← moves it above the plot panel
-        plot.title = element_text(hjust = 0.5, margin = margin(b = 30))  # add bottom margin
+        plot.title = ggplot2::element_text(hjust = 0.5, margin = margin(b = 30))  # add bottom margin
       )
     plot_list[[i]] <- p
 

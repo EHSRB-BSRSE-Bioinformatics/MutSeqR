@@ -1588,7 +1588,7 @@ plot <- plot_model_mf(
                      "#118ab2")
 )
 # Rotate the x-axis labels for clarity using ggplot2 functions.
-plot <- plot + ggplot2::theme(axis.text.x = element_text(angle = 90))
+plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
 

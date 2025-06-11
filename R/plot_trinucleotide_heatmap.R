@@ -246,8 +246,8 @@ plot_trinucleotide_heatmap <- function(mf_data,
                   na.value = "white") +
                 theme_minimal() +
                 labs(x = x_label, y = y_label) +
-                theme(axis.text.y = element_text(size = 6),
-                      axis.text.x = element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
+                theme(axis.text.y = ggplot2::element_text(size = 6),
+                      axis.text.x = ggplot2::element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
                       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                       panel.spacing.x = unit(spacing, "lines"),
                       panel.spacing.y = unit(spacing, "lines")
@@ -260,19 +260,19 @@ plot_trinucleotide_heatmap <- function(mf_data,
     figfx <- fig +
       facet_grid(cols = vars(subtype_labels), scales = "free_x",
                  labeller = labeller(subtype_labels = facet_labs_x)) +
-      theme(strip.text = element_text(size = 8))
+      theme(strip.text = ggplot2::element_text(size = 8))
     return(figfx)
   } else if (plot_context == FALSE & !is.null(facet_col)) {
     figfy <- fig +
       facet_grid(rows = vars(Facet), scales = "free_y",
                  labeller = labeller(Facet = facet_labs_y)) +
-      theme(strip.text = element_text(size = 8))
+      theme(strip.text = ggplot2::element_text(size = 8))
     return(figfy)
   } else if (plot_context & !is.null(facet_col)) {
     figfxy <- fig +
       facet_grid(Facet ~ subtype_labels, scales = "free",
                  labeller = labeller(Facet = facet_labs_y, subtype_labels = facet_labs_x)) +
-      theme(strip.text = element_text(size = 8))
+      theme(strip.text = ggplot2::element_text(size = 8))
     return(figfxy)
   } else {
     return(fig)

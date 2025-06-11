@@ -348,7 +348,7 @@ plot3.3 <- plot_mean_mf(
   add_labels = "none",
   plot_legend = FALSE
 ) +
-  ggplot2::theme(axis.text.x = element_text(angle = 90,
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
                                             vjust = 0.5,
                                             hjust = 1))
 plot3.3
@@ -1258,7 +1258,7 @@ plot6.7 <- plot_model_mf(model = model_rg,
   fill_order = fill_order,
   plot_signif = plot_signif
 ) +
-  ggplot2::theme(axis.text.x = element_text(angle = 90,
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
                                             vjust = 0.5,
                                             hjust = 1))
 
@@ -1351,7 +1351,7 @@ for (contig_name in unique_contigs) {
       panel.grid = element_blank(),
       axis.line = element_line(color = "black"),
       axis.ticks = element_line(color = "black"),
-      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
+      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5)
     )
   )
   cat("\n")
