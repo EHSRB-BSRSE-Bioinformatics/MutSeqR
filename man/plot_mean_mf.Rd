@@ -20,7 +20,9 @@ plot_mean_mf(
   y_lab = NULL,
   plot_title = NULL,
   custom_palette = NULL,
-  plot_legend = TRUE
+  plot_legend = TRUE,
+  rotate_labels = FALSE,
+  label_size = 3
 )
 }
 \arguments{
@@ -104,6 +106,11 @@ Mean/Individual values will be the same colour, different shades.
 
 \item{plot_legend}{Logical. Whether to show the fill (and color) legend.
 Default is TRUE.}
+
+\item{rotate_labels}{A logical value indicating whether data labels should
+be rotated 90 degrees. Default is FALSE.}
+
+\item{label_size}{A numeric value that controls the size of the data labels.}
 }
 \value{
 a ggplot object
