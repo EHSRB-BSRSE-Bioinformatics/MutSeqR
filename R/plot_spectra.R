@@ -235,36 +235,93 @@ plot_spectra <- function(mf_data,
   }
   axis_labels <- ggplot2::labs(x = x_lab, y = y_lab)
 
-  # bar plot
-  bar <- ggplot(plot_data, aes(x = .data$group,
-                               y = .data$response,
-                               fill = .data$subtype,
-                               add = FALSE)) +
+  # Separate SNVs and NON-SNVs
+  if (subtype_resolution != "type") {
+    do_panels <- any(MutSeqR::subtype_list$type %in% plot_data$subtype)
+    if (do_panels) {
+      plot_data <- dplyr::mutate(
+        plot_data,
+        subtype_class = ifelse(subtype %in% MutSeqR::subtype_list$type, "non-snv", "snv")
+      )
+      plot_data_nonsnv <- dplyr::filter(plot_data, subtype_class == "non-snv")
+      plot_data <- dplyr::filter(plot_data, subtype_class == "snv")
+      # Plot the non-snvs seperately.
+      bar_nonsnv <- ggplot(
+        plot_data_nonsnv,
+        aes(x = .data$group, y = .data$response, fill = .data$subtype)
+      ) +
+        geom_bar(stat = "identity", width = 1) +
+        scale_fill_manual(values = palette) +
+        axis_labels +
+        theme_minimal() +
+        theme(
+          legend.position = "right",
+          axis.text.x = element_text(angle = 90)
+        ) +
+        scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
+        labs(y = y_lab)
+    }
+  } else {
+    do_panels <- FALSE
+  }
+
+  # Plot main data
+  bar <- ggplot(plot_data,
+    aes(x = .data$group, y = .data$response, fill = .data$subtype)
+  ) +
     geom_bar(stat = "identity", width = 1) +
     scale_fill_manual(values = palette) +
     axis_labels +
     theme_minimal() +
-    theme(legend.position = "right",
-          axis.text.x = element_text(angle = 90)) +
+    theme(
+      legend.position = "right",
+      axis.text.x = element_text(angle = 90)
+    ) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01)))
 
+  # Plot dendrogram
   if (group_order == "clustered") {
-    plot <-  bar +
-      ggh4x::scale_x_dendrogram(hclust = hc, position = "top", labels = NULL,
-      ) +
-      theme(axis.ticks.length.x = unit(10, "pt"))
-    x_axis <- ggplot(plot_data, aes(x = .data$group)) +
-      theme_minimal() +
-      labs(x = x_lab) +
-      theme(axis.text.x = element_text(angle = 90),
-            axis.ticks.length = unit(0.1, "cm"))
+    if (do_panels) {
+      bar_nonsnv <- bar_nonsnv +
+        ggh4x::scale_x_dendrogram(hclust = hc, position = "top", labels = NULL,
+        ) +
+        theme(axis.ticks.length.x = unit(10, "pt"))
+      p <- bar_nonsnv / bar +
+        patchwork::plot_layout(
+          heights = c(1, 1, 1),
+          axis_titles = "collect",
+          axes = "collect",
+          guides = "collect"
+        )
+      return(p)
+    } else {
+      p <- bar +
+        ggh4x::scale_x_dendrogram(hclust = hc, position = "top", labels = NULL,
+        ) +
+        theme(axis.ticks.length.x = unit(10, "pt"))
+      x_axis <- ggplot(plot_data, aes(x = .data$group)) +
+        theme_minimal() +
+        labs(x = x_lab) +
+        theme(axis.text.x = element_text(angle = 90),
+              axis.ticks.length = unit(0.1, "cm"))
 
-    layout <- c(patchwork::area(t = 1, l = 1, b = 1, r = 1),
-                patchwork::area(t = 1, l = 1, b = 1, r = 1))
-    p <- x_axis + plot + patchwork::plot_layout(design = layout)
-    return(p)
+      layout <- c(patchwork::area(t = 1, l = 1, b = 1, r = 1),
+                  patchwork::area(t = 1, l = 1, b = 1, r = 1))
+      p <- x_axis + p + patchwork::plot_layout(design = layout)
+      return(p)
+    }
   } else {
-    return(bar)
+    if (do_panels) {
+      p <- bar_nonsnv / bar +
+        patchwork::plot_layout(
+          heights = c(1, 1, 1),
+          axis_titles = "collect",
+          axes = "collect",
+          guides = "collect"
+        )
+    } else {
+      return(bar)
+    }
   }
 }
 
