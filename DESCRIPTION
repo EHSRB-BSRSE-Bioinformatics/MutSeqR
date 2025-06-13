@@ -55,6 +55,7 @@ Imports:
     BiocGenerics,
     BiocManager,
     Biostrings,
+    data.table,
     dplyr,
     GenomeInfoDb,
     GenomicRanges,
