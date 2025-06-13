@@ -204,23 +204,40 @@ filter_mut <- function(mutation_data,
 
       hits_indices <- integer(0)
 
-      for (sample_name in unique(mutation_data$sample)) {
-        snv_subset <- mutation_data %>%
-          dplyr::filter(.data$sample == sample_name, .data$variation_type == "snv")
-        germ_mnv_subset <- mnv_ranges %>%
-          dplyr::filter(.data$sample == sample_name)
-        snv_gr <- GenomicRanges::makeGRangesFromDataFrame(snv_subset,
-                                                          seqnames.field = "contig",
-                                                          keep.extra.columns = TRUE)
-        germ_mnv_gr <- GenomicRanges::makeGRangesFromDataFrame(germ_mnv_subset,
-                                                               seqnames.field = "contig",
-                                                               keep.extra.columns = TRUE)
-        overlaps <- GenomicRanges::findOverlaps(query = snv_gr, subject = germ_mnv_gr)
-        hits <- S4Vectors::queryHits(overlaps)
-        hits_indices <- c(hits_indices, which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")[hits])
-      }
+      # Only proceed if there are any germline MNVs to check against
+      if (nrow(mnv_ranges) > 0) {
+          for (sample_name in unique(mutation_data$sample)) {
+            snv_subset <- mutation_data %>%
+              dplyr::filter(.data$sample == sample_name, .data$variation_type == "snv")
+            germ_mnv_subset <- mnv_ranges %>%
+              dplyr::filter(.data$sample == sample_name)
+
+            # If there are no SNVs or no germline MNVs for this sample, skip to the next
+            if (nrow(snv_subset) == 0 || nrow(germ_mnv_subset) == 0) {
+              next
+            }
+            snv_gr <- GenomicRanges::makeGRangesFromDataFrame(snv_subset,
+                                                              seqnames.field = "contig",
+                                                              keep.extra.columns = TRUE)
+            germ_mnv_gr <- GenomicRanges::makeGRangesFromDataFrame(germ_mnv_subset,
+                                                                   seqnames.field = "contig",
+                                                                   keep.extra.columns = TRUE)
+            overlaps <- GenomicRanges::findOverlaps(query = snv_gr, subject = germ_mnv_gr)
+            hits <- S4Vectors::queryHits(overlaps)
+
+            # Ensure 'hits' is not empty before using it as an index
+            if (length(hits) > 0) {
+                 original_indices <- which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")
+                 hits_indices <- c(hits_indices, original_indices[hits])
+            }
+          }
+      } # end of if(nrow(mnv_ranges) > 0)
       mutation_data$snv_in_germ_mnv <- FALSE
-      mutation_data$snv_in_germ_mnv[hits_indices] <- TRUE
+      # Check if hits_indices has any values before trying to index
+      if(length(hits_indices) > 0) {
+          mutation_data$snv_in_germ_mnv[hits_indices] <- TRUE
+      }
+
       mutation_data <- mutation_data %>%
         dplyr::mutate(filter_mut = ifelse(.data$snv_in_germ_mnv == TRUE,
                                           TRUE, .data$filter_mut),
@@ -325,7 +342,8 @@ filter_mut <- function(mutation_data,
     }
     mutation_data <- as.data.frame(ranges_joined)
     mutation_data$TO_REMOVE_in_regions[is.na(mutation_data$TO_REMOVE_in_regions)] <- FALSE
-    mutation_data <- dplyr::rename(mutation_data, contig = seqnames)
+    mutation_data <- mutation_data %>%
+      dplyr::rename(contig = seqnames)
     original_row_count <- nrow(mutation_data)
     if (regions_filter == "remove_within") {
       if (return_filtered_rows) {
