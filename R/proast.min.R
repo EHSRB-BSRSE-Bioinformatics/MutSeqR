@@ -8531,7 +8531,6 @@ f.boot.ma <- function(
   filename = NULL,
   output_type = NULL
 ) {
-  }
   if (ans.all$seed.bt != 0) {
     set.seed(ans.all$seed.bt)
   }
@@ -12474,7 +12473,6 @@ f.plot.gui <- function(
   interactive_mode = TRUE,
   record_plots = FALSE
 ) {
-  }
   WAPP <- ans.all$WAPP
 
 # Record Plots: just overide some of the parameters. Hacky - can fix later
