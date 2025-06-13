@@ -12456,8 +12456,8 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' the plots or not.
 #' @param results_env environment
 #' @param output_type The format that you wish to export the plots as.
-#' @param filename The name of the file
-#' @param interactive_mode Whether to run interactively or in batch mode
+#' @param filename The name of the file to be read.
+#' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
 #' @param record_plots A logical variable indicating whether you want to record
 #' the plots and return them as a list instead of exporting them. This parameter
 #' should only be used when running the function indenpently or within f.plot.result.
