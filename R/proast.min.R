@@ -6159,6 +6159,160 @@ f.data.plt.con <- function(ans.all, sep = FALSE) {
             ans.all$y.lim.plt <- c(min(ans.all$y.plt, na.rm = T), 
                 max(ans.all$y.plt, na.rm = T))
             ans.all$cex.1 <- cex.1
+            return(ans.all)
+        }, {
+            y.plt <- regr.resid
+            x.plt <- x
+            x.plt[x.plt == 0] <- dum.contr
+            x.plt <- log10(x.plt)
+            x.plt <- x.plt[!is.na(y.plt)]
+            if (x.leg != "") xleg <- paste("log10-", x.leg, sep = "") else xleg <- ""
+            yleg <- "residual"
+            x.lim.plt <- log10(x.lim)
+            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
+            y.lim.plt <- c(min(y.plt, na.rm = T), max(y.plt, 
+                na.rm = T))
+            if (plt.mns == 3) plt.mns <- 2
+        }, {
+            x.plt <- x
+            if (x.leg != "") xleg <- paste("log10 of normalized ", 
+                x.leg, sep = "") else xleg <- ""
+            y.plt <- yy
+            x.plt <- x.plt[!is.na(y.plt)]
+            y.plt <- y.plt[!is.na(y.plt)]
+            yleg <- "residual"
+            yleg <- "residual"
+            x.lim.plt <- log10(x.lim)
+            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
+            if (is.na(xy.lim[4])) y.lim <- c(min(y.plt, na.rm = T), 
+                max(y.plt, na.rm = T))
+            y.lim.plt <- c(min(y.plt, na.rm = T), max(y.plt, 
+                na.rm = T))
+        })
+        shift.plt <- 0
+        shift.tmp <- 0
+        if (shift > 0) {
+            shift.plt <- (max(x.plt, na.rm = T) - min(x.plt, 
+                na.rm = T))/shift
+            x.lim.plt[2] <- x.lim.plt[2] + shift.plt
+        }
+        if (gr.txt[1] == "" || is.na(gr.txt[1])) {
+            if (covar.no > 0 && !sep) 
+                gr.txt <- fct3.txt
+            else if (max(fct1) > 1) 
+                gr.txt <- fct1.txt
+            else if (max(fct2.save) > 1) 
+                gr.txt <- fct2.txt
+            else if (max(fct3) > 1) 
+                gr.txt <- fct3.txt
+        }
+        if (CI.plt) 
+            for (jj in 1:nr.bb) for (ii in 1:nr.aa) for (kk in 1:nr.cc) for (ll in 1:nr.dd) {
+                lst <- fct1 == ii & fct2 == jj & fct4 == kk & 
+                  fct5 == ll
+                x.part <- x.plt[lst]
+                y.part <- y.plt[lst]
+                y.tmp <- yy[lst]
+                if (plot.type == 11) {
+                  x.part <- (x.part/max(x.part, na.rm = T))
+                  x.part[x.part == 0] <- dum.contr
+                  x.part <- log10(x.part)
+                }
+                if (length(y.part) > 0) {
+                  if (dtype %in% c(10, 15, 250)) {
+                    sd2.log.part <- sd2.log[lst]
+                    nn.part <- nn[lst]
+                  }
+                  out.lst <- f.means(x.part, y.tmp, dtype, plot.type, 
+                    CI = TRUE, sd2.log = sd2.log.part, nn = nn.part)
+                  if (!is.na(out.lst$conf.L[1])) {
+                    y.lim.CI <- out.lst$y.lim.plt
+                    y.lim.plt[1] <- min(y.lim.CI[1], y.lim.plt[1], 
+                      na.rm = T)
+                    y.lim.plt[2] <- max(y.lim.CI[2], y.lim.plt[2], 
+                      na.rm = T)
+                  }
+                }
+            }
+        if (nr.aa > 1 && nr.bb > 1 && sum(fct1 != fct2) == 0) {
+            nr.aa <- 1
+            fct1 <- rep(1, length(x))
+        }
+        if (nr.aa > 1 & nr.bb > 1 && sum(fct1 != fct2) == 0) {
+            nr.aa <- 1
+            fct1 <- rep(1, length(x))
+        }
+        points.plt.lst <- list()
+        means.plt.lst <- list()
+        if (gr.txt[1] == "") 
+            gr.txt <- "all"
+        zz <- 0
+        for (jj in 1:nr.bb) for (ii in 1:nr.aa) for (kk in 1:nr.cc) for (ll in 1:nr.dd) {
+            lst <- fct1 == ii & fct2 == jj & fct4 == kk & fct5 == 
+                ll
+            x.part <- x.plt[lst]
+            y.part <- y.plt[lst]
+            y.tmp <- yy[lst]
+            if (plot.type == 11) {
+                x.part <- (x.part/max(x.part, na.rm = T))
+                x.part[x.part == 0] <- dum.contr
+                x.part <- log10(x.part)
+            }
+            if (length(y.part) > 0) {
+                zz <- zz + 1
+                if (zz > 500) 
+                  cat("\nATTENTION: number of subgroups too large for plotting\n\n")
+                x.part <- x.part + shift.tmp
+                mean.x <- NA
+                if (plt.mns %in% c(1, 3)) {
+                  if (dtype %in% c(1, 5, 15, 25, 26)) {
+                    mean.x <- as.numeric(tapply(x.part, x.part, 
+                      mean))
+                    mean.y <- f.means(x.part, y.tmp, dtype, plot.type)
+                  }
+                  if (dtype %in% c(10, 15, 250)) {
+                    mean.x <- x.part
+                    mean.y <- y.part
+                  }
+                  if (CI.plt) {
+                    if (dtype %in% c(10, 15, 250)) {
+                      sd2.log.part <- sd2.log[lst]
+                      nn.part <- nn[lst]
+                    }
+                    out.lst <- f.means(x.part, y.tmp, dtype, 
+                      plot.type, CI = TRUE, sd2.log = sd2.log.part, 
+                      nn = nn.part)
+                    L025 <- out.lst$conf.L
+                    L975 <- out.lst$conf.U
+                  }
+                }
+                if (plt.mns == 2 || !CI.plt) {
+                  L025 <- rep(NA, length(mean.x))
+                  L975 <- rep(NA, length(mean.x))
+                }
+                points.plt.lst[[gr.txt[zz]]] <- data.frame(x = x.part, 
+                  y = y.part)
+                if (plt.mns %in% c(1, 3)) 
+                  means.plt.lst[[gr.txt[zz]]] <- data.frame(x = as.numeric(mean.x), 
+                    y = as.numeric(mean.y), CI.low = as.numeric(L025), 
+                    CI.upp = as.numeric(L975))
+                shift.tmp <- shift.tmp + shift.plt
+            }
+        }
+        ans.all$xy.plt <- data.frame(x.plt = x.plt, y.plt = y.plt)
+        ans.all$points.plt.lst <- points.plt.lst
+        ans.all$means.plt.lst <- means.plt.lst
+        ans.all$cex.1 <- cex.1
+        ans.all$cex.2 <- cex.2
+        ans.all$xleg <- xleg
+        ans.all$yleg <- yleg
+        ans.all$x.lim.plt <- x.lim.plt
+        ans.all$y.lim.plt <- y.lim.plt
+        ans.all$detlim.plt.1 <- detlim.plt.1
+        ans.all$detlim.plt.2 <- detlim.plt.2
+        ans.all$gr.txt <- gr.txt
+        ans.all$fct2 <- fct2.save
+        ans.all$fct2.txt <- fct2.txt.save
         return(ans.all)
     })
 }
