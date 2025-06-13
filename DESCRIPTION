@@ -79,6 +79,7 @@ Suggests:
     BSgenome.Mmusculus.UCSC.mm10,
     car,
     colorspace,
+    dendsort,
     doBy,
     DT,
     fmsb,
