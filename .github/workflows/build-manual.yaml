@@ -32,7 +32,7 @@ jobs:
 
       - name: Build PDF manual
         run: |
-          R CMD Rd2pdf . --output=./inst/doc/MutSeqR.pdf
+          R CMD Rd2pdf . --output=MutSeqR.pdf
 
       - name: Commit PDF Manual
         run: |
