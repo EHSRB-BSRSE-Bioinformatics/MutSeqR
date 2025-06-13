@@ -1359,6 +1359,7 @@ DT::datatable(
   model_by_dose$pairwise_comparisons,
   options = list(
     columnDefs = list(
+      scrollX = TRUE,
       list(targets = c("p.value", "adj_p.value"),
         render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
       )
@@ -1451,7 +1452,7 @@ stats::qqline(model_data$residuals, col = "red")
 model_by_target$summary
 ```
 
-##### Anova
+##### ANOVA
 
 ```{r model-rg-anova}
 model_by_target$anova

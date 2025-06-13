@@ -15,7 +15,7 @@ Required columns for the regions file are "contig", "start", and "end".
 In a GRanges object, the required columns are "seqnames", "start", and "end".}
 
 \item{rg_sep}{The delimiter for importing the custom_regions. The default is
-tab-delimited "\t".}
+tab-delimited "\\t".}
 
 \item{is_0_based_rg}{A logical variable. Indicates whether the position
 coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).

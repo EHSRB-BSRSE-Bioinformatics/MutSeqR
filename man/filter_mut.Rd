@@ -80,7 +80,7 @@ be included in the filter. If FALSE, only rows that start and end within the
 \code{regions} will be included in the filter. Default is FALSE.}
 
 \item{rg_sep}{The delimiter for importing the custom_regions. The default is
-tab-delimited "\t".}
+tab-delimited "\\t".}
 
 \item{is_0_based_rg}{A logical variable. Indicates whether the position
 coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).

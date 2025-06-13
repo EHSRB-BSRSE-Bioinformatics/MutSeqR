@@ -58,8 +58,6 @@ f.proast <- function(odt = list(),
         message(paste0("Independent variable: ", indep_var_choice))
         results_env <- new.env()
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.proast")
     if (is.list(odt)) 
         if (length(odt$EXP) > 0 || length(odt$MLE) > 0) {
             cat("you probably forgot the comma in f.proast()\n")
@@ -317,8 +315,6 @@ f.proast <- function(odt = list(),
 
 
 f.overlap <- function() {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.overlap")
     attached <- search()
     attached <- substring(attached, 9, 14)
     lst1 <- attached == "proast"
@@ -362,16 +358,12 @@ f.overlap <- function() {
             }
         }
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.overlap:   END")
     return(invisible())
 }
 
 
 
 f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.ini")
     ans.all <- list()
     if (!no.seed) 
         ans.all$seed.bt <- 125
@@ -649,16 +641,12 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$show.no.trend <- NA
     ans.all$DA.ans <- 1
     class(ans.all) <- c("list", "proast.session")
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.ini : END")
     return(ans.all)
 }
 
 
 
 f.graphwin.size <- function(resize = F) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.graphwin.size")
     if (!exists(".gw.size")) {
         size.x <- 5
         size.y <- 5
@@ -688,14 +676,10 @@ f.graphwin.size <- function(resize = F) {
 
 
 f.assign <- function(name, obj) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.assign")
     obj$date <- date()
     if (!is.character(name)) 
         print("f.assign:  names and object are reversed")
     assign(name, obj, pos = 1, immediate = T)
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.assign:   END")
 }
 
 
@@ -708,8 +692,6 @@ f.change.settings <- function(ans.all,
                               nonzero_val = NULL,
                               detection_limit = NULL) {
   message(indep_var_choice)
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.change.settings")
     ans.all$choose <- choose
     with(ans.all, {
         if (0) {
@@ -1177,8 +1159,6 @@ f.change.settings <- function(ans.all,
             ans.all$full6.done <- FALSE
             f.assign(".Pr.last", ans.all)
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.change.settings:  END")
         return(ans.all)
     })
 }
@@ -1188,8 +1168,6 @@ f.change.settings <- function(ans.all,
 f.remove.NAs <- function(xans = 0, tans = 0, yans = 0, sans = 0, nans = 0, covar.no = 0, 
     fct1.no = 0, fct2.no = 0, fct3.no = 0, fct4.no = 0, fct5.no = 0, 
     dfr, output = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.remove.NAs")
     if (length(xans) == 1) 
         lst.na.x <- is.na(dfr[, xans])
     else {
@@ -1262,16 +1240,12 @@ f.remove.NAs <- function(xans = 0, tans = 0, yans = 0, sans = 0, nans = 0, covar
         if (sum(lst.na) > 0) 
             cat("\n these rows are removed from the dataset\n")
     dfr <- dfr[!lst.na, ]
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.remove.NAs:  END")
     return(dfr)
 }
 
 
 
 f.cont <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.cont")
     if (ans.all$dtype %in% c(1, 5, 15, 10, 25, 26, 250, 260)) 
         cont <- T
     if (ans.all$dtype %in% c(2, 3, 4, 6, 84)) 
@@ -1283,8 +1257,6 @@ f.cont <- function(ans.all) {
 
 
 f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.check.nonneg.num")
     check.out <- F
     if (quick.ans == 1) {
         if (!is.numeric(vec)) {
@@ -1328,8 +1300,6 @@ f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
             check.out <- T
         }
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.check.nonneg.num:   END")
     invisible(check.out)
 }
 
@@ -1341,8 +1311,6 @@ f.execute <- function(ans.all,
                       add_nonzero_val_to_dat = FALSE,
                       nonzero_val = NULL,
                       detection_limit = NULL) {
-  if ("track" %in% ls(envir = .GlobalEnv))
-    print("f.execute")
   ans.all$no.plot <- no.plot
   ans.all$cont <- f.cont(ans.all)
   with(ans.all, {
@@ -2007,8 +1975,6 @@ f.execute <- function(ans.all,
       ans.all$model.fam <- 1
     else ans.all$model.fam <- 0
     f.assign(".Pr.last", ans.all)
-    if ("track" %in% ls(envir = .GlobalEnv))
-      print("f.execute:  END")
     return(ans.all)
   })
 }
@@ -2016,8 +1982,6 @@ f.execute <- function(ans.all,
 
 
 f.clear <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.clear")
     ans.all$show <- ""
     ans.all$MLE <- NA
     ans.all$regr.par <- NA
@@ -2040,16 +2004,12 @@ f.clear <- function(ans.all) {
         ans.all$Vbmdl <- NA
         ans.all$Vbmdu <- NA
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.clear:   END")
     return(ans.all)
 }
 
 
 
 f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.full.ans")
     if (gui == T) 
         ans.all$gui <- T
     with(ans.all, {
@@ -2107,8 +2067,6 @@ f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
                 full.ans <- 2
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.full.ans:   END")
         return(full.ans)
     })
 }
@@ -2116,8 +2074,6 @@ f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
 
 
 f.regr.par.full <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.regr.par.full")
     with(ans.all, {
         if (dtype %in% c(10, 15, 250, 260)) {
             if (dtype %in% c(10, 15)) 
@@ -2175,8 +2131,6 @@ f.regr.par.full <- function(ans.all) {
 
 
 f.constr.dd <- function(model.ans) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.constr.dd")
     lower.dd <- 0.2
     upper.dd <- 5
     if (model.ans %in% c(18, 20, 21, 23, 25)) {
@@ -2188,16 +2142,12 @@ f.constr.dd <- function(model.ans) {
     if (model.ans %in% 53:54) {
         lower.dd <- lower.dd/4
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.constr.dd:    END")
     return(c(lower.dd, upper.dd))
 }
 
 
 
 f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.select.con")
     ans.all$HILL <- NA
     ans.all$INVEXP <- NA
     ans.all$LOGN <- NA
@@ -2284,8 +2234,6 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
                 }
     ans.all$Vaic <- Vaic
     ans.all$fitted <- T
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.select.con END")
     return(ans.all)
     #assign(ans.all$created, ans.all, envir = results_env)
 }
@@ -2293,8 +2241,6 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
 
 
 f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.select.m5.con")
     gui <- ans.all$gui
     model.switch <- ans.all$model.switch
     cont <- ans.all$cont
@@ -3737,8 +3683,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
         ans.all$nest.size <- nest.size
     }
     #assign(current_model, ans.all, envir = results_env) # Nope... this only gets one model in each "loop" of the code somehow.
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.select.m5.con:   END")
     return(ans.all)
 }
 
@@ -3757,8 +3701,6 @@ f.graph.window <- function(
   filename = NULL,
   output_type = NULL
 ) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.graph.window")
     if (nr.pl > 64) 
         cat("\nATTENTION:  nr of plots too large to plot together\n")
     if (!exists(".gw.size")) 
@@ -3851,8 +3793,6 @@ f.graph.window <- function(
         par(mfcol = c(8, 8))
         par(mar = c(2, 1.5, 1.5, 1))
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.graph.window   END")
     return(invisible())
 }
 
@@ -3860,8 +3800,6 @@ f.graph.window <- function(
 
 f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, plotprefix = NA, 
     nr.gr = 1, svg.plots = FALSE, output = TRUE, output_type = NULL, filename = NULL) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.create.graphwin")
     lst <- dev.list()
     if (length(lst) > 60) {
         cat("\n ATTENTION:  too many graphical windows are opened")
@@ -3915,16 +3853,12 @@ f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, 
                 title = title)
         else X11(, aa, bb, 10, title = title, ypos = y.pos)
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.create.graphwin:   END")
     return(invisible())
 }
 
 
 
 f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.qfit")
     plot.type.save <- ans.all.fit$plot.type
     ans.all.fit$plot.type <- plot.type
     ans.all.fit$plt.mns <- plt.mns
@@ -4076,8 +4010,6 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_p
             ans.all.fit$loglik <- -1e+12
         ans.all.fit$plot.type <- plot.type.save
         ans.all.fit$fitted <- TRUE
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.qfit:  END")
         return(ans.all.fit)
     })
 }
@@ -4085,8 +4017,6 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_p
 
 
 f.text.par <- function(ans.all, brief = F) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.text.par")
     with(ans.all, {
         if (brief) {
             nr.var <- 1
@@ -4495,8 +4425,6 @@ f.text.par <- function(ans.all, brief = F) {
         if (dtype == 6) 
             text.par <- c(paste("alfa", fct3.txt[1:nr.var], sep = "-"), 
                 text.par)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.text.par:  END")
         return(text.par)
     })
 }
@@ -4504,8 +4432,6 @@ f.text.par <- function(ans.all, brief = F) {
 
 
 f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.start.con")
     if (ans.all$model.ans == 0) {
         cat("\n\nchoose model first\n")
         f.press.key.to.continue()
@@ -5532,8 +5458,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
             }
             ans.all$regr.par <- regr.par
             if (!cont) {
-                if ("track" %in% ls(envir = .GlobalEnv)) 
-                  print("f.start.con:  END.sub")
                 ans.all$regr.par <- regr.par
                 ans.all$top <- top
                 return(ans.all)
@@ -5742,8 +5666,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
         ans.all$npar <- length(ans.all$par.start)
         ans.all$CED <- NA
         ans.all$l.ty <- 1
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.start.con:  END")
         return(ans.all)
     })
 }
@@ -5751,8 +5673,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
 
 
 f.start.lm.con <- function(xtmp, ytmp, model.ans, dtype) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.start.lm.con")
     if (dtype %in% c(25, 250)) 
         dt.fr <- data.frame(yyy = ytmp, dose.tmp = xtmp)
     else if (dtype %in% c(26, 260)) 
@@ -5781,16 +5701,12 @@ f.start.lm.con <- function(xtmp, ytmp, model.ans, dtype) {
             increase <- 1
         else increase <- -1
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.start.lm.con:  END")
     return(c(aa, bb, increase))
 }
 
 
 
 f.report.pars <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.report.pars")
     with(ans.all, {
         if (dtype == 4 && length(unique(fct3)) > 1) 
             nth <- 0
@@ -5825,8 +5741,6 @@ f.report.pars <- function(ans.all) {
                     lb[nrp + nth + 1], "\n")
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.report.pars:   END")
         return(report.pars)
     })
 }
@@ -5834,8 +5748,6 @@ f.report.pars <- function(ans.all) {
 
 
 f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = FALSE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.plot.con")
     if (ans.all$plot.type == 0) {
         cat("\nTECHNICAL NOTE: plot.type = 0 (f.plot.con)\n")
         return(ans.all)
@@ -5959,8 +5871,6 @@ f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = 
             }
         }
         ans.all$nr.gr <- nr.gr
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.plot.con:  END")
         return(ans.all)
     })
 }
@@ -5968,8 +5878,6 @@ f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = 
 
 
 f.data.plt.con <- function(ans.all, sep = FALSE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.data.plt.con")
     ans.all$sep <- sep
     with(ans.all, {
         if (is.na(cex.2)) {
@@ -6251,7 +6159,6 @@ f.data.plt.con <- function(ans.all, sep = FALSE) {
             ans.all$y.lim.plt <- c(min(ans.all$y.plt, na.rm = T), 
                 max(ans.all$y.plt, na.rm = T))
             ans.all$cex.1 <- cex.1
-            if ("track" %in% ls(envir = .GlobalEnv)) print("f.data.plt.con:   END")
             return(ans.all)
         }, {
             y.plt <- regr.resid
@@ -6406,8 +6313,6 @@ f.data.plt.con <- function(ans.all, sep = FALSE) {
         ans.all$gr.txt <- gr.txt
         ans.all$fct2 <- fct2.save
         ans.all$fct2.txt <- fct2.txt.save
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.data.plt.con:  END")
         return(ans.all)
     })
 }
@@ -6415,8 +6320,6 @@ f.data.plt.con <- function(ans.all, sep = FALSE) {
 
 
 f.model.specific.results <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.model.specific.results")
     sublist <- list()
     sublist$model.ans <- ans.all$model.ans
     sublist$model.type <- ans.all$model.type
@@ -6496,16 +6399,12 @@ f.model.specific.results <- function(ans.all) {
         if (ans.all$dtype %in% c(1, 5)) 
             sublist$outliers <- ans.all$outliers
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.model.specific.results:  END")
     return(sublist)
 }
 
 
 
 f.ced.con <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.ced.con")
     with(ans.all, {
         CED <- numeric()
         if (dtype == 4 && max(fct3) > 1) {
@@ -6541,8 +6440,6 @@ f.ced.con <- function(ans.all) {
             }
         }
         CED.lst <- list(CED = CED)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.ced.con: END")
         return(CED.lst)
     })
 }
@@ -6551,8 +6448,6 @@ f.ced.con <- function(ans.all) {
 
 f.inv.con <- function(model.ans, params, CES, max.x = NA, ES.abs = 1, ans.m6.sd = 1, 
     dtype = 1, m6.ED50 = FALSE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.inv.con")
     CED <- NA
     CES.tmp <- CES
     aa <- params[1]
@@ -6729,16 +6624,12 @@ f.inv.con <- function(model.ans, params, CES, max.x = NA, ES.abs = 1, ans.m6.sd 
     if (dtype != 3 && !ES.abs) 
         if (is.na(CED) && bb < 1e-10) 
             CED <- 1e+10
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.inv.con : END")
     return(CED)
 }
 
 
 
 f.resid.con <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.resid.con")
     with(ans.all, {
         pred.value <- f.expect.con(model.ans, x, regr.par = regr.par, 
             fct1 = fct1, fct2 = fct2, fct3 = fct3, fct4 = fct4, 
@@ -6761,8 +6652,6 @@ f.resid.con <- function(ans.all) {
             var.subgr[ii] * (fct3 == ii)
         ans.all$regr.resid <- regr.resid/sqrt(var.vector)
         ans.all$pred.value <- pred.value
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.resid.con:  END")
         if (quick.ans > 1 && dtype %in% c(1, 5, 25, 26)) 
             ans.all <- f.outliers(ans.all)
         return(ans.all)
@@ -6772,8 +6661,6 @@ f.resid.con <- function(ans.all) {
 
 
 f.outliers <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.outliers")
     with(ans.all, {
         length.old <- length(regr.resid)
         sig2 <- 1
@@ -6844,8 +6731,6 @@ f.outliers <- function(ans.all) {
                   data.0[lst, ])
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.outliers:   END")
         return(ans.all)
     })
 }
@@ -6853,8 +6738,6 @@ f.outliers <- function(ans.all) {
 
 
 f.factorname <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.factorname")
     with(ans.all, {
         factor.name <- ""
         fact1.name <- ""
@@ -6911,8 +6794,6 @@ f.factorname <- function(ans.all) {
                 factor.name <- paste(factor.name, fact4.name)
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.factorname  END")
         return(factor.name)
     })
 }
@@ -6920,8 +6801,6 @@ f.factorname <- function(ans.all) {
 
 
 f.hit.constr <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.hit.constr")
     with(ans.all, {
         if (!(model.ans == 11 && model.type == 1) && !(model.ans == 
             14 && model.type == 1)) {
@@ -6954,8 +6833,6 @@ f.hit.constr <- function(ans.all) {
                 print(c(text.par[lst], signif(MLE[lst], 5)))
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.hit.constr:   END")
         return(invisible())
     })
 }
@@ -6963,8 +6840,6 @@ f.hit.constr <- function(ans.all) {
 
 
 f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.refit.nes")
     ans.all <- f.nes(ans.all)
     ans.all <- with(ans.all, {
         if (increase == 1 && CES < 0) {
@@ -7189,8 +7064,6 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
     }, return(ans.all.tmp)
     
 )
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.refit.nes:  END")
     return(ans.all)
     
 }
@@ -7198,8 +7071,6 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
 
 
 f.nes <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.nes")
     with(ans.all, {
         var.within.pooled <- f.var.pooled(ans.all)
         sd.0 <- log(1.05)
@@ -7224,8 +7095,6 @@ f.nes <- function(ans.all) {
 
 
 f.var.pooled <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.var.pooled")
     f.var <- function(dtype, xx, yy, sd2.log, nn) {
         if (dtype %in% c(10, 15, 250)) {
             SS <- sum(sd2.log * (nn - 1))
@@ -7250,8 +7119,6 @@ f.var.pooled <- function(ans.all) {
             var.within <- (sum(nn) - 1) * var(resid)/df
         }
         out.lst <- list(var.within = var.within, df = df)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.var:   END")
         return(out.lst)
     }
     with(ans.all, {
@@ -7284,8 +7151,6 @@ f.var.pooled <- function(ans.all) {
 
 
 f.check.cc <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.check.cc")
     with(ans.all, {
         cc.OK <- T
         cc <- MLE[nr.var + nr.aa + nr.bb + 1]
@@ -7305,8 +7170,6 @@ f.check.cc <- function(ans.all) {
                 return(cc.OK)
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.check.cc    END")
         return(cc.OK)
     })
 }
@@ -7314,8 +7177,6 @@ f.check.cc <- function(ans.all) {
 
 
 f.lines.con <- function(ans.all, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.lines.con")
     with(ans.all, {
         lines.plt.lst <- f.lines.plt.con(ans.all)
         nr.gr <- length(lines.plt.lst)
@@ -7332,8 +7193,6 @@ f.lines.con <- function(ans.all, display_plots = TRUE) {
         }
         ans.all$lines.plt.lst <- lines.plt.lst
         ans.all$nr.gr <- nr.gr
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.lines.con : END")
         return(ans.all)
     })
 }
@@ -7341,8 +7200,6 @@ f.lines.con <- function(ans.all, display_plots = TRUE) {
 
 
 f.lines.plt.con <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.lines.plt.con")
     with(ans.all, {
         if (sum(is.na(regr.par)) > 0) {
             cat("\nregr.par contains NAs\n")
@@ -7469,8 +7326,6 @@ f.lines.plt.con <- function(ans.all) {
             }
         }
         ans.all$nr.gr <- nr.gr
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.lines.plt.con:   END")
         return(lines.plt.lst)
     })
 }
@@ -7478,8 +7333,6 @@ f.lines.plt.con <- function(ans.all) {
 
 
 f.cedlines.con <- function(ans.all, display_plots = TRUE) {   
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.cedlines.con")
     ans.all$cedes <- f.cedes.plt.con(ans.all)
     with(ans.all, {
         ES.x <- cedes$ES.x
@@ -7499,8 +7352,6 @@ f.cedlines.con <- function(ans.all, display_plots = TRUE) {
                 lines(CED.x[ii, ], CED.y[ii, ], lty = 2)
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.cedlines.con:  END")
         return(ans.all)
     })
 }
@@ -7508,8 +7359,6 @@ f.cedlines.con <- function(ans.all, display_plots = TRUE) {
 
 
 f.cedes.plt.con <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.cedes.plt.con")
     if (is.null(ans.all$regr.par.matr)) 
         ans.all$regr.par.matr <- f.pars(ans.all)$regr.par.matr
     with(ans.all, {
@@ -7631,8 +7480,6 @@ f.cedes.plt.con <- function(ans.all) {
             print(ES.x)
             print(ES.y)
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.cedes.plt.con: END")
         return(cedes.lst)
     })
 }
@@ -7640,8 +7487,6 @@ f.cedes.plt.con <- function(ans.all) {
 
 
 f.show.con <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.show.con")
     with(ans.all, {
         nl <- "\n"
         tb <- "  "
@@ -7905,8 +7750,6 @@ f.show.con <- function(ans.all) {
                 "\n"))
         if (cond.ans != 3) 
             show <- paste(show, "\n fit cond:", cond.ans)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.show.con:  END")
         return(show)
     })
 }
@@ -7915,8 +7758,6 @@ f.show.con <- function(ans.all) {
 
 f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE, 
     no.show = FALSE, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.plot.all")
     if (ans.all$plot.type == 0) 
         return(ans.all)
     if (ans.all$tans != 0) {
@@ -8085,8 +7926,6 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
             if (model.ans == 46 && dtype == 3) 
                 ans.all <- ans.all.saved
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.plot.all : END")
         return(ans.all)
     })
 }
@@ -8094,8 +7933,6 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
 
 
 f.move.sublist <- function(lst, sub) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.move.sublist")
     lst$model.ans <- sub$model.ans
     if (length(sub$model.type) > 0) 
         lst$model.type <- sub$model.type
@@ -8163,16 +8000,12 @@ f.move.sublist <- function(lst, sub) {
     lst$cedes.lst <- sub$cedes.lst
     if (lst$dtype %in% c(1, 5)) 
         lst$outliers <- sub$outliers
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.move.sublist:  END")
     return(lst)
 }
 
 
 
 f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.ced.ma")
     with(ans.all, {
         length.xx.interpol <- 1000
         ans.all$nr.models <- nr.models
@@ -8290,8 +8123,6 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
                   inter.sigma.ma <- c(inter.sigma.ma, sqrt(inter.var.subgr))
                   intra.sigma.ma <- c(intra.sigma.ma, sqrt(intra.var.subgr))
                 }
-                if ("track" %in% ls(envir = .GlobalEnv)) 
-                  print("f.ced.ma:   END 1")
             }
             ans.all$MA <- list(yy.ma = yy.ma, xx.ma = xx.ma, 
                 nn.ma = nn.ma, covar.ma = covar.ma, Vweight = Vweight.dfr, 
@@ -8459,8 +8290,6 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
                 f.plot.frq(ans.all.tmp)
                 lines((xx), yy.ma)
             }
-            if ("track" %in% ls(envir = .GlobalEnv)) 
-                print("f.ced.ma:   END 2")
             return(signif(Vced.ma, 4))
         }
     })
@@ -8469,8 +8298,6 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
 
 
 f.xx.ma <- function(ans.all, group, length.xx) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.xx.ma")
     ans.all$group <- group
     with(ans.all, {
         Vced <- numeric()
@@ -8504,8 +8331,6 @@ f.xx.ma <- function(ans.all, group, length.xx) {
         if (min(xx) != 0) {
             xx <- c(0, xx)
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.xx.ma:  END")
         return(xx)
     })
 }
@@ -8513,8 +8338,6 @@ f.xx.ma <- function(ans.all, group, length.xx) {
 
 
 f.prepare.boot <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.prepare.boot")
     ans.all.bt <- ans.all
     with(ans.all, {
         if (dtype %in% c(10, 15, 250, 260)) {
@@ -8594,8 +8417,6 @@ f.prepare.boot <- function(ans.all) {
             ans.all.bt$dtype <- 1
         if (dtype == 15) 
             ans.all.bt$dtype <- 5
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.prepare.boot  END")
         return(ans.all.bt)
     })
 }
@@ -8603,8 +8424,6 @@ f.prepare.boot <- function(ans.all) {
 
 
 f.gener.con <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.gener.con")
     with(ans.all, {
         noise <- numeric()
         df.corr <- length(x) - nrp
@@ -8629,8 +8448,6 @@ f.gener.con <- function(ans.all) {
         else if (dtype == 26 | dtype == 260) 
             y <- (sqrt(y.true) + (noise))^2
         else y <- y.true * exp(noise)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.gener.con:  END")
         return(y)
     })
 }
@@ -8638,8 +8455,6 @@ f.gener.con <- function(ans.all) {
 
 
 f.show.ma <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.show.ma")
     with(ans.all, {
         nl <- "\n"
         sp <- " "
@@ -8673,8 +8488,6 @@ f.show.ma <- function(ans.all) {
                   2], 2), signif(MA$conf.int[ii, 3]), sep = "  ")
             }
         }
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.show.ma: END")
         return(show)
     })
 }
@@ -8682,8 +8495,6 @@ f.show.ma <- function(ans.all) {
 
 
 f.mtext <- function(ans.all, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.mtext")
     modelname <- ans.all$modelname
     show <- ans.all$show
     if (ans.all$show != "") {
@@ -8707,8 +8518,6 @@ f.mtext <- function(ans.all, display_plots = TRUE) {
     else if (!ans.all$fitted && ans.all$heading == "") {
         title(main = "\nstarting values")
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.mtext:  END")
     return(invisible())
 }
 
@@ -8722,9 +8531,6 @@ f.boot.ma <- function(
   filename = NULL,
   output_type = NULL
 ) {
-  if ("track" %in% ls(envir = .GlobalEnv)) {
-    print("f.boot.ma")
-  }
   if (ans.all$seed.bt != 0) {
     set.seed(ans.all$seed.bt)
   }
@@ -8880,8 +8686,6 @@ f.boot.ma <- function(
         cat("\n\nATTENTION: \n        There are NAs in the vector of bootstrap CEDs, this indicates a problem in interpolation\n\n")
     if (WAPP) 
         dev.off()
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.boot.ma: END")
     return(ans.all)
   })
 }
@@ -8889,8 +8693,6 @@ f.boot.ma <- function(
 
 
 f.store.results <- function(ans.all, store.name = 0, add.ext = 0, interactive_mode = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.store.results")
     if (ans.all$quick.ans == 1) {
         ans.all$EXP <- NULL
         ans.all$HILL <- NULL
@@ -8959,8 +8761,6 @@ f.con <- function(ans.all,
                   add_nonzero_val_to_dat = FALSE,
                   nonzero_val = NULL,
                   detection_limit = NULL) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.con")
     f.assign(".Pr.last", ans.all)
     if (list.logic) {
         cat("\n You have chosen previous results concerning:   ")
@@ -9292,8 +9092,6 @@ f.con <- function(ans.all,
 
 
 f.nr.replicates <- function(ans.all) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.nr.replicates")
     with(ans.all, {
         if (length(xans) > 1) {
             x <- data.0[, xans[1]]
@@ -9331,8 +9129,6 @@ f.quick.con <- function(ans.all,
                         add_nonzero_val_to_dat = FALSE,
                         nonzero_val = NULL,
                         detection_limit = NULL) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.quick.con")
         message(paste0("indep_var_choice: ", indep_var_choice))
     if (ans.all$WAPP) {
         ans.all$gui <- TRUE
@@ -9893,8 +9689,6 @@ f.quick.con <- function(ans.all,
         }
         if (!gui) 
             ans.all$NES.ans <- 1
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.quick.con:  END")
         return(ans.all)
   })
 }
@@ -10524,8 +10318,6 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
 
 
 f.constr.con <- function(ans.all, tmp.quick = F) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.constr.con")
     ans.all$tmp.quick <- tmp.quick
     with(ans.all, {
         nr.aa <- max(fct1)
@@ -11082,8 +10874,6 @@ f.constr.con <- function(ans.all, tmp.quick = F) {
                     sep = "")
             }
         ans.all$text.par <- text.par
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.constr.con:  END")
         return(ans.all)
     })
 }
@@ -11810,8 +11600,6 @@ f.grubb <- function(ss = 25, alfa = 0.05) {
 
 
 f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.CI")
     with(ans.all, {
         if (quick.ans == 1) 
             ans.all$trace.plt <- T
@@ -11897,8 +11685,6 @@ f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
             if (cont) 
                 ans.all$show <- f.show.con(ans.all)
             else ans.all$show <- f.show.cat(ans.all)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.CI END")
         return(ans.all)
     })
 }
@@ -11906,8 +11692,6 @@ f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
 
 
 f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.profile.all")
     date.start <- date()
     with(ans.all, {
         if (debug) {
@@ -12656,8 +12440,6 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
         profile.out$CED.upp <- CED.upp
         profile.out$loglik.upp <- loglik.upp
         ans.all$boot <- FALSE
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("end of profile.all")
         return(profile.out)
     })
 }
@@ -12674,9 +12456,8 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' the plots or not.
 #' @param results_env environment
 #' @param output_type The format that you wish to export the plots as.
-#' @param filename Name of the file to import
-#' @param interactive_mode A logical variable that will determine if the session
-#' runs interactively or scripted
+#' @param filename The name of the file to be read.
+#' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
 #' @param record_plots A logical variable indicating whether you want to record
 #' the plots and return them as a list instead of exporting them. This parameter
 #' should only be used when running the function indenpently or within f.plot.result.
@@ -12692,9 +12473,6 @@ f.plot.gui <- function(
   interactive_mode = TRUE,
   record_plots = FALSE
 ) {
-  if ("track" %in% ls(envir = .GlobalEnv)) {
-    print("f.plot.gui")
-  }
   WAPP <- ans.all$WAPP
 
 # Record Plots: just overide some of the parameters. Hacky - can fix later
@@ -13065,8 +12843,6 @@ if (record_plots) {
           f.explain.marks(ans.all)
   if (WAPP)
       dev.off()
-  if ("track" %in% ls(envir = .GlobalEnv))
-      print("f.plot.gui:  END")
   if (interactive_mode == FALSE) {
     if (!is.null(results_env)) {
       if (length(ans.all$Vyans) > 1) {
@@ -13087,8 +12863,6 @@ if (record_plots) {
 
 
 f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.CI.sel")
     ans.all <- with(ans.all, {
         nr.aa <- max(fct1)
         nr.bb <- max(fct2)
@@ -13239,8 +13013,6 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 cat("\n\nNOTE: confidence intervals were stored in refit.tmp\n\n")
             }
         ans.all$CED <- signif(CED, 4)
-        if ("track" %in% ls(envir = .GlobalEnv)) 
-            print("f.CI.sel:  END")
         if (interactive_mode == FALSE) {
           if (length(ans.all$Vyans) > 1) {
             message("Vyans is greater than 1")
@@ -13259,8 +13031,6 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
 
 f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = NA, 
     logn.out = NA, TREND) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.CED.all")
     CED.matr <- CED.all$CED.matr
     endpoints <- CED.all$endpoints
     Mces <- CED.all$Mces
@@ -13376,8 +13146,6 @@ f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = 
     CED.all$Msd <- Msd
     Vtrend <- CED.all$Vtrend
     CED.all$Vtrend <- c(Vtrend, TREND)
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.CED.all:   END")
     return(CED.all)
 }
 
@@ -13391,8 +13159,6 @@ f.plot.CED <- function(ans.all,
                        svg.plots = FALSE,
                        display_plots = TRUE,
                        interactive_mode = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv))
-        print("f.plot.CED")
     data <- ans.all$CED.all
     covar.txt <- data$covar.txt
     nr.lev <- length(covar.txt)
@@ -13871,13 +13637,9 @@ f.plot.result <- function(
 
 
 f.remove.blanks <- function(vec) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.remove.blanks")
     LEVELS <- levels(as.factor(vec))
     LEVELS <- subset(LEVELS, LEVELS != "")
     vec <- factor(vec, level = LEVELS)
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.remove.blanks:   END")
     return(vec)
 }
 
@@ -13912,8 +13674,6 @@ f.explain.marks <- function(ans.all) {
 
 f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE, 
     ref = NA, rm.NAs = TRUE, display_plots = TRUE) {
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.plot.CI")
     no.hill <- FALSE
     if (ans.all$do.MA) {
         CI <- ans.all$MA$conf.int.ma
@@ -14122,9 +13882,10 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         }
         l.ty <- 1
     }
-    if ("track" %in% ls(envir = .GlobalEnv)) 
-        print("f.plot.CI  END")
     if (ans.all$WAPP) 
         dev.off()
     return(CI.matr)
 }
+
+
+
