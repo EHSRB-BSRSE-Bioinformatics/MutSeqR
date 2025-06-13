@@ -11,7 +11,6 @@ import_mut_data(
   sample_data = NULL,
   sd_sep = "\\t",
   regions = NULL,
-  custom_regions = NULL,
   rg_sep = "\\t",
   is_0_based_rg = TRUE,
   padding = 0,

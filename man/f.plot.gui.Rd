@@ -30,6 +30,10 @@ the plots or not.}
 
 \item{output_type}{The format that you wish to export the plots as.}
 
+\item{filename}{The name of the file}
+
+\item{interactive_mode}{Whether to run interactively or in batch mode}
+
 \item{record_plots}{A logical variable indicating whether you want to record
 the plots and return them as a list instead of exporting them. This parameter
 should only be used when running the function indenpently or within f.plot.result.
