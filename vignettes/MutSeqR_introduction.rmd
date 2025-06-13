@@ -1358,8 +1358,8 @@ DT::datatable(
 DT::datatable(
   model_by_dose$pairwise_comparisons,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
-      scrollX = TRUE,
       list(targets = c("p.value", "adj_p.value"),
         render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
       )
