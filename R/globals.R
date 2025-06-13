@@ -11,6 +11,6 @@ utils::globalVariables(
     "f.select.m46.con", "f.show.cat", "f.start.cat", "f.use.comma.for.decimal",
 
     # PROAST internal state variables
-    ".gw.size", ".Pr.last", ".ypos",
+    ".gw.size", ".Pr.last", ".ypos"
   )
 )
