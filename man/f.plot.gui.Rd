@@ -30,9 +30,9 @@ the plots or not.}
 
 \item{output_type}{The format that you wish to export the plots as.}
 
-\item{filename}{The name of the file}
+\item{filename}{The name of the file to be read.}
 
-\item{interactive_mode}{Whether to run interactively or in batch mode}
+\item{interactive_mode}{A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.}
 
 \item{record_plots}{A logical variable indicating whether you want to record
 the plots and return them as a list instead of exporting them. This parameter
