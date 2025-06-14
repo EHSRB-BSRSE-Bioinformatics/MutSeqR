@@ -286,7 +286,7 @@ plot_spectra <- function(mf_data,
         ggh4x::scale_x_dendrogram(hclust = hc, position = "top", labels = NULL,
         ) +
         theme(axis.ticks.length.x = unit(10, "pt"))
-      p <- bar_nonsnv / bar +
+      p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol=1) +
         patchwork::plot_layout(
           heights = c(1, 1, 1),
           axis_titles = "collect",
@@ -312,7 +312,7 @@ plot_spectra <- function(mf_data,
     }
   } else {
     if (do_panels) {
-      p <- bar_nonsnv / bar +
+      p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol = 1) +
         patchwork::plot_layout(
           heights = c(1, 1, 1),
           axis_titles = "collect",
