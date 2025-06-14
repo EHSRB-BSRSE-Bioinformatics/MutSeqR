@@ -5,4 +5,4 @@
 ^\.github$
 ^doc$
 ^Meta$
-^pdf$
+^.*\.pdf$
