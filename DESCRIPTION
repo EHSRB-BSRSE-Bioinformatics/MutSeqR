@@ -85,6 +85,7 @@ Suggests:
     fmsb,
     fs,
     GenVisR,
+    ggdendro,
     ggh4x,
     ggrepel,
     gtools,
