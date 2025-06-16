@@ -28,6 +28,7 @@
 #' sum of mutations in the mutation labels. Default is TRUE.
 #' @return A named list containing ggplots.
 #' @importFrom dplyr arrange group_by mutate summarise
+#' @importFrom stats setNames
 #' @import ggplot2
 #' @importFrom stringr str_extract str_c
 #' @details The function plots the trinucleotide spectrum for all levels of a

@@ -90,6 +90,7 @@
 #'                      add_labels = "none")
 #' @import ggplot2
 #' @importFrom dplyr across all_of arrange rename group_by summarize
+#' @importFrom stats sd setNames
 #' @export
 
 plot_mean_mf <- function(mf_data,

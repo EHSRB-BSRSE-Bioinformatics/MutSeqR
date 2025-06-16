@@ -15,6 +15,7 @@
 #' If TRUE, positions will be converted to 1-based (start + 1).
 #' Need not be supplied for TSpanels. Default is TRUE.
 #' @returns a GRanges object of the imported regions metadata file.
+#' @importFrom methods is
 #' @export
 
 load_regions_file <- function(regions,
