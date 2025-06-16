@@ -199,7 +199,8 @@ example_data <- readRDS(example_file)
 # Calculate depth from the mutation data
 mf_example <- calculate_mf(mutation_data = example_data,
                            cols_to_group = "sample")
-# Example 2: Calculate the trinucleotide mutation proportions for each dose - TODO - Add correct_depth parameter to examples!
+# Example 2: Calculate the trinucleotide mutation proportions for each dose 
+# TODO - Add correct_depth parameter to examples!
 mf_96_example <- calculate_mf(mutation_data = example_data,
                               cols_to_group = "dose",
                               subtype_resolution = "base_96",

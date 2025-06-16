@@ -9,7 +9,7 @@ f.plot.gui(
   HTML = FALSE,
   model.summ = TRUE,
   display_plots = TRUE,
-  results_env = NULL,
+  .proast_env = NULL,
   output_type = NULL,
   filename = NULL,
   interactive_mode = TRUE,
@@ -21,12 +21,12 @@ f.plot.gui(
 
 \item{HTML}{Keep FALSE}
 
-\item{model.summ}{Keep it TRUE}
+\item{model.summ}{Keep TRUE}
 
 \item{display_plots}{A logical variable - whether we want to display
 the plots or not.}
 
-\item{results_env}{environment}
+\item{.proast_env}{environment}
 
 \item{output_type}{The format that you wish to export the plots as.}
 

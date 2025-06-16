@@ -6,3 +6,6 @@
 ^doc$
 ^Meta$
 ^.*\.pdf$
+^pkgdown$
+^docs$
+^_pkgdown\.yml$
