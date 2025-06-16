@@ -58,6 +58,8 @@
 #' \url{https://colorbrewer2.org/}. Default is `NULL`.
 #' @param x_lab The label for the x-axis. Default is the value of `group_col`.
 #' @param y_lab The label for the y-axis. Default is the value of `response_col`.
+#' @param rotate_xlabs A logical value indicating whether the x-axis labels
+#' should be rotated 90 degrees. Default is FALSE.
 #' @import ggplot2
 #' @importFrom dplyr select arrange across all_of
 #' @export
@@ -107,15 +109,16 @@ plot_spectra <- function(mf_data,
                          cluster_method = "ward.D",
                          custom_palette = NULL,
                          x_lab = NULL,
-                         y_lab = NULL) {
+                         y_lab = NULL,
+                         rotate_xlabs = FALSE) {
 
   # check package dependencies
+  if (!requireNamespace("patchwork", quietly = TRUE)) {
+      stop("Package patchwork is required. Please install the package using 'install.packages('patchwork')'")
+  }
   if (group_order == "clustered") {
     if (!requireNamespace("ggh4x", quietly = TRUE)) {
       stop("Package ggh4x is required when using the 'clustered' group_order option. Please install the package using 'install.packages('ggh4x')'")
-    }
-    if (!requireNamespace("patchwork", quietly = TRUE)) {
-      stop("Package patchwork is required when using the 'clustered' group_order option. Please install the package using 'install.packages('patchwork')'")
     }
   } else if (group_order == "smart") {
     if (!requireNamespace("gtools", quietly = TRUE)) {
@@ -123,7 +126,7 @@ plot_spectra <- function(mf_data,
     }
   }
   if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
-    stop("Package RColorBrewer is required for generating the default color palette. Please install the package using 'install.packages('RColorBrewer')'")
+    stop("Package RColorBrewer is required. Please install the package using 'install.packages('RColorBrewer')'")
   }
   # Desginate the response column
   if (response == "proportion") {
@@ -235,13 +238,21 @@ plot_spectra <- function(mf_data,
   }
   axis_labels <- ggplot2::labs(x = x_lab, y = y_lab)
 
+  if (rotate_xlabs) {
+    angle <- 90
+  } else {
+    angle <- 0
+  }
+
   # Separate SNVs and NON-SNVs
   if (subtype_resolution != "type") {
     do_panels <- any(MutSeqR::subtype_list$type %in% plot_data$subtype)
     if (do_panels) {
       plot_data <- dplyr::mutate(
         plot_data,
-        subtype_class = ifelse(subtype %in% MutSeqR::subtype_list$type, "non-snv", "snv")
+        subtype_class = ifelse(subtype %in% MutSeqR::subtype_list$type,
+          "non-snv", "snv"
+        )
       )
       plot_data_nonsnv <- dplyr::filter(plot_data, subtype_class == "non-snv")
       plot_data <- dplyr::filter(plot_data, subtype_class == "snv")
@@ -256,13 +267,22 @@ plot_spectra <- function(mf_data,
         theme_minimal() +
         theme(
           legend.position = "right",
-          axis.text.x = element_text(angle = 90)
+          axis.text.x = element_text(angle = angle),
+          axis.line.y = element_line(color = "gray"),
+          axis.line.x.bottom = element_line(color = "black"),
+          axis.line.x.top = element_blank(),
+          axis.ticks.y = element_line(color = "gray"),
+          panel.grid = element_blank()
         ) +
         scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
-        labs(y = y_lab)
+        labs(y = y_lab, fill = "Non-SNV Subtype")
+      legend_title <- "SNV Subtype"
+    } else {
+      legend_title <- "SNV Subtype"
     }
   } else {
     do_panels <- FALSE
+    legend_title <- "Variation Type"
   }
 
   # Plot main data
@@ -275,9 +295,15 @@ plot_spectra <- function(mf_data,
     theme_minimal() +
     theme(
       legend.position = "right",
-      axis.text.x = element_text(angle = 90)
+      axis.text.x = element_text(angle = angle),
+      axis.line.y = element_line(color = "gray"),
+      axis.line.x.bottom = element_line(color = "black"),
+      axis.line.x.top = element_blank(),
+      axis.ticks.y = element_line(color = "gray"),
+      panel.grid = element_blank()
     ) +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.01)))
+    scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
+    labs(fill = legend_title)
 
   # Plot dendrogram
   if (group_order == "clustered") {
@@ -302,7 +328,7 @@ plot_spectra <- function(mf_data,
       x_axis <- ggplot(plot_data, aes(x = .data$group)) +
         theme_minimal() +
         labs(x = x_lab) +
-        theme(axis.text.x = element_text(angle = 90),
+        theme(axis.text.x = element_text(angle = angle),
               axis.ticks.length = unit(0.1, "cm"))
 
       layout <- c(patchwork::area(t = 1, l = 1, b = 1, r = 1),

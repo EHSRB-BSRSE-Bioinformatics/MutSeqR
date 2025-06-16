@@ -73,8 +73,8 @@ subtype_dict <- c(
 #' @format A list with corresponding values
 #' @export
 subtype_list <- list(
-  type = c("no_variant", "snv", "deletion", "insertion", "complex", "mnv",
-           "sv", "ambiguous", "uncategorized"),
+  type = c("ambiguous", "complex", "deletion", "insertion",
+           "mnv", "no_variant", "sv", "snv", "uncategorized"),
   base_6 = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"),
   base_12 = c("A>C", "A>G", "A>T", "C>A", "C>G", "C>T",
               "G>A", "G>C", "G>T", "T>A", "T>C", "T>G"),
