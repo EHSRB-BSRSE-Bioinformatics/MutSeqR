@@ -9932,8 +9932,6 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
             }
             if (par4 <= 1) print(c("f.expect.con, value of BMD-ratio:", 
                 par4))
-            dd <- f.uniroot.BMDratio(ratio = par4, cc = cc0, 
-                CES1 = CES1, CES2 = CES2)
             y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-(x/bb0)^dd))
             if (is.na(dd)) y.expect <- rep(0, length(x))
         }, {
