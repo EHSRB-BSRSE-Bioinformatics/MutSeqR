@@ -58,7 +58,7 @@ if (requireNamespace("dplyr", quietly = TRUE) &&
   )
 
   # 2. Generate the plots
-  plot_list <- lollipop_ggplot(mutations = mutations_df, min_recurrence = 2)
+  plot_list <- plot_lollipop(mutations = mutations_df, min_recurrence = 2)
 
   # 3. Display a plot for a specific chromosome
   # print(plot_list$chr1)
