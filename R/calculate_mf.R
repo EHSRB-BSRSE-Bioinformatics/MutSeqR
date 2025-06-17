@@ -66,6 +66,22 @@
 #' Default includes all variants. For `calculate_depth = TRUE`: Regardless of
 #' whether or not a variant is included in the mutation counts, the total_depth
 #' for that position will be counted.
+#' @param correct_depth A logical value. If TRUE, the function will correct the
+#' \code{total_depth} column in \code{mutation_data} in order to prevent
+#' double-counting the \code{total_depth} values for the same genomic position.
+#' For rows with the same sample contig, and start values, the \code{total_depth}
+#' will be retained for only one row. All other rows in the group will have their
+#' \code{total_depth} set to 0. The default is FALSE
+#' @param correct_depth_by_indel_priority A logical value. If TRUE, during depth
+#' correction, should there be different \code{total_depth} values within a
+#' group of rows with the same sample, contig, and start values, the
+#' \code{total_depth} value for the row with the highest priority
+#' \code{variation_type} will be retained, while the other rows will have their
+#' \code{total_depth} set to 0. \code{variation_type} priority order is:
+#' deletion, complex, insertion, snv, mnv, sv, uncategorised, ambiguous, no_variant.
+#' If FALSE, the \code{total_depth} value for the first row in the group will
+#' be retained, while the other rows will have their \code{total_depth} set to
+#' 0. The default is TRUE.
 #' @param calculate_depth A logical variable, whether to calculate the
 #' per-group total_depth from the mutation data. If set to TRUE, the mutation
 #' data must contain a total_depth value for every sequenced base (including
@@ -126,6 +142,17 @@
 #' is not "none". If no depth is calculated or provided, proportion is
 #' calculated without normalization to the depth.
 #' }
+#' @details
+#' Depth correction is important for preventing double-counting of reads in
+#' mutation data when summing the total_depth across samples or other groups.
+#' Generally, when several mutations have been detected at the same genomic
+#' position, within a sample, the total_depth value will be the same for all of
+#' them. However, in some datasets, whenever a deletion is detected, the data
+#' may contain an additional row with the same genomic position calling a
+#' "no_variant". The total_depth will differ between the deletion and the
+#' no_variant. In these cases, correct_depth_by_indel_priority == TRUE will ensure that
+#' the total_depth value for the deletion is retained, while the total_depth
+#' value for the no_variant is removed.
 #' @examples
 #' # Load example data
 #' example_file <- system.file("extdata", "Example_files",
@@ -137,7 +164,8 @@
 #' # Calculate depth from the mutation data
 #' mf_example <- calculate_mf(mutation_data = example_data,
 #'                            cols_to_group = "sample")
-#' # Example 2: Calculate the trinucleotide mutation proportions for each dose
+#' # Example 2: Calculate the trinucleotide mutation proportions for each dose 
+#' # TODO - Add correct_depth parameter to examples!
 #' mf_96_example <- calculate_mf(mutation_data = example_data,
 #'                               cols_to_group = "dose",
 #'                               subtype_resolution = "base_96",
@@ -218,7 +246,8 @@
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
 #' select distinct ungroup
 #' @importFrom magrittr %>%
-#' @importFrom rlang := .data
+#' @importFrom data.table :=
+#' @importFrom rlang .data
 #' @importFrom utils modifyList
 #' @importFrom stats na.omit
 #' @export
@@ -235,6 +264,8 @@ calculate_mf <- function(mutation_data,
                                            "ambiguous",
                                            "uncategorized"),
                          calculate_depth = TRUE,
+                         correct_depth = TRUE,
+                         correct_depth_by_indel_priority = FALSE,
                          precalc_depth_data = NULL,
                          d_sep = "\t",
                          summary = TRUE,
@@ -289,6 +320,34 @@ calculate_mf <- function(mutation_data,
   if (!is.null(retain_metadata_cols) && !is.character(retain_metadata_cols)) {
     stop("retain_metadata_cols must be a character vector.")
   }
+
+  if (calculate_depth && correct_depth) {
+    if (!"total_depth" %in% colnames(mutation_data)) {
+      stop("Error: `correct_depth` is TRUE but 'total_depth' column not found in mutation_data.")
+    }
+
+    message("Performing internal depth correction to prevent double-counting...")
+    dt <- data.table::as.data.table(mutation_data)
+
+    if (correct_depth_by_indel_priority) {
+      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv", "sv", "uncategorized", "ambiguous", "no_variant")
+      dt[, priority_order := factor(variation_type, levels = variation_priority, ordered = TRUE)]
+      dt[, total_depth := {
+        group_order <- order(priority_order, na.last = TRUE)
+        corrected_depths <- rep(0, .N)
+        corrected_depths[group_order[1]] <- total_depth[group_order[1]]
+        corrected_depths
+      }, by = .(sample, contig, start)]
+      dt[, priority_order := NULL]
+    } else {
+      dt[, total_depth := c(total_depth[1], rep(0, .N - 1)), by = .(sample, contig, start)]
+    }
+    
+    # Overwrite the input data frame with the corrected version
+    mutation_data <- as.data.frame(dt)
+    message("Internal depth correction complete.")
+  }
+
   # Rename columns in mutation_data to default
   mutation_data <- MutSeqR::rename_columns(mutation_data)
   # Check for all required columns
@@ -451,13 +510,13 @@ calculate_mf <- function(mutation_data,
     # Do not depend on the data to have all the possible context rows; we will grab from set list in context_list
     # Missing data will be 0s eventually.
     if (subtype_resolution %in% c("base_6", "base_12", "base_96", "base_192")) {
-      context_rows_snv <- context_list[[subtype_resolution]] ### TO DO: ADD back in MutSeqR::
+      context_rows_snv <- MutSeqR::context_list[[subtype_resolution]]
       context_rows_snv <- tidyr::expand_grid(group_df, !!paste(MutSeqR::denominator_dict[[subtype_resolution]]) := context_rows_snv)
 
-      depth_df <- left_join(context_rows_snv, depth_df, by = denominator_groups)
+      depth_df <- dplyr::left_join(context_rows_snv, depth_df, by = denominator_groups)
 
       # re-extract the group depth seperately, to make sure we have a complete list of all groups
-      # Do no depend on extracting all group x context combinations from the data as we may end up missing some groups
+      # Do not depend on extracting all group x context combinations from the data as we may end up missing some groups
       depth_df <- dplyr::select(depth_df, -"group_depth")
       group_depth_df <- mut_freq_table %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(cols_to_group))) %>%
@@ -604,3 +663,4 @@ calculate_mf <- function(mutation_data,
     return(summary_table)
   }
 }
+

@@ -236,19 +236,19 @@ plot_trinucleotide_heatmap <- function(mf_data,
   }
   df <- dplyr::rename(df, Group = dplyr::all_of(group_col))
   # General figure, no facetting
-  fig <- ggplot(df, aes(x = x_variable,
+  fig <- ggplot2::ggplot(df, aes(x = x_variable,
                         y = Group,
                         fill = ProportionPlot)) +
-                geom_raster() +
-                scale_fill_viridis_c(
+                ggplot2::geom_raster() +
+                ggplot2::scale_fill_viridis_c(
                   name = "Relative proportion", limits = c(0, max),
                   option = mut_proportion_scale,
                   na.value = "white") +
-                theme_minimal() +
-                labs(x = x_label, y = y_label) +
-                theme(axis.text.y = element_text(size = 6),
-                      axis.text.x = element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
-                      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                ggplot2::theme_minimal() +
+                ggplot2::labs(x = x_label, y = y_label) +
+                ggplot2::theme(axis.text.y = ggplot2::element_text(size = 6),
+                      axis.text.x = ggplot2::element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
+                      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
                       panel.spacing.x = unit(spacing, "lines"),
                       panel.spacing.y = unit(spacing, "lines")
   )
@@ -258,21 +258,21 @@ plot_trinucleotide_heatmap <- function(mf_data,
   # facet none : plot_context == FALSE & is.null(facet_col)
   if (plot_context && is.null(facet_col)) {
     figfx <- fig +
-      facet_grid(cols = vars(subtype_labels), scales = "free_x",
+      ggplot2::facet_grid(cols = vars(subtype_labels), scales = "free_x",
                  labeller = labeller(subtype_labels = facet_labs_x)) +
-      theme(strip.text = element_text(size = 8))
+      ggplot2::theme(strip.text = ggplot2::element_text(size = 8))
     return(figfx)
   } else if (plot_context == FALSE & !is.null(facet_col)) {
     figfy <- fig +
-      facet_grid(rows = vars(Facet), scales = "free_y",
+      ggplot2::facet_grid(rows = vars(Facet), scales = "free_y",
                  labeller = labeller(Facet = facet_labs_y)) +
-      theme(strip.text = element_text(size = 8))
+      ggplot2::theme(strip.text = ggplot2::element_text(size = 8))
     return(figfy)
   } else if (plot_context & !is.null(facet_col)) {
     figfxy <- fig +
-      facet_grid(Facet ~ subtype_labels, scales = "free",
+      ggplot2::facet_grid(Facet ~ subtype_labels, scales = "free",
                  labeller = labeller(Facet = facet_labs_y, subtype_labels = facet_labs_x)) +
-      theme(strip.text = element_text(size = 8))
+      ggplot2::theme(strip.text = ggplot2::element_text(size = 8))
     return(figfxy)
   } else {
     return(fig)

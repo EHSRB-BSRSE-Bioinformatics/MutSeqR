@@ -84,7 +84,7 @@ signature_fitting <- function(mutation_data,
           be aware of the implications of this. For advanced use, it is
           suggested to use the SigProfiler python tools directly in python as
           described in their respective documentation.")
-
+  setup_mutseqr_python(force = FALSE)
   installed_envs <- reticulate::virtualenv_list()
   # Check if MutSeqR virtualenv already exists
   if (env_name %in% installed_envs) {
@@ -121,7 +121,7 @@ signature_fitting <- function(mutation_data,
   SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file("extdata", "signatures.py",
                                         package = "MutSeqR")
-  reticulate::source_python(signatures_python_code)
+  sig_py <- reticulate::source_python(signatures_python_code, envir = new.env())
 
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...
@@ -210,7 +210,7 @@ signature_data <- signature_data %>%
     )
 
   message("Running COSMIC fitting...")
-  cosmic_fit_MutSeqR(
+  sig_py$cosmic_fit_MutSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",
                         paste0(project_name, ".SBS96.all")),
     output = file.path(output_path, "matrices", "output"),

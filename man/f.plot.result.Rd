@@ -14,7 +14,7 @@ f.plot.result(
 }
 \arguments{
 \item{proast_results_list}{The raw results list. This is the output of
-f.proast [\link{1}]}
+\code{\link{f.proast}}}
 
 \item{output_path}{The file path to the output directory. If the output_path
 is NULL, it will save it to the working directory. If the output_path

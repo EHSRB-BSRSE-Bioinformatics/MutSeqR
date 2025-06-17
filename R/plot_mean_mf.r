@@ -64,6 +64,9 @@
 #' Mean/Individual values will be the same colour, different shades.
 #' @param plot_legend Logical. Whether to show the fill (and color) legend.
 #' Default is TRUE.
+#' @param rotate_labels A logical value indicating whether data labels should
+#' be rotated 90 degrees. Default is FALSE.
+#' @param label_size A numeric value that controls the size of the data labels.
 #' @return a ggplot object
 #' @examples
 #' example_file <- system.file("extdata", "Example_files",
@@ -87,6 +90,7 @@
 #'                      add_labels = "none")
 #' @import ggplot2
 #' @importFrom dplyr across all_of arrange rename group_by summarize
+#' @importFrom stats sd setNames
 #' @export
 
 plot_mean_mf <- function(mf_data,
@@ -104,7 +108,9 @@ plot_mean_mf <- function(mf_data,
                          y_lab = NULL,
                          plot_title = NULL,
                          custom_palette = NULL,
-                         plot_legend = TRUE) {
+                         plot_legend = TRUE,
+                         rotate_labels = FALSE,
+                         label_size = 3) {
   # load required packages
   if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
       stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
@@ -186,10 +192,10 @@ plot_mean_mf <- function(mf_data,
     dplyr::group_by(.data$group_col, .data$fill_col) %>%
     dplyr::summarize(
       min_Mean = mean(.data$mf_min, na.rm = TRUE),
-      min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(n()),
+      min_SE = sd(.data$mf_min, na.rm = TRUE) / sqrt(dplyr::n()),
       min_sum_mean = mean(.data$sum_min, na.rm = TRUE),
       max_Mean = mean(.data$mf_max, na.rm = TRUE),
-      max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(n()),
+      max_SE = sd(.data$mf_max, na.rm = TRUE) / sqrt(dplyr::n()),
       max_sum_mean = mean(.data$sum_max, na.rm = TRUE),
       .groups = "drop"
     )
@@ -485,13 +491,20 @@ plot_mean_mf <- function(mf_data,
   }
 
   if (add_labels %in% c("indiv_count", "indiv_MF")) {
+    # label parameters
+    if (rotate_labels) {
+      label_angle <- 90
+    } else {
+      label_angle <- 0
+    }
     labels <- ggrepel::geom_text_repel(
       data = indiv_data,
       ggplot2::aes(x = indiv_data$group_col,
-                  y = indiv_data$mf_col,
-                  label = label,
-                  color = indiv_data$indiv_fill_col),
-      size = 2,
+                   y = indiv_data$mf_col,
+                   label = label,
+                   color = indiv_data$indiv_fill_col),
+      size = label_size,
+      angle = label_angle,
       position = indiv_label_position,
       max.overlaps = Inf,
       inherit.aes = FALSE
@@ -510,15 +523,27 @@ plot_mean_mf <- function(mf_data,
         label_position = mean_data$label_position + mean_data$SE
       )
     }
+    # Set label params
+    if (rotate_labels) {
+      label_angle <- 90
+      vjust <- 0.5
+      hjust <- -0.5
+    } else {
+      label_angle <- 0
+      vjust <- -0.5
+      hjust <- 0.5
+    }
     labels <- ggplot2::geom_text(
       data = mean_data,
       ggplot2::aes(x = mean_data$group_col,
-                  y = mean_data$label_position,
-                  label = label,
-                  group = interaction(mean_data$group_col, mean_data$mean_fill_col)),
+                   y = mean_data$label_position,
+                   label = label,
+                   group = interaction(mean_data$group_col, mean_data$mean_fill_col)),
       position = mean_label_position,
-      vjust = -0.5,
-      size = 4,
+      vjust = vjust,
+      hjust = hjust,
+      angle = label_angle,
+      size = label_size,
       color = "black"
     )
   } else {

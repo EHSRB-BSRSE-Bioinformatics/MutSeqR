@@ -3,3 +3,9 @@
 ^\.Rproj\.user$
 ^data-raw$
 ^\.github$
+^doc$
+^Meta$
+^.*\.pdf$
+^pkgdown$
+^docs$
+^_pkgdown\.yml$

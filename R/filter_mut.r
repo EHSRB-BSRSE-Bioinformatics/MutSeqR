@@ -7,23 +7,7 @@
 #' filters. To reset previous filters, set the filter_mut column values to
 #' FALSE.
 #' @param mutation_data Your mutation data.
-#' @param correct_depth A logical value. If TRUE, the function will correct the
-#' \code{total_depth} column in \code{mutation_data} in order to prevent
-#' double-counting the \code{total_depth} values for the same genomic position.
-#' For rows with the same sample contig, and start values, the \code{total_depth}
-#' will be retained for only one row. All other rows in the group will have their
-#' \code{total_depth} set to 0. The default is FALSE
-#' @param correct_depth_to_indel A logical value. If TRUE, during depth
-#' correction, should there be different \code{total_depth} values within a
-#' group of rows with the same sample, contig, and start values, the
-#' \code{total_depth} value for the row with the highest priority
-#' \code{variation_type} will be retained, while the other rows will have their
-#' \code{total_depth} set to 0. \code{variation_type} priority order is:
-#' deletion, complex, insertion, snv, mnv, sv, uncategorised, no_variant.
-#' If FALSE, the \code{total_depth} value for the first row in the group will
-#' be retained, while the other rows will have their \code{total_depth} set to
-#' 0. The default is TRUE.
-#'@param vaf_cutoff Filter out ostensibly germline variants using a cutoff for
+#' @param vaf_cutoff Filter out ostensibly germline variants using a cutoff for
 #' variant allele fraction (VAF). Any variant with a \code{vaf} larger than
 #' the cutoff will be filtered. The default is 1 (no filtering). It is
 #' recommended to use a value of 0.01 (i.e. 1%) to retain only somatic
@@ -70,7 +54,7 @@
 #' be included in the filter. If FALSE, only rows that start and end within the
 #' \code{regions} will be included in the filter. Default is FALSE.
 #' @param rg_sep The delimiter for importing the custom_regions. The default is
-#' tab-delimited "\t".
+#' tab-delimited "\\t".
 #' @param is_0_based_rg A logical variable. Indicates whether the position
 #' coordinates in `regions` are 0 based (TRUE) or 1 based (FALSE).
 #' If TRUE, positions will be converted to 1-based (start + 1).
@@ -88,17 +72,6 @@
 #' removed/flagged in a seperate data frame. The two dataframes will be
 #' returned inside a list, with names \code{mutation_data} and
 #' \code{filtered_rows}. Default is FALSE.
-#' @details
-#' Depth correction is important for preventing double-counting of reads in
-#' mutation data when summing the total_depth across samples or other groups.
-#' Generally, when several mutations have been detected at the same genomic
-#' position, within a sample, the total_depth value will be the same for all of
-#' them. However, in some datasets, whenever a deletion is detected, the data
-#' may contain an additional row with the same genomic position calling a
-#' "no_variant". The total_depth will differ between the deletion and the
-#' no_variant. In these cases, correct_depth_to_indel == TRUE will ensure that
-#' the total_depth value for the deletion is retained, while the total_depth
-#' value for the no_variant is removed.
 #' @examples
 #' # Load example data
 #' example_file <- system.file("extdata", "Example_files",
@@ -108,18 +81,15 @@
 #' # Filter the data
 #' # Basic Usage: correct the depth and filter out germline variants
 #' filter_example_1 <- filter_mut(mutation_data = example_data,
-#'                                correct_depth = TRUE,
 #'                                vaf_cutoff = 0.01)
 #' # Remove rows outside of the TwinStand Mouse Mutagenesis Panel regions
 #' filter_example_2 <- filter_mut(mutation_data = example_data,
-#'                                correct_depth = TRUE,
 #'                                vaf_cutoff = 0.01,
 #'                                regions = "TSpanel_mouse",
 #'                                regions_filter = "keep_within")
 #' # Apply a custom filter to flag rows with "EndRepairFillInArtifact"
 #' # in the column 'filter'
 #' filter_example_3 <- filter_mut(mutation_data = example_data,
-#'                                correct_depth = TRUE,
 #'                                vaf_cutoff = 0.01,
 #'                                regions = "TSpanel_mouse",
 #'                                regions_filter = "keep_within",
@@ -130,7 +100,6 @@
 #' # Subtract the alt_depth of these variants from their total_depth (treat them as N-calls).
 #' # Return all the flagged/removed rows in a seperate data frame
 #' filter_example_4 <- filter_mut(mutation_data = example_data,
-#'                                correct_depth = TRUE,
 #'                                vaf_cutoff = 0.01,
 #'                                regions = "TSpanel_mouse",
 #'                                regions_filter = "keep_within",
@@ -162,8 +131,6 @@
 #' @importFrom plyranges join_overlap_left_directed join_overlap_left_within_directed
 #' @export
 filter_mut <- function(mutation_data,
-                       correct_depth = FALSE,
-                       correct_depth_to_indel = TRUE,
                        vaf_cutoff = 1,
                        snv_in_germ_mnv = FALSE,
                        # SNV GERM INDELS by 10bp
@@ -237,23 +204,40 @@ filter_mut <- function(mutation_data,
 
       hits_indices <- integer(0)
 
-      for (sample_name in unique(mutation_data$sample)) {
-        snv_subset <- mutation_data %>%
-          dplyr::filter(.data$sample == sample_name, .data$variation_type == "snv")
-        germ_mnv_subset <- mnv_ranges %>%
-          dplyr::filter(.data$sample == sample_name)
-        snv_gr <- GenomicRanges::makeGRangesFromDataFrame(snv_subset,
-                                                          seqnames.field = "contig",
-                                                          keep.extra.columns = TRUE)
-        germ_mnv_gr <- GenomicRanges::makeGRangesFromDataFrame(germ_mnv_subset,
-                                                               seqnames.field = "contig",
-                                                               keep.extra.columns = TRUE)
-        overlaps <- GenomicRanges::findOverlaps(query = snv_gr, subject = germ_mnv_gr)
-        hits <- S4Vectors::queryHits(overlaps)
-        hits_indices <- c(hits_indices, which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")[hits])
-      }
+      # Only proceed if there are any germline MNVs to check against
+      if (nrow(mnv_ranges) > 0) {
+          for (sample_name in unique(mutation_data$sample)) {
+            snv_subset <- mutation_data %>%
+              dplyr::filter(.data$sample == sample_name, .data$variation_type == "snv")
+            germ_mnv_subset <- mnv_ranges %>%
+              dplyr::filter(.data$sample == sample_name)
+
+            # If there are no SNVs or no germline MNVs for this sample, skip to the next
+            if (nrow(snv_subset) == 0 || nrow(germ_mnv_subset) == 0) {
+              next
+            }
+            snv_gr <- GenomicRanges::makeGRangesFromDataFrame(snv_subset,
+                                                              seqnames.field = "contig",
+                                                              keep.extra.columns = TRUE)
+            germ_mnv_gr <- GenomicRanges::makeGRangesFromDataFrame(germ_mnv_subset,
+                                                                   seqnames.field = "contig",
+                                                                   keep.extra.columns = TRUE)
+            overlaps <- GenomicRanges::findOverlaps(query = snv_gr, subject = germ_mnv_gr)
+            hits <- S4Vectors::queryHits(overlaps)
+
+            # Ensure 'hits' is not empty before using it as an index
+            if (length(hits) > 0) {
+                 original_indices <- which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")
+                 hits_indices <- c(hits_indices, original_indices[hits])
+            }
+          }
+      } # end of if(nrow(mnv_ranges) > 0)
       mutation_data$snv_in_germ_mnv <- FALSE
-      mutation_data$snv_in_germ_mnv[hits_indices] <- TRUE
+      # Check if hits_indices has any values before trying to index
+      if(length(hits_indices) > 0) {
+          mutation_data$snv_in_germ_mnv[hits_indices] <- TRUE
+      }
+
       mutation_data <- mutation_data %>%
         dplyr::mutate(filter_mut = ifelse(.data$snv_in_germ_mnv == TRUE,
                                           TRUE, .data$filter_mut),
@@ -358,7 +342,8 @@ filter_mut <- function(mutation_data,
     }
     mutation_data <- as.data.frame(ranges_joined)
     mutation_data$TO_REMOVE_in_regions[is.na(mutation_data$TO_REMOVE_in_regions)] <- FALSE
-    mutation_data <- dplyr::rename(mutation_data, contig = seqnames)
+    mutation_data <- mutation_data %>%
+      dplyr::rename(contig = seqnames)
     original_row_count <- nrow(mutation_data)
     if (regions_filter == "remove_within") {
       if (return_filtered_rows) {
@@ -392,48 +377,6 @@ filter_mut <- function(mutation_data,
     message("Removed ", region_filtered_count, " rows based on regions.")
   }
 
-  ######## Depth Correction ###################################################
-  if (correct_depth) {
-    if (!("total_depth" %in% colnames(mutation_data))) {
-      stop("Error: You have set correct_depth to TRUE but there is no
-      'total_depth' column in your mutation_data.")
-    }
-    message("Correcting depth...")
-    if (correct_depth_to_indel) {
-
-      # priority list for variation types
-      variation_priority <- c("deletion", "complex", "insertion", "snv", "mnv",
-                              "sv", "uncategorized", "no_variant")
-
-      # Step 1: Identify the highest priority type for each unique group
-      priority_data <- mutation_data %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::reframe(
-          all_depths_same = dplyr::n_distinct(.data$total_depth) == 1,
-          highest_priority_type = variation_type[which.min(match(variation_type, variation_priority))])
-      # Step 2: Join back to the original data for efficient updates
-      mutation_data <- mutation_data %>%
-        dplyr::left_join(priority_data, by = c("sample", "contig", "start")) %>%
-        dplyr::group_by(sample, contig, start) %>%
-        dplyr::mutate(first_row = dplyr::row_number() == 1) %>%
-        dplyr::ungroup() %>%
-        dplyr::mutate(total_depth = dplyr::case_when(
-                        all_depths_same ~ dplyr::if_else(first_row, total_depth, 0),
-                        variation_type == highest_priority_type ~ total_depth,
-                        TRUE ~ 0)) %>%
-        dplyr::select(-"all_depths_same",
-                      -"highest_priority_type",
-                      -"first_row")
-    } else {
-      mutation_data <- mutation_data %>%
-        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-        dplyr::mutate(
-          total_depth = dplyr::if_else(row_number() == 1, .data$total_depth, 0)) %>%
-        dplyr::ungroup()
-    }
-    corrected_depth_count <- sum(mutation_data$total_depth == 0)
-    message(corrected_depth_count, " rows had their total_depth corrected.")
-  }
   if (rm_filtered_mut_from_depth) {
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%

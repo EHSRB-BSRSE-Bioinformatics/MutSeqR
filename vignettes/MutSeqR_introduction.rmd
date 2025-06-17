@@ -226,7 +226,7 @@ imported_example_data <- import_vcf_data(
 **Data Table 1.** Mutation data imported from VCF for sample dna00996.1. Displays the first 6 rows.
 
 ```{r import-vcf-table, echo=FALSE}
-DT::datatable(head(imported_example_data))
+DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
 ### Tabular
@@ -265,7 +265,7 @@ imported_example_data <- import_mut_data(
 **Data Table 2.** Mutation data imported from a data.frame object for sample dna00996.1. Displays the first 6 rows.
 
 ```{r import-mut-table, echo=FALSE}
-DT::datatable(head(imported_example_data))
+DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
 ## Region Metadata
@@ -309,7 +309,7 @@ targets. Displays the first 6 rows. Added columns are 'target_size',
 'label', 'genic_context', 'region_GC_content', 'genome', and 'in_regions'.
 
 ```{r import-mut-table-rg, echo=FALSE}
-DT::datatable(head(imported_example_data))
+DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
 Users can load the example TwinStrand Mutagenesis Panels with load_regions().
@@ -370,7 +370,7 @@ names. Displays the first 6 rows. Custom column names are changed to default
 values.
 
 ```{r import-mut-cust-table, echo=FALSE}
-DT::datatable(head(imported_example_data_custom))
+DT::datatable(head(imported_example_data_custom), options = list(scrollX = TRUE))
 ```
 
 ## Output
@@ -542,7 +542,6 @@ example_data <- readRDS(example_file)
 # Filter
 filtered_example_mutation_data <- filter_mut(
   mutation_data = example_data,
-  correct_depth = TRUE,
   vaf_cutoff = 0.01,
   regions = "TSpanel_mouse",
   regions_filter = "keep_within",
@@ -561,7 +560,7 @@ variants that were flagged during filtering.
 ```{r filter-mut-table, echo=FALSE}
 filter_table <- filtered_example_mutation_data %>%
   dplyr::filter(filter_mut == TRUE)
-DT::datatable(head(filter_table))
+DT::datatable(head(filter_table), options = list(scrollX = TRUE))
 ```
 
 # Calculating MF
@@ -703,7 +702,7 @@ mf_data_global <- calculate_mf(
 mean_mf <- mf_data_global %>%
   dplyr::group_by(dose_group) %>%
   dplyr::summarise(mean_mf_min = mean(mf_min),
-                   SE = sd(mf_min) / sqrt(n()))
+                   SE = sd(mf_min) / sqrt(dplyr::n()))
 ```
 
 **Table 8.** Mean Mutation Frequency per Dose Group.
@@ -795,6 +794,7 @@ mf_data_6 <- calculate_mf(
 ```{r mf-6-table, echo=FALSE}
 DT::datatable(mf_data_6,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -871,6 +871,7 @@ mf_data_types <- calculate_mf(
 ```{r mf-types-table, echo=FALSE}
 DT::datatable(mf_data_types,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -900,6 +901,7 @@ mf_data_96 <- calculate_mf(
 ```{r mf-96_tables, echo=FALSE}
 DT::datatable(mf_data_types,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -1009,6 +1011,7 @@ DT::datatable(depth)
 ```{r mf-precalc2-table, echo=FALSE}
 DT::datatable(mf_data_6_precalc,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("mf_min", "mf_max"),
            render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
@@ -1355,6 +1358,7 @@ DT::datatable(
 DT::datatable(
   model_by_dose$pairwise_comparisons,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("p.value", "adj_p.value"),
         render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
@@ -1448,7 +1452,7 @@ stats::qqline(model_data$residuals, col = "red")
 model_by_target$summary
 ```
 
-##### Anova
+##### ANOVA
 
 ```{r model-rg-anova}
 model_by_target$anova
@@ -1483,6 +1487,7 @@ DT::datatable(
 DT::datatable(
   model_by_target$pairwise_comparisons,
   options = list(
+    scrollX = TRUE,
     columnDefs = list(
       list(targets = c("p.value", "adj_p.value"),
         render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
@@ -1588,7 +1593,7 @@ plot <- plot_model_mf(
                      "#118ab2")
 )
 # Rotate the x-axis labels for clarity using ggplot2 functions.
-plot <- plot + ggplot2::theme(axis.text.x = element_text(angle = 90))
+plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
 

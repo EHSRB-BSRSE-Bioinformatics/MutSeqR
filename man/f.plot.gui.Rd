@@ -9,7 +9,7 @@ f.plot.gui(
   HTML = FALSE,
   model.summ = TRUE,
   display_plots = TRUE,
-  results_env = NULL,
+  .proast_env = NULL,
   output_type = NULL,
   filename = NULL,
   interactive_mode = TRUE,
@@ -19,16 +19,20 @@ f.plot.gui(
 \arguments{
 \item{ans.all}{The proast object that gets passed to all functions.}
 
-\item{HTML}{I don't know what this does but keep it FALSE}
+\item{HTML}{Keep FALSE}
 
-\item{model.summ}{I don't knkow what this does either, but keep it TRUE}
+\item{model.summ}{Keep TRUE}
 
 \item{display_plots}{A logical variable - whether we want to display
 the plots or not.}
 
-\item{results_env}{environment}
+\item{.proast_env}{environment}
 
 \item{output_type}{The format that you wish to export the plots as.}
+
+\item{filename}{The name of the file to be read.}
+
+\item{interactive_mode}{A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.}
 
 \item{record_plots}{A logical variable indicating whether you want to record
 the plots and return them as a list instead of exporting them. This parameter

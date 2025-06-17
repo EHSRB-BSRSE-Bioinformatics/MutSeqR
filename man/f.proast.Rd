@@ -35,6 +35,20 @@ f.proast(
 )
 }
 \arguments{
+\item{odt}{List. Internal state object/list passed between PROAST functions. Usually, users do not need to set this.}
+
+\item{ans.all}{Output from a previous fit, or internal results object. Used to resume or adjust analyses. Usually 0 (default) to start a new session.}
+
+\item{er}{Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Default is FALSE.}
+
+\item{resize}{Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.}
+
+\item{scale.ans}{Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.}
+
+\item{const.var}{Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.}
+
+\item{show.warnings}{Logical. If TRUE, print extra warning messages during model fitting (for debugging or detailed output). Defaults to FALSE.}
+
 \item{interactive_mode}{A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.}
 
 \item{datatype}{Non-interactive mode parameter. What type of response data do you want to consider? Options are 'continuous, individual data'.}
@@ -44,7 +58,7 @@ f.proast(
 \item{setting_choice}{Non-interactive mode parameter. Do you want to fit a set of models, or choose a single model? Options are 'single model', 'set of models'.
 Recommended: 'set of models'.}
 
-\item{nested_model_choice}{???}
+\item{nested_model_choice}{Non-interactive mode parameter. Which subset of nested models to fit, if changing model settings non-interactively. Options match those provided in interactive menus. See details in documentation.}
 
 \item{indep_var_choice}{Non-interactive mode parameter. The column name for the independent variable to use.}
 

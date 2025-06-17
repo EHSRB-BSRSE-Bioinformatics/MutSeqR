@@ -55,7 +55,7 @@
 #' object, the required columns are "seqnames", "start", and "end". Default is
 #' NULL.
 #' @param rg_sep The delimiter for importing the custom_regions. The default is
-#' tab-delimited "\t".
+#' tab-delimited "\\t".
 #' @param is_0_based_rg A logical variable. Indicates whether the position
 #' coordinates in `regions` are 0 based (TRUE) or 1 based (FALSE).
 #' If TRUE, positions will be converted to 1-based (start + 1).
@@ -474,7 +474,7 @@ import_mut_data <- function(mut_file,
   # Check for duplicated rows
   dat <- dat %>%
     dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::mutate(row_has_duplicate = n() > 1) %>%
+    dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {

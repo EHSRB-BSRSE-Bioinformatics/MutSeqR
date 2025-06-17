@@ -1,5 +1,3 @@
-library(testthat)
-
 # Define test cases for spectra_comparison function
 test_that("spectra_comparison works as expected", {
 
@@ -20,7 +18,7 @@ test_that("spectra_comparison works as expected", {
   # Call the spectra_comparison function on the sample data
   result <- spectra_comparison(mf_data = mf_data,
                                mf_type = "min",
-                               cols_to_group = c("dose", "tissue"),
+                               exp_variable = c("dose", "tissue"),
                                contrasts = contrast_df)
 
   # Check if the result is a data frame
@@ -28,7 +26,7 @@ test_that("spectra_comparison works as expected", {
                info = "Check if the result is a data frame")
 
   # Check if the result has the expected columns
-  expect_true(all(c("G2", "p.value", "adjP", "sign") %in% names(result)),
+  expect_true(all(c("contrasts", "G2", "p.value", "adj_p.value", "Significance") %in% names(result)),
               info = "Check if the result has the expected columns")
 
   # Check if the result has the correct number of rows

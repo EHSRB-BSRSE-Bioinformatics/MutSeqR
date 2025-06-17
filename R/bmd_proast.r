@@ -261,7 +261,7 @@ bmd_proast <- function(
           output_path = output_path
         )
         for (i in seq_along(c_plot)) {
-          dev.new()
+          grDevices::dev.new()
           print(c_plot[[i]])
         }
         plots <- c(plots, ma_plots, c_plot)

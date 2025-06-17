@@ -36,6 +36,11 @@
 #' @param x_lab The label for the x axis.
 #' @param y_lab The label for the y axis.
 #' @param title The title of the plot.
+#' @param rotate_labels A logical value aplied when labels is not "none".
+#' Indicates whether the labels should be rotated 90 degrees. Default is
+#' FALSE.
+#' @param label_size A numeric value that adjusts the size of the labels.
+#' Default is 3.
 #' @return A ggplot object
 #' @examples
 #' example_file <- system.file("extdata", "Example_files",
@@ -73,7 +78,9 @@ plot_mf <- function(mf_data,
                     scale_y_axis = "linear",
                     x_lab = NULL,
                     y_lab = NULL,
-                    title = NULL) {
+                    title = NULL,
+                    rotate_labels = FALSE,
+                    label_size = 3) {
   
   if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
       stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
@@ -238,11 +245,25 @@ plot_mf <- function(mf_data,
     type <- ggplot2::geom_bar(stat = "identity",
                               position = position,
                               color = "black")
-  labels <- ggplot2::geom_text(ggplot2::aes(label = label),
-                               position = label_position,
-                               vjust = -0.5,
-                               size = 3,
-                               color = "black")
+  # Set label params
+  if (rotate_labels) {
+    label_angle <- 90
+    vjust <- 0.5
+    hjust <- -0.5
+  } else {
+    label_angle <- 0
+    vjust <- -0.5
+    hjust <- 0.5
+  }
+    labels <- ggplot2::geom_text(
+      ggplot2::aes(label = label),
+      position = label_position,
+      vjust = vjust,
+      hjust = hjust,
+      size = label_size,
+      color = "black",
+      angle = label_angle
+    )
   } else if (plot_type == "point") {
     pos <- ggplot2::position_jitter(width = 0.1,
                                     height = 0,
@@ -251,11 +272,20 @@ plot_mf <- function(mf_data,
                                 size = 3,
                                 color = "black",
                                 position = pos)
-    labels <- ggrepel::geom_text_repel(aes(label = label),
-                                       size = 3,
-                                       color = "black",
-                                       position = pos,
-                                       max.overlaps = Inf)
+    # label parameters
+    if (rotate_labels) {
+      label_angle <- 90
+    } else {
+      label_angle <- 0
+    }
+    labels <- ggrepel::geom_text_repel(
+      aes(label = label),
+      angle = label_angle,
+      size = label_size,
+      color = "black",
+      position = pos,
+      max.overlaps = Inf
+                                       )
   }
 
   # Create the plot

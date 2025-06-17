@@ -1,4 +1,5 @@
 # Concatenated files for minimal proast package
+.proast_env <- new.env(parent = emptyenv())
 #' Run dose-response modeling using PROAST.
 #'
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
@@ -6,7 +7,7 @@
 #' @param model_choice Non-interactive mode parameter. Do you want to fit a single model or fit various nested families of models? Options are 'single model', 'select model 3 or 5 from various families of models', 'select model 3 from various nested families of models', 'select model 5 from various nested families of models', 'select model 15 in terms of RPF'. Recommended: 'select model 3 or 5 from various families of models'.
 #' @param setting_choice Non-interactive mode parameter. Do you want to fit a set of models, or choose a single model? Options are 'single model', 'set of models'.
 #' Recommended: 'set of models'.
-#' @param nested_model_choice ???
+#' @param nested_model_choice Non-interactive mode parameter. Which subset of nested models to fit, if changing model settings non-interactively. Options match those provided in interactive menus. See details in documentation.
 #' @param indep_var_choice Non-interactive mode parameter. The column name for the independent variable to use.
 #' @param Vyans_input Non-interactive mode parameter. The column name(s) for the response variable(s) to use. If multiple, provide as a vector.
 #' @param covariates Non-interactive mode parameter. The column name for the covariate to use. If none, enter 0.
@@ -22,6 +23,15 @@
 #' @param add_nonzero_val_to_dat Non-interactive mode parameter. When the response data contains 0s, whether to add a non-zero value to each observation. TRUE/FALSE. If TRUE, set the nonzero_val parameter with your desired (positive) number. If FALSE, a detection limit will used. Provide the detection limit in the detection_limit parameter. If no detection_limit is given, the function will use the minimum non-zero value in the data. Values below the detection limit will be plotted as half the detection limit.
 #' @param nonzero_val Non-interactive mode parameter. The non-zero value to add to each observation when add_nonzero_val_to_dat = TRUE. Must be a positive number.
 #' @param detection_limit Non-interactive mode parameter. The detection limit to use when add_nonzero_val_to_dat = FALSE. If NULL, the minimum non-zero value in the data will be used. This paramater accepts a numeric value, which will be applied to all response values, or a column name in the data, which will be used to apply different detection limits to different observations.
+#' @param show.warnings Logical. If TRUE, print extra warning messages during model fitting (for debugging or detailed output). Defaults to FALSE.
+#' @param odt List. Internal state object/list passed between PROAST functions. Usually, users do not need to set this.
+#' @param ans.all Output from a previous fit, or internal results object. Used to resume or adjust analyses. Usually 0 (default) to start a new session.
+#' @param er Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Default is FALSE.
+#' @param resize Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.
+#' @param scale.ans Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.
+#' @param const.var Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.
+#' @importFrom utils menu
+#' @importFrom stats setNames
 #' @return Results from PROAST.
 f.proast <- function(odt = list(),
                      ans.all = 0,
@@ -56,7 +66,7 @@ f.proast <- function(odt = list(),
     } else {
         message("Running in batch/command line mode...")
         message(paste0("Independent variable: ", indep_var_choice))
-        results_env <- new.env()
+        .proast_env <- new.env()
     }
     if (is.list(odt)) 
         if (length(odt$EXP) > 0 || length(odt$MLE) > 0) {
@@ -69,24 +79,17 @@ f.proast <- function(odt = list(),
     f.overlap()
     quit <- F
     if (mode(ans.all) == "list") {
-        ans.all <- f.adjust.saved(ans.all)
         ans.all$const.var <- const.var
         ans.all$quick.ans <- 1
         if (ans.all$cont) 
-            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat,nonzero_val = nonzero_val,detection_limit = detection_limit)
-        else quit <- f.cat(ans.all,
-                           list.logic = TRUE,
-                           interactive_mode = interactive_mode,
-                           add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                           nonzero_val = nonzero_val,
-                           detection_limit = detection_limit)
+            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat,nonzero_val = nonzero_val,detection_limit = detection_limit)
         if (quit) {
             if (interactive_mode == FALSE) {
-                result <- as.list(results_env)
+                result <- as.list(.proast_env)
                 result_df <- parse_PROAST_output(result)
                 print(result_df)
                 if (interactive_mode == FALSE) {
-                    rm(list = ls(envir = results_env), envir = results_env)
+                    rm(list = ls(envir = .proast_env), envir = .proast_env)
                 }
                 return(list(result, result_df))
 
@@ -187,7 +190,7 @@ f.proast <- function(odt = list(),
                 }
             }
             if (ans.all$quick.ans > 1) 
-                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
+                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
         }
         if (dtype %in% c(2, 3, 4, 6, 84)) {
             ans.all$cont <- FALSE
@@ -209,12 +212,6 @@ f.proast <- function(odt = list(),
                     title = "\nDo you want to fit a set of models, or choose a single model?")
                     if (ans.all$quick.ans == 2) {
                     ans.all$quick.ans <- 3
-                    ans.all <- f.quick.cat(ans.all,
-                                           interactive_mode = interactive_mode,
-                                           results_env = results_env,
-                                           add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                                           nonzero_val = nonzero_val,
-                                           detection_limit = detection_limit)
                     }
                 }
             } else {
@@ -226,20 +223,16 @@ f.proast <- function(odt = list(),
                 }
             }
             if (ans.all$quick.ans == 3) 
-                quit <- f.cat(ans.all,
-                              interactive_mode = interactive_mode,
-                              add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                              nonzero_val = nonzero_val,
-                              detection_limit = detection_limit)
-            }
+                message("quick.ans == 3")
+        }
         if (quit) {
             if (interactive_mode == FALSE) {
-                result <- as.list(results_env)
+                result <- as.list(.proast_env)
                 result_df <- parse_PROAST_output(result)
                 print(result_df)
                 if (interactive_mode == FALSE) {
-                    # Get rid of results_env
-                   rm(list = ls(envir = results_env), envir = results_env)
+                    # Get rid of .proast_env
+                   rm(list = ls(envir = .proast_env), envir = .proast_env)
                 }
                 return(list(result, result_df))
             } else {
@@ -270,11 +263,10 @@ f.proast <- function(odt = list(),
         if (!is.null(ans.all$data.0)) 
             ans.all$odt.tmp <- ans.all$data.0
         else ans.all$odt.tmp <- ans.all$odt
-        ans.all$data.0 <- f.firstcheck(ans.all)
         f.assign(".Pr.last", ans.all)
     }
     if (er) {
-        ans.all <- .Pr.last
+#         ans.all <- .Pr.last
         if (ans.all$xans[1] == 0 || ans.all$yans[1] == 0) {
             cat("\nOption er=T cannot be used, start analysis all over\n\n")
             return(invisible())
@@ -289,20 +281,15 @@ f.proast <- function(odt = list(),
                              detection_limit = detection_limit)
     }
     if (ans.all$cont) 
-        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
-    else quit <- f.cat(ans.all,
-                       interactive_mode = interactive_mode,
-                       add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                       nonzero_val = nonzero_val,
-                       detection_limit = detection_limit)
+        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
     if (quit) {
         if (interactive_mode == FALSE) {
-            result <- as.list(results_env)
+            result <- as.list(.proast_env)
             result_df <- parse_PROAST_output(result)
             print(result_df)
             if (interactive_mode == FALSE) {
-                    # Get rid of results_env
-                    rm(list = ls(envir = results_env), envir = results_env)
+                    # Get rid of .proast_env
+                    rm(list = ls(envir = .proast_env), envir = .proast_env)
             }
             return(list(result, result_df))
         } else {
@@ -311,7 +298,6 @@ f.proast <- function(odt = list(),
         }
     }
 }
-
 
 
 f.overlap <- function() {
@@ -330,9 +316,11 @@ f.overlap <- function() {
     pos.pr <- pos.pr[1]
     if (pos.pr > 0) {
         if (exists("last.fit", where = pos.pr)) {
-            rm(last.fit, pos = pos.pr)
+            message("last.fit exists")
+#             rm(last.fit, pos = pos.pr)
             if (exists("newfit")) 
-                rm(newfit, pos = pos.pr)
+                message("newfit exists")
+#                 rm(newfit, pos = pos.pr)
         }
         if (length(pos.pr) > 1) 
             cat("\n\nATTENTION: you have attached more than one PROAST package\n\n")
@@ -341,7 +329,7 @@ f.overlap <- function() {
         wdir <- getwd()
         dum <- substring(wdir, 30, 36)
         if (dum != "proast") {
-            obj.wd <- objects(pos = 1)
+            obj.wd <- objects(pos = .proast_env)
             obj.wd <- obj.wd[obj.wd != "newfit"]
             lst <- obj.wd %in% obj.pr
             overlap <- obj.wd[lst]
@@ -353,14 +341,12 @@ f.overlap <- function() {
                   cat(overlap[ii])
                   cat("\n")
                 }
-                f.press.key.to.continue(NA)
                 stop()
             }
         }
     }
     return(invisible())
 }
-
 
 
 f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
@@ -503,7 +489,7 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$ans.scale <- 0
     ans.all$bounds.ans <- 2
     ans.all$modelname <- ""
-    assign(".ypos", 0, immediate = T, pos = 1)
+    assign(".ypos", 0, envir = .proast_env)
     ans.all$store.name <- 0
     ans.all$list.logic <- F
     ans.all$CES.cat <- 1
@@ -632,7 +618,6 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
         ans.all$data.is.from.file <- FALSE
         ans.all$last.upload.dir <- ""
         ans.all$data.name <- ""
-        ans.all$comma.for.decimal <- f.use.comma.for.decimal()
     }
     ans.all$summ.lst <- list()
     ans.all$notes <- "ATTENTION"
@@ -645,7 +630,8 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
 }
 
 
-
+#' @importFrom utils menu
+#' @importFrom grDevices dev.list dev.cur dev.off
 f.graphwin.size <- function(resize = F) {
     if (!exists(".gw.size")) {
         size.x <- 5
@@ -653,11 +639,11 @@ f.graphwin.size <- function(resize = F) {
         f.assign(".gw.size", c(size.x, size.y))
     }
     if (resize) {
-        f.create.graphwin(.gw.size[1], .gw.size[2])
+#         f.create.graphwin(.gw.size[1], .gw.size[2])
         oke <- F
         while (!oke) {
-            gw.x <- .gw.size[[1]][1]
-            gw.y <- .gw.size[[2]][1]
+#             gw.x <- .gw.size[[1]][1]
+#             gw.y <- .gw.size[[2]][1]
             cat("\ncurrent values for horizontal and vertical size of the graphical window are:\n")
             cat(gw.x, " and ", gw.y, "\n")
             gw.x <- eval(parse(prompt = paste("\nGive value for horizontal size > ")))
@@ -669,19 +655,17 @@ f.graphwin.size <- function(resize = F) {
             lst <- lst[lst != curr]
             for (ii in lst) dev.off(ii)
         }
-        assign(".gw.size", c(gw.x, gw.y), pos = 1, immediate = T)
+        assign(".gw.size", c(gw.x, gw.y), pos = .proast_env)
     }
 }
-
 
 
 f.assign <- function(name, obj) {
     obj$date <- date()
     if (!is.character(name)) 
         print("f.assign:  names and object are reversed")
-    assign(name, obj, pos = 1, immediate = T)
+    assign(name, obj, envir = .proast_env)
 }
-
 
 
 f.change.settings <- function(ans.all,
@@ -916,7 +900,6 @@ f.change.settings <- function(ans.all,
                 change[10] <- F
                 if (model.ans == 46) {
                   cat("\nscaling factor on dose not implemented for model 46, it will be ignored\n")
-                  f.press.key.to.continue()
                 }
             }
             if (change[11]) {
@@ -1017,12 +1000,10 @@ f.change.settings <- function(ans.all,
                 if (model.ans %in% c(2, 4, 7, 9, 12, 14, 17, 
                   19, 22, 24)) {
                   cat("\nATTENTION: parameter d does not occur in this model\n\n")
-                  f.press.key.to.continue()
                 }
                 if (model.type == 2 && model.ans %in% c(13, 15, 
                   23, 25)) {
                   cat("\nATTENTION: covariate on parameter d not implemented for LVMs in terms of CED \n\n")
-                  f.press.key.to.continue()
                   return(ans.all)
                 }
                 if (model.ans != 57) 
@@ -1036,11 +1017,9 @@ f.change.settings <- function(ans.all,
                 if (model.ans %in% c(2, 3, 7, 8, 12, 13, 17, 
                   18, 22, 23)) {
                   cat("\nATTENTION: parameter c does not occur in this model\n\n")
-                  f.press.key.to.continue()
                 }
                 if (model.type == 2 && model.ans %in% c(15, 25)) {
                   cat("\nATTENTION: covariate on parameter c not implemented for LVMs in terms of CED \n\n")
-                  f.press.key.to.continue()
                   return(ans.all)
                 }
                 fct4.no <- menu(varnames[1:nvar], title = "\nQ16: Give number of factor serving as covariate with respect to\n    parameter c \n --- type 0 if none --- \n  ")
@@ -1164,7 +1143,6 @@ f.change.settings <- function(ans.all,
 }
 
 
-
 f.remove.NAs <- function(xans = 0, tans = 0, yans = 0, sans = 0, nans = 0, covar.no = 0, 
     fct1.no = 0, fct2.no = 0, fct3.no = 0, fct4.no = 0, fct5.no = 0, 
     dfr, output = TRUE) {
@@ -1244,7 +1222,6 @@ f.remove.NAs <- function(xans = 0, tans = 0, yans = 0, sans = 0, nans = 0, covar
 }
 
 
-
 f.cont <- function(ans.all) {
     if (ans.all$dtype %in% c(1, 5, 15, 10, 25, 26, 250, 260)) 
         cont <- T
@@ -1255,7 +1232,7 @@ f.cont <- function(ans.all) {
 }
 
 
-
+#' @importFrom utils menu
 f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
     check.out <- F
     if (quick.ans == 1) {
@@ -1302,7 +1279,6 @@ f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
     }
     invisible(check.out)
 }
-
 
 
 f.execute <- function(ans.all,
@@ -1402,12 +1378,10 @@ f.execute <- function(ans.all,
               Vdetlim <- data.0[, detlim.col]
               if (min(Vdetlim <= 0)) {
                 cat("\n ATTENTION: there are non-positive detection limits !\n")
-                f.press.key.to.continue()
               }
               if (any(is.na(Vdetlim))) {
                 cat("\nATTENTION:  column with detection limits contains NAs; \n
                     replace NAs with (large) numbers\n\n")
-                f.press.key.to.continue()
               }
             }
             if (detlim.col == 0) { # when will this happen?
@@ -1632,7 +1606,6 @@ f.execute <- function(ans.all,
         if (interrupt && max(fct1) == 1) {
           cat("\nAttention 1: The factor you chose as covariate on par a has only one level\n")
           cat("you might have selected a subgroup for this factor\n")
-          f.press.key.to.continue()
         }
       }
       if (fct2.no > 0) {
@@ -1645,7 +1618,6 @@ f.execute <- function(ans.all,
         if (max(fct2) == 1) {
           cat("\nAttention: the factor you chose as covariate on par b has only one level\n")
           cat("you might have selected a subgroup for this factor\n")
-          f.press.key.to.continue()
         }
       }
       if (fct3.no > 0) {
@@ -1656,7 +1628,6 @@ f.execute <- function(ans.all,
           if (max(fct3) == 1) {
             cat("\nAttention: the factor you chose as covariate on var has only one level\n")
             cat("you might have selected a subgroup for this factor\n")
-            f.press.key.to.continue()
           }
         }
         else if (dtype == 4) {
@@ -1681,7 +1652,6 @@ f.execute <- function(ans.all,
         if (max(fct4) == 1) {
           cat("\nAttention: the factor you chose as covariate on par c has only one level\n")
           cat("you might have selected a subgroup for this factor\n")
-          f.press.key.to.continue()
         }
       }
       if (fct5.no > 0) {
@@ -1695,7 +1665,6 @@ f.execute <- function(ans.all,
         if (max(fct5) == 1) {
           cat("\nAttention: the factor you chose as covariate on par d has only one level\n")
           cat("you might have selected a subgroup for this factor\n")
-          f.press.key.to.continue()
         }
       }
       twice <- FALSE
@@ -1721,7 +1690,6 @@ f.execute <- function(ans.all,
         if (sum(is.na(covariate)) > 0) {
           cat("\nAttention: the factor you chose as covariate contains NAs\n")
           cat("\nThe associated observations will be removed\n")
-          f.press.key.to.continue()
           covariate <- data.0[, covar.no]
         }
         fct1.txt <- covar.txt
@@ -1949,7 +1917,6 @@ f.execute <- function(ans.all,
           cat("\nThe type of data you indicated does not match the one indicated in the dataset\n")
           cat("indicated in dataset:", dtype.tmp)
           cat("\nintended:", ans.all$dtype, "\n")
-          f.press.key.to.continue()
         }
       }
     if (cont && length(xans) == 1)
@@ -1980,7 +1947,6 @@ f.execute <- function(ans.all,
 }
 
 
-
 f.clear <- function(ans.all) {
     ans.all$show <- ""
     ans.all$MLE <- NA
@@ -2006,7 +1972,6 @@ f.clear <- function(ans.all) {
     }
     return(ans.all)
 }
-
 
 
 f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
@@ -2072,7 +2037,6 @@ f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
 }
 
 
-
 f.regr.par.full <- function(ans.all) {
     with(ans.all, {
         if (dtype %in% c(10, 15, 250, 260)) {
@@ -2129,7 +2093,6 @@ f.regr.par.full <- function(ans.all) {
 }
 
 
-
 f.constr.dd <- function(model.ans) {
     lower.dd <- 0.2
     upper.dd <- 5
@@ -2146,8 +2109,7 @@ f.constr.dd <- function(model.ans) {
 }
 
 
-
-f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, display_plots = TRUE) {
+f.select.con <- function(ans.all, interactive_mode = T, .proast_env = NULL, display_plots = TRUE) {
     ans.all$HILL <- NA
     ans.all$INVEXP <- NA
     ans.all$LOGN <- NA
@@ -2166,13 +2128,12 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
         cat(paste("\n\nresponse: ", ans.all$y.leg))
     ans.all$model.switch <- 0
     if (ans.all$quick.ans == 6) {
-        ans.all <- f.select.m46.con(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
         return(ans.all)
-        # assign(ans.all$created, ans.all, envir = results_env)
+        # assign(ans.all$created, ans.all, envir = .proast_env)
     }
     if (ans.all$NES.ans == 2) 
         ans.all$CES <- 0.05
-    ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
     Vaic[1] <- ans.all$EXP$aic
     Vnpar.sel <- c(Vnpar.sel, ans.all$EXP$npar)
     ans.all$TREND <- TRUE
@@ -2182,7 +2143,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
         if (ans.all$output) 
             cat(paste("\n\nresponse: ", ans.all$y.leg))
         ans.all$model.switch <- 1
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
         Vaic[2] <- ans.all$HILL$aic
         Vnpar.sel <- c(Vnpar.sel, ans.all$HILL$npar)
         if (!ans.all$TREND) 
@@ -2193,7 +2154,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
         if (ans.all$output) 
             cat(paste("\n\nresponse: ", ans.all$y.leg))
         ans.all$model.switch <- 2
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
         Vaic[3] <- ans.all$INVEXP$aic
         Vnpar.sel <- c(Vnpar.sel, ans.all$INVEXP$npar)
         if (!ans.all$TREND) 
@@ -2204,7 +2165,7 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
         if (ans.all$output) 
             cat(paste("\n\nresponse: ", ans.all$y.leg))
         ans.all$model.switch <- 3
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
         Vaic[4] <- ans.all$LOGN$aic
         Vnpar.sel <- c(Vnpar.sel, ans.all$LOGN$npar)
         if (!ans.all$TREND) 
@@ -2235,12 +2196,11 @@ f.select.con <- function(ans.all, interactive_mode = T, results_env = NULL, disp
     ans.all$Vaic <- Vaic
     ans.all$fitted <- T
     return(ans.all)
-    #assign(ans.all$created, ans.all, envir = results_env)
+    #assign(ans.all$created, ans.all, envir = .proast_env)
 }
 
 
-
-f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, results_env = NULL, display_plots = TRUE) {
+f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, .proast_env = NULL, display_plots = TRUE) {
     gui <- ans.all$gui
     model.switch <- ans.all$model.switch
     cont <- ans.all$cont
@@ -2396,7 +2356,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 ans.all.fit <- f.qfit(ans.all.fit, plot.type, 
                   output = output, display_plots = display_plots)
             else {
-                ans.all.fit <- f.dtype6.mn(ans.all.fit)
                 ans.all$full6.done <- TRUE
                 ans.all$alfa.mle <- ans.all.fit$alfa.mle
                 ans.all$Pvalue.alfa <- ans.all.fit$Pvalue.alfa
@@ -2642,8 +2601,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             ans.all.fit$nr.var <- max(ans.all.fit$fct3)
         if (cont) 
             par.start.tmp <- f.start.con(ans.all.fit, tmp.quick = T)$par.start
-        if (!cont) 
-            par.start.tmp <- f.start.cat(ans.all.fit, tmp.quick = T)$par.start
+        if (!cont) {
+            message("not cont")
+        }
         if (covar.no == 0) 
             aa.start.tmp <- aa.start
         if (covar.no > 0) 
@@ -2690,7 +2650,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             if (dtype != 6 & alfa.length != 0) {
                 print("f.select.m5.con")
                 cat(" \n\nalfa.length not equal to zero \n\n")
-                f.press.key.to.continue()
             }
         if (cont) {
             if (ans.all$MA.running) 
@@ -2741,7 +2700,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             ced.start <- exp(mean(log(Vced.start)))
         }
         if (!cont) {
-            ced.lst <- f.ced.cat(ans.all.fit)
             Vced.start <- ced.lst$CED.matr[, 1]
             if (all(is.finite(Vced.start))) {
                 ced.start <- exp(mean(log(Vced.start)))
@@ -2762,11 +2720,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
         ces.cat.tmp <- 1
         if (dtype == 3) {
             for (ii in 1:ans.all.fit$nr.gr) {
-                pi.matr <- f.expect.cat(model.type = 2, model.ans = 2, 
-                  x = 0, ans.all.fit$regr.par.matr[ii, ], ans.all.fit$th.par, 
-                  ans.all.fit$sig.par, CES = 0, ces.ans = 1, 
-                  dtype = 3, twice = TRUE, cc.inf = cc.inf)
-                dum <- pi.matr < 0.5
+#                 dum <- pi.matr < 0.5
                 ces.cat.tmp <- min(order(dum)[dum == TRUE])
                 ces.cat <- max(ces.cat.tmp, ces.cat)
             }
@@ -3034,7 +2988,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             if (dtype != 6 & alfa.length != 0) {
                 print("f.select.m5.con")
                 cat(" \nalfa.length not equal to zero \n\n")
-                f.press.key.to.continue()
             }
             results.m3.ab <- f.model.specific.results(ans.all.fit)
             message(" \nstoring results in results.m3.ab for ", results.m3.ab$modelname)
@@ -3364,18 +3317,18 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             if (interactive_mode == FALSE) { 
               if (ans.all$MA.running == FALSE) {
                 if (length(ans.all$Vyans) > 1) {
-                  assign(paste(results.m3.0$res.name, results.m3.0$modelname), results.m3.0, envir = results_env)
-                  assign(paste(results.m5.0$res.name, results.m5.0$modelname), results.m5.0, envir = results_env)
+                  assign(paste(results.m3.0$res.name, results.m3.0$modelname), results.m3.0, envir = .proast_env)
+                  assign(paste(results.m5.0$res.name, results.m5.0$modelname), results.m5.0, envir = .proast_env)
                   if (model.switch == 0){
-                      assign(paste(results.m1$res.name, "Null"), results.m1, envir = results_env)
-                      assign(paste(results.full, "Full"), results.full, envir = results_env)
+                      assign(paste(results.m1$res.name, "Null"), results.m1, envir = .proast_env)
+                      assign(paste(results.full, "Full"), results.full, envir = .proast_env)
                     }
                 } else {
-                  assign(results.m3.0$modelname, results.m3.0, envir = results_env)
-                  assign(results.m5.0$modelname, results.m5.0, envir = results_env)
+                  assign(results.m3.0$modelname, results.m3.0, envir = .proast_env)
+                  assign(results.m5.0$modelname, results.m5.0, envir = .proast_env)
                   if (model.switch == 0){
-                    assign("Null", results.m1, envir = results_env)
-                    assign("Full", results.full, envir = results_env)
+                    assign("Null", results.m1, envir = .proast_env)
+                    assign("Full", results.full, envir = .proast_env)
                   }
                 }
               }
@@ -3537,7 +3490,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
         if (dtype == 5 && ans.all.tmp$nest.no == 0) 
             dtype <- 1
         else {
-            ans.all.tmp <- f.nested.con(ans.all.tmp)
             ans.all.tmp$inter.var <- ans.all.tmp$inter.var
             ans.all.tmp$intra.var <- ans.all.tmp$intra.var
             df1 <- ans.all.tmp$df1
@@ -3566,28 +3518,28 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
             else ans.all.tmp$no.CI <- FALSE
         if (cont) 
             f.hit.constr(ans.all.tmp)
-        if (!ans.all$no.CI && dtype == 3) 
-            ans.all.tmp <- f.CI.sel.ord(ans.all.tmp, interactive_mode = interactive_mode)
-        else if (ans.all$NES.ans == 2) {
+        if (!ans.all$no.CI && dtype == 3) {
+            message("!ans.all$no.CI && dtype == 3")
+        } else if (ans.all$NES.ans == 2) {
             if (interactive_mode == FALSE){
-              ans.all.tmp <- f.refit.nes(ans.all.tmp, interactive_mode = interactive_mode, results_env = results_env)
+              ans.all.tmp <- f.refit.nes(ans.all.tmp, interactive_mode = interactive_mode, .proast_env = .proast_env)
             }
-            # assign(ans.all.tmp$modelname, ans.all.tmp, envir = results_env)
+            # assign(ans.all.tmp$modelname, ans.all.tmp, envir = .proast_env)
             current_model <- ans.all.tmp$modelname
             ans.all$do.MA <- ans.all.tmp$do.MA
             ans.all$CES <- ans.all.tmp$CES
-            # assign(current_model, ans.all.tmp, envir = results_env) # well, that's not right either
-            # assign(current_model, ans.all, envir = results_env) 
+            # assign(current_model, ans.all.tmp, envir = .proast_env) # well, that's not right either
+            # assign(current_model, ans.all, envir = .proast_env) 
             if (output) {
                 cat(ans.all.tmp$report.pars)
                 cat("------------------------------------------------------\n ")
             }
         }
         else if (!ans.all$no.CI && cont) {
-            ans.all.tmp <- f.CI.sel(ans.all.tmp, results_env = results_env, interactive_mode = interactive_mode)
+            ans.all.tmp <- f.CI.sel(ans.all.tmp, .proast_env = .proast_env, interactive_mode = interactive_mode)
         }
         else if (!cont) {
-            ans.all.tmp <- f.CI.sel(ans.all.tmp, results_env = results_env, interactive_mode = interactive_mode)
+            ans.all.tmp <- f.CI.sel(ans.all.tmp, .proast_env = .proast_env, interactive_mode = interactive_mode)
         }
     }
     if (model.sel == 1 && dtype %in% c(4, 6)) {
@@ -3659,7 +3611,6 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
                 print("error in f.select.m5.con")
                 print(ans.all$EXP$fct3)
                 print(ans.all$EXP$nr.var)
-                f.press.key.to.continue()
             }
     }
     if (0) 
@@ -3682,10 +3633,9 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, res
         ans.all$no.of.nests <- no.of.nests
         ans.all$nest.size <- nest.size
     }
-    #assign(current_model, ans.all, envir = results_env) # Nope... this only gets one model in each "loop" of the code somehow.
+    #assign(current_model, ans.all, envir = .proast_env) # Nope... this only gets one model in each "loop" of the code somehow.
     return(ans.all)
 }
-
 
 
 f.graph.window <- function(
@@ -3797,20 +3747,19 @@ f.graph.window <- function(
 }
 
 
-
-f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, plotprefix = NA, 
-    nr.gr = 1, svg.plots = FALSE, output = TRUE, output_type = NULL, filename = NULL) {
+#' @importFrom grDevices dev.list svg png dev.cur dev.new
+f.create.graphwin <- function(
+    aa, bb, title = "", name.wapp = NA, WAPP = FALSE, plotprefix = NA, 
+    nr.gr = 1, svg.plots = FALSE, output = TRUE, output_type = NULL, filename = NULL
+) {
     lst <- dev.list()
     if (length(lst) > 60) {
         cat("\n ATTENTION:  too many graphical windows are opened")
         cat("\nthey will be deleted, this is the last chance to save any of them")
         if (output) 
-            f.press.key.to.continue("\npress any key if they can be deleted ... > ")
-        f.delete.gw()
-        assign(".ypos", 0)
+        assign(".ypos", 0, envir = .proast_env)
     }
     if (nr.gr > 25) 
-        f.delete.gw()
     if (WAPP) {
         if (!is.null(filename)) {
             filename <- paste0(filename, "_", name.wapp)
@@ -3838,25 +3787,24 @@ f.create.graphwin <- function(aa, bb, title = "", name.wapp = NA, WAPP = FALSE, 
         } else if (output_type == "none") {
             message("Not saving PROAST plots to file!")
         } else {
-            png(paste(plotprefix, name.wapp, ".png", sep = ""), 
-            aa, bb)
+            grDevices::png(paste0(plotprefix, name.wapp, ".png"), aa, bb)
         }
-    }
-    else {
-        title <- paste(dev.cur(), "PROAST:", title)
-        y.pos <- .ypos + 5
-        if (y.pos > 100) 
-            y.pos <- 0
-        assign(".ypos", y.pos, immediate = T, pos = 1)
-        if (.Platform$OS.type == "windows") 
-            windows(aa, bb, 10, ypos = y.pos, restoreConsole = T, 
-                title = title)
-        else X11(, aa, bb, 10, title = title, ypos = y.pos)
+    } else {
+        ## Open a new device (cross-platform & CRAN/BioC-safe)
+        # Note: dev.new() uses width/height in inches, not pixels!
+        # Assume aa and bb are in pixels, so convert
+        width_inches <- aa / 96  # Common screen DPI
+        height_inches <- bb / 96
+        
+        dev.new(width = width_inches, height = height_inches)  # or just dev.new()
+        # dev.new() doesn't accept `title` or `ypos`.
+        # Users will see the device appear, but titles are set in the plotting code.
+
+        # Optionally, display a user message if any dropped args:
+        # message("Device title/ypos arguments ignored for portability (set manually if needed)")
     }
     return(invisible())
 }
-
-
 
 f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_plots = TRUE) {
     plot.type.save <- ans.all.fit$plot.type
@@ -3948,7 +3896,6 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_p
                 par.start.tmp <- ans.all.fit$par.start
                 if (any(is.na(par.start.tmp)) || length(xans) > 
                   1) {
-                  ans.all.fit <- f.start.cat(ans.all.fit, tmp.quick = T)
                   nrp <- ans.all.fit$nrp
                   ans.all.fit$text.par <- f.text.par(ans.all.fit)
                 }
@@ -3964,7 +3911,6 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_p
                     ces.ans = ces.ans, Mx = Mx, kk.tot = kk.tot, 
                     nn.tot = nn.tot, quick.ans = quick.ans)
                   if (is.na(loglik.start) | loglik.start == -1e+12) {
-                    ans.all.fit <- f.start.cat(ans.all.fit, tmp.quick = T)
                   }
                   else {
                     ans.all.fit$par.start <- par.start.tmp
@@ -3985,7 +3931,6 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_p
                 if (interrupt && plot.type > 0 && hill == 0) {
                   print("f.qfit 000000")
                   print("Attention to programmer: this part of the code is used, which is unexpected")
-                  f.press.key.to.continue()
                   ans.all.fit$heading <- ""
                   ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
                   ans.all.fit$regr.par <- regr.par
@@ -4013,7 +3958,6 @@ f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_p
         return(ans.all.fit)
     })
 }
-
 
 
 f.text.par <- function(ans.all, brief = F) {
@@ -4430,11 +4374,9 @@ f.text.par <- function(ans.all, brief = F) {
 }
 
 
-
 f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_plots = TRUE) {
     if (ans.all$model.ans == 0) {
         cat("\n\nchoose model first\n")
-        f.press.key.to.continue()
         return(ans.all)
     }
     if (ans.all$cont && ans.all$model.ans == 10 && ans.all$list.logic) {
@@ -4598,7 +4540,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                       cat("ATTENTION: you entered a value of", 
                         CES.old, "for CES, this is translated into", 
                         CES, "\n")
-                      f.press.key.to.continue()
                     }
                   }
                 }
@@ -4615,7 +4556,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
             switch(model.ans, {
                 if (nr.bb > 1) {
                   cat("\nThis model is not defined for different b parameters!")
-                  f.press.key.to.continue()
                   ans.all$fct2 <- rep(1, length(x))
                 }
                 if (nr.cc > 1) {
@@ -4812,7 +4752,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                   CES1 <- -CES1
                   if (cc > 1 + CES2) {
                     cat("\nATTENTION: value of c does not allow BMD ratio")
-                    f.press.key.to.continue()
                     return(ans.all)
                   }
                 }
@@ -5316,7 +5255,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
             }, {
                 if (min(x) != 0) {
                   cat("\n\nATTENTION: lowest value of x (milking) should be zero\n\n")
-                  f.press.key.to.continue()
                   return(ans.all)
                 }
                 if (nr.aa > 1) dum.aa <- yy[x == 0] else dum.aa <- ytmp[1]
@@ -5475,7 +5413,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 if (sum(expect.trans <= 0) > 0 && !(dtype %in% 
                   c(25, 250))) {
                   cat("\nATTENTION:  model predicts non-negative values \n")
-                  f.press.key.to.continue()
                 }
                 if (dtype == 26) {
                   expect.trans <- sqrt(expect.trans)
@@ -5490,7 +5427,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                   if (quick.ans > 1) {
                     cat("\n there may be a fitting problem, try single model\n")
                     ans.all$par.start[1] <- 0
-                    f.press.key.to.continue()
                   }
                   else if (!WAPP) {
                     cat("\n adjust start values\n")
@@ -5543,7 +5479,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 cat("\nATTENTION: You need to adjust start values before fitting the model...\n")
                 ans.all$adjust.start <- T
                 if (!WAPP) {
-                  f.press.key.to.continue()
                   return(ans.all)
                 }
             }
@@ -5573,7 +5508,6 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 if (ans.plt == 1) {
                   ans.all.plt$heading <- ""
                   ans.all.plt$ans.plt <- 1
-                  f.plot.sep(ans.all.plt)
                 }
             }
             while (ans[1] != (nrp + (nr.var + 1))) {
@@ -5652,10 +5586,11 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                   ans.all.plt$plot.type <- 1
                 ans.all.plt$show <- ""
                 ans.all.plt$l.ty <- 2
-                if (ans.plt == 1) 
-                  f.plot.sep(ans.all.plt)
-                else f.plot.all(ans.all.plt, new.window = FALSE, 
+                if (ans.plt == 1) {
+                  message("ans.plt == 1")
+                } else { f.plot.all(ans.all.plt, new.window = FALSE, 
                   no.show = TRUE)
+                }
                 loglik.old <- loglik.new
             }
             ans.all$par.start <- par.start
@@ -5671,7 +5606,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
 }
 
 
-
+#' @importFrom stats lm
 f.start.lm.con <- function(xtmp, ytmp, model.ans, dtype) {
     if (dtype %in% c(25, 250)) 
         dt.fr <- data.frame(yyy = ytmp, dose.tmp = xtmp)
@@ -5703,7 +5638,6 @@ f.start.lm.con <- function(xtmp, ytmp, model.ans, dtype) {
     }
     return(c(aa, bb, increase))
 }
-
 
 
 f.report.pars <- function(ans.all) {
@@ -5744,7 +5678,6 @@ f.report.pars <- function(ans.all) {
         return(report.pars)
     })
 }
-
 
 
 f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = FALSE) {
@@ -5874,7 +5807,6 @@ f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = 
         return(ans.all)
     })
 }
-
 
 
 f.data.plt.con <- function(ans.all, sep = FALSE) {
@@ -6318,7 +6250,6 @@ f.data.plt.con <- function(ans.all, sep = FALSE) {
 }
 
 
-
 f.model.specific.results <- function(ans.all) {
     sublist <- list()
     sublist$model.ans <- ans.all$model.ans
@@ -6403,7 +6334,6 @@ f.model.specific.results <- function(ans.all) {
 }
 
 
-
 f.ced.con <- function(ans.all) {
     with(ans.all, {
         CED <- numeric()
@@ -6445,7 +6375,7 @@ f.ced.con <- function(ans.all) {
 }
 
 
-
+#' @importFrom stats uniroot qnorm pnorm
 f.inv.con <- function(model.ans, params, CES, max.x = NA, ES.abs = 1, ans.m6.sd = 1, 
     dtype = 1, m6.ED50 = FALSE) {
     CED <- NA
@@ -6628,7 +6558,6 @@ f.inv.con <- function(model.ans, params, CES, max.x = NA, ES.abs = 1, ans.m6.sd 
 }
 
 
-
 f.resid.con <- function(ans.all) {
     with(ans.all, {
         pred.value <- f.expect.con(model.ans, x, regr.par = regr.par, 
@@ -6659,7 +6588,6 @@ f.resid.con <- function(ans.all) {
 }
 
 
-
 f.outliers <- function(ans.all) {
     with(ans.all, {
         length.old <- length(regr.resid)
@@ -6668,7 +6596,6 @@ f.outliers <- function(ans.all) {
         limit.tmp <- f.grubb(length.old)
         if (dtype %in% c(10, 15)) {
             cat(" \n\nATTENTION:  identifying outliers is not valid for summary data \n\n")
-            f.press.key.to.continue()
         }
         if (output) 
             cat(" \nThe Grubb outlier for this sample size is:", 
@@ -6719,7 +6646,6 @@ f.outliers <- function(ans.all) {
                 ans.all$fct5 <- fct5[!is.na(fct5)]
                 ans.all$data.0 <- data.0[!lst, ]
                 ans.all$regr.resid <- regr.resid[!lst]
-                f.press.key.to.continue("\n\nthe model will be refitted  \n\n")
                 if (first.outliers) {
                   Moutliers <- data.0[1, ]
                   Moutliers[1, ] <- rep(NA, length(data.0[1, 
@@ -6734,7 +6660,6 @@ f.outliers <- function(ans.all) {
         return(ans.all)
     })
 }
-
 
 
 f.factorname <- function(ans.all) {
@@ -6799,7 +6724,6 @@ f.factorname <- function(ans.all) {
 }
 
 
-
 f.hit.constr <- function(ans.all) {
     with(ans.all, {
         if (!(model.ans == 11 && model.type == 1) && !(model.ans == 
@@ -6838,17 +6762,14 @@ f.hit.constr <- function(ans.all) {
 }
 
 
-
-f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
+f.refit.nes <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
     ans.all <- f.nes(ans.all)
     ans.all <- with(ans.all, {
         if (increase == 1 && CES < 0) {
             cat("\nproblem in sign of CES (f.refit.nes)\n")
-            f.press.key.to.continue()
         }
         if (increase == -1 && CES > 0) {
             cat("\nproblem in sign of CES (f.refit.nes)\n")
-            f.press.key.to.continue()
         }
         if (increase == 0) 
             cat("\nATTENTION:  variable increase has value 0 (f.refit.nes)\n")
@@ -6934,9 +6855,9 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 "\n")
         ans.all <- f.qfit(ans.all, plot.type = 0)
         if (interactive_mode == TRUE) {
-            assign("last.fit", ans.all, immed = T, pos = 1)
+            assign("last.fit", ans.all, pos = .proast_env)
         } else {
-            #assign(ans.all$modelname, ans.all, envir = results_env)
+            #assign(ans.all$modelname, ans.all, envir = .proast_env)
         }
         if (ans.all$MLE[1] == 0) {
             cat("\n re-fitting model failed\n")
@@ -6978,7 +6899,6 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 if (max(Vdetlim, na.rm = T) != 0) 
                   cat("\nlitter effects not implemented for nonzero detection limit\n")
                 else {
-                  ans.all <- f.nested.con(ans.all)
                 }
             }
             else dtype <- 1
@@ -6994,15 +6914,14 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 tb, Vnpar[ii], tb, Vloglik[ii]), tb, Vaic[ii], 
                 "")
         if (interactive_mode == TRUE) {
-            assign("last.fit", ans.all, immed = T, pos = 1)
+            assign("last.fit", ans.all, pos = .proast_env)
         } else {
-            #assign(ans.all$modelname, ans.all, envir = results_env)
+            #assign(ans.all$modelname, ans.all, envir = .proast_env)
         }
         if (!no.CI) {
             if (dtype == 5) {
                 ans.all$plot.ans <- 1
                 ans.all$CED <- CED
-                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
                 conf.int <- ans.all$conf.int
             }
             else {
@@ -7020,7 +6939,7 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
             # If you want to do the CES recalculation you need to uncomment these lines
             # Something weird about ans.all at this point though. Probably best to avoid this.
             # ans.all$CED <- CED # This is probably not a good idea, but necessary to get the CED to match the output below, which also matches the figures. No idea where the proper ans.all to capture for this is.
-            # assign(ans.all$modelname, ans.all, envir = results_env)
+            # assign(ans.all$modelname, ans.all, envir = .proast_env)
             regr.par <- MLE[-(1:max(fct3))]
             CED <- regr.par[(nr.aa + 1):(nr.aa + nr.bb)]
             if (nr.bb == 1) 
@@ -7069,7 +6988,6 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
 }
 
 
-
 f.nes <- function(ans.all) {
     with(ans.all, {
         var.within.pooled <- f.var.pooled(ans.all)
@@ -7093,7 +7011,7 @@ f.nes <- function(ans.all) {
 }
 
 
-
+#' @importFrom stats var
 f.var.pooled <- function(ans.all) {
     f.var <- function(dtype, xx, yy, sd2.log, nn) {
         if (dtype %in% c(10, 15, 250)) {
@@ -7149,7 +7067,6 @@ f.var.pooled <- function(ans.all) {
 }
 
 
-
 f.check.cc <- function(ans.all) {
     with(ans.all, {
         cc.OK <- T
@@ -7175,7 +7092,6 @@ f.check.cc <- function(ans.all) {
 }
 
 
-
 f.lines.con <- function(ans.all, display_plots = TRUE) {
     with(ans.all, {
         lines.plt.lst <- f.lines.plt.con(ans.all)
@@ -7196,7 +7112,6 @@ f.lines.con <- function(ans.all, display_plots = TRUE) {
         return(ans.all)
     })
 }
-
 
 
 f.lines.plt.con <- function(ans.all) {
@@ -7331,7 +7246,6 @@ f.lines.plt.con <- function(ans.all) {
 }
 
 
-
 f.cedlines.con <- function(ans.all, display_plots = TRUE) {   
     ans.all$cedes <- f.cedes.plt.con(ans.all)
     with(ans.all, {
@@ -7355,7 +7269,6 @@ f.cedlines.con <- function(ans.all, display_plots = TRUE) {
         return(ans.all)
     })
 }
-
 
 
 f.cedes.plt.con <- function(ans.all) {
@@ -7483,7 +7396,6 @@ f.cedes.plt.con <- function(ans.all) {
         return(cedes.lst)
     })
 }
-
 
 
 f.show.con <- function(ans.all) {
@@ -7755,13 +7667,12 @@ f.show.con <- function(ans.all) {
 }
 
 
-
+#' @importFrom utils menu
 f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE, 
     no.show = FALSE, display_plots = TRUE) {
     if (ans.all$plot.type == 0) 
         return(ans.all)
     if (ans.all$tans != 0) {
-        ans.all$y.lim <- f.plot.cxt(ans.all, sep = sep)
         return(ans.all)
     }
     if (is.na(ans.all$xy.lim[1]) || ans.all$xy.lim[1] == 0) {
@@ -7788,10 +7699,8 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
     if (length(ans.all$xans) > 1 && ans.all$nr.aa > 1) {
         sep <- TRUE
         cat("\n\nATTENTION: plots are provided for each subgroup, as global plot is not correct \n for dose additon model with covariate on parameter a\n\n")
-        f.press.key.to.continue()
     }
     if (sep) {
-        f.plot.sep(ans.all)
         return(ans.all)
     }
     with(ans.all, {
@@ -7866,7 +7775,6 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
                 ans.all.plt$y.lim <- out.list$y.lim
                 if (no.show) 
                   ans.all$show <- ""
-                else ans.all.plt$show <- f.show.cat(ans.all.plt)
                 title(modelname, col = color[1], cex.main = 0.9, 
                   font.main = 1)
                 f.mtext(ans.all.plt)
@@ -7929,7 +7837,6 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
         return(ans.all)
     })
 }
-
 
 
 f.move.sublist <- function(lst, sub) {
@@ -8004,7 +7911,6 @@ f.move.sublist <- function(lst, sub) {
 }
 
 
-
 f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
     with(ans.all, {
         length.xx.interpol <- 1000
@@ -8065,10 +7971,6 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
                     if (ii > (nr.models - 2)) {
                       th.par <- ans.all[[model.list[ii]]]$th.par
                       sig.par <- ans.all[[model.list[ii]]]$sig.par
-                      y.expect <- f.expect.cat(model.type = 2, 
-                        model.ans, x.subgr, regr.par, th.par, 
-                        sig.par, dtype = dtype, CES = CES, ces.ans = ces.ans, 
-                        fct1 = 1, fct2 = 1, cc.inf = cc.inf)
                     }
                     else {
                       y.expect <- f.expect.bin(model.ans, x.subgr, 
@@ -8155,14 +8057,6 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
                     if (ii > (nr.models - 2)) {
                       th.par <- ans.all[[model.list[ii]]]$th.par
                       sig.par <- ans.all[[model.list[ii]]]$sig.par
-                      y.expect <- f.expect.cat(model.type = 2, 
-                        model.ans, xx.interpol, regr.par, th.par, 
-                        sig.par, dtype = dtype, CES = CES, ces.ans = ces.ans, 
-                        fct1 = 1, fct2 = 1, cc.inf = cc.inf)
-                      y.expect.plt <- f.expect.cat(model.type = 2, 
-                        model.ans, xline, regr.par, th.par, sig.par, 
-                        dtype = dtype, CES = CES, ces.ans = ces.ans, 
-                        fct1 = fct1, fct2 = 1, cc.inf = cc.inf)
                     }
                     else {
                       y.expect <- f.expect.bin(model.ans, xx.interpol, 
@@ -8296,7 +8190,6 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
 }
 
 
-
 f.xx.ma <- function(ans.all, group, length.xx) {
     ans.all$group <- group
     with(ans.all, {
@@ -8334,7 +8227,6 @@ f.xx.ma <- function(ans.all, group, length.xx) {
         return(xx)
     })
 }
-
 
 
 f.prepare.boot <- function(ans.all) {
@@ -8422,7 +8314,6 @@ f.prepare.boot <- function(ans.all) {
 }
 
 
-
 f.gener.con <- function(ans.all) {
     with(ans.all, {
         noise <- numeric()
@@ -8451,7 +8342,6 @@ f.gener.con <- function(ans.all) {
         return(y)
     })
 }
-
 
 
 f.show.ma <- function(ans.all) {
@@ -8493,7 +8383,7 @@ f.show.ma <- function(ans.all) {
 }
 
 
-
+#' @importFrom graphics mtext title
 f.mtext <- function(ans.all, display_plots = TRUE) {
     modelname <- ans.all$modelname
     show <- ans.all$show
@@ -8522,11 +8412,10 @@ f.mtext <- function(ans.all, display_plots = TRUE) {
 }
 
 
-
 f.boot.ma <- function(
   ans.all,
   interactive_mode = TRUE,
-  results_env = NULL,
+  .proast_env = NULL,
   display_plots = TRUE,
   filename = NULL,
   output_type = NULL
@@ -8644,7 +8533,7 @@ f.boot.ma <- function(
             ans.all.bt$dtype <- 1
             ans.all.bt$dtype.0 <- 1
             ans.all.bt$output <- FALSE
-            ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+            ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
         }
         Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
         ced.ma.matr[ii, ] <- Vced.ma
@@ -8691,7 +8580,6 @@ f.boot.ma <- function(
 }
 
 
-
 f.store.results <- function(ans.all, store.name = 0, add.ext = 0, interactive_mode = TRUE) {
     if (ans.all$quick.ans == 1) {
         ans.all$EXP <- NULL
@@ -8711,12 +8599,10 @@ f.store.results <- function(ans.all, store.name = 0, add.ext = 0, interactive_mo
 }
 
 
-
 f.version <- function() {
     PRversion <- "71.1"
     PRversion
 }
-
 
 
 f.control <- function(lev = 3) {
@@ -8741,7 +8627,6 @@ f.control <- function(lev = 3) {
 }
 
 
-
 f.con <- function(ans.all,
                   list.logic = FALSE,
                   indep_var_choice = NULL,
@@ -8756,7 +8641,7 @@ f.con <- function(ans.all,
                   adjust_CES_to_group_SD = NULL,
                   model_averaging = NULL,
                   num_bootstraps = NULL,
-                  results_env = NULL,
+                  .proast_env = NULL,
                   display_plots = TRUE,
                   add_nonzero_val_to_dat = FALSE,
                   nonzero_val = NULL,
@@ -8790,7 +8675,6 @@ f.con <- function(ans.all,
                   plot(log10(Vcc), log10(Vsd), xlab = "log.sd", 
                   ylab = "log.c")
                 }
-                f.press.key.to.continue()
             })
         }
         if (length(ans.all$xans) > 1) 
@@ -8816,7 +8700,6 @@ f.con <- function(ans.all,
                   mtext(show, 4, 1, adj = 0, padj = 1, las = 1, 
                     at = loc.txt, cex = 0.7)
                   cat("\n\n\nSee plot for relationship between c and sd\n\n")
-                  f.press.key.to.continue()
                   if (model.ans == 6 && fitted) 
                     ans.all <- f.fit.model6(ans.all, interactive_mode = interactive_mode)
                 }
@@ -8829,12 +8712,11 @@ f.con <- function(ans.all,
         ans.all$PRversion <- ans.all$version.old
         if (ans.all$model.fam > 0) 
             f.plot.all(ans.all)
-        else f.plot.gui(ans.all, interactive_mode = interactive_mode)
+        else f.plot.gui(ans.all, interactive_mode = interactive_mode, .proast_env = .proast_env)
         ans.all$PRversion <- PRversion
         if (ans.all$dtype != 3 && length(ans.all$gr.txt) > 1) 
             f.explain.marks(ans.all)
         if (length(ans.all$EXP$conf.int[, 1]) > 1) {
-            f.press.key.to.continue()
             cat("\n\nplot of BMD CIs for each subgroup\n\n")
             f.plot.CI(ans.all)
         }
@@ -8857,7 +8739,7 @@ f.con <- function(ans.all,
                                          detection_limit = detection_limit)
             if (ans.all$fitted) ans.all$show <- f.show.con(ans.all)
             if (!ans.all$fitted) {
-                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit) else {
+                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit) else {
                   ans.all <- f.execute(ans.all,
                                        interactive_mode = interactive_mode,
                                        add_nonzero_val_to_dat = add_nonzero_val_to_dat,
@@ -8909,7 +8791,7 @@ f.con <- function(ans.all,
                 }
             }
             if (ans.all$quick.ans > 1) {
-                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, results_env = results_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
+                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
                 
                 # Human-readable list of models
                 list.of.models <- c("exponential", "Hill", "inverse exponential", "lognormal DR")
@@ -8996,14 +8878,18 @@ f.con <- function(ans.all,
             ans.all <- f.start.con(ans.all, adjust = T, fitted = ans.all$fitted, 
                 tmp.quick = F)
         }, {
-            ans.all <- f.mm4.con(ans.all, interactive_mode = interactive_mode)
-            while (ans.all$out.ans == 1) ans.all <- f.mm4.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            ans.all <- f.mm5.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            if (ans.all$fitted == F) cat("\nFirst fit the model using option 4\n") else if (ans.all$model.ans == 
-                11) cat("\nCED not defined for full model\n") else if (ans.all$model.ans == 
-                1) cat("\nCED not defined for null model\n") else ans.all <- f.mm6.con(ans.all, interactive_mode = interactive_mode)
+            if (!ans.all$fitted) {
+              cat("\nFirst fit the model using option 4\n")
+            } else if (ans.all$model.ans == 11) {
+              cat("\nCED not defined for full model\n")
+            } else if (ans.all$model.ans == 1) {
+              cat("\nCED not defined for null model\n")
+            } else {
+              message("final else block")
+            }
+
         }, {
             if (is.na(ans.all$CED[1]) && ans.all$model.ans != 
                 59) cat("\nYou did not calculate CED! First use option 6 from main menu\n") else {
@@ -9011,12 +8897,9 @@ f.con <- function(ans.all,
                 ans.all$plot.ans <- 1
                 ans.all$plot.ans <- menu(c("no", "yes (reduces speed)"), 
                   title = "\ndo you want plots of each sampling run?")
-                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
             }
         }, {
-            ans.all <- f.mm8.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            ans.all <- f.mm10.con(ans.all, interactive_mode = interactive_mode)
         }, {
             with(ans.all, {
                 if (model.ans != 2) {
@@ -9090,7 +8973,6 @@ f.con <- function(ans.all,
 }
 
 
-
 f.nr.replicates <- function(ans.all) {
     with(ans.all, {
         if (length(xans) > 1) {
@@ -9111,7 +8993,6 @@ f.nr.replicates <- function(ans.all) {
 }
 
 
-
 f.quick.con <- function(ans.all,
                         indep_var_choice = NULL,
                         Vyans_input = NULL,
@@ -9124,7 +9005,7 @@ f.quick.con <- function(ans.all,
                         adjust_CES_to_group_SD = NULL,
                         model_averaging = NULL,
                         num_bootstraps = NULL,
-                        results_env = NULL,
+                        .proast_env = NULL,
                         display_plots = TRUE,
                         add_nonzero_val_to_dat = FALSE,
                         nonzero_val = NULL,
@@ -9142,7 +9023,6 @@ f.quick.con <- function(ans.all,
             if (output) 
                 if (!WAPP && !simu) {
                   cat("\nclick in this window to see current output\n")
-                  f.press.key.to.continue()
                 }
             ans.all$data.0 <- odt
             f.overlap()
@@ -9159,7 +9039,6 @@ f.quick.con <- function(ans.all,
             ans.all$const.var <- FALSE
             version.old <- ans.all$PRversion
             if (version.old[1] != PRversion) 
-                ans.all <- f.adjust.saved(ans.all)
             if (ans.all$WAPP && ans.all$nruns == 0 && dtype %in% 
                 c(5, 15)) 
                 ans.all$nruns <- 200
@@ -9469,7 +9348,7 @@ f.quick.con <- function(ans.all,
                 ans.all$increase <- 0
                 ans.all$Vyans <- Vyans
                 ans.all$do.MA <- do.MA
-                ans.all <- f.select.con(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+                ans.all <- f.select.con(ans.all, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
                 if (ans.all$quick.ans == 6) {
                   if (!(WAPP || gui)) 
                     f.store.results(ans.all, store.name = 0, interactive_mode = interactive_mode)
@@ -9578,15 +9457,14 @@ f.quick.con <- function(ans.all,
                       ans.all$LOGN, ans.all$TREND)
                   }
                 if (interactive_mode == TRUE) {
-                  assign("last.fit", ans.all, immed = T, pos = 1)
+                  assign("last.fit", ans.all, pos = .proast_env)
                 }
                 if (ans.all$fitted) {
                   if (ans.all$dtype %in% c(1, 5)) 
                     ans.all$plt.mns <- 1
-                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots, results_env = results_env, interactive_mode = interactive_mode)
+                  ans.all <- f.plot.gui(ans.all, display_plots = display_plots, .proast_env = .proast_env, interactive_mode = interactive_mode)
                   if (!WAPP && length(ans.all$xans) > 1 && ans.all$nr.aa > 
                     1) {
-                    f.press.key.to.continue()
                     f.plot.all(ans.all, sep = T, display_plots = display_plots)
                   }
                 }
@@ -9599,7 +9477,7 @@ f.quick.con <- function(ans.all,
                   if (ans.all$TREND) {
                     ans.all$MA.running <- TRUE
                     cat("\n\nCalculating confidence intervals by model averaging, this may make some time ....\n\n")
-                    ans.all <- f.boot.ma(ans.all, interactive_mode = interactive_mode, results_env = results_env, display_plots = display_plots)
+                    ans.all <- f.boot.ma(ans.all, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
                     cat("\nThe model-average BMD confidence interval is:\n")
                     print(ans.all$MA$conf.int.ma)
                     cat("\n")
@@ -9614,10 +9492,10 @@ f.quick.con <- function(ans.all,
                       if (length(ans.all$Vyans) > 1) {
                         message("Vyans is greater than 1")
                         ans.all$res.name <- ans.all$varname[ans.all$yans]
-                        assign(paste(ans.all$res.name, "model_averaging"), ans.all, envir = results_env)
+                        assign(paste(ans.all$res.name, "model_averaging"), ans.all, envir = .proast_env)
                       } else {
                         ans.all$res.name <- ans.all$varname[ans.all$yans]
-                        results_env$model_averaging <- ans.all
+                        .proast_env$model_averaging <- ans.all
                       } 
                     }
                   } else {
@@ -9635,7 +9513,6 @@ f.quick.con <- function(ans.all,
                   if (length(ans.all$notes) > 1) {
                     print("f.quick.con")
                     cat(ans.all$notes)
-                    f.press.key.to.continue()
                   }
                   if (!(WAPP || gui) && length(Vyans) > 1 && 
                     interrupt) 
@@ -9694,7 +9571,7 @@ f.quick.con <- function(ans.all,
 }
 
 
-
+#' @importFrom stats pnorm
 f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log, 
     sd2.log, nn, Vdetlim, CES, twice = T, ttt = 0, trace.tmp = F, 
     fct4 = 1, fct5 = 1, cens.up = NA, lb = -Inf, ub = Inf, par.tmp, 
@@ -9748,7 +9625,7 @@ f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log,
     if (dtype %in% c(1, 5, 25, 26)) 
         expect <- f.expect.con(model.ans, x, regr.par, fct1 = fct1, 
             fct2 = fct2, fct3 = fct3, fct4 = fct4, fct5 = fct5, 
-            CES = CES, twice = twice, ttt = ttt, y = yy, trace.expect = F, 
+            CES = CES, twice = twice, ttt = ttt, yy = yy, trace.expect = F, 
             increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
             sign.q = sign.q, ans.m6.sd = ans.m6.sd, x1 = x1, 
             x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
@@ -9797,7 +9674,7 @@ f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log,
     if (dtype %in% c(10, 15, 250, 260)) 
         expect <- f.expect.con(model.ans, x, regr.par, fct1 = fct1, 
             fct2 = fct2, fct3 = fct3, fct4 = fct4, fct5 = fct5, 
-            CES = CES, twice = twice, ttt = ttt, y = y, increase = increase, 
+            CES = CES, twice = twice, ttt = ttt, yy = y, increase = increase, 
             x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
             ans.m6.sd = ans.m6.sd, x1 = x1, x2 = x2, cc.inf = cc.inf, 
             incr.decr.no = incr.decr.no)
@@ -9836,7 +9713,7 @@ f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log,
 }
 
 
-
+#' @importFrom stats pnorm qnorm
 f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 1, 
     fct4 = 1, fct5 = 1, name = F, CES = NA, twice = T, ttt = 0, 
     yy = 0, trace.expect = F, increase, x.mn = NA, ref.lev, ans.m6.sd = 1, 
@@ -10049,15 +9926,12 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
                 cat("\n\nATTENTION:  CES.16 not defined; CES2 is set to 0.10 and CES1 to 0.05\n\n")
                 CES2 <- 0.1
                 CES1 <- 0.05
-                f.press.key.to.continue()
             } else {
-                CES2 <- CES.16$CES2
-                CES1 <- CES.16$CES1
+#                 CES2 <- CES.16$CES2
+#                 CES1 <- CES.16$CES1
             }
             if (par4 <= 1) print(c("f.expect.con, value of BMD-ratio:", 
                 par4))
-            dd <- f.uniroot.BMDratio(ratio = par4, cc = cc0, 
-                CES1 = CES1, CES2 = CES2)
             y.expect <- aa0 * (cc0 - (cc0 - 1) * exp(-(x/bb0)^dd))
             if (is.na(dd)) y.expect <- rep(0, length(x))
         }, {
@@ -10314,7 +10188,6 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
         print("f.expect.con:  END")
     return(y.expect)
 }
-
 
 
 f.constr.con <- function(ans.all, tmp.quick = F) {
@@ -10879,7 +10752,6 @@ f.constr.con <- function(ans.all, tmp.quick = F) {
 }
 
 
-
 f.nlminb <- function(ans.all, tmp.quick = F) {
     if (exists("track2")) 
         print("f.nlminb")
@@ -10954,7 +10826,6 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
                 print(increase)
                 print(cbind(text.par, par.start, lb, ub, scale.dum))
                 print(loglik.check)
-                f.press.key.to.continue()
             }
             fit.res <- nlminb(par.start, f.lik.con, scale = scale.dum, 
                 lower = lb, upper = ub, control = lst.control, 
@@ -11008,7 +10879,6 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
                   ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
                   cc.inf = cc.inf, incr.decr.no = incr.decr.no)
                 print(loglik.tmp)
-                f.press.key.to.continue()
             }
         }
         if (!cont) {
@@ -11033,7 +10903,6 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
                 print(CES.cat)
                 print(cbind(text.par, par.start, lb, ub, scale.dum))
                 print(loglik.check)
-                f.press.key.to.continue()
             }
             retry <- FALSE
             if (!is.finite(loglik.check) || abs(loglik.check) == 
@@ -11085,7 +10954,6 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
                 output = output)
             if (dtype == 6 && model.type == 2 && model.ans %in% 
                 c(13, 15, 23, 25) && quick.ans > 1) {
-                par.start <- f.start.cat(ans.all, tmp.quick = TRUE)$par.start
                 scale.dum <- abs(1/par.start)
                 scale.dum[scale.dum == Inf] <- 1000
                 scale.dum[1:nr.alfa] <- 1
@@ -11138,7 +11006,6 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
                 print(cbind(text.par, par.start, lb, ub, scale.dum))
                 print(fit.res$objective)
                 print(fit.res$par)
-                f.press.key.to.continue()
             }
             count <- 0
             while (is.na(fit.res$par[1]) || (fit.res$obj == 1e-12) | 
@@ -11194,7 +11061,6 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
                 0) 
                 if (abs(ans.all$loglik - loglik.start) < 0.1) {
                   cat("\n\nATTENTION:  log-likelihood hardly changed\n\n")
-                  f.press.key.to.continue()
                 }
         if ((model.type == 1 && model.ans == 14) || (cont && 
             model.ans == 11)) 
@@ -11233,14 +11099,13 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
 }
 
 
-
 f.pars <- function(ans.all) {
     if (exists("track2")) 
         print("f.pars")
     if (ans.all$fit.ans == 1) 
         if (ans.all$model.ans == 47 || (ans.all$model.ans == 
-            6 && ans.all$ans.m6.sd == 2)) 
-            return(f.pars.m6(ans.all))
+            6 && ans.all$ans.m6.sd == 2))
+            message("model ans is 47, 6, or 2")
     with(ans.all, {
         if (!cont && model.ans == 14 && model.type == 1) {
             ans.all$regr.par.matr <- 0
@@ -11484,7 +11349,6 @@ f.pars <- function(ans.all) {
 }
 
 
-
 f.converged <- function(mess, conv.out, tmp.quick = F) {
     if (exists("track2")) 
         print("f.converged")
@@ -11503,7 +11367,7 @@ f.converged <- function(mess, conv.out, tmp.quick = F) {
 }
 
 
-
+#' @importFrom stats qnorm pnorm
 f.bb.con <- function(model.ans, cc, dd, CED, CES, ref.lev = NA, CED.ref = NA, 
     incr.decr.no = 0, cont, aa = NA) {
     if (exists("track2")) 
@@ -11588,7 +11452,7 @@ f.bb.con <- function(model.ans, cc, dd, CED, CES, ref.lev = NA, CED.ref = NA,
 }
 
 
-
+#' @importFrom stats qt
 f.grubb <- function(ss = 25, alfa = 0.05) {
     alfa <- alfa/2
     t.crit <- qt(alfa/ss, ss - 2)
@@ -11596,7 +11460,6 @@ f.grubb <- function(ss = 25, alfa = 0.05) {
     G <- G * sqrt(t.crit^2/(ss - 2 + t.crit^2))
     return(G)
 }
-
 
 
 f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
@@ -11665,7 +11528,6 @@ f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
                   ans.all$th.par <- par.lst$th.par
                   ans.all$sig.par <- par.lst$sig.par
                 }
-                ans.all$show <- f.show.cat(ans.all)
             }
         }
         low <- conf.int[, 1]
@@ -11684,11 +11546,9 @@ f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
         if (update) 
             if (cont) 
                 ans.all$show <- f.show.con(ans.all)
-            else ans.all$show <- f.show.cat(ans.all)
         return(ans.all)
     })
 }
-
 
 
 f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRUE) {
@@ -11933,7 +11793,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                     print("loglik current")
                     print(loglik.current)
                     if (interrupt) 
-                      f.press.key.to.continue()
+                      message("interrupt")
                   }
                   if (!debug && trace.plt && (loglik.current > 
                     (loglik.max - crit))) {
@@ -12140,7 +12000,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                     print(MLE.current[jj])
                     print(loglik.current)
                     if (interrupt) 
-                      f.press.key.to.continue()
+                      message("interrupt")
                   }
                   if (!debug && trace.plt & (loglik.current > 
                     (loglik.max - crit))) {
@@ -12271,8 +12131,9 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                 loglik.upp <- loglik.upp[rev(order(CED.upp))]
                 CED.upp <- rev(sort(CED.upp))
             }
-            if (debug) 
-                f.press.key.to.continue()
+            if (debug) {
+              message("debug")
+            }
             lst <- loglik.low < (loglik.max - crit)
             if (sum(lst) > 0) {
                 first.crit.ll <- max(loglik.low[lst])
@@ -12445,16 +12306,15 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 }
 
 
-
 #' Manages plotting for PROAST
 #' @description Runs through the plotting functions depending on data type
 #' and plot type.
 #' @param ans.all The proast object that gets passed to all functions.
-#' @param HTML I don't know what this does but keep it FALSE
-#' @param model.summ I don't knkow what this does either, but keep it TRUE
+#' @param HTML Keep FALSE
+#' @param model.summ Keep TRUE
 #' @param display_plots A logical variable - whether we want to display
 #' the plots or not.
-#' @param results_env environment
+#' @param .proast_env environment
 #' @param output_type The format that you wish to export the plots as.
 #' @param filename The name of the file to be read.
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
@@ -12462,12 +12322,14 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' the plots and return them as a list instead of exporting them. This parameter
 #' should only be used when running the function indenpently or within f.plot.result.
 #' It will disrupt f.proast(), so keep the default as FALSE.
+#' @importFrom graphics title text mtext
+#' @importFrom grDevices recordPlot dev.off
 f.plot.gui <- function(
   ans.all,
   HTML = FALSE,
   model.summ = TRUE,
   display_plots = TRUE,
-  results_env = NULL,
+  .proast_env = NULL,
   output_type = NULL,
   filename = NULL,
   interactive_mode = TRUE,
@@ -12537,7 +12399,7 @@ if (record_plots) {
           par(cex = 0.6)
         }
         y.pos <- 0
-        assign(".ypos", y.pos, immediate = TRUE, pos = 1)
+        assign(".ypos", y.pos, pos = .proast_env)
       }
       ans.all.plt <- ans.all
       ans.all.plt$heading <- ""
@@ -12548,7 +12410,6 @@ if (record_plots) {
       }
       if (model.summ) {
         if (ans.all$dtype == 3) {
-          ans.all.plt$show <- f.show.cat(ans.all.plt)
         } else {
           ans.all.plt$show <- f.show.con(ans.all.plt)
         }
@@ -12578,11 +12439,10 @@ if (record_plots) {
           ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$HILL)
         }
         y.pos <- 95
-        assign(".ypos", y.pos, immediate = T, pos = 1)
+        assign(".ypos", y.pos, pos = .proast_env)
         ans.all.plt$yleg <- ""
         if (model.summ) {
           if (ans.all$dtype == 3) {
-            ans.all.plt$show <- f.show.cat(ans.all.plt)
           } else {
             ans.all.plt$show <- f.show.con(ans.all.plt)
           }
@@ -12638,11 +12498,10 @@ if (record_plots) {
           ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$INVEXP)
         }
         y.pos <- 95
-        assign(".ypos", y.pos, immediate = TRUE, pos = 1)
+        assign(".ypos", y.pos, pos = .proast_env)
         ans.all.plt$yleg <- ""
         if (model.summ) {
           if (ans.all$dtype == 3) {
-            ans.all.plt$show <- f.show.cat(ans.all.plt)
           } else {
             ans.all.plt$show <- f.show.con(ans.all.plt)
           }
@@ -12669,11 +12528,10 @@ if (record_plots) {
           ans.all.plt <- f.move.sublist(ans.all.plt, ans.all$LOGN)
         }
         y.pos <- 95
-        assign(".ypos", y.pos, immediate = TRUE, pos = 1)
+        assign(".ypos", y.pos, pos = .proast_env)
         ans.all.plt$yleg <- ""
         if (model.summ) {
           if (ans.all$dtype == 3) {
-            ans.all.plt$show <- f.show.cat(ans.all.plt)
           } else {
             ans.all.plt$show <- f.show.con(ans.all.plt)
           }
@@ -12702,7 +12560,7 @@ if (record_plots) {
         else {
             new.window <- T
             y.pos <- 0
-            assign(".ypos", y.pos, immediate = T, pos = 1)
+            assign(".ypos", y.pos, pos = .proast_env)
         }
         ans.all.plt <- ans.all
         if (length(ans.all$SINGMOD) > 0) 
@@ -12726,8 +12584,10 @@ if (record_plots) {
                 ans.all$NULL.model)
         ans.all.plt$heading <- ""
         if (model.summ) 
-            if (ans.all$dtype == 3) 
-              ans.all.plt$show <- f.show.cat(ans.all.plt)
+            if (ans.all$dtype == 3) {
+              message("dtype == 3")
+            }
+              
             else ans.all.plt$show <- f.show.con(ans.all.plt)
         f.plot.all(ans.all.plt, new.window = new.window, display_plots = display_plots)
         if (ans.all$dtype == 3) 
@@ -12832,8 +12692,10 @@ if (record_plots) {
               ans.all.plt <- f.move.sublist(ans.all.plt, ans.all[[name]])
               if (ans.all$dtype == 2) 
                 ans.all.plt$CI.plt <- FALSE
-              if (model.summ) 
-                ans.all.plt$show <- f.show.cat(ans.all.plt)
+              if (model.summ) {
+                message("model.summ")
+              }
+                
               f.plot.all(ans.all.plt, new.window = FALSE, display_plots = display_plots)
           }
       }
@@ -12844,12 +12706,12 @@ if (record_plots) {
   if (WAPP)
       dev.off()
   if (interactive_mode == FALSE) {
-    if (!is.null(results_env)) {
+    if (!is.null(.proast_env)) {
       if (length(ans.all$Vyans) > 1) {
         ans.all$res.name <- ans.all$varnames[ans.all$yans]
-        assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = results_env) 
+        assign(paste(ans.all$res.name, "plot_result"), ans.all, envir = .proast_env) 
       } else {
-        assign("plot_result", ans.all, envir = results_env)
+        assign("plot_result", ans.all, envir = .proast_env)
       }
     }
   }
@@ -12861,8 +12723,7 @@ if (record_plots) {
 }
 
 
-
-f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
+f.CI.sel <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
     ans.all <- with(ans.all, {
         nr.aa <- max(fct1)
         nr.bb <- max(fct2)
@@ -12877,10 +12738,10 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
               if (interactive_mode == FALSE) {
                 if (length(ans.all$Vyans) > 1) {
                   ans.all$res.name <- ans.all$varname[ans.all$yans]
-                  assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = results_env)
+                  assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = .proast_env)
                 } else {
                   ans.all$res.name <- ans.all$varname[ans.all$yans]
-                  assign(ans.all$modelname, ans.all, envir = results_env)
+                  assign(ans.all$modelname, ans.all, envir = .proast_env)
                 }
               }
               return(ans.all)
@@ -12899,7 +12760,6 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
             }
         }
         if (!cont) {
-            CED.lst <- f.ced.cat(ans.all)
             ans.all$CED.matr <- CED.lst$CED.matr
             ans.all$response.matr <- CED.lst$response.matr
             CED <- CED.lst$CED
@@ -12924,7 +12784,6 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                 ans.all$plot.ans <- 1
                 ans.all$nrp <- length(regr.par)
                 ans.all$CED <- CED
-                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
                 conf.int <- ans.all$conf.int
             }
             else {
@@ -12950,7 +12809,6 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
                         nr.bb)]
                     }
                     if (!cont) {
-                      CED.lst <- f.ced.cat(ans.all)
                       ans.all$CED.matr <- CED.lst$CED.matr
                       ans.all$response.matr <- CED.lst$response.matr
                       CED <- CED.lst$CED
@@ -13017,16 +12875,15 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, results_env = NULL) {
           if (length(ans.all$Vyans) > 1) {
             message("Vyans is greater than 1")
             ans.all$res.name <- ans.all$varname[ans.all$yans]
-            assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = results_env)
+            assign(paste(ans.all$res.name, ans.all$modelname), ans.all, envir = .proast_env)
           } else {
             ans.all$res.name <- ans.all$varname[ans.all$yans]
-            assign(ans.all$modelname, ans.all, envir = results_env)
+            assign(ans.all$modelname, ans.all, envir = .proast_env)
         }
         }
         return(ans.all)
     })
 }
-
 
 
 f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = NA, 
@@ -13150,7 +13007,8 @@ f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = 
 }
 
 
-
+#' @importFrom graphics plot title lines mtext points
+#' @importFrom grDevices dev.off
 f.plot.CED <- function(ans.all,
                        logscale = T,
                        xx.lim = NA,
@@ -13292,18 +13150,15 @@ f.plot.CED <- function(ans.all,
             cat("\nCED-CI plot created for subgroup", ii, "\n")
             if (ii < nr.lev)
                 if (interactive_mode == TRUE) {
-                  f.press.key.to.continue()
                 }
         }
         if (WAPP)
             dev.off()
     }
-    if (exists(" track"))
-        print("f.plot.CED: END")
 }
 
 
-
+#' @importFrom stats median setNames
 parse_PROAST_output <- function(result) {
   result <- result[!grepl("plot_result", names(result))]
   selected_models <- c()
@@ -13502,11 +13357,10 @@ parse_PROAST_output <- function(result) {
 }
 
 
-
 #' Plot the PROAST results
 #' @description Independently generate the model plots from the raw results.
 #' @param proast_results_list The raw results list. This is the output of
-#' f.proast [[1]]
+#' \code{\link{f.proast}}
 #' @param output_path The file path to the output directory. If the output_path
 #' is NULL, it will save it to the working directory. If the output_path
 #' doesn't exist, it will be created.
@@ -13523,6 +13377,7 @@ parse_PROAST_output <- function(result) {
 #' it might take a while. You may think this seems rather inefficient. Well,
 #' it is, but I'm too tired to fix it, so we all just have to deal with it for
 #' now.
+#' @importFrom grDevices recordPlot
 #' @return Generates plots. Either saves them to an output path or records them
 #' and returns them as a list.
 f.plot.result <- function(
@@ -13578,7 +13433,8 @@ f.plot.result <- function(
           res,
           filename = filename,
           output_type = output_type,
-          interactive_mode = FALSE
+          interactive_mode = FALSE,
+          .proast_env = .proast_env
         )
       } else { # Model averaging
         f.boot.ma(
@@ -13589,7 +13445,7 @@ f.plot.result <- function(
       }
     } else { # When output type isn't set, record the plots
       if (model_averaging == FALSE) {
-        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE)
+        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE, .proast_env = .proast_env)
       } else {
         plots <- list()
         f.boot.ma(res, display_plots = TRUE)
@@ -13635,20 +13491,17 @@ f.plot.result <- function(
 # f.plot.result(result_A[[1]])
 
 
-
 f.remove.blanks <- function(vec) {
     LEVELS <- levels(as.factor(vec))
     LEVELS <- subset(LEVELS, LEVELS != "")
-    vec <- factor(vec, level = LEVELS)
+    vec <- factor(vec, levels = LEVELS)
     return(vec)
 }
-
 
 
 f.alert.full <- function() {
     "\nAttention: the AIC of the best model (minimum AIC) is more than two units larger than that of the full model. \nThis might indicate a problem in the data, in particular when the difference is much larger than two units (e.g. > 5). \n\nYou might check the following options:\n1. In real-life studies, not all experimental factors are completely randomized over all animals (experimental units), \ne.g. animals were housed in the same cage within a given dose group, or order of treatments were not randomized over individual animals. \nAnother option is that individual outlying animals distort the mean response of one or more treatment groups. \nThis may lead to fluctuations in the (mean) responses among treatment groups that are larger than expected from random sampling error, \nresulting in an AIC difference with the full model larger than 2 units.\n2. the data consist of subgroups not taken into account in the model (e.g. various studies, or two sexes) \n3. the data contain litter effects not taken into account \n4. the response in the top dose group deviates substantially from the fitted model (check the CI around the observed (mean) response); \n\nAssociated actions for each of these four options are:\n1. the greater scatter in (mean) responses will result in a wider BMD CI; normally, no further action is needed, \nas the BMD approach is relatively robust to such devations. You might check this by leaving out specific \ntreatment groups (one by one) and check if this has a major impact on the BMD CI.\n2. use the factor defining the subgroups as a covariate and re-analyse the data \n3. re-analyse the data with litter effects taken into account \n4. consider to leave out the top dose; it is not recommended to leave out two high dose groups.\n\n"
 }
-
 
 
 f.explain.marks <- function(ans.all) {
@@ -13671,7 +13524,8 @@ f.explain.marks <- function(ans.all) {
 }
 
 
-
+#' @importFrom graphics title lines mtext
+#' @importFrom grDevices dev.off
 f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE, 
     ref = NA, rm.NAs = TRUE, display_plots = TRUE) {
     no.hill <- FALSE
@@ -13887,5 +13741,221 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
     return(CI.matr)
 }
 
+
+f.choose.model <- function(ans.all.tmp,
+                           cont = TRUE,
+                           interactive_mode = TRUE,
+                           add_nonzero_val_to_dat = FALSE,
+                           nonzero_val = NULL,
+                           detection_limit = NULL) {
+    with(ans.all.tmp, {
+        ans.all <- ans.all.tmp
+        if (cont) {
+            model.names <- f.expect.con(name = T)
+            if (length(xans) > 1) 
+                model.names[46:47] <- ""
+            model.ans <- menu(model.names, title = "\nWhich model do you want to fit ?\n                       (type 0 if none\n")
+            if (model.ans == 0) {
+                ans.all$model.ans <- 0
+                return(ans.all)
+            }
+            if (max(x, na.rm = T) > 1000 && model.ans %in% c(2:5, 
+                17:20)) {
+                cat("\n(Nonzero) doses range from ", min(x[x != 
+                  0], na.rm = T), "to ", max(x, na.rm = T))
+                cat("\nit may be helpful to scale dose x to prevent numerical problems\n")
+                ans.all$sf.x <- eval(parse(prompt = "\nQ10: Give scaling factor for dose (e.g. 1000) > "))
+            }
+            if (model.ans %in% c(58, 59)) {
+                if (y[1] == -1000) {
+                  cat("\n\nATTENTION: you need to remove or adjust the first response which equals zero\n or is below LOQ\n\n")
+                  print(cbind(x, y)[1:10, ])
+                }
+            }
+            ans.all$quick.ans <- 1
+            if (model.ans == 38) 
+                ans.all$quick.ans <- 5
+            if (model.ans == 39) 
+                ans.all$quick.ans <- 3
+            if (model.ans == 40) 
+                ans.all$quick.ans <- 4
+            if (yans == 0 && !(model.ans %in% 38:40)) {
+                cat("\nFirst choose response ... \n")
+                ans.all$change[2] <- T
+                ans.all <- f.change.settings(ans.all,
+                                             interactive_mode = interactive_mode,
+                                             add_nonzero_val_to_dat = add_nonzero_val_to_dat,
+                                             nonzero_val = nonzero_val,
+                                             detection_limit = detection_limit)
+                ans.all <- f.execute(ans.all,
+                                     interactive_mode = interactive_mode,
+                                     add_nonzero_val_to_dat = add_nonzero_val_to_dat,
+                                     nonzero_val = nonzero_val,
+                                     detection_limit = detection_limit)
+            }
+            if (model.ans == 16) 
+                cat("\nATTENTION: this model can only be fitted after fitting model 10!\n")
+            if (model.ans %in% c(12:15, 22:25, 46, 50:54, 60, 
+                61, 63)) 
+                CES <- eval(parse(prompt = paste("give value for CES (negative for decreasing response) > ")))
+            if (model.ans == 16) {
+                if (!pre.16) {
+                  model.ans <- 10
+                  cat("\nfirst model 10 will be fitted\n")
+                }
+                else ans.all$par.start <- MLE[(max(fct3) + 1):length(MLE)]
+            }
+            if (incr.decr.no > 0) {
+                if (model.ans %in% c(0, 15, 25, 52, 54, 46)) {
+                  cat("")
+                  CES.tmp <- CES
+                  CES <- rep(CES, length(x))
+                  CES[fct4 == 1] <- -CES.tmp
+                  ans.all$CES <- CES
+                }
+                else {
+                  cat("\n\nthe selected model is not applicable with both in- and decreasing DRs\n")
+                  cat("\nselect model 15,25,52,54 or 46\n")
+                  return(ans.all)
+                }
+            }
+            ans.all$modelname <- f.expect.con(name = T)[model.ans]
+        }
+        if (!cont) {
+            if (length(unique(fct3)) > 1 || dtype == 3) 
+                model.type <- 2
+            else model.type <- menu(c("classical models", "latent variable models", 
+                "set of models"), title = "\nChoose type of models")
+            switch(model.type, model.names <- f.expect.bin(name = T), 
+                {
+                  model.names <- f.expect.con(name = T)[c(1:25, 
+                    31, 32, 33, 45, 38, 39, 40, 46, 48, 50, 52, 
+                    54)]
+                }, {
+                  ans.all$quick.ans <- 3
+                  return(ans.all)
+                })
+            model.ans <- menu(model.names, title = "\nWhich model do you want to fit ?\n  (type 0 is you first want to change the settings\n")
+            if (model.type == 2) {
+                model.ans.tmp <- model.ans
+                if (model.ans.tmp == 26) 
+                  model.ans <- 31
+                if (model.ans.tmp == 27) 
+                  model.ans <- 32
+                if (model.ans.tmp == 28) 
+                  model.ans <- 33
+                if (model.ans.tmp == 29) 
+                  model.ans <- 45
+                if (model.ans.tmp == 30) 
+                  model.ans <- 38
+                if (model.ans.tmp == 31) 
+                  model.ans <- 39
+                if (model.ans.tmp == 32) 
+                  model.ans <- 40
+                if (model.ans.tmp == 33) 
+                  model.ans <- 46
+                if (model.ans == 38) 
+                  ans.all$quick.ans <- 5
+                if (model.ans == 39) 
+                  ans.all$quick.ans <- 3
+                if (model.ans == 40) 
+                  ans.all$quick.ans <- 4
+                if (model.ans %in% 38:40) 
+                  ans.all$displ.no <- 0
+                ans.all$modelname <- f.expect.con(name = T)[model.ans]
+            }
+            if (model.type == 2 && model.ans == 11) {
+                cat("\nfull LVM model not allowed, model 14 from classical models will be chosen\n")
+                ans.all$model.ans <- 14
+                ans.all$model.type <- 1
+                model.names <- f.expect.bin(name = T)
+                ans.all$modelname <- model.names[ans.all$model.ans]
+                return(ans.all)
+            }
+            if (model.type == 1) 
+                ans.all$modelname <- f.expect.bin(name = T)[model.ans]
+            dum <- F
+            if ((model.type == 1) & (model.ans %in% 15:26)) 
+                dum <- T
+            if ((model.type == 2) & (model.ans %in% c(12:15, 
+                22:25, 46)) && dtype != 3) 
+                dum <- T
+            if (dum) {
+                ans.all$ces.ans <- menu(c("ED50", "Additional risk, i.e. P[BMD] - P[0]", 
+                  "Extra risk, i.e. (P[BMD]-P[0])/(1-P[0])", 
+                  "CES for latent variable", "Relative risk"), 
+                  title = "\nWhat type of Benchmark response do you want to consider?")
+                switch(ans.all$ces.ans, CES <- 0, CES <- eval(parse(prompt = "\nGive value for the BMR,\nin terms of additional risk > ")), 
+                  CES <- eval(parse(prompt = "\nGive value for the BMR,\nin terms of extra risk > ")), 
+                  CES <- eval(parse(prompt = "\nGive value for the CES,\ndefined for latent variable > ")), 
+                  CES <- eval(parse(prompt = "\nGive value for the percent change in risk > ")))
+            }
+            if (dtype == 3) {
+                CES <- 0
+                ans.all$ces.ans <- 1
+            }
+            if (dtype == 3 && model.ans %in% c(12:15, 22:25, 
+                46)) {
+                cat("\n number of (temporary) severity categories for this endpoint:", 
+                  nth, "\n")
+                CES.cat <- eval(parse(prompt = paste("\nGive severity category (in temporary terms) associated with CED > ")))
+            }
+            if (length(unique(fct3)) > 1 && model.ans %in% c(12:15, 
+                22:25, 46)) {
+                cat("\n the levels of the covariate are:\n")
+                print(th.par)
+            }
+            if (model.type == 1 & model.ans == 25 & ans.all$ces.ans > 
+                1) {
+                ans.all$fct1 <- rep(1, length(x))
+                ans.all$fct2 <- rep(1, length(x))
+                ans.all$nr.aa <- 1
+                ans.all$nr.bb <- 1
+            }
+            ans.all$model.type <- model.type
+        }
+        if (model.ans == 46) {
+            fct2.no <- menu(varnames[1:nvar], title = "\n:Give number of factor for which RPFs need to be estimated\n  ")
+            fct2.fact <- data.0[, fct2.no]
+            levels.all <- levels(factor(fct2.fact))
+            nr.lev <- length(levels.all)
+            cat("\n: Give number associated with the reference\n")
+            cat(" ")
+            cat(paste(1:nr.lev, ":", levels.all, "\n"))
+            ans.all$ref.lev <- eval(parse(prompt = paste(" -------- > ")))
+            ans.all$fct2.no <- fct2.no
+            ans.all <- f.execute(ans.all,
+                                 interactive_mode = interactive_mode,
+                                 add_nonzero_val_to_dat = add_nonzero_val_to_dat,
+                                 nonzero_val = nonzero_val,
+                                 detection_limit = detection_limit)
+        }
+        ans.all$CES <- CES
+        ans.all$model.ans <- model.ans
+        ans.all$model.names <- model.names
+        if (cont) 
+            ans.all$modelname <- model.names[model.ans]
+        if (!cont) 
+            ans.all$CES.cat <- CES.cat
+        dum1 <- !cont & (model.type == 1) & (model.ans %in% c(15:16, 
+            18:26, 30, 33))
+        dum2 <- ((!cont & (model.type == 2)) | cont) & (model.ans %in% 
+            c(12:16, 22:25, 46:47, 51:54))
+        ans.all$CED.model <- dum1 | dum2
+        if (!cont && model.type == 1 && nr.aa > 1 && nr.bb == 
+            1 && ans.all$CED.model && ans.all$ces.ans != 3) {
+            cat("\nATTENTION:  this situation is not yet correctly implemented\n")
+            cat("the resulting BMDs may not be entirely correct\n\n")
+            if (quick.ans == 1)
+              message("quick ans 1")
+        }
+        ans.all$model.fam <- 1
+        if (model.ans == 42) {
+            ans.all$opposing <- menu(c("no", "yes"), title = "\ndo the curves have opposing direction?") - 
+                1
+        }
+        return(ans.all)
+    })
+}
 
 

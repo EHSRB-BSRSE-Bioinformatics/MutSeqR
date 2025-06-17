@@ -262,7 +262,6 @@ example_data <- readRDS(example_file)
 # Filter
 filtered_example_mutation_data <- filter_mut(
   mutation_data = example_data,
-  correct_depth = TRUE,
   vaf_cutoff = 0.01,
   regions = "TSpanel_mouse",
   regions_filter = "keep_within",
@@ -330,7 +329,7 @@ mf_data <- calculate_mf(
 )
 mean <- mf_data %>%
   dplyr::group_by(dose) %>%
-  dplyr::summarise(mean_mf_min = mean(mf_min), SE = sd(mf_min)/sqrt(n()))
+  dplyr::summarise(mean_mf_min = mean(mf_min), SE = sd(mf_min)/sqrt(dplyr::n()))
 ```
 ### Mutation Subtypes
 Mutations can also be grouped by mutation subtype at varying degrees of resolution using the `subtype_resolution` parameter.
@@ -710,7 +709,7 @@ plot <- plot_model_mf(model = model_by_target,
                                          "#ffd166",
                                          "#06d6a0",
                                          "#118ab2"))
-plot <- plot + ggplot2::theme(axis.text.x = element_text(angle = 90))
+plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 ```
 ![plot_model_mf Dose and Target Model](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/main/inst/extdata/Example_files/plot4.2.2.png)
 

@@ -1,11 +1,14 @@
-name: Build PDF Manual
+# .github/workflows/build-manual.yml
+name: Build and Commit PDF Manual
 
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '**.pdf'  # This prevents the workflow from running when a PDF file is committed
+    # Only run if .R or .Rd files change, not on other changes.
+    paths:
+      - 'R/**'
+      - 'man/**'
 
 jobs:
   build_manual:
@@ -21,21 +24,20 @@ jobs:
       - name: Install LaTeX
         run: |
           sudo apt-get update
-          sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra texinfo
+          sudo apt-get install -y texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra texinfo
 
-      - name: Remove previous PDF file
-        run: |
-          rm -f MutSeqR.pdf || echo "No previous PDF to remove."
+      - name: Create inst/doc directory
+        # The -p flag ensures it doesn't fail if the directory already exists.
+        run: mkdir -p inst/doc
 
       - name: Build PDF manual
         run: |
           R CMD Rd2pdf . --output=MutSeqR.pdf
-          # Rscript -e 'devtools::build_manual(pkg = ".", path = ".")'
 
       - name: Commit PDF Manual
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add *.pdf
-          git commit -m "[skip ci] Update PDF manual" -a || echo "No changes to commit."
-          git push || echo "No changes to push."
+          git add inst/doc/MutSeqR.pdf
+          git commit -m "docs: Rebuild PDF manual [skip ci]" || true
+          git push || true

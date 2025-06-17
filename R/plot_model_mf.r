@@ -43,6 +43,7 @@
 #' geom_text ggplot guides labs theme position_dodge scale_fill_manual
 #' element_blank element_line
 #' @importFrom grDevices colorRampPalette
+#' @importFrom stats setNames
 
 plot_model_mf <- function(model,
                           plot_type = "point",

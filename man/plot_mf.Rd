@@ -17,7 +17,9 @@ plot_mf(
   scale_y_axis = "linear",
   x_lab = NULL,
   y_lab = NULL,
-  title = NULL
+  title = NULL,
+  rotate_labels = FALSE,
+  label_size = 3
 )
 }
 \arguments{
@@ -69,6 +71,13 @@ the mutation frequency.}
 \item{y_lab}{The label for the y axis.}
 
 \item{title}{The title of the plot.}
+
+\item{rotate_labels}{A logical value aplied when labels is not "none".
+Indicates whether the labels should be rotated 90 degrees. Default is
+FALSE.}
+
+\item{label_size}{A numeric value that adjusts the size of the labels.
+Default is 3.}
 }
 \value{
 A ggplot object

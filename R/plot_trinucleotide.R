@@ -28,6 +28,7 @@
 #' sum of mutations in the mutation labels. Default is TRUE.
 #' @return A named list containing ggplots.
 #' @importFrom dplyr arrange group_by mutate summarise
+#' @importFrom stats setNames
 #' @import ggplot2
 #' @importFrom stringr str_extract str_c
 #' @details The function plots the trinucleotide spectrum for all levels of a
@@ -200,18 +201,18 @@ plot_trinucleotide <- function(
     n_bars <- length(levels(plot_data$subtype))
 
     # Make the ggplot
-    p <- ggplot(plot_data, aes(x = subtype, y = response, fill = mutation)) +
-      annotate("segment",
+    p <- ggplot2::ggplot(plot_data, aes(x = subtype, y = response, fill = mutation)) +
+      ggplot2::annotate("segment",
         x = 0.5, xend = 0.5,
         y = 0, yend = y_max,
         color = "gray80", linewidth = 0.6) +
-      geom_rect(
+      ggplot2::geom_rect(
         data = rects,
         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = mutation),
         inherit.aes = FALSE,
         show.legend = FALSE
       ) +
-      annotate(
+      ggplot2::annotate(
         "text",
         x = rects$xcenter, y = text_y,
         label = rects$label,
@@ -219,48 +220,48 @@ plot_trinucleotide <- function(
         size = 4.5, fontface = 2,
         vjust = 0
       ) +
-      coord_cartesian(ylim = c(0, y_max), clip = "off") +
-      geom_col(width = 0.5, color = NA, show.legend = FALSE) +
-      annotate("segment",
+      ggplot2::coord_cartesian(ylim = c(0, y_max), clip = "off") +
+      ggplot2::geom_col(width = 0.5, color = NA, show.legend = FALSE) +
+      ggplot2::annotate("segment",
         x = 0.5, xend = n_bars + 0.5,
         y = 0, yend = 0,
         color = "gray80", linewidth = 0.6
       ) +
-      scale_fill_manual(values = plotcolours) +
-      scale_x_discrete(
+      ggplot2::scale_fill_manual(values = plotcolours) +
+      ggplot2::scale_x_discrete(
         breaks = subtype_levels,
         labels = subtype_to_context,
         drop = FALSE,
         expand = c(0.002, 0.002)
       ) +
-      labs(
+      ggplot2::labs(
         x = "Trinucleotide Context",
         y = y_lab,
         title = as.character(group_levels[i])
       ) +
-      theme_minimal(base_size = 12) +
-      theme(
-        axis.text.x = element_text(angle = 90,
+      ggplot2::theme_minimal(base_size = 12) +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(angle = 90,
           vjust = 1,
           hjust = 1,
           family = "mono", size = rel(0.75),
           margin = margin(t = -14) # decreases the gab between x-axis and the labels.
         ),
-        axis.title.x = element_text(margin = margin(t = 5, b = 0)),
+        axis.title.x = ggplot2::element_text(margin = margin(t = 5, b = 0)),
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_line("gray80"),
         panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank(),
-        plot.title = element_text(hjust = 0.5),
+        plot.title = ggplot2::element_text(hjust = 0.5),
         plot.margin = margin(72, 24, 24, 48),
         legend.position = "none",
         panel.border = element_blank(),
         plot.background = element_blank(),
-        plot.caption = element_text(hjust = 0)
-      ) + ggtitle(as.character(group_levels[i])) +
-      theme(
+        plot.caption = ggplot2::element_text(hjust = 0)
+      ) + ggplot2::ggtitle(as.character(group_levels[i])) +
+      ggplot2::theme(
         plot.title.position = "plot",  # ← moves it above the plot panel
-        plot.title = element_text(hjust = 0.5, margin = margin(b = 30))  # add bottom margin
+        plot.title = ggplot2::element_text(hjust = 0.5, margin = margin(b = 30))  # add bottom margin
       )
     plot_list[[i]] <- p
 
@@ -271,7 +272,7 @@ plot_trinucleotide <- function(
         "trinucleotide_plot_",
         group_col, "_", names(plot_list)[i],
         ".", output_type)
-      ggsave(
+      ggplot2::ggsave(
         filename = output_filename,
         plot = p,
         device = output_type,

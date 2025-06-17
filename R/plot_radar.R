@@ -7,12 +7,12 @@
 #' @param indiv_y A logical indicating whether to use individual y-axis scales
 #' for each plot.
 #' @importFrom tidyr pivot_wider
-#' @importFrom dplyr select filter
+#' @importFrom dplyr select filter pull
 #' @examples
 #' # Plot the mean MFmin of each genomic target per dose group
 #' # Order the genomic targets by their genic context.
 #' #Load the example data and calculate MF
-#' example_file <- system.file("extdata",
+#' example_file <- system.file("extdata", "Example_files",
 #'                             "example_mutation_data_filtered.rds",
 #'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
@@ -21,7 +21,7 @@
 #'                    retain_metadata_cols = c("dose_group", "genic_context"))
 #' # Define the order of the genomic targets
 #' label_order <- mf %>% dplyr::arrange(genic_context) %>%
-#'   pull(label) %>%
+#'   dplyr::pull(label) %>%
 #'   unique()
 #' # Calculate the mean MF per dose_group for each target.
 #' mean <- mf %>%

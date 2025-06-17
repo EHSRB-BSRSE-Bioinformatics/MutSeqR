@@ -7,7 +7,7 @@
 #' @param config_filepath The path to the configuration file.
 #' @param output_file The name of the output file. Will be saved to the
 #' outputdir in config params.
-#' @param output_format. The format of the output file. Options are
+#' @param output_format The format of the output file. Options are
 #' "html_document" (default), "pdf_document", or "all".
 #' @return None
 #'
@@ -82,7 +82,7 @@ render_report <- function(
     params <- c(params, config$Custom_Profile_Params)
   }
   # Construct the path to the .Rmd file within the installed package directory
-  rmd_file <- "DS_summary_report.Rmd"
+  rmd_file <- "Summary_report.Rmd"
   rmd_path <- system.file("extdata", rmd_file,
                           package = "MutSeqR", mustWork = TRUE)
 message("project directory", params$projectdir)

@@ -10,7 +10,7 @@
 #' In a GRanges object, the required columns are "seqnames", "start", and
 #' "end".
 #' @param rg_sep The delimiter for importing the regions file. The default is
-#' tab-delimited ("\t").
+#' tab-delimited ("\\t").
 #' @param is_0_based_rg A logical variable. Indicates whether the position
 #' coordinates in `regions` are 0 based (TRUE) or 1 based (FALSE).
 #' If TRUE, positions will be converted to 1-based (start + 1). Need not be
