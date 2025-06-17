@@ -50,7 +50,7 @@ example_data$dose_group <- factor(example_data$dose_group,
                                              "Medium", "High"))
 
   # 2. Generate the plots
-  plot_list <- plot_lollipop(mutations = mf, min_recurrence = 2)
+  plot_list <- plot_lollipop(mutations = example_data, min_recurrence = 2)
 
   # 3. Display a plot for a specific chromosome
   # print(plot_list$chr1)
