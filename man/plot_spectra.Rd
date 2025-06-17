@@ -16,7 +16,8 @@ plot_spectra(
   cluster_method = "ward.D",
   custom_palette = NULL,
   x_lab = NULL,
-  y_lab = NULL
+  y_lab = NULL,
+  rotate_xlabs = FALSE
 )
 }
 \arguments{
@@ -88,6 +89,9 @@ options. You may visualize the palettes at the ColorBrewer website:
 \item{x_lab}{The label for the x-axis. Default is the value of \code{group_col}.}
 
 \item{y_lab}{The label for the y-axis. Default is the value of \code{response_col}.}
+
+\item{rotate_xlabs}{A logical value indicating whether the x-axis labels
+should be rotated 90 degrees. Default is FALSE.}
 }
 \description{
 Given mf data, construct a plot displaying the
