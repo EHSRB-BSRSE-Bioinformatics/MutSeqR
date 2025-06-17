@@ -7,7 +7,7 @@
 #' @param model_choice Non-interactive mode parameter. Do you want to fit a single model or fit various nested families of models? Options are 'single model', 'select model 3 or 5 from various families of models', 'select model 3 from various nested families of models', 'select model 5 from various nested families of models', 'select model 15 in terms of RPF'. Recommended: 'select model 3 or 5 from various families of models'.
 #' @param setting_choice Non-interactive mode parameter. Do you want to fit a set of models, or choose a single model? Options are 'single model', 'set of models'.
 #' Recommended: 'set of models'.
-#' @param nested_model_choice ???
+#' @param nested_model_choice Non-interactive mode parameter. Which subset of nested models to fit, if changing model settings non-interactively. Options match those provided in interactive menus. See details in documentation.
 #' @param indep_var_choice Non-interactive mode parameter. The column name for the independent variable to use.
 #' @param Vyans_input Non-interactive mode parameter. The column name(s) for the response variable(s) to use. If multiple, provide as a vector.
 #' @param covariates Non-interactive mode parameter. The column name for the covariate to use. If none, enter 0.
@@ -23,6 +23,15 @@
 #' @param add_nonzero_val_to_dat Non-interactive mode parameter. When the response data contains 0s, whether to add a non-zero value to each observation. TRUE/FALSE. If TRUE, set the nonzero_val parameter with your desired (positive) number. If FALSE, a detection limit will used. Provide the detection limit in the detection_limit parameter. If no detection_limit is given, the function will use the minimum non-zero value in the data. Values below the detection limit will be plotted as half the detection limit.
 #' @param nonzero_val Non-interactive mode parameter. The non-zero value to add to each observation when add_nonzero_val_to_dat = TRUE. Must be a positive number.
 #' @param detection_limit Non-interactive mode parameter. The detection limit to use when add_nonzero_val_to_dat = FALSE. If NULL, the minimum non-zero value in the data will be used. This paramater accepts a numeric value, which will be applied to all response values, or a column name in the data, which will be used to apply different detection limits to different observations.
+#' @param show.warnings Logical. If TRUE, print extra warning messages during model fitting (for debugging or detailed output). Defaults to FALSE.
+#' @param odt List. Internal state object/list passed between PROAST functions. Usually, users do not need to set this.
+#' @param ans.all Output from a previous fit, or internal results object. Used to resume or adjust analyses. Usually 0 (default) to start a new session.
+#' @param er Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Default is FALSE.
+#' @param resize Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.
+#' @param scale.ans Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.
+#' @param const.var Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.
+#' @importFrom utils menu
+#' @importFrom stats setNames
 #' @return Results from PROAST.
 f.proast <- function(odt = list(),
                      ans.all = 0,
@@ -621,6 +630,8 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
 }
 
 
+#' @importFrom utils menu
+#' @importFrom grDevices dev.list dev.cur dev.off
 f.graphwin.size <- function(resize = F) {
     if (!exists(".gw.size")) {
         size.x <- 5
@@ -1221,6 +1232,7 @@ f.cont <- function(ans.all) {
 }
 
 
+#' @importFrom utils menu
 f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
     check.out <- F
     if (quick.ans == 1) {
@@ -3735,6 +3747,7 @@ f.graph.window <- function(
 }
 
 
+#' @importFrom grDevices dev.list svg png dev.cur dev.new
 f.create.graphwin <- function(
     aa, bb, title = "", name.wapp = NA, WAPP = FALSE, plotprefix = NA, 
     nr.gr = 1, svg.plots = FALSE, output = TRUE, output_type = NULL, filename = NULL
@@ -5593,6 +5606,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
 }
 
 
+#' @importFrom stats lm
 f.start.lm.con <- function(xtmp, ytmp, model.ans, dtype) {
     if (dtype %in% c(25, 250)) 
         dt.fr <- data.frame(yyy = ytmp, dose.tmp = xtmp)
@@ -6361,6 +6375,7 @@ f.ced.con <- function(ans.all) {
 }
 
 
+#' @importFrom stats uniroot qnorm pnorm
 f.inv.con <- function(model.ans, params, CES, max.x = NA, ES.abs = 1, ans.m6.sd = 1, 
     dtype = 1, m6.ED50 = FALSE) {
     CED <- NA
@@ -6907,7 +6922,6 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
             if (dtype == 5) {
                 ans.all$plot.ans <- 1
                 ans.all$CED <- CED
-                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
                 conf.int <- ans.all$conf.int
             }
             else {
@@ -6997,6 +7011,7 @@ f.nes <- function(ans.all) {
 }
 
 
+#' @importFrom stats var
 f.var.pooled <- function(ans.all) {
     f.var <- function(dtype, xx, yy, sd2.log, nn) {
         if (dtype %in% c(10, 15, 250)) {
@@ -7652,6 +7667,7 @@ f.show.con <- function(ans.all) {
 }
 
 
+#' @importFrom utils menu
 f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE, 
     no.show = FALSE, display_plots = TRUE) {
     if (ans.all$plot.type == 0) 
@@ -8367,6 +8383,7 @@ f.show.ma <- function(ans.all) {
 }
 
 
+#' @importFrom graphics mtext title
 f.mtext <- function(ans.all, display_plots = TRUE) {
     modelname <- ans.all$modelname
     show <- ans.all$show
@@ -8695,7 +8712,7 @@ f.con <- function(ans.all,
         ans.all$PRversion <- ans.all$version.old
         if (ans.all$model.fam > 0) 
             f.plot.all(ans.all)
-        else f.plot.gui(ans.all, interactive_mode = interactive_mode)
+        else f.plot.gui(ans.all, interactive_mode = interactive_mode, .proast_env = .proast_env)
         ans.all$PRversion <- PRversion
         if (ans.all$dtype != 3 && length(ans.all$gr.txt) > 1) 
             f.explain.marks(ans.all)
@@ -8861,14 +8878,18 @@ f.con <- function(ans.all,
             ans.all <- f.start.con(ans.all, adjust = T, fitted = ans.all$fitted, 
                 tmp.quick = F)
         }, {
-            ans.all <- f.mm4.con(ans.all, interactive_mode = interactive_mode)
-            while (ans.all$out.ans == 1) ans.all <- f.mm4.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            ans.all <- f.mm5.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            if (ans.all$fitted == F) cat("\nFirst fit the model using option 4\n") else if (ans.all$model.ans == 
-                11) cat("\nCED not defined for full model\n") else if (ans.all$model.ans == 
-                1) cat("\nCED not defined for null model\n") else ans.all <- f.mm6.con(ans.all, interactive_mode = interactive_mode)
+            if (!ans.all$fitted) {
+              cat("\nFirst fit the model using option 4\n")
+            } else if (ans.all$model.ans == 11) {
+              cat("\nCED not defined for full model\n")
+            } else if (ans.all$model.ans == 1) {
+              cat("\nCED not defined for null model\n")
+            } else {
+              message("final else block")
+            }
+
         }, {
             if (is.na(ans.all$CED[1]) && ans.all$model.ans != 
                 59) cat("\nYou did not calculate CED! First use option 6 from main menu\n") else {
@@ -8876,12 +8897,9 @@ f.con <- function(ans.all,
                 ans.all$plot.ans <- 1
                 ans.all$plot.ans <- menu(c("no", "yes (reduces speed)"), 
                   title = "\ndo you want plots of each sampling run?")
-                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
             }
         }, {
-            ans.all <- f.mm8.con(ans.all, interactive_mode = interactive_mode)
         }, {
-            ans.all <- f.mm10.con(ans.all, interactive_mode = interactive_mode)
         }, {
             with(ans.all, {
                 if (model.ans != 2) {
@@ -9553,6 +9571,7 @@ f.quick.con <- function(ans.all,
 }
 
 
+#' @importFrom stats pnorm
 f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log, 
     sd2.log, nn, Vdetlim, CES, twice = T, ttt = 0, trace.tmp = F, 
     fct4 = 1, fct5 = 1, cens.up = NA, lb = -Inf, ub = Inf, par.tmp, 
@@ -9694,6 +9713,7 @@ f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log,
 }
 
 
+#' @importFrom stats pnorm qnorm
 f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 1, 
     fct4 = 1, fct5 = 1, name = F, CES = NA, twice = T, ttt = 0, 
     yy = 0, trace.expect = F, increase, x.mn = NA, ref.lev, ans.m6.sd = 1, 
@@ -11086,8 +11106,8 @@ f.pars <- function(ans.all) {
         print("f.pars")
     if (ans.all$fit.ans == 1) 
         if (ans.all$model.ans == 47 || (ans.all$model.ans == 
-            6 && ans.all$ans.m6.sd == 2)) 
-            return(f.pars.m6(ans.all))
+            6 && ans.all$ans.m6.sd == 2))
+            message("model ans is 47, 6, or 2")
     with(ans.all, {
         if (!cont && model.ans == 14 && model.type == 1) {
             ans.all$regr.par.matr <- 0
@@ -11349,6 +11369,7 @@ f.converged <- function(mess, conv.out, tmp.quick = F) {
 }
 
 
+#' @importFrom stats qnorm pnorm
 f.bb.con <- function(model.ans, cc, dd, CED, CES, ref.lev = NA, CED.ref = NA, 
     incr.decr.no = 0, cont, aa = NA) {
     if (exists("track2")) 
@@ -11433,6 +11454,7 @@ f.bb.con <- function(model.ans, cc, dd, CED, CES, ref.lev = NA, CED.ref = NA,
 }
 
 
+#' @importFrom stats qt
 f.grubb <- function(ss = 25, alfa = 0.05) {
     alfa <- alfa/2
     t.crit <- qt(alfa/ss, ss - 2)
@@ -12302,6 +12324,8 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' the plots and return them as a list instead of exporting them. This parameter
 #' should only be used when running the function indenpently or within f.plot.result.
 #' It will disrupt f.proast(), so keep the default as FALSE.
+#' @importFrom graphics title text mtext
+#' @importFrom grDevices recordPlot dev.off
 f.plot.gui <- function(
   ans.all,
   HTML = FALSE,
@@ -12762,7 +12786,6 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
                 ans.all$plot.ans <- 1
                 ans.all$nrp <- length(regr.par)
                 ans.all$CED <- CED
-                ans.all <- f.mm7.con(ans.all, interactive_mode = interactive_mode)
                 conf.int <- ans.all$conf.int
             }
             else {
@@ -12986,6 +13009,8 @@ f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = 
 }
 
 
+#' @importFrom graphics plot title lines mtext points
+#' @importFrom grDevices dev.off
 f.plot.CED <- function(ans.all,
                        logscale = T,
                        xx.lim = NA,
@@ -13132,11 +13157,10 @@ f.plot.CED <- function(ans.all,
         if (WAPP)
             dev.off()
     }
-    if (exists(" track"))
-        print("f.plot.CED: END")
 }
 
 
+#' @importFrom stats median setNames
 parse_PROAST_output <- function(result) {
   result <- result[!grepl("plot_result", names(result))]
   selected_models <- c()
@@ -13355,6 +13379,7 @@ parse_PROAST_output <- function(result) {
 #' it might take a while. You may think this seems rather inefficient. Well,
 #' it is, but I'm too tired to fix it, so we all just have to deal with it for
 #' now.
+#' @importFrom grDevices recordPlot
 #' @return Generates plots. Either saves them to an output path or records them
 #' and returns them as a list.
 f.plot.result <- function(
@@ -13410,7 +13435,8 @@ f.plot.result <- function(
           res,
           filename = filename,
           output_type = output_type,
-          interactive_mode = FALSE
+          interactive_mode = FALSE,
+          .proast_env = .proast_env
         )
       } else { # Model averaging
         f.boot.ma(
@@ -13421,7 +13447,7 @@ f.plot.result <- function(
       }
     } else { # When output type isn't set, record the plots
       if (model_averaging == FALSE) {
-        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE)
+        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE, .proast_env = .proast_env)
       } else {
         plots <- list()
         f.boot.ma(res, display_plots = TRUE)
@@ -13471,8 +13497,6 @@ f.remove.blanks <- function(vec) {
     LEVELS <- levels(as.factor(vec))
     LEVELS <- subset(LEVELS, LEVELS != "")
     vec <- factor(vec, levels = LEVELS)
-    if (exists("track")) 
-        print("f.remove.blanks:   END")
     return(vec)
 }
 
@@ -13502,6 +13526,8 @@ f.explain.marks <- function(ans.all) {
 }
 
 
+#' @importFrom graphics title lines mtext
+#' @importFrom grDevices dev.off
 f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE, 
     ref = NA, rm.NAs = TRUE, display_plots = TRUE) {
     no.hill <- FALSE

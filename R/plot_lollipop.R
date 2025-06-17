@@ -54,7 +54,7 @@
 #'   # print(plot_list$chr1)
 #'   # print(plot_list$chr2)
 #' }
-lollipop_ggplot <- function(mutations,
+plot_lollipop <- function(mutations,
                             min_recurrence = 2,
                             group_by_col = "dose_group",
                             custom_palette = NULL) {

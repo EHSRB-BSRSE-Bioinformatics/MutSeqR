@@ -7,7 +7,7 @@
 #' @param config_filepath The path to the configuration file.
 #' @param output_file The name of the output file. Will be saved to the
 #' outputdir in config params.
-#' @param output_format. The format of the output file. Options are
+#' @param output_format The format of the output file. Options are
 #' "html_document" (default), "pdf_document", or "all".
 #' @return None
 #'

@@ -16,7 +16,7 @@ render_report(
 \item{output_file}{The name of the output file. Will be saved to the
 outputdir in config params.}
 
-\item{output_format.}{The format of the output file. Options are
+\item{output_format}{The format of the output file. Options are
 "html_document" (default), "pdf_document", or "all".}
 }
 \value{

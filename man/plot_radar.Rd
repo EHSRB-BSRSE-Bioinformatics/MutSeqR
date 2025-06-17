@@ -37,7 +37,7 @@ mf <- calculate_mf(mutation_data = example_data,
                    retain_metadata_cols = c("dose_group", "genic_context"))
 # Define the order of the genomic targets
 label_order <- mf \%>\% dplyr::arrange(genic_context) \%>\%
-  pull(label) \%>\%
+  dplyr::pull(label) \%>\%
   unique()
 # Calculate the mean MF per dose_group for each target.
 mean <- mf \%>\%
