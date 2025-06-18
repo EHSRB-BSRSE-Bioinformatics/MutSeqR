@@ -3759,7 +3759,8 @@ f.create.graphwin <- function(
         if (output) 
         assign(".ypos", 0, envir = .proast_env)
     }
-    if (nr.gr > 25) 
+    if (nr.gr > 25)
+        message("Greater than 25 graphic windows")
     if (WAPP) {
         if (!is.null(filename)) {
             filename <- paste0(filename, "_", name.wapp)
