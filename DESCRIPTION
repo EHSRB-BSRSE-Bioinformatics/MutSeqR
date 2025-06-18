@@ -20,7 +20,7 @@ Authors@R: c(
       role = "aut",
       comment = c(ORCID = "0009-0002-3443-378X")
     ),
-    person("Danielle", "LeBlanc",
+    person("Danielle P.M.", "LeBlanc",
       role = "ctb",
       comment = c(ORCID = "0000-0002-3847-8371")
     ),
@@ -36,10 +36,18 @@ Authors@R: c(
       role = "ctb",
       comment = c(ORCID = "0000-0002-9435-4867")
     ),
-    person("Carole", "Yauk",
+    person("Carole L.", "Yauk",
       role = "ctb",
       comment = c(ORCID = "0000-0002-6725-3454")
-    )
+    ),
+    person("Clint C.", "Valentine",
+      role = "ctb"),
+    person("Jesse J.", "Salk",
+      role = "ctb"),
+    person("Alexander Y.", "Maslov",
+      role = "ctb"),
+    person("Christopher", "Bradley",
+      role = "ctb")
   )
 Description: Standard methods for analysis of mutation data following error-
     corrected sequencing (ECS) for the purpose of mutagencity assessment.
