@@ -109,6 +109,9 @@ Suggests:
     trackViewer,
     yaml,
     xml2
+Remotes: 
+    NIEHS/ToxicR,
+    AlexandrovLab/SigProfilerMatrixGeneratorR
 VignetteBuilder: knitr
 Config/reticulate: list( packages = list( list(package =
     "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),
