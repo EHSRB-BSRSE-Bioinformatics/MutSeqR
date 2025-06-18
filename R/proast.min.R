@@ -26,7 +26,7 @@
 #' @param show.warnings Logical. If TRUE, print extra warning messages during model fitting (for debugging or detailed output). Defaults to FALSE.
 #' @param odt List. Internal state object/list passed between PROAST functions. Usually, users do not need to set this.
 #' @param ans.all Output from a previous fit, or internal results object. Used to resume or adjust analyses. Usually 0 (default) to start a new session.
-#' @param er Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Default is FALSE.
+#' @param er Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Defaults to FALSE.
 #' @param resize Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.
 #' @param scale.ans Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.
 #' @param const.var Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.
