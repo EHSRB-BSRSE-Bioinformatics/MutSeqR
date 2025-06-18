@@ -27,8 +27,8 @@ filter_mut(
 \item{vaf_cutoff}{Filter out ostensibly germline variants using a cutoff for
 variant allele fraction (VAF). Any variant with a \code{vaf} larger than
 the cutoff will be filtered. The default is 1 (no filtering). It is
-recommended to use a value of 0.01 (i.e. 1\%) to retain only somatic
-variants.}
+recommended to use a value of 0.01 (i.e. 1\%) as a conservative approach
+to retain only somatic variants.}
 
 \item{snv_in_germ_mnv}{Filter out snv variants that overlap with
 germline mnv variants within the same samples. mnv variants will be
@@ -90,7 +90,7 @@ Need not be supplied for TSpanels. Default is TRUE.}
 \item{rm_filtered_mut_from_depth}{A logical value. If TRUE, the function will
 subtract the \code{alt_depth} of rows that were flagged by the
 \code{filter_mut} column from their \code{total_depth}. This will treat
-flagged variants as N-calls. This will not apply to variants flagged as
+flagged variants as No-calls. This will not apply to variants flagged as
 germline by the \code{vaf_cutoff}. However, if the germline variant
 has additional filters applied, then the subtraction will still occur.
 If FALSE, the \code{alt_depth} will be retained in the
@@ -104,12 +104,12 @@ returned inside a list, with names \code{mutation_data} and
 }
 \description{
 This function creates a filter_mut column that will be read by
-the \code{calculate_mf} function. Variants with filter == TRUE will
-not be included in final mutation counts. This function may also remove
-records of given loci from the mutation data based on user specification.
-Running this function again on the same data will not overide the previous
-filters. To reset previous filters, set the filter_mut column values to
-FALSE.
+the \code{calculate_mf} function and other downstream functions.
+Variants with filter == TRUE will not be included in final mutation counts.
+This function may also remove records of given loci from the mutation data
+based on user specification. Running this function again on the same data
+will not overide the previous filters. To reset previous filters, set the
+filter_mut column values to FALSE.
 }
 \examples{
 # Load example data
@@ -118,7 +118,7 @@ example_file <- system.file("extdata", "Example_files",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
 # Filter the data
-# Basic Usage: correct the depth and filter out germline variants
+# Basic Usage: Filter out putative germline variants
 filter_example_1 <- filter_mut(mutation_data = example_data,
                                vaf_cutoff = 0.01)
 # Remove rows outside of the TwinStand Mouse Mutagenesis Panel regions
@@ -136,7 +136,8 @@ filter_example_3 <- filter_mut(mutation_data = example_data,
                                custom_filter_val = "EndRepairFillInArtifact",
                                custom_filter_rm = FALSE)
 # Flag snv variants that overlap with germline mnv variants.
-# Subtract the alt_depth of these variants from their total_depth (treat them as N-calls).
+# Subtract the alt_depth of these variants from their total_depth
+# (treat them as No-calls).
 # Return all the flagged/removed rows in a seperate data frame
 filter_example_4 <- filter_mut(mutation_data = example_data,
                                vaf_cutoff = 0.01,
