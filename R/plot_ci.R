@@ -69,7 +69,7 @@ plot_ci <- function(data,
       dplyr::group_by(.data$Response) %>%
       dplyr::mutate(max = .data$BMDU) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), function(x) round(x, 2))) %>%
       tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
     if (is.null(x_lab)) {x_lab <- "log10(BMD)"}
   } else {
@@ -77,7 +77,7 @@ plot_ci <- function(data,
       dplyr::group_by(.data$Response) %>%
       dplyr::mutate(max = .data$BMDU) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 1))) %>%
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), function(x) round(x, 1))) %>%
       tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
     if (is.null(x_lab)) {x_lab <- "BMD"}
   }

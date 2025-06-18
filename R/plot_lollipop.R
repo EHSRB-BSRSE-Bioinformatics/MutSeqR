@@ -31,24 +31,16 @@
 #' if (requireNamespace("dplyr", quietly = TRUE) &&
 #'     requireNamespace("ggplot2", quietly = TRUE)) {
 #'
-#'   # 1. Create a sample mutation data frame
-#'   # We'll make some mutations recurrent
-#'   mutations_df <- data.frame(
-#'     seqnames = c(rep("chr1", 6), rep("chr2", 4)),
-#'     start = c(100, 100, 250, 500, 500, 500, 80, 80, 120, 150),
-#'     variation_type = "snv",
-#'     normalized_subtype = c(
-#'       "C>A", "C>A", # Recurrent
-#'       "C>T",
-#'       "T>A", "T>A", "T>A", # Recurrent
-#'       "C>G", "C>G", # Recurrent
-#'       "T>C",
-#'       "C>A"
-#'     )
-#'   )
+#' example_file <- system.file("extdata", "Example_files",
+#'                             "example_mutation_data_filtered.rds",
+#'                             package = "MutSeqR")
+#' example_data <- readRDS(example_file)
+#' example_data$dose_group <- factor(example_data$dose_group,
+#'                                   levels = c("Control", "Low",
+#'                                              "Medium", "High"))
 #'
 #'   # 2. Generate the plots
-#'   plot_list <- plot_lollipop(mutations = mutations_df, min_recurrence = 2)
+#'   plot_list <- plot_lollipop(mutations = example_data, min_recurrence = 2)
 #'
 #'   # 3. Display a plot for a specific chromosome
 #'   # print(plot_list$chr1)

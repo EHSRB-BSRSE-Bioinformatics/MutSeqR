@@ -82,7 +82,7 @@ render_report <- function(
     params <- c(params, config$Custom_Profile_Params)
   }
   # Construct the path to the .Rmd file within the installed package directory
-  rmd_file <- "DS_summary_report.Rmd"
+  rmd_file <- "Summary_report.Rmd"
   rmd_path <- system.file("extdata", rmd_file,
                           package = "MutSeqR", mustWork = TRUE)
 message("project directory", params$projectdir)

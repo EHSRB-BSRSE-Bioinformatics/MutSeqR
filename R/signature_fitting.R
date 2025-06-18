@@ -84,7 +84,7 @@ signature_fitting <- function(mutation_data,
           be aware of the implications of this. For advanced use, it is
           suggested to use the SigProfiler python tools directly in python as
           described in their respective documentation.")
-
+  setup_mutseqr_python(force = FALSE)
   installed_envs <- reticulate::virtualenv_list()
   # Check if MutSeqR virtualenv already exists
   if (env_name %in% installed_envs) {
