@@ -2,15 +2,15 @@ Package: MutSeqR
 Title: Analysis of Error-Corrected Sequencing Data for Mutation Detection
 Version: 0.99.0
 Authors@R: c(
-    person("Matthew J.", "Meier",
-      email = "matthew.meier@hc-sc.gc.ca",
-      role = c("aut", "cre"),
-      comment = c(ORCID = "0000-0001-8199-8754")
-    ),
     person("Annette E.", "Dodge",
       email = "annette.dodge@hc-sc.gc.ca",
       role = "aut",
       comment = c(ORCID = "0000-0002-0446-9055")
+    ),
+    person("Matthew J.", "Meier",
+      email = "matthew.meier@hc-sc.gc.ca",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0001-8199-8754")
     ),
     person("Andrew", "Williams",
       role = "aut",
