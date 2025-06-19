@@ -18,11 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # - {os: self-hosted,   r: 'release'}
+          - {os: self-hosted,   r: 'release'}
           # - {os: macos-latest,   r: 'release'}
-           - {os: windows-latest, r: 'release'}
+          # - {os: windows-latest, r: 'release'}
           # - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-           - {os: ubuntu-latest,   r: 'release'}
+          # - {os: ubuntu-latest,   r: 'release'}
           # - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
@@ -44,6 +44,17 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+      - name: Install GitHub Suggested Packages
+        run: |
+          install_if_missing <- function(pkg, repo) {
+            if (!requireNamespace(pkg, quietly = TRUE)) {
+              remotes::install_github(repo)
+            }
+          }
+          install.packages("remotes")
+          install_if_missing("ToxicR", "NIEHS/ToxicR")
+          install_if_missing("SigProfilerMatrixGeneratorR", "AlexandrovLab/SigProfilerMatrixGeneratorR")
+        shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
         with:
