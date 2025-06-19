@@ -39,7 +39,7 @@ f.proast(
 
 \item{ans.all}{Output from a previous fit, or internal results object. Used to resume or adjust analyses. Usually 0 (default) to start a new session.}
 
-\item{er}{Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Default is FALSE.}
+\item{er}{Logical. If TRUE, attempt to resume analysis from previously stored state. Used internally/recoverably. Defaults to FALSE.}
 
 \item{resize}{Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.}
 

@@ -181,32 +181,34 @@ of the data and inverts the probability statements for decreasing data.
 }
 }
 \examples{
-# Calculate the BMD for a 50\% increase in mutation frequency from control
-# Individual data with Model averaging.
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
-mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
-bmd <- bmd_toxicr(mf_data = mf,
-                  dose_col = "dose",
-                  response_col = c("mf_min", "mf_max"))
-# Plot the results using plot_ci()
-plot <- plot_ci(bmd, order = "asc", log_scale = FALSE)
+if (requireNamespace("ToxicR", quietly = TRUE)) {
+  # Calculate the BMD for a 50\% increase in mutation frequency from control
+  # Individual data with Model averaging.
+  example_file <- system.file("extdata", "Example_files",
+                              "example_mutation_data_filtered.rds",
+                              package = "MutSeqR")
+  example_data <- readRDS(example_file)
+  mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
+  bmd <- bmd_toxicr(mf_data = mf,
+                    dose_col = "dose",
+                    response_col = c("mf_min", "mf_max"))
+  # Plot the results using plot_ci()
+  plot <- plot_ci(bmd, order = "asc", log_scale = FALSE)
 
-# Summary data with Model averaging.
-mf_sum <- mf \%>\%
- dplyr::group_by(dose) \%>\%
- dplyr::summarise(mean_mf_min = mean(mf_min),
-                  sd_min = sd(mf_min),
-                  n_min = dplyr::n(),
-                  mean_mf_max = mean(mf_max),
-                  sd_max = sd(mf_max),
-                  n_max = dplyr::n())
-bmd <- bmd_toxicr(mf_data = mf_sum,
-                  data_type = "summary",
-                  dose_col = "dose",
-                  response_col = c("mean_mf_min", "mean_mf_max"),
-                  sd_col = c("sd_min", "sd_max"),
-                  n_col = c("n_min", "n_max"))
+  # Summary data with Model averaging.
+  mf_sum <- mf \%>\%
+    dplyr::group_by(dose) \%>\%
+    dplyr::summarise(mean_mf_min = mean(mf_min),
+                     sd_min = sd(mf_min),
+                     n_min = dplyr::n(),
+                     mean_mf_max = mean(mf_max),
+                     sd_max = sd(mf_max),
+                     n_max = dplyr::n())
+  bmd <- bmd_toxicr(mf_data = mf_sum,
+                    data_type = "summary",
+                    dose_col = "dose",
+                    response_col = c("mean_mf_min", "mean_mf_max"),
+                    sd_col = c("sd_min", "sd_max"),
+                    n_col = c("n_min", "n_max"))
+}
 }
