@@ -40,18 +40,6 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - name: Manually install GitHub-only packages (Suggests)
-        run: |
-          install.packages("remotes")
-          install_if_missing <- function(pkg, repo) {
-            if (!requireNamespace(pkg, quietly = TRUE)) {
-              remotes::install_github(repo, upgrade = "never")
-            }
-          }
-          install_if_missing("ToxicR", "NIEHS/ToxicR")
-          install_if_missing("SigProfilerMatrixGeneratorR", "AlexandrovLab/SigProfilerMatrixGeneratorR")
-        shell: Rscript {0}
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
