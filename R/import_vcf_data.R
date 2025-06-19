@@ -454,7 +454,8 @@ import_vcf_data <- function(vcf_file,
                .data$variation_type),
       gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
                     stringr::str_count(string = .data$context, pattern = "C"))
-      / stringr::str_count(.data$context)
+      / stringr::str_count(.data$context),
+      filter_mut = FALSE
     )
 
   # Depth
