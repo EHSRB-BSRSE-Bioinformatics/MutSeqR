@@ -51,7 +51,7 @@ Install the package from github:
 
 ```{r}
 # install.packages("devtools")
-devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR", auth_token = "your personal_access_token from GitHub")
+devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 ```
 
 Load the package
