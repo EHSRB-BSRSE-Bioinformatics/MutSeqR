@@ -48,7 +48,7 @@ test_that("filter simple mutation data", {
   idx <- which(mutation_data$sd_metadata == "C")
   expect_true(all(result$filter_mut[idx] == TRUE))
   expect_true(all(result$filter_reason[idx] == "C"))
-  
+
   result <- filter_mut(
     mutation_data = mutation_data,
     custom_filter_col = "sd_metadata",
@@ -61,9 +61,9 @@ test_that("filter simple mutation data", {
   expect_setequal(unique(result$filtered_rows$sd_metadata), c("A", "B"))
   # Regions
   regions <- data.frame(contig = c("chr1", "chr2"),
-                      start = c(101, 201),
-                      end = c(110, 210),
-                      rg_metadata = c("R1", "R2"))
+                        start = c(101, 201),
+                        end = c(110, 210),
+                        rg_metadata = c("R1", "R2"))
   result <- filter_mut(
     mutation_data = mutation_data,
     regions = regions,

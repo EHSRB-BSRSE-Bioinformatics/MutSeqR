@@ -3,27 +3,30 @@ library(testthat)
 # Define a test case for import_mut_data function
 test_that("import_vcf_datafunction correctly imports vcf files", {
   # Create temporary test file with example mutation data
-
-  test_file <- system.file("extdata", "Example_files",
-                           "example_import_vcf_data_cleaned.vcf.bgz",
-                           package = "MutSeqR")
-
+  file <- file.path("./testdata/simple_vcf_data.vcf")
 
   # Call the import_mut_data function on the test data
-  mut_data <- suppressWarnings(import_vcf_data(vcf_file = test_file,
-                                               regions = "TSpanel_mouse",
-                                               species = "mouse",
-                                               genome = "mm10",
-                                               output_granges = FALSE))
-
-  expect_true(is(mut_data, "data.frame"),
-              info = "Check if the resulting object is a data frame")
-  expect_true(all(c("short_ref", "normalized_ref", "context",
-                    "normalized_context", "variation_type", "subtype",
-                    "normalized_subtype", "context_with_mutation",
-                    "normalized_context_with_mutation", "nchar_ref",
-                    "nchar_alt", "varlen", "ref_depth", "vaf", "gc_content",
-                    "row_has_duplicate") %in% colnames(mut_data)),
-              info = "Check if the resulting object has the correct columns")
-
+  mut_data <- import_vcf_data(vcf_file = file,
+    regions = NULL,
+    species = "mouse",
+    genome = "mm10",
+    output_granges = FALSE
+  )
+  colnames <- c(
+    MutSeqR::op$base_required_mut_cols,
+    MutSeqR::op$processed_required_mut_cols, # subtype/context cols
+    "total_depth", "ref_depth", "vaf", # depth cols
+    "nchar_ref", "nchar_alt", "varlen",
+    "gc_content", "row_has_duplicate",
+    "strand", "width", # added by GRanges
+    "alt.group", "alt.group_name", "AD_1", "AD_2" # vcf cols
+  )
+  expect_named(mut_data, colnames, ignore.order = TRUE) # check columns
+  expect_equal(nrow(mut_data), 10)
+  expect_equal(
+    mut_data$variation_type,
+    c("no_variant", "snv", "no_variant", "insertion", "snv",
+      "no_variant", "mnv", "snv", "deletion", "no_variant")
+  )
+  expect_equal(mut_data$vaf, mut_data$alt_depth / mut_data$total_depth)
 })
