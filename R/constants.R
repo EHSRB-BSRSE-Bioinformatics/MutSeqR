@@ -43,7 +43,8 @@ op$processed_required_mut_cols <-
     "normalized_ref",
     "short_ref",
     "context",
-    "normalized_context")
+    "normalized_context",
+    "filter_mut")
 op$base_required_mut_cols <-
   c("contig",
     "start",

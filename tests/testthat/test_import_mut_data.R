@@ -37,4 +37,5 @@ test_that("import simple_mut_import.txt produces all expected warnings", {
                  "no_variant", "snv", "sv", "ambiguous", "no_variant",
                  "insertion", "snv", "no_variant", "no_variant", "deletion",
                  "snv", "no_variant", "mnv"))
+  expect_equal(mut_data$vaf, mut_data$alt_depth / mut_data$total_depth)
 })
