@@ -1,12 +1,13 @@
 #' Filter your mutation data
-#' @description This function creates a filter_mut column that will be read by
-#' the \code{calculate_mf} function and other downstream functions.
-#' Variants with filter == TRUE will not be included in final mutation counts.
-#' This function may also remove records of given loci from the mutation data
-#' based on user specification. Running this function again on the same data
-#' will not overide the previous filters. To reset previous filters, set the
-#' filter_mut column values to FALSE.
-#' @param mutation_data Your mutation data.
+#' @description This function creates a `filter_mut`` column that will be read
+#' by the \code{calculate_mf} function and other downstream functions.
+#' Variants with `filter_mut == TRUE`` will be excluded from group mutation
+#' counts. This function may also remove records upon on user specification.
+#' Running this function again on the same data will not overide the previous
+#' filters. To reset previous filters, set the filter_mut column values to
+#' FALSE.
+#' @param mutation_data Your mutation data. This can be a data frame or a
+#' GRanges object.
 #' @param vaf_cutoff Filter out ostensibly germline variants using a cutoff for
 #' variant allele fraction (VAF). Any variant with a \code{vaf} larger than
 #' the cutoff will be filtered. The default is 1 (no filtering). It is
@@ -34,8 +35,9 @@
 #' depending on \code{custom_filter_rm}.
 #' @param custom_filter_rm A logical value. If TRUE, rows in custom_filter_col
 #' that match any value in custom_filter_val will be removed from the
-#' mutation_data. If FALSE, filter_mut will be set to TRUE for those rows.
-#' @param regions Remove rows that are within or outside of specified regions.
+#' mutation_data. If FALSE, \code{filter_mut} will be set to TRUE for those
+#' rows.
+#' @param regions Remove rows that are within/outside of specified regions.
 #' `regions` can be either a file path, a data frame, or a GRanges object
 #' containing the genomic ranges by which to filter. File paths will be read
 #' using the rg_sep. Users can also choose from the built-in TwinStrand's
@@ -45,14 +47,14 @@
 #' "start", and "end".
 #' @param regions_filter Specifies how the provided \code{regions} should be
 #' applied to \code{mutation_data}. Acceptable values are "remove_within" or
-#' "keep_within". If set to "remove_within", any rows that fall within the
+#' "keep_within". If set to "remove_within", records that fall within the
 #' specified regions wil be removed from mutation_data. If set to
-#' "keep_within", only the rows within the specified regions will be kept in
-#' mutation_data, and all other rows will be removed.
-#' @param allow_half_overlap A logical value. If TRUE, rows that start or end
-#' in your \code{regions}, but extend outside of them in either direction will
-#' be included in the filter. If FALSE, only rows that start and end within the
-#' \code{regions} will be included in the filter. Default is FALSE.
+#' "keep_within", only records within the specified regions will be kept in
+#' mutation_data, and all other records will be removed.
+#' @param allow_half_overlap A logical value. If TRUE, records that start or
+#' end in your \code{regions}, but extend outside of them in either direction
+#' will be included in the filter. If FALSE, only records that start and end
+#' within the \code{regions} will be included in the filter. Default is FALSE.
 #' @param rg_sep The delimiter for importing the custom_regions. The default is
 #' tab-delimited "\\t".
 #' @param is_0_based_rg A logical variable. Indicates whether the position
@@ -60,7 +62,7 @@
 #' If TRUE, positions will be converted to 1-based (start + 1).
 #' Need not be supplied for TSpanels. Default is TRUE.
 #' @param rm_filtered_mut_from_depth A logical value. If TRUE, the function will
-#' subtract the \code{alt_depth} of rows that were flagged by the
+#' subtract the \code{alt_depth} of records that were flagged by the
 #' \code{filter_mut} column from their \code{total_depth}. This will treat
 #' flagged variants as No-calls. This will not apply to variants flagged as
 #' germline by the \code{vaf_cutoff}. However, if the germline variant
@@ -68,7 +70,7 @@
 #' If FALSE, the \code{alt_depth} will be retained in the
 #' \code{total_depth} for all variants.  Default is FALSE.
 #' @param return_filtered_rows A logical value. If TRUE, the function will
-#' return both the filtered mutation data and the rows that were
+#' return both the filtered mutation data and the records that were
 #' removed/flagged in a seperate data frame. The two dataframes will be
 #' returned inside a list, with names \code{mutation_data} and
 #' \code{filtered_rows}. Default is FALSE.
@@ -154,6 +156,10 @@ filter_mut <- function(mutation_data,
 
   if (return_filtered_rows) {
     rm_rows <- data.frame()
+  }
+  if (inherits(mutation_data, "GRanges")) {
+    mutation_data <- as.data.frame(mutation_data)
+    mutation_data <- dplyr::rename(mutation_data, contig = seqnames)
   }
 
   # Create a new Filter Column

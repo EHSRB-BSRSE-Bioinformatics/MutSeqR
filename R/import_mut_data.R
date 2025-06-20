@@ -6,33 +6,7 @@
 #' to a file or directory. If you specify a directory, the function will
 #' attempt to read all files in the directory and combine them into
 #' a single data frame. Mutation data should consist of a row for each
-#' variant. Required columns are listed below.
-#' \itemize{
-#'      \item `contig`: The name of the reference sequence.
-#'      \item `start`: The start position of the feature.
-#'      \item `end`: The half-open end position of the feature.
-#'      \item `sample`: The sample name.
-#'      \item `ref`: The reference allele at this position
-#'      \item `alt`: The left-aligned, normalized, alternate allele at this
-#' position. Multiple alt alleles called for a single position should be
-#' represented as separate rows in the table.
-#' }
-#' The following columns are not required, but are recommended for full
-#' package functionality:
-#' \itemize{
-#'   \item `alt_depth`: The read depth supporting the alternate allele. If
-#' not included, the function will add this column, assuming a value of 1.
-#'    \item `total_depth`: The total read depth at this position, excluding
-#' no-calls (N calls). If not present, the function will attempt to calculate
-#' the `total_depth` as `depth` - `no_calls`. If no_calls is not present, the
-#' function will use `depth` as the `total_depth.`
-#'    \item `depth`: The total read depth at this position, including no-calls.
-#'    \item `no_calls`: The number of no-calls (N-calls) at this position.
-#' }
-#' We recommend that files include a record for every sequenced
-#' position, regardless of whether a variant was called, along with the
-#' `total_depth` for each record. This enables site-specific depth calculations
-#' required for some downstream analyses.
+#' variant. Required columns are listed in details.
 #' @param mut_sep The delimiter for importing the mutation file.
 #' Default is tab-delimited.
 #' @param is_0_based_mut A logical variable. Indicates whether the
@@ -87,6 +61,33 @@
 #' automatically be changed to their default value.
 #' @param output_granges A logical variable; whether you want the mutation
 #' data to output as a GRanges object. Default output (FALSE) is as a dataframe.
+#' @details Required columns for mut files are:
+#' \itemize{
+#'      \item `contig`: The name of the reference sequence.
+#'      \item `start`: The start position of the feature.
+#'      \item `end`: The half-open end position of the feature.
+#'      \item `sample`: The sample name.
+#'      \item `ref`: The reference allele at this position
+#'      \item `alt`: The left-aligned, normalized, alternate allele at this
+#' position. Multiple alt alleles called for a single position should be
+#' represented as separate rows in the table.
+#' }
+#' The following columns are not required, but are recommended for full
+#' package functionality:
+#' \itemize{
+#'   \item `alt_depth`: The read depth supporting the alternate allele. If
+#' not included, the function will add this column, assuming a value of 1.
+#'    \item `total_depth`: The total read depth at this position, excluding
+#' no-calls (N calls). If not present, the function will attempt to calculate
+#' the `total_depth` as `depth` - `no_calls`. If no_calls is not present, the
+#' function will use `depth` as the `total_depth.`
+#'    \item `depth`: The total read depth at this position, including no-calls.
+#'    \item `no_calls`: The number of no-calls (N-calls) at this position.
+#' }
+#' We recommend that files include a record for every sequenced
+#' position, regardless of whether a variant was called, along with the
+#' `total_depth` for each record. This enables site-specific depth calculations
+#' required for some downstream analyses.
 #' @returns A table where each row is a mutation, and columns indicate the
 #' location, type, and other data. If `output_granges` is set to TRUE, the
 #' mutation data will be returned as a GRanges object, otherwise mutation
@@ -124,6 +125,9 @@
 #' \item `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
 #' \item `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is
 #' the same as that of at least one other row for the same sample.
+#' \item `filter_mut` : A logical value, initially set to FALSE that indicates
+#' to calculte_mf() if the variant should be excluded from mutation counts.
+#' See the filter_mut function for more detail.
 #' }
 #' @examples
 #' # Example: Import a single mutation file. This library was sequenced with
