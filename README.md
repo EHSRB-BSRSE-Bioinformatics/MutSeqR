@@ -1,24 +1,34 @@
+
+
+# MutSeqR <a href="https://https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/temp-hex.png" align="right" height="138" /></a>
+
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
   [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   <!-- badges: end -->
-  
-# Change Report:
+
+## Overview
+MutSeqR is an open-source R package to analyze error-corrected Next-Generation
+Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.
+
+<img src="man/figures/MutSeqR overview.png" align=center alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
+
+<p style="font-size: 0.5em;">
+Figure transcript: 1. Data Import: Imports mutation data into the R environment. Binds data from multiple libraries into a single object. Joins sample and target region metadata to the mutation data. Retrieves trinucleotide context. Functions: import_mut_data() & import_vcf_data(). Inputs: Raw Mutation data (VCF or tabular), sample metadata, sequencing panel ranges. 2. Data Processing: Calculates mutation frequencies for gruops of interest. Calculates frequencies andproportions of mutation subtypes. Opinoal Variant filtering: eliminates putative germline variants, removes variants outside of specified regions, quality assurance filtering. Functions: calculate_mf() & filter_mut(). Inputs: mutation data. Outputs: mf data. 3. Statistical Analyses: Generalized linear modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra comparison between groups. Unsupervised clustering based on mutation spectra. Functions: model_mf(), bmd_proast(), bmd_toxicr(), signature_fitting(), spectra_comparison(), cluster_spectra(). Inputs: mf data. 4. Visualization: Create figures to display mutation frequencies and the proportions of mutation subtypes. VIsualise statistical results. Visualise mutation distribution across genomic loci. View clonal expansion of mutations. Functions: plot_mf(), plot_mean_mf(), plot_model_mf(), plot_ci(), plot_spectra(), plot_trinucleotide(), plot_trinucleotide_heatmap(), plot_bubbles(), plot_radar(). 5. Output: Summary report RMarkdown file will faciliatte the generation of results. Output mutation data as VCF. Output sequences in FASTA format. Output spectra data in SigProfiler format. Export results to Excel workbook. Functions: render_report(), write_vcf_from_mut(), write_reference_fasta(), get_sigprofiler_output(), write_excel().
+</p>
+
+## Vignette
+
+See the [vignette](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles/MutSeqR_introduction.html#introduction) for details on function utility.
+
+## Recent Changes:
+Changes: 2025-06-19
+- We're Public!!
+- See the Vignette for function details.
+- Moved the correct_depth feature to calculate_mf
+
 Changes: 2025-06-05
 - Summary Report: Users may now run a standardized analysis workflow using render_report().
-- Users may consult the MutSeqR vignette:
-
-```{r}
-  rmarkdown::render(
-    input = system.file("vignette", "vignette.rmd", package="MutSeqR"),
-    output_dir = NULL,
-    output_file = "./Vignette_Rmd",
-    envir = new.env()
-  )
-```
-
-Change: 2025-06-19
-- Moved the correct_depth feature to calculate_mf
 
 Changes: 2025-03-27
 - Removed custom_regions parameter. Utility is now incorporated by regions parameter.
@@ -31,27 +41,7 @@ Major changes on 2025-03-24
 - plot_spectra, plot_trinucleotide, and spectra_comparison are now supplied with mf_data instead of the mutation data.
 - Example data has been added: Currently 44Mb
 
-  
-For full details on function utility, see below.
-
-# MutSeqR: Error-corrected Next-Generation Sequencing (ECS) Analysis For Mutagenicity Assessment
-
-Error-corrected next-generation sequencing (ECS) uses various methods to combine multiple independent raw sequence reads derived from an original starting molecule, thereby subtracting out artifacts introduced during sequencing or library preparation. This results in a highly accurate representation of the original molecule. ECS is particularly useful for detecting rare somatic mutations (or mutations induced in germ cells), such as those that arise from mutagen exposure or other sources of DNA damage. ECS is a powerful tool for assessing the mutagenicity of chemicals, drugs, or other agents, and can be used to identify the mutational signatures of these agents. ECS can also be used to detect rare mutations in cancer or other diseases, and to track the clonal evolution of these diseases over time.
-
-For more background on how ECS works and its context in regulatory toxicology testing and genetic toxicology, see the following articles:
-- [Menon and Brash, 2023](10.1016/j.mrrev.2023.108471)
-- [Marchetti et al., 2023a](https://doi.org/10.1038/d41573-023-00014-y)
-- [Marchetti et al., 2023b](https://doi.org/10.1016/j.mrrev.2023.108466)
-- [Kennedy et al., 2014](https://doi.org/10.1038/nprot.2014.170)
-
-# Features
- - Import tabular or VCF mutation data
- - Filter variants
- - Summarise mutation frequency across samples, experimental groups, and mutation subtypes
- - Perform statistical analysis of mutation data
- - Visualize data
-
-# Installation
+## Installation
 
 Install the package from github:
 
@@ -65,7 +55,12 @@ Load the package
 library(MutSeqR)
 ```
 
-# Citation
+## Getting Help
+
+If you encounter a clear bug, please file an issue with a minimal reproducible example on [Github](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues).
+
+## Citation
+
 To cite this package in publications use:
 
 Meier M, Dodge A, Williams A, Esina E (2025). MutSeqR: Analysis of Error-Corrected Sequencing Data for Mutation Detection. R package version 0.99.0, https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/.
