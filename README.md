@@ -11,7 +11,7 @@
 MutSeqR is an open-source R package to analyze error-corrected Next-Generation
 Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.
 
-<img src="man/figures/MutSeqR overview.png" align=center alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
+<img src="man/figures/MutSeqR_overview.png" align=center alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
 
 <p>
   <small>
