@@ -48,7 +48,7 @@ Output saved to : `r params$outputdir`
 
 ```{r import-data}
 no_depth_warning <- "Could not find an appropriate depth column. Some package functionality may be limited.\n"
-correct_depth_warning <-  "The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances."
+correct_depth_warning <-  "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
 warnings_list <- character(0)
 mutation_data <- NULL
 
@@ -157,20 +157,11 @@ cat ("Records must start and end within the filtering regions to be included: ",
 **Flagged variants (except those identified as germline) have their alt_depth subtracted from their total_depth: `r params$rm_filtered_mut_from_depth`.**
 If TRUE, flagged variants are treated as N-calls within the data.
 
-**Correcting the total_depth for overlapping positions: `r correct_depth`.**
-Corrects the total_depth at overlapping positions within a single sample.
-Overlapping positions are defined as those sharing the same sample, contig, and
-start values. For these positions, the total_depth will be retained for only one row.
-All other rows will have their total_edpth set to 0 to prevent double-counting. This
-parameter is set to TRUE automatically when overlapping positions are detected within
-the mutation data.
-
 ^1^ *Only applicable for mutation data that contains an appropriate total_depth column.*
 
 ```{r filter-mutation-data, message=TRUE, results='asis'}
 filtered_mutation_data <- filter_mut(
   mutation_data,
-  correct_depth = correct_depth,
   vaf_cutoff = params$vaf_cutoff,
   snv_in_germ_mnv = params$snv_in_germ_mnv,
   rm_abnormal_vaf = params$rm_abnormal_vaf,
@@ -209,6 +200,15 @@ of the number of reads that contain the non-reference allele.
 **Mutation Frequency maximum** (mf_max). Multiple identical mutations at the same
 position within a sample are counted as independent mutation events.
 
+**Correcting the total_depth for overlapping positions: `r correct_depth`.**
+When TRUE, the total_depth at overlapping positions within a single sample's
+mutation data will have depth corrected. Overlapping positions are defined as
+those sharing the same sample, contig, and start values. For these positions,
+the total_depth will be retained for only one row. All other rows will have
+their total_depth set to 0 to prevent double-counting. This parameter is set
+to TRUE automatically when overlapping positions are detected within
+the mutation data.
+
 ``` {r no-depth-msg-global, eval=no_depth, results='asis'}
 if (is.null(params$precalc_depth_data_global)) {
   cat("No appropriate total_depth column within the mutation data.
@@ -219,18 +219,21 @@ if (is.null(params$precalc_depth_data_global)) {
       "/", params$precalc_depth_data_global, sep = "")
 }
 ```
+
 ## Summary Table
 
 ```{r calculate-global-mf-sample}
-mf_data <- calculate_mf(mutation_data = filtered_mutation_data,
-                        cols_to_group = "sample",
-                        subtype_resolution = "none",
-                        variant_types = c("-ambiguous", "-uncategorized"),
-                        calculate_depth = !no_depth,
-                        precalc_depth_data = params$precalc_depth_data_global,
-                        d_sep = params$d_sep,
-                        summary = TRUE,
-                        retain_metadata_cols = params$exp_variable)
+mf_data <- calculate_mf(
+  mutation_data = filtered_mutation_data,
+  cols_to_group = "sample",
+  subtype_resolution = "none",
+  variant_types = c("-ambiguous", "-uncategorized"),
+  calculate_depth = !no_depth,
+  precalc_depth_data = params$precalc_depth_data_global,
+  d_sep = params$d_sep,
+  correct_depth = correct_depth,
+  retain_metadata_cols = params$exp_variable
+)
 plot_max <- all(mf_data$mf_min != mf_data$mf_max)
 DT::datatable(mf_data,
   caption = "Figure 1. Mutation Frequency per Sample",
@@ -293,18 +296,20 @@ if (!is.null(params$exp_variable)) {
   plot_data[[params$exp_variable]] <- factor(plot_data[[params$exp_variable]],
                                              levels = params$exp_variable_order)
 }
-plot3.2 <- plot_mf(mf_data = plot_data,
-                 group_col = "sample",
-                 plot_type = "bar",
-                 mf_type = ifelse(plot_max, "both", "min"),
-                 group_order = ifelse(is.null(params$exp_variable),
-                                      "smart",
-                                      "arranged"),
-                 group_order_input = params$exp_variable,
-                 fill_col = params$exp_variable,
-                 labels = labels,
-                 x_lab = "Sample",
-                 y_lab = "Mutation Frequency (mutations/bp)")
+plot3.2 <- plot_mf(
+  mf_data = plot_data,
+  group_col = "sample",
+  plot_type = "bar",
+  mf_type = ifelse(plot_max, "both", "min"),
+  group_order = ifelse(is.null(params$exp_variable),
+                       "smart",
+                       "arranged"),
+  group_order_input = params$exp_variable,
+  fill_col = params$exp_variable,
+  labels = labels,
+  x_lab = "Sample",
+  y_lab = "Mutation Frequency (mutations/bp)"
+)
 plot3.2
 ```
 
@@ -505,7 +510,7 @@ if (params$bmd_method == "proast") {
                     response_col = response_col,
                     bmr = params$bmr,
                     model_averaging = TRUE,
-                    num_bootstraps = 2, # parameterize this. 50/200
+                    num_bootstraps = params$num_boots,
                     plot_results = TRUE,
                     output_path = NULL)
 } else if (params$bmd_method == "toxicr") {
@@ -710,7 +715,8 @@ mf6 <- calculate_mf(
   variant_types = c("-ambiguous", "-uncategorized"),
   calculate_depth = !no_depth,
   precalc_depth_data = params$precalc_depth_data_base6,
-  d_sep = params$d_sep
+  d_sep = params$d_sep,
+  correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
 if (!is.null(params$exp_variable)) {
@@ -752,13 +758,14 @@ caption <- paste0(
 )
 ```
 
-```{r plot-spectra-clustered, fig.cap=caption}
+```{r plot-spectra-clustered, fig.cap=caption, fig.width=12, fig.height=6}
 plot5.12 <- plot_spectra(
   mf_data = mf6,
   group_col = "sample",
   subtype_resolution = "base_6",
   response = "proportion",
-  group_order = "clustered"
+  group_order = "clustered",
+  rotate_xlabs = TRUE
 )
 plot5.12
 ```
@@ -783,7 +790,8 @@ mf6_expv <- calculate_mf(
   variant_types = c("-ambiguous", "-uncategorized"),
   calculate_depth = !no_depth,
   precalc_depth_data = depth_base6_expv,
-  d_sep = params$d_sep
+  d_sep = params$d_sep,
+  correct_depth = correct_depth
 )
 # Calculate the mean subtype MF for the experimental variable
 mf6_expv_mean <- mf6 %>%
@@ -889,7 +897,8 @@ mf96 <- calculate_mf(
   variant_types = "snv",
   calculate_depth = !no_depth,
   precalc_depth_data = params$precalc_depth_data_base96,
-  d_sep = params$d_sep
+  d_sep = params$d_sep,
+  correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
 if (!is.null(params$exp_variable)) {
@@ -934,7 +943,8 @@ mf96_expv <- calculate_mf(
   variant_types = "snv",
   calculate_depth = !no_depth,
   precalc_depth_data = precalc_depth_data_base96,
-  d_sep = params$d_sep
+  d_sep = params$d_sep,
+  correct_depth = correct_depth
 )
 # Calculate the mean subtype MF for the experimental variable
 mf96_expv_mean <- mf96 %>%
@@ -1011,7 +1021,10 @@ for (i in seq_along(plots)) {
 
 ## Signature Analysis
 
-```{r signature-analysis, eval=FALSE}
+**Ran Signature Assignment: `r params$run_sigfitting`**
+See the Sigprofiler Output folder in `r output_path`
+
+```{r signature-analysis, eval=params$run_sigfitting}
 # Think of a way to get these results in the report....
 
 signature_fitting(
@@ -1039,7 +1052,8 @@ mf_rg <- calculate_mf(
   calculate_depth = !no_depth,
   precalc_depth_data = params$precalc_depth_data_rg,
   d_sep = params$d_sep,
-  retain_metadata_cols = params$exp_variable
+  retain_metadata_cols = params$exp_variable,
+  correct_depth = correct_depth
 )
 DT::datatable(
   mf_rg,
