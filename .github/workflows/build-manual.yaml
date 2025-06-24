@@ -26,6 +26,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra texinfo
 
+      - name: Install GitHub-only dependencies
+        run: |
+          Rscript -e 'install.packages("remotes", repos = "https://cloud.r-project.org")'
+          Rscript -e 'remotes::install_github("AlexandrovLab/SigProfilerMatrixGeneratorR")'
+          Rscript -e 'remotes::install_github("NIEHS/ToxicR")'
+
       - name: Create inst/doc directory
         # The -p flag ensures it doesn't fail if the directory already exists.
         run: mkdir -p inst/doc
