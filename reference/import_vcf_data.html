@@ -18,10 +18,7 @@ data into a dataframe."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment</a></li>
-  </ul></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -70,34 +67,7 @@ imported. If you specify a directory, the function will
 attempt to read all files in the directory and combine them into
 a single table. VCF files should follow the VCF specifications,
 version 4.5. Multisample VCF files are not supported; VCF files
-must contain one sample each. Required fields are listed below.</p><ul><li><p><code>FIXED FIELDS</code></p></li>
-<li><p><code>CHROM</code>: The name of the reference sequence. Equivalent to <code>contig</code>.</p></li>
-<li><p><code>POS</code>: The 1-based start position of the feature. Equivalent to  <code>start</code>.</p></li>
-<li><p><code>REF</code>: The reference allele at this position.</p></li>
-<li><p><code>ALT</code>: The left-aligned, normalized, alternate allele at this position.
-Multiple alt alleles called for a single position should be represented as
-separate rows in the table.</p></li>
-<li><p><code>INFO FIELDS</code></p></li>
-<li><p><code>END</code>: The half-open end position of the feature.</p></li>
-<li><p><code>sample</code>: An identifying field for your samples; either in the INFO
-field or as the header to the FORMAT field.</p></li>
-</ul><p>The following FORMAT fields are not required, but are recommended for full
-package functionality:</p><ul><li><p><code>AD</code>: The allelic depths for the reference and alternate allele
-in the order listed. The sum of AD is equivalent to the <code>total_depth</code>
-(read depth at this position excluding N-calls).</p></li>
-<li><p><code>DP</code>: The read depth at this position (including N-calls).
-Equivalent to <code>depth</code>. Note that in many VCF files, the DP field
-is defined as <code>total_depth</code>. However, in most cases, the DP field
-includes N-calls.</p></li>
-<li><p><code>VD</code>: The read depth supporting the alternate allele. If
-not included, the function will add this column, assuming a value of 1.
-Equivalent to <code>alt_depth</code>.</p></li>
-</ul><p>We recommend that files include a record for every sequenced
-position, regardless of whether a variant was called, along with the
-<code>AD</code> for each record. This enables site-specific depth calculations
-required for some downstream analyses. AD is used to calculate the <code>total_depth</code>
-(the read depth excluding No-calls). If AD is not available, the <code>DP</code> field
-will be used as the <code>total_depth</code>.</p></dd>
+must contain one sample each. Required fields are listed in details.</p></dd>
 
 
 <dt id="arg-sample-data">sample_data<a class="anchor" aria-label="anchor" href="#arg-sample-data"></a></dt>
@@ -208,7 +178,41 @@ type for the snv variant including the two flanking nucleotides
 <li><p><code>is_known</code>: TRUE or FALSE. Flags known variants (ID != ".").</p></li>
 <li><p><code>row_has_duplicate</code>: TRUE or FALSE. Flags rows whose position is
 the same as that of at least one other row for the same sample.</p></li>
+<li><p><code>filter_mut</code> : A logical value, initially set to FALSE that indicates
+to calculte_mf() if the variant should be excluded from mutation counts.
+See the filter_mut function for more detail.</p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The required fields are:</p>
+<p><strong>FIXED FIELDS</strong></p><ul><li><p><code>CHROM</code>: The name of the reference sequence. Equivalent to <code>contig</code>.</p></li>
+<li><p><code>POS</code>: The 1-based start position of the feature. Equivalent to  <code>start</code>.</p></li>
+<li><p><code>REF</code>: The reference allele at this position.</p></li>
+<li><p><code>ALT</code>: The left-aligned, normalized, alternate allele at this position.
+Multiple alt alleles called for a single position should be represented as
+separate rows in the table.</p></li>
+</ul><p><strong>INFO FIELDS</strong></p><ul><li><p><code>END</code>: The half-open end position of the feature.</p></li>
+<li><p><code>sample</code>: An identifying field for your samples; either in the INFO
+field or as the header to the FORMAT field.</p></li>
+</ul><p><strong>SUGGESTED FIELDS</strong></p>
+<p>The following <strong>FORMAT</strong> fields are not required, but are recommended for
+full package functionality:</p><ul><li><p><code>AD</code>: The allelic depths for the reference and alternate allele
+in the order listed. The sum of AD is equivalent to the <code>total_depth</code>
+(read depth at this position excluding N-calls).</p></li>
+<li><p><code>DP</code>: The read depth at this position (including N-calls).
+Equivalent to <code>depth</code>. Note that in many VCF files, the DP field
+is defined as <code>total_depth</code>. However, in most cases, the DP field
+includes N-calls.</p></li>
+<li><p><code>VD</code>: The read depth supporting the alternate allele. If
+not included, the function will add this column, assuming a value of 1.
+Equivalent to <code>alt_depth</code>.</p></li>
+</ul><p>We recommend that files include a record for every sequenced
+position, regardless of whether a variant was called, along with the
+<code>AD</code> for each record. This enables site-specific depth calculations
+required for some downstream analyses. AD is used to calculate the
+<code>total_depth</code> (the read depth excluding No-calls). If AD is not available,
+the <code>DP</code> field will be used as the <code>total_depth</code>.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -241,7 +245,7 @@ the same as that of at least one other row for the same sample.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Loading reference genome: BSgenome.Mmusculus.UCSC.mm10.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Retrieving context sequences from the reference genome</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>150 rows were found whose position was the same as that of at least one other row for the same sample.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -249,7 +253,7 @@ the same as that of at least one other row for the same sample.</p></li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Matthew J. Meier, Annette E. Dodge, Andrew Williams, Elena Esina.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
 </div>
 
 <div class="pkgdown-footer-right">
