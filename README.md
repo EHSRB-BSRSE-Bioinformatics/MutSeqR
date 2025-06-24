@@ -1,6 +1,6 @@
 
 
-# MutSeqR <a href="https://https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/temp-hex.png" align="right" height="138" alt = "this is just a temporary image."/></a>
+# MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" alt = "this is just a temporary image."/></a>
 
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
@@ -11,7 +11,7 @@
 MutSeqR is an open-source R package to analyze error-corrected Next-Generation
 Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.
 
-<img src="man/figures/MutSeqR overview.png" align=center alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
+<img src="man/figures/MutSeqR_overview.png" align=center alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
 
 <p>
   <small>
