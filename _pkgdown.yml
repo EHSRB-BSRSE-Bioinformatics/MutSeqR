@@ -7,5 +7,5 @@ vignettes: false
 articles:
   - title: Overview of MutSeqR workflow
     contents:
-      - MutSeqR_introduction.rmd
+      - MutSeqR_introduction
 
