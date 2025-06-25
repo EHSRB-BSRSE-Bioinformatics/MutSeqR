@@ -1,9 +1,9 @@
 
 
-# MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" alt = "The MutSeqR logo."/></a>
+# MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" style="height:138px; float:right;" alt="The MutSeqR logo."></a>
 
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
+  [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml)
   [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   <!-- badges: end -->
 
@@ -11,15 +11,15 @@
 MutSeqR is an open-source R package to analyze error-corrected Next-Generation
 Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.
 
-<img src="man/figures/MutSeqR_overview.png" align=center alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
+<img src="man/figures/MutSeqR_overview.png" style="display:block; margin:auto; max-width:100%;" alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
 
-<p>
-  <small>
-  <em>
-Figure transcript: 1. Data Import: Imports mutation data into the R environment. Binds data from multiple libraries into a single object. Joins sample and target region metadata to the mutation data. Retrieves trinucleotide context. 2. Data Processing: Calculates mutation frequencies for groups of interest. Calculates frequencies andproportions of mutation subtypes. Opinoal Variant filtering: eliminates putative germline variants, removes variants outside of specified regions, quality assurance filtering. 3. Statistical Analyses: Generalized linear modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra comparison between groups. Unsupervised clustering based on mutation spectra. 4. Visualization: Create figures to display mutation frequencies and the proportions of mutation subtypes. VIsualise statistical results. Visualise mutation distribution across genomic loci. View clonal expansion of mutations. 5. Output: Summary report RMarkdown file will faciliatte the generation of results. Output mutation data as VCF. Output sequences in FASTA format. Output spectra data in SigProfiler format. Export results to  Excel workbook.
-  </small>
-  </em>
-</p>
+<details>
+<summary><strong>
+Figure transcript
+</strong></summary>
+<em>1. Data Import: Imports mutation data into the R environment. Binds data from multiple libraries into a single object. Joins sample and target region metadata to the mutation data. Retrieves trinucleotide context. 2. Data Processing: Calculates mutation frequencies for groups of interest. Calculates frequencies and proportions of mutation subtypes. Optional Variant filtering: eliminates putative germline variants, removes variants outside of specified regions, quality assurance filtering. 3. Statistical Analyses: Generalized linear modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra comparison between groups. Unsupervised clustering based on mutation spectra. 4. Visualization: Create figures to display mutation frequencies and the proportions of mutation subtypes. Visualise statistical results. Visualise mutation distribution across genomic loci. View clonal expansion of mutations. 5. Output: Summary report RMarkdown file will faciliatte the generation of results. Output mutation data as VCF. Output sequences in FASTA format. Output spectra data in SigProfiler format. Export results to  Excel workbook.
+</em>
+</details>
 
 ## Vignette
 
@@ -49,13 +49,13 @@ Major changes on 2025-03-24
 
 Install the package from github:
 
-```{r}
+```r
 # install.packages("devtools")
 devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 ```
 
 Load the package
-```{r}
+```r
 library(MutSeqR)
 ```
 
