@@ -26,7 +26,6 @@ vignette: >
 BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
-library(bs4Dash)
 library(htmltools)
 ```
 
