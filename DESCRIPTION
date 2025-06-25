@@ -2,11 +2,6 @@ Package: MutSeqR
 Title: Analysis of Error-Corrected Sequencing Data for Mutation Detection
 Version: 0.99.0
 Authors@R: c(
-    person("Matthew J.", "Meier",
-      email = "matthew.meier@hc-sc.gc.ca",
-      role = c("aut", "cre"),
-      comment = c(ORCID = "0000-0001-8199-8754")
-    ),
     person("Annette E.", "Dodge",
       email = "annette.dodge@hc-sc.gc.ca",
       role = "aut",
@@ -16,29 +11,38 @@ Authors@R: c(
       role = "aut",
       comment = c(ORCID = "0000-0002-7637-7686")
     ),
+    person("Danielle P.M.", "LeBlanc",
+      role = "aut",
+      comment = c(ORCID = "0000-0002-3847-8371")
+    ),
+    person("David M.", "Schuster",
+      role = "aut",
+      comment = c(ORCID = "0009-0001-6316-4358")
+    ),
     person("Elena", "Esina", 
       role = "aut",
       comment = c(ORCID = "0009-0002-3443-378X")
     ),
-    person("Danielle", "LeBlanc",
-      role = "ctb",
-      comment = c(ORCID = "0000-0002-3847-8371")
+    person("Clint C.", "Valentine", role = "aut"),
+    person("Jesse J.", "Salk", role = "aut"),
+    person("Alexander Y.", "Maslov", role = "aut"),
+    person("Christopher", "Bradley", role = "aut"),
+    person("Carole L.", "Yauk",
+      role = "aut",
+      comment = c(ORCID = "0000-0002-6725-3454")
+    ),
+    person("Francesco", "Marchetti",
+      role = "aut",
+      comment = c(ORCID = "0000-0002-9435-4867")
+    ),    
+    person("Matthew J.", "Meier",
+      email = "matthew.meier@hc-sc.gc.ca",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0001-8199-8754")
     ),
     person("Geronimo", "Matteo",
       role = "ctb",
       comment = c(ORCID = "0000-0003-0819-4471")
-    ),
-    person("David M.", "Schuster",
-      role = "ctb",
-      comment = c(ORCID = "0009-0001-6316-4358")
-    ),
-    person("Francesco", "Marchetti",
-      role = "ctb",
-      comment = c(ORCID = "0000-0002-9435-4867")
-    ),
-    person("Carole", "Yauk",
-      role = "ctb",
-      comment = c(ORCID = "0000-0002-6725-3454")
     )
   )
 Description: Standard methods for analysis of mutation data following error-
@@ -109,9 +113,6 @@ Suggests:
     trackViewer,
     yaml,
     xml2
-Remotes: 
-    NIEHS/ToxicR,
-    AlexandrovLab/SigProfilerMatrixGeneratorR
 VignetteBuilder: knitr
 Config/reticulate: list( packages = list( list(package =
     "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),

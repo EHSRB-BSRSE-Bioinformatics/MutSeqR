@@ -3797,7 +3797,8 @@ f.create.graphwin <- function(
         width_inches <- aa / 96  # Common screen DPI
         height_inches <- bb / 96
         
-        dev.new(width = width_inches, height = height_inches)  # or just dev.new()
+        dev.new()
+        #dev.new(width = width_inches, height = height_inches)  # or just dev.new()
         # dev.new() doesn't accept `title` or `ypos`.
         # Users will see the device appear, but titles are set in the plotting code.
 

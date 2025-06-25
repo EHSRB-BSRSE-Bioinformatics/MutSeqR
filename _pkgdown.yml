@@ -2,3 +2,10 @@ url: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/
 template:
   bootstrap: 5
 
+vignettes: false
+
+articles:
+  - title: Overview of MutSeqR workflow
+    contents:
+      - MutSeqR_introduction
+

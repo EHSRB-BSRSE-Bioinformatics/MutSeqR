@@ -24,40 +24,7 @@ imported. If you specify a directory, the function will
 attempt to read all files in the directory and combine them into
 a single table. VCF files should follow the VCF specifications,
 version 4.5. Multisample VCF files are not supported; VCF files
-must contain one sample each. Required fields are listed below.
-\itemize{
-\item \verb{FIXED FIELDS}
-\item \code{CHROM}: The name of the reference sequence. Equivalent to \code{contig}.
-\item \code{POS}: The 1-based start position of the feature. Equivalent to  \code{start}.
-\item \code{REF}: The reference allele at this position.
-\item \code{ALT}: The left-aligned, normalized, alternate allele at this position.
-Multiple alt alleles called for a single position should be represented as
-separate rows in the table.
-\item \verb{INFO FIELDS}
-\item \code{END}: The half-open end position of the feature.
-\item \code{sample}: An identifying field for your samples; either in the INFO
-field or as the header to the FORMAT field.
-}
-The following FORMAT fields are not required, but are recommended for full
-package functionality:
-\itemize{
-\item \code{AD}: The allelic depths for the reference and alternate allele
-in the order listed. The sum of AD is equivalent to the \code{total_depth}
-(read depth at this position excluding N-calls).
-\item \code{DP}: The read depth at this position (including N-calls).
-Equivalent to \code{depth}. Note that in many VCF files, the DP field
-is defined as \code{total_depth}. However, in most cases, the DP field
-includes N-calls.
-\item \code{VD}: The read depth supporting the alternate allele. If
-not included, the function will add this column, assuming a value of 1.
-Equivalent to \code{alt_depth}.
-}
-We recommend that files include a record for every sequenced
-position, regardless of whether a variant was called, along with the
-\code{AD} for each record. This enables site-specific depth calculations
-required for some downstream analyses. AD is used to calculate the \code{total_depth}
-(the read depth excluding No-calls). If AD is not available, the \code{DP} field
-will be used as the \code{total_depth}.}
+must contain one sample each. Required fields are listed in details.}
 
 \item{sample_data}{An optional file containing additional sample
 metadata (dose, timepoint, etc.). This can be a data frame or a file path.
@@ -149,11 +116,57 @@ type for the snv variant including the two flanking nucleotides
 \item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
 \item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
 the same as that of at least one other row for the same sample.
+\item \code{filter_mut} : A logical value, initially set to FALSE that indicates
+to calculte_mf() if the variant should be excluded from mutation counts.
+See the filter_mut function for more detail.
 }
 }
 \description{
 The function reads VCF file(s) and extracts the
 data into a dataframe.
+}
+\details{
+The required fields are:
+
+\strong{FIXED FIELDS}
+\itemize{
+\item \code{CHROM}: The name of the reference sequence. Equivalent to \code{contig}.
+\item \code{POS}: The 1-based start position of the feature. Equivalent to  \code{start}.
+\item \code{REF}: The reference allele at this position.
+\item \code{ALT}: The left-aligned, normalized, alternate allele at this position.
+Multiple alt alleles called for a single position should be represented as
+separate rows in the table.
+}
+
+\strong{INFO FIELDS}
+\itemize{
+\item \code{END}: The half-open end position of the feature.
+\item \code{sample}: An identifying field for your samples; either in the INFO
+field or as the header to the FORMAT field.
+}
+
+\strong{SUGGESTED FIELDS}
+
+The following \strong{FORMAT} fields are not required, but are recommended for
+full package functionality:
+\itemize{
+\item \code{AD}: The allelic depths for the reference and alternate allele
+in the order listed. The sum of AD is equivalent to the \code{total_depth}
+(read depth at this position excluding N-calls).
+\item \code{DP}: The read depth at this position (including N-calls).
+Equivalent to \code{depth}. Note that in many VCF files, the DP field
+is defined as \code{total_depth}. However, in most cases, the DP field
+includes N-calls.
+\item \code{VD}: The read depth supporting the alternate allele. If
+not included, the function will add this column, assuming a value of 1.
+Equivalent to \code{alt_depth}.
+}
+We recommend that files include a record for every sequenced
+position, regardless of whether a variant was called, along with the
+\code{AD} for each record. This enables site-specific depth calculations
+required for some downstream analyses. AD is used to calculate the
+\code{total_depth} (the read depth excluding No-calls). If AD is not available,
+the \code{DP} field will be used as the \code{total_depth}.
 }
 \examples{
 # Example: Import a single bg-zipped vcf file. This library was sequenced

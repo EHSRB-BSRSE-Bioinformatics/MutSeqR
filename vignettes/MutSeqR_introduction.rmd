@@ -71,7 +71,7 @@ devtools::install_github(
 )
 ```
 
-Install the package from Bioconductor:
+Install the package from Bioconductor (currently not implemented):
 
 ```{r install-bioc, eval=FALSE}
 if (!require("BiocManager", quietly = TRUE)) {
@@ -389,7 +389,6 @@ parameters in the `filter_mut` column. Variants flagged as TRUE in the
 `filter_mut` column will be automatically excluded from downstream analyses
 such as `calculate_mf()`, `plot_bubbles`, and `signature_fitting`. When
 specified, this function may also remove records from the mutation data.
-Finally, the function offers other data cleaning options.
 
 Flagging the variants in the `filter_mut` column will not remove them from
 the mutation data, however, they will be excluded from mutation counts in
@@ -399,34 +398,6 @@ their `total_depth` values may still be used in frequency calculations.
 By default, all filtering parameters are disabled. Users should be mindful of
 the filters that they use, ensuring first that they are applicable to their
 data.
-
-## Correcting Depth
-
-There may be cases when the same genomic position is represented multiple times
-within the mutation data of a single sample. For instance, we require that
-multiple different alternate alleles for a single position be reported as
-seperate rows. Another common example of this that we have observed are deletion
-calls. Often, for each deletion called, a no_variant call at the same start
-position will also be present. For data that includes the `total_depth` of each
- record, we want to prevent double-counting the depth at these positions during
- downstream analyses. When set to TRUE, `correct_depth` parameter will correct
- the depth at these positions. For positions with the same sample, contig, and
- start values, the `total_depth` will be retained for only one row. All other
- rows in the group will have their `total_depth` set to 0. The import functions
- will automatically check for duplicated rows and return a warning advising to
- correct the depth should it find any in the mutation data. This is recommended
- for all users whose data contain `total_depth` values.
-
-*NOTE: The case of deletions and no_variants: When identifying a deletion,*
-*some variant callers will re-align the sequences. As such a second*
-*total_depth value will be calculated, specifically for the deletion. The*
-*variant caller will then provide both the no_variant and the deletion call,*
-*the former with the initial depth, and the latter with the re-aligned depth*
-*value. Generally, when correcting the depth, the function will retain the*
-*total_depth of the first row in the group, and set the rest to 0. However, in*
-*the case of deletions, the function will prioritize retaining the re-aligned*
-*total_depth over the total_depth assigned to the no_variant. This*
-*prioritization can be disabled with the `correct_depth_to_indel` parameter.*
 
 ## Germline Variants
 
@@ -522,7 +493,6 @@ according to each parameter.
 
 *Filters used:*
 
-- *Depth correction*
 - Filter germline variants: vaf < 0.01
 - Filter snvs overlapping with germline variants and have their `alt_depth`
 removed from their `total_depth`.
@@ -732,11 +702,11 @@ Table: (\#tab:subtypes) Definitions of mutation subtype resolutions.
 
 |Subtype resolutions| Definition | Example |
 |-------------------|------------|---------|
-| `type`            | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
-| `base_6`          | The simple spectrum; snv subtypes in their pyrimidine context | C>A, C>G, C>T, T>A, T>C, T>G |
-| `base_12`         | The snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
-| `base_96`         | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A |
-| `base_192`        | The snv subtypes reported alongside their two flanking nucleotides | A[G>A]A |
+| `type` | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
+| `base_6` | The simple spectrum; snv subtypes in their pyrimidine context | C>A, C>G, C>T, T>A, T>C, T>G |
+| `base_12` | The snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
+| `base_96` | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A |
+| `base_192` | The snv subtypes reported alongside their two flanking nucleotides | A[G>A]A |
 
 Mutations and `total_depth` will be summed across groups for each mutation
 subtype to calculate frequencies. For SNV subtypes, the `total_depth` is
@@ -914,6 +884,36 @@ DT::datatable(mf_data_types,
   )
 )
 ```
+
+## Correcting Depth
+
+There may be cases when the same genomic position is represented multiple times
+within the mutation data of a single sample. For instance, we require that
+multiple different alternate alleles for a single position be reported as
+seperate rows. Another common example of this that we have observed are deletion
+calls. Often, for each deletion called, a no_variant call at the same start
+position will also be present. For data that includes the `total_depth` of each
+record, we want to prevent double-counting the depth at these positions during
+when summing the depth across groups. When set to TRUE, `correct_depth` parameter
+will correct the depth at these positions. For positions with the same sample,
+contig, and start values, the `total_depth` will be retained for only one row.
+All other rows in the group will have their `total_depth` set to 0 before beign
+summed. The import functions will automatically check for duplicated rows and
+return a warning advising to correct the depth should it find any in the mutation
+data. This is recommended for all users whose data contain `total_depth` values.
+By default, correct_depth is set to TRUE.
+
+*NOTE: The case of deletions and no_variants: When identifying a deletion,*
+*some variant callers will re-align the sequences. As such a second*
+*total_depth value will be calculated, specifically for the deletion. The*
+*variant caller will then provide both the no_variant and the deletion call,*
+*the former with the initial depth, and the latter with the re-aligned depth*
+*value. Generally, when correcting the depth, the function will retain the*
+*total_depth of the first row in the group, and set the rest to 0. However, in*
+*the case of deletions, the function may prioritize retaining the re-aligned*
+*total_depth over the total_depth assigned to the no_variant. This*
+*prioritization can be activated with the `correct_depth_by_indel_priority`*
+*parameter.*
 
 ## Precalculated Depth
 

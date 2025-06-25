@@ -32,6 +32,7 @@ params:
   bmd: TRUE # A logical variable indicating whether to run a BMD analysis. Assumes the exp_variable is dose/concentration (numeric).
   bmr: 0.5 # The benchmark response for the bmd analysis. Defined as a bmr-% increase in MF from the reference level.
   bmd_method: "proast" # Options: "proast", "toxicr" The method for running the bmd analysis.
+  num_boots: 200 # The number of bootstraps to run for PROAST model averaging. 200 is recommended but may reduce to 50 to decrease run time.
 # Signature Analysis
   run_sigfitting: TRUE # A logical variable indicating whether to run signature_fitting. Will create a virtual environment to run python on first use.
   python_version: 3.11 # The python version for signature fitting

@@ -1,62 +1,26 @@
 #' Calculate mutation frequency
 #'
-#' Calculates the mutation frequency for arbitrary groupings and creates a new
-#' dataframe with the results. Mutation frequency is # mutations / total bases,
-#' but this can be subset in different ways: e.g., by mutation context. In this
-#' case, it is necessary to change the denominator of total bases to reflect
-#' the sequencing depth at the proper reference bases under consideration.
-#' Additionally, by default, the operation is run by default using both the minimum 
-#' and maximum independent methods for counting mutations.
-#' @param mutation_data The data frame to be processed containing mutation data.
-#' Required columns are listed below.
-#' Synonymous names for these columns are accepted.
-#' \itemize{
-#'      \item `contig`: The reference sequence name.
-#'      \item `start`: 1-based start position of the feature.
-#'      \item `alt_depth`: The read depth supporting the alternate allele.
-#'      \item `variation_type`: The category to which this variant is assigned.
-#'      \item subtype_col: The column containing the mutation subtype. This
-#' column depends on the `subtype_resolution` parameter.
-#'     \item reference context: The column containing the referene base(s) for the
-#' mutation. This column depends on the `subtype_resolution` parameter.
-#'    \item cols to group: all columns across which you want to calculate
-#' the mutation frequency. Ex. `c("tissue", "dose")`. These columns should be listed
-#' in cols_to_group.
-#' }
-#' It is also required to include the total_depth column if you are calculating
-#' depth from the mutation data. If you are using precalculated depth data, the
-#' total_depth column is not required.
-#' 
-#' @param cols_to_group A vector of grouping variables: this should be the
+#' Calculates mutation frequencies for arbitrary groupings and creates a new
+#' dataframe with the results. Mutation frequency is calculated by dividing
+#' the sum of mutations by the sum of the total_depth for a given group
+#' (mutations/bp). The operation is run using both the minimum and maximum
+#' independent mutation counting methods.
+#' @param mutation_data The data frame (or GRanges) to be processed containing
+#' mutation data. Required columns are listed in details.
+#' @param cols_to_group A vector of grouping variables. This should be the
 #' groups of interest that you want to calculate a frequency for.
-#' For instance, getting the frequency by `sample`. Other options might
-#' include `dose`, `locus`, or, `c("sample","locus")`. All listed variables
-#' must be a column in the mutation_data.
-#' @param subtype_resolution The resolution of the mutation subtypes. Options are
-#'  \itemize{
-#'        \item "none" calculates mutation frequencies across all selected
-#' grouping columns.
-#'         \item "type" calculates mutation frequencies across all selected
-#' grouping columns for each `variation_type` seperately; snv, mnv, deletion,
-#' insertion, complex, sv, ambiguous, uncategorized.
-#'          \item "base_6" calculates mutation frequencies across all selected
-#' grouping columns for each variation_type with snv mutations separated by
-#' `normalized_subtype`; C>A, C>G, C>T, T>A, T>C, T>G. The reference context is
-#' `normalized_ref`.
-#'          \item "base_12" calculates mutation frequencies across all
-#' selected grouping columns for each variation_type with snv mutations
-#' separated by `subtype`; A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T,
-#' T>A, T>C, T>G. The reference context is `short_ref`.
-#'           \item "base_96" calculates mutation frequencies across all
-#' selected grouping columns for each variation_type with snv mutations
-#' separated by `normalized_context_with_mutation`, i.e. the 96-base
-#' trinucleotide context. Ex. A\\[C>T\\]A. The reference context is
-#' `normalized_context`.
-#'           \item "base_192" calculates mutation frequencies across all
-#' selected grouping columns for each variation_type with snv mutations
-#' separated by `context_with_mutation`, i.e. the 192-base trinucleotide
-#' context. Ex A\\[G>A\\]A. The reference context is `context`.
-#'  }
+#' For instance, getting the frequency by `"sample"`. Other options might
+#' include an experimental group Ex. `"dose"` or a locus Ex.
+#' `c("sample", "locus")`. All listed variables must be a column in the
+#' mutation_data. Do not include mutation subtype columns in this field.
+#' Please refer to subtype_resolution to group by subtype as the calculation
+#' will differ.
+#' @param subtype_resolution The degree at which to resolve the mutation
+#' subtypes when calculating frequencies. Mutation frequency will be calculated
+#' across all col_to_groups for each mutation subtype given the desired
+#' resolution. Subtype proportions will also be calculated. Options
+#' are "none", "type", "base_6", "base_12", "base_96", and "base_192". See
+#' details for definitions.
 #' @param variant_types Use this parameter to choose which variation types
 #' to include in the mutation counts. Provide a character vector of the
 #' variation types that you want to include. Alternatively, provide a
@@ -69,19 +33,19 @@
 #' @param correct_depth A logical value. If TRUE, the function will correct the
 #' \code{total_depth} column in \code{mutation_data} in order to prevent
 #' double-counting the \code{total_depth} values for the same genomic position.
-#' For rows with the same sample contig, and start values, the \code{total_depth}
-#' will be retained for only one row. All other rows in the group will have their
-#' \code{total_depth} set to 0. The default is FALSE
+#' For rows with the same sample, contig, and start values, the
+#' \code{total_depth} will be retained for only one row. All other rows in the
+#' group will have their \code{total_depth} set to 0. The default is TRUE.
 #' @param correct_depth_by_indel_priority A logical value. If TRUE, during depth
 #' correction, should there be different \code{total_depth} values within a
 #' group of rows with the same sample, contig, and start values, the
 #' \code{total_depth} value for the row with the highest priority
 #' \code{variation_type} will be retained, while the other rows will have their
 #' \code{total_depth} set to 0. \code{variation_type} priority order is:
-#' deletion, complex, insertion, snv, mnv, sv, uncategorised, ambiguous, no_variant.
-#' If FALSE, the \code{total_depth} value for the first row in the group will
-#' be retained, while the other rows will have their \code{total_depth} set to
-#' 0. The default is TRUE.
+#' deletion, complex, insertion, snv, mnv, sv, uncategorised, ambiguous,
+#' no_variant. If FALSE, the \code{total_depth} value for the first row in
+#' the group will be retained, while the other rows will have their
+#' \code{total_depth} set to 0. The default is FALSE.
 #' @param calculate_depth A logical variable, whether to calculate the
 #' per-group total_depth from the mutation data. If set to TRUE, the mutation
 #' data must contain a total_depth value for every sequenced base (including
@@ -118,41 +82,109 @@
 #' frequency calculated for each group. If summary is set to FALSE, the
 #' mutation frequency will be appended to each row of the original
 #' mutation_data.
-#'  \itemize{
-#'      \item `sum_min`: The sum of all mutations within the group, calculated
+#' \itemize{
+#' \item `sum_min`: The sum of all mutations within the group, calculated
 #' using the "min" method for mutation counting. All identical mutations
 #' within a samples are assumed to be the result of clonal expansion and are
 #' thus only counted once.
-#'      \item `sum_max`: The sum of all mutations within the group, calculated
+#' \item `sum_max`: The sum of all mutations within the group, calculated
 #' using the "max" method for mutaiton counting. All identical mutations
 #' within a sample are assumed to be idenpendant mutational evens and are
 #' included in the mutation frequency calculation.
-#'       \item `mf_min`: The mutation frequency calculated using the "min"
+#' \item `group_depth`: The total_depth summed across groups.
+#' \item `subtype_depth`: The total_depth summed across groups for a given
+#' sequence context. Used for calculating subtype frequencies.
+#' \item `mf_min`: The mutation frequency calculated using the "min"
 #' method for mutation counting. mf_min = sum_min / depth.
-#'        \item `mf_max`: The mutation frequency calculated using the "max"
+#' \item `mf_max`: The mutation frequency calculated using the "max"
 #' method for mutation counting. mf_max = sum_max / depth.
-#'     \item `proportion_min`: The proportion of each mutation
+#' \item `proportion_min`: The proportion of each mutation
 #' subtype within the group, normalized to the depth. Calculated
 #' using the "min" method. This is only calculated if `subtype_resolution`
 #' is not "none". If no depth is calculated or provided, proportion is
 #' calculated without normalization to the depth.
-#'     \item `proportion_max`: The proportion of each mutation
+#' \item `proportion_max`: The proportion of each mutation
 #' subtype within the group, normalized to its read depth. Calculated
 #' using the "max" method. This is only calculated if `subtype_resolution`
 #' is not "none". If no depth is calculated or provided, proportion is
 #' calculated without normalization to the depth.
 #' }
 #' @details
-#' Depth correction is important for preventing double-counting of reads in
+#' **Required columns:**
+#'  \itemize{
+#'      \item `contig`: (or `seqnames`) The reference sequence name.
+#'      \item `start`: 1-based start position of the feature.
+#'      \item `alt_depth`: The read depth supporting the alternate allele.
+#'      \item `variation_type`: The category to which this variant is assigned.
+#'      \item subtype_col: The column containing the mutation subtype. This
+#' column depends on the `subtype_resolution` parameter.
+#'     \item reference context: The column containing the referene base(s) for
+#' the mutation. This column depends on the `subtype_resolution` parameter.
+#'    \item cols to group: all columns across which you want to calculate
+#' the mutation frequency. Ex. `c("tissue", "dose")`. These columns should be
+#' listed in cols_to_group.
+#' }
+#' It is also required to include the total_depth column if you are calculating
+#' depth from the mutation data. If you are using precalculated depth data, the
+#' total_depth column is not required.
+#'
+#' **Subtype Resolutions:**
+#'  \itemize{
+#'        \item "none" calculates mutation frequencies across all selected
+#' grouping columns.
+#'         \item "type" calculates mutation frequencies across all selected
+#' grouping columns for each `variation_type` seperately; snv, mnv, deletion,
+#' insertion, complex, sv, ambiguous, uncategorized.
+#'          \item "base_6" calculates mutation frequencies across all selected
+#' grouping columns for each variation_type with snv mutations separated by
+#' `normalized_subtype`; C>A, C>G, C>T, T>A, T>C, T>G. The reference context is
+#' `normalized_ref`.
+#'          \item "base_12" calculates mutation frequencies across all
+#' selected grouping columns for each variation_type with snv mutations
+#' separated by `subtype`; A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T,
+#' T>A, T>C, T>G. The reference context is `short_ref`.
+#'           \item "base_96" calculates mutation frequencies across all
+#' selected grouping columns for each variation_type with snv mutations
+#' separated by `normalized_context_with_mutation`, i.e. the 96-base
+#' trinucleotide context. Ex. A\[C>T\]A. The reference context is
+#' `normalized_context`.
+#'           \item "base_192" calculates mutation frequencies across all
+#' selected grouping columns for each variation_type with snv mutations
+#' separated by `context_with_mutation`, i.e. the 192-base trinucleotide
+#' context. Ex A\[G>A\]A. The reference context is `context`.
+#'  }
+#'
+#' **Subtype depth:** For SNV subtypes, the total_depth is summed based on the
+#' sequence context in which the SNV subtype occurs. Ex. for base_6, the
+#' two possible reference bases are C or T; hence, the total_depth is
+#' summed seperately for C:G positions and T:A positions. The MF for C>T
+#' mutations is calculated as total # C>T mutations / total_depth for C>G
+#' positions (sum / subtype_depth). Non-SNV mutation types will be caluclated
+#' as their sum / group_depth, since they can occur in the context of any
+#' nucleotide.
+#'
+#' **retain_metadata_cols at subtype_resolution:** The summary table uses a
+#' pre-defined list of possible subtypes for each resolution. If a particular
+#' subtype within a given group is not recorded in the mutation data, the
+#' summary table will have no frame of reference for populating the
+#' metadata_cols. Thus, for subtypes that do not occur in the mutation data
+#' for a given group, the corresponding metadata_col will be NA.
+#'
+#' **Variant filtering:** Variants flagged as TRUE in the `filter_mut` column
+#' will be excluded from the mutation counts. However, the total_depth of
+#' these variants will be included in the group/subtype depths if
+#' calculating depth.
+#'
+#' **Depth correction** is important for preventing double-counting of reads in
 #' mutation data when summing the total_depth across samples or other groups.
 #' Generally, when several mutations have been detected at the same genomic
 #' position, within a sample, the total_depth value will be the same for all of
 #' them. However, in some datasets, whenever a deletion is detected, the data
 #' may contain an additional row with the same genomic position calling a
 #' "no_variant". The total_depth will differ between the deletion and the
-#' no_variant. In these cases, correct_depth_by_indel_priority == TRUE will ensure that
-#' the total_depth value for the deletion is retained, while the total_depth
-#' value for the no_variant is removed.
+#' no_variant. In these cases, correct_depth_by_indel_priority == TRUE will
+#' ensure that the total_depth value for the deletion is retained, while the
+#' total_depth value for the no_variant is removed.
 #' @examples
 #' # Load example data
 #' example_file <- system.file("extdata", "Example_files",
@@ -160,16 +192,28 @@
 #'                             package = "MutSeqR")
 #' example_data <- readRDS(example_file)
 #'
+#' 
 #' # Example 1 Calculate mutation frequency by sample.
-#' # Calculate depth from the mutation data
-#' mf_example <- calculate_mf(mutation_data = example_data,
-#'                            cols_to_group = "sample")
-#' # Example 2: Calculate the trinucleotide mutation proportions for each dose 
-#' # TODO - Add correct_depth parameter to examples!
-#' mf_96_example <- calculate_mf(mutation_data = example_data,
-#'                               cols_to_group = "dose",
-#'                               subtype_resolution = "base_96",
-#'                               variant_types  = "snv")
+#' # Calculate depth from the mutation data (default)
+#' # Correct the Depth (default) with indel priority (set)
+#' mf_example <- calculate_mf(
+#'  mutation_data = example_data,
+#'  cols_to_group = "sample",
+#'  correct_depth_by_indel_priority = TRUE
+#' )
+#' 
+#'
+#' # Example 2: Calculate the trinucleotide mutation proportions for each dose
+#' # Calculate and correct depth to indep priority.
+#' mf_96_example <- calculate_mf(
+#'  mutation_data = example_data,
+#'  cols_to_group = "dose",
+#'  subtype_resolution = "base_96",
+#'  variant_types  = "snv",
+#'  correct_depth_by_indel_priority = TRUE
+#' )
+#' 
+#'
 #' # Example 3: Calculate the mean mutation frequency for each 6 base subtype
 #' # per dose
 #' # calculate_mf does not calculate mean mutation frequency for
@@ -177,17 +221,16 @@
 #' # interested in calculating the mean of a group, this must be done
 #' # separately.
 #' # First, calculate 6 base MF per sample. Retain the dose column.
-#' mf_6_example <- calculate_mf(mutation_data = example_data,
-#'                              cols_to_group = "sample",
-#'                              subtype_resolution = "base_6",
-#'                              retain_metadata_cols = "dose")
-#' # Note: NA values in retain_metadata_cols. When we create a summary table
-#' # that includes mutation subtypes, there may occasionally be NA values in
-#' # the metadata columns. This is because the mutation data does not contain
-#' # any mutations (filtered or not) for that particular subtype within the
-#' # given group. For example, our example_data does not contain any ambiguous
+#' mf_6_example <- calculate_mf(
+#'  mutation_data = example_data,
+#'  cols_to_group = "sample",
+#'  subtype_resolution = "base_6",
+#'  retain_metadata_cols = "dose",
+#'  correct_depth_by_indel_priority = TRUE
+#' )
+#' # Note: our example_data does not contain any ambiguous
 #' # or uncategorized mutations, so the dose column is NA for all those
-#' # mutations in the summary table. This will not affect downstream analyses.
+#' # mutations in the summary table. This will not affect our mean calculation.
 #'
 #' # Calculate the mean MF for each 6 base subtype per dose
 #' mf_6_mean_example <- mf_6_example %>%
@@ -197,35 +240,31 @@
 #'                   mean_mf_max = mean(mf_max),
 #'                   se_mf_max = sd(mf_max) / sqrt(dplyr::n()))
 #'
+#' 
 #' # Example 4: Calculate MF using precalculated depth data
-#' sample_depth_example <- data.frame(sample = c("dna00973.1", "dna00974.1",
-#'                                               "dna00975.1", "dna00976.1",
-#'                                               "dna00977.1", "dna00978.1",
-#'                                               "dna00979.1", "dna00980.1",
-#'                                               "dna00981.1", "dna00982.1",
-#'                                               "dna00983.1", "dna00984.1",
-#'                                               "dna00985.1", "dna00986.1",
-#'                                               "dna00987.1", "dna00988.1",
-#'                                               "dna00989.1", "dna00990.1",
-#'                                               "dna00991.1", "dna00992.1",
-#'                                               "dna00993.1", "dna00994.1",
-#'                                               "dna00995.1", "dna00996.1"),
-#'                                    group_depth = c(565395266, 755574283,
-#'                                                    639909215, 675090988,
-#'                                                    598104021, 611295330,
-#'                                                    648531765, 713240735,
-#'                                                    669734626, 684951248,
-#'                                                    716913381, 692323218,
-#'                                                    297661400, 172863681,
-#'                                                    672259724, 740901132,
-#'                                                    558051386, 733727643,
-#'                                                    703349287, 884821671,
-#'                                                    743311822, 799605045,
-#'                                                    677693752, 701163532))
-#' mf_example_precalc <- calculate_mf(mutation_data = example_data,
-#'                                    cols_to_group = "sample",
-#'                                    calculate_depth = FALSE,
-#'                                    precalc_depth_data = sample_depth_example)
+#' sample_depth_example <- data.frame(
+#'  sample = c(
+#'  "dna00973.1", "dna00974.1", "dna00975.1", "dna00976.1", "dna00977.1",
+#'  "dna00978.1", "dna00979.1", "dna00980.1", "dna00981.1", "dna00982.1",
+#'  "dna00983.1", "dna00984.1", "dna00985.1", "dna00986.1", "dna00987.1",
+#'  "dna00988.1", "dna00989.1", "dna00990.1", "dna00991.1", "dna00992.1",
+#'  "dna00993.1", "dna00994.1", "dna00995.1", "dna00996.1"
+#'  ),
+#'  group_depth = c(
+#'    565395266, 755574283, 639909215, 675090988, 598104021,
+#'    611295330, 648531765, 713240735, 669734626, 684951248,
+#'    716913381, 692323218, 297661400, 172863681, 672259724,
+#'    740901132, 558051386, 733727643, 703349287, 884821671,
+#'    743311822, 799605045, 677693752, 701163532
+#'  )
+#' )
+#' mf_example_precalc <- calculate_mf(
+#'  mutation_data = example_data,
+#'  cols_to_group = "sample",
+#'  calculate_depth = FALSE,
+#'  precalc_depth_data = sample_depth_example
+#' )
+#'
 #'
 #' # Example 5: Calculate MF using precalculated depth data for 6 base
 #' # mutation subtypes per sample.
@@ -238,11 +277,13 @@
 #'  dplyr::select(sample, normalized_ref, group_depth, subtype_depth) %>%
 #'  unique() %>%
 #' dplyr::filter(normalized_ref != "N")
-#' mf_6_example_precalc <- calculate_mf(mutation_data = example_data,
-#'                                      cols_to_group = "sample",
-#'                                      subtype_resolution = "base_6",
-#'                                      calculate_depth = FALSE,
-#'                                      precalc_depth_data = sample_subtype_depth_example)
+#' mf_6_example_precalc <- calculate_mf(
+#'  mutation_data = example_data,
+#'  cols_to_group = "sample",
+#'  subtype_resolution = "base_6",
+#'  calculate_depth = FALSE,
+#'  precalc_depth_data = sample_subtype_depth_example
+#' )
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
 #' select distinct ungroup
 #' @importFrom magrittr %>%
@@ -297,6 +338,7 @@ calculate_mf <- function(mutation_data,
   # Check if data is provided as GRanges: if so, convert to data frame.
   if (inherits(mutation_data, "GRanges")) {
     mutation_data <- as.data.frame(mutation_data)
+    mutation_data <- dplyr::rename(contig = seqnames)
   }
   if (!inherits(mutation_data, "data.frame")) {
     warning("You should use a data frame as input here.")

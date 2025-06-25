@@ -7,40 +7,7 @@
 #' attempt to read all files in the directory and combine them into
 #' a single table. VCF files should follow the VCF specifications,
 #' version 4.5. Multisample VCF files are not supported; VCF files
-#' must contain one sample each. Required fields are listed below.
-#' \itemize{
-#' \item `FIXED FIELDS`
-#' \item `CHROM`: The name of the reference sequence. Equivalent to `contig`.
-#' \item `POS`: The 1-based start position of the feature. Equivalent to  `start`.
-#' \item `REF`: The reference allele at this position.
-#' \item `ALT`: The left-aligned, normalized, alternate allele at this position.
-#' Multiple alt alleles called for a single position should be represented as
-#' separate rows in the table.
-#' \item `INFO FIELDS`
-#' \item `END`: The half-open end position of the feature.
-#' \item `sample`: An identifying field for your samples; either in the INFO
-#' field or as the header to the FORMAT field.
-#' }
-#' The following FORMAT fields are not required, but are recommended for full
-#' package functionality:
-#' \itemize{
-#' \item `AD`: The allelic depths for the reference and alternate allele
-#' in the order listed. The sum of AD is equivalent to the `total_depth`
-#' (read depth at this position excluding N-calls).
-#'  \item `DP`: The read depth at this position (including N-calls).
-#' Equivalent to `depth`. Note that in many VCF files, the DP field
-#' is defined as `total_depth`. However, in most cases, the DP field
-#' includes N-calls.
-#'  \item `VD`: The read depth supporting the alternate allele. If
-#' not included, the function will add this column, assuming a value of 1.
-#' Equivalent to `alt_depth`.
-#' }
-#' We recommend that files include a record for every sequenced
-#' position, regardless of whether a variant was called, along with the
-#' `AD` for each record. This enables site-specific depth calculations
-#' required for some downstream analyses. AD is used to calculate the `total_depth`
-#' (the read depth excluding No-calls). If AD is not available, the `DP` field
-#' will be used as the `total_depth`.
+#' must contain one sample each. Required fields are listed in details.
 #' @param sample_data An optional file containing additional sample
 #' metadata (dose, timepoint, etc.). This can be a data frame or a file path.
 #' Metadata will be joined with the mutation data based on the sample column.
@@ -83,6 +50,47 @@
 #' BS genome (TRUE) or not (FALSE). Default is FALSE.
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation
 #' data to output as a GRanges object. Default output is as a dataframe.
+#' @details The required fields are:
+#' 
+#' **FIXED FIELDS**
+#' \itemize{
+#' \item `CHROM`: The name of the reference sequence. Equivalent to `contig`.
+#' \item `POS`: The 1-based start position of the feature. Equivalent to  `start`.
+#' \item `REF`: The reference allele at this position.
+#' \item `ALT`: The left-aligned, normalized, alternate allele at this position.
+#' Multiple alt alleles called for a single position should be represented as
+#' separate rows in the table.
+#' }
+#'
+#' **INFO FIELDS**
+#' \itemize{
+#' \item `END`: The half-open end position of the feature.
+#' \item `sample`: An identifying field for your samples; either in the INFO
+#' field or as the header to the FORMAT field.
+#' }
+#'
+#' **SUGGESTED FIELDS**
+#' 
+#' The following **FORMAT** fields are not required, but are recommended for
+#' full package functionality:
+#' \itemize{
+#' \item `AD`: The allelic depths for the reference and alternate allele
+#' in the order listed. The sum of AD is equivalent to the `total_depth`
+#' (read depth at this position excluding N-calls).
+#'  \item `DP`: The read depth at this position (including N-calls).
+#' Equivalent to `depth`. Note that in many VCF files, the DP field
+#' is defined as `total_depth`. However, in most cases, the DP field
+#' includes N-calls.
+#'  \item `VD`: The read depth supporting the alternate allele. If
+#' not included, the function will add this column, assuming a value of 1.
+#' Equivalent to `alt_depth`.
+#' }
+#' We recommend that files include a record for every sequenced
+#' position, regardless of whether a variant was called, along with the
+#' `AD` for each record. This enables site-specific depth calculations
+#' required for some downstream analyses. AD is used to calculate the
+#' `total_depth` (the read depth excluding No-calls). If AD is not available,
+#' the `DP` field will be used as the `total_depth`.
 #' @returns A table where each row is a mutation, and columns indicate the
 #' location, type, and other data. If `output_granges` is set to TRUE, the
 #' mutation data will be returned as a GRanges object, otherwise mutation
@@ -120,6 +128,9 @@
 #' \item `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
 #' \item `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is
 #' the same as that of at least one other row for the same sample.
+#' \item `filter_mut` : A logical value, initially set to FALSE that indicates
+#' to calculte_mf() if the variant should be excluded from mutation counts.
+#' See the filter_mut function for more detail.
 #' }
 #' @examples
 #' # Example: Import a single bg-zipped vcf file. This library was sequenced
@@ -454,7 +465,8 @@ import_vcf_data <- function(vcf_file,
                .data$variation_type),
       gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
                     stringr::str_count(string = .data$context, pattern = "C"))
-      / stringr::str_count(.data$context)
+      / stringr::str_count(.data$context),
+      filter_mut = FALSE
     )
 
   # Depth
@@ -499,7 +511,7 @@ import_vcf_data <- function(vcf_file,
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to overlapping positions. Use the filter_mut() function to correct the total_depth for these instances.")
+      warning("The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.")
     }
   }
 

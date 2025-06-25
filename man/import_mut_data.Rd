@@ -27,33 +27,7 @@ This can be either a data frame object or a filepath
 to a file or directory. If you specify a directory, the function will
 attempt to read all files in the directory and combine them into
 a single data frame. Mutation data should consist of a row for each
-variant. Required columns are listed below.
-\itemize{
-\item \code{contig}: The name of the reference sequence.
-\item \code{start}: The start position of the feature.
-\item \code{end}: The half-open end position of the feature.
-\item \code{sample}: The sample name.
-\item \code{ref}: The reference allele at this position
-\item \code{alt}: The left-aligned, normalized, alternate allele at this
-position. Multiple alt alleles called for a single position should be
-represented as separate rows in the table.
-}
-The following columns are not required, but are recommended for full
-package functionality:
-\itemize{
-\item \code{alt_depth}: The read depth supporting the alternate allele. If
-not included, the function will add this column, assuming a value of 1.
-\item \code{total_depth}: The total read depth at this position, excluding
-no-calls (N calls). If not present, the function will attempt to calculate
-the \code{total_depth} as \code{depth} - \code{no_calls}. If no_calls is not present, the
-function will use \code{depth} as the \code{total_depth.}
-\item \code{depth}: The total read depth at this position, including no-calls.
-\item \code{no_calls}: The number of no-calls (N-calls) at this position.
-}
-We recommend that files include a record for every sequenced
-position, regardless of whether a variant was called, along with the
-\code{total_depth} for each record. This enables site-specific depth calculations
-required for some downstream analyses.}
+variant. Required columns are listed in details.}
 
 \item{mut_sep}{The delimiter for importing the mutation file.
 Default is tab-delimited.}
@@ -159,10 +133,42 @@ type for the snv variant including the two flanking nucleotides
 \item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
 \item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
 the same as that of at least one other row for the same sample.
+\item \code{filter_mut} : A logical value, initially set to FALSE that indicates
+to calculte_mf() if the variant should be excluded from mutation counts.
+See the filter_mut function for more detail.
 }
 }
 \description{
 Imports tabular mutation file into the local R environment.
+}
+\details{
+Required columns for mut files are:
+\itemize{
+\item \code{contig}: The name of the reference sequence.
+\item \code{start}: The start position of the feature.
+\item \code{end}: The half-open end position of the feature.
+\item \code{sample}: The sample name.
+\item \code{ref}: The reference allele at this position
+\item \code{alt}: The left-aligned, normalized, alternate allele at this
+position. Multiple alt alleles called for a single position should be
+represented as separate rows in the table.
+}
+The following columns are not required, but are recommended for full
+package functionality:
+\itemize{
+\item \code{alt_depth}: The read depth supporting the alternate allele. If
+not included, the function will add this column, assuming a value of 1.
+\item \code{total_depth}: The total read depth at this position, excluding
+no-calls (N calls). If not present, the function will attempt to calculate
+the \code{total_depth} as \code{depth} - \code{no_calls}. If no_calls is not present, the
+function will use \code{depth} as the \code{total_depth.}
+\item \code{depth}: The total read depth at this position, including no-calls.
+\item \code{no_calls}: The number of no-calls (N-calls) at this position.
+}
+We recommend that files include a record for every sequenced
+position, regardless of whether a variant was called, along with the
+\code{total_depth} for each record. This enables site-specific depth calculations
+required for some downstream analyses.
 }
 \examples{
 # Example: Import a single mutation file. This library was sequenced with

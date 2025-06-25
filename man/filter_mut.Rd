@@ -22,13 +22,14 @@ filter_mut(
 )
 }
 \arguments{
-\item{mutation_data}{Your mutation data.}
+\item{mutation_data}{Your mutation data. This can be a data frame or a
+GRanges object.}
 
 \item{vaf_cutoff}{Filter out ostensibly germline variants using a cutoff for
 variant allele fraction (VAF). Any variant with a \code{vaf} larger than
 the cutoff will be filtered. The default is 1 (no filtering). It is
-recommended to use a value of 0.01 (i.e. 1\%) to retain only somatic
-variants.}
+recommended to use a value of 0.01 (i.e. 1\%) as a conservative approach
+to retain only somatic variants.}
 
 \item{snv_in_germ_mnv}{Filter out snv variants that overlap with
 germline mnv variants within the same samples. mnv variants will be
@@ -56,9 +57,10 @@ depending on \code{custom_filter_rm}.}
 
 \item{custom_filter_rm}{A logical value. If TRUE, rows in custom_filter_col
 that match any value in custom_filter_val will be removed from the
-mutation_data. If FALSE, filter_mut will be set to TRUE for those rows.}
+mutation_data. If FALSE, \code{filter_mut} will be set to TRUE for those
+rows.}
 
-\item{regions}{Remove rows that are within or outside of specified regions.
+\item{regions}{Remove rows that are within/outside of specified regions.
 \code{regions} can be either a file path, a data frame, or a GRanges object
 containing the genomic ranges by which to filter. File paths will be read
 using the rg_sep. Users can also choose from the built-in TwinStrand's
@@ -69,15 +71,15 @@ and "end". In a GRanges object, the required columns are "seqnames",
 
 \item{regions_filter}{Specifies how the provided \code{regions} should be
 applied to \code{mutation_data}. Acceptable values are "remove_within" or
-"keep_within". If set to "remove_within", any rows that fall within the
+"keep_within". If set to "remove_within", records that fall within the
 specified regions wil be removed from mutation_data. If set to
-"keep_within", only the rows within the specified regions will be kept in
-mutation_data, and all other rows will be removed.}
+"keep_within", only records within the specified regions will be kept in
+mutation_data, and all other records will be removed.}
 
-\item{allow_half_overlap}{A logical value. If TRUE, rows that start or end
-in your \code{regions}, but extend outside of them in either direction will
-be included in the filter. If FALSE, only rows that start and end within the
-\code{regions} will be included in the filter. Default is FALSE.}
+\item{allow_half_overlap}{A logical value. If TRUE, records that start or
+end in your \code{regions}, but extend outside of them in either direction
+will be included in the filter. If FALSE, only records that start and end
+within the \code{regions} will be included in the filter. Default is FALSE.}
 
 \item{rg_sep}{The delimiter for importing the custom_regions. The default is
 tab-delimited "\\t".}
@@ -88,25 +90,23 @@ If TRUE, positions will be converted to 1-based (start + 1).
 Need not be supplied for TSpanels. Default is TRUE.}
 
 \item{rm_filtered_mut_from_depth}{A logical value. If TRUE, the function will
-subtract the \code{alt_depth} of rows that were flagged by the
+subtract the \code{alt_depth} of records that were flagged by the
 \code{filter_mut} column from their \code{total_depth}. This will treat
-flagged variants as N-calls. This will not apply to variants flagged as
+flagged variants as No-calls. This will not apply to variants flagged as
 germline by the \code{vaf_cutoff}. However, if the germline variant
 has additional filters applied, then the subtraction will still occur.
 If FALSE, the \code{alt_depth} will be retained in the
 \code{total_depth} for all variants.  Default is FALSE.}
 
 \item{return_filtered_rows}{A logical value. If TRUE, the function will
-return both the filtered mutation data and the rows that were
+return both the filtered mutation data and the records that were
 removed/flagged in a seperate data frame. The two dataframes will be
 returned inside a list, with names \code{mutation_data} and
 \code{filtered_rows}. Default is FALSE.}
 }
 \description{
-This function creates a filter_mut column that will be read by
-the \code{calculate_mf} function. Variants with filter == TRUE will
-not be included in final mutation counts. This function may also remove
-records of given loci from the mutation data based on user specification.
+This function creates a \verb{filter_mut`` column that will be read by the \code{calculate_mf} function and other downstream functions. Variants with }filter_mut == TRUE`` will be excluded from group mutation
+counts. This function may also remove records upon on user specification.
 Running this function again on the same data will not overide the previous
 filters. To reset previous filters, set the filter_mut column values to
 FALSE.
@@ -118,7 +118,7 @@ example_file <- system.file("extdata", "Example_files",
                             package = "MutSeqR")
 example_data <- readRDS(example_file)
 # Filter the data
-# Basic Usage: correct the depth and filter out germline variants
+# Basic Usage: Filter out putative germline variants
 filter_example_1 <- filter_mut(mutation_data = example_data,
                                vaf_cutoff = 0.01)
 # Remove rows outside of the TwinStand Mouse Mutagenesis Panel regions
@@ -136,7 +136,8 @@ filter_example_3 <- filter_mut(mutation_data = example_data,
                                custom_filter_val = "EndRepairFillInArtifact",
                                custom_filter_rm = FALSE)
 # Flag snv variants that overlap with germline mnv variants.
-# Subtract the alt_depth of these variants from their total_depth (treat them as N-calls).
+# Subtract the alt_depth of these variants from their total_depth
+# (treat them as No-calls).
 # Return all the flagged/removed rows in a seperate data frame
 filter_example_4 <- filter_mut(mutation_data = example_data,
                                vaf_cutoff = 0.01,
