@@ -36,9 +36,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="data-import">Data Import<a class="anchor" aria-label="anchor" href="#data-import"></a></h2>
 
-
+      <div class="section-desc"><p>Functions for importing and preparing mutation and region data.</p></div>
 
 
     </div><div class="section level2">
@@ -48,106 +48,51 @@
 
       <dl><dt>
 
-          <code><a href="annotate_CpG_sites.html">annotate_cpg_sites()</a></code>
+          <code><a href="import_mut_data.html">import_mut_data()</a></code>
 
         </dt>
-        <dd>Annotate CpG sites</dd>
+        <dd>Import tabular mutation data</dd>
       </dl><dl><dt>
 
-          <code><a href="bmd_proast.html">bmd_proast()</a></code>
+          <code><a href="import_vcf_data.html">import_vcf_data()</a></code>
 
         </dt>
-        <dd>BMD modeling using PROAST</dd>
+        <dd>Import a VCF file</dd>
       </dl><dl><dt>
 
-          <code><a href="bmd_toxicr.html">bmd_toxicr()</a></code>
+          <code><a href="load_regions_file.html">load_regions_file()</a></code>
 
         </dt>
-        <dd>BMD modeling using ToxicR</dd>
+        <dd>Imports the regions file</dd>
       </dl><dl><dt>
 
-          <code><a href="calculate_mf.html">calculate_mf()</a></code>
+          <code><a href="rename_columns.html">rename_columns()</a></code>
 
         </dt>
-        <dd>Calculate mutation frequency</dd>
+        <dd>Map column names of mutation data to default column names. A utility function that renames columns of mutation data to default columns names.</dd>
       </dl><dl><dt>
 
           <code><a href="check_required_columns.html">check_required_columns()</a></code>
 
         </dt>
         <dd>Check that all required columns are present before proceeding with the function</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="reference-genomes-context">Reference Genomes &amp; Context<a class="anchor" aria-label="anchor" href="#reference-genomes-context"></a></h2>
 
-          <code><a href="classify_variation.html">classify_variation()</a></code>
+      <div class="section-desc"><p>Reference sequence utilities.</p></div>
 
-        </dt>
-        <dd>classify_variation</dd>
-      </dl><dl><dt>
 
-          <code><a href="cleveland_plot.html">cleveland_plot()</a></code>
+    </div><div class="section level2">
 
-        </dt>
-        <dd>Cleveland Plot</dd>
-      </dl><dl><dt>
 
-          <code><a href="cluster_spectra.html">cluster_spectra()</a></code>
 
-        </dt>
-        <dd>Hierarchical Clustering</dd>
-      </dl><dl><dt>
 
-          <code><a href="context_list.html">context_list</a></code>
+      <dl><dt>
+
+          <code><a href="install_ref_genome.html">install_ref_genome()</a></code>
 
         </dt>
-        <dd>A list of reference contexts at different resolutions</dd>
-      </dl><dl><dt>
-
-          <code><a href="denominator_dict.html">denominator_dict</a></code>
-
-        </dt>
-        <dd>Values used for denominators in frequency calculations</dd>
-      </dl><dl><dt>
-
-          <code><a href="f.plot.gui.html">f.plot.gui()</a></code>
-
-        </dt>
-        <dd>Manages plotting for PROAST</dd>
-      </dl><dl><dt>
-
-          <code><a href="f.plot.result.html">f.plot.result()</a></code>
-
-        </dt>
-        <dd>Plot the PROAST results</dd>
-      </dl><dl><dt>
-
-          <code><a href="f.proast.html">f.proast()</a></code>
-
-        </dt>
-        <dd>Run dose-response modeling using PROAST.</dd>
-      </dl><dl><dt>
-
-          <code><a href="filter_mut.html">filter_mut()</a></code>
-
-        </dt>
-        <dd>Filter your mutation data</dd>
-      </dl><dl><dt>
-
-          <code><a href="get_CpG_mutations.html">get_cpg_mutations()</a></code>
-
-        </dt>
-        <dd>Get mutations at CpG sites.</dd>
-      </dl><dl><dt>
-
-          <code><a href="get_CpG_regions.html">get_cpg_regions()</a></code>
-
-        </dt>
-        <dd>Get the coordinates of the CpG sites within your genomic regions</dd>
-      </dl><dl><dt>
-
-          <code><a href="get_binom_ci.html">get_binom_ci()</a></code>
-
-        </dt>
-        <dd>Add binomial confidence intervals to mutation frequencies.</dd>
+        <dd>Install the reference genome for the specified organism.</dd>
       </dl><dl><dt>
 
           <code><a href="get_ref_of_mut.html">get_ref_of_mut()</a></code>
@@ -162,34 +107,40 @@
         <dd>Get sequence of genomic target regions</dd>
       </dl><dl><dt>
 
-          <code><a href="import_mut_data.html">import_mut_data()</a></code>
+          <code><a href="get_CpG_regions.html">get_cpg_regions()</a></code>
 
         </dt>
-        <dd>Import tabular mutation data</dd>
+        <dd>Get the coordinates of the CpG sites within your genomic regions</dd>
       </dl><dl><dt>
 
-          <code><a href="import_vcf_data.html">import_vcf_data()</a></code>
+          <code><a href="annotate_CpG_sites.html">annotate_cpg_sites()</a></code>
 
         </dt>
-        <dd>Import a VCF file</dd>
+        <dd>Annotate CpG sites</dd>
       </dl><dl><dt>
 
-          <code><a href="install_ref_genome.html">install_ref_genome()</a></code>
+          <code><a href="context_list.html">context_list</a></code>
 
         </dt>
-        <dd>Install the reference genome for the specified organism.</dd>
+        <dd>A list of reference contexts at different resolutions</dd>
       </dl><dl><dt>
 
-          <code><a href="load_regions_file.html">load_regions_file()</a></code>
+          <code><a href="subtype_dict.html">subtype_dict</a></code>
 
         </dt>
-        <dd>Imports the regions file</dd>
+        <dd>Values accepted for mutation subtypes</dd>
       </dl><dl><dt>
 
-          <code><a href="model_mf.html">model_mf()</a></code>
+          <code><a href="subtype_list.html">subtype_list</a></code>
 
         </dt>
-        <dd>Perform linear modelling on mutation frequency for given fixed and random effects</dd>
+        <dd>A list of mutation subtypes at different resolutions</dd>
+      </dl><dl><dt>
+
+          <code><a href="denominator_dict.html">denominator_dict</a></code>
+
+        </dt>
+        <dd>Values used for denominators in frequency calculations</dd>
       </dl><dl><dt>
 
           <code><a href="op.html">op</a></code>
@@ -198,28 +149,80 @@
         <dd>Column names for mut tables</dd>
       </dl><dl><dt>
 
-          <code><a href="plot_bubbles.html">plot_bubbles()</a></code>
+          <code><a href="reverseComplement.html">reverseComplement()</a></code>
 
         </dt>
-        <dd>Generate Bubble Plots</dd>
+        <dd>Get the reverse complement of a DNA or RNA sequence.</dd>
+      </dl></div><div class="section level2">
+      <h2 id="mutation-data-handling">Mutation Data Handling<a class="anchor" aria-label="anchor" href="#mutation-data-handling"></a></h2>
+
+      <div class="section-desc"><p>Wrangling and filtering mutation tables.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="classify_variation.html">classify_variation()</a></code>
+
+        </dt>
+        <dd>classify_variation</dd>
       </dl><dl><dt>
 
-          <code><a href="plot_ci.html">plot_ci()</a></code>
+          <code><a href="filter_mut.html">filter_mut()</a></code>
 
         </dt>
-        <dd>plot_ci</dd>
+        <dd>Filter your mutation data</dd>
       </dl><dl><dt>
 
-          <code><a href="plot_lollipop.html">plot_lollipop()</a></code>
+          <code><a href="get_CpG_mutations.html">get_cpg_mutations()</a></code>
 
         </dt>
-        <dd>Plot recurrent mutations in a lollipop plot using ggplot2</dd>
+        <dd>Get mutations at CpG sites.</dd>
       </dl><dl><dt>
 
-          <code><a href="plot_mean_mf.html">plot_mean_mf()</a></code>
+          <code><a href="setup_mutseqr_python.html">setup_mutseqr_python()</a></code>
 
         </dt>
-        <dd>Plot the Mean Mutatation Frequency</dd>
+        <dd>Set up Python environment for MutSeqR</dd>
+      </dl></div><div class="section level2">
+      <h2 id="mutation-frequency-analysis">Mutation Frequency Analysis<a class="anchor" aria-label="anchor" href="#mutation-frequency-analysis"></a></h2>
+
+      <div class="section-desc"><p>Functions to calculate, model, and visualize mutation frequency.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="calculate_mf.html">calculate_mf()</a></code>
+
+        </dt>
+        <dd>Calculate mutation frequency</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_binom_ci.html">get_binom_ci()</a></code>
+
+        </dt>
+        <dd>Add binomial confidence intervals to mutation frequencies.</dd>
+      </dl><dl><dt>
+
+          <code><a href="model_mf.html">model_mf()</a></code>
+
+        </dt>
+        <dd>Perform linear modelling on mutation frequency for given fixed and random effects</dd>
+      </dl><dl><dt>
+
+          <code><a href="sidak.html">sidak()</a></code>
+
+        </dt>
+        <dd>Correct p-values for multiple comparisons</dd>
       </dl><dl><dt>
 
           <code><a href="plot_mf.html">plot_mf()</a></code>
@@ -228,17 +231,34 @@
         <dd>Plot the Mutation Frequency</dd>
       </dl><dl><dt>
 
+          <code><a href="plot_mean_mf.html">plot_mean_mf()</a></code>
+
+        </dt>
+        <dd>Plot the Mean Mutatation Frequency</dd>
+      </dl><dl><dt>
+
           <code><a href="plot_model_mf.html">plot_model_mf()</a></code>
 
         </dt>
         <dd>Plot your mf model</dd>
       </dl><dl><dt>
 
-          <code><a href="plot_radar.html">plot_radar()</a></code>
+          <code><a href="plot_ci.html">plot_ci()</a></code>
 
         </dt>
-        <dd>Create a radar plot</dd>
-      </dl><dl><dt>
+        <dd>plot_ci</dd>
+      </dl></div><div class="section level2">
+      <h2 id="spectra-and-subtypes">Spectra and Subtypes<a class="anchor" aria-label="anchor" href="#spectra-and-subtypes"></a></h2>
+
+      <div class="section-desc"><p>Analysis and visualization of mutation spectra.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="plot_spectra.html">plot_spectra()</a></code>
 
@@ -258,40 +278,10 @@
         <dd>Create a heatmap plot of mutation subtype proportions.</dd>
       </dl><dl><dt>
 
-          <code><a href="print_ascii_art.html">print_ascii_art()</a></code>
+          <code><a href="spectra_comparison.html">spectra_comparison()</a></code>
 
         </dt>
-        <dd>This function prints ASCII art when the package is loaded</dd>
-      </dl><dl><dt>
-
-          <code><a href="rename_columns.html">rename_columns()</a></code>
-
-        </dt>
-        <dd>Map column names of mutation data to default column names. A utility function that renames columns of mutation data to default columns names.</dd>
-      </dl><dl><dt>
-
-          <code><a href="render_report.html">render_report()</a></code>
-
-        </dt>
-        <dd>Read configuration file and render R Markdown document</dd>
-      </dl><dl><dt>
-
-          <code><a href="reverseComplement.html">reverseComplement()</a></code>
-
-        </dt>
-        <dd>Get the reverse complement of a DNA or RNA sequence.</dd>
-      </dl><dl><dt>
-
-          <code><a href="setup_mutseqr_python.html">setup_mutseqr_python()</a></code>
-
-        </dt>
-        <dd>Set up Python environment for MutSeqR</dd>
-      </dl><dl><dt>
-
-          <code><a href="sidak.html">sidak()</a></code>
-
-        </dt>
-        <dd>Correct p-values for multiple comparisons</dd>
+        <dd>Compare the overall mutation spectra between groups</dd>
       </dl><dl><dt>
 
           <code><a href="signature_fitting.html">signature_fitting()</a></code>
@@ -300,29 +290,75 @@
         <dd>Run COSMIC signatures comparison using SigProfilerAssignment</dd>
       </dl><dl><dt>
 
-          <code><a href="spectra_comparison.html">spectra_comparison()</a></code>
+          <code><a href="cluster_spectra.html">cluster_spectra()</a></code>
 
         </dt>
-        <dd>Compare the overall mutation spectra between groups</dd>
+        <dd>Hierarchical Clustering</dd>
       </dl><dl><dt>
 
-          <code><a href="subtype_dict.html">subtype_dict</a></code>
+          <code><a href="plot_radar.html">plot_radar()</a></code>
 
         </dt>
-        <dd>Values accepted for mutation subtypes</dd>
-      </dl><dl><dt>
+        <dd>Create a radar plot</dd>
+      </dl></div><div class="section level2">
+      <h2 id="dose-response-bmd-modeling">Dose-Response / BMD Modeling<a class="anchor" aria-label="anchor" href="#dose-response-bmd-modeling"></a></h2>
 
-          <code><a href="subtype_list.html">subtype_list</a></code>
+      <div class="section-desc"><p>Functions for BMD modeling using PROAST and ToxicR.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="bmd_proast.html">bmd_proast()</a></code>
 
         </dt>
-        <dd>A list of mutation subtypes at different resolutions</dd>
+        <dd>BMD modeling using PROAST</dd>
       </dl><dl><dt>
 
-          <code><a href="write_excel.html">write_excel()</a></code>
+          <code><a href="bmd_toxicr.html">bmd_toxicr()</a></code>
 
         </dt>
-        <dd>Write Excel tables</dd>
+        <dd>BMD modeling using ToxicR</dd>
       </dl><dl><dt>
+
+          <code><a href="f.proast.html">f.proast()</a></code>
+
+        </dt>
+        <dd>Run dose-response modeling using PROAST.</dd>
+      </dl><dl><dt>
+
+          <code><a href="f.plot.result.html">f.plot.result()</a></code>
+
+        </dt>
+        <dd>Plot the PROAST results</dd>
+      </dl><dl><dt>
+
+          <code><a href="f.plot.gui.html">f.plot.gui()</a></code>
+
+        </dt>
+        <dd>Manages plotting for PROAST</dd>
+      </dl><dl><dt>
+
+          <code><a href="cleveland_plot.html">cleveland_plot()</a></code>
+
+        </dt>
+        <dd>Cleveland Plot</dd>
+      </dl></div><div class="section level2">
+      <h2 id="mutation-output">Mutation Output<a class="anchor" aria-label="anchor" href="#mutation-output"></a></h2>
+
+      <div class="section-desc"><p>Export functions.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="write_mutation_calling_file.html">write_mutation_calling_file()</a></code>
 
@@ -346,8 +382,61 @@
 
         </dt>
         <dd>Write mutation_data to a VCF file</dd>
+      </dl><dl><dt>
+
+          <code><a href="write_excel.html">write_excel()</a></code>
+
+        </dt>
+        <dd>Write Excel tables</dd>
+      </dl><dl><dt>
+
+          <code><a href="render_report.html">render_report()</a></code>
+
+        </dt>
+        <dd>Read configuration file and render R Markdown document</dd>
+      </dl></div><div class="section level2">
+      <h2 id="visualization-utilities">Visualization Utilities<a class="anchor" aria-label="anchor" href="#visualization-utilities"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plot_bubbles.html">plot_bubbles()</a></code>
+
+        </dt>
+        <dd>Generate Bubble Plots</dd>
+      </dl><dl><dt>
+
+          <code><a href="plot_lollipop.html">plot_lollipop()</a></code>
+
+        </dt>
+        <dd>Plot recurrent mutations in a lollipop plot using ggplot2</dd>
+      </dl></div><div class="section level2">
+      <h2 id="internal-or-miscellaneous">Internal or Miscellaneous<a class="anchor" aria-label="anchor" href="#internal-or-miscellaneous"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="print_ascii_art.html">print_ascii_art()</a></code>
+
+        </dt>
+        <dd>This function prints ASCII art when the package is loaded</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

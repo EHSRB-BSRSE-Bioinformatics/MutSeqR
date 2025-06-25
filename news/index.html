@@ -41,19 +41,16 @@
 <p>Initial public version.</p>
 <div class="section level4">
 <h4 id="major-changes-0-99-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-0-99-0"></a></h4>
-<ul><li>Added <code><a href="../reference/filter_mut.html">filter_mut()</a></code> to workflow: germline identification via <code>vaf_cutoff</code>, region filtering, and depth correction now occur here instead of the import functions.</li>
-<li>
-<code>calculate_mut_freq()</code> is renamed to <code><a href="../reference/calculate_mf.html">calculate_mf()</a></code>.</li>
-<li>
-<code><a href="../reference/calculate_mf.html">calculate_mf()</a></code> no longer requires depth; users may:
+<ul><li>Added [filter_mut()] to workflow: germline identification via <code>vaf_cutoff</code>, region filtering, and depth correction now occur here instead of the import functions.</li>
+<li>[calculate_mut_freq()] is renamed to [calculate_mf()].</li>
+<li>[calculate_mf()] no longer requires depth; users may:
 <ol style="list-style-type: decimal"><li>calculate depth from mutation data,</li>
 <li>supply a separate depth table, or</li>
 <li>omit depth entirely (only mutation counts returned).</li>
 </ol></li>
 <li>
-<code>correct_depth</code> option moved to <code><a href="../reference/calculate_mf.html">calculate_mf()</a></code>.</li>
-<li>
-<code><a href="../reference/plot_spectra.html">plot_spectra()</a></code>, <code><a href="../reference/plot_trinucleotide.html">plot_trinucleotide()</a></code>, and <code><a href="../reference/spectra_comparison.html">spectra_comparison()</a></code> now use <code>mf_data</code> instead of raw mutations.</li>
+<code>correct_depth</code> option moved to [calculate_mf()].</li>
+<li>[plot_spectra()], [plot_trinucleotide()], and [spectra_comparison()] now use <code>mf_data</code> instead of raw mutations.</li>
 <li>Output options added: VCF, FASTA, SigProfiler-compatible format, Excel workbook.</li>
 <li>Example dataset (~44MB) added.</li>
 </ul></div>
