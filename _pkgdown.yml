@@ -17,3 +17,6 @@ navbar:
       menu:
         - text: Overview of MutSeqR workflow
           href: articles/MutSeqR_introduction.html
+
+news:
+  one_page: true
