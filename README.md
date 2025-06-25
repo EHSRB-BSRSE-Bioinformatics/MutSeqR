@@ -1,6 +1,6 @@
 
 
-# MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" alt = "this is just a temporary image."/></a>
+# MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" alt = "The MutSeqR logo."/></a>
 
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml)
