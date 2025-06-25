@@ -37,10 +37,40 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.99.0" id="mutseqr-0990">MutSeqR 0.99.0<a class="anchor" aria-label="anchor" href="#mutseqr-0990"></a></h2>
-<ul><li>Initial public version.</li>
+<h2 class="pkg-version" data-toc-text="0.99.0" id="mutseqr-0990-2025-06-19">MutSeqR 0.99.0 (2025-06-19)<a class="anchor" aria-label="anchor" href="#mutseqr-0990-2025-06-19"></a></h2>
+<p>Initial public version.</p>
+<div class="section level4">
+<h4 id="major-changes-0-99-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-0-99-0"></a></h4>
+<ul><li>Added <code><a href="../reference/filter_mut.html">filter_mut()</a></code> to workflow: germline identification via <code>vaf_cutoff</code>, region filtering, and depth correction now occur here instead of the import functions.</li>
+<li>
+<code>calculate_mut_freq()</code> is renamed to <code><a href="../reference/calculate_mf.html">calculate_mf()</a></code>.</li>
+<li>
+<code><a href="../reference/calculate_mf.html">calculate_mf()</a></code> no longer requires depth; users may:
+<ol style="list-style-type: decimal"><li>calculate depth from mutation data,</li>
+<li>supply a separate depth table, or</li>
+<li>omit depth entirely (only mutation counts returned).</li>
+</ol></li>
+<li>
+<code>correct_depth</code> option moved to <code><a href="../reference/calculate_mf.html">calculate_mf()</a></code>.</li>
+<li>
+<code><a href="../reference/plot_spectra.html">plot_spectra()</a></code>, <code><a href="../reference/plot_trinucleotide.html">plot_trinucleotide()</a></code>, and <code><a href="../reference/spectra_comparison.html">spectra_comparison()</a></code> now use <code>mf_data</code> instead of raw mutations.</li>
+<li>Output options added: VCF, FASTA, SigProfiler-compatible format, Excel workbook.</li>
+<li>Example dataset (~44MB) added.</li>
 </ul></div>
-  </main></div>
+<div class="section level4">
+<h4 id="new-features-0-99-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-99-0"></a></h4>
+<ul><li>
+<code><a href="../reference/render_report.html">render_report()</a></code> added for standardized summary reporting.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="other-0-99-0">Other<a class="anchor" aria-label="anchor" href="#other-0-99-0"></a></h4>
+<ul><li>Removed <code>custom_regions</code> parameter; replaced by generalized <code>regions</code> argument.</li>
+<li>Public release 🎉</li>
+<li>See the <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles/MutSeqR_introduction.html">vignette</a> for details.</li>
+</ul></div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

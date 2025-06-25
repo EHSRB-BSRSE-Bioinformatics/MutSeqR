@@ -53,7 +53,7 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="mutseqr-">MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="reference/figures/MutSeqR_hex_logo.png" align="right" height="138" alt="The MutSeqR logo."></a>
+<div class="page-header"><h1 id="mutseqr-">MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="reference/figures/MutSeqR_hex_logo.png" style="height:138px; float:right;" alt="The MutSeqR logo."></a>
 <a class="anchor" aria-label="anchor" href="#mutseqr-"></a>
 </h1></div>
 <!-- badges: start -->
@@ -62,10 +62,10 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>MutSeqR is an open-source R package to analyze error-corrected Next-Generation Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.</p>
-<p><img src="reference/figures/MutSeqR_overview.png" align="center" alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer."></p>
-<p>
-<small> <em> Figure transcript: 1. Data Import: Imports mutation data into the R environment. Binds data from multiple libraries into a single object. Joins sample and target region metadata to the mutation data. Retrieves trinucleotide context. 2. Data Processing: Calculates mutation frequencies for groups of interest. Calculates frequencies andproportions of mutation subtypes. Opinoal Variant filtering: eliminates putative germline variants, removes variants outside of specified regions, quality assurance filtering. 3. Statistical Analyses: Generalized linear modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra comparison between groups. Unsupervised clustering based on mutation spectra. 4. Visualization: Create figures to display mutation frequencies and the proportions of mutation subtypes. VIsualise statistical results. Visualise mutation distribution across genomic loci. View clonal expansion of mutations. 5. Output: Summary report RMarkdown file will faciliatte the generation of results. Output mutation data as VCF. Output sequences in FASTA format. Output spectra data in SigProfiler format. Export results to Excel workbook. </em></small>
-</p>
+<p><img src="reference/figures/MutSeqR_overview.png" style="display:block; margin:auto; max-width:100%;" alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer."></p>
+<details><summary><strong> Figure transcript </strong>
+</summary><em>1. Data Import: Imports mutation data into the R environment. Binds data from multiple libraries into a single object. Joins sample and target region metadata to the mutation data. Retrieves trinucleotide context. 2. Data Processing: Calculates mutation frequencies for groups of interest. Calculates frequencies and proportions of mutation subtypes. Optional Variant filtering: eliminates putative germline variants, removes variants outside of specified regions, quality assurance filtering. 3. Statistical Analyses: Generalized linear modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra comparison between groups. Unsupervised clustering based on mutation spectra. 4. Visualization: Create figures to display mutation frequencies and the proportions of mutation subtypes. Visualise statistical results. Visualise mutation distribution across genomic loci. View clonal expansion of mutations. 5. Output: Summary report RMarkdown file will faciliatte the generation of results. Output mutation data as VCF. Output sequences in FASTA format. Output spectra data in SigProfiler format. Export results to Excel workbook. </em>
+</details>
 </div>
 <div class="section level2">
 <h2 id="vignette">Vignette<a class="anchor" aria-label="anchor" href="#vignette"></a>
@@ -73,19 +73,21 @@
 <p>See the <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles/MutSeqR_introduction.html#introduction">vignette</a> for details on function utility.</p>
 </div>
 <div class="section level2">
-<h2 id="recent-changes">Recent Changes:<a class="anchor" aria-label="anchor" href="#recent-changes"></a>
+<h2 id="changelog">Changelog<a class="anchor" aria-label="anchor" href="#changelog"></a>
 </h2>
-<p>Changes: 2025-06-19 - We’re Public!! - See the Vignette for function details. - Moved the correct_depth feature to calculate_mf</p>
-<p>Changes: 2025-06-05 - Summary Report: Users may now run a standardized analysis workflow using render_report().</p>
-<p>Changes: 2025-03-27 - Removed custom_regions parameter. Utility is now incorporated by regions parameter.</p>
-<p>Major changes on 2025-03-24 - <em>filter_mut()</em> function added to workflow. This function filters the mutation_data: germline identification via vaf_cutoff, depth correction, and filtering variants based on regions have all been moved from the import functions to filter_mut(). calculate_mf(), plot_bubbles(), and signature_fitting() filter out variants using the filter_mut column instead of the is_germline column. - calculate_mut_freq() is renamed to calculate_mf() - total_depth and depth are no longer required for import - calculate_mf() no longer requires depth. Users may choose to 1) calculate depth from mutation data, 2) supply precalculated depth values in a separate table, 3) No depth, mf is not calculated, only mutation sums. - plot_spectra, plot_trinucleotide, and spectra_comparison are now supplied with mf_data instead of the mutation data. - Example data has been added: Currently 44Mb</p>
+<p>See the <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/news/index.html">release notes on the pkgdown site</a> for version history.</p>
+<p>You can also view <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/releases" class="external-link">GitHub releases</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>Install the package from github:</p>
-<p><code>{r} # install.packages("devtools") devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")</code></p>
-<p>Load the package <code>{r} library(MutSeqR)</code></p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"EHSRB-BSRSE-Bioinformatics/MutSeqR"</span><span class="op">)</span></span></code></pre></div>
+<p>Load the package</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/">MutSeqR</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="getting-help">Getting Help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
@@ -145,7 +147,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/EHSRB-BSRSE-Bioinformatics/duplex-sequencing/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a></li>
 </ul>
 </div>
