@@ -24,9 +24,6 @@ jobs:
 
       - name: Patch vignette YAML for pkgdown rendering
         run: |
-          ls -al
-          pwd
-          find . | grep Rmd
           awk '
             BEGIN { in_output = 0 }
             /^output:/ {
