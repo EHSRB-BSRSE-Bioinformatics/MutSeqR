@@ -4,8 +4,16 @@ template:
 
 vignettes: false
 
-articles:
-  - title: Overview of MutSeqR workflow
-    contents:
-      - MutSeqR_introduction
-
+navbar:
+  structure:
+    left:
+      - home
+      - reference
+      - articles
+      - news
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: Overview of MutSeqR workflow
+          href: articles/MutSeqR_introduction.html
