@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   MutSeqR_introduction: MutSeqR_introduction.html
-last_built: 2025-06-25T17:37Z
+last_built: 2025-06-25T18:17Z
 urls:
   reference: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference
   article: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles

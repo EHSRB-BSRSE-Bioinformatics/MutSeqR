@@ -1,0 +1,13 @@
+/* Make plain Markdown tables scroll horizontally if too wide */
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  table-layout: auto;
+}
+
+table th, table td {
+  padding: 6px 12px;
+  text-align: left;
+}
