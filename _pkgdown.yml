@@ -4,8 +4,104 @@ template:
 
 vignettes: false
 
-articles:
-  - title: Overview of MutSeqR workflow
-    contents:
-      - MutSeqR_introduction
+navbar:
+  structure:
+    left:
+      - home
+      - reference
+      - articles
+      - news
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: Overview of MutSeqR workflow
+          href: articles/MutSeqR_introduction.html
 
+news:
+  one_page: true
+
+reference:
+  - title: Data Import
+    desc: Functions for importing and preparing mutation and region data.
+    contents:
+      - import_mut_data
+      - import_vcf_data
+      - load_regions_file
+      - rename_columns
+      - check_required_columns
+
+  - title: Reference Genomes & Context
+    desc: Reference sequence utilities.
+    contents:
+      - install_ref_genome
+      - get_ref_of_mut
+      - get_seq
+      - get_cpg_regions
+      - annotate_cpg_sites
+      - context_list
+      - subtype_dict
+      - subtype_list
+      - denominator_dict
+      - op
+      - reverseComplement
+
+  - title: Mutation Data Handling
+    desc: Wrangling and filtering mutation tables.
+    contents:
+      - classify_variation
+      - filter_mut
+      - get_cpg_mutations
+      - setup_mutseqr_python
+
+  - title: Mutation Frequency Analysis
+    desc: Functions to calculate, model, and visualize mutation frequency.
+    contents:
+      - calculate_mf
+      - get_binom_ci
+      - model_mf
+      - sidak
+      - plot_mf
+      - plot_mean_mf
+      - plot_model_mf
+      - plot_ci
+
+  - title: Spectra and Subtypes
+    desc: Analysis and visualization of mutation spectra.
+    contents:
+      - plot_spectra
+      - plot_trinucleotide
+      - plot_trinucleotide_heatmap
+      - spectra_comparison
+      - signature_fitting
+      - cluster_spectra
+      - plot_radar
+
+  - title: Dose-Response / BMD Modeling
+    desc: Functions for BMD modeling using PROAST and ToxicR.
+    contents:
+      - bmd_proast
+      - bmd_toxicr
+      - f.proast
+      - f.plot.result
+      - f.plot.gui
+      - cleveland_plot
+
+  - title: Mutation Output
+    desc: Export functions.
+    contents:
+      - write_mutation_calling_file
+      - write_mutational_matrix
+      - write_reference_fasta
+      - write_vcf_from_mut
+      - write_excel
+      - render_report
+
+  - title: Visualization Utilities
+    contents:
+      - plot_bubbles
+      - plot_lollipop
+
+  - title: Internal or Miscellaneous
+    contents:
+      - print_ascii_art
