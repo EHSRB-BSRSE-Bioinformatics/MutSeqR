@@ -114,7 +114,7 @@ Suggests:
     trackViewer,
     yaml,
     xml2
-VignetteBuilder: knitr
+VignetteBuilder: quarto
 Config/reticulate: list( packages = list( list(package =
     "SigProfilerAssignment"), list(package = "SigProfilerExtractor"),
     list(package = "SigProfilerMatrixGenerator") ) )

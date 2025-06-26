@@ -1,24 +1,26 @@
 ---
 title: "MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment"
 author:
-- name: Annette E. Dodge
-  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-- name: Matthew J. Meier
-  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-  email: matthew.meier@hc-sc.gc.ca
+  - name: Annette E. Dodge
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  - name: Matthew J. Meier
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+    email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
-output:
-  BiocStyle::html_document:
+format:
+  html:
     toc: true
-    toc_float: yes
-    code_folding: show
-    code_download: yes
+    toc-depth: 2
+    toc-location: left
+    code-fold: true
+    code-tools: true
     css: custom.css
+    html-math-method: mathjax
 bibliography: references.bib
 link-citations: true
 vignette: >
   %\VignetteIndexEntry{MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
   
@@ -100,19 +102,30 @@ of mutation subtype frequencies ad other site-specific frequemcies. The data
 set can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination). 
 
-Table: (\#tab:required-columns) Required columns for mutation data import.
+```{r}
+#| label: tbl-required-columns
+#| tbl-cap: "Required columns for mutation data import."
 
-| **Column** | **VCF Specification** | **Definition** |
-|------------|-----------------------|----------------|
-| contig | CHROM | The name of the reference sequence. |
-| start | POS | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import. |
-| end | INFO(END) | The half-open end position of the feature in contig. |
-| ref | REF | The reference allele at this position. |
-| alt | ALT | The left-aligned, normalized, alternate allele at this position. |
-| sample | INFO(sample) or Genotype Header | A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field. |
-| *SUGGESTED FIELDS* | | |
-| alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
-| total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
+cols <- data.frame(
+  Column = c("contig", "start", "end", "ref", "alt", "sample", "*SUGGESTED FIELDS*", "alt_depth", "total_depth or depth"),
+  `VCF Specification` = c(
+    "CHROM", "POS", "INFO(END)", "REF", "ALT", "INFO(sample) or Genotype Header", "", "VD", "AD or DP"
+  ),
+  Definition = c(
+    "The name of the reference sequence.",
+    "The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import.",
+    "The half-open end position of the feature in contig.",
+    "The reference allele at this position.",
+    "The left-aligned, normalized, alternate allele at this position.",
+    "A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field.",
+    "",
+    "The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites.",
+    "The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to \"depth\"."
+  )
+)
+
+knitr::kable(cols, format = "html", escape = FALSE)
+```
 
 VCF files should follow the VCF specification (version 4.5; @danecek-2011).
 VCF files may be bg/g-zipped. Each individual VCF file should contain the
@@ -185,7 +198,8 @@ Context information will be extracted from the installed BSgenome object.
 BSgenome offers genomes with masked sequences. If you wish to use the masked
 version of the genome, set `masked_BS_genome` to `TRUE`.
 
-## Examples {.tabset}
+## Examples 
+::: {.panel-tabset}
 
 We provide an example data set taken from @leblanc-2022. This data
 consists of 24 mouse bone marrow samples sequenced with Duplex Sequencing
@@ -266,6 +280,8 @@ imported_example_data <- import_mut_data(
 ```{r import-mut-table, echo=FALSE}
 DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
+
+:::
 
 ## Region Metadata
 
@@ -1056,7 +1072,8 @@ mutation data, the summary table will have no frame of reference for populating
 the `metadata_cols`. Thus, for subtypes that do not occur in the mutation data for
 a given group, the corresponding `metadata_col` will be NA.
 
-## MF Plots {.tabset}
+## MF Plots 
+::: {.panel-tabset}
 
 You can visualize the results of `calculate_mf` using the `plot_mf()` and
 `plot_mean_mf`() functions. These functions offer variable aesthetics for
@@ -1126,6 +1143,7 @@ plot_mean <- plot_mean_mf(
 plot_mean
 ```
 
+:::
 
 # Modeling MF
 
@@ -1260,7 +1278,8 @@ comparisons specified in the `contrasts`.
 
 ### Examples
 
-#### Example 4.1 Model by Dose {.tabset}
+#### Example 4.1 Model by Dose 
+::: {.panel-tabset}
 
 *Example 4.1. Model the effect of dose on MF. Our example data consists of 24*
 *mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups*
@@ -1373,7 +1392,10 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
-#### Example 4.2 Model by Dose and Target {.tabset}
+:::
+
+#### Example 4.2 Model by Dose and Target 
+::: {.panel-tabset}
 
 *Example 4.2.1. Model the effects of dose and genomic locus on MF. Sequencing for*
 *the example data was done on a panel of 20 genomic targets. We will determine*
@@ -1502,7 +1524,10 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
-### Plot Model Results {.tabset}
+:::
+
+### Plot Model Results 
+::: {.panel-tabset}
 
 Plot the results of `model_mf()` using `plot_model_mf()`. This function will
 create a bar or line plot of the point estimates. Users can include the
@@ -1595,6 +1620,8 @@ plot <- plot_model_mf(
 plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
+
+:::
 
 ## Benchmark Dose Modeling
 
@@ -2235,7 +2262,8 @@ write_mutational_matrix(
 
 ## Plot Spectra
 
-### plot_spectra {.tabset}
+### plot_spectra 
+::: {.panel-tabset}
 
 The mutation spectra can be visualized with  `plot_spectra` which will create a
 stacked bar plot for user-defined groups at the desired subtype resolution.
@@ -2391,7 +2419,10 @@ plot <- plot_spectra(
 plot
 ```                        
 
-### Trinucleotide Plots {.tabset}
+:::
+
+### Trinucleotide Plots 
+::: {.panel-tabset}
 
 The 96-base SNV mutation subtypes can be vizualised using `plot_trinucleotide()`.
 This function creates a bar plot of the 96-base SNV spectrum for all levels of a
@@ -2452,6 +2483,8 @@ plots[3]
 ```{r trinuc-H, fig.wide=TRUE, echo=FALSE, fig.cap=caption}
 plots[4]
 ```
+
+:::
 
 ### Heatmaps
 
