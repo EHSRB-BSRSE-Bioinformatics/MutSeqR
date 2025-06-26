@@ -136,7 +136,7 @@ columns, INFO fields, and FORMAT fields will be retained upon import.
 Upon import, records are categorized within the `variation_type` column based
 on their REF and ALT. Categories are listed below.
 
-Table: (\#tab:variation-types) Definitions of Variation types.
+::: {.table tbl-cap="Definitions of Variation types." #tab-variation-types}
 
 | variation_type | Definition |
 |------------------|------------|
@@ -152,7 +152,7 @@ Table: (\#tab:variation-types) Definitions of Variation types.
 
 Additional columns are created to further characterise variants.
 
-Table: (\#tab:mut-columns) Definitions of Mutation data columns.
+::: {.table tbl-cap="Definitions of Mutation data columns." #tab-mut-columns}
 
 | Column Name        | Definition                                        |
 |--------------------|---------------------------------------------------|
@@ -346,7 +346,7 @@ it will automatically be changed to match our set values. For example, your
 this synonymous column name will be changed to `contig`. Column names are
 case-insensitive. A list of column name synonyms are listed below.
 
-Table: (\#tab:name-sym) Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import.
+::: {.table tbl-cap="Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import." #tab-name-sym} 
 
 | Column | Synonyms |
 |--------|----------|
@@ -713,7 +713,7 @@ DT::datatable(mean_mf,
 Mutations can also be grouped by mutation subtype at varying degrees of
 resolution using the `subtype_resolution` parameter. 
 
-Table: (\#tab:subtypes) Definitions of mutation subtype resolutions.
+::: {.table tbl-cap="Definitions of mutation subtype resolutions." #tab-subtypes}
 
 |Subtype resolutions| Definition | Example |
 |-------------------|------------|---------|
@@ -739,7 +739,7 @@ of SNV subtypes and their associated sequence context for the various
 resolutions. Below the columns associated with each subtype_resolution are
 defined:
 
-Table: (\#tab:subtypes-cols) Subtype Resolutions and their associated subtype/context columns.
+::: {.table tbl-cap="Subtype Resolutions and their associated subtype/context columns." #tab-subtypes-cols} 
 
 |Subtype resolution | Subtype Column | Context Column |
 |-------------------|----------------|----------------|
@@ -2088,7 +2088,7 @@ strand bias. SBS and DBS matrices are stored in their respective folders in
 the output directory. **Only the SBS96 matrix is used for refitting**.
 *Matrices are stored as `.all` files which can be viewed in a text-editor.*
 
-Table: (\#tab:mat-files) Output Files from SigProfilerMatrixGeneration by Folder.
+::: {.table tbl-cap="Output files from SigProfilerMatrixGenerator by folder." #tab-mat-files}
 
 | Folder | File | Definition | Plot file |
 |--------|------|------------|-----------|
@@ -2151,7 +2151,7 @@ matrix generation.
 Mutations are first classified within the four transcriptional bias
 categories:
 
-Table: (\#tab:transcript-cat) SigProfiler Transcriptional Bias Categories.
+::: {.table tbl-cap="SigProfiler transcriptional bias categories." #tab-transcript-cat}
 
 |Category        | Description                                           |
 |----------------|-------------------------------------------------------|
@@ -2178,7 +2178,10 @@ number of transcribed and untranscribed mutations for each mutation type.
 Results from the signature refitting perfomed by
 [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within
 the "Assignment_Solution" folder. "Assignment_Solution" consists of 3
-subdirectories;  "Activities", "Signatures", and "Solution_Stats". 
+subdirectories;  "Activities", "Signatures", and "Solution_Stats".
+
+
+::: {.table tbl-cap="Signature assignment output files." #tab-assignment-output}
 
 **Activities**
 
