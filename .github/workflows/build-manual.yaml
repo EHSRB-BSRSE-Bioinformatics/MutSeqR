@@ -29,6 +29,12 @@ jobs:
       - name: Create inst/doc directory
         # The -p flag ensures it doesn't fail if the directory already exists.
         run: mkdir -p inst/doc
+      
+      - name: Remove existing PDF manual if it exists
+        run: |
+        if [ -f inst/doc/MutSeqR.pdf ]; then
+        rm inst/doc/MutSeqR.pdf
+        fi
 
       - name: Build PDF manual
         run: |
