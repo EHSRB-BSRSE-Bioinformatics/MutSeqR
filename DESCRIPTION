@@ -103,6 +103,7 @@ Suggests:
     openxlsx,
     packcircles,
     patchwork,
+    quarto,
     RColorBrewer,
     reticulate,    
     rmarkdown,
