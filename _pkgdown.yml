@@ -4,6 +4,9 @@ template:
 
 vignettes: false
 
+project:
+  render: ['*.qmd']
+
 navbar:
   structure:
     left:
