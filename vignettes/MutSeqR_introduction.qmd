@@ -2885,11 +2885,6 @@ or in the regions metadata file.
 
 ## Output
 
-
-# References
-
-# Appendix
-
 ## Session Info
 
 ```{r session-info, echo=FALSE}
