@@ -143,7 +143,7 @@ on their REF and ALT. Categories are listed below.
 
 Additional columns are created to further characterise variants.
 
-: Definitions of Mutation data columns. {#tab-mut-columns}
+: Definitions of Mutation data columns. {#tbl-mut-columns}
 
 | Column Name        | Definition                                        |
 |--------------------|---------------------------------------------------|
@@ -330,7 +330,7 @@ region_example
 ## Custom Column Names
 
 We recognize that column names may differ from those specified in
-Table @ref(tbl-required-columns). Therefore, we have implemented some default
+Table @tbl-required-columns. Therefore, we have implemented some default
 column name synonyms. If your column name matches one of our listed synonyms,
 it will automatically be changed to match our set values. For example, your
 `contig` column may be named `chr` or `chromosome`. After importing your data,
@@ -2121,7 +2121,7 @@ the SigProfiler tools.
 **Plots**: Barplots of the mutation matrices for all groups can be found in
 the "plots" folder. The number of mutations are plotted for each group at the
 various subtype resolutions. Files for each matrix are listed in
-Table @ref(tab-mat-files).
+Table @tbl-mat-files.
 
 **vcf_files**: This output folder provides text-based files containing the
 original mutations and their SigProfilerMatrixGenerator classification for
@@ -2175,7 +2175,7 @@ Results from the signature refitting perfomed by
 the "Assignment_Solution" folder. "Assignment_Solution" consists of 3
 subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 
-::: {#tab-assignment-output layout-ncol=1 }
+::: {#tbl-assignment-output layout-ncol=1 }
 
 | File | Description |
 |------|-------------|
@@ -2201,12 +2201,12 @@ subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 
 : Solution stats {#tbl-solution-stats}
 
+Signature assignment output files.
+:::
+
 **Other Files**
 
 *JOB_METADATA_SPA.txt*: This file contains the metadata about system and runtime.
-
-Signature assignment output files.
-:::
 
 ### Use SigProfiler Webtool
 
