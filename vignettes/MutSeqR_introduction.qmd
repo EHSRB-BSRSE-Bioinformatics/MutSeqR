@@ -13,10 +13,11 @@ format:
     toc: true
     toc-depth: 2
     toc-location: left
-    code-fold: true
+    code-fold: show
     code-tools: true
     #css: custom.css
     html-math-method: mathjax
+    self-contained: true
 bibliography: references.bib
 link-citations: true
 vignette: >
@@ -103,7 +104,7 @@ of mutation subtype frequencies ad other site-specific frequemcies. The data
 set can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination). 
 
-::: {.table tbl-cap="Required columns for mutation data import." #tbl-required-columns}
+: Required columns for mutation data import. {#tbl-required-columns}
 
 | **Column** | **VCF Specification** | **Definition** |
 |------------|-----------------------|----------------|
@@ -117,8 +118,6 @@ indels, SVs, or any combination).
 | alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
 | total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
 
-:::
-
 VCF files should follow the VCF specification (version 4.5; @danecek-2011).
 VCF files may be bg/g-zipped. Each individual VCF file should contain the
 mutation data for a single sample library. Multiple alt alleles called for a
@@ -128,7 +127,7 @@ columns, INFO fields, and FORMAT fields will be retained upon import.
 Upon import, records are categorized within the `variation_type` column based
 on their REF and ALT. Categories are listed below.
 
-::: {.table tbl-cap="Definitions of Variation types." #tab-variation-types}
+: Definitions of Variation types. {#tbl-variation-types}
 
 | variation_type | Definition |
 |------------------|------------|
@@ -142,11 +141,9 @@ on their REF and ALT. Categories are listed below.
 | ambiguous | ALT contains IUPAC ambiguity codes. |
 | uncategorized | The record does not fall into any of the preceding categories. |
 
-:::
-
 Additional columns are created to further characterise variants.
 
-::: {.table tbl-cap="Definitions of Mutation data columns." #tab-mut-columns}
+: Definitions of Mutation data columns. {#tab-mut-columns}
 
 | Column Name        | Definition                                        |
 |--------------------|---------------------------------------------------|
@@ -167,8 +164,6 @@ Additional columns are created to further characterise variants.
 | gc_content | % GC of the trinucleotide context at this position. |
 | is_known | A logical value indicating if the record is a known variant; i.e. ID field is not NULL. |
 | row_has_duplicate | A logical value that  flags rows whose position is the same as that of at least one other row for the same sample. |
-
-:::
 
 ## General Usage
 
@@ -342,7 +337,7 @@ it will automatically be changed to match our set values. For example, your
 this synonymous column name will be changed to `contig`. Column names are
 case-insensitive. A list of column name synonyms are listed below.
 
-::: {.table tbl-cap="Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import." #tab-name-sym} 
+: Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import. {tbl-name-sym} 
 
 | Column | Synonyms |
 |--------|----------|
@@ -357,8 +352,6 @@ case-insensitive. A list of column name synonyms are listed below.
 | sample | sample_name, sample_id |
 | start | pos, position |
 | total_depth | informative_somatic_depth |
-
-:::
 
 If your data contains a column that is synonymous to one of the required
 columns, but the name is not included in our synonyms list, your column
@@ -711,7 +704,7 @@ DT::datatable(mean_mf,
 Mutations can also be grouped by mutation subtype at varying degrees of
 resolution using the `subtype_resolution` parameter. 
 
-::: {.table tbl-cap="Definitions of mutation subtype resolutions." #tab-subtypes}
+: Definitions of mutation subtype resolutions. {tbl-subtypes}
 
 |Subtype resolutions| Definition | Example |
 |-------------------|------------|---------|
@@ -720,8 +713,6 @@ resolution using the `subtype_resolution` parameter.
 | `base_12` | The snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
 | `base_96` | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A |
 | `base_192` | The snv subtypes reported alongside their two flanking nucleotides | A[G>A]A |
-
-:::
 
 Mutations and `total_depth` will be summed across groups for each mutation
 subtype to calculate frequencies. For SNV subtypes, the `total_depth` is
@@ -739,7 +730,7 @@ of SNV subtypes and their associated sequence context for the various
 resolutions. Below the columns associated with each subtype_resolution are
 defined:
 
-::: {.table tbl-cap="Subtype Resolutions and their associated subtype/context columns." #tab-subtypes-cols} 
+: Subtype Resolutions and their associated subtype/context columns. {tbl-subtypes-cols} 
 
 |Subtype resolution | Subtype Column | Context Column |
 |-------------------|----------------|----------------|
@@ -748,8 +739,6 @@ defined:
 | `base_12` | `subtype` | `short_ref` |
 | `base_96` | `normalized_context_with_mutation` | `normalized_context` |
 | `base_192` | `context_with_mutation` | `context` |
-
-:::
 
 The function will also calculate the the proportion of mutations for eachsubtype,
 normalized to the `total_depth`:  
@@ -2091,7 +2080,7 @@ the output directory. **Only the SBS96 matrix is used for refitting**.
 *Matrices are stored as `.all` files which can be viewed in a text-editor.*
 
 ::: {.scroll-box style="overflow-x: auto; overflow-y: auto; max-height: 400px;"}
-::: {.table tbl-cap="Output files from SigProfilerMatrixGenerator by folder." #tab-mat-files}
+: Output files from SigProfilerMatrixGenerator by folder. {tbl-mat-files}
 
 | Folder | File | Definition | Plot file |
 |--------|------|------------|-----------|
@@ -2116,7 +2105,7 @@ the output directory. **Only the SBS96 matrix is used for refitting**.
 | TSB | *significantResults_strandBiasTest.txt*| Returns significant results from the three files above.|  |
 
 :::
-:::
+
 
 **Doublet-base Matrices (DBS)**: DBS are somatic mutations in which a set of two
 adjacent DNA base-pairs are simultaneously substituted with another set of two
@@ -2157,7 +2146,7 @@ matrix generation.
 Mutations are first classified within the four transcriptional bias
 categories:
 
-::: {.table tbl-cap="SigProfiler transcriptional bias categories." #tab-transcript-cat}
+: SigProfiler transcriptional bias categories. {tbl-transcript-cat}
 
 |Category        | Description                                           |
 |----------------|-------------------------------------------------------|
@@ -2165,8 +2154,6 @@ categories:
 |Untranscribed (U)|The variant is on the untranscribed (coding) strand.  |
 |Bidirectional (B) |The variant is on both strands and is transcribed either way. |
 |Nontranscribed (N) |The variant is in a non-coding region and is untranslated. |
-
-:::
 
 The tool will then perform a transcription strand bias test which compares the
 number of transcribed and untranscribed mutations for each mutation type.
@@ -2219,7 +2206,6 @@ subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 *JOB_METADATA_SPA.txt*: This file contains the metadata about system and runtime.
 
 Signature assignment output files.
-
 :::
 
 ### Use SigProfiler Webtool
