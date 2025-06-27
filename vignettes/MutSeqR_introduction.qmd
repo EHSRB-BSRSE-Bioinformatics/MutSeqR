@@ -9,18 +9,19 @@ author:
 package: MutSeqR
 format:
   html:
+    number-sections: true
     toc: true
     toc-depth: 2
     toc-location: left
     code-fold: true
     code-tools: true
-    css: custom.css
+    #css: custom.css
     html-math-method: mathjax
 bibliography: references.bib
 link-citations: true
 vignette: >
   %\VignetteIndexEntry{MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment}
-  %\VignetteEngine{quarto::html}
+  %\VignetteEngine{quarto::format}
   %\VignetteEncoding{UTF-8}
 ---
   
@@ -102,30 +103,21 @@ of mutation subtype frequencies ad other site-specific frequemcies. The data
 set can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination). 
 
-```{r}
-#| label: tbl-required-columns
-#| tbl-cap: "Required columns for mutation data import."
+::: {.table tbl-cap="Required columns for mutation data import." #tbl-required-columns}
 
-cols <- data.frame(
-  Column = c("contig", "start", "end", "ref", "alt", "sample", "*SUGGESTED FIELDS*", "alt_depth", "total_depth or depth"),
-  `VCF Specification` = c(
-    "CHROM", "POS", "INFO(END)", "REF", "ALT", "INFO(sample) or Genotype Header", "", "VD", "AD or DP"
-  ),
-  Definition = c(
-    "The name of the reference sequence.",
-    "The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import.",
-    "The half-open end position of the feature in contig.",
-    "The reference allele at this position.",
-    "The left-aligned, normalized, alternate allele at this position.",
-    "A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field.",
-    "",
-    "The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites.",
-    "The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to \"depth\"."
-  )
-)
+| **Column** | **VCF Specification** | **Definition** |
+|------------|-----------------------|----------------|
+| contig | CHROM | The name of the reference sequence. |
+| start | POS | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import. |
+| end | INFO(END) | The half-open end position of the feature in contig. |
+| ref | REF | The reference allele at this position. |
+| alt | ALT | The left-aligned, normalized, alternate allele at this position. |
+| sample | INFO(sample) or Genotype Header | A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field. |
+| *SUGGESTED FIELDS* | | |
+| alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
+| total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
 
-knitr::kable(cols, format = "html", escape = FALSE)
-```
+:::
 
 VCF files should follow the VCF specification (version 4.5; @danecek-2011).
 VCF files may be bg/g-zipped. Each individual VCF file should contain the
@@ -150,6 +142,8 @@ on their REF and ALT. Categories are listed below.
 | ambiguous | ALT contains IUPAC ambiguity codes. |
 | uncategorized | The record does not fall into any of the preceding categories. |
 
+:::
+
 Additional columns are created to further characterise variants.
 
 ::: {.table tbl-cap="Definitions of Mutation data columns." #tab-mut-columns}
@@ -173,6 +167,8 @@ Additional columns are created to further characterise variants.
 | gc_content | % GC of the trinucleotide context at this position. |
 | is_known | A logical value indicating if the record is a known variant; i.e. ID field is not NULL. |
 | row_has_duplicate | A logical value that  flags rows whose position is the same as that of at least one other row for the same sample. |
+
+:::
 
 ## General Usage
 
@@ -339,7 +335,7 @@ region_example
 ## Custom Column Names
 
 We recognize that column names may differ from those specified in
-Table \@ref(tab:required-columns). Therefore, we have implemented some default
+Table @ref(tbl-required-columns). Therefore, we have implemented some default
 column name synonyms. If your column name matches one of our listed synonyms,
 it will automatically be changed to match our set values. For example, your
 `contig` column may be named `chr` or `chromosome`. After importing your data,
@@ -361,6 +357,8 @@ case-insensitive. A list of column name synonyms are listed below.
 | sample | sample_name, sample_id |
 | start | pos, position |
 | total_depth | informative_somatic_depth |
+
+:::
 
 If your data contains a column that is synonymous to one of the required
 columns, but the name is not included in our synonyms list, your column
@@ -723,6 +721,8 @@ resolution using the `subtype_resolution` parameter.
 | `base_96` | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A |
 | `base_192` | The snv subtypes reported alongside their two flanking nucleotides | A[G>A]A |
 
+:::
+
 Mutations and `total_depth` will be summed across groups for each mutation
 subtype to calculate frequencies. For SNV subtypes, the `total_depth` is
 summed based on the sequence context in which the SNV subtype occurs
@@ -748,6 +748,8 @@ defined:
 | `base_12` | `subtype` | `short_ref` |
 | `base_96` | `normalized_context_with_mutation` | `normalized_context` |
 | `base_192` | `context_with_mutation` | `context` |
+
+:::
 
 The function will also calculate the the proportion of mutations for eachsubtype,
 normalized to the `total_depth`:  
@@ -2088,6 +2090,7 @@ strand bias. SBS and DBS matrices are stored in their respective folders in
 the output directory. **Only the SBS96 matrix is used for refitting**.
 *Matrices are stored as `.all` files which can be viewed in a text-editor.*
 
+::: {.scroll-box style="overflow-x: auto; overflow-y: auto; max-height: 400px;"}
 ::: {.table tbl-cap="Output files from SigProfilerMatrixGenerator by folder." #tab-mat-files}
 
 | Folder | File | Definition | Plot file |
@@ -2111,6 +2114,9 @@ the output directory. **Only the SBS96 matrix is used for refitting**.
 | TSB | *strandBiasTes_384.txt*| Transcription Strand Bias Test stats of the SBS96 variants|  |
 | TSB | *strandBiasTes_6144.txt*| Transcription Strand Bias Test stats of the SBS1536 variants|  |
 | TSB | *significantResults_strandBiasTest.txt*| Returns significant results from the three files above.|  |
+
+:::
+:::
 
 **Doublet-base Matrices (DBS)**: DBS are somatic mutations in which a set of two
 adjacent DNA base-pairs are simultaneously substituted with another set of two
@@ -2160,6 +2166,8 @@ categories:
 |Bidirectional (B) |The variant is on both strands and is transcribed either way. |
 |Nontranscribed (N) |The variant is in a non-coding region and is untranslated. |
 
+:::
+
 The tool will then perform a transcription strand bias test which compares the
 number of transcribed and untranscribed mutations for each mutation type.
 *For example, it will compare the number of transcribed T>C to untranscribed*
@@ -2180,10 +2188,7 @@ Results from the signature refitting perfomed by
 the "Assignment_Solution" folder. "Assignment_Solution" consists of 3
 subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 
-
-::: {.table tbl-cap="Signature assignment output files." #tab-assignment-output}
-
-**Activities**
+::: {#tab-assignment-output layout-ncol=1 }
 
 | File | Description |
 |------|-------------|
@@ -2193,26 +2198,29 @@ subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 | *Decomposed_Mutation_Probabilities.txt* | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures. |
 | *SampleReconstruction* | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure.|
 
-
-**Signatures**
+: Activities {#tbl-activities}
 
 | Files | Description |
 |-------|-------------|
 | *Assignment_Solution_Signatures.txt* | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures. |
 | *SBS_96_plots_Assignment_Solution.pdf* | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
 
-
-**Solution_Stats**
+: Signatures {#tbl-signatures}
 
 | Files | Description |
 |-------|-------------|
 | *Assignment_Solution_Samples_Stats.txt* | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
 | *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps. |
 
+: Solution stats {#tbl-solution-stats}
 
 **Other Files**
 
 *JOB_METADATA_SPA.txt*: This file contains the metadata about system and runtime.
+
+Signature assignment output files.
+
+:::
 
 ### Use SigProfiler Webtool
 
