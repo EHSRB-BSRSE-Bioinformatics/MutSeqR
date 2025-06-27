@@ -104,10 +104,10 @@ of mutation subtype frequencies ad other site-specific frequemcies. The data
 set can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination). 
 
-: Required columns for mutation data import. {#tbl-required-columns}
+: Required columns for mutation data import. {.striped .hover #tbl-required-columns}
 
 | **Column** | **VCF Specification** | **Definition** |
-|------------|-----------------------|----------------|
+|:-----------|:----------------------|:---------------|
 | contig | CHROM | The name of the reference sequence. |
 | start | POS | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import. |
 | end | INFO(END) | The half-open end position of the feature in contig. |
@@ -127,10 +127,10 @@ columns, INFO fields, and FORMAT fields will be retained upon import.
 Upon import, records are categorized within the `variation_type` column based
 on their REF and ALT. Categories are listed below.
 
-: Definitions of Variation types. {#tbl-variation-types}
+: Definitions of Variation types. {.striped .hover #tbl-variation-types}
 
-| variation_type | Definition |
-|------------------|------------|
+| variation_type   | Definition |
+|:-----------------|:-----------|
 | no_variant | No variation, the null-case. |
 | snv | Single nucleotide variant. |
 | mnv | Multiple nucleotide variant. |
@@ -143,10 +143,10 @@ on their REF and ALT. Categories are listed below.
 
 Additional columns are created to further characterise variants.
 
-: Definitions of Mutation data columns. {#tbl-mut-columns}
+: Definitions of Mutation data columns. {.striped .hover #tbl-mut-columns}
 
 | Column Name        | Definition                                        |
-|--------------------|---------------------------------------------------|
+|:-------------------|:--------------------------------------------------|
 |  short_ref | The reference base at the start position. |
 | normalized_ref | The short_ref in C/T (pyrimidine) notation for this position. Ex. `A` -> `T`, `G` -> `C` |
 | context | The trinucleotide context at this position. Consists of the reference base and the two flanking bases. Sequences are retrieved from the appropriate BS genome. Ex. `TAC` |
@@ -337,10 +337,10 @@ it will automatically be changed to match our set values. For example, your
 this synonymous column name will be changed to `contig`. Column names are
 case-insensitive. A list of column name synonyms are listed below.
 
-: Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import. {tbl-name-sym} 
+: Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import. {.striped .hover #tbl-name-sym} 
 
 | Column | Synonyms |
-|--------|----------|
+|:-------|:---------|
 | alt | alternate |
 | alt_depth | alt_read_depth, var_depth, variant_depth, vd |
 | context | sequence_context, trinucleotide_context, flanking_sequence |
@@ -612,7 +612,7 @@ mf_data_global <- calculate_mf(
 **Table 6.** Global Mutation Frequency per Sample
 
 ```{r mf-global-table, echo=FALSE}
-#| tbl-cap: "datatable {#tbl-datatable}"
+#| tbl-cap: "datatable {.striped .hover #tbl-datatable}"
 DT::datatable(mf_data_global,
   options = list(
     columnDefs = list(
@@ -704,10 +704,10 @@ DT::datatable(mean_mf,
 Mutations can also be grouped by mutation subtype at varying degrees of
 resolution using the `subtype_resolution` parameter. 
 
-: Definitions of mutation subtype resolutions. {tbl-subtypes}
+: Definitions of mutation subtype resolutions. {.striped .hover #tbl-subtypes}
 
 |Subtype resolutions| Definition | Example |
-|-------------------|------------|---------|
+|:------------------|:-----------|:--------|
 | `type` | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
 | `base_6` | The simple spectrum; snv subtypes in their pyrimidine context | C>A, C>G, C>T, T>A, T>C, T>G |
 | `base_12` | The snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
@@ -730,10 +730,10 @@ of SNV subtypes and their associated sequence context for the various
 resolutions. Below the columns associated with each subtype_resolution are
 defined:
 
-: Subtype Resolutions and their associated subtype/context columns. {tbl-subtypes-cols} 
+: Subtype Resolutions and their associated subtype/context columns. {.striped .hover #tbl-subtypes-cols} 
 
 |Subtype resolution | Subtype Column | Context Column |
-|-------------------|----------------|----------------|
+|:------------------|:---------------|:---------------|
 | `type` | `variation_type`| NA |
 | `base_6` | `normalized_subtype` | `normalized_ref` |
 | `base_12` | `subtype` | `short_ref` |
@@ -2080,10 +2080,10 @@ the output directory. **Only the SBS96 matrix is used for refitting**.
 *Matrices are stored as `.all` files which can be viewed in a text-editor.*
 
 ::: {.scroll-box style="overflow-x: auto; overflow-y: auto; max-height: 400px;"}
-: Output files from SigProfilerMatrixGenerator by folder. {tbl-mat-files}
+: Output files from SigProfilerMatrixGenerator by folder. {.striped .hover #tbl-mat-files}
 
 | Folder | File | Definition | Plot file |
-|--------|------|------------|-----------|
+|:-------|:-----|:-----------|:----------|
 | SBS | *project.SBS6.all* | The 6 pyrimidine single-nucleotide variants. *C>A, C>G, C>T, T>A, T>C, or T>G* |  *plots/SBS_6_plots_project.pdf* |
 | SBS | *project.SBS18.all*| The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N). |  |
 | SBS | *project.SBS24.all*| The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N). | *plots/SBS_24_plots_project.pdf* |
@@ -2146,10 +2146,10 @@ matrix generation.
 Mutations are first classified within the four transcriptional bias
 categories:
 
-: SigProfiler transcriptional bias categories. {tbl-transcript-cat}
+: SigProfiler transcriptional bias categories. {.striped .hover #tbl-transcript-cat}
 
 |Category        | Description                                           |
-|----------------|-------------------------------------------------------|
+|:---------------|:------------------------------------------------------|
 |Transcribed (T) |The variant is on the transcribed (template) strand.   |
 |Untranscribed (U)|The variant is on the untranscribed (coding) strand.  |
 |Bidirectional (B) |The variant is on both strands and is transcribed either way. |
@@ -2175,31 +2175,31 @@ Results from the signature refitting perfomed by
 the "Assignment_Solution" folder. "Assignment_Solution" consists of 3
 subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 
-::: {#tbl-assignment-output layout-ncol=1 }
+::: {.striped .hover #tbl-assignment-output layout-ncol=1 }
 
 | File | Description |
-|------|-------------|
+|:-----|:------------|
 |*Assignment_Solution_Activities.txt* | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process. |
 |*Assignment_Solution_Activity_Plots.pdf* | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.|
 | *Assignment_Solution_TMB_plot.pdf* | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase. |
 | *Decomposed_Mutation_Probabilities.txt* | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures. |
 | *SampleReconstruction* | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure.|
 
-: Activities {#tbl-activities}
+: Activities {.striped .hover #tbl-activities}
 
 | Files | Description |
-|-------|-------------|
+|:------|:------------|
 | *Assignment_Solution_Signatures.txt* | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures. |
 | *SBS_96_plots_Assignment_Solution.pdf* | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
 
-: Signatures {#tbl-signatures}
+: Signatures {.striped .hover #tbl-signatures}
 
 | Files | Description |
-|-------|-------------|
+|:------|:------------|
 | *Assignment_Solution_Samples_Stats.txt* | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
 | *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps. |
 
-: Solution stats {#tbl-solution-stats}
+: Solution stats {.striped .hover #tbl-solution-stats}
 
 Signature assignment output files.
 :::
