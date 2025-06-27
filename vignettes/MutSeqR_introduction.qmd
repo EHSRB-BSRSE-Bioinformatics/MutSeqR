@@ -2132,7 +2132,7 @@ the SigProfiler tools.
 **Plots**: Barplots of the mutation matrices for all groups can be found in
 the "plots" folder. The number of mutations are plotted for each group at the
 various subtype resolutions. Files for each matrix are listed in
-Table \@ref(tab:mat-files).
+Table @ref(tab-mat-files).
 
 **vcf_files**: This output folder provides text-based files containing the
 original mutations and their SigProfilerMatrixGenerator classification for
