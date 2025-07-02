@@ -47,15 +47,10 @@
 #'   # print(plot_list$chr2)
 #' }
 plot_lollipop <- function(mutations,
-                            min_recurrence = 2,
-                            group_by_col = "dose_group",
-                            custom_palette = NULL) {
+                          min_recurrence = 2,
+                          group_by_col = "dose_group",
+                          custom_palette = NULL) {
 
-  # --- 1. Input Validation ---
-  if (!requireNamespace("ggplot2", quietly = TRUE) ||
-      !requireNamespace("dplyr", quietly = TRUE)) {
-    stop("This function requires `ggplot2` and `dplyr`. Please install them.")
-  }
   if (!is.data.frame(mutations)) {
     stop("Input `mutations` must be a data.frame.")
   }
@@ -63,7 +58,7 @@ plot_lollipop <- function(mutations,
   required_cols <- c("start", "variation_type", "normalized_subtype", group_by_col)
   missing_cols <- setdiff(required_cols, names(mutations))
   if (length(missing_cols) > 0) {
-     stop(paste("The `mutations` data.frame is missing required columns:",
+    stop(paste("The `mutations` data.frame is missing required columns:",
                 paste(missing_cols, collapse = ", ")))
   }
 
