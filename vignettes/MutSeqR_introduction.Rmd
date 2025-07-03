@@ -191,22 +191,29 @@ We provide an example data set taken from @leblanc-2022. This data
 consists of 24 mouse bone marrow samples sequenced with Duplex Sequencing
 using Twinstrand's Mouse Mutagenesis Panel of twenty 2.4kb targeted genomic
 loci. Mice were exposed to three doses of benzo[a]pyrene (BaP) alongside
-vehicle controls, n = 6.
+vehicle controls, n = 6. Example data is retrieved from MutSeqRData, an
+ExperimentHub data package available via Bioconductor. Example data
+can be retrieved from the ExperimentHub index (eh) through specific
+accessors.
+
+```{r load-MutSeqRData}
+library(ExperimentHub)
+# load the index
+eh <- ExperimentHub()
+# Query the index for MutSeqRData records and their associated accessors.
+query(eh, "MutSeqRData")
+```
 
 ### VCF
 
-*Example 1.1. Import the example .vcf.bgz file. Provided is the genomic*
-*vcf.gz file for sample dna00996.1. It is comprised of a record for all*
-*48K positions sequenced for the Mouse Mutagenesis Panel with the alt_depth*
-*and the tota_depth values for each record.*
+*Example 1.1. Import the example .vcf.bgz file "Example import_vcf_data".*
+*Provided is the genomic vcf.gz file for sample dna00996.1. It is comprised*
+*of a record for all 48K positions sequenced for the Mouse Mutagenesis Panel*
+*with the alt_depth and the tota_depth values for each record.*
 
 ```{r import-vcf}
-example_file <- system.file(
-  "extdata",
-  "Example_files",
-  "example_import_vcf_data_cleaned.vcf.bgz",
-  package = "MutSeqR"
-)
+example_file <- eh[["EH9859"]]
+
 sample_metadata <- data.frame(
   sample = "dna00996.1",
   dose = "50",
@@ -230,19 +237,13 @@ DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 
 ### Tabular
 
-*Example 1.2. Import example tabular data. This is the equivalent file to*
-*the example vcf file. It is stored as an .rds file. We will load the dataframe*
-*and supply it to `import_mut_data`. The mut_file parameter can accept file*
-*paths or data frames as input.*
+*Example 1.2. Import example tabular data "Example import_mut_data". This is*
+*the equivalent file to the example vcf file. It is stored as an .rds file.*
+*We will load the dataframe and supply it to `import_mut_data`. The mut_file*
+*parameter can accept file paths or data frames as input.*
 
 ```{r import-mut}
-example_file <- system.file(
-  "extdata",
-  "Example_files",
-  "example_import_mut_data.rds",
-  package = "MutSeqR"
-)
-example_data <- readRDS(example_file)
+example_data <- eh[["EH9857"]]
 
 sample_metadata <- data.frame(
   sample = "dna00996.1",
@@ -352,11 +353,8 @@ name may be substituted using the `custom_column_names` parameter. Provide
 this parameter with a list of names to specify the meaning of column headers.
 
 ```{r import-mut-custom-cols, message=TRUE}
-mut_data <- system.file(
-  "extdata", "Example_files",
-  "example_import_mut_data_custom_col_names.txt",
-  package = "MutSeqR"
-)
+mut_data <- eh[["EH9858"]]
+
 imported_example_data_custom <- import_mut_data(
   mut_file = mut_data,
   custom_column_names = list(my_contig_name = "contig",
@@ -487,7 +485,7 @@ according to each parameter.
 
 ## Example
 
-*Example 2. The example file "example_mutation_data.rds" is the output of*
+*Example 2. The example file "Example mutation data" is the output of*
 *import_mut_data() run on all 24 mouse libraries from @leblanc-2022.*
 
 *Filters used:*
@@ -501,12 +499,7 @@ column. Their `alt_depth` will be removed from their `total_depth`.
 
 ```{r filter-mut, message=TRUE}
 # load the example data
-example_file <- system.file(
-  "extdata", "Example_files",
-  "example_mutation_data.rds",
-  package = "MutSeqR"
-)
-example_data <- readRDS(example_file)
+example_data <- eh[["EH9860"]]
 
 # Filter
 filtered_example_mutation_data <- filter_mut(
@@ -582,17 +575,12 @@ one or more columns in the mutation data that represent experimental variables
 of interest. 
 
 *Example 3.1. Calculate mutation sums and frequencies per sample.*
-*The file "example_mutation_data_filtered.rds" is the output of filter_mut()*
+*The file "Example mutation data filtered" is the output of filter_mut()*
 *from Example 2*
 
 ```{r mf-global}
 # load example data:
-example_file <- system.file(
-  "extdata", "Example_files",
-  "example_mutation_data_filtered.rds",
-  package = "MutSeqR"
-)
-example_data <- readRDS(example_file)
+example_data <- eh[["EH9861"]]
 
 mf_data_global <- calculate_mf(
   mutation_data = example_data,
@@ -733,7 +721,7 @@ Table: (\#tab:subtypes-cols) Subtype Resolutions and their associated subtype/co
 | `base_96` | `normalized_context_with_mutation` | `normalized_context` |
 | `base_192` | `context_with_mutation` | `context` |
 
-The function will also calculate the the proportion of mutations for eachsubtype,
+The function will also calculate the proportion of mutations for each subtype,
 normalized to the `total_depth`:  
 $$P_s = \frac{\left(\frac{M_s}{D_s}\right)}{\sum_s \left(\frac{M_s}{D_s}\right)}$$  
 Where $P_s$ is the normalized mutation proportion for subtype $s$. $M_s$ is
@@ -984,23 +972,14 @@ mf_data_6_precalc <- calculate_mf(
   cols_to_group = "sample",
   subtype_resolution = "base_6",
   calculate_depth = FALSE,
-  precalc_depth = system.file("extdata", "Example_files",
-                              "precalc_depth_base_6_example.txt",
-                              package = "MutSeqR")
+  precalc_depth = eh[["EH9862"]]
 )
 ```
 
 **Table 16.** Precalculated Depth Data per sample for base_6 subtype resolution.
 
 ```{r precalc2-depth, echo=FALSE}
-depth <- read.table(
-  file = system.file(
-    "extdata", "Example_files",
-    "precalc_depth_base_6_example.txt",
-    package = "MutSeqR"
-  ),
-  header = TRUE
-)
+depth <- eh[["EH9862"]]
 
 DT::datatable(depth)
 ```
@@ -1022,6 +1001,13 @@ DT::datatable(mf_data_6_precalc,
     )
   )
 )
+```
+
+View examples for base_12, base_96, and base_192 below:
+```{r pre-calc-other-ex}
+base_12 <- eh[["EH9863"]]
+base_96 <- eh[["EH9864"]]
+base_192 <- eh[["EH9865"]]
 ```
 
 ## Summary Table

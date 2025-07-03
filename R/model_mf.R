@@ -142,11 +142,15 @@
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 #' @examples
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
+#'
 #' # Example 1: Model MFmin by dose
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
 #' mf_example <- calculate_mf(mutation_data = example_data,
 #'                            cols_to_group = "sample",
 #'                           retain_metadata_cols = "dose")

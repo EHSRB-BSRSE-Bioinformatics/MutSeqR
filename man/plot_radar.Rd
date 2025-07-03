@@ -27,11 +27,15 @@ Create a radar plot
 \examples{
 # Plot the mean MFmin of each genomic target per dose group
 # Order the genomic targets by their genic context.
-#Load the example data and calculate MF
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut as in Example 4.
+# Sequenced on TS Mouse Mutagenesis Panel. Example data is
+# retrieved from MutSeqRData, an ExperimentHub data package.
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
+
 mf <- calculate_mf(mutation_data = example_data,
                    cols_to_group = c("sample", "label"),
                    retain_metadata_cols = c("dose_group", "genic_context"))

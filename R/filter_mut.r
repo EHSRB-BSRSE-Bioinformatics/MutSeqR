@@ -75,11 +75,12 @@
 #' returned inside a list, with names \code{mutation_data} and
 #' \code{filtered_rows}. Default is FALSE.
 #' @examples
-#' # Load example data
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data(). Sequenced on TS Mouse Mutagenesis Panel.
+#' # Example data is retrieved from MutSeqRData, an ExperimentHub data package
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9860"]]
 #' # Filter the data
 #' # Basic Usage: Filter out putative germline variants
 #' filter_example_1 <- filter_mut(mutation_data = example_data,

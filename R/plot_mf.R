@@ -43,10 +43,14 @@
 #' Default is 3.
 #' @return A ggplot object
 #' @examples
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
+#'
 #' example_data$dose_group <- factor(example_data$dose_group,
 #'                                   levels = c("Control", "Low",
 #'                                              "Medium", "High"))

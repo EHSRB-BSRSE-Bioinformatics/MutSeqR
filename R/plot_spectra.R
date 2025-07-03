@@ -64,11 +64,13 @@
 #' @importFrom dplyr select arrange across all_of
 #' @export
 #' @examples
-#' # Load example data
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
 #'
 #' # Example 1: plot the proportion of 6-based mutation subtypes
 #' # for each sample, organized by dose group:

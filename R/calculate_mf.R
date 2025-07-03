@@ -186,12 +186,13 @@
 #' ensure that the total_depth value for the deletion is retained, while the
 #' total_depth value for the no_variant is removed.
 #' @examples
-#' # Load example data
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
-#'
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
 #' 
 #' # Example 1 Calculate mutation frequency by sample.
 #' # Calculate depth from the mutation data (default)
@@ -201,10 +202,10 @@
 #'  cols_to_group = "sample",
 #'  correct_depth_by_indel_priority = TRUE
 #' )
-#' 
+#'
 #'
 #' # Example 2: Calculate the trinucleotide mutation proportions for each dose
-#' # Calculate and correct depth to indep priority.
+#' # Calculate and correct depth to indel priority.
 #' mf_96_example <- calculate_mf(
 #'  mutation_data = example_data,
 #'  cols_to_group = "dose",
@@ -212,7 +213,7 @@
 #'  variant_types  = "snv",
 #'  correct_depth_by_indel_priority = TRUE
 #' )
-#' 
+#'
 #'
 #' # Example 3: Calculate the mean mutation frequency for each 6 base subtype
 #' # per dose
@@ -240,7 +241,7 @@
 #'                   mean_mf_max = mean(mf_max),
 #'                   se_mf_max = sd(mf_max) / sqrt(dplyr::n()))
 #'
-#' 
+#'
 #' # Example 4: Calculate MF using precalculated depth data
 #' sample_depth_example <- data.frame(
 #'  sample = c(
@@ -271,19 +272,21 @@
 #' # The base_6 resolution uses reference context 'normalized_ref'; C or T.
 #' # Our precalc_depth_data needs group_depth (depth per sample) and the
 #' # subtype_depth (depth per sample AND per normalized_ref)
-#' # We will create the example precalc_depth data for the base_6 resolution
-#' # from Example 3 results for simplicity.
-#' sample_subtype_depth_example <- mf_6_example %>%
-#'  dplyr::select(sample, normalized_ref, group_depth, subtype_depth) %>%
-#'  unique() %>%
-#' dplyr::filter(normalized_ref != "N")
+#' base_6_precalc_depth <- eh[["EH9862"]]
+#'
 #' mf_6_example_precalc <- calculate_mf(
 #'  mutation_data = example_data,
 #'  cols_to_group = "sample",
 #'  subtype_resolution = "base_6",
 #'  calculate_depth = FALSE,
-#'  precalc_depth_data = sample_subtype_depth_example
+#'  precalc_depth_data = base_6_precalc_depth
 #' )
+#' #' sample_subtype_depth_example <- eh[["EH9862"]]
+#' # Examples of the precalculated depth files for base_12, base_96, and
+#' # base_192 can be retrieved with:
+#'  base_12_precalc_depth <- eh[["EH9863"]]
+#'  base_96_precalc_depth <- eh[["EH9864"]]
+#'  base_192_precalc_depth <- eh[["EH9865"]]
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
 #' select distinct ungroup
 #' @importFrom magrittr %>%
