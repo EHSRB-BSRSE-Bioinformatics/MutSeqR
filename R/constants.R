@@ -8,7 +8,10 @@ op <- list()
 op$column <- list()
 op$column$alternate <- "alt"
 op$column$alt_value <- "alt"
+op$column$tumor_seq_allele2 <- "alt" # CODEC MAF
 op$column$alt_read_depth <- "alt_depth"
+op$column$n_alt_count <- "alt_depth" # CODEC MAF
+op$column$t_alt_count <- "alt_depth" # CODEC MAF
 op$column$var_depth <- "alt_depth"
 op$column$variant_depth <- "alt_depth"
 op$column$vd <- "alt_depth"
@@ -24,11 +27,13 @@ op$column$n_calls <- "no_calls"
 op$column$n_depth <- "no_calls"
 op$column$no_depth <- "no_calls"
 op$column$reference <- "ref"
+op$column$reference_allele <- "ref"
 op$column$ref_value <- "ref"
 op$column$sample_name <- "sample"
 op$column$sample_id <- "sample"
 op$column$pos <- "start"
 op$column$position <- "start"
+op$column$start_position <- "start"
 op$column$total_depth <- "total_depth"
 op$column$informative_somatic_depth <- "total_depth"
 op$site$columns <- c("contig", "start")
