@@ -62,32 +62,35 @@ render_report <- function(
     params$outputdir <- normalizePath(output_path) # set the param
   }
 
-  # Load the profile config, if applicable.
-  if (params$config_profile != "None") {
-    # Load the config file
-    profile_config <- yaml::yaml.load_file(normalizePath("./inst/extdata/inputs/profile_config.yaml")) # Fix: Change to a system file once testing is complete.
-    if (grepl("^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$",
-              params$config_profile)) {
-      # Join the DS parameters with params list.
-      params <- c(params, profile_config$Duplex_Sequencing)
-      # Define the regions parameter for TS panels.
-      params$regions <- paste0("TSpanel_",
-        tolower(sub("Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel",
-        "\\1", params$config_profile, perl = TRUE))
-      )
-      message("Setting up parameters for Duplex Sequencing on ", params$regions)
-      params$filtering_regions <- params$regions
-    }
-  } else {
+  # Load the profile config
+  profile_config <- yaml::yaml.load_file(system.file("extdata", "inputs", "profile_config.yaml", package = "MutSeqR"))
+  if (grepl("^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$",
+            params$config_profile)) {
+    # Join the DS parameters with params list.
+    params <- c(params, profile_config$Duplex_Sequencing)
+    # Define the regions parameter for TS panels.
+    params$regions <- paste0("TSpanel_",
+      tolower(sub("Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel",
+      "\\1", params$config_profile, perl = TRUE))
+    )
+    message("Setting up parameters for Duplex Sequencing on ", params$regions)
+    params$filtering_regions <- params$regions
+  } else if (params$config_profile == "CODEC") {
+    params <- c(params, profile_config$CODEC)
+  } else if (params$config_profile == "None") {
     params <- c(params, config$Custom_Profile_Params)
   }
+
   # Construct the path to the .Rmd file within the installed package directory
   rmd_file <- "Summary_report.Rmd"
   rmd_path <- system.file("extdata", rmd_file,
                           package = "MutSeqR", mustWork = TRUE)
-message("project directory", params$projectdir)
-message("output directory:", params$outputdir)
+  message("project directory", params$projectdir)
+  message("output directory:", params$outputdir)
   # Rendering the R Markdown document
+
+  print(params)
+
   rmarkdown::render(
     input = rmd_path,
     output_dir = params$outputdir,
