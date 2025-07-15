@@ -93,6 +93,11 @@ if (params$file_type == "table") {
                              warnings_list,
                              fixed = TRUE))
 }
+if (no_depth & is.null(params$precalc_depth_data_global)) {
+  no_mf <- TRUE
+} else {
+  no_mf <- FALSE
+}
 sample_no <- length(unique(mutation_data$sample))
 entries <- nrow(mutation_data)
 
@@ -106,7 +111,7 @@ if (!no_variants_present) {
     "frequencies may not be accurate if the mutation data does not contain",
     "total_depth values for ~ every sequenced site ~. Consider",
     "removing the total_depth column and precalculating the per-sample depth",
-    "(see precalc_depth_data) if it is not possible to import all sequenced",
+    "(see calculate_mf(precalc_depth_data)) if it is not possible to import all sequenced",
     "sites into R."
   )
 }
@@ -234,28 +239,34 @@ mf_data <- calculate_mf(
   correct_depth = correct_depth,
   retain_metadata_cols = params$exp_variable
 )
-plot_max <- all(mf_data$mf_min != mf_data$mf_max)
-DT::datatable(mf_data,
-  caption = "Figure 1. Mutation Frequency per Sample",
-  options = list(
-    columnDefs = list(
-      list(targets = c("mf_min", "mf_max"), # check if ths works no mf.
-           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
-    ),
-    rowCallback = JS(
-      "function(row, data, dataIndex) {
-        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
-      }"
+if (!no_mf) {
+  plot_max <- all(mf_data$mf_min != mf_data$mf_max)
+  DT::datatable(mf_data,
+    caption = "Figure 1. Mutation Frequency per Sample",
+    options = list(
+      columnDefs = list(
+        list(targets = c("mf_min", "mf_max"), # check if ths works no mf.
+            render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+      ),
+      rowCallback = JS(
+        "function(row, data, dataIndex) {
+          $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+        }"
+      )
     )
   )
-)
+} else {
+  DT::datatable(mf_data,
+    caption = "Figure 1. Mutation Sums per Sample"
+  )
+}
 # Results List for Export
 Results <- list("Global MF per Sample" = mf_data)
 ```
 
 ## Plot Mutation Frequency per Sample
 
-``` {r set-plot-size3.2, include=FALSE}
+``` {r set-plot-size3.2, include=FALSE, eval = !no_mf}
 fig_width <- 8
 fig_height <- 6
 labels <- "count"
@@ -277,7 +288,7 @@ if (plot_max && n_samples > 54) {
 }
 ```
 
-```{r plot3.2-caption, include=FALSE}
+```{r plot3.2-caption, include=FALSE, eval = !no_mf}
 # Define your caption components
 caption <- paste0(
   "Mutation Frequency (MF) Minimum",
@@ -290,7 +301,7 @@ caption <- paste0(
 
 ```
 
-```{r plot-mf, fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
+```{r plot-mf, fig.width=fig_width, fig.height=fig_height, fig.cap=caption, eval = !no_mf}
 plot_data <- mf_data
 if (!is.null(params$exp_variable)) {
   plot_data[[params$exp_variable]] <- factor(plot_data[[params$exp_variable]],
@@ -315,7 +326,7 @@ plot3.2
 
 ## Plot Mean Mutation Frequency
 
-``` {r set-plot-size3.3, eval=!is.null(params$exp_variable), include=FALSE}
+``` {r set-plot-size3.3, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
 fig_width <- 8
 fig_height <- 6
 n_expv <- length(unique(plot_data[params$exp_variable]))
@@ -328,7 +339,7 @@ if (!plot_max && n_expv > 24 || plot_max && n_expv > 18) {
 }
 ```
 
-```{r plot3.3-caption, eval=!is.null(params$exp_variable), include=FALSE}
+```{r plot3.3-caption, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
 # Define your caption components
 caption <- paste0(
   "Mean Mutation Frequency (MF) Minimum",
@@ -340,7 +351,7 @@ caption <- paste0(
 )
 ```
 
-```{r plot-mean-mf, eval=!is.null(params$exp_variable), fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
+```{r plot-mean-mf, eval=!is.null(params$exp_variable) & !no_mf, fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
 plot3.3 <- plot_mean_mf(
   mf_data = plot_data,
   group_col = params$exp_variable,
@@ -365,7 +376,7 @@ plot3.3
 
 ### Model Fit
 
-```{r glm, eval=!is.null(params$exp_variable), message=TRUE, fig.show='hide'}
+```{r glm, eval=!is.null(params$exp_variable) & !no_mf, message=TRUE, fig.show='hide'}
 model <- model_mf(mf_data = mf_data,
                   fixed_effects = params$exp_variable,
                   random_effects = NULL,
@@ -377,6 +388,8 @@ model <- model_mf(mf_data = mf_data,
 cat("Dispersion Parameter taken to be :", model$summary$dispersion)
 if (!is.null(params$contrasts) && any(model$pairwise_comparisons$Significance == "***")) {
   plot_signif <- TRUE
+} else {
+  plot_signif <- FALSE
 }
 # Save the model results
 write_excel(data = model,
@@ -387,7 +400,7 @@ write_excel(data = model,
 
 ### Residuals Histogram
 
-```{r glm-hist-caption, eval=!is.null(params$exp_variable), include=FALSE}
+```{r glm-hist-caption, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
 caption <- paste(
   "GLM residuals of MFmin modelled as an effect of ",
   params$exp_variable,
@@ -397,7 +410,7 @@ caption <- paste(
 )
 ```
 
-```{r glm-residuals-hist, eval=!is.null(params$exp_variable), fig.cap=caption}
+```{r glm-residuals-hist, eval=!is.null(params$exp_variable) & !no_mf, fig.cap=caption}
 model_data <- model$model_data
 hist_data <- hist(model_data$residuals, plot = FALSE)
 ylim_max <- max(hist_data$counts) + 1
@@ -409,7 +422,7 @@ plot4.12 <- hist(model_data$residuals,
 
 ### Residuals QQ Plot
 
-```{r glm-qq-caption, eval=!is.null(params$exp_variable), include=FALSE}
+```{r glm-qq-caption, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
 caption <- paste0(
   "GLM residuals of MFmin modelled as an effect of ",
   params$exp_variable, " expressed as a quantile-quantile plot.",
@@ -420,14 +433,14 @@ caption <- paste0(
 )
 ```
 
-```{r glm-residuals-qq, eval=!is.null(params$exp_variable), fig.cap=caption}
+```{r glm-residuals-qq, eval=!is.null(params$exp_variable) & !no_mf, fig.cap=caption}
 qqplot4.13 <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
 stats::qqline(model_data$residuals, col = "red")
 ```
 
 ### Model Estimates
 
-```{r glm-point-estimates, eval=!is.null(params$exp_variable)}
+```{r glm-point-estimates, eval=!is.null(params$exp_variable) & !no_mf}
 DT::datatable(
   model$point_estimates,
   caption = "Estimated Mean Mutation Frequency",
@@ -447,7 +460,7 @@ DT::datatable(
 
 ### Pairwise Comparisons
 
-```{r glm-pairwise, eval=!is.null(params$contrasts)}
+```{r glm-pairwise, eval=!is.null(params$contrasts) & !no_mf}
 DT::datatable(
   model$pairwise_comparisons,
   caption = "Pairwise Comparisons",
@@ -469,7 +482,7 @@ DT::datatable(
 
 ### Plot
 
-```{r plot4.16-caption, eval=!is.null(params$exp_variable), include=FALSE}
+```{r plot4.16-caption, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
 caption <- paste0(
   "Mean Mutation Frequency Minimum (mutations/bp) per ",
   params$exp_variable,
@@ -478,7 +491,7 @@ caption <- paste0(
 )
 ```
 
-```{r plot-glm, eval=!is.null(params$exp_variable), fig.cap=caption}
+```{r plot-glm, eval=!is.null(params$exp_variable) & !no_mf, fig.cap=caption}
 plot4.16 <- plot_model_mf(
   model = model,
   plot_type = "bar",
@@ -497,7 +510,7 @@ BMD is the dose at which a `r params$bmr * 100`% in mutation frequency occurs ab
 
 Returns the BMD, and the upper (BMDU) and lower (BMDL) 90% confidence intervals, calculated using model averaging.
 
-```{r bmd-analysis, eval=params$bmd, results='hide', fig.show = 'hide'}
+```{r bmd-analysis, eval=params$bmd & !no_mf, results='hide', fig.show = 'hide'}
 if (plot_max) {
   response_col <- c("mf_min", "mf_max")
 } else {
@@ -531,7 +544,7 @@ if (params$bmd_method == "proast") {
 
 ### BMD Results
 
-```{r bmd-results, eval=params$bmd}
+```{r bmd-results, eval=params$bmd & !no_mf}
 DT::datatable(bmd$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
 Results[["BMD Results"]] <- bmd$summary
@@ -539,11 +552,11 @@ Results[["BMD Results"]] <- bmd$summary
 
 ### BMD Plots {.tabset}
 
-```{r bmd-exphill-tab, eval=params$bmd&params$bmd_method=="proast", results='asis'}
+```{r bmd-exphill-tab, eval=params$bmd & params$bmd_method=="proast" & !no_mf, results='asis'}
 cat("#### Exponential & Hill Models\n\n")
 ```
 
-```{r bmd-exphill-cap, eval=params$bmd&params$bmd_method == "proast", include=FALSE}
+```{r bmd-exphill-cap, eval=params$bmd & params$bmd_method == "proast" & !no_mf, include=FALSE}
 caption1 <- paste(
   "The fitted curve of the selected Exponenetial (left) and Hill (right)",
   "models. Data is MFmin by", params$exp_variable, "following",
@@ -560,19 +573,19 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-exphill-plot1, eval=params$bmd&params$bmd_method == "proast", fig.width=12, fig.height=6, fig.cap=caption1}
+```{r bmd-exphill-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.width=12, fig.height=6, fig.cap=caption1}
 replayPlot(bmd$mf_min_Expon_HILL)
 ```
 
-```{r bmd-exphill-plot2, eval=params$bmd&params$bmd_method == "proast"&plot_max, fig.width=12, fig.height=6, fig.cap=caption2}
+```{r bmd-exphill-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.width=12, fig.height=6, fig.cap=caption2}
 replayPlot(bmd$mf_max_Expon_HILL)
 ```
 
-```{r bmd-invln-tab, eval=params$bmd&params$bmd_method=="proast", results='asis'}
+```{r bmd-invln-tab, eval=params$bmd & params$bmd_method=="proast" & !no_mf, results='asis'}
 cat("####  Inverse Exponential & Log-Normal Models\n\n")
 ```
 
-```{r bmd-invln-cap, eval=params$bmd&params$bmd_method == "proast", include=FALSE}
+```{r bmd-invln-cap, eval=params$bmd & params$bmd_method == "proast" & !no_mf, include=FALSE}
 caption1 <- paste(
   "The fitted curve of the selected Inverse-Exponenetial (left) and",
   "Log-Normal (right) models. Data is MFmin by", params$exp_variable,
@@ -591,19 +604,19 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-invln-plot1, eval=params$bmd&params$bmd_method == "proast", fig.width=12, fig.height=6, fig.cap=caption1}
+```{r bmd-invln-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.width=12, fig.height=6, fig.cap=caption1}
 replayPlot(bmd$mf_min_InvExp_LN)
 ```
 
-```{r bmd-invln-plot2, eval=params$bmd&params$bmd_method == "proast"&plot_max, fig.width=12, fig.height=6, fig.cap=caption2}
+```{r bmd-invln-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.width=12, fig.height=6, fig.cap=caption2}
 replayPlot(bmd$mf_max_InvExp_LN)
 ```
 
-```{r bmd-boot-tab, eval=params$bmd&params$bmd_method=="proast", results='asis'}
+```{r bmd-boot-tab, eval=params$bmd & params$bmd_method=="proast" & !no_mf, results='asis'}
 cat("####  Bootstrap Curves\n\n")
 ```
 
-```{r bmd-boot-cap, eval=params$bmd&params$bmd_method == "proast", include=FALSE}
+```{r bmd-boot-cap, eval=params$bmd & params$bmd_method == "proast" & !no_mf, include=FALSE}
 caption1 <- paste(
   "The bootstrap curves based on model averaging. Data is MFmin by",
   params$exp_variable, "with log-transformation. The geometric mean at each",
@@ -618,19 +631,19 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-boot-plot1, eval=params$bmd&params$bmd_method == "proast", fig.cap=caption1}
+```{r bmd-boot-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.cap=caption1}
 replayPlot(bmd$mf_min_boostrap_curves)
 ```
 
-```{r bmd-boot-plot2, eval=params$bmd&params$bmd_method == "proast"&plot_max, fig.cap=caption2}
+```{r bmd-boot-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
 replayPlot(bmd$mf_max_boostrap_curves)
 ```
 
-```{r bmd-ma-tab, eval=params$bmd&params$bmd_method=="toxicr", results='asis'}
+```{r bmd-ma-tab, eval=params$bmd & params$bmd_method=="toxicr" & !no_mf, results='asis'}
 cat("####  Model Averaged Model\n\n")
 ```
 
-```{r bmd-ma-cap, eval=params$bmd&params$bmd_method == "toxicr", include=FALSE}
+```{r bmd-ma-cap, eval=params$bmd & params$bmd_method == "toxicr" & !no_mf, include=FALSE}
 caption1 <- paste(
   "The fitted model based on model averaging. Data is MFmin by",
   params$exp_variable, " The black points are the individual data points.",
@@ -645,17 +658,17 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-ma-plot1, eval=params$bmd&params$bmd_method=="toxicr", fig.cap=caption1}
+```{r bmd-ma-plot1, eval=params$bmd & params$bmd_method=="toxicr" & !no_mf, fig.cap=caption1}
 bmd$mf_min_ma
 ```
 
-```{r bmd-ma-plot2, eval=params$bmd&params$bmd_method=="toxicr"&plot_max, fig.cap=caption2}
+```{r bmd-ma-plot2, eval=params$bmd & params$bmd_method=="toxicr" & plot_max & !no_mf, fig.cap=caption2}
 bmd$mf_max_ma
 ```
 
 #### Cleveland Plots
 
-```{r bmd-cvd-cap, eval=params$bmd, include=FALSE}
+```{r bmd-cvd-cap, eval=params$bmd & !no_mf, include=FALSE}
 caption1 <- paste(
   "MFmin. The BMD estimate for each model plotted as a red point alongside the 90%",
   "confidence intervals. The size of the BMD point represents the model weight",
@@ -676,17 +689,17 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-cvd-plot1, eval=params$bmd, fig.cap=caption1}
+```{r bmd-cvd-plot1, eval=params$bmd & !no_mf, fig.cap=caption1}
 bmd$mf_min_cleveland
 ```
 
-```{r bmd-cvd-plot2, eval=params$bmd&plot_max, fig.cap=caption2}
+```{r bmd-cvd-plot2, eval=params$bmd&plot_max & !no_mf, fig.cap=caption2}
 bmd$mf_max_cleveland
 ```
 
 #### Confidence Interval Plot
 
-```{r bmd-ci-cap, eval=params$bmd, include=FALSE}
+```{r bmd-ci-cap, eval=params$bmd & !no_mf, include=FALSE}
 caption <- paste(
   "Benchmark dose with 90% confidence intervals representing the dose at which a ",
   params$bmr * 100, " % increase in mutation frequency occurs from reference level.",
@@ -695,7 +708,7 @@ caption <- paste(
 )
 ```
 
-```{r bmd-ci-plot, eval=params$bmd, fig.cap=caption, fig.width=8, fig.height=6}
+```{r bmd-ci-plot, eval=params$bmd & !no_mf, fig.cap=caption, fig.width=8, fig.height=6}
 bmd <- bmd$summary %>% dplyr::filter(Model == "Model averaging")
 plot4.2 <- plot_ci(bmd)
 plot4.2
@@ -719,11 +732,27 @@ mf6 <- calculate_mf(
   correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
-if (!is.null(params$exp_variable)) {
+# Skip this if using a precalc depth because it will add the exp_variable.
+if (!is.null(params$exp_variable) & is.null(params$precalc_depth_data_base6)) {
   sample_exp_map <- filtered_mutation_data %>%
     dplyr::distinct(sample, .data[[params$exp_variable]])
   mf6 <- dplyr::left_join(mf6, sample_exp_map, by = "sample")
 }
+if ("mf_min" %in% colnames(mf6)) {
+  no_mf <- FALSE
+} else {
+  no_mf <- TRUE
+}
+```
+
+```{r mf6-no-mf-msg, results = 'asis', eval = no_mf}
+cat("No depth column in mutation data, nor was a precalculated depth file provided.",
+    "Unable to calculate mutation frequency.",
+    "Unable to normalized subtype proportions to depth")
+```
+
+```{r mf6-tab}
+if (!no_mf) {
 DT::datatable(
   mf6,
   caption = "6-base Mutation Frequnecy per Sample",
@@ -740,7 +769,13 @@ DT::datatable(
   )
 ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
-
+} else {
+  DT::datatable(
+    mf6,
+    caption = "6-base Mutation Sums and Proportions per Sample"
+  )  %>%
+  DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+}
 Results[["6-base MF per Sample"]] <- mf6
 ```
 
@@ -752,7 +787,7 @@ caption <- paste0(
   " variants at 6-base resolution, complex variants, deletions, insertions,",
   " multi-nucleotide variants (mnv) and structural variants (sv). Subtypes",
   " are represented by colour. Data is the proportion",
-  if (!no_depth) " normalized to sequencing depth",
+  if (!no_mf) " normalized to sequencing depth",
   ". Samples are clustered based on the Euclidean distance between their",
   " subtype proportions."
 )
@@ -773,12 +808,19 @@ plot5.12
 ### Mutation Spectra per `r params$exp_variable`
 
 ```{r base6-spectra-exp-variable, eval=!is.null(params$exp_variable)}
+
 # Precalc_depth: Aggregate across the experimental variable
+
 if (!is.null(params$precalc_depth_data_base6)) {
-  depth_base6_expv <- params$precalc_depth_data_base6 %>%
+  depth_base6_expv <- read.delim(
+    file.path(params$precalc_depth_data_base6),
+    sep = params$d_sep, header = TRUE
+  )
+  depth_base6_expv <- depth_base6_expv %>%
     dplyr::group_by(normalized_ref,
                     dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-    dplyr::summarize(subtype_depth = sum(subtype_depth))
+    dplyr::summarize(subtype_depth = sum(subtype_depth),
+                     group_depth = sum(group_depth))
 } else {
   depth_base6_expv <- NULL
 }
@@ -794,36 +836,43 @@ mf6_expv <- calculate_mf(
   correct_depth = correct_depth
 )
 # Calculate the mean subtype MF for the experimental variable
-mf6_expv_mean <- mf6 %>%
-  dplyr::group_by(normalized_subtype,
-                  dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-  dplyr::summarize(mean_mf_min = mean(mf_min),
-                   se_mf_min = sd(mf_min) / dplyr::n(),
-                   mean_mf_max = mean(mf_max),
-                   se_mf_max = sd(mf_max) / dplyr::n())
+if (!no_mf) {
+  mf6_expv_mean <- mf6 %>%
+    dplyr::group_by(normalized_subtype,
+                    dplyr::across(dplyr::all_of(params$exp_variable))) %>%
+    dplyr::summarize(mean_mf_min = mean(mf_min),
+                    se_mf_min = sd(mf_min) / dplyr::n(),
+                    mean_mf_max = mean(mf_max),
+                    se_mf_max = sd(mf_max) / dplyr::n())
 
-mf6_expv <- dplyr::left_join(mf6_expv, mf6_expv_mean,
-                             by = c(params$exp_variable,
-                                    "normalized_subtype")) %>%
-  dplyr::select(-"mf_min", -"mf_max")
+  mf6_expv <- dplyr::left_join(mf6_expv, mf6_expv_mean,
+                              by = c(params$exp_variable,
+                                      "normalized_subtype")) %>%
+    dplyr::select(-"mf_min", -"mf_max")
 
-DT::datatable(
-  mf6_expv,
-  caption = paste("6-base Mutation Frequency per", params$exp_variable),
-  options = list(
-    columnDefs = list(
-      list(targets = c("mean_mf_min", "se_mf_min", "mean_mf_max", "se_mf_max"),
-           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
-    ),
-    rowCallback = JS(
-      "function(row, data, dataIndex) {
-        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
-      }"
+  DT::datatable(
+    mf6_expv,
+    caption = paste("6-base Mutation Frequency per", params$exp_variable),
+    options = list(
+      columnDefs = list(
+        list(targets = c("mean_mf_min", "se_mf_min", "mean_mf_max", "se_mf_max"),
+            render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+      ),
+      rowCallback = JS(
+        "function(row, data, dataIndex) {
+          $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+        }"
+      )
     )
-  )
-) %>%
+  ) %>%
+    DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+} else {
+  DT::datatable(
+    mf6_expv,
+    caption = paste("6-base Mutation Sum and Proportions per", params$exp_variable)
+  ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
-
+}
 Results[["6-base MF per Exp-variable"]] <- mf6_expv
 ```
 
@@ -865,7 +914,7 @@ caption <- paste0(
   " complex variants, deletions, insertions, multi-nucleotide variants (mnv)",
   " and structural variants (sv). Subtypes are represented by colour.",
   " Data is the proportion",
-  if (!no_depth) " normalized to sequencing depth",
+  if (!no_mf) " normalized to sequencing depth",
   "."
 )
 ```
@@ -901,9 +950,25 @@ mf96 <- calculate_mf(
   correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
-if (!is.null(params$exp_variable)) {
+if (!is.null(params$exp_variable) && is.null(params$precalc_depth_data_base6))  {
   mf96 <- dplyr::left_join(mf96, sample_exp_map, by = "sample")
 }
+
+if ("mf_min"%in% colnames(mf96)) {
+  no_mf <- FALSE
+} else {
+  no_mf <- TRUE
+}
+```
+
+```{r mf96-no-mf-msg, results = 'asis', eval = no_mf}
+cat("No depth column in mutation data, nor was a precalculated depth file provided.",
+    "Unable to calculate mutation frequency.",
+    "Unable to normalized subtype proportions to depth")
+```
+
+```{r mf96-tab}
+if (!no_mf) {
 DT::datatable(
   mf96,
   caption = "96-base Mutation Frequnecy per Sample",
@@ -920,6 +985,13 @@ DT::datatable(
   )
 ) %>%
   DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+} else {
+  DT::datatable(
+  mf96,
+  caption = "96-base Mutation Sum and Proportion per Sample"
+) %>%
+  DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+}
 Results[["96-base MF per Sample"]] <- mf96
 ```
 
@@ -928,10 +1000,15 @@ Results[["96-base MF per Sample"]] <- mf96
 ```{r trinuc-spectra-expc, eval=!is.null(params$exp_variable)}
 # Precalc_depth: Aggregate across the experimental variable
 if (!is.null(params$precalc_depth_data_base96)) {
-  precalc_depth_data_base96 <- params$precalc_depth_data_base96 %>%
+  precalc_depth_data_base96 <- read.delim(
+      file.path(params$precalc_depth_data_base96),
+      sep = params$d_sep, header = TRUE
+    )
+    precalc_depth_data_base96 <- precalc_depth_data_base96 %>%
     dplyr::group_by(normalized_context,
                     dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-    dplyr::summarize(subtype_depth = sum(subtype_depth))
+    dplyr::summarize(subtype_depth = sum(subtype_depth),
+                     group_depth = sum(group_depth))
 } else {
   precalc_depth_data_base96 <- NULL
 }
@@ -946,37 +1023,44 @@ mf96_expv <- calculate_mf(
   d_sep = params$d_sep,
   correct_depth = correct_depth
 )
-# Calculate the mean subtype MF for the experimental variable
-mf96_expv_mean <- mf96 %>%
-  dplyr::group_by(normalized_context_with_mutation,
-                  dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-  dplyr::summarize(mean_mf_min = mean(mf_min),
-                   se_mf_min = sd(mf_min) / dplyr::n(),
-                   mean_mf_max = mean(mf_max),
-                   se_mf_max = sd(mf_max) / dplyr::n())
+if (!no_mf) {
+  # Calculate the mean subtype MF for the experimental variable
+  mf96_expv_mean <- mf96 %>%
+    dplyr::group_by(normalized_context_with_mutation,
+                    dplyr::across(dplyr::all_of(params$exp_variable))) %>%
+    dplyr::summarize(mean_mf_min = mean(mf_min),
+                    se_mf_min = sd(mf_min) / dplyr::n(),
+                    mean_mf_max = mean(mf_max),
+                    se_mf_max = sd(mf_max) / dplyr::n())
 
-mf96_expv <- dplyr::left_join(mf96_expv, mf96_expv_mean,
-                              by = c(params$exp_variable,
-                                     "normalized_context_with_mutation")) %>%
-  dplyr::select(-"mf_min", -"mf_max")
+  mf96_expv <- dplyr::left_join(mf96_expv, mf96_expv_mean,
+                                by = c(params$exp_variable,
+                                      "normalized_context_with_mutation")) %>%
+    dplyr::select(-"mf_min", -"mf_max")
 
-DT::datatable(
-  mf96_expv,
-  caption = paste("96-base Mutation Frequency per", params$exp_variable),
-  options = list(
-    columnDefs = list(
-      list(targets = c("mean_mf_min", "se_mf_min", "mean_mf_max", "se_mf_max"),
-           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
-    ),
-    rowCallback = JS(
-      "function(row, data, dataIndex) {
-        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
-      }"
+  DT::datatable(
+    mf96_expv,
+    caption = paste("96-base Mutation Frequency per", params$exp_variable),
+    options = list(
+      columnDefs = list(
+        list(targets = c("mean_mf_min", "se_mf_min", "mean_mf_max", "se_mf_max"),
+            render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+      ),
+      rowCallback = JS(
+        "function(row, data, dataIndex) {
+          $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+        }"
+      )
     )
-  )
-) %>%
-  DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
-
+  ) %>%
+    DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+} else {
+  DT::datatable(
+    mf96_expv,
+    caption = paste("96-base Mutation Sums and Proportions per", params$exp_variable)
+  ) %>%
+    DT::formatRound(columns = c("proportion_min", "proportion_max"), digits = 2)
+}
 Results[["96-base MF per Exp Variable"]] <- mf96_expv
 ```
 
@@ -987,7 +1071,7 @@ caption <- paste0(
   "96-base trinucleotide spectra (minimum) per ",
   if (is.null(params$exp_variable)) "Sample" else params$exp_variable,
   ". Bars are the proportion of SNV subtypes within their trinucleotide context",
-  if (!no_depth) " normalized to the sequencing depth. ",
+  if (!no_mf) " normalized to the sequencing depth. ",
   "Bars are coloured based on SNV subtype. Data labels indicate the total",
   " number of mutations for each SNV subtype"
 )
@@ -1021,10 +1105,12 @@ for (i in seq_along(plots)) {
 
 ## Signature Analysis
 
+**Currently not implemented**
+
 **Ran Signature Assignment: `r params$run_sigfitting`**
 See the Sigprofiler Output folder in `r output_path`
 
-```{r signature-analysis, eval=params$run_sigfitting}
+```{r signature-analysis, eval=FALSE}
 # Think of a way to get these results in the report....
 
 signature_fitting(
@@ -1055,28 +1141,36 @@ mf_rg <- calculate_mf(
   retain_metadata_cols = params$exp_variable,
   correct_depth = correct_depth
 )
-DT::datatable(
-  mf_rg,
-  caption = "MF per sample for each genomic target",
-  options = list(
-    columnDefs = list(
-      list(targets = c("mf_min", "mf_max"),
-           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
-    ),
-    rowCallback = JS(
-      "function(row, data, dataIndex) {
-        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
-      }"
+if ("mf_min" %in% colnames(mf_rg)) {
+  no_mf <- FALSE
+  DT::datatable(
+    mf_rg,
+    caption = "MF per sample for each genomic target",
+    options = list(
+      columnDefs = list(
+        list(targets = c("mf_min", "mf_max"),
+            render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+      ),
+      rowCallback = JS(
+        "function(row, data, dataIndex) {
+          $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+        }"
+      )
     )
   )
-)
-
+} else {
+  no_mf <- TRUE
+  DT::datatable(
+    mf_rg,
+    caption = "Mutation counts per sample for each genomic target"
+  ) 
+}
 Results[["MF per Target Region"]] <- mf_rg
 ```
 
 ## Generalized Linear Mixed Model
 
-```{r regions-glmm, eval=params$do_regions_analysis, message=TRUE, fig.show='hide'}
+```{r regions-glmm, eval=params$do_regions_analysis & !no_mf, message=TRUE, fig.show='hide'}
 rg <- as.data.frame(load_regions_file(params$regions))
 rg_levels <- unique(rg[params$region_col])
 
@@ -1130,7 +1224,7 @@ write_excel(
 
 ## Residuals Histogram
 
-```{r glmm-hist-caption, eval=params$do_regions_analysis, include=FALSE}
+```{r glmm-hist-caption, eval=params$do_regions_analysis & !no_mf, include=FALSE}
 caption <- paste0(
   "GLMM residuals of MFmin modelled as an effect of ",
   params$region_col,
@@ -1141,7 +1235,7 @@ caption <- paste0(
 )
 ```
 
-```{r glmm-residuals-hist, eval=params$do_regions_analysis, fig.cap=caption}
+```{r glmm-residuals-hist, eval=params$do_regions_analysis & !no_mf, fig.cap=caption}
 model_rg_data <- model_rg$model_data
 hist_data <- hist(model_rg_data$residuals, plot = FALSE)
 ylim_max <- max(hist_data$counts) + 1
@@ -1154,7 +1248,7 @@ plot6.3 <- hist(model_rg_data$residuals,
 
 ## Residuals QQ Plot
 
-```{r glmm-qq-caption, eval=params$do_regions_analysis, include=FALSE}
+```{r glmm-qq-caption, eval=params$do_regions_analysis & !no_mf, include=FALSE}
 caption <- paste0(
   "GLMM residuals of MFmin modelled as an effect of ",
   params$region_col,
@@ -1167,7 +1261,7 @@ caption <- paste0(
 )
 ```
 
-```{r glmm-residuals-qq, eval=params$do_regions_analysis, fig.cap=caption}
+```{r glmm-residuals-qq, eval=params$do_regions_analysis & !no_mf, fig.cap=caption}
 qqplot6.4 <- stats::qqnorm(
   model_rg_data$residuals,
   main = "QQ Plot of Residuals"
@@ -1177,7 +1271,7 @@ stats::qqline(model_rg_data$residuals, col = "red")
 
 ## Model Estimates
 
-``` {r glmm-point-estimates, eval=params$do_regions_analysis}
+``` {r glmm-point-estimates, eval=params$do_regions_analysis & !no_mf}
 DT::datatable(
   model_rg$point_estimates,
   caption = "Estimated Mean Mutation Frequency",
@@ -1197,7 +1291,7 @@ DT::datatable(
 
 ## Pairwise Comparisons
 
-```{r glmm-pairwise, eval=!is.null(params$contrasts) && params$do_regions_analysis}
+```{r glmm-pairwise, eval=!is.null(params$contrasts) && params$do_regions_analysis & !no_mf}
 DT::datatable(
   model_rg$pairwise_comparisons,
   caption = "Pairwise Comparisons",
@@ -1220,13 +1314,13 @@ plot_signif <- TRUE
 
 ## Model Plot
 
-```{r set-plot-size6.7, include=FALSE}
+```{r set-plot-size6.7, include=FALSE, eval=params$do_regions_analysis & !no_mf}
 n_rg <- nrow(rg_levels)
 fig_width <- 8
 fig_height <- 6
 ```
 
-```{r plot6.7-caption, eval=params$do_regions_analysis, include=FALSE}
+```{r plot6.7-caption, eval=params$do_regions_analysis & !no_mf, include=FALSE}
 caption <- paste0(
   "Mean Mutation Frequency Minimum (mutations/bp) per ",
   params$region_col,
@@ -1237,7 +1331,7 @@ caption <- paste0(
 )
 ```
 
-```{r plot-glmm, eval=params$do_regions_analysis, fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
+```{r plot-glmm, eval=params$do_regions_analysis & !no_mf, fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
 # Define parameters for plot
 if (!is.null(params$exp_variable)) {
   # rg ordered by expv level with highest avg mf
@@ -1282,7 +1376,6 @@ plot6.7
 # Mutation Hotspots
 
 ```{r, recurrent-mutations}
-
 recurring_mutations_all <- filtered_mutation_data %>%
   dplyr::filter(!variation_type %in% "no_variant",
                 filter_mut == FALSE) %>%
