@@ -64,6 +64,15 @@ render_report <- function(
 
   # Load the profile config
   profile_config <- yaml::yaml.load_file(system.file("extdata", "inputs", "profile_config.yaml", package = "MutSeqR"))
+  if (!profile_config %in% c(
+    "Duplex Sequencing Mouse Mutagenesis Panel",
+    "Duplex Sequencing Human Mutagenesis Panel",
+    "Duplex Sequencing Rat Mutagenesis Panel",
+    "CODEC",
+    "None"
+  )) {
+    stop("Invalid profile configuration in the YAML file.")
+  }
   if (grepl("^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$",
             params$config_profile)) {
     # Join the DS parameters with params list.
@@ -87,10 +96,14 @@ render_report <- function(
                           package = "MutSeqR", mustWork = TRUE)
   message("project directory", params$projectdir)
   message("output directory:", params$outputdir)
+
+  # Validate the Parameters
+  if (!is.character(params$project_title)) stop("project_title must be a character string")
+  if (!is.character(params$researcher_name)) stop("researcher_name must be a character string")
+  if (!is.character(params$user_name)) stop("user_name must be a character string")
+  if (!params$file_type %in% c("table", "vcf")) stop("file_type must be either 'table' or 'vcf'")
+
   # Rendering the R Markdown document
-
-  print(params)
-
   rmarkdown::render(
     input = rmd_path,
     output_dir = params$outputdir,
