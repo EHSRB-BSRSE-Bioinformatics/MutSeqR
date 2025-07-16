@@ -52,7 +52,7 @@ plot_radar <- function(mf_data,
                        facet_col,
                        indiv_y = TRUE) {
 
-  if (!requireNamespace("fmsb")) {
+  if (!requireNamespace("fmsb", quietly = TRUE)) {
     stop("You need the package fmsb to run this function.")
   }
   plot_data <- mf_data %>%
