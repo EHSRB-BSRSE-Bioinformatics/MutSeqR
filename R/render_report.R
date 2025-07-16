@@ -64,7 +64,7 @@ render_report <- function(
 
   # Load the profile config
   profile_config <- yaml::yaml.load_file(system.file("extdata", "inputs", "profile_config.yaml", package = "MutSeqR"))
-  if (!profile_config %in% c(
+  if (!params$config_profile %in% c(
     "Duplex Sequencing Mouse Mutagenesis Panel",
     "Duplex Sequencing Human Mutagenesis Panel",
     "Duplex Sequencing Rat Mutagenesis Panel",
