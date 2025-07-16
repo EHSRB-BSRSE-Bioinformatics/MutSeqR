@@ -2694,10 +2694,16 @@ Workflow Profile
 - *config_profile* : Choose a workflow profile to load pre-defined parameters.
 Current options are "Duplex Sequencing Mouse Mutagenesis Panel",
 "Duplex Sequencing Human Mutagenesis Panel", 
-"Duplex Sequencing Rat Mutagenesis Panel", and "None". Pre-defined parameters are set to
-handle data import and filtering. More profiles coming soon. If not using a
-pre-defined profile ("None"), users must fill out the Custom_Profile_Params
-(see below).
+"Duplex Sequencing Rat Mutagenesis Panel", "CODEC"^1, and "None". Pre-defined
+parameters are set to handle data import and filtering. More profiles coming
+soon. If not using a pre-defined profile ("None"), users must fill out the
+Custom_Profile_Params (see below).
+
+^1 CODEC .maf files output from the CODECsuite analysis pipeline may be
+imported provided the user 1. Adds a "sample" column, 2. Adds an "end" column
+equal to the Start_Position + length(Reference_Allele) - 1, 3. Ensure Chromsome
+entries are consistent with notation of BSgenome seqnames for the given reference
+genome. Ex. GRCh38 requires users to remove "chr" from the Chromosome value.
 
 Data Import
 
@@ -2854,6 +2860,51 @@ for the regions_analysis. This column must be present in the mutation_data
 or in the regions metadata file.
 
 ## Output
+
+render_report() will output the summary report of results as an html file or a pdf file.
+All output will be saved to the output_directory specified in the summary_config.yaml.
+
+### Report
+
+The Summary Report consists of the following sections.
+
+1. **Import the Mutation Data:** Statement of number of imported rows and the
+total number of samples detected.
+2. **Filter the Mutation Data**: Summary of applied filters with total counts
+for the number of records that were flagged/removed.
+3. **Calculate Per-Sample Mutation Frequency**: Mutation frequency calculated
+per sample. Includes plot of mutation frequency per sample and plot of mean
+mutation frequency per experimental group (given experimental variable was
+provided).
+4. **Generalized Linear Modelling**: Model results of mutation frequency as an
+effect of the experimental variable. Includes model summary, residual plots,
+model estimates, pairwise comparisons as specified in "contrasts", and a plot
+of the model estimates and significant results.
+5. **Benchmark Dose Analysis**: BMD results for the experimental variable on
+mutation frequency. BMD estimates per individual model and model-averaged
+result. Includes model plots, cleveland plots, and confidence interval plots.
+6. **6-Base Spectrum**: Mutation frequency calculated at the base_6 resolution
+per-sample and averaged across the experimental variable. Includes hierarchical
+clustering of samples by subtype proportion, spectra comparison between experimental
+groups, and plot of subtype proportions per experimental group.
+7. **96-Base Trinucleotide Spectrum**: Mutation frequency calculated at the base_96
+resolution per-sample and averaged across the experimental variable. Includes
+trinucleotide proportion plots for all experimental groups or by sample if no
+experimental variable is provided.
+8. **Regions Analysis**: Mutation frequency calculated per sample for genomic
+regions of interest. Includes model results of mutation frequency as an effect
+of the experimental variable and genomic target. Pairwise comparisons specified
+in contrasts are conducted for each genomic target individually. If no
+experimental variable is provided, model results reflect mutation frequency as
+an effect of genomic target. 
+9. **Mutation HotSpots**: Statement # of mutations that occur in more than one sample.
+Also includes recurrent mutations within experimental groups.
+10. **Lollipop Plots**: Given genomic regions of interest, plots recurrent mutations
+across genomic position.
+11. **Bubble Plot: Multiple Mutations**: Bubble plot depicting multiplet mutations per
+experimental group.
+
+If an experimental variable is not provided, statistical analysis will be skipped.
 
 
 # References
