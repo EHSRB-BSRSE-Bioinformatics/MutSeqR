@@ -165,6 +165,10 @@ If TRUE, flagged variants are treated as N-calls within the data.
 ^1^ *Only applicable for mutation data that contains an appropriate total_depth column.*
 
 ```{r filter-mutation-data, message=TRUE, results='asis'}
+if (no_depth) {
+  params$rm_filtered_mut_from_depth <- FALSE
+}
+
 filtered_mutation_data <- filter_mut(
   mutation_data,
   vaf_cutoff = params$vaf_cutoff,
@@ -239,8 +243,8 @@ mf_data <- calculate_mf(
   correct_depth = correct_depth,
   retain_metadata_cols = params$exp_variable
 )
+plot_max <- all(mf_data$sum_min != mf_data$sum_max)
 if (!no_mf) {
-  plot_max <- all(mf_data$mf_min != mf_data$mf_max)
   DT::datatable(mf_data,
     caption = "Figure 1. Mutation Frequency per Sample",
     options = list(
@@ -266,7 +270,7 @@ Results <- list("Global MF per Sample" = mf_data)
 
 ## Plot Mutation Frequency per Sample
 
-``` {r set-plot-size3.2, include=FALSE, eval = !no_mf}
+``` {r set-plot-size3.2, include=FALSE}
 fig_width <- 8
 fig_height <- 6
 labels <- "count"
@@ -301,7 +305,7 @@ caption <- paste0(
 
 ```
 
-```{r plot-mf, fig.width=fig_width, fig.height=fig_height, fig.cap=caption, eval = !no_mf}
+```{r plot-mf, eval = !no_mf, fig.width=fig_width, fig.height=fig_height, fig.cap=caption}
 plot_data <- mf_data
 if (!is.null(params$exp_variable)) {
   plot_data[[params$exp_variable]] <- factor(plot_data[[params$exp_variable]],
@@ -732,8 +736,7 @@ mf6 <- calculate_mf(
   correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
-# Skip this if using a precalc depth because it will add the exp_variable.
-if (!is.null(params$exp_variable) & is.null(params$precalc_depth_data_base6)) {
+if (!is.null(params$exp_variable)) {
   sample_exp_map <- filtered_mutation_data %>%
     dplyr::distinct(sample, .data[[params$exp_variable]])
   mf6 <- dplyr::left_join(mf6, sample_exp_map, by = "sample")
@@ -781,7 +784,7 @@ Results[["6-base MF per Sample"]] <- mf6
 
 ### Hierarchical Clustering of Samples
 
-```{r plot-spectra-clust-caption,  include=FALSE}
+```{r plot-spectra-clust-caption, include=FALSE}
 caption <- paste0(
   "Mutation spectrum (minimum) per sample. Subtypes include single-nucleotide,",
   " variants at 6-base resolution, complex variants, deletions, insertions,",
@@ -793,7 +796,7 @@ caption <- paste0(
 )
 ```
 
-```{r plot-spectra-clustered, fig.cap=caption, fig.width=12, fig.height=6}
+```{r plot-spectra-clustered, fig.cap=caption, fig.width=12, fig.height=8}
 plot5.12 <- plot_spectra(
   mf_data = mf6,
   group_col = "sample",
@@ -816,6 +819,9 @@ if (!is.null(params$precalc_depth_data_base6)) {
     file.path(params$precalc_depth_data_base6),
     sep = params$d_sep, header = TRUE
   )
+  # add on the experimental variable
+  depth_base6_expv <- dplyr::left_join(depth_base6_expv, sample_exp_map, by = "sample")
+
   depth_base6_expv <- depth_base6_expv %>%
     dplyr::group_by(normalized_ref,
                     dplyr::across(dplyr::all_of(params$exp_variable))) %>%
@@ -907,7 +913,7 @@ Results[["6-base Spectral Comparison"]] <- base6_comp
 
 ### Plot 6-base Mutation Spectra per `r params$exp_variable`
 
-```{r plot-spectra-exp-caption, eval=!is.null(params$exp_variable),  include=FALSE}
+```{r plot-spectra-exp-caption, eval=!is.null(params$exp_variable), include=FALSE, fig.height = 8}
 caption <- paste0(
   "Mutation spectrum (minimum) per ", params$exp_variable,
   ". Subtypes include single-nucleotide variants at 6-base resolution,",
@@ -950,7 +956,7 @@ mf96 <- calculate_mf(
   correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
-if (!is.null(params$exp_variable) && is.null(params$precalc_depth_data_base6))  {
+if (!is.null(params$exp_variable))  {
   mf96 <- dplyr::left_join(mf96, sample_exp_map, by = "sample")
 }
 
@@ -1003,8 +1009,9 @@ if (!is.null(params$precalc_depth_data_base96)) {
   precalc_depth_data_base96 <- read.delim(
       file.path(params$precalc_depth_data_base96),
       sep = params$d_sep, header = TRUE
-    )
-    precalc_depth_data_base96 <- precalc_depth_data_base96 %>%
+  )
+
+  precalc_depth_data_base96 <- dplyr::left_join(precalc_depth_data_base96, sample_exp_map, by = "sample") %>%
     dplyr::group_by(normalized_context,
                     dplyr::across(dplyr::all_of(params$exp_variable))) %>%
     dplyr::summarize(subtype_depth = sum(subtype_depth),
