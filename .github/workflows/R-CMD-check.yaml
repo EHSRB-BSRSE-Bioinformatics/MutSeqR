@@ -42,7 +42,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, knitr, rmarkdown, BiocStyle, bs4Dash, BSgenome, BSgenome.Mmusculus.UCSC.mm10, car, colorspace, dendsort, doBy, DT, fs, GenVisR, ggdendro, ggh4x, ggrepel, gtools, htmltools, httr, lme4, magick, openxlsx, packcircles, patchwork, RColorBrewer, reticulate, scales, shiny, trackViewer, yaml, xml2  
+          extra-packages: any::rcmdcheck  
           dependencies: '"hard"'
 
       - uses: r-lib/actions/check-r-package@v2
