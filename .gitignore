@@ -48,3 +48,6 @@ output*
 /doc/
 /Meta/
 docs
+
+# README source
+README.Rmd
