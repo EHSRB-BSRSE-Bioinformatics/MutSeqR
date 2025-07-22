@@ -364,7 +364,10 @@ plot3.3 <- plot_mean_mf(
   plot_type = "line",
   plot_error_bars = TRUE,
   plot_indiv_vals = TRUE,
-  group_order = "none",
+  group_order = ifelse(is.null(params$exp_variable),
+                       "smart",
+                       "arranged"),
+  group_order_input = params$exp_variable,
   add_labels = "none",
   plot_legend = FALSE
 ) +
@@ -390,7 +393,7 @@ model <- model_mf(mf_data = mf_data,
                   contrasts = params$contrasts,
                   cont_sep = params$cont_sep)
 cat("Dispersion Parameter taken to be :", model$summary$dispersion)
-if (!is.null(params$contrasts) && any(model$pairwise_comparisons$Significance == "***")) {
+if (!is.null(params$contrasts) && any(grepl("\\*", model$pairwise_comparisons$Significance))) {
   plot_signif <- TRUE
 } else {
   plot_signif <- FALSE
