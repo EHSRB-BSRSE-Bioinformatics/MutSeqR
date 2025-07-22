@@ -40,11 +40,23 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      - name: Install hard dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck  
+          extra-packages: any::rcmdcheck
           dependencies: '"hard"'
 
-      - uses: r-lib/actions/check-r-package@v2
+      - name: Install CRAN/Bioc Suggests
+        run: |
+          install.packages("remotes")
+          github_pkgs <- c("GenVisR", "SigProfilerMatrixGeneratorR", "ToxicR") # Exclude
+          suggests <- remotes::local_package_deps(dependencies = "Suggests")
+          cran_suggests <- setdiff(suggests, github_pkgs)
+          remotes::install_cran(cran_suggests)
+        shell: Rscript {0}
+
+      - name: Check package
+        uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+  
