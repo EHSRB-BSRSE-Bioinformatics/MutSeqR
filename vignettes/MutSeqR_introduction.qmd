@@ -1,24 +1,28 @@
 ---
 title: "MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment"
 author:
-- name: Annette E. Dodge
-  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-- name: Matthew J. Meier
-  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-  email: matthew.meier@hc-sc.gc.ca
+  - name: Annette E. Dodge
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  - name: Matthew J. Meier
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+    email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
-output:
-  BiocStyle::html_document:
+format:
+  html:
+    number-sections: true
     toc: true
-    toc_float: yes
-    code_folding: show
-    code_download: yes
-    css: custom.css
+    toc-depth: 2
+    toc-location: left
+    code-fold: show
+    code-tools: true
+    #css: custom.css
+    html-math-method: mathjax
+    self-contained: true
 bibliography: references.bib
 link-citations: true
 vignette: >
   %\VignetteIndexEntry{MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{quarto::format}
   %\VignetteEncoding{UTF-8}
 ---
   
@@ -100,10 +104,10 @@ of mutation subtype frequencies ad other site-specific frequemcies. The data
 set can be pared down later to include only mutations of interest (SNVs,
 indels, SVs, or any combination). 
 
-Table: (\#tab:required-columns) Required columns for mutation data import.
+Table: Required columns for mutation data import. {.striped .hover #tbl-required-columns}
 
 | **Column** | **VCF Specification** | **Definition** |
-|------------|-----------------------|----------------|
+|:-----------|:----------------------|:---------------|
 | contig | CHROM | The name of the reference sequence. |
 | start | POS | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import. |
 | end | INFO(END) | The half-open end position of the feature in contig. |
@@ -123,10 +127,10 @@ columns, INFO fields, and FORMAT fields will be retained upon import.
 Upon import, records are categorized within the `variation_type` column based
 on their REF and ALT. Categories are listed below.
 
-Table: (\#tab:variation-types) Definitions of Variation types.
+Table: Definitions of Variation types. {.striped .hover #tbl-variation-types}
 
-| variation_type | Definition |
-|------------------|------------|
+| variation_type   | Definition |
+|:-----------------|:-----------|
 | no_variant | No variation, the null-case. |
 | snv | Single nucleotide variant. |
 | mnv | Multiple nucleotide variant. |
@@ -139,10 +143,10 @@ Table: (\#tab:variation-types) Definitions of Variation types.
 
 Additional columns are created to further characterise variants.
 
-Table: (\#tab:mut-columns) Definitions of Mutation data columns.
+Table: Definitions of Mutation data columns. {.striped .hover #tbl-mut-columns}
 
 | Column Name        | Definition                                        |
-|--------------------|---------------------------------------------------|
+|:-------------------|:--------------------------------------------------|
 |  short_ref | The reference base at the start position. |
 | normalized_ref | The short_ref in C/T (pyrimidine) notation for this position. Ex. `A` -> `T`, `G` -> `C` |
 | context | The trinucleotide context at this position. Consists of the reference base and the two flanking bases. Sequences are retrieved from the appropriate BS genome. Ex. `TAC` |
@@ -185,7 +189,8 @@ Context information will be extracted from the installed BSgenome object.
 BSgenome offers genomes with masked sequences. If you wish to use the masked
 version of the genome, set `masked_BS_genome` to `TRUE`.
 
-## Examples {.tabset}
+## Examples 
+::: {.panel-tabset}
 
 We provide an example data set taken from @leblanc-2022. This data
 consists of 24 mouse bone marrow samples sequenced with Duplex Sequencing
@@ -267,6 +272,8 @@ imported_example_data <- import_mut_data(
 DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 ```
 
+:::
+
 ## Region Metadata
 
 Similar to sample metadata, you may supply a file containing the metadata of
@@ -323,17 +330,17 @@ region_example
 ## Custom Column Names
 
 We recognize that column names may differ from those specified in
-Table \@ref(tab:required-columns). Therefore, we have implemented some default
+Table @tbl-required-columns. Therefore, we have implemented some default
 column name synonyms. If your column name matches one of our listed synonyms,
 it will automatically be changed to match our set values. For example, your
 `contig` column may be named `chr` or `chromosome`. After importing your data,
 this synonymous column name will be changed to `contig`. Column names are
 case-insensitive. A list of column name synonyms are listed below.
 
-Table: (\#tab:name-sym) Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import.
+Table: Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import. {.striped .hover #tbl-name-sym} 
 
 | Column | Synonyms |
-|--------|----------|
+|:-------|:---------|
 | alt | alternate |
 | alt_depth | alt_read_depth, var_depth, variant_depth, vd |
 | context | sequence_context, trinucleotide_context, flanking_sequence |
@@ -605,7 +612,7 @@ mf_data_global <- calculate_mf(
 **Table 6.** Global Mutation Frequency per Sample
 
 ```{r mf-global-table, echo=FALSE}
-#| tbl-cap: "datatable {#tbl-datatable}"
+#| tbl-cap: "datatable {.striped .hover #tbl-datatable}"
 DT::datatable(mf_data_global,
   options = list(
     columnDefs = list(
@@ -697,10 +704,10 @@ DT::datatable(mean_mf,
 Mutations can also be grouped by mutation subtype at varying degrees of
 resolution using the `subtype_resolution` parameter. 
 
-Table: (\#tab:subtypes) Definitions of mutation subtype resolutions.
+Table: Definitions of mutation subtype resolutions. {.striped .hover #tbl-subtypes}
 
 |Subtype resolutions| Definition | Example |
-|-------------------|------------|---------|
+|:------------------|:-----------|:--------|
 | `type` | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
 | `base_6` | The simple spectrum; snv subtypes in their pyrimidine context | C>A, C>G, C>T, T>A, T>C, T>G |
 | `base_12` | The snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
@@ -723,10 +730,10 @@ of SNV subtypes and their associated sequence context for the various
 resolutions. Below the columns associated with each subtype_resolution are
 defined:
 
-Table: (\#tab:subtypes-cols) Subtype Resolutions and their associated subtype/context columns.
+Table: Subtype Resolutions and their associated subtype/context columns. {.striped .hover #tbl-subtypes-cols} 
 
 |Subtype resolution | Subtype Column | Context Column |
-|-------------------|----------------|----------------|
+|:------------------|:---------------|:---------------|
 | `type` | `variation_type`| NA |
 | `base_6` | `normalized_subtype` | `normalized_ref` |
 | `base_12` | `subtype` | `short_ref` |
@@ -1056,7 +1063,8 @@ mutation data, the summary table will have no frame of reference for populating
 the `metadata_cols`. Thus, for subtypes that do not occur in the mutation data for
 a given group, the corresponding `metadata_col` will be NA.
 
-## MF Plots {.tabset}
+## MF Plots 
+::: {.panel-tabset}
 
 You can visualize the results of `calculate_mf` using the `plot_mf()` and
 `plot_mean_mf`() functions. These functions offer variable aesthetics for
@@ -1126,6 +1134,7 @@ plot_mean <- plot_mean_mf(
 plot_mean
 ```
 
+:::
 
 # Modeling MF
 
@@ -1260,7 +1269,8 @@ comparisons specified in the `contrasts`.
 
 ### Examples
 
-#### Example 4.1 Model by Dose {.tabset}
+#### Example 4.1 Model by Dose 
+::: {.panel-tabset}
 
 *Example 4.1. Model the effect of dose on MF. Our example data consists of 24*
 *mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups*
@@ -1373,7 +1383,10 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
-#### Example 4.2 Model by Dose and Target {.tabset}
+:::
+
+#### Example 4.2 Model by Dose and Target 
+::: {.panel-tabset}
 
 *Example 4.2.1. Model the effects of dose and genomic locus on MF. Sequencing for*
 *the example data was done on a panel of 20 genomic targets. We will determine*
@@ -1502,7 +1515,10 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
-### Plot Model Results {.tabset}
+:::
+
+### Plot Model Results 
+::: {.panel-tabset}
 
 Plot the results of `model_mf()` using `plot_model_mf()`. This function will
 create a bar or line plot of the point estimates. Users can include the
@@ -1595,6 +1611,8 @@ plot <- plot_model_mf(
 plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
+
+:::
 
 ## Benchmark Dose Modeling
 
@@ -2061,10 +2079,11 @@ strand bias. SBS and DBS matrices are stored in their respective folders in
 the output directory. **Only the SBS96 matrix is used for refitting**.
 *Matrices are stored as `.all` files which can be viewed in a text-editor.*
 
-Table: (\#tab:mat-files) Output Files from SigProfilerMatrixGeneration by Folder.
+::: {.scroll-box style="overflow-x: auto; overflow-y: auto; max-height: 400px;"}
+Table: Output files from SigProfilerMatrixGenerator by folder. {.striped .hover #tbl-mat-files}
 
 | Folder | File | Definition | Plot file |
-|--------|------|------------|-----------|
+|:-------|:-----|:-----------|:----------|
 | SBS | *project.SBS6.all* | The 6 pyrimidine single-nucleotide variants. *C>A, C>G, C>T, T>A, T>C, or T>G* |  *plots/SBS_6_plots_project.pdf* |
 | SBS | *project.SBS18.all*| The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N). |  |
 | SBS | *project.SBS24.all*| The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N). | *plots/SBS_24_plots_project.pdf* |
@@ -2085,6 +2104,9 @@ Table: (\#tab:mat-files) Output Files from SigProfilerMatrixGeneration by Folder
 | TSB | *strandBiasTes_6144.txt*| Transcription Strand Bias Test stats of the SBS1536 variants|  |
 | TSB | *significantResults_strandBiasTest.txt*| Returns significant results from the three files above.|  |
 
+:::
+
+
 **Doublet-base Matrices (DBS)**: DBS are somatic mutations in which a set of two
 adjacent DNA base-pairs are simultaneously substituted with another set of two
 adjacent DNA base-pairs. **We do not recommend using the DBS matrices**
@@ -2099,7 +2121,7 @@ the SigProfiler tools.
 **Plots**: Barplots of the mutation matrices for all groups can be found in
 the "plots" folder. The number of mutations are plotted for each group at the
 various subtype resolutions. Files for each matrix are listed in
-Table \@ref(tab:mat-files).
+Table @tbl-mat-files.
 
 **vcf_files**: This output folder provides text-based files containing the
 original mutations and their SigProfilerMatrixGenerator classification for
@@ -2124,10 +2146,10 @@ matrix generation.
 Mutations are first classified within the four transcriptional bias
 categories:
 
-Table: (\#tab:transcript-cat) SigProfiler Transcriptional Bias Categories.
+Table: SigProfiler transcriptional bias categories. {.striped .hover #tbl-transcript-cat}
 
 |Category        | Description                                           |
-|----------------|-------------------------------------------------------|
+|:---------------|:------------------------------------------------------|
 |Transcribed (T) |The variant is on the transcribed (template) strand.   |
 |Untranscribed (U)|The variant is on the untranscribed (coding) strand.  |
 |Bidirectional (B) |The variant is on both strands and is transcribed either way. |
@@ -2151,34 +2173,36 @@ number of transcribed and untranscribed mutations for each mutation type.
 Results from the signature refitting perfomed by
 [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within
 the "Assignment_Solution" folder. "Assignment_Solution" consists of 3
-subdirectories;  "Activities", "Signatures", and "Solution_Stats". 
+subdirectories;  "Activities", "Signatures", and "Solution_Stats".
 
-**Activities**
+::: {.striped .hover #tbl-assignment-output layout-ncol=1 }
 
 | File | Description |
-|------|-------------|
+|:-----|:------------|
 |*Assignment_Solution_Activities.txt* | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process. |
 |*Assignment_Solution_Activity_Plots.pdf* | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.|
 | *Assignment_Solution_TMB_plot.pdf* | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase. |
 | *Decomposed_Mutation_Probabilities.txt* | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures. |
 | *SampleReconstruction* | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure.|
 
-
-**Signatures**
+Table: Activities {.striped .hover #tbl-activities}
 
 | Files | Description |
-|-------|-------------|
+|:------|:------------|
 | *Assignment_Solution_Signatures.txt* | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures. |
 | *SBS_96_plots_Assignment_Solution.pdf* | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
 
-
-**Solution_Stats**
+Table: Signatures {.striped .hover #tbl-signatures}
 
 | Files | Description |
-|-------|-------------|
+|:------|:------------|
 | *Assignment_Solution_Samples_Stats.txt* | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
 | *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps. |
 
+Table: Solution stats {.striped .hover #tbl-solution-stats}
+
+Signature assignment output files.
+:::
 
 **Other Files**
 
@@ -2235,7 +2259,8 @@ write_mutational_matrix(
 
 ## Plot Spectra
 
-### plot_spectra {.tabset}
+### plot_spectra 
+::: {.panel-tabset}
 
 The mutation spectra can be visualized with  `plot_spectra` which will create a
 stacked bar plot for user-defined groups at the desired subtype resolution.
@@ -2391,7 +2416,10 @@ plot <- plot_spectra(
 plot
 ```                        
 
-### Trinucleotide Plots {.tabset}
+:::
+
+### Trinucleotide Plots 
+::: {.panel-tabset}
 
 The 96-base SNV mutation subtypes can be vizualised using `plot_trinucleotide()`.
 This function creates a bar plot of the 96-base SNV spectrum for all levels of a
@@ -2452,6 +2480,8 @@ plots[3]
 ```{r trinuc-H, fig.wide=TRUE, echo=FALSE, fig.cap=caption}
 plots[4]
 ```
+
+:::
 
 ### Heatmaps
 
@@ -2854,11 +2884,6 @@ for the regions_analysis. This column must be present in the mutation_data
 or in the regions metadata file.
 
 ## Output
-
-
-# References
-
-# Appendix
 
 ## Session Info
 

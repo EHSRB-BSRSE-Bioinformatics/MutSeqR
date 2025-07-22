@@ -22,18 +22,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Patch vignette YAML for pkgdown rendering
-        run: |
-          awk '
-            BEGIN { in_output = 0 }
-            /^output:/ {
-              print "output:\n  rmarkdown::html_document:\n    toc: true\n    toc_float: yes\n    code_folding: show\n    code_download: yes\n    css: custom.css"
-              in_output = 1
-              next
-            }
-            in_output && /^\S/ { in_output = 0 }
-            !in_output { print }
-          ' vignettes/MutSeqR_introduction.Rmd > tmp && mv tmp vignettes/MutSeqR_introduction.Rmd
+      # - name: Patch vignette YAML for pkgdown rendering
+      #   run: |
+      #     awk '
+      #       BEGIN { in_output = 0 }
+      #       /^output:/ {
+      #         print "output:\n  rmarkdown::html_document:\n    toc: true\n    toc_float: yes\n    code_folding: show\n    code_download: yes\n    css: custom.css"
+      #         in_output = 1
+      #         next
+      #       }
+      #       in_output && /^\S/ { in_output = 0 }
+      #       !in_output { print }
+      #     ' vignettes/MutSeqR_introduction.Rmd > tmp && mv tmp vignettes/MutSeqR_introduction.Rmd
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -58,6 +58,9 @@ jobs:
           extra-packages: any::pkgdown, local::.
           dependencies: '"hard"'
           needs: website
+          
+      - name: Install Quarto R package
+        run: Rscript -e 'install.packages("quarto")'
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
