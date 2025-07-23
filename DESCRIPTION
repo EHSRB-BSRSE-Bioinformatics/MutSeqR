@@ -6,45 +6,31 @@ Authors@R: c(
     person("Annette E.", "Dodge",
       email = "annette.dodge@hc-sc.gc.ca",
       role = "aut",
-      comment = c(ORCID = "0000-0002-0446-9055")
-    ),
-    person("Andrew", "Williams",
-      role = "aut",
-      comment = c(ORCID = "0000-0002-7637-7686")
-    ),
-    person("Danielle P.M.", "LeBlanc",
-      role = "aut",
-      comment = c(ORCID = "0000-0002-3847-8371")
-    ),
-    person("David M.", "Schuster",
-      role = "aut",
-      comment = c(ORCID = "0009-0001-6316-4358")
-    ),
-    person("Elena", "Esina", 
-      role = "aut",
-      comment = c(ORCID = "0009-0002-3443-378X")
-    ),
-    person("Clint C.", "Valentine", role = "aut"),
-    person("Jesse J.", "Salk", role = "aut"),
+      comment = c(ORCID = "0000-0002-0446-9055")),
+    person("Andrew", "Williams", role = "aut",
+      comment = c(ORCID = "0000-0002-7637-7686")),
+    person("Danielle P.M.", "LeBlanc", role = "aut",
+      comment = c(ORCID = "0000-0002-3847-8371")),
+    person("David M.", "Schuster", role = "aut",
+      comment = c(ORCID = "0009-0001-6316-4358")),
+    person("Elena", "Esina", role = "aut",
+      comment = c(ORCID = "0009-0002-3443-378X")),
+    person("Clint C.", "Valentine", role = "aut",
+      comment = c(ORCID = "0000-0001-5630-7368")),
+    person("Jesse J.", "Salk", role = "aut",
+      comment = c(ORCID = "0000-0002-7804-0550")),
     person("Alexander Y.", "Maslov", role = "aut"),
     person("Christopher", "Bradley", role = "aut"),
-    person("Carole L.", "Yauk",
-      role = "aut",
-      comment = c(ORCID = "0000-0002-6725-3454")
-    ),
-    person("Francesco", "Marchetti",
-      role = "aut",
-      comment = c(ORCID = "0000-0002-9435-4867")
-    ),    
+    person("Carole L.", "Yauk", role = "aut",
+      comment = c(ORCID = "0000-0002-6725-3454")),
+    person("Francesco", "Marchetti", role = "aut",
+      comment = c(ORCID = "0000-0002-9435-4867")),    
     person("Matthew J.", "Meier",
       email = "matthew.meier@hc-sc.gc.ca",
       role = c("aut", "cre"),
-      comment = c(ORCID = "0000-0001-8199-8754")
-    ),
-    person("Geronimo", "Matteo",
-      role = "ctb",
-      comment = c(ORCID = "0000-0003-0819-4471")
-    )
+      comment = c(ORCID = "0000-0001-8199-8754")),
+    person("Geronimo", "Matteo", role = "ctb",
+      comment = c(ORCID = "0000-0003-0819-4471"))
   )
 Description: Standard methods for analysis of mutation data following error-
     corrected sequencing (ECS) for the purpose of mutagencity assessment.
