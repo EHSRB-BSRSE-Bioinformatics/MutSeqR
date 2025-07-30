@@ -1,0 +1,39 @@
+---
+title: "MutSeqR Summary Report"
+author: "Matthew J. Meier & Annette E. Dodge"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: hide
+    theme: spacelab
+    code_download: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r load_libraries, warning=FALSE, include=FALSE}
+set.seed(3135)
+library(MutSeqR)
+library(here)
+library(knitr)
+library(DT)
+library(bs4Dash)
+```
+
+```{r}
+print(params$project_title)
+print(params$user_name)
+print(params$config_profile)
+print(head(params$mutation_file))
+print(params$sample_data)
+print(params$exp_variable)
+print(params$exp_variable_order)
+print(params$reference_level)
+print(params$contrasts)
+print(params$bmd)
+print(params$bmr)
+```
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
