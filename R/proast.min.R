@@ -3827,13 +3827,14 @@ f.create.graphwin <- function(
         }
     } else {
         ## Open a new device (cross-platform & CRAN/BioC-safe)
+      message("I took this out cause it was opening too many graphics devices. AD")
+        #dev.new()
+
         # Note: dev.new() uses width/height in inches, not pixels!
         # Assume aa and bb are in pixels, so convert
-        width_inches <- aa / 96  # Common screen DPI
-        height_inches <- bb / 96
-        
-        dev.new()
-        #dev.new(width = width_inches, height = height_inches)  # or just dev.new()
+        # width_inches <- aa / 96  # Common screen DPI
+        # height_inches <- bb / 96
+        # dev.new(width = width_inches, height = height_inches)  # or just dev.new()
         # dev.new() doesn't accept `title` or `ypos`.
         # Users will see the device appear, but titles are set in the plotting code.
 
@@ -8482,10 +8483,10 @@ f.boot.ma <- function(
           output = output, filename = filename,
           output_type = output_type)
       }
-      if (knitting) { # adjust plot dimensions when knitting
+      if (knitting) { # adjust plot dimensions when knitting: reduce!!!
         old_par <- par(no.readonly = TRUE)
         on.exit(par(old_par))
-        par(mar = c(6, 5, 6, 13))
+        par(mar = c(0,0,0,0))
       }
       if (!cont)
           ans.all$xy.lim[4:5] <- c(0, 1)
@@ -12386,6 +12387,9 @@ f.plot.gui <- function(
   return_plots = FALSE
 ) {
   WAPP <- ans.all$WAPP
+  # Save current par settings and restore previous settings
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
 
 if (!WAPP) { # Record the plots, don't save to file.
   plot_list <- list()
@@ -13515,6 +13519,7 @@ f.plot.result <- function(
   if (output_type == "none") {
     return(plot_list)
   }
+  
 }
 
   ### TODO
