@@ -250,21 +250,19 @@ bmd_proast <- function(
       )
       if (model_averaging == TRUE) {
         ma_plots <- f.plot.result(
-          results[[1]],
+          proast_results_list = results[[1]],
           output_path = output_path,
           output_type = "none",
           model_averaging = TRUE
         )
-        c_plot <- cleveland_plot(
+
+        c_plots <- cleveland_plot(
           results,
           covariate_col = covariate_col,
           output_path = output_path
         )
-        for (i in seq_along(c_plot)) {
-          grDevices::dev.new()
-          print(c_plot[[i]])
-        }
-        plots <- c(plots, ma_plots, c_plot)
+
+        plots <- c(plots, ma_plots, c_plots)
       }
     }
   }
@@ -278,9 +276,11 @@ bmd_proast <- function(
                   BMR = "CES") %>%
     dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
   results_list <- list(summary = summary)
+
   if (plot_results && is.null(output_path)) {
     results_list <- c(results_list, plots)
   }
+
   if (raw_results) {
     results_list$raw_results <- results[[1]]
   }
