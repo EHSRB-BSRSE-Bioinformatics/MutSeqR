@@ -2109,94 +2109,129 @@ f.constr.dd <- function(model.ans) {
 }
 
 
-f.select.con <- function(ans.all, interactive_mode = T, .proast_env = NULL, display_plots = TRUE) {
-    ans.all$HILL <- NA
-    ans.all$INVEXP <- NA
-    ans.all$LOGN <- NA
-    if (ans.all$nr.models == 1) 
-        ans.all$model.fam <- 1
-    else ans.all$model.fam <- 0
-    if (ans.all$nr.models == 2) 
-        ans.all$model.list <- c("EXP", "HILL")
-    if (ans.all$nr.models == 3) 
-        ans.all$model.list <- c("EXP", "HILL", "INVEXP")
-    if (ans.all$nr.models == 4) 
-        ans.all$model.list <- c("EXP", "HILL", "INVEXP", "LOGN")
-    Vaic <- numeric(ans.all$nr.models)
-    Vnpar.sel <- numeric()
-    if (ans.all$output) 
-        cat(paste("\n\nresponse: ", ans.all$y.leg))
-    ans.all$model.switch <- 0
-    if (ans.all$quick.ans == 6) {
-        return(ans.all)
-        # assign(ans.all$created, ans.all, envir = .proast_env)
-    }
-    if (ans.all$NES.ans == 2) 
-        ans.all$CES <- 0.05
-    ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-    Vaic[1] <- ans.all$EXP$aic
-    Vnpar.sel <- c(Vnpar.sel, ans.all$EXP$npar)
-    ans.all$TREND <- TRUE
-    if (!ans.all$EXP$trend) 
-        ans.all$TREND <- FALSE
-    if (ans.all$nr.models > 1) {
-        if (ans.all$output) 
-            cat(paste("\n\nresponse: ", ans.all$y.leg))
-        ans.all$model.switch <- 1
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-        Vaic[2] <- ans.all$HILL$aic
-        Vnpar.sel <- c(Vnpar.sel, ans.all$HILL$npar)
-        if (!ans.all$TREND) 
-            if (ans.all$HILL$trend) 
-                ans.all$TREND <- TRUE
-    }
-    if (ans.all$nr.models > 2) {
-        if (ans.all$output) 
-            cat(paste("\n\nresponse: ", ans.all$y.leg))
-        ans.all$model.switch <- 2
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-        Vaic[3] <- ans.all$INVEXP$aic
-        Vnpar.sel <- c(Vnpar.sel, ans.all$INVEXP$npar)
-        if (!ans.all$TREND) 
-            if (ans.all$INVEXP$trend) 
-                ans.all$TREND <- TRUE
-    }
-    if (ans.all$nr.models > 3) {
-        if (ans.all$output) 
-            cat(paste("\n\nresponse: ", ans.all$y.leg))
-        ans.all$model.switch <- 3
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-        Vaic[4] <- ans.all$LOGN$aic
-        Vnpar.sel <- c(Vnpar.sel, ans.all$LOGN$npar)
-        if (!ans.all$TREND) 
-            if (ans.all$LOGN$trend) 
-                ans.all$TREND <- TRUE
-    }
-    aic.min <- min(Vaic)
-    model.sel <- (1:ans.all$nr.models)[Vaic == aic.min]
-    if (0) 
-        if (ans.all$full.ans == 1) {
-            cat("\nAIC of full model = ", ans.all$aic.full, "\n")
-            cat("AIC of best fitting model = ", aic.min, "\n")
-        }
-    npar.sel <- max(Vnpar.sel[model.sel])
-    if (length(ans.all$xans) == 1 && !ans.all$model.ans %in% 
-        c(5, 15)) 
-        if (ans.all$full.ans == 1) 
-            if (ans.all$npar.aic.full >= npar.sel) 
-                if (aic.min > ans.all$aic.full + ans.all$aic.crit) {
-                  cat("\nAIC of full model = ", ans.all$aic.full, 
-                    "\n")
-                  cat("AIC of best fitting model = ", aic.min, 
-                    "\n")
-                  ans.all$alert.full <- f.alert.full()
-                  if (ans.all$output) 
-                    cat(ans.all$alert.full)
-                }
-    ans.all$Vaic <- Vaic
-    ans.all$fitted <- T
+f.select.con <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL,
+                         display_plots = TRUE) {
+  ans.all$HILL <- NA
+  ans.all$INVEXP <- NA
+  ans.all$LOGN <- NA
+  if (ans.all$nr.models == 1) {
+    ans.all$model.fam <- 1
+  } else {
+    ans.all$model.fam <- 0
+  }
+  if (ans.all$nr.models == 2) {
+    ans.all$model.list <- c("EXP", "HILL")
+  }
+  if (ans.all$nr.models == 3) {
+    ans.all$model.list <- c("EXP", "HILL", "INVEXP")
+  }
+  if (ans.all$nr.models == 4) {
+    ans.all$model.list <- c("EXP", "HILL", "INVEXP", "LOGN")
+  }
+  Vaic <- numeric(ans.all$nr.models)
+  Vnpar.sel <- numeric()
+  if (ans.all$output) {
+    cat(paste("\n\nresponse: ", ans.all$y.leg))
+  }
+  ans.all$model.switch <- 0
+  if (ans.all$quick.ans == 6) {
     return(ans.all)
-    #assign(ans.all$created, ans.all, envir = .proast_env)
+    # assign(ans.all$created, ans.all, envir = .proast_env)
+  }
+  if (ans.all$NES.ans == 2) {
+    ans.all$CES <- 0.05
+  }
+  ans.all <- f.select.m5.con(
+    ans.all,
+    output = ans.all$output,
+    interactive_mode = interactive_mode,
+    .proast_env = .proast_env,
+    display_plots = display_plots
+  )
+  Vaic[1] <- ans.all$EXP$aic
+  Vnpar.sel <- c(Vnpar.sel, ans.all$EXP$npar)
+  ans.all$TREND <- TRUE
+  if (!ans.all$EXP$trend) {
+    ans.all$TREND <- FALSE
+  }
+  if (ans.all$nr.models > 1) {
+    if (ans.all$output) {
+      cat(paste("\n\nresponse: ", ans.all$y.leg))
+    }
+    ans.all$model.switch <- 1
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output,
+                               interactive_mode = interactive_mode,
+                               .proast_env = .proast_env,
+                               display_plots = display_plots)
+    Vaic[2] <- ans.all$HILL$aic
+    Vnpar.sel <- c(Vnpar.sel, ans.all$HILL$npar)
+    if (!ans.all$TREND) {
+      if (ans.all$HILL$trend) {
+        ans.all$TREND <- TRUE
+      }
+    }
+  }
+  if (ans.all$nr.models > 2) {
+    if (ans.all$output) {
+      cat(paste("\n\nresponse: ", ans.all$y.leg))
+    }
+    ans.all$model.switch <- 2
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output,
+                               interactive_mode = interactive_mode,
+                               .proast_env = .proast_env,
+                               display_plots = display_plots)
+    Vaic[3] <- ans.all$INVEXP$aic
+    Vnpar.sel <- c(Vnpar.sel, ans.all$INVEXP$npar)
+    if (!ans.all$TREND) {
+      if (ans.all$INVEXP$trend) {
+        ans.all$TREND <- TRUE
+      }
+    }
+  }
+  if (ans.all$nr.models > 3) {
+    if (ans.all$output) {
+      cat(paste("\n\nresponse: ", ans.all$y.leg))
+    }
+    ans.all$model.switch <- 3
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output,
+                               interactive_mode = interactive_mode,
+                               .proast_env = .proast_env,
+                               display_plots = display_plots)
+    Vaic[4] <- ans.all$LOGN$aic
+    Vnpar.sel <- c(Vnpar.sel, ans.all$LOGN$npar)
+    if (!ans.all$TREND) {
+      if (ans.all$LOGN$trend) {
+        ans.all$TREND <- TRUE
+      }
+    }
+  }
+  aic.min <- min(Vaic)
+  model.sel <- (1:ans.all$nr.models)[Vaic == aic.min]
+    if (0) {
+      if (ans.all$full.ans == 1) {
+        cat("\nAIC of full model = ", ans.all$aic.full, "\n")
+        cat("AIC of best fitting model = ", aic.min, "\n")
+      }
+    }
+  npar.sel <- max(Vnpar.sel[model.sel])
+  if (length(ans.all$xans) == 1 && !ans.all$model.ans %in% c(5, 15)) {
+    if (ans.all$full.ans == 1) {
+      if (ans.all$npar.aic.full >= npar.sel) {
+        if (aic.min > ans.all$aic.full + ans.all$aic.crit) {
+          cat("\nAIC of full model = ", ans.all$aic.full, "\n")
+          cat("AIC of best fitting model = ", aic.min, "\n")
+          ans.all$alert.full <- f.alert.full()
+          if (ans.all$output) {
+            cat(ans.all$alert.full)
+          }
+        }
+      }
+    }
+  }
+  ans.all$Vaic <- Vaic
+  ans.all$fitted <- TRUE
+  return(ans.all)
+  #assign(ans.all$created, ans.all, envir = .proast_env)
 }
 
 
@@ -8420,7 +8455,8 @@ f.boot.ma <- function(
   .proast_env = NULL,
   display_plots = TRUE,
   filename = NULL,
-  output_type = NULL
+  output_type = NULL,
+  knitting = FALSE
 ) {
   if (ans.all$seed.bt != 0) {
     set.seed(ans.all$seed.bt)
@@ -8435,7 +8471,7 @@ f.boot.ma <- function(
         to = logb(xy.lim[3]), length = 1000
       ))
       name.wapp <- paste("c", yans, "ma.plot", sep = "")
-      if (display_plots) {
+      if (display_plots && !knitting) {
         f.graph.window(
           1,
           WAPP = WAPP,
@@ -8445,6 +8481,11 @@ f.boot.ma <- function(
           svg.plots = svg.plots,
           output = output, filename = filename,
           output_type = output_type)
+      }
+      if (knitting) { # adjust plot dimensions when knitting
+        old_par <- par(no.readonly = TRUE)
+        on.exit(par(old_par))
+        par(mar = c(6, 5, 6, 13))
       }
       if (!cont)
           ans.all$xy.lim[4:5] <- c(0, 1)
@@ -12328,10 +12369,8 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' @param output_type The format that you wish to export the plots as.
 #' @param filename The name of the file to be read.
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
-#' @param record_plots A logical variable indicating whether you want to record
-#' the plots and return them as a list instead of exporting them. This parameter
-#' should only be used when running the function indenpently or within f.plot.result.
-#' It will disrupt f.proast(), so keep the default as FALSE.
+#' @param knitting A TRUE/FALSE value specifying whether you are knitting a document. If TRUE, the function will adjust the plot display accordingly.
+#' @param return_plots A logical variable indicating whether you want to return the plots as a list (TRUE) or not (FALSE, the default). If TRUE, the function will return a list of recorded plots.
 #' @importFrom graphics title text mtext
 #' @importFrom grDevices recordPlot dev.off
 f.plot.gui <- function(
@@ -12343,17 +12382,12 @@ f.plot.gui <- function(
   output_type = NULL,
   filename = NULL,
   interactive_mode = TRUE,
-  record_plots = FALSE
+  knitting = FALSE,
+  return_plots = FALSE
 ) {
   WAPP <- ans.all$WAPP
 
-# Record Plots: just overide some of the parameters. Hacky - can fix later
-# Record Plots should only be set for plotting - not for running the entire proast workflow
-if (record_plots) {
-  WAPP <- FALSE
-  display_plots <- TRUE
-  model.summ <- TRUE
-  HTML <- FALSE
+if (!WAPP) { # Record the plots, don't save to file.
   plot_list <- list()
 }
 
@@ -12376,9 +12410,12 @@ if (record_plots) {
       ans.all$CI.plt <- TRUE
     }
     if (ans.all$model.fam == 0 && length(ans.all$SINGMOD) == 0) {
-      if (!HTML) { # This chunk opens the first graphics window for cont. plots
+      # Open the graphics window
+      if (!HTML) { # This can't be FALSE or else error: ans.all$TREND is of length zero
         if (ans.all$nr.models == 1) {
-          f.graph.window(1)
+          if (!knitting) {
+            f.graph.window(1)
+          }
         } else {
           if (WAPP & !ans.all$svg.plots) {
             .gw.size <- c(800, 400)
@@ -12388,7 +12425,7 @@ if (record_plots) {
             .gw.size <- c(7, 3)
           }
           name.wapp <- paste("a", ans.all$yans, "exphill", sep = "")
-          if (display_plots) {
+          if (display_plots && !knitting) {
             f.create.graphwin(
               .gw.size[1],
               .gw.size[2],
@@ -12437,7 +12474,7 @@ if (record_plots) {
       }
 
       # Record the Expon plot, if we are not making more plots
-      if (ans.all$nr.models == 1 && record_plots) {
+      if (ans.all$nr.models == 1 && !WAPP) {
         plot_list$Expon <- recordPlot()
       }
 
@@ -12471,7 +12508,7 @@ if (record_plots) {
       } # Done Hill
 
       #   Record the Expon/Hill Plot for Continuous Data
-      if (record_plots) {
+      if (!WAPP) {
         plot_list$Expon_HILL <- recordPlot()
       }
 
@@ -12480,7 +12517,7 @@ if (record_plots) {
           dev.off()
         }
         name.wapp <- paste("a", ans.all$yans, "invlogn", sep = "")
-        if (display_plots) {
+        if (display_plots && !knitting) {
           f.create.graphwin( # Create a new Graphics window to house InvE and LN
             .gw.size[1],
             .gw.size[2],
@@ -12526,7 +12563,7 @@ if (record_plots) {
       }
 
       # Save the InvExpon Plot if we are not continuing with the LN
-      if (ans.all$nr.models == 3 && record_plots) {
+      if (ans.all$nr.models == 3 && !WAPP) {
         plot_list$InvExp <- recordPlot()
       }
 
@@ -12555,14 +12592,13 @@ if (record_plots) {
         }
       }
       # Save the InvExpon/LN plot
-      if (record_plots) {
+      if (!WAPP) {
         plot_list$InvExp_LN <- recordPlot()
       }
     }
-    if (ans.all$model.fam > 0 || length(ans.all$SINGMOD) > 
-        0) {
+    if (ans.all$model.fam > 0 || length(ans.all$SINGMOD) > 0) {
         if (HTML || WAPP) {
-            new.window <- F
+            new.window <- FALSE
             name.wapp <- paste("a", ans.all$yans, "singmod")
             f.graph.window(1, WAPP = WAPP, name.wapp = name.wapp, 
               plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
@@ -12726,7 +12762,7 @@ if (record_plots) {
     }
   }
   # Return the plots
-  if (record_plots) {
+  if (!WAPP && return_plots) {
     return(plot_list)
   }
   return(ans.all)
@@ -13397,7 +13433,10 @@ f.plot.result <- function(
   prefix = NULL,
   model_averaging = FALSE
 ) {
-
+  knitting <- isTRUE(getOption('knitr.in.progress'))
+  if (knitting) {
+    message("Knitr is in progress, adjusting the plot display.")
+  }
   # Validate the output_type
   if (!output_type %in% c("none", "jpeg", "pdf", "png", "svg", "tiff")) {
     stop("Invalid output_type. Must be one of none, jpeg, pdf, png, svg, tiff")
@@ -13429,44 +13468,48 @@ f.plot.result <- function(
   } else { # Initialize list to store results
     plot_list <- list()
   }
-
+  # Loop through each response in the results list
   for (i in seq_along(result)) {
-    res <- result[[i]] # loop through the response_cols
+    res <- result[[i]]
     if (output_type == "svg") {
       res$svg.plots <- TRUE
     }
     if (output_type != "none") {
-      message("Setting WAPP to TRUE")
+      message("Setting WAPP to TRUE - saving plots to file")
       res$WAPP <- TRUE
-      if (model_averaging == FALSE) {
-        f.plot.gui(
-          res,
-          filename = filename,
-          output_type = output_type,
-          interactive_mode = FALSE,
-          .proast_env = .proast_env
-        )
-      } else { # Model averaging
-        f.boot.ma(
-          res,
-          filename = filename,
-          output_type = output_type
-        )
+    } else {
+      message("Setting WAPP to FALSE - recording plots")
+      res$WAPP <- FALSE
+    }
+    if (model_averaging == FALSE) {
+      plot <- f.plot.gui(
+        res,
+        filename = filename,
+        output_type = output_type,
+        interactive_mode = FALSE,
+        .proast_env = .proast_env,
+        knitting = knitting,
+        return_plots = TRUE
+      )
+    } else { # Model averaging
+      f.boot.ma(
+        res,
+        filename = filename,
+        output_type = output_type,
+        knitting = knitting
+      )
+      if (output_type == "none") {
+        plot <- list()
+        plot$bootstrap_curves <- recordPlot()
       }
-    } else { # When output type isn't set, record the plots
-      if (model_averaging == FALSE) {
-        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE, .proast_env = .proast_env)
-      } else {
-        plots <- list()
-        f.boot.ma(res, display_plots = TRUE)
-        plots$boostrap_curves <- recordPlot()
-      }
+    }
+    if (output_type == "none") {
       # Add Response to plot names
       response <- res$varnames[res$yans]
-      new_names <- paste0(response, "_", names(plots))
-      names(plots) <- new_names
+      new_names <- paste0(response, "_", names(plot))
+      names(plot) <- new_names
       # Add plots to the master list
-      plot_list <- c(plot_list, plots)
+      plot_list <- c(plot_list, plot)
     }
   }
   if (output_type == "none") {
