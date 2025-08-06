@@ -13,7 +13,8 @@ f.plot.gui(
   output_type = NULL,
   filename = NULL,
   interactive_mode = TRUE,
-  record_plots = FALSE
+  knitting = FALSE,
+  return_plots = FALSE
 )
 }
 \arguments{
@@ -34,10 +35,9 @@ the plots or not.}
 
 \item{interactive_mode}{A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.}
 
-\item{record_plots}{A logical variable indicating whether you want to record
-the plots and return them as a list instead of exporting them. This parameter
-should only be used when running the function indenpently or within f.plot.result.
-It will disrupt f.proast(), so keep the default as FALSE.}
+\item{knitting}{A TRUE/FALSE value specifying whether you are knitting a document. If TRUE, the function will adjust the plot display accordingly.}
+
+\item{return_plots}{A logical variable indicating whether you want to return the plots as a list (TRUE) or not (FALSE, the default). If TRUE, the function will return a list of recorded plots.}
 }
 \description{
 Runs through the plotting functions depending on data type
