@@ -580,11 +580,11 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-exphill-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.width=12, fig.height=6, fig.cap=caption1}
+```{r bmd-exphill-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.cap=caption1}
 replayPlot(bmd$mf_min_Expon_HILL)
 ```
 
-```{r bmd-exphill-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.width=12, fig.height=6, fig.cap=caption2}
+```{r bmd-exphill-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
 replayPlot(bmd$mf_max_Expon_HILL)
 ```
 
@@ -611,11 +611,11 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-invln-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.width=12, fig.height=6, fig.cap=caption1}
+```{r bmd-invln-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.cap=caption1}
 replayPlot(bmd$mf_min_InvExp_LN)
 ```
 
-```{r bmd-invln-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.width=12, fig.height=6, fig.cap=caption2}
+```{r bmd-invln-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
 replayPlot(bmd$mf_max_InvExp_LN)
 ```
 
@@ -631,19 +631,19 @@ caption1 <- paste(
   params$num_bootstraps
 )
 caption2 <- paste(
-  "The bootstrap curves based on model averaging. Data is MFmax by",
+  "The bootstrap curves based on model averaging. Data is MFmin (left) and MFmax (right) by",
   params$exp_variable, "with log-transformation. The geometric mean at each",
   params$exp_variabe, "is plotted as a triangle. Number of bootstraps =",
   params$num_bootstraps
 )
 ```
 
-```{r bmd-boot-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.cap=caption1}
-replayPlot(bmd$mf_min_boostrap_curves)
+```{r bmd-boot-plot1, eval=params$bmd & params$bmd_method == "proast" & !plot_max & !no_mf, fig.cap=caption1}
+replayPlot(bmd$mf_min_bootstrap_curves)
 ```
 
 ```{r bmd-boot-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
-replayPlot(bmd$mf_max_boostrap_curves)
+replayPlot(bmd$mf_max_bootstrap_curves)
 ```
 
 ```{r bmd-ma-tab, eval=params$bmd & params$bmd_method=="toxicr" & !no_mf, results='asis'}
