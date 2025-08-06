@@ -1414,65 +1414,16 @@ caption <- paste(
 ```
 
 ```{r lolliplot, eval=params$do_regions_analysis, fig.cap=caption, fig.width=12, fig.height=6, results='asis'}
-
-plot_data <- filtered_mutation_data %>%
-  dplyr::filter(
-    !variation_type %in% "no_variant",
-    filter_mut == FALSE
-  ) %>%
-  dplyr::group_by(
-    .data[[params$region_col]], start, end, normalized_subtype
-  ) %>%
-  dplyr::tally() %>%
-  dplyr::arrange(-n) %>%
-  dplyr::filter(n > 1)
-unique_contigs <- unique(plot_data[[params$region_col]])
-plot_data$normalized_subtype <- factor(
-  plot_data$normalized_subtype, # change to subtype colours
-  levels = c(
-    "complex", "deletion", "insertion", "mnv", "sv",
-    "C>A", "C>G", "C>T", "T>A", "T>C", "T>G"
-  )
-)
-palette <- c(
-  RColorBrewer::brewer.pal(5, "BrBG"),
-  RColorBrewer::brewer.pal(6, "Spectral")
-)
-names(palette) <- c(
-  "complex", "deletion", "insertion", "mnv", "sv",
-  "T>G", "T>C", "T>A", "C>T", "C>G", "C>A"
-)
-
-plot_list <- list()
-for (contig_name in unique_contigs) {
-  cat("### ", contig_name, "\n\n")
-  df <- filter(plot_data, .data[[params$region_col]] == contig_name)
-  print(ggplot(df, aes(x = start, y = n)) +
-    # Lollipop stick: line from (x, 0) to (x, n)
-    geom_segment(aes(x = start, xend = start, y = 0, yend = n),
-                 linewidth = 0.3,
-                 show.legend = FALSE,
-                 color = "black") +
-    # Lollipop "candy": the point
-    geom_point(aes(fill = normalized_subtype), shape = 21, size = 3) +
-    scale_fill_manual(values = palette) +
-    scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
-    labs(
-      title = paste("Recurrent Mutations on", contig_name),
-      x = "Genomic Position (start)",
-      y = "Recurrence (n)",
-      color = "Normalized Subtype"
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid = element_blank(),
-      axis.line = element_line(color = "black"),
-      axis.ticks = element_line(color = "black"),
-      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5)
-    )
-  )
+plot <- plot_lollipop(mutation_data = filtered_mutation_data,
+                      min_recurrence = 2,
+                      group_col = params$region_col,
+                      custom_palette = NULL)
+plot_list <- names(plot)
+for (p in plot_list) {
+  cat("### ", p, "\n\n")
+  print(plot[p])
   cat("\n")
-}
+}                            
 ```
 
 ```{r, recur-per-sample, eval=FALSE}
