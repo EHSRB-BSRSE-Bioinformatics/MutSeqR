@@ -8483,11 +8483,11 @@ f.boot.ma <- function(
           output = output, filename = filename,
           output_type = output_type)
       }
-      if (knitting) { # adjust plot dimensions when knitting: reduce!!!
-        old_par <- par(no.readonly = TRUE)
-        on.exit(par(old_par))
-        par(mar = c(0,0,0,0))
-      }
+      # if (knitting) { # adjust plot dimensions when knitting?
+      #   old_par <- par(no.readonly = TRUE)
+      #   on.exit(par(old_par))
+      #   par(mar = c(0,0,0,0))
+      # }
       if (!cont)
           ans.all$xy.lim[4:5] <- c(0, 1)
       ans.all$xy.lim[1] <- dum.contr
@@ -12387,9 +12387,6 @@ f.plot.gui <- function(
   return_plots = FALSE
 ) {
   WAPP <- ans.all$WAPP
-  # Save current par settings and restore previous settings
-  old_par <- par(no.readonly = TRUE)
-  on.exit(par(old_par))
 
 if (!WAPP) { # Record the plots, don't save to file.
   plot_list <- list()
