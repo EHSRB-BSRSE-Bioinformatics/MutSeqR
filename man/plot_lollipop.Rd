@@ -5,21 +5,21 @@
 \title{Plot recurrent mutations in a lollipop plot using ggplot2}
 \usage{
 plot_lollipop(
-  mutations,
+  mutation_data,
   min_recurrence = 2,
-  group_by_col = "dose_group",
+  group_col = "dose_group",
   custom_palette = NULL
 )
 }
 \arguments{
-\item{mutations}{A data frame containing mutation data. It must contain columns
+\item{mutation_data}{A data frame containing mutation data. It must contain columns
 for genomic start position (\code{start}), \code{variation_type}, \code{normalized_subtype},
-and a column to group by (see \code{group_by_col}).}
+and a column to group by (see \code{group_col}).}
 
 \item{min_recurrence}{An integer specifying the minimum number of times a
 mutation must be observed at the same position to be plotted. Defaults to 2.}
 
-\item{group_by_col}{A string specifying the column name to group mutations by,
+\item{group_col}{A string specifying the column name to group mutation_data by,
 typically representing chromosomes or contigs (e.g., "seqnames", "chr").
 Defaults to "seqnames".}
 
@@ -50,7 +50,7 @@ example_data$dose_group <- factor(example_data$dose_group,
                                              "Medium", "High"))
 
   # 2. Generate the plots
-  plot_list <- plot_lollipop(mutations = example_data, min_recurrence = 2)
+  plot_list <- plot_lollipop(mutation_data = example_data, min_recurrence = 2)
 
   # 3. Display a plot for a specific chromosome
   # print(plot_list$chr1)
