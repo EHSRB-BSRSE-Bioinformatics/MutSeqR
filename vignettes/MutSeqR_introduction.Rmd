@@ -1686,7 +1686,7 @@ Users may access the raw, unparsed PROAST results by setting
 *increase in MF from control. This will be calculated for both MFmin and MFmax.*
 * See example 3.1 for calculating mf_data_global.*
 
-```{r proast, results='hide'}
+```{r proast, results='hide', fig.show = 'hide'}
 proast_results <- bmd_proast(
   mf_data = mf_data_global,
   dose_col = "dose",
@@ -1694,15 +1694,115 @@ proast_results <- bmd_proast(
   bmr = 0.5,
   model_averaging = TRUE,
   num_bootstraps = 10, # recommended value 200
-  plot_results = FALSE
+  plot_results = TRUE,
+  output_path = NULL
 )
 ```
+
+
+
+#### BMD Results {.tabset}
+
+##### Summary
 
 **Table 22.** BMD Estimates by PROAST.
 
 ```{r proast-results, echo=FALSE}
-DT::datatable(proast_results) %>%
+DT::datatable(proast_results$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
+```
+
+##### Exponential & Hill Models
+
+```{r bmd-exphill-cap, include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmin by Dose following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each dose is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmax by Dose following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each dose is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+```
+
+```{r bmd-exphill-plot1, fig.cap=caption1}
+replayPlot(proast_results$mf_min_Expon_HILL)
+```
+
+```{r bmd-exphill-plot2, fig.cap=caption2}
+replayPlot(proast_results$mf_max_Expon_HILL)
+```
+
+#####  Inverse Exponential & Log-Normal Models
+
+```{r bmd-invln-cap, include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmin by Dose",
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each dose",
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmax by Dose",
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each dose",
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+```
+
+```{r bmd-invln-plot1, fig.cap=caption1}
+replayPlot(proast_results$mf_min_InvExp_LN)
+```
+
+```{r bmd-invln-plot2, fig.cap=caption2}
+replayPlot(proast_results$mf_max_InvExp_LN)
+```
+
+#####  Bootstrap Curves
+
+```{r bmd-boot-cap, include=FALSE}
+caption1 <- paste(
+  "The bootstrap curves based on model averaging. Data is MFmin (left) and MFmax (right) by",
+  " Dose with log-transformation. The geometric mean at each dose",
+  "is plotted as a triangle. Number of bootstraps = 10 (although the recommended value is 200)."
+)
+```
+
+```{r bmd-boot-plot2, fig.cap=caption1}
+replayPlot(proast_results$mf_max_bootstrap_curves)
+```
+
+##### Cleveland Plots
+
+```{r bmd-cvd-cap, include=FALSE}
+caption1 <- paste(
+  "MFmin. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging based on AIC."
+)
+caption2 <- paste(
+  "MFmax. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging based on AIC."
+)
+```
+
+```{r bmd-cvd-plot1, fig.cap=caption1}
+proast_results$mf_min_cleveland
+```
+
+```{r bmd-cvd-plot2, fig.cap=caption2}
+proast_results$mf_max_cleveland
 ```
 
 ### ToxicR
