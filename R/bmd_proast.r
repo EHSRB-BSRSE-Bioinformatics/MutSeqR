@@ -75,13 +75,19 @@
 #' points are plotted using small triangles. The geometric mean (median) at
 #' each dose is plotted as a large triangle. The BMD is indicated by the
 #' dotted line. If applicable, the covariate subgroup is indicated by color.
+#' When output_path = NULL, plots are returned alongside results as recordedPlot
+#' objects. View plots with replayPlot().
 #' \item bootstrap_curves If \code{model_averaging = TRUE}, the bootstrap
 #' curves based on model averaging. The geometric mean (median) at each dose
-#' is plotted as a large triangle. Data is log-transformed.
+#' is plotted as a large triangle. Data is log-transformed. When
+#' output_path = NULL, plots are returned alongside results as recordedPlot
+#' objects. View plots with replayPlot().
 #' \item cleveland plot if \code{model_averaging = TRUE} The BMD estimate
 #' for each model is plotted as a red point alongside the 90% confidence
 #' intervals. The size of the BMD point represents the model weight assigned
-#' during model averaging, based on the AIC.
+#' during model averaging, based on the AIC. When output_path = NULL, plots
+#' are returned alongside results as ggplots. View plots by calling object
+#' name.
 #' }
 #'
 #' If \code{raw_results = TRUE}, the function will return the raw results of
