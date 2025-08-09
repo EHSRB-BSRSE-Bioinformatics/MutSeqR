@@ -322,7 +322,7 @@ plot_spectra <- function(mf_data,
           heights = c(1, 1, 1),
           axis_titles = "collect",
           axes = "collect",
-          guides = "collect"
+          guides = "keep"
         )
       return(p)
     } else {
@@ -349,7 +349,7 @@ plot_spectra <- function(mf_data,
           heights = c(1, 1, 1),
           axis_titles = "collect",
           axes = "collect",
-          guides = "collect"
+          guides = "keep"
         )
     } else {
       return(bar)
