@@ -315,7 +315,11 @@ plot_spectra <- function(mf_data,
   if (group_order == "clustered") {
     if (do_panels) {
       bar_nonsnv <- bar_nonsnv +
-        legendry::scale_x_dendro(clust = hc, position = "top", labels = NULL) +
+      guides(
+        x = legendry::guide_axis_dendro(clust = hc,
+                                        position = "top",
+                                        labels = FALSE)
+        ) +
         theme(axis.ticks.length.x = unit(10, "pt"))
      p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol=1) +
         patchwork::plot_layout(
@@ -327,8 +331,11 @@ plot_spectra <- function(mf_data,
       return(p)
     } else {
       p <- bar +
-        legendry::scale_x_dendro(clust = hc, position = "top", labels = NULL
-        ) +
+        guides(
+          x = legendry::guide_axis_dendro(clust = hc,
+                                          position = "top",
+                                          labels = FALSE)
+                                        ) +
         theme(axis.ticks.length.x = unit(10, "pt"))
       x_axis <- ggplot(plot_data, aes(x = .data$group)) +
        # theme_minimal() +
