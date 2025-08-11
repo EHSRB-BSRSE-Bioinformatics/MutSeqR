@@ -32,9 +32,9 @@ jobs:
       
       - name: Remove existing PDF manual if it exists
         run: |
-        if [ -f inst/doc/MutSeqR.pdf ]; then
-        rm inst/doc/MutSeqR.pdf
-        fi
+          if [ -f inst/doc/MutSeqR.pdf ]; then
+          rm inst/doc/MutSeqR.pdf
+          fi
 
       - name: Build PDF manual
         run: |

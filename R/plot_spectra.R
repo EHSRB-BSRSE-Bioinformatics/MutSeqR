@@ -61,7 +61,7 @@
 #' @param rotate_xlabs A logical value indicating whether the x-axis labels
 #' should be rotated 90 degrees. Default is FALSE.
 #' @import ggplot2
-#' @import legendry
+#' @import ggdendro
 #' @importFrom dplyr select arrange across all_of
 #' @export
 #' @examples
@@ -116,6 +116,11 @@ plot_spectra <- function(mf_data,
   # check package dependencies
   if (!requireNamespace("patchwork", quietly = TRUE)) {
       stop("Package patchwork is required. Please install the package using 'install.packages('patchwork')'")
+  }
+  if (group_order == "clustered") {
+      if (!requireNamespace("ggdendro", quietly = TRUE)) {
+          stop("Package ggdendro is required for clustered ordering. Please install using 'install.packages('ggdendro')'")
+      }
   }
  if (group_order == "smart") {
     if (!requireNamespace("gtools", quietly = TRUE)) {
@@ -262,6 +267,7 @@ plot_spectra <- function(mf_data,
         scale_fill_manual(values = palette) +
         axis_labels +
        # theme_minimal() + breaks the dendrogram
+       # TODO: this may not be true anymore now that we're using ggdendro - could simplify the code if we don't have to specify theme manually
         theme(
           panel.background = element_rect(fill = "white", colour = NA),
           plot.background = element_rect(fill = "white", colour = NA),
@@ -313,49 +319,53 @@ plot_spectra <- function(mf_data,
 
   # Plot dendrogram
   if (group_order == "clustered") {
-    if (do_panels) {
-      bar_nonsnv <- bar_nonsnv +
-        legendry::scale_x_dendro(clust = hc, position = "top", labels = NULL) +
-        theme(axis.ticks.length.x = unit(10, "pt"))
-     p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol=1) +
-        patchwork::plot_layout(
-          heights = c(1, 1, 1),
-          axis_titles = "collect",
-          axes = "collect",
-          guides = "collect"
-        )
-      return(p)
-    } else {
-      p <- bar +
-        legendry::scale_x_dendro(clust = hc, position = "top", labels = NULL
-        ) +
-        theme(axis.ticks.length.x = unit(10, "pt"))
-      x_axis <- ggplot(plot_data, aes(x = .data$group)) +
-       # theme_minimal() +
-        labs(x = x_lab) +
-        theme(axis.text.x = element_text(angle = angle),
-              axis.ticks.length = unit(0.1, "cm"))
+    # Create the dendrogram plot using ggdendro
+    dendro_plot <- ggdendro::ggdendrogram(hc, rotate = FALSE, labels = FALSE) +
+      theme_void() # Removes all axes, labels, etc.
 
-      layout <- c(patchwork::area(t = 1, l = 1, b = 1, r = 1),
-                  patchwork::area(t = 1, l = 1, b = 1, r = 1))
-      p <- x_axis + p + patchwork::plot_layout(design = layout)
-      return(p)
+    # Modify the main bar plot(s) to align with the dendrogram
+    theme_for_bar <- theme(
+      axis.text.x = element_blank(),
+      axis.title.x = element_blank(),
+      axis.ticks.x = element_blank()
+    )
+
+    bar <- bar + theme_for_bar
+    if (do_panels) {
+      bar_nonsnv <- bar_nonsnv + theme_for_bar
     }
-  } else {
+
+    # Use patchwork to stack the plots
+    if (do_panels) {
+      # Stack dendrogram, non-snv plot, and snv plot
+      p <- patchwork::wrap_plots(dendro_plot, bar_nonsnv, bar, 
+                                 ncol = 1,
+                                 heights = c(0.2, 1, 1)) + # Adjust heights
+      patchwork::plot_layout(guides = "collect")
+
+    } else {
+      # Stack dendrogram on top of the single bar plot
+      p <- patchwork::wrap_plots(dendro_plot, bar,
+                                 ncol = 1,
+                                 heights = c(0.2, 1)) # Adjust heights as needed
+    }
+    return(p)
+
+  } else { # This is your original code for non-clustered plots
     if (do_panels) {
      p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol = 1) +
-    #  p <- bar_nonsnv / bar +
         patchwork::plot_layout(
-          heights = c(1, 1, 1),
           axis_titles = "collect",
           axes = "collect",
-          guides = "collect"
+          guides = "keep"
         )
     } else {
-      return(bar)
+      p <- bar
     }
+    return(p)
   }
 }
+
 
 #' Hierarchical Clustering
 #' @description perform hierarchical clustering of samples
