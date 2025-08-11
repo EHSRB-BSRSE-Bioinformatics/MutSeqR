@@ -18,11 +18,18 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - {os: ubuntu-latest, r: 'devel'}
+          - {os: windows-latest, r: 'devel'}
+          # Uncomment when in release
+          #- {os: windows-latest, r: 'release'}
+          #- {os: ubuntu-latest,   r: 'release'}
+
+          # For self hosted GH Actions runners
           # - {os: self-hosted,   r: 'release'}
+
+          # Other
           # - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
           # - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
           # - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
