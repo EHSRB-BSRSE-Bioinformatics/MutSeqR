@@ -1,4 +1,5 @@
-#' Transition-transversion plot
+#' Plot spectra
+#' 
 #' @description Given mf data, construct a plot displaying the
 #' mutation subtypes observed in a cohort.
 #' @param mf_data A data frame containing the mutation frequency data at the

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_spectra.R
 \name{plot_spectra}
 \alias{plot_spectra}
-\title{Transition-transversion plot}
+\title{Plot spectra}
 \usage{
 plot_spectra(
   mf_data,

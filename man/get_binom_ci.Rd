@@ -38,10 +38,14 @@ not part of MutSeqR's recommended workflow, but is provided here for
 users who wish to use it.
 }
 \examples{
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut as in Example 4.
+# Sequenced on TS Mouse Mutagenesis Panel. Example data is
+# retrieved from MutSeqRData, an ExperimentHub data package.
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
+
 mf <- calculate_mf(example_data)
 confint <- get_binom_ci(mf_data = mf,
                         sum_col = "sum_min",

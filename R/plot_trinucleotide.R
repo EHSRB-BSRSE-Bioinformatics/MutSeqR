@@ -1,4 +1,5 @@
- #' Plot the trinucleotide spectrum
+#' Plot the trinucleotide spectrum
+#' 
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
 #' a given group.
 #' @param mf_96 A data frame containing the mutation frequency data at the

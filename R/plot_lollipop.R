@@ -32,6 +32,8 @@
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
 #' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' #' if (requireNamespace("dplyr", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' example_data <- eh[["EH9861"]]
