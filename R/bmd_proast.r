@@ -75,13 +75,19 @@
 #' points are plotted using small triangles. The geometric mean (median) at
 #' each dose is plotted as a large triangle. The BMD is indicated by the
 #' dotted line. If applicable, the covariate subgroup is indicated by color.
+#' When output_path = NULL, plots are returned alongside results as recordedPlot
+#' objects. View plots with replayPlot().
 #' \item bootstrap_curves If \code{model_averaging = TRUE}, the bootstrap
 #' curves based on model averaging. The geometric mean (median) at each dose
-#' is plotted as a large triangle. Data is log-transformed.
+#' is plotted as a large triangle. Data is log-transformed. When
+#' output_path = NULL, plots are returned alongside results as recordedPlot
+#' objects. View plots with replayPlot().
 #' \item cleveland plot if \code{model_averaging = TRUE} The BMD estimate
 #' for each model is plotted as a red point alongside the 90% confidence
 #' intervals. The size of the BMD point represents the model weight assigned
-#' during model averaging, based on the AIC.
+#' during model averaging, based on the AIC. When output_path = NULL, plots
+#' are returned alongside results as ggplots. View plots by calling object
+#' name.
 #' }
 #'
 #' If \code{raw_results = TRUE}, the function will return the raw results of
@@ -250,21 +256,19 @@ bmd_proast <- function(
       )
       if (model_averaging == TRUE) {
         ma_plots <- f.plot.result(
-          results[[1]],
+          proast_results_list = results[[1]],
           output_path = output_path,
           output_type = "none",
           model_averaging = TRUE
         )
-        c_plot <- cleveland_plot(
+
+        c_plots <- cleveland_plot(
           results,
           covariate_col = covariate_col,
           output_path = output_path
         )
-        for (i in seq_along(c_plot)) {
-          grDevices::dev.new()
-          print(c_plot[[i]])
-        }
-        plots <- c(plots, ma_plots, c_plot)
+
+        plots <- c(plots, ma_plots, c_plots)
       }
     }
   }
@@ -278,9 +282,11 @@ bmd_proast <- function(
                   BMR = "CES") %>%
     dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
   results_list <- list(summary = summary)
+
   if (plot_results && is.null(output_path)) {
     results_list <- c(results_list, plots)
   }
+
   if (raw_results) {
     results_list$raw_results <- results[[1]]
   }

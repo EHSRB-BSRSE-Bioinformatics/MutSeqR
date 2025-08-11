@@ -1672,7 +1672,7 @@ Users may access the raw, unparsed PROAST results by setting
 *increase in MF from control. This will be calculated for both MFmin and MFmax.*
 * See example 3.1 for calculating mf_data_global.*
 
-```{r proast, results='hide'}
+```{r proast, results='hide', fig.show = 'hide'}
 proast_results <- bmd_proast(
   mf_data = mf_data_global,
   dose_col = "dose",
@@ -1680,15 +1680,115 @@ proast_results <- bmd_proast(
   bmr = 0.5,
   model_averaging = TRUE,
   num_bootstraps = 10, # recommended value 200
-  plot_results = FALSE
+  plot_results = TRUE,
+  output_path = NULL
 )
 ```
+
+
+
+#### BMD Results {.tabset}
+
+##### Summary
 
 **Table 22.** BMD Estimates by PROAST.
 
 ```{r proast-results, echo=FALSE}
-DT::datatable(proast_results) %>%
+DT::datatable(proast_results$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
+```
+
+##### Exponential & Hill Models
+
+```{r bmd-exphill-cap, include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmin by Dose following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each dose is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmax by Dose following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each dose is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+```
+
+```{r bmd-exphill-plot1, fig.cap=caption1}
+replayPlot(proast_results$mf_min_Expon_HILL)
+```
+
+```{r bmd-exphill-plot2, fig.cap=caption2}
+replayPlot(proast_results$mf_max_Expon_HILL)
+```
+
+#####  Inverse Exponential & Log-Normal Models
+
+```{r bmd-invln-cap, include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmin by Dose",
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each dose",
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmax by Dose",
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each dose",
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+```
+
+```{r bmd-invln-plot1, fig.cap=caption1}
+replayPlot(proast_results$mf_min_InvExp_LN)
+```
+
+```{r bmd-invln-plot2, fig.cap=caption2}
+replayPlot(proast_results$mf_max_InvExp_LN)
+```
+
+#####  Bootstrap Curves
+
+```{r bmd-boot-cap, include=FALSE}
+caption1 <- paste(
+  "The bootstrap curves based on model averaging. Data is MFmin (left) and MFmax (right) by",
+  " Dose with log-transformation. The geometric mean at each dose",
+  "is plotted as a triangle. Number of bootstraps = 10 (although the recommended value is 200)."
+)
+```
+
+```{r bmd-boot-plot2, fig.cap=caption1}
+replayPlot(proast_results$mf_max_bootstrap_curves)
+```
+
+##### Cleveland Plots
+
+```{r bmd-cvd-cap, include=FALSE}
+caption1 <- paste(
+  "MFmin. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging based on AIC."
+)
+caption2 <- paste(
+  "MFmax. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging based on AIC."
+)
+```
+
+```{r bmd-cvd-plot1, fig.cap=caption1}
+proast_results$mf_min_cleveland
+```
+
+```{r bmd-cvd-plot2, fig.cap=caption2}
+proast_results$mf_max_cleveland
 ```
 
 ### ToxicR
@@ -2680,10 +2780,16 @@ Workflow Profile
 - *config_profile* : Choose a workflow profile to load pre-defined parameters.
 Current options are "Duplex Sequencing Mouse Mutagenesis Panel",
 "Duplex Sequencing Human Mutagenesis Panel", 
-"Duplex Sequencing Rat Mutagenesis Panel", and "None". Pre-defined parameters are set to
-handle data import and filtering. More profiles coming soon. If not using a
-pre-defined profile ("None"), users must fill out the Custom_Profile_Params
-(see below).
+"Duplex Sequencing Rat Mutagenesis Panel", "CODEC"^1, and "None". Pre-defined
+parameters are set to handle data import and filtering. More profiles coming
+soon. If not using a pre-defined profile ("None"), users must fill out the
+Custom_Profile_Params (see below).
+
+^1 CODEC .maf files output from the CODECsuite analysis pipeline may be
+imported provided the user 1. Adds a "sample" column, 2. Adds an "end" column
+equal to the Start_Position + length(Reference_Allele) - 1, 3. Ensure Chromsome
+entries are consistent with notation of BSgenome seqnames for the given reference
+genome. Ex. GRCh38 requires users to remove "chr" from the Chromosome value.
 
 Data Import
 
@@ -2840,6 +2946,51 @@ for the regions_analysis. This column must be present in the mutation_data
 or in the regions metadata file.
 
 ## Output
+
+render_report() will output the summary report of results as an html file or a pdf file.
+All output will be saved to the output_directory specified in the summary_config.yaml.
+
+### Report
+
+The Summary Report consists of the following sections.
+
+1. **Import the Mutation Data:** Statement of number of imported rows and the
+total number of samples detected.
+2. **Filter the Mutation Data**: Summary of applied filters with total counts
+for the number of records that were flagged/removed.
+3. **Calculate Per-Sample Mutation Frequency**: Mutation frequency calculated
+per sample. Includes plot of mutation frequency per sample and plot of mean
+mutation frequency per experimental group (given experimental variable was
+provided).
+4. **Generalized Linear Modelling**: Model results of mutation frequency as an
+effect of the experimental variable. Includes model summary, residual plots,
+model estimates, pairwise comparisons as specified in "contrasts", and a plot
+of the model estimates and significant results.
+5. **Benchmark Dose Analysis**: BMD results for the experimental variable on
+mutation frequency. BMD estimates per individual model and model-averaged
+result. Includes model plots, cleveland plots, and confidence interval plots.
+6. **6-Base Spectrum**: Mutation frequency calculated at the base_6 resolution
+per-sample and averaged across the experimental variable. Includes hierarchical
+clustering of samples by subtype proportion, spectra comparison between experimental
+groups, and plot of subtype proportions per experimental group.
+7. **96-Base Trinucleotide Spectrum**: Mutation frequency calculated at the base_96
+resolution per-sample and averaged across the experimental variable. Includes
+trinucleotide proportion plots for all experimental groups or by sample if no
+experimental variable is provided.
+8. **Regions Analysis**: Mutation frequency calculated per sample for genomic
+regions of interest. Includes model results of mutation frequency as an effect
+of the experimental variable and genomic target. Pairwise comparisons specified
+in contrasts are conducted for each genomic target individually. If no
+experimental variable is provided, model results reflect mutation frequency as
+an effect of genomic target. 
+9. **Mutation HotSpots**: Statement # of mutations that occur in more than one sample.
+Also includes recurrent mutations within experimental groups.
+10. **Lollipop Plots**: Given genomic regions of interest, plots recurrent mutations
+across genomic position.
+11. **Bubble Plot: Multiple Mutations**: Bubble plot depicting multiplet mutations per
+experimental group.
+
+If an experimental variable is not provided, statistical analysis will be skipped.
 
 
 # References

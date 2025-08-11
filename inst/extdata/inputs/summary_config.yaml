@@ -7,7 +7,7 @@ params:
   user_name: FirstName LastName # The name of the one running the analysis
   project_description: This is an example of the Rmd Summary report generation # Optional description of the project.
 # Profile
-  config_profile: "Duplex Sequencing Mouse Mutagenesis Panel" # Use a pre-defined Parameter Configuration File: Options: Duplex Sequencing Human Mutagenesis Panel, Duplex Sequencing Mouse Mutagenesis Panel, Duplex Sequencing Rat Mutagenesis Panel, None
+  config_profile: "Duplex Sequencing Mouse Mutagenesis Panel" # Use a pre-defined Parameter Configuration File: Options: Duplex Sequencing Human Mutagenesis Panel, Duplex Sequencing Mouse Mutagenesis Panel, Duplex Sequencing Rat Mutagenesis Panel, CODEC, None
 # Data Import:
   species: "mouse" # The species of the model organism.
   genome: "mm10" # The reference genome.

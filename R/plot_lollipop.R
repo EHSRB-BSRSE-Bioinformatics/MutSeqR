@@ -5,12 +5,12 @@
 #' then generates a lollipop plot for each group (e.g., chromosome)
 #' displaying mutations that meet a minimum recurrence threshold.
 #'
-#' @param mutations A data frame containing mutation data. It must contain columns
+#' @param mutation_data A data frame containing mutation data. It must contain columns
 #'   for genomic start position (`start`), `variation_type`, `normalized_subtype`,
-#'   and a column to group by (see `group_by_col`).
+#'   and a column to group by (see `group_col`).
 #' @param min_recurrence An integer specifying the minimum number of times a
 #'   mutation must be observed at the same position to be plotted. Defaults to 2.
-#' @param group_by_col A string specifying the column name to group mutations by,
+#' @param group_col A string specifying the column name to group mutation_data by,
 #'   typically representing chromosomes or contigs (e.g., "seqnames", "chr").
 #'   Defaults to "seqnames".
 #' @param custom_palette A named character vector for coloring the mutation
@@ -40,35 +40,41 @@
 #'                                   levels = c("Control", "Low",
 #'                                              "Medium", "High"))
 #'
-#' plot_list <- plot_lollipop(mutations = example_data, min_recurrence = 2)
+#'   # 2. Generate the plots
+#'   plot_list <- plot_lollipop(mutation_data = example_data, min_recurrence = 2)
 #'
-#' # Display a plot for a specific chromosome
-#' # print(plot_list$chr1)
-#' # print(plot_list$chr2)
-#'
-plot_lollipop <- function(mutations,
-                          min_recurrence = 2,
-                          group_by_col = "dose_group",
-                          custom_palette = NULL) {
+#'   # 3. Display a plot for a specific chromosome
+#'   # print(plot_list$chr1)
+#'   # print(plot_list$chr2)
+#' }
+plot_lollipop <- function(mutation_data,
+                            min_recurrence = 2,
+                            group_col = "dose_group",
+                            custom_palette = NULL) {
 
-  if (!is.data.frame(mutations)) {
-    stop("Input `mutations` must be a data.frame.")
+  # --- 1. Input Validation ---
+  if (!requireNamespace("ggplot2", quietly = TRUE) ||
+      !requireNamespace("dplyr", quietly = TRUE)) {
+    stop("This function requires `ggplot2` and `dplyr`. Please install them.")
+  }
+  if (!is.data.frame(mutation_data)) {
+    stop("Input `mutation_data` must be a data.frame.")
   }
   # Check for all required columns
-  required_cols <- c("start", "variation_type", "normalized_subtype", group_by_col)
-  missing_cols <- setdiff(required_cols, names(mutations))
+  required_cols <- c("start", "variation_type", "normalized_subtype", group_col)
+  missing_cols <- setdiff(required_cols, names(mutation_data))
   if (length(missing_cols) > 0) {
-    stop(paste("The `mutations` data.frame is missing required columns:",
+     stop(paste("The `mutation_data` data.frame is missing required columns:",
                 paste(missing_cols, collapse = ", ")))
   }
 
   # --- 2. Data Preparation ---
   # No conversion needed; we use the input data frame directly.
-  plot_data <- mutations %>%
+  plot_data <- mutation_data %>%
     # Filter out non-variants if that column exists and is used
     dplyr::filter(.data$variation_type != "no_variant") %>%
     # Count occurrences by region, position, and subtype
-    dplyr::group_by(.data[[group_by_col]], .data$start, .data$normalized_subtype) %>%
+    dplyr::group_by(.data[[group_col]], .data$start, .data$normalized_subtype) %>%
     dplyr::tally(name = "n") %>%
     # Keep only mutations meeting the recurrence threshold
     dplyr::filter(.data$n >= min_recurrence) %>%
@@ -104,11 +110,11 @@ plot_lollipop <- function(mutations,
 
   # --- 4. Plotting Loop ---
   plot_list <- list()
-  unique_regions <- unique(as.character(plot_data[[group_by_col]]))
+  unique_regions <- unique(as.character(plot_data[[group_col]]))
 
   for (region_name in unique_regions) {
     # Subset data for the current region
-    df_region <- dplyr::filter(plot_data, .data[[group_by_col]] == region_name)
+    df_region <- dplyr::filter(plot_data, .data[[group_col]] == region_name)
 
     # Create the ggplot object
     p <- ggplot(df_region, aes(x = .data$start, y = .data$n)) +

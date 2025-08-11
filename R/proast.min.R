@@ -2109,94 +2109,129 @@ f.constr.dd <- function(model.ans) {
 }
 
 
-f.select.con <- function(ans.all, interactive_mode = T, .proast_env = NULL, display_plots = TRUE) {
-    ans.all$HILL <- NA
-    ans.all$INVEXP <- NA
-    ans.all$LOGN <- NA
-    if (ans.all$nr.models == 1) 
-        ans.all$model.fam <- 1
-    else ans.all$model.fam <- 0
-    if (ans.all$nr.models == 2) 
-        ans.all$model.list <- c("EXP", "HILL")
-    if (ans.all$nr.models == 3) 
-        ans.all$model.list <- c("EXP", "HILL", "INVEXP")
-    if (ans.all$nr.models == 4) 
-        ans.all$model.list <- c("EXP", "HILL", "INVEXP", "LOGN")
-    Vaic <- numeric(ans.all$nr.models)
-    Vnpar.sel <- numeric()
-    if (ans.all$output) 
-        cat(paste("\n\nresponse: ", ans.all$y.leg))
-    ans.all$model.switch <- 0
-    if (ans.all$quick.ans == 6) {
-        return(ans.all)
-        # assign(ans.all$created, ans.all, envir = .proast_env)
-    }
-    if (ans.all$NES.ans == 2) 
-        ans.all$CES <- 0.05
-    ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-    Vaic[1] <- ans.all$EXP$aic
-    Vnpar.sel <- c(Vnpar.sel, ans.all$EXP$npar)
-    ans.all$TREND <- TRUE
-    if (!ans.all$EXP$trend) 
-        ans.all$TREND <- FALSE
-    if (ans.all$nr.models > 1) {
-        if (ans.all$output) 
-            cat(paste("\n\nresponse: ", ans.all$y.leg))
-        ans.all$model.switch <- 1
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-        Vaic[2] <- ans.all$HILL$aic
-        Vnpar.sel <- c(Vnpar.sel, ans.all$HILL$npar)
-        if (!ans.all$TREND) 
-            if (ans.all$HILL$trend) 
-                ans.all$TREND <- TRUE
-    }
-    if (ans.all$nr.models > 2) {
-        if (ans.all$output) 
-            cat(paste("\n\nresponse: ", ans.all$y.leg))
-        ans.all$model.switch <- 2
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-        Vaic[3] <- ans.all$INVEXP$aic
-        Vnpar.sel <- c(Vnpar.sel, ans.all$INVEXP$npar)
-        if (!ans.all$TREND) 
-            if (ans.all$INVEXP$trend) 
-                ans.all$TREND <- TRUE
-    }
-    if (ans.all$nr.models > 3) {
-        if (ans.all$output) 
-            cat(paste("\n\nresponse: ", ans.all$y.leg))
-        ans.all$model.switch <- 3
-        ans.all <- f.select.m5.con(ans.all, output = ans.all$output, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
-        Vaic[4] <- ans.all$LOGN$aic
-        Vnpar.sel <- c(Vnpar.sel, ans.all$LOGN$npar)
-        if (!ans.all$TREND) 
-            if (ans.all$LOGN$trend) 
-                ans.all$TREND <- TRUE
-    }
-    aic.min <- min(Vaic)
-    model.sel <- (1:ans.all$nr.models)[Vaic == aic.min]
-    if (0) 
-        if (ans.all$full.ans == 1) {
-            cat("\nAIC of full model = ", ans.all$aic.full, "\n")
-            cat("AIC of best fitting model = ", aic.min, "\n")
-        }
-    npar.sel <- max(Vnpar.sel[model.sel])
-    if (length(ans.all$xans) == 1 && !ans.all$model.ans %in% 
-        c(5, 15)) 
-        if (ans.all$full.ans == 1) 
-            if (ans.all$npar.aic.full >= npar.sel) 
-                if (aic.min > ans.all$aic.full + ans.all$aic.crit) {
-                  cat("\nAIC of full model = ", ans.all$aic.full, 
-                    "\n")
-                  cat("AIC of best fitting model = ", aic.min, 
-                    "\n")
-                  ans.all$alert.full <- f.alert.full()
-                  if (ans.all$output) 
-                    cat(ans.all$alert.full)
-                }
-    ans.all$Vaic <- Vaic
-    ans.all$fitted <- T
+f.select.con <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL,
+                         display_plots = TRUE) {
+  ans.all$HILL <- NA
+  ans.all$INVEXP <- NA
+  ans.all$LOGN <- NA
+  if (ans.all$nr.models == 1) {
+    ans.all$model.fam <- 1
+  } else {
+    ans.all$model.fam <- 0
+  }
+  if (ans.all$nr.models == 2) {
+    ans.all$model.list <- c("EXP", "HILL")
+  }
+  if (ans.all$nr.models == 3) {
+    ans.all$model.list <- c("EXP", "HILL", "INVEXP")
+  }
+  if (ans.all$nr.models == 4) {
+    ans.all$model.list <- c("EXP", "HILL", "INVEXP", "LOGN")
+  }
+  Vaic <- numeric(ans.all$nr.models)
+  Vnpar.sel <- numeric()
+  if (ans.all$output) {
+    cat(paste("\n\nresponse: ", ans.all$y.leg))
+  }
+  ans.all$model.switch <- 0
+  if (ans.all$quick.ans == 6) {
     return(ans.all)
-    #assign(ans.all$created, ans.all, envir = .proast_env)
+    # assign(ans.all$created, ans.all, envir = .proast_env)
+  }
+  if (ans.all$NES.ans == 2) {
+    ans.all$CES <- 0.05
+  }
+  ans.all <- f.select.m5.con(
+    ans.all,
+    output = ans.all$output,
+    interactive_mode = interactive_mode,
+    .proast_env = .proast_env,
+    display_plots = display_plots
+  )
+  Vaic[1] <- ans.all$EXP$aic
+  Vnpar.sel <- c(Vnpar.sel, ans.all$EXP$npar)
+  ans.all$TREND <- TRUE
+  if (!ans.all$EXP$trend) {
+    ans.all$TREND <- FALSE
+  }
+  if (ans.all$nr.models > 1) {
+    if (ans.all$output) {
+      cat(paste("\n\nresponse: ", ans.all$y.leg))
+    }
+    ans.all$model.switch <- 1
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output,
+                               interactive_mode = interactive_mode,
+                               .proast_env = .proast_env,
+                               display_plots = display_plots)
+    Vaic[2] <- ans.all$HILL$aic
+    Vnpar.sel <- c(Vnpar.sel, ans.all$HILL$npar)
+    if (!ans.all$TREND) {
+      if (ans.all$HILL$trend) {
+        ans.all$TREND <- TRUE
+      }
+    }
+  }
+  if (ans.all$nr.models > 2) {
+    if (ans.all$output) {
+      cat(paste("\n\nresponse: ", ans.all$y.leg))
+    }
+    ans.all$model.switch <- 2
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output,
+                               interactive_mode = interactive_mode,
+                               .proast_env = .proast_env,
+                               display_plots = display_plots)
+    Vaic[3] <- ans.all$INVEXP$aic
+    Vnpar.sel <- c(Vnpar.sel, ans.all$INVEXP$npar)
+    if (!ans.all$TREND) {
+      if (ans.all$INVEXP$trend) {
+        ans.all$TREND <- TRUE
+      }
+    }
+  }
+  if (ans.all$nr.models > 3) {
+    if (ans.all$output) {
+      cat(paste("\n\nresponse: ", ans.all$y.leg))
+    }
+    ans.all$model.switch <- 3
+    ans.all <- f.select.m5.con(ans.all, output = ans.all$output,
+                               interactive_mode = interactive_mode,
+                               .proast_env = .proast_env,
+                               display_plots = display_plots)
+    Vaic[4] <- ans.all$LOGN$aic
+    Vnpar.sel <- c(Vnpar.sel, ans.all$LOGN$npar)
+    if (!ans.all$TREND) {
+      if (ans.all$LOGN$trend) {
+        ans.all$TREND <- TRUE
+      }
+    }
+  }
+  aic.min <- min(Vaic)
+  model.sel <- (1:ans.all$nr.models)[Vaic == aic.min]
+    if (0) {
+      if (ans.all$full.ans == 1) {
+        cat("\nAIC of full model = ", ans.all$aic.full, "\n")
+        cat("AIC of best fitting model = ", aic.min, "\n")
+      }
+    }
+  npar.sel <- max(Vnpar.sel[model.sel])
+  if (length(ans.all$xans) == 1 && !ans.all$model.ans %in% c(5, 15)) {
+    if (ans.all$full.ans == 1) {
+      if (ans.all$npar.aic.full >= npar.sel) {
+        if (aic.min > ans.all$aic.full + ans.all$aic.crit) {
+          cat("\nAIC of full model = ", ans.all$aic.full, "\n")
+          cat("AIC of best fitting model = ", aic.min, "\n")
+          ans.all$alert.full <- f.alert.full()
+          if (ans.all$output) {
+            cat(ans.all$alert.full)
+          }
+        }
+      }
+    }
+  }
+  ans.all$Vaic <- Vaic
+  ans.all$fitted <- TRUE
+  return(ans.all)
+  #assign(ans.all$created, ans.all, envir = .proast_env)
 }
 
 
@@ -3792,13 +3827,14 @@ f.create.graphwin <- function(
         }
     } else {
         ## Open a new device (cross-platform & CRAN/BioC-safe)
+      message("I took this out cause it was opening too many graphics devices. AD")
+        #dev.new()
+
         # Note: dev.new() uses width/height in inches, not pixels!
         # Assume aa and bb are in pixels, so convert
-        width_inches <- aa / 96  # Common screen DPI
-        height_inches <- bb / 96
-        
-        dev.new()
-        #dev.new(width = width_inches, height = height_inches)  # or just dev.new()
+        # width_inches <- aa / 96  # Common screen DPI
+        # height_inches <- bb / 96
+        # dev.new(width = width_inches, height = height_inches)  # or just dev.new()
         # dev.new() doesn't accept `title` or `ypos`.
         # Users will see the device appear, but titles are set in the plotting code.
 
@@ -8420,7 +8456,8 @@ f.boot.ma <- function(
   .proast_env = NULL,
   display_plots = TRUE,
   filename = NULL,
-  output_type = NULL
+  output_type = NULL,
+  knitting = FALSE
 ) {
   if (ans.all$seed.bt != 0) {
     set.seed(ans.all$seed.bt)
@@ -8435,7 +8472,7 @@ f.boot.ma <- function(
         to = logb(xy.lim[3]), length = 1000
       ))
       name.wapp <- paste("c", yans, "ma.plot", sep = "")
-      if (display_plots) {
+      if (display_plots && !knitting) {
         f.graph.window(
           1,
           WAPP = WAPP,
@@ -8446,6 +8483,11 @@ f.boot.ma <- function(
           output = output, filename = filename,
           output_type = output_type)
       }
+      # if (knitting) { # adjust plot dimensions when knitting?
+      #   old_par <- par(no.readonly = TRUE)
+      #   on.exit(par(old_par))
+      #   par(mar = c(0,0,0,0))
+      # }
       if (!cont)
           ans.all$xy.lim[4:5] <- c(0, 1)
       ans.all$xy.lim[1] <- dum.contr
@@ -11102,252 +11144,260 @@ f.nlminb <- function(ans.all, tmp.quick = F) {
 
 
 f.pars <- function(ans.all) {
-    if (exists("track2")) 
-        print("f.pars")
-    if (ans.all$fit.ans == 1) 
-        if (ans.all$model.ans == 47 || (ans.all$model.ans == 
-            6 && ans.all$ans.m6.sd == 2))
-            message("model ans is 47, 6, or 2")
-    with(ans.all, {
-        if (!cont && model.ans == 14 && model.type == 1) {
-            ans.all$regr.par.matr <- 0
-            return(ans.all)
-        }
-        else if (cont && model.ans == 11) {
-            ans.all$regr.par.matr <- 0
-            return(ans.all)
-        }
-        gr.txt.save <- ans.all$gr.txt
-        nrp <- length(regr.par)
-        regr.par.matr <- numeric()
-        nr.aa <- max(fct1)
-        nr.bb <- max(fct2)
-        nr.cc <- max(fct4)
-        nr.dd <- max(fct5)
-        nr.var <- max(fct3)
-        if (dtype == 4 && max(fct3) > 1) 
-            nr.var <- 1
-        if (length(ans.all$nr.cc) == 0) 
-            nr.cc <- 1
-        if (length(ans.all$nr.dd) == 0) 
+  if (exists("track2")) {
+    print("f.pars")
+  }
+  if (ans.all$fit.ans == 1) {
+    if (ans.all$model.ans == 47 || (ans.all$model.ans == 6 && ans.all$ans.m6.sd == 2)) {
+      message("model ans is 47, 6, or 2")
+    }
+  }
+  with(ans.all, {
+    if (!cont && model.ans == 14 && model.type == 1) {
+        ans.all$regr.par.matr <- 0
+        return(ans.all)
+    } else if (cont && model.ans == 11) {
+      ans.all$regr.par.matr <- 0
+      return(ans.all)
+    }
+    gr.txt.save <- ans.all$gr.txt
+    nrp <- length(regr.par)
+    regr.par.matr <- numeric()
+    nr.aa <- max(fct1)
+    nr.bb <- max(fct2)
+    nr.cc <- max(fct4)
+    nr.dd <- max(fct5)
+    nr.var <- max(fct3)
+    if (dtype == 4 && max(fct3) > 1) {
+      nr.var <- 1
+    }
+    if (length(ans.all$nr.cc) == 0) {
+      nr.cc <- 1
+    }
+    if (length(ans.all$nr.dd) == 0) {
+      nr.dd <- 1
+    }
+    if (length(ans.all$nr.var) == 0) {
+      nr.var <- 1
+    }
+    if (model.ans == 36) {
+      nr.cc <- 0
+      nr.dd <- 0
+    }
+    if (nr.aa == 1 && nr.bb == 1 && nr.cc == 1 && nr.dd == 1 && nr.var < 2) {
+      ans.all$regr.par.matr <- matrix(regr.par, nrow = 1)
+      ans.all$nr.gr <- 1
+      ans.all$gr.txt <- ""
+      if (max(fct3) > 1) {
+        ans.all$gr.txt <- fct3.txt
+        ans.all$regr.par.matr <- matrix(regr.par, byrow = TRUE,
+          nrow = length(fct3.txt), ncol = length(regr.par))
+      }
+      if (length(xans) > 1) {
+        ans.all$gr.txt <- gr.txt.save
+      }
+      if (exists("track2")) {
+        print("end of f.pars")
+      }
+      return(ans.all)
+    }
+    if (cont || model.type == 2) {
+      if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53)) {
+        nr.cc <- 0
+      }
+      if (model.ans %in% c(4, 9, 14, 19, 24)) {
+        nr.dd <- 0
+      }
+      if (model.ans %in% c(2, 12, 17, 22)) {
+        nr.cc <- 0
+        nr.dd <- 0
+      }
+      cc <- regr.par[nr.aa + nr.bb + 1]
+      dd <- regr.par[nr.aa + nr.bb + nr.cc + 1]
+      if (cont && model.ans == 31) {
+        dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 4)]
+      }
+      if (cont && model.ans == 32) {
+        dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 4)]
+      }
+      if (cont && model.ans == 33) {
+        dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 5)]
+      }
+      if (cont && model.ans == 45) {
+        dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 3)]
+      }
+    }
+    if (cont && model.ans %in% c(35, 41, 44)) 
+        nr.cc <- 0
+    if (cont && model.ans %in% c(26, 27, 30, 35, 41, 44, 
+        55, 56)) 
+        nr.dd <- 0
+    if (!cont && model.type == 1) {
+        if (model.ans %in% c(7, 20)) {
             nr.dd <- 1
-        if (length(ans.all$nr.var) == 0) 
-            nr.var <- 1
-        if (model.ans == 36) {
-            nr.cc <- 0
-            nr.dd <- 0
-        }
-        if (nr.aa == 1 && nr.bb == 1 && nr.cc == 1 && nr.dd == 
-            1 && nr.var < 2) {
-            ans.all$regr.par.matr <- matrix(regr.par, nrow = 1)
-            ans.all$nr.gr <- 1
-            ans.all$gr.txt <- ""
-            if (max(fct3) > 1) {
-                ans.all$gr.txt <- fct3.txt
-                ans.all$regr.par.matr <- matrix(regr.par, byrow = TRUE, 
-                  nrow = length(fct3.txt), ncol = length(regr.par))
-            }
-            if (length(xans) > 1) 
-                ans.all$gr.txt <- gr.txt.save
-            if (exists("track2")) 
-                print("end of f.pars")
-            return(ans.all)
-        }
-        if (cont || model.type == 2) {
-            if (model.ans %in% c(3, 8, 13, 18, 23, 51, 53)) 
-                nr.cc <- 0
-            if (model.ans %in% c(4, 9, 14, 19, 24)) 
-                nr.dd <- 0
-            if (model.ans %in% c(2, 12, 17, 22)) {
-                nr.cc <- 0
-                nr.dd <- 0
-            }
-            cc <- regr.par[nr.aa + nr.bb + 1]
             dd <- regr.par[nr.aa + nr.bb + nr.cc + 1]
-            if (cont && model.ans == 31) 
-                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
-                  4)]
-            if (cont && model.ans == 32) 
-                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
-                  4)]
-            if (cont && model.ans == 33) 
-                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
-                  5)]
-            if (cont && model.ans == 45) 
-                dd <- regr.par[(nr.aa + nr.bb + 1):(nr.aa + nr.bb + 
-                  3)]
         }
-        if (cont && model.ans %in% c(35, 41, 44)) 
-            nr.cc <- 0
-        if (cont && model.ans %in% c(26, 27, 30, 35, 41, 44, 
-            55, 56)) 
-            nr.dd <- 0
-        if (!cont && model.type == 1) {
-            if (model.ans %in% c(7, 20)) {
-                nr.dd <- 1
-                dd <- regr.par[nr.aa + nr.bb + nr.cc + 1]
+        else nr.dd <- 0
+    }
+    nr.subgr <- max(nr.aa, nr.bb, nr.cc, nr.dd)
+    if (nr.aa == 1) 
+        fct1.txt <- rep("", nr.subgr)
+    if (nr.bb == 1) 
+        fct2.txt <- rep("", nr.subgr)
+    if (nr.cc == 1) 
+        fct4.txt <- rep("", nr.subgr)
+    if (nr.dd == 1) 
+        fct5.txt <- rep("", nr.subgr)
+    if (identical(fct1, fct2)) 
+        fct2.txt <- rep("", nr.subgr)
+    if (identical(fct1, fct4)) 
+        fct4.txt <- rep("", nr.subgr)
+    if (identical(fct4, fct2)) 
+        fct4.txt <- rep("", nr.subgr)
+    gr.txt <- character(0)
+    if (!cont && model.type == 2 && (model.ans %in% c(12:15, 
+        22:25)) && ces.ans %in% c(1:3, 5)) {
+        if (nrp > (nr.aa + nr.bb)) 
+            par.rest <- regr.par[(nr.aa + nr.bb + 1):nrp]
+        else par.rest <- numeric()
+        if (nr.aa > 1 && nr.bb == 1) 
+            for (ii in 1:nr.aa) {
+              par.tmp <- c(regr.par[1], regr.par[ii + 1], 
+                par.rest)
+              regr.par.matr <- rbind(regr.par.matr, par.tmp)
             }
-            else nr.dd <- 0
-        }
-        nr.subgr <- max(nr.aa, nr.bb, nr.cc, nr.dd)
-        if (nr.aa == 1) 
-            fct1.txt <- rep("", nr.subgr)
-        if (nr.bb == 1) 
-            fct2.txt <- rep("", nr.subgr)
-        if (nr.cc == 1) 
-            fct4.txt <- rep("", nr.subgr)
-        if (nr.dd == 1) 
-            fct5.txt <- rep("", nr.subgr)
-        if (identical(fct1, fct2)) 
-            fct2.txt <- rep("", nr.subgr)
-        if (identical(fct1, fct4)) 
-            fct4.txt <- rep("", nr.subgr)
-        if (identical(fct4, fct2)) 
-            fct4.txt <- rep("", nr.subgr)
-        gr.txt <- character(0)
-        if (!cont && model.type == 2 && (model.ans %in% c(12:15, 
-            22:25)) && ces.ans %in% c(1:3, 5)) {
-            if (nrp > (nr.aa + nr.bb)) 
-                par.rest <- regr.par[(nr.aa + nr.bb + 1):nrp]
-            else par.rest <- numeric()
-            if (nr.aa > 1 && nr.bb == 1) 
-                for (ii in 1:nr.aa) {
-                  par.tmp <- c(regr.par[1], regr.par[ii + 1], 
-                    par.rest)
-                  regr.par.matr <- rbind(regr.par.matr, par.tmp)
-                }
-            if (nr.aa == 1 & nr.bb > 1) 
-                for (jj in 1:nr.bb) {
-                  par.tmp <- c(regr.par[1], regr.par[jj + 1], 
-                    par.rest)
-                  regr.par.matr <- rbind(regr.par.matr, par.tmp)
-                }
-            if (nr.aa > 1 & nr.bb > 1) 
-                for (jj in 1:nr.bb) {
-                  par.tmp <- c(regr.par[jj], regr.par[jj + nr.aa], 
-                    par.rest)
-                  regr.par.matr <- rbind(regr.par.matr, par.tmp)
-                }
-            ans.all$regr.par.matr <- regr.par.matr
-            if (quick.ans > 1 && length(ans.all$covar.txt) > 
-                0) 
-                fct1.txt <- covar.txt
-            kk <- 1
+        if (nr.aa == 1 & nr.bb > 1) 
             for (jj in 1:nr.bb) {
-                f1 <- fct1[fct2 == jj]
-                f1.lev <- levels(factor(f1))
-                for (ii.index in f1.lev) {
-                  ii <- as.numeric(ii.index)
-                  if (!twice) 
-                    gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
-                      sep = "-")
-                  if (twice) {
-                    gr.txt[kk] <- paste(fct1.txt[kk], sep = "-")
-                  }
-                  kk <- kk + 1
-                }
+              par.tmp <- c(regr.par[1], regr.par[jj + 1], 
+                par.rest)
+              regr.par.matr <- rbind(regr.par.matr, par.tmp)
             }
-            ans.all$nr.gr <- length(ans.all$regr.par.matr[, 1])
-            ans.all$gr.txt <- gr.txt
-            if (length(xans) > 1) 
-                ans.all$gr.txt <- gr.txt.save
-            if (exists("track2")) 
-                print("f.pars LVM: END ")
-            return(ans.all)
-        }
-        if (nr.dd < 2) {
-            if (length(fct4) == 1) 
-                fct4 <- rep(1, length(x))
-            par.tmp <- rep(NA, length(regr.par))
-            kk <- 1
+        if (nr.aa > 1 & nr.bb > 1) 
             for (jj in 1:nr.bb) {
-                f1 <- fct1[fct2 == jj]
-                f1.lev <- levels(factor(f1))
-                for (ii.index in f1.lev) {
-                  ii <- as.numeric(ii.index)
-                  f4 <- fct4[fct1 == ii & fct2 == jj]
-                  f4.lev <- levels(factor(f4))
-                  for (mm.index in f4.lev) {
-                    mm <- as.numeric(mm.index)
-                    if (cont && model.ans %in% c(31, 32, 33, 
-                      45)) {
-                      mm <- 0
-                      nr.cc <- 0
-                    }
-                    par.tmp <- c(regr.par[ii], regr.par[nr.aa + 
-                      jj])
-                    if (nr.cc > 0) 
-                      par.tmp <- c(par.tmp, regr.par[nr.aa + 
-                        nr.bb + mm])
-                    if (nr.dd > 0) 
-                      par.tmp <- c(par.tmp, dd)
-                    if (length(xans) > 1) {
-                      RPF.vec <- ans.all$regr.par[(length(ans.all$regr.par) - 
-                        nr.dosecol + 2):length(ans.all$regr.par)]
-                      par.tmp <- c(par.tmp, RPF.vec)
-                    }
-                    regr.par.matr <- rbind(regr.par.matr, par.tmp)
-                    gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
-                      fct4.txt[mm], sep = "-")
-                    kk <- kk + 1
-                  }
-                }
+              par.tmp <- c(regr.par[jj], regr.par[jj + nr.aa], 
+                par.rest)
+              regr.par.matr <- rbind(regr.par.matr, par.tmp)
             }
-            n.col <- length(par.tmp)
-            regr.par.matr <- matrix(regr.par.matr[, 1:n.col], 
-                ncol = n.col)
-        }
-        if (exists("track2")) 
-            print("f.pars, continue 2")
-        if (nr.cc < 2 && nr.dd > 1) {
-            if (length(fct5) == 1) 
-                fct5 <- rep(1, length(x))
-            par.tmp <- rep(NA, length(regr.par))
-            kk <- 1
-            for (jj in 1:nr.bb) {
-                f1 <- fct1[fct2 == jj]
-                f1.lev <- levels(factor(f1))
-                for (ii.index in f1.lev) {
-                  ii <- as.numeric(ii.index)
-                  f5 <- fct5[fct1 == ii & fct2 == jj]
-                  f5.lev <- levels(factor(f5))
-                  for (mm.index in f5.lev) {
-                    mm <- as.numeric(mm.index)
-                    par.tmp <- c(regr.par[ii], regr.par[nr.aa + 
-                      jj])
-                    if (nr.cc > 0) 
-                      par.tmp <- c(par.tmp, regr.par[nr.aa + 
-                        nr.bb + 1])
-                    if (nr.dd > 0) 
-                      par.tmp <- c(par.tmp, regr.par[nr.aa + 
-                        nr.bb + nr.cc + mm])
-                    if (length(xans) > 1) {
-                      RPF.vec <- ans.all$regr.par[(length(ans.all$regr.par) - 
-                        nr.dosecol + 2):length(ans.all$regr.par)]
-                      par.tmp <- c(par.tmp, RPF.vec)
-                    }
-                    regr.par.matr <- rbind(regr.par.matr, par.tmp)
-                    gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
-                      fct5.txt[mm], sep = "-")
-                    kk <- kk + 1
-                  }
-                }
-            }
-            n.col <- length(par.tmp)
-            regr.par.matr <- matrix(regr.par.matr[, 1:n.col], 
-                ncol = n.col)
-        }
-        if (exists("track2")) 
-            print("f.pars, continue 3")
         ans.all$regr.par.matr <- regr.par.matr
+        if (quick.ans > 1 && length(ans.all$covar.txt) > 
+            0) 
+            fct1.txt <- covar.txt
+        kk <- 1
+        for (jj in 1:nr.bb) {
+            f1 <- fct1[fct2 == jj]
+            f1.lev <- levels(factor(f1))
+            for (ii.index in f1.lev) {
+              ii <- as.numeric(ii.index)
+              if (!twice) 
+                gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
+                  sep = "-")
+              if (twice) {
+                gr.txt[kk] <- paste(fct1.txt[kk], sep = "-")
+              }
+              kk <- kk + 1
+            }
+        }
+        ans.all$nr.gr <- length(ans.all$regr.par.matr[, 1])
         ans.all$gr.txt <- gr.txt
-        ans.all$nr.gr <- length(regr.par.matr[, 1])
         if (length(xans) > 1) 
             ans.all$gr.txt <- gr.txt.save
         if (exists("track2")) 
-            print("f.pars: END ")
+            print("f.pars LVM: END ")
         return(ans.all)
-    })
+    }
+    if (nr.dd < 2) {
+        if (length(fct4) == 1) 
+            fct4 <- rep(1, length(x))
+        par.tmp <- rep(NA, length(regr.par))
+        kk <- 1
+        for (jj in 1:nr.bb) {
+            f1 <- fct1[fct2 == jj]
+            f1.lev <- levels(factor(f1))
+            for (ii.index in f1.lev) {
+              ii <- as.numeric(ii.index)
+              f4 <- fct4[fct1 == ii & fct2 == jj]
+              f4.lev <- levels(factor(f4))
+              for (mm.index in f4.lev) {
+                mm <- as.numeric(mm.index)
+                if (cont && model.ans %in% c(31, 32, 33, 
+                  45)) {
+                  mm <- 0
+                  nr.cc <- 0
+                }
+                par.tmp <- c(regr.par[ii], regr.par[nr.aa + 
+                  jj])
+                if (nr.cc > 0) 
+                  par.tmp <- c(par.tmp, regr.par[nr.aa + 
+                    nr.bb + mm])
+                if (nr.dd > 0) 
+                  par.tmp <- c(par.tmp, dd)
+                if (length(xans) > 1) {
+                  RPF.vec <- ans.all$regr.par[(length(ans.all$regr.par) - 
+                    nr.dosecol + 2):length(ans.all$regr.par)]
+                  par.tmp <- c(par.tmp, RPF.vec)
+                }
+                regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
+                  fct4.txt[mm], sep = "-")
+                kk <- kk + 1
+              }
+            }
+        }
+        n.col <- length(par.tmp)
+        regr.par.matr <- matrix(regr.par.matr[, 1:n.col], 
+            ncol = n.col)
+    }
+    if (exists("track2")) 
+        print("f.pars, continue 2")
+    if (nr.cc < 2 && nr.dd > 1) {
+        if (length(fct5) == 1) 
+            fct5 <- rep(1, length(x))
+        par.tmp <- rep(NA, length(regr.par))
+        kk <- 1
+        for (jj in 1:nr.bb) {
+            f1 <- fct1[fct2 == jj]
+            f1.lev <- levels(factor(f1))
+            for (ii.index in f1.lev) {
+              ii <- as.numeric(ii.index)
+              f5 <- fct5[fct1 == ii & fct2 == jj]
+              f5.lev <- levels(factor(f5))
+              for (mm.index in f5.lev) {
+                mm <- as.numeric(mm.index)
+                par.tmp <- c(regr.par[ii], regr.par[nr.aa + 
+                  jj])
+                if (nr.cc > 0) 
+                  par.tmp <- c(par.tmp, regr.par[nr.aa + 
+                    nr.bb + 1])
+                if (nr.dd > 0) 
+                  par.tmp <- c(par.tmp, regr.par[nr.aa + 
+                    nr.bb + nr.cc + mm])
+                if (length(xans) > 1) {
+                  RPF.vec <- ans.all$regr.par[(length(ans.all$regr.par) - 
+                    nr.dosecol + 2):length(ans.all$regr.par)]
+                  par.tmp <- c(par.tmp, RPF.vec)
+                }
+                regr.par.matr <- rbind(regr.par.matr, par.tmp)
+                gr.txt[kk] <- paste(fct1.txt[ii], fct2.txt[jj], 
+                  fct5.txt[mm], sep = "-")
+                kk <- kk + 1
+              }
+            }
+        }
+        n.col <- length(par.tmp)
+        regr.par.matr <- matrix(regr.par.matr[, 1:n.col], 
+            ncol = n.col)
+    }
+    if (exists("track2")) 
+        print("f.pars, continue 3")
+    ans.all$regr.par.matr <- regr.par.matr
+    ans.all$gr.txt <- gr.txt
+    ans.all$nr.gr <- length(regr.par.matr[, 1])
+    if (length(xans) > 1) 
+        ans.all$gr.txt <- gr.txt.save
+    if (exists("track2")) 
+        print("f.pars: END ")
+    return(ans.all)
+  })
 }
 
 
@@ -12320,10 +12370,8 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' @param output_type The format that you wish to export the plots as.
 #' @param filename The name of the file to be read.
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
-#' @param record_plots A logical variable indicating whether you want to record
-#' the plots and return them as a list instead of exporting them. This parameter
-#' should only be used when running the function indenpently or within f.plot.result.
-#' It will disrupt f.proast(), so keep the default as FALSE.
+#' @param knitting A TRUE/FALSE value specifying whether you are knitting a document. If TRUE, the function will adjust the plot display accordingly.
+#' @param return_plots A logical variable indicating whether you want to return the plots as a list (TRUE) or not (FALSE, the default). If TRUE, the function will return a list of recorded plots.
 #' @importFrom graphics title text mtext
 #' @importFrom grDevices recordPlot dev.off
 f.plot.gui <- function(
@@ -12335,17 +12383,12 @@ f.plot.gui <- function(
   output_type = NULL,
   filename = NULL,
   interactive_mode = TRUE,
-  record_plots = FALSE
+  knitting = FALSE,
+  return_plots = FALSE
 ) {
   WAPP <- ans.all$WAPP
 
-# Record Plots: just overide some of the parameters. Hacky - can fix later
-# Record Plots should only be set for plotting - not for running the entire proast workflow
-if (record_plots) {
-  WAPP <- FALSE
-  display_plots <- TRUE
-  model.summ <- TRUE
-  HTML <- FALSE
+if (!WAPP) { # Record the plots, don't save to file.
   plot_list <- list()
 }
 
@@ -12368,9 +12411,12 @@ if (record_plots) {
       ans.all$CI.plt <- TRUE
     }
     if (ans.all$model.fam == 0 && length(ans.all$SINGMOD) == 0) {
-      if (!HTML) { # This chunk opens the first graphics window for cont. plots
+      # Open the graphics window
+      if (!HTML) { # This can't be FALSE or else error: ans.all$TREND is of length zero
         if (ans.all$nr.models == 1) {
-          f.graph.window(1)
+          if (!knitting) {
+            f.graph.window(1)
+          }
         } else {
           if (WAPP & !ans.all$svg.plots) {
             .gw.size <- c(800, 400)
@@ -12380,7 +12426,7 @@ if (record_plots) {
             .gw.size <- c(7, 3)
           }
           name.wapp <- paste("a", ans.all$yans, "exphill", sep = "")
-          if (display_plots) {
+          if (display_plots && !knitting) {
             f.create.graphwin(
               .gw.size[1],
               .gw.size[2],
@@ -12429,7 +12475,7 @@ if (record_plots) {
       }
 
       # Record the Expon plot, if we are not making more plots
-      if (ans.all$nr.models == 1 && record_plots) {
+      if (ans.all$nr.models == 1 && !WAPP) {
         plot_list$Expon <- recordPlot()
       }
 
@@ -12463,7 +12509,7 @@ if (record_plots) {
       } # Done Hill
 
       #   Record the Expon/Hill Plot for Continuous Data
-      if (record_plots) {
+      if (!WAPP) {
         plot_list$Expon_HILL <- recordPlot()
       }
 
@@ -12472,7 +12518,7 @@ if (record_plots) {
           dev.off()
         }
         name.wapp <- paste("a", ans.all$yans, "invlogn", sep = "")
-        if (display_plots) {
+        if (display_plots && !knitting) {
           f.create.graphwin( # Create a new Graphics window to house InvE and LN
             .gw.size[1],
             .gw.size[2],
@@ -12518,7 +12564,7 @@ if (record_plots) {
       }
 
       # Save the InvExpon Plot if we are not continuing with the LN
-      if (ans.all$nr.models == 3 && record_plots) {
+      if (ans.all$nr.models == 3 && !WAPP) {
         plot_list$InvExp <- recordPlot()
       }
 
@@ -12547,14 +12593,13 @@ if (record_plots) {
         }
       }
       # Save the InvExpon/LN plot
-      if (record_plots) {
+      if (!WAPP) {
         plot_list$InvExp_LN <- recordPlot()
       }
     }
-    if (ans.all$model.fam > 0 || length(ans.all$SINGMOD) > 
-        0) {
+    if (ans.all$model.fam > 0 || length(ans.all$SINGMOD) > 0) {
         if (HTML || WAPP) {
-            new.window <- F
+            new.window <- FALSE
             name.wapp <- paste("a", ans.all$yans, "singmod")
             f.graph.window(1, WAPP = WAPP, name.wapp = name.wapp, 
               plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
@@ -12718,7 +12763,7 @@ if (record_plots) {
     }
   }
   # Return the plots
-  if (record_plots) {
+  if (!WAPP && return_plots) {
     return(plot_list)
   }
   return(ans.all)
@@ -13389,7 +13434,10 @@ f.plot.result <- function(
   prefix = NULL,
   model_averaging = FALSE
 ) {
-
+  knitting <- isTRUE(getOption('knitr.in.progress'))
+  if (knitting) {
+    message("Knitr is in progress, adjusting the plot display.")
+  }
   # Validate the output_type
   if (!output_type %in% c("none", "jpeg", "pdf", "png", "svg", "tiff")) {
     stop("Invalid output_type. Must be one of none, jpeg, pdf, png, svg, tiff")
@@ -13421,49 +13469,54 @@ f.plot.result <- function(
   } else { # Initialize list to store results
     plot_list <- list()
   }
-
+  # Loop through each response in the results list
   for (i in seq_along(result)) {
-    res <- result[[i]] # loop through the response_cols
+    res <- result[[i]]
     if (output_type == "svg") {
       res$svg.plots <- TRUE
     }
     if (output_type != "none") {
-      message("Setting WAPP to TRUE")
+      message("Setting WAPP to TRUE - saving plots to file")
       res$WAPP <- TRUE
-      if (model_averaging == FALSE) {
-        f.plot.gui(
-          res,
-          filename = filename,
-          output_type = output_type,
-          interactive_mode = FALSE,
-          .proast_env = .proast_env
-        )
-      } else { # Model averaging
-        f.boot.ma(
-          res,
-          filename = filename,
-          output_type = output_type
-        )
+    } else {
+      message("Setting WAPP to FALSE - recording plots")
+      res$WAPP <- FALSE
+    }
+    if (model_averaging == FALSE) {
+      plot <- f.plot.gui(
+        res,
+        filename = filename,
+        output_type = output_type,
+        interactive_mode = FALSE,
+        .proast_env = .proast_env,
+        knitting = knitting,
+        return_plots = TRUE
+      )
+    } else { # Model averaging
+      f.boot.ma(
+        res,
+        filename = filename,
+        output_type = output_type,
+        knitting = knitting
+      )
+      if (output_type == "none") {
+        plot <- list()
+        plot$bootstrap_curves <- recordPlot()
       }
-    } else { # When output type isn't set, record the plots
-      if (model_averaging == FALSE) {
-        plots <- f.plot.gui(res, record_plots = TRUE, interactive_mode = FALSE, .proast_env = .proast_env)
-      } else {
-        plots <- list()
-        f.boot.ma(res, display_plots = TRUE)
-        plots$boostrap_curves <- recordPlot()
-      }
+    }
+    if (output_type == "none") {
       # Add Response to plot names
       response <- res$varnames[res$yans]
-      new_names <- paste0(response, "_", names(plots))
-      names(plots) <- new_names
+      new_names <- paste0(response, "_", names(plot))
+      names(plot) <- new_names
       # Add plots to the master list
-      plot_list <- c(plot_list, plots)
+      plot_list <- c(plot_list, plot)
     }
   }
   if (output_type == "none") {
     return(plot_list)
   }
+  
 }
 
   ### TODO
