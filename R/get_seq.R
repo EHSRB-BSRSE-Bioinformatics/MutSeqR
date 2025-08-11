@@ -57,7 +57,7 @@
 #' @importFrom Biostrings getSeq
 #' @importFrom BiocGenerics start end
 #' @importFrom S4Vectors mcols
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #'
 #' @export
 get_seq <- function(regions,
@@ -114,7 +114,7 @@ get_seq <- function(regions,
 
     # Apply the function to each row of the GR
     seqs <- mapply(get_sequence_for_region,
-                   as.vector(GenomeInfoDb::seqnames(regions_gr)),
+                   as.vector(Seqinfo::seqnames(regions_gr)),
                    BiocGenerics::start(regions_gr),
                    BiocGenerics::end(regions_gr))
     S4Vectors::mcols(regions_gr)$sequence <- seqs

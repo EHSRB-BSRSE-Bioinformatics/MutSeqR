@@ -184,10 +184,10 @@ of the data and inverts the probability statements for decreasing data.
 if (requireNamespace("ToxicR", quietly = TRUE)) {
   # Calculate the BMD for a 50\% increase in mutation frequency from control
   # Individual data with Model averaging.
-  example_file <- system.file("extdata", "Example_files",
-                              "example_mutation_data_filtered.rds",
-                              package = "MutSeqR")
-  example_data <- readRDS(example_file)
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
+
   mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
   bmd <- bmd_toxicr(mf_data = mf,
                     dose_col = "dose",

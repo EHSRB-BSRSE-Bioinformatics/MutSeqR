@@ -34,7 +34,7 @@
 #' @importFrom dplyr filter mutate
 #' @importFrom plyranges find_overlaps
 #' @importFrom rlang .data
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @export
 get_cpg_mutations <- function(mutation_data,
                               regions,
@@ -100,7 +100,7 @@ get_cpg_mutations <- function(mutation_data,
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges ranges
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @export
 get_cpg_regions <- function(regions, motif = "CG") {
 
@@ -111,7 +111,7 @@ get_cpg_regions <- function(regions, motif = "CG") {
       subject = regions[i]$sequence[[1]]
     )
     CpG_sites_rg <- GenomicRanges::GRanges(
-      seqnames = GenomeInfoDb::seqnames(regions[i]),
+      seqnames = Seqinfo::seqnames(regions[i]),
       ranges = IRanges::IRanges(
         start = GenomicRanges::start(IRanges::ranges(CpG_sites_rg)) + GenomicRanges::start(regions[i]) - 1,
         end = GenomicRanges::end(IRanges::ranges(CpG_sites_rg)) + GenomicRanges::start(regions[i]) - 1

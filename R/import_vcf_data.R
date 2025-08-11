@@ -163,7 +163,7 @@
 #' @importFrom IRanges IRanges
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom BiocGenerics strand start end
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @export
 #'
 import_vcf_data <- function(vcf_file,
@@ -379,7 +379,7 @@ import_vcf_data <- function(vcf_file,
     extract_context <- function(mut_gr,
                                 bsgenome) {
       # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = GenomeInfoDb::seqnames(mut_gr),
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = Seqinfo::seqnames(mut_gr),
                                                 ranges = IRanges::IRanges(
                                                   start = BiocGenerics::start(mut_gr) - 1,
                                                   end = BiocGenerics::start(mut_gr) + 1

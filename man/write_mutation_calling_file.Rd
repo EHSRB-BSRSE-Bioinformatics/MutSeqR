@@ -39,10 +39,10 @@ Mutations will be be filtered for SNVs. Mutations flagged in
 \code{filter_mut} will be excluded from the output.
 }
 \examples{
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
+
 temp_output <- tempdir()
 write_mutation_calling_file(mutation_data = example_data,
                             project_name = "Example",
