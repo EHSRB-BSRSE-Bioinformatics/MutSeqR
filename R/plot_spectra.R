@@ -62,7 +62,6 @@
 #' should be rotated 90 degrees. Default is FALSE.
 #' @import ggplot2
 #' @import ggdendro
-#' @import legendry
 #' @importFrom dplyr select arrange across all_of
 #' @export
 #' @examples
@@ -268,6 +267,7 @@ plot_spectra <- function(mf_data,
         scale_fill_manual(values = palette) +
         axis_labels +
        # theme_minimal() + breaks the dendrogram
+       # TODO: this may not be true anymore now that we're using ggdendro - could simplify the code if we don't have to specify theme manually
         theme(
           panel.background = element_rect(fill = "white", colour = NA),
           plot.background = element_rect(fill = "white", colour = NA),
