@@ -30,6 +30,7 @@
 #' @return A ggplot object representing the heatmap plot.
 #' @export
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Plot the trinucleotide proportions per sample, facetted by dose group.
 #' 
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
@@ -53,6 +54,7 @@
 #'                                   group_col = "sample",
 #'                                   facet_col = "dose_group")
 #'
+#' }
 
 plot_trinucleotide_heatmap <- function(mf_data,
                                        group_col = "sample",

@@ -138,6 +138,7 @@
 #' NULL, the function will return a list that includes summary (the
 #' data frame contianing the BMD results), and all generated plots.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' if (requireNamespace("ToxicR", quietly = TRUE)) {
 #'   # Calculate the BMD for a 50% increase in mutation frequency from control
 #'   # Individual data with Model averaging.
@@ -168,10 +169,12 @@
 #'                     sd_col = c("sd_min", "sd_max"),
 #'                     n_col = c("n_min", "n_max"))
 #' }
+#' }
 #' @importFrom dplyr select rename if_else
 #' @importFrom tidyr pivot_longer
 #' @import ggplot2
 #' @export
+#' 
 bmd_toxicr <- function(mf_data,
                        data_type = "individual",
                        dose_col = "dose",

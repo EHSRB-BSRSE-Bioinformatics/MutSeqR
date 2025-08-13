@@ -53,6 +53,7 @@ Mutation sums for each facet group and normalized subtype are calculated
 and displayed.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Plot the trinucleotide proportions per sample, facetted by dose group.
 
 # Example data consists of 24 mouse bone marrow DNA samples imported
@@ -76,4 +77,5 @@ plot <- plot_trinucleotide_heatmap(mf_96,
                                   group_col = "sample",
                                   facet_col = "dose_group")
 
+}
 }

@@ -70,6 +70,7 @@ the sequences from the UCSC genome browser using the DAS API. See the
 UCSC website for available genomes: \url{https://genome.ucsc.edu}.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
 regions_seq <- get_seq(regions = "TSpanel_mouse")
 
@@ -83,4 +84,5 @@ regions_seq <- get_seq(regions = human,
                        genome = "hg38",
                        masked = FALSE,
                        padding = 0)
+}
 }

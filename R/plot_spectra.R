@@ -66,6 +66,7 @@
 #' @importFrom dplyr select arrange across all_of
 #' @export
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -101,6 +102,7 @@
 #'                      subtype_resolution = "base_6",
 #'                      response = "proportion",
 #'                      group_order = "clustered")
+#' }
 
 plot_spectra <- function(mf_data,
                          group_col = "sample",

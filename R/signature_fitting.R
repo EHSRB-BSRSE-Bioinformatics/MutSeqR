@@ -43,6 +43,7 @@
 #' @details Mutation data will be filtered to only include SNVs. Variants
 #' flagged by the filter_mut column will be excluded.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' \dontrun{
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -59,13 +60,14 @@
 #'                   group = "dose",
 #'                   python_version = "3.11")
 #' }
+#' }
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate
 #' @importFrom utils write.table
 #' @importFrom rlang .data
 #' @import stringr
 #' @export
-#'
+
 signature_fitting <- function(mutation_data,
                               project_name = "Default",
                               project_genome = "GRCh38",

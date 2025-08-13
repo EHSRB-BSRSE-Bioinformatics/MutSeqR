@@ -17,6 +17,7 @@
 #' @returns A mf data frame with added columns indicating the confidence
 #' intervals.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -29,6 +30,7 @@
 #' confint <- get_binom_ci(mf_data = mf,
 #'                         sum_col = "sum_min",
 #'                         depth_col = "group_depth")
+#' }
 #' @importFrom dplyr bind_rows rename select
 #' @export
 get_binom_ci <- function(mf_data,

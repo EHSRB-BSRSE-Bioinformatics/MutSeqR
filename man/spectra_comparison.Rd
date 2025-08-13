@@ -82,6 +82,7 @@ the contrast table would look like:
 50:bone_marrow	50:liver
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
 # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -103,4 +104,5 @@ spectra_comparison(mf_data = mf_data,
                    exp_variable = "dose_group",
                    mf_type = "min",
                    contrasts = contrasts)
+}
 }

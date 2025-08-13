@@ -171,6 +171,7 @@ position, regardless of whether a variant was called, along with the
 required for some downstream analyses.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example: Import a single mutation file. This library was sequenced with
 # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 # consists of 20 2.4kb targets = 48kb of sequence. Example data is
@@ -189,4 +190,5 @@ imported_example_data <- import_mut_data(mut_file = example_data,
                                          genome = "mm10",
                                          species = "mouse",
                                          masked_BS_genome = FALSE)
+}
 }

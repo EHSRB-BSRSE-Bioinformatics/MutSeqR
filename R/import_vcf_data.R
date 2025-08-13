@@ -133,6 +133,7 @@
 #' See the filter_mut function for more detail.
 #' }
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example: Import a single bg-zipped vcf file. This library was sequenced
 #' # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 #' # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
@@ -152,6 +153,7 @@
 #'                                          genome = "mm10",
 #'                                          species = "mouse",
 #'                                          masked_BS_genome = FALSE)
+#' }
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
@@ -165,7 +167,6 @@
 #' @importFrom BiocGenerics strand start end
 #' @importFrom Seqinfo seqnames
 #' @export
-#'
 import_vcf_data <- function(vcf_file,
                             sample_data = NULL,
                             sd_sep = "\t",

@@ -98,6 +98,7 @@ Given mf data, construct a plot displaying the
 mutation subtypes observed in a cohort.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
 # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -133,4 +134,5 @@ plot <- plot_spectra(mf_data = mf_data,
                      subtype_resolution = "base_6",
                      response = "proportion",
                      group_order = "clustered")
+}
 }

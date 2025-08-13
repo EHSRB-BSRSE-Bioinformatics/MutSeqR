@@ -171,6 +171,7 @@ argument as an extra argument in the \code{model_mf} function.
 Ex. \code{control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", tol = 3e-3, relTol = NULL))}
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
 # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -273,4 +274,5 @@ plot <- plot_model_mf(model = model2,
 # functions. For example, to rotate the x-axis labels by 90 degrees,
 # use the following code:
 p <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+}
 }

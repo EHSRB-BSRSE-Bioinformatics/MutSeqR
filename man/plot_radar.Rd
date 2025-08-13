@@ -25,6 +25,7 @@ A radar plot
 Create a radar plot
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Plot the mean MFmin of each genomic target per dose group
 # Order the genomic targets by their genic context.
 
@@ -61,4 +62,5 @@ plot <- plot_radar(mf_data = mean,
                    label_col = "label",
                    facet_col = "dose_group",
                    indiv_y = FALSE)
+}
 }

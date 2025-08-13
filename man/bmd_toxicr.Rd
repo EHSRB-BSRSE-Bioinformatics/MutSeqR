@@ -181,6 +181,7 @@ of the data and inverts the probability statements for decreasing data.
 }
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 if (requireNamespace("ToxicR", quietly = TRUE)) {
   # Calculate the BMD for a 50\% increase in mutation frequency from control
   # Individual data with Model averaging.
@@ -210,5 +211,6 @@ example_data <- eh[["EH9861"]]
                     response_col = c("mean_mf_min", "mean_mf_max"),
                     sd_col = c("sd_min", "sd_max"),
                     n_col = c("n_min", "n_max"))
+}
 }
 }

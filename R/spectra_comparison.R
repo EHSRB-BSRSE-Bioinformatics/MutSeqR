@@ -62,6 +62,7 @@
 #' 50:bone_marrow	50:liver
 #'
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -83,6 +84,7 @@
 #'                    exp_variable = "dose_group",
 #'                    mf_type = "min",
 #'                    contrasts = contrasts)
+#' }
 #' @importFrom dplyr select mutate
 #' @importFrom stats pchisq pf r2dtable
 

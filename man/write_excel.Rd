@@ -30,6 +30,7 @@ A saved Excel workbook.
 Writes data to an Excel file.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 \dontrun{
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -67,5 +68,6 @@ model  <- model_mf(mf1,
 write_excel(model,
             workbook_name = "test_model",
             model_results = TRUE)
+}
 }
 }

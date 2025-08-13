@@ -169,6 +169,7 @@ required for some downstream analyses. AD is used to calculate the
 the \code{DP} field will be used as the \code{total_depth}.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example: Import a single bg-zipped vcf file. This library was sequenced
 # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
@@ -188,4 +189,5 @@ imported_example_data <- import_vcf_data(vcf_file = example_file,
                                          genome = "mm10",
                                          species = "mouse",
                                          masked_BS_genome = FALSE)
+}
 }

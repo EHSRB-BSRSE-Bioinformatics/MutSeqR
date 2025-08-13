@@ -43,6 +43,7 @@
 #' Default is 3.
 #' @return A ggplot object
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -67,6 +68,7 @@
 #'                 group_order_input = "dose_group",
 #'                 labels = "count",
 #'                 title = "Mutation Frequency per Sample")
+#' }
 #' @import ggplot2
 #' @importFrom dplyr arrange across all_of rename
 #' @export

@@ -61,6 +61,7 @@ the ability to visualize the the distribution of recurrent mutations within
 their data with large multiplets having a large circle.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
 # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -70,4 +71,5 @@ eh <- ExperimentHub()
 example_data <- eh[["EH9861"]]
 plot <- plot_bubbles(mutation_data = example_data,
                      facet_col = "dose_group")
+}
 }

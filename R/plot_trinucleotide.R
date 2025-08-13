@@ -36,6 +36,7 @@
 #' given group from the provided mf_96 data; the output of calculate_mf with
 #' subtype_resolution = "base_96".
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -61,6 +62,7 @@
 #'  indiv_y = FALSE,
 #'  output_path = NULL
 #' )
+#' }
 #' @export
 plot_trinucleotide <- function(
   mf_96,

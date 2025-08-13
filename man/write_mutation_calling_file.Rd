@@ -39,6 +39,7 @@ Mutations will be be filtered for SNVs. Mutations flagged in
 \code{filter_mut} will be excluded from the output.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 library(ExperimentHub)
 eh <- ExperimentHub()
 example_data <- eh[["EH9861"]]
@@ -53,4 +54,5 @@ list.files(temp_output)
 # To view the file, use the following code:
 ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
 ## file.show(output_file
+}
 }

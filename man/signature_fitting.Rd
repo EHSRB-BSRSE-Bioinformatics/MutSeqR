@@ -73,6 +73,7 @@ Mutation data will be filtered to only include SNVs. Variants
 flagged by the filter_mut column will be excluded.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 \dontrun{
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -88,5 +89,6 @@ signature_fitting(mutation_data = example_data,
                   env_name = "MutSeqR",
                   group = "dose",
                   python_version = "3.11")
+}
 }
 }

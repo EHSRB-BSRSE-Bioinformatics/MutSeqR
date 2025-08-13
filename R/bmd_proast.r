@@ -145,6 +145,9 @@
 #' # With Model averaging.
 #' # For the purpose of this example, num_bootstraps is set to 5 to reduce
 #' # run time. 200 bootstraps is recommended.
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#'  BiocManager::install("MutSeqRData", ask = FALSE)
+#' }
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' example_data <- eh[["EH9861"]]

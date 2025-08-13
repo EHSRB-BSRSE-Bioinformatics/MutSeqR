@@ -11,6 +11,7 @@
 #' @importFrom VariantAnnotation makeVRangesFromGRanges writeVcf asVCF
 #' @returns Writes a VCF file of mutations "mutation_output.vcf".
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' \dontrun{
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -21,6 +22,7 @@
 #' example_data <- eh[["EH9861"]]
 #' 
 #' write_vcf_from_mut(example_data)
+#' }
 #' }
 #' @export
 

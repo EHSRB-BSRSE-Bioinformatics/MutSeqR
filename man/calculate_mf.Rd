@@ -222,6 +222,7 @@ ensure that the total_depth value for the deletion is retained, while the
 total_depth value for the no_variant is removed.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
 # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -323,4 +324,5 @@ mf_6_example_precalc <- calculate_mf(
  base_12_precalc_depth <- eh[["EH9863"]]
  base_96_precalc_depth <- eh[["EH9864"]]
  base_192_precalc_depth <- eh[["EH9865"]]
+}
 }

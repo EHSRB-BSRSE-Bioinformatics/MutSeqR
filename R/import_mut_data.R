@@ -130,6 +130,7 @@
 #' See the filter_mut function for more detail.
 #' }
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example: Import a single mutation file. This library was sequenced with
 #' # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
 #' # consists of 20 2.4kb targets = 48kb of sequence. Example data is
@@ -148,6 +149,7 @@
 #'                                          genome = "mm10",
 #'                                          species = "mouse",
 #'                                          masked_BS_genome = FALSE)
+#' }
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub str_count

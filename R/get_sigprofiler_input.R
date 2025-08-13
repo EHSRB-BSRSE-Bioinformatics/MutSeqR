@@ -19,6 +19,7 @@
 #' `filter_mut` will be excluded from the output.
 #' @importFrom dplyr rename filter select mutate relocate
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' example_data <- eh[["EH9861"]]
@@ -33,6 +34,7 @@
 #' # To view the file, use the following code:
 #' ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
 #' ## file.show(output_file
+#' }
 #' @importFrom dplyr rename filter select mutate relocate
 #' @importFrom here here
 #' @importFrom utils write.table
@@ -140,6 +142,7 @@ write_mutation_calling_file <- function(mutation_data,
 #' `filter_mut` will be excluded from the output. Mutations will be summed
 #' across the groups specified in the `group` argument.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' example_file <- system.file("extdata", "Example_files",
 #'                             "example_mutation_data_filtered.rds",
 #'                             package = "MutSeqR")
@@ -155,11 +158,11 @@ write_mutation_calling_file <- function(mutation_data,
 #' # To view the file, use the following code:
 #' ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
 #' ## file.show(output_file)
+#' }
 #' @importFrom stats reshape
 #' @importFrom dplyr rename filter group_by mutate ungroup select distinct
 #' @importFrom here here
 #' @export
-#'
 write_mutational_matrix <- function(mutation_data,
                                     group = "dose",
                                     subtype_resolution = "base_96",

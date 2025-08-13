@@ -15,6 +15,7 @@
 #' model_mf output and write them to separate sheets in the Excel workbook.
 #' @returns A saved Excel workbook.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' \dontrun{
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -52,6 +53,7 @@
 #' write_excel(model,
 #'             workbook_name = "test_model",
 #'             model_results = TRUE)
+#' }
 #' }
 #' @export
 write_excel <- function(data,
