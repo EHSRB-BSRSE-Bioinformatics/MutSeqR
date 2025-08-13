@@ -45,6 +45,7 @@ Mutations will be be filtered for SNVs. Mutations flagged in
 across the groups specified in the \code{group} argument.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 example_file <- system.file("extdata", "Example_files",
                             "example_mutation_data_filtered.rds",
                             package = "MutSeqR")
@@ -60,4 +61,5 @@ list.files(temp_output)
 # To view the file, use the following code:
 ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
 ## file.show(output_file)
+}
 }

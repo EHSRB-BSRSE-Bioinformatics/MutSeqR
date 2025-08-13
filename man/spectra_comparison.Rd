@@ -82,11 +82,14 @@ the contrast table would look like:
 50:bone_marrow	50:liver
 }
 \examples{
-# Load the example data
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut as in Example 4.
+# Sequenced on TS Mouse Mutagenesis Panel. Example data is
+# retrieved from MutSeqRData, an ExperimentHub data package.
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
 
 # Example: compare 6-base mutation spectra between dose groups
 # Calculate the mutation frequency data at the 6-base resolution
@@ -101,4 +104,5 @@ spectra_comparison(mf_data = mf_data,
                    exp_variable = "dose_group",
                    mf_type = "min",
                    contrasts = contrasts)
+}
 }

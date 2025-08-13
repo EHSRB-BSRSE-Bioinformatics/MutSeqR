@@ -40,6 +40,7 @@
 #' the sequences from the UCSC genome browser using the DAS API. See the
 #' UCSC website for available genomes: \url{https://genome.ucsc.edu}.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
 #' regions_seq <- get_seq(regions = "TSpanel_mouse")
 #'
@@ -53,13 +54,14 @@
 #'                        genome = "hg38",
 #'                        masked = FALSE,
 #'                        padding = 0)
+#' }
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom Biostrings getSeq
 #' @importFrom BiocGenerics start end
 #' @importFrom S4Vectors mcols
-#' @importFrom GenomeInfoDb seqnames
-#'
+#' @importFrom Seqinfo seqnames
 #' @export
+
 get_seq <- function(regions,
                     rg_sep = "\t",
                     is_0_based_rg = TRUE,
@@ -114,7 +116,7 @@ get_seq <- function(regions,
 
     # Apply the function to each row of the GR
     seqs <- mapply(get_sequence_for_region,
-                   as.vector(GenomeInfoDb::seqnames(regions_gr)),
+                   as.vector(Seqinfo::seqnames(regions_gr)),
                    BiocGenerics::start(regions_gr),
                    BiocGenerics::end(regions_gr))
     S4Vectors::mcols(regions_gr)$sequence <- seqs

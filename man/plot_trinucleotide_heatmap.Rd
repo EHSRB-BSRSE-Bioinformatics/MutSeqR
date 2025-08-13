@@ -53,11 +53,17 @@ Mutation sums for each facet group and normalized subtype are calculated
 and displayed.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Plot the trinucleotide proportions per sample, facetted by dose group.
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut as in Example 4.
+# Sequenced on TS Mouse Mutagenesis Panel. Example data is
+# retrieved from MutSeqRData, an ExperimentHub data package.
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
+
 # define dose_group order
 example_data$dose_group <- factor(example_data$dose_group,
                                   levels = c("Control", "Low",
@@ -71,4 +77,5 @@ plot <- plot_trinucleotide_heatmap(mf_96,
                                   group_col = "sample",
                                   facet_col = "dose_group")
 
+}
 }

@@ -1,4 +1,5 @@
- #' Plot the trinucleotide spectrum
+#' Plot the trinucleotide spectrum
+#' 
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
 #' a given group.
 #' @param mf_96 A data frame containing the mutation frequency data at the
@@ -35,13 +36,14 @@
 #' given group from the provided mf_96 data; the output of calculate_mf with
 #' subtype_resolution = "base_96".
 #' @examples
-#' # Load example data
-#' example_file <- system.file(
-#'  "extdata", "Example_files",
-#'  "example_mutation_data_filtered.rds",
-#'  package = "MutSeqR"
-#' )
-#' example_data <- readRDS(example_file)
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
 #'
 #' # Calculate the mutation frequency data at the 96-base resolution
 #' mf_96 <- calculate_mf(
@@ -60,6 +62,7 @@
 #'  indiv_y = FALSE,
 #'  output_path = NULL
 #' )
+#' }
 #' @export
 plot_trinucleotide <- function(
   mf_96,

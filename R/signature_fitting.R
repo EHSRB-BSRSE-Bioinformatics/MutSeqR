@@ -43,11 +43,16 @@
 #' @details Mutation data will be filtered to only include SNVs. Variants
 #' flagged by the filter_mut column will be excluded.
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' \dontrun{
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
+#' 
 #' signature_fitting(mutation_data = example_data,
 #'                   project_name = "Example",
 #'                   project_genome = "mm10",
@@ -55,13 +60,14 @@
 #'                   group = "dose",
 #'                   python_version = "3.11")
 #' }
+#' }
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate
 #' @importFrom utils write.table
 #' @importFrom rlang .data
 #' @import stringr
 #' @export
-#'
+
 signature_fitting <- function(mutation_data,
                               project_name = "Default",
                               project_genome = "GRCh38",

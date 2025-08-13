@@ -22,6 +22,43 @@ library(DT)
 library(bs4Dash)
 ```
 
+```{r check-for-suggests, include=FALSE}
+check_pkgs <- function(pkgs) {
+  missing_packages <- c()
+  for (pkg in pkgs) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      missing_packages <- c(missing_packages, pkg)
+    }
+  }
+  if (length(missing_packages) > 0) {
+    stop(paste0(
+      "Rendering halted: The following required packages are not installed:\n  ",
+      paste(missing_packages, collapse = ", ")
+    ), call. = FALSE)
+  } else {
+    return(invisible(TRUE))
+  }
+}
+plotting <- c(
+  "colorspace", # plot_mean_mf
+  "dendsort", # plot_spectra 
+  "ggh4x", # plot_spectra
+  "ggrepel", # plot_mf plot_mean_mf
+  "gtools", # plot_mf plot_mean_mf plot_spectra
+  "packcircles", #plot_bubbles
+  "patchwork", # plot_spectra
+  "RColorBrewer" # plot_mf plot_mean_mf plot_spectra plot_bubbles plot_lollipop
+)
+stats <- c("doBy", "car", "lme4") # model_mf
+general <- c("openxlsx", "BSgenome")
+pkg_ls <- c(plotting, general)
+if (!is.null(params$exp_variable)) {
+pkg_ls <- c(pkg_ls, stats)
+}
+
+check_pkgs(pkg_ls)
+```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 has_description <- !is.null(params$project_description)

@@ -29,11 +29,6 @@ render_report <- function(
     install.packages("rmarkdown")
   }
 
-  # Check if MutSeqR package is available, install if not
-  if (!requireNamespace("MutSeqR", quietly = TRUE)) {
-    install.packages("MutSeqR") # Fix: Will depend on where it gets published.
-  }
-
   # Validate config_filepath
   config_filepath <- normalizePath(config_filepath)
   if (!file.exists(config_filepath)) {
