@@ -1,3 +1,7 @@
+# MutSeqR 0.99.1 (2025-08-13)
+
+Preparing for Bioconductor release. This change adds MutSeqRData to suggests, and alters how the examples are run (now depends on the ExperimentHub accessions).
+
 # MutSeqR 0.99.0 (2025-06-19)
 
 Initial public version.
