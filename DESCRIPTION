@@ -48,6 +48,7 @@ Imports:
     Biostrings,
     data.table,
     dplyr,
+    GenomeInfoDb,
     GenomicRanges,
     ggplot2,
     here,
