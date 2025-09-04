@@ -1,5 +1,18 @@
-from SigProfilerAssignment import Analyzer as Analyze
-from SigProfilerExtractor import sigpro as sig
+print("Starting signatures.py")
+try:
+    print("Importing SigProfilerAssignment.Analyzer...")
+    from SigProfilerAssignment import Analyzer as Analyze
+    print("Imported SigProfilerAssignment.Analyzer OK.")
+except Exception as e:
+    print(f"FAILED: {e}")
+try:
+    print("Importing SigProfilerExtractor.sigpro ...")
+    from SigProfilerExtractor import sigpro as sig
+    print("Imported SigProfilerExtractor.sigpro OK.")
+except Exception as e:
+    print(f"FAILED: {e}")
+
+print("All imports passed, proceeding to function defs.")
 
  
 def cosmic_fit_MutSeqR(samples,
@@ -31,6 +44,7 @@ def cosmic_fit_MutSeqR(samples,
                        sample_reconstruction_plots = sample_reconstruction_plots,
                        verbose=verbose
                        )
+print("Defined cosmic_fit_MutSeqR")
 
 def denovo_fit_MutSeqR(samples,
                        output,
@@ -42,6 +56,7 @@ def denovo_fit_MutSeqR(samples,
                         input_type=input_type,
                         signatures=signatures,
                         genome_build=genome_build)
+print("Defined denovo_fit_MutSeqR")
 
 def decompose_fit_MutSeqR(samples,
                        output,
@@ -55,4 +70,4 @@ def decompose_fit_MutSeqR(samples,
                         signatures=signatures,
                         signature_database=signature_database,
                         genome_build=genome_build)
-
+print("Defined decompose_fit_MutSeqR")

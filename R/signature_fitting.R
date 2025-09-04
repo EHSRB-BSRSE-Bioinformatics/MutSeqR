@@ -127,7 +127,8 @@ signature_fitting <- function(mutation_data,
   SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file("extdata", "signatures.py",
                                         package = "MutSeqR")
-  sig_py <- reticulate::source_python(signatures_python_code, envir = new.env())
+  sig_py <- new.env()
+  reticulate::source_python(signatures_python_code, envir = sig_py)
 
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...
