@@ -14,7 +14,7 @@
 #' @param project_name The name of the project. This is used to format
 #' the data into required .txt format for SigProfiler tools.
 #' @param project_genome The reference genome to use. On first use, the
-#' function will install the genome using SigProfilerMatrixGeneratorR::install.
+#' function will install the genome using SigProfilerMatrixGenerator::install.
 #' e.x. GRCh37, GRCH38, mm10, mm9, rn6
 #' @param env_name The name of the virtual environment. This will be created on
 #' first use.
@@ -78,9 +78,6 @@ signature_fitting <- function(mutation_data,
   if (!requireNamespace("reticulate")) {
     stop("Reticulate not installed: you need this to run SigProfiler tools in R.")
   }
-  if (!requireNamespace("SigProfilerMatrixGeneratorR")) {
-    stop("SigProfilerMatrixGeneratorR not installed: you need this to run SigProfiler tools in R. Install using devtools::install_github('AlexandrovLab/SigProfilerMatrixGeneratorR')")
-  }
   message("Note: This function requires python to be installed on the users 
           computer. If you do not have python installed, you can do so using: 
           reticulate::install_python().
@@ -124,11 +121,14 @@ signature_fitting <- function(mutation_data,
   # reticulate::install_python(version = python_version)
   reticulate::use_virtualenv(env_name)
 
-  SigProfilerMatrixGeneratorR::install(project_genome)
+  # SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file("extdata", "signatures.py",
                                         package = "MutSeqR")
   sig_py <- new.env()
   reticulate::source_python(signatures_python_code, envir = sig_py)
+
+  message("Installing reference genome if not already installed...")
+  sig_py$install_MutSeqR(genome = project_genome)
 
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...
@@ -195,27 +195,38 @@ signature_data <- signature_data %>%
     dir.create(file.path(output_path, "matrices"), recursive = TRUE)
   }
 
-  message("Writing mutation matrix to use as input to SigProfiler...")
+  message("Writing mutation data to use as input to SigProfiler...")
   write.table(signature_data,
     file = file.path(output_path, "matrices", "mutations.txt"),
     sep = "\t", row.names = FALSE, quote = FALSE
   )
 
-  message("Running SigProfilerMatrixGeneratorR...")
-  signature_matrices <-
-    SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
-      project = project_name,
-      genome = project_genome,
-      matrix_path = file.path(output_path, "matrices"),
-      plot = TRUE,
-      exome = FALSE,
-      bed_file = NULL,
-      chrom_based = FALSE,
-      tsb_stat = TRUE,
-      seqInfo = TRUE,
-      cushion = 100
-    )
-
+  message("Running SigProfilerMatrixGenerator...")
+  # signature_matrices <-
+  #   SigProfilerMatrixGeneratorR::SigProfilerMatrixGeneratorR(
+  #     project = project_name,
+  #     genome = project_genome,
+  #     matrix_path = file.path(output_path, "matrices"),
+  #     plot = TRUE,
+  #     exome = FALSE,
+  #     bed_file = NULL,
+  #     chrom_based = FALSE,
+  #     tsb_stat = TRUE,
+  #     seqInfo = TRUE,
+  #     cushion = 100
+  #   )
+  sig_py$matrix_generator_MutSeqR(
+    project = project_name,
+    reference_genome = project_genome,
+    path_to_input_files = file.path(output_path, "matrices"),
+    plot = TRUE,
+    exome = FALSE,
+    bed_file = NULL,
+    chrom_based = FALSE,
+    tsb_stat = TRUE,
+    seqInfo = TRUE,
+    cushion = 100
+  )
   message("Running COSMIC fitting...")
   sig_py$cosmic_fit_MutSeqR(
     samples = file.path(output_path, "matrices", "output", "SBS",

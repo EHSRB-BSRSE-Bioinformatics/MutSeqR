@@ -1,20 +1,62 @@
-print("Starting signatures.py")
 try:
-    print("Importing SigProfilerAssignment.Analyzer...")
     from SigProfilerAssignment import Analyzer as Analyze
-    print("Imported SigProfilerAssignment.Analyzer OK.")
 except Exception as e:
-    print(f"FAILED: {e}")
+    print(f"Importing SigProfilerAssignment.Analyzer FAILED: {e}")
 try:
-    print("Importing SigProfilerExtractor.sigpro ...")
     from SigProfilerExtractor import sigpro as sig
-    print("Imported SigProfilerExtractor.sigpro OK.")
 except Exception as e:
-    print(f"FAILED: {e}")
+    print(f"Importing SigProfilerExtractor.sigpro FAILED: {e}")
+try:
+    from SigProfilerMatrixGenerator import install as genInstall
+except Exception as e:
+    print(f"Importing SigProfilerMatrixGenerator.install FAILED: {e}")
+try:
+    from SigProfilerMatrixGenerator.scripts import SigProfilerMatrixGeneratorFunc as matGen
+except Exception as e:
+    print(f"Importing SigProfilerMatrixGenerator.scripts.SigProfilerMatrixGeneratorFunc FAILED: {e}")
 
-print("All imports passed, proceeding to function defs.")
+def install_MutSeqR(genome,
+                    custom=False,
+                    rsync=False,
+                    bash=True,
+                    ftp=True,
+                    fastaPath=None,
+                    transcriptPath=None,
+                    exomePath=None,
+                    offline_files_path=None,
+                    volume=None):
+    genInstall.install(genome = genome,
+                       custom=custom,
+                       rsync=rsync,
+                       bash=bash,
+                       ftp=ftp,
+                       fastaPath=fastaPath,
+                       transcriptPath=transcriptPath,
+                       exomePath=exomePath,
+                       offline_files_path=offline_files_path,
+                       volume=volume)
 
- 
+def matrix_generator_MutSeqR(project,
+                    reference_genome,
+                    path_to_input_files,
+                    plot = True,
+                    exome = False,
+                    bed_file = None,
+                    chrom_based = False,
+                    tsb_stat = True,
+                    seqInfo = True,
+                    cushion = 100):
+   matGen.SigProfilerMatrixGeneratorFunc(project = project,
+                    reference_genome = reference_genome,
+                    path_to_input_files = path_to_input_files,
+                    plot = plot,
+                    exome = exome,
+                    bed_file = bed_file,
+                    chrom_based = chrom_based,
+                    tsb_stat = tsb_stat,
+                    seqInfo = seqInfo,
+                    cushion = cushion)
+
 def cosmic_fit_MutSeqR(samples,
                        output,
                        input_type="matrix",

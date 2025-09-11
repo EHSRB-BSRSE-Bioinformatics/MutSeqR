@@ -21,7 +21,7 @@ signature_fitting(
 the data into required .txt format for SigProfiler tools.}
 
 \item{project_genome}{The reference genome to use. On first use, the
-function will install the genome using SigProfilerMatrixGeneratorR::install.
+function will install the genome using SigProfilerMatrixGenerator::install.
 e.x. GRCh37, GRCH38, mm10, mm9, rn6}
 
 \item{env_name}{The name of the virtual environment. This will be created on

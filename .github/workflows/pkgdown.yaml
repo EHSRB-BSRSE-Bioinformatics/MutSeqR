@@ -50,7 +50,6 @@ jobs:
       - name: Install GitHub-only dependencies
         run: |
           Rscript -e 'install.packages("remotes", repos = "https://cloud.r-project.org")'
-          Rscript -e 'remotes::install_github("AlexandrovLab/SigProfilerMatrixGeneratorR")'
           Rscript -e 'remotes::install_github("NIEHS/ToxicR")'
 
       - uses: r-lib/actions/setup-r-dependencies@v2
