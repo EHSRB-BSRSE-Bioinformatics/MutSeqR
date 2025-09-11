@@ -96,7 +96,6 @@ Suggests:
     rmarkdown,
     scales,
     shiny,
-    SigProfilerMatrixGeneratorR,
     testthat (>= 3.0.0),
     ToxicR,
     trackViewer,

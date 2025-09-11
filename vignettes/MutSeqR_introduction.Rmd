@@ -2047,7 +2047,7 @@ your specified reference genome. As a result ~3Gb of storage must be available
 for the downloads of each genome. 
 
 SNVs in their 96-base trinucleotide context are summed across groups to create
-a mutation count matrix by `SigProfilerMatrixGeneratorR()`
+a mutation count matrix by `SigProfilerMatrixGenerator()`
 (SigProfilerMatrixGenerator; @khandekar-2023). `Analyze.cosmic_fit `
 (SigProfilerAssignment; @diaz-gay-2023) is then run to assign mutational
 signatures to each group using refitting methods, which quantifies the
@@ -2071,8 +2071,7 @@ described in their respective [documentation](https://github.com/AlexandrovLab).
 
 *Examples include external dependencies*
 
-`signature_fitting` requires the installation of reticulate and
-[SigProfilerMatrixGeneratorR](https://github.com/AlexandrovLab/SigProfilerMatrixGeneratorR)
+`signature_fitting` requires the installation of reticulate
 as well as a version of python 3.8 or newer.
 
 ```{r install-sigprof-depends, eval=FALSE}
@@ -2081,9 +2080,6 @@ install.packages("reticulate")
 
 # Install python
 reticulate::install_python()
-
-# Install SigProfilerMatrixGeneratorR from github using devtools.
-devtools::install_github("AlexandrovLab/SigProfilerMatrixGeneratorR")
 
 ```
 
