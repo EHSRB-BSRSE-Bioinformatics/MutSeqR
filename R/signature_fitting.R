@@ -44,16 +44,22 @@
 #' flagged by the filter_mut column will be excluded.
 #' @examples
 #' \dontrun{
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
-#' signature_fitting(mutation_data = example_data,
-#'                   project_name = "Example",
-#'                   project_genome = "mm10",
-#'                   env_name = "MutSeqR",
-#'                   group = "dose",
-#'                   python_version = "3.11")
+#'  if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#'    # Example data consists of 24 mouse bone marrow DNA samples imported
+#'    # using import_mut_data() and filtered with filter_mut as in Example 4.
+#'    # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#'    # retrieved from MutSeqRData, an ExperimentHub data package.
+#'    library(ExperimentHub)
+#'    eh <- ExperimentHub()
+#'    example_data <- eh[["EH9861"]]
+#' 
+#'    signature_fitting(mutation_data = example_data,
+#'                      project_name = "Example",
+#'                      project_genome = "mm10",
+#'                      env_name = "MutSeqR",
+#'                      group = "dose",
+#'                      python_version = "3.11")
+#'  }
 #' }
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate
@@ -61,7 +67,7 @@
 #' @importFrom rlang .data
 #' @import stringr
 #' @export
-#'
+
 signature_fitting <- function(mutation_data,
                               project_name = "Default",
                               project_genome = "GRCh38",
@@ -121,7 +127,8 @@ signature_fitting <- function(mutation_data,
   SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file("extdata", "signatures.py",
                                         package = "MutSeqR")
-  sig_py <- reticulate::source_python(signatures_python_code, envir = new.env())
+  sig_py <- new.env()
+  reticulate::source_python(signatures_python_code, envir = sig_py)
 
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...

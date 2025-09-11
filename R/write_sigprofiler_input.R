@@ -19,10 +19,11 @@
 #' `filter_mut` will be excluded from the output.
 #' @importFrom dplyr rename filter select mutate relocate
 #' @examples
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
+#'
 #' temp_output <- tempdir()
 #' write_mutation_calling_file(mutation_data = example_data,
 #'                             project_name = "Example",
@@ -33,6 +34,7 @@
 #' # To view the file, use the following code:
 #' ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
 #' ## file.show(output_file
+#' }
 #' @importFrom dplyr rename filter select mutate relocate
 #' @importFrom here here
 #' @importFrom utils write.table
@@ -140,26 +142,27 @@ write_mutation_calling_file <- function(mutation_data,
 #' `filter_mut` will be excluded from the output. Mutations will be summed
 #' across the groups specified in the `group` argument.
 #' @examples
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
-#' temp_output <- tempdir()
-#' write_mutational_matrix(mutation_data = example_data,
-#'                         group = "dose_group",
-#'                         subtype_resolution = "base_96",
-#'                         mf_type = "min",
-#'                         output_path = temp_output)
-#' list.files(temp_output)
-#' # The file is saved in the temporary directory
-#' # To view the file, use the following code:
-#' ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
-#' ## file.show(output_file)
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#'  library(ExperimentHub)
+#'  eh <- ExperimentHub()
+#'  example_data <- eh[["EH9861"]]
+#'  temp_output <- tempdir()
+#' 
+#'  write_mutational_matrix(mutation_data = example_data,
+#'                          group = "dose_group",
+#'                          subtype_resolution = "base_96",
+#'                          mf_type = "min",
+#'                          output_path = temp_output)
+#'  list.files(temp_output)
+#'  # The file is saved in the temporary directory
+#'  # To view the file, use the following code:
+#'  ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
+#'  ## file.show(output_file)
+#' }
 #' @importFrom stats reshape
 #' @importFrom dplyr rename filter group_by mutate ungroup select distinct
 #' @importFrom here here
 #' @export
-#'
 write_mutational_matrix <- function(mutation_data,
                                     group = "dose",
                                     subtype_resolution = "base_96",

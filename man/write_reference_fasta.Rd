@@ -28,10 +28,12 @@ Generate an arbitrary multi-sequence FASTA file from GRanges
 including the reference sequences.
 }
 \examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 \dontrun{
 # Write FASTA files for the 20 genomic target sequences
 # of TwinStrand's Mouse Mutagenesis Panel.
 rg <- get_seq("TSpanel_mouse")
 write_reference_fasta(rg, output_path = NULL)
+}
 }
 }

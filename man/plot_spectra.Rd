@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_spectra.R
 \name{plot_spectra}
 \alias{plot_spectra}
-\title{Transition-transversion plot}
+\title{Plot spectra}
 \usage{
 plot_spectra(
   mf_data,
@@ -98,11 +98,14 @@ Given mf data, construct a plot displaying the
 mutation subtypes observed in a cohort.
 }
 \examples{
-# Load example data
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut as in Example 4.
+# Sequenced on TS Mouse Mutagenesis Panel. Example data is
+# retrieved from MutSeqRData, an ExperimentHub data package.
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
 
 # Example 1: plot the proportion of 6-based mutation subtypes
 # for each sample, organized by dose group:
@@ -131,4 +134,5 @@ plot <- plot_spectra(mf_data = mf_data,
                      subtype_resolution = "base_6",
                      response = "proportion",
                      group_order = "clustered")
+}
 }

@@ -112,11 +112,13 @@ filters. To reset previous filters, set the filter_mut column values to
 FALSE.
 }
 \examples{
-# Load example data
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data(). Sequenced on TS Mouse Mutagenesis Panel.
+# Example data is retrieved from MutSeqRData, an ExperimentHub data package
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9860"]]
 # Filter the data
 # Basic Usage: Filter out putative germline variants
 filter_example_1 <- filter_mut(mutation_data = example_data,
@@ -164,4 +166,5 @@ filter_example_4 <- filter_mut(mutation_data = example_data,
 # Returning a list: mutation_data and filtered_rows.
 filtered_rows <- filter_example_4$filtered_rows
 filtered_example_mutation_data <- filter_example_4$mutation_data
+}
 }

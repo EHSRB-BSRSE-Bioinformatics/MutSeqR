@@ -69,10 +69,15 @@
 #' @param label_size A numeric value that controls the size of the data labels.
 #' @return a ggplot object
 #' @examples
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
+#' 
 #' example_data$dose_group <- factor(example_data$dose_group,
 #'                                   levels = c("Control", "Low",
 #'                                              "Medium", "High"))
@@ -88,6 +93,7 @@
 #'                      plot_error_bars = TRUE,
 #'                      plot_indiv_vals = TRUE,
 #'                      add_labels = "none")
+#' }
 #' @import ggplot2
 #' @importFrom dplyr across all_of arrange rename group_by summarize
 #' @importFrom stats sd setNames

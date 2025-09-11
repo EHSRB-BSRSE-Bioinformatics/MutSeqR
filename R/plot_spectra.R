@@ -1,4 +1,5 @@
-#' Transition-transversion plot
+#' Plot spectra
+#' 
 #' @description Given mf data, construct a plot displaying the
 #' mutation subtypes observed in a cohort.
 #' @param mf_data A data frame containing the mutation frequency data at the
@@ -65,11 +66,14 @@
 #' @importFrom dplyr select arrange across all_of
 #' @export
 #' @examples
-#' # Load example data
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_mutation_data_filtered.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut as in Example 4.
+#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9861"]]
 #'
 #' # Example 1: plot the proportion of 6-based mutation subtypes
 #' # for each sample, organized by dose group:
@@ -98,6 +102,7 @@
 #'                      subtype_resolution = "base_6",
 #'                      response = "proportion",
 #'                      group_order = "clustered")
+#' }
 
 plot_spectra <- function(mf_data,
                          group_col = "sample",

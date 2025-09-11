@@ -70,7 +70,7 @@
 #' }
 #'
 #' **SUGGESTED FIELDS**
-#' 
+#'
 #' The following **FORMAT** fields are not required, but are recommended for
 #' full package functionality:
 #' \itemize{
@@ -133,12 +133,15 @@
 #' See the filter_mut function for more detail.
 #' }
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example: Import a single bg-zipped vcf file. This library was sequenced
 #' # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-#' # consists of 20 2.4kb targets = 48kb of sequence.
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_import_vcf_data_cleaned.vcf.bgz",
-#'                             package = "MutSeqR")
+#' # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
+#' # from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_file <- eh[["EH9859"]]
+#' 
 #' # We will create an example metadata table for this data.
 #' sample_meta <- data.frame(sample = "dna00996.1",
 #'                           dose = "50",
@@ -150,6 +153,7 @@
 #'                                          genome = "mm10",
 #'                                          species = "mouse",
 #'                                          masked_BS_genome = FALSE)
+#' }
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
@@ -161,9 +165,8 @@
 #' @importFrom IRanges IRanges
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom BiocGenerics strand start end
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @export
-#'
 import_vcf_data <- function(vcf_file,
                             sample_data = NULL,
                             sd_sep = "\t",
@@ -377,7 +380,7 @@ import_vcf_data <- function(vcf_file,
     extract_context <- function(mut_gr,
                                 bsgenome) {
       # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = GenomeInfoDb::seqnames(mut_gr),
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = Seqinfo::seqnames(mut_gr),
                                                 ranges = IRanges::IRanges(
                                                   start = BiocGenerics::start(mut_gr) - 1,
                                                   end = BiocGenerics::start(mut_gr) + 1

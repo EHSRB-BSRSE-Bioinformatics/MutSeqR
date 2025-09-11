@@ -182,20 +182,22 @@ interval based on MA (e.g. 200) \emph{num_bootstraps}
 # With Model averaging.
 # For the purpose of this example, num_bootstraps is set to 5 to reduce
 # run time. 200 bootstraps is recommended.
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
-mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
-bmd <- bmd_proast(mf_data = mf,
-                  dose_col = "dose",
-                  response_col = c("mf_min", "mf_max"),
-                  bmr = 0.5,
-                  model_averaging = TRUE,
-                  num_bootstraps = 5)
-# Plot the Model Averaging 90\% CI using plot_ci()
-plot_df <- bmd \%>\%
- dplyr::filter(Model == "Model averaging") \%>\%
- dplyr::select(Response, BMD, BMDL, BMDU)
-plot <- plot_ci(plot_df, order = "asc", log_scale = FALSE)
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+ library(ExperimentHub)
+ eh <- ExperimentHub()
+ example_data <- eh[["EH9861"]]
+
+ mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
+ bmd <- bmd_proast(mf_data = mf,
+                   dose_col = "dose",
+                   response_col = c("mf_min", "mf_max"),
+                   bmr = 0.5,
+                   model_averaging = TRUE,
+                   num_bootstraps = 5)
+ # Plot the Model Averaging 90\% CI using plot_ci()
+ plot_df <- bmd \%>\%
+  dplyr::filter(Model == "Model averaging") \%>\%
+  dplyr::select(Response, BMD, BMDL, BMDU)
+ plot <- plot_ci(plot_df, order = "asc", log_scale = FALSE)
+}
 }

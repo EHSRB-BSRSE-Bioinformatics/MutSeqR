@@ -130,13 +130,14 @@
 #' See the filter_mut function for more detail.
 #' }
 #' @examples
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example: Import a single mutation file. This library was sequenced with
 #' # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-#' # consists of 20 2.4kb targets = 48kb of sequence.
-#' example_file <- system.file("extdata", "Example_files",
-#'                             "example_import_mut_data.rds",
-#'                             package = "MutSeqR")
-#' example_data <- readRDS(example_file)
+#' # consists of 20 2.4kb targets = 48kb of sequence. Example data is
+#' # retrieved from MutSeqRData, an ExperimentHub data package.
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' example_data <- eh[["EH9857"]]
 #' # We will create an example metadata table for this data.
 #' sample_meta <- data.frame(sample = "dna00996.1",
 #'                           dose = "50",
@@ -148,6 +149,7 @@
 #'                                          genome = "mm10",
 #'                                          species = "mouse",
 #'                                          masked_BS_genome = FALSE)
+#' }
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub str_count
@@ -158,7 +160,7 @@
 #' @importFrom BiocGenerics strand start end
 #' @importFrom IRanges IRanges
 #' @importFrom Biostrings getSeq
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @export
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
@@ -362,7 +364,7 @@ import_mut_data <- function(mut_file,
     extract_context <- function(mut_gr,
                                 bsgenome) {
       # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = GenomeInfoDb::seqnames(mut_gr),
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = Seqinfo::seqnames(mut_gr),
                                                 ranges = IRanges::IRanges(
                                                   start = BiocGenerics::start(mut_gr) - 1,
                                                   end = BiocGenerics::start(mut_gr) + 1

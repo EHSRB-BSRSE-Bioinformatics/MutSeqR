@@ -74,15 +74,21 @@ flagged by the filter_mut column will be excluded.
 }
 \examples{
 \dontrun{
-example_file <- system.file("extdata", "Example_files",
-                            "example_mutation_data_filtered.rds",
-                            package = "MutSeqR")
-example_data <- readRDS(example_file)
-signature_fitting(mutation_data = example_data,
-                  project_name = "Example",
-                  project_genome = "mm10",
-                  env_name = "MutSeqR",
-                  group = "dose",
-                  python_version = "3.11")
+ if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+   # Example data consists of 24 mouse bone marrow DNA samples imported
+   # using import_mut_data() and filtered with filter_mut as in Example 4.
+   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+   # retrieved from MutSeqRData, an ExperimentHub data package.
+   library(ExperimentHub)
+   eh <- ExperimentHub()
+   example_data <- eh[["EH9861"]]
+
+   signature_fitting(mutation_data = example_data,
+                     project_name = "Example",
+                     project_genome = "mm10",
+                     env_name = "MutSeqR",
+                     group = "dose",
+                     python_version = "3.11")
+ }
 }
 }
