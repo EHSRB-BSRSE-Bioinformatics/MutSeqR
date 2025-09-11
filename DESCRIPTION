@@ -97,7 +97,6 @@ Suggests:
     scales,
     shiny,
     testthat (>= 3.0.0),
-    ToxicR,
     trackViewer,
     yaml,
     xml2

@@ -18,5 +18,5 @@ exist, it will be created. If NULL, the plots will not be exported.}
 A list of ggplot objects for each response in results.
 }
 \description{
-Make a Cleveland plot for the PROAST results. Matches ToxicR.
+Make a Cleveland plot for the PROAST results.
 }

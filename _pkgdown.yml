@@ -78,10 +78,9 @@ reference:
       - plot_radar
 
   - title: Dose-Response / BMD Modeling
-    desc: Functions for BMD modeling using PROAST and ToxicR.
+    desc: Functions for BMD modeling using PROAST.
     contents:
       - bmd_proast
-      - bmd_toxicr
       - f.proast
       - f.plot.result
       - f.plot.gui

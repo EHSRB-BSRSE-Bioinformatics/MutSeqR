@@ -20,11 +20,11 @@
 #' @return a ggplot object
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Plot results from PROAST and ToxicR
-#' dat <- data.frame(Response = c("PROAST MF Min", "PROAST MF Max", "ToxicR MF Min", "ToxicR MF Max"),
-#'                   BMD = c(NA, NA, 9.641894, 8.100164),
-#'                   BMDL = c(7.38, 2.98, 8.032936,5.463013),
-#'                   BMDU = c(10.9, 7.68, 10.97636, 10.04638))
+#' # Plot results from PROAST
+#' dat <- data.frame(Response = c("PROAST MF Min", "PROAST MF Max"),
+#'                   BMD = c(NA, NA),
+#'                   BMDL = c(7.38, 2.98),
+#'                   BMDU = c(10.9, 7.68))
 #' plot <- plot_ci(dat)
 #' }
 #' @export
