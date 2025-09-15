@@ -548,7 +548,7 @@ plot4.16
 
 ## Benchmark Dose Analysis
 
-Benchmark dose (BMD) was calculated using `r params$bmd_method`.
+Benchmark dose (BMD) was calculated using PROAST.
 
 BMD is the dose at which a `r params$bmr * 100`% in mutation frequency occurs above controls.
 
@@ -560,8 +560,6 @@ if (plot_max) {
 } else {
   response_col <- "mf_min"
 }
-
-if (params$bmd_method == "proast") {
   bmd <- bmd_proast(mf_data = mf_data,
                     dose_col = params$exp_variable,
                     response_col = response_col,
@@ -570,20 +568,6 @@ if (params$bmd_method == "proast") {
                     num_bootstraps = params$num_boots,
                     plot_results = TRUE,
                     output_path = NULL)
-} else if (params$bmd_method == "toxicr") {
-  bmd <- bmd_toxicr(mf_data = mf_data,
-                    dose_col = params$exp_variable,
-                    response_col = response_col,
-                    bmr = params$bmr,
-                    plot_results = TRUE,
-                    output_path = NULL,
-                    ma_summary = TRUE)
-  bmd$summary$BMR <- params$bmr
-  bmd$summary <- bmd$summary %>%
-    dplyr::select(Model, Response, BMR, BMD, BMDL, BMDU,
-                  post_p, confidence_level) %>%
-    dplyr::arrange(desc(Model == "Model averaging"))
-}
 ```
 
 ### BMD Results
@@ -596,11 +580,11 @@ Results[["BMD Results"]] <- bmd$summary
 
 ### BMD Plots {.tabset}
 
-```{r bmd-exphill-tab, eval=params$bmd & params$bmd_method=="proast" & !no_mf, results='asis'}
+```{r bmd-exphill-tab, eval=params$bmd & !no_mf, results='asis'}
 cat("#### Exponential & Hill Models\n\n")
 ```
 
-```{r bmd-exphill-cap, eval=params$bmd & params$bmd_method == "proast" & !no_mf, include=FALSE}
+```{r bmd-exphill-cap, eval=params$bmd & !no_mf, include=FALSE}
 caption1 <- paste(
   "The fitted curve of the selected Exponenetial (left) and Hill (right)",
   "models. Data is MFmin by", params$exp_variable, "following",
@@ -617,19 +601,19 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-exphill-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.cap=caption1}
+```{r bmd-exphill-plot1, eval=params$bmd & !no_mf, fig.cap=caption1}
 replayPlot(bmd$mf_min_Expon_HILL)
 ```
 
-```{r bmd-exphill-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
+```{r bmd-exphill-plot2, eval=params$bmd & plot_max & !no_mf, fig.cap=caption2}
 replayPlot(bmd$mf_max_Expon_HILL)
 ```
 
-```{r bmd-invln-tab, eval=params$bmd & params$bmd_method=="proast" & !no_mf, results='asis'}
+```{r bmd-invln-tab, eval=params$bmd & !no_mf, results='asis'}
 cat("####  Inverse Exponential & Log-Normal Models\n\n")
 ```
 
-```{r bmd-invln-cap, eval=params$bmd & params$bmd_method == "proast" & !no_mf, include=FALSE}
+```{r bmd-invln-cap, eval=params$bmd & !no_mf, include=FALSE}
 caption1 <- paste(
   "The fitted curve of the selected Inverse-Exponenetial (left) and",
   "Log-Normal (right) models. Data is MFmin by", params$exp_variable,
@@ -648,19 +632,19 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-invln-plot1, eval=params$bmd & params$bmd_method == "proast" & !no_mf, fig.cap=caption1}
+```{r bmd-invln-plot1, eval=params$bmd & !no_mf, fig.cap=caption1}
 replayPlot(bmd$mf_min_InvExp_LN)
 ```
 
-```{r bmd-invln-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
+```{r bmd-invln-plot2, eval=params$bmd & plot_max & !no_mf, fig.cap=caption2}
 replayPlot(bmd$mf_max_InvExp_LN)
 ```
 
-```{r bmd-boot-tab, eval=params$bmd & params$bmd_method=="proast" & !no_mf, results='asis'}
+```{r bmd-boot-tab, eval=params$bmd & !no_mf, results='asis'}
 cat("####  Bootstrap Curves\n\n")
 ```
 
-```{r bmd-boot-cap, eval=params$bmd & params$bmd_method == "proast" & !no_mf, include=FALSE}
+```{r bmd-boot-cap, eval=params$bmd & !no_mf, include=FALSE}
 caption1 <- paste(
   "The bootstrap curves based on model averaging. Data is MFmin by",
   params$exp_variable, "with log-transformation. The geometric mean at each",
@@ -675,39 +659,12 @@ caption2 <- paste(
 )
 ```
 
-```{r bmd-boot-plot1, eval=params$bmd & params$bmd_method == "proast" & !plot_max & !no_mf, fig.cap=caption1}
+```{r bmd-boot-plot1, eval=params$bmd & !plot_max & !no_mf, fig.cap=caption1}
 replayPlot(bmd$mf_min_bootstrap_curves)
 ```
 
-```{r bmd-boot-plot2, eval=params$bmd & params$bmd_method == "proast" & plot_max & !no_mf, fig.cap=caption2}
+```{r bmd-boot-plot2, eval=params$bmd & plot_max & !no_mf, fig.cap=caption2}
 replayPlot(bmd$mf_max_bootstrap_curves)
-```
-
-```{r bmd-ma-tab, eval=params$bmd & params$bmd_method=="toxicr" & !no_mf, results='asis'}
-cat("####  Model Averaged Model\n\n")
-```
-
-```{r bmd-ma-cap, eval=params$bmd & params$bmd_method == "toxicr" & !no_mf, include=FALSE}
-caption1 <- paste(
-  "The fitted model based on model averaging. Data is MFmin by",
-  params$exp_variable, " The black points are the individual data points.",
-  "The BMD is represented by a black triangle with the 90% confidence",
-  "intervals extending as error bars."
-)
-caption2 <- paste(
-  "The fitted model based on model averaging. Data is MFmAX by",
-  params$exp_variable, " The black points are the individual data points.",
-  "The BMD is represented by a black triangle with the 90% confidence",
-  "intervals extending as error bars."
-)
-```
-
-```{r bmd-ma-plot1, eval=params$bmd & params$bmd_method=="toxicr" & !no_mf, fig.cap=caption1}
-bmd$mf_min_ma
-```
-
-```{r bmd-ma-plot2, eval=params$bmd & params$bmd_method=="toxicr" & plot_max & !no_mf, fig.cap=caption2}
-bmd$mf_max_ma
 ```
 
 #### Cleveland Plots
@@ -716,20 +673,12 @@ bmd$mf_max_ma
 caption1 <- paste(
   "MFmin. The BMD estimate for each model plotted as a red point alongside the 90%",
   "confidence intervals. The size of the BMD point represents the model weight",
-  "assigned during model averaging",
-  ifelse(params$bmd_method == "proast",
-    "based on AIC",
-    "based on posterior probability"
-  )
+  "assigned during model averaging based in AIC."
 )
 caption2 <- paste(
   "MFmax. The BMD estimate for each model plotted as a red point alongside the 90%",
   "confidence intervals. The size of the BMD point represents the model weight",
-  "assigned during model averaging",
-  ifelse(params$bmd_method == "proast",
-    "based on AIC",
-    "based on posterior probability"
-  )
+  "assigned during model averaging based on AIC."
 )
 ```
 
@@ -747,7 +696,7 @@ bmd$mf_max_cleveland
 caption <- paste(
   "Benchmark dose with 90% confidence intervals representing the dose at which a ",
   params$bmr * 100, " % increase in mutation frequency occurs from reference level.",
-  " Calculated using ", params$bmd_method, " software.",
+  " Calculated using PROAST software.",
   "Black points represent the BMD, red points the BMDL, and blue points, the BMDU"
 )
 ```

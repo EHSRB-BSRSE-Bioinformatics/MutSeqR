@@ -1,5 +1,5 @@
 #' Cleveland Plot
-#' @description Make a Cleveland plot for the PROAST results. Matches ToxicR.
+#' @description Make a Cleveland plot for the PROAST results.
 #' @param results PROAST results object.
 #' @param covariate_col Covariate column name.
 #' @param output_path Output path for the plot. If the output_path doesn't

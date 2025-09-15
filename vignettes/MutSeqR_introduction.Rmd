@@ -1616,16 +1616,9 @@ default provided by this package calculates the BMD at a 50% relative increase
 in MF from the background. This BMR was selected based on previous
 recommendations for genotoxicity assessment by @white-2020.
 
-MutSeqR provides two functions for BMD modelling, each employing widely-used
-software designed to be consistent with methods used by regulatory authorities.
-
-1. `bmd_proast()` runs a modified version of the
+MutSeqR provides `bmd_proast` for BMD modelling, which runs a modified version of the
 [proast71.1](https://www.rivm.nl/en/proast) R library that is parametirized instead of
 menu-based.
-2. `bmd_toxicr` uses the [ToxicR](https://github.com/NIEHS/ToxicR) library,
-available on Github.
-
-### PROAST
 
 `bmd_proast` will analyze the continuous, individual MF data following a log
 transformation. PROAST uses four families of nested models: exponential, Hill,
@@ -1636,7 +1629,7 @@ BMR values are a user-defined relative increase in MF from the
 control. Alternatively, users may set the BMR as one standard-deviation from
 the control.
 
-#### General Usage: bmd_proast
+### General Usage: bmd_proast
 
 Supply `bmd_proast` with per-sample mf data calculated using `calculate_mf()`,
 with the dose column retained in the summary table. Dose column must be numeric.
@@ -1666,7 +1659,7 @@ estimate for each model family and the model averaging results, if applicable.
 Users may access the raw, unparsed PROAST results by setting
 `raw_results = TRUE`.
 
-#### Example
+### Example
 
 *Example 5.1. Calculate the BMD with model averaging for a 50% relative*
 *increase in MF from control. This will be calculated for both MFmin and MFmax.*
@@ -1685,11 +1678,9 @@ proast_results <- bmd_proast(
 )
 ```
 
+### BMD Results {.tabset}
 
-
-#### BMD Results {.tabset}
-
-##### Summary
+#### Summary
 
 **Table 22.** BMD Estimates by PROAST.
 
@@ -1698,7 +1689,7 @@ DT::datatable(proast_results$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
 ```
 
-##### Exponential & Hill Models
+#### Exponential & Hill Models
 
 ```{r bmd-exphill-cap, include=FALSE}
 caption1 <- paste(
@@ -1725,7 +1716,7 @@ replayPlot(proast_results$mf_min_Expon_HILL)
 replayPlot(proast_results$mf_max_Expon_HILL)
 ```
 
-#####  Inverse Exponential & Log-Normal Models
+####  Inverse Exponential & Log-Normal Models
 
 ```{r bmd-invln-cap, include=FALSE}
 caption1 <- paste(
@@ -1754,7 +1745,7 @@ replayPlot(proast_results$mf_min_InvExp_LN)
 replayPlot(proast_results$mf_max_InvExp_LN)
 ```
 
-#####  Bootstrap Curves
+####  Bootstrap Curves
 
 ```{r bmd-boot-cap, include=FALSE}
 caption1 <- paste(
@@ -1768,7 +1759,7 @@ caption1 <- paste(
 replayPlot(proast_results$mf_max_bootstrap_curves)
 ```
 
-##### Cleveland Plots
+#### Cleveland Plots
 
 ```{r bmd-cvd-cap, include=FALSE}
 caption1 <- paste(
@@ -1791,93 +1782,6 @@ proast_results$mf_min_cleveland
 proast_results$mf_max_cleveland
 ```
 
-### ToxicR
-
-`bmd_toxicr` will analyze continuous, individual or continuous, summary MF data,
-assuming either a normal (default) or log-normal distribution. This function
-employs Bayesian estimation using either the Laplace Maximum *a posteriori*
-approach (default) [@gelman-1995] or Markov chain Monte Carlo (MCMC)
-simulation [@brooks-2011]. The default model parameter’s prior
-distributions are specified in [@wheeler-2020], but they are
-user-modifiable. The default models are described in the European Food Safety
-Authority’s 2022 Guidance on the use of benchmark dose approach in risk
-assessment [@efsa-2022]. Model averaging may be
-applied using described methodologies (@wheeler-2020; @wheeler-2022).
-
-
-ToxicR offers several options for the BMR:
-
-- **Relative deviation (*rel*)**: the BMD represents the dose that changes the
-mean MF a certain percentage from the background dose. 
-- **Standard deviation (*sd*)**: the BMD represents the dose associated with
-the mean MF changing a specified number of standard deviations from the
-background mean. 
-- **Absolute deviation (*abs*)**: the  BMD represents the dose associated with
-a specified absolute deviation from the background mean. 
-- **Hybrid deviation (*hybrid*)**: the  BMD represents the dose that changes
-the probability of an adverse event by a specified amount. 
-
-One of these options can be specified using the `bmr_type` parameter. The
-`bmr` parameter is set to a numeric value specifying the BMR, defined in
-relation to the calculation requested in `bmr_type`.
-
-Selecting an appropriate BMR involves making judgements about the statistical
-and biological characteristics of the dataset and about the applications for
-which the resuling BMDs will be used.
-
-#### Install ToxicR
-
-``` {r install-toxicr, eval=FALSE}
-devtools::install_github("NIEHS/ToxicR")
-```
-
-*See the ToxicR repository on github for more information on installing the*
-*package.*
-
-#### General Usage: bmd_toxicr
-
-*Examples include external dependencies*
-
-Supply `bmd_toxicr` with the per-sample mf data from `calculate_mf()`. Retain
-the dose column in the summary table. Specify the column that contains the
-numeric dose values in `dose_col`. The function can model more than one response
-variable at once. Supply all response variables to `response_col`.
-
-Calculate the BMD with model averaging by setting `model_averaging = TRUE`. The
-confidence level for the upper and lower confidence intervals can be defined
-with the `alpha` parameter (default 90% CI).
-
-Users may choose to generate model plots with `plot_results`. If TRUE, plots
-may be automatically saved to an output directory specified in `output_path`.
-Alternatively, if `output_path` is NULL, plots will be returned within a list
-alongside the the BMD results.
-
-The function will return the BMD with its upper and lower confidence intervals
-for each response variable. If model averaging, a breakdown of the model
-averaging process can be returned alongside the results `ma_summary = TRUE`.
-This will return the estimate for each model with its associated posterior
-probability.
-
-#### Example
-
-*Example 5.2. Calculate the BMD with model averaging for a 50% relative*
-*increase in MF from control. This will be calculated for both MFmin and*
-*MFmax. See example 3.1 for calculation of mf_data_global.*
-
-```{r toxicr, eval=FALSE}
-toxicr_results <- bmd_toxicr(
-  mf_data = mf_data_global,
-  dose_col = "dose",
-  response_col = c("mf_min", "mf_max"),
-  bmr_type = "rel",
-  bmr = 0.5,
-  model_averaging = TRUE,
-  ma_summary = TRUE,
-  plot_results = FALSE
-)
-toxicr_results
-```
-
 ### Plot BMD CIs
 
 `plot_ci()` creates a confidence interval (CI) plot of BMD results for easy
@@ -1886,7 +1790,7 @@ comparison of BMDs between response variables.
 The BMD values can be plotted on the log scale, if required.
 
 *Example 5.3. Compare the estimated BMD for MFmin (50% relative increase)*
-*by PROAST versus ToxicR*
+*by PROAST versus ToxicR (another BMD software available on Github)*
 
 ```{r ci-plot-caption, include=FALSE}
 caption <- paste(
@@ -2880,8 +2784,6 @@ concentration values.
 - *bmr*: A numeric value indicating the benchmark response for the bmd analysis.
 The Summary Report defines the bmr as a bmr-% increase in MF from the reference
 level. Default is 0.5.
-- *bmd_method*: The method for running the BMD analysis. Optionsare "proast" or
-"toxicr".
 - *run_sigfitting*: A logical variable indicating whether to run
 signature_fitting. If an exp_variable is provided,the signature analysis
 will be performed per exp_variable level, otherwise it will be performed per
