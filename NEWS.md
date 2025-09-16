@@ -1,3 +1,7 @@
+# MutSeqR 0.99.2 (2025-09-15)
+
+Preparing for Bioconductor release. This change removes bmd_toxicR from the package. ToxicR dependency is not supported by Bioconductor. See ToxicR_archive branch for bmd_toxicr function. Modifies signature_fitting() to use SigProfilerMatrixGenerator python dependency rather than R dependency.
+
 # MutSeqR 0.99.1 (2025-08-13)
 
 Preparing for Bioconductor release. This change adds MutSeqRData to suggests, and alters how the examples are run (now depends on the ExperimentHub accessions).
