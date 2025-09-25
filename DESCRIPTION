@@ -41,7 +41,7 @@ Description: Standard methods for analysis of mutation data following error-
 License: MIT + file LICENSE
 Depends:
     R (>= 3.5.0)
-biocViews: Software
+biocViews: Sequencing, SomaticMutation, Visualization, GenomicVariation, DriverMutation, StatisticalMethod, GeneTarget
 Imports:
     BiocGenerics,
     BiocManager,
