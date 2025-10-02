@@ -1,12 +1,9 @@
 # PROAST Code Attribution
 
 # This R code is a modified subset derived from the PROAST software package.
-
 # Original Copyright (c) RIVM National Institute for Public Health and the Environment.
-
 # Subsequent modifications and surrounding code are (c) His Majesty the King in Right of Canada, 2025.
 
-# 
 # Concatenated files for minimal parameterized PROAST:
 .proast_env <- new.env(parent = emptyenv())
 #' Run dose-response modeling using PROAST.
