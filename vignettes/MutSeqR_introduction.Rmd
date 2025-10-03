@@ -65,8 +65,7 @@ Install the package from github:
 install.packages("devtools")
 
 devtools::install_github(
-  "EHSRB-BSRSE-Bioinformatics/MutSeqR",
-  auth_token = "your personal_access_token from GitHub"
+  "EHSRB-BSRSE-Bioinformatics/MutSeqR"
 )
 ```
 
@@ -172,18 +171,21 @@ An important component of importing your data for proper use is to assign each
 mutation to a biological sample, and also make sure that some additional
 information about each sample is present (ex., a chemical treatment, a dose,
 etc.). This is done by providing `sample_data`. This parameter can take a data
-frame, or it can read in a file if provided with a filepath. If using a
+frame, or it can read in a file if provided it with a filepath. If using a
 filepath, specify the proper delimiter using the `sd_sep` parameter. Sample
 metadata will be joined with the mutation data using the "sample" column to
 capture that information and associate it with each mutation.
 
-Specify the appropriate BS genome with which to populate the context column by
-supplying the species, genome, and masked_BS_genome parameters. The function
+Specify the appropriate BS genome with which to populate the context column.
+Prior to data import, ensure that the BS genome is installed. Supply the pkgname
+to the BS_genome parameter in the import function. If you are not sure which
+BS genome you should use, you can use the find_BS_genome() function. This function
 will browse [BSgenome::available.genomes](https://www.rdocumentation.org/packages/BSgenome/versions/1.40.1/topics/available.genomes)
-for the appropriate reference genome and install the corresponding package.
-Context information will be extracted from the installed BSgenome object.
-BSgenome offers genomes with masked sequences. If you wish to use the masked
-version of the genome, set `masked_BS_genome` to `TRUE`.
+for given organisms and genome assembly versions. Once you've identified the
+appropriate BS genome, it can be installed using BiocManager().
+Context information will be extracted from the BS genome.
+Note, BSgenome offers genomes with masked sequences. If you wish to use the masked
+version of the genome, you can find the right one with find_BS_genome(masked = TRUE).
 
 ## Examples {.tabset}
 
@@ -202,6 +204,17 @@ library(ExperimentHub)
 eh <- ExperimentHub()
 # Query the index for MutSeqRData records and their associated accessors.
 query(eh, "MutSeqRData")
+```
+
+Identify the BS genome: Sequencing data was aligned to the mm10 mouse genome.
+```{r find_BS_genome}
+mouse_BS_genome <- find_BS_genome(organism = "mouse", genome = "mm10")
+print(mouse_BS_genome)
+```
+
+Install the mouse mm10 BS genome:
+```{r install_BS_genome, eval=FALSE}
+BiocManager("BSgenome.Mmusculus.UCSC.mm10")
 ```
 
 ### VCF
@@ -223,9 +236,7 @@ sample_metadata <- data.frame(
 imported_example_data <- import_vcf_data(
   vcf_file = example_file,
   sample_data = sample_metadata,
-  genome = "mm10",
-  species = "mouse",
-  masked_BS_genome = FALSE
+  BS_genome = mouse_BS_genome
 )
 ```
 
@@ -254,9 +265,7 @@ sample_metadata <- data.frame(
 imported_example_data <- import_mut_data(
   mut_file = example_data,
   sample_data = sample_metadata,
-  genome = "mm10",
-  species = "mouse",
-  masked_BS_genome = FALSE,
+  BS_genome = find_BS_genome("mouse", "mm10"), # Must be installed!!
   is_0_based_mut = TRUE # indicates that the genomic coordinates are 0-based.
 # Coordinates will be changed to 1-based upon import.
 )
@@ -295,9 +304,7 @@ converted to 1-based. If you do not wish to specify regions, then set the
 imported_example_data <- import_mut_data(
   mut_file = example_data,
   sample_data = sample_metadata,
-  genome = "mm10",
-  species = "mouse",
-  masked_BS_genome = FALSE,
+  BS_genome = find_BS_genome("mouse", "mm10"),
   is_0_based_mut = TRUE,
   regions = "TSpanel_mouse"
 )
@@ -2516,12 +2523,26 @@ plot
 # Retrieve Sequences
 
 `get_seq()` will retrive raw nucleotide sequences for specified genomic
-intervals. This function will install an appropriate BS genome library to
-retrieve sequences based on species, genome, and masked parameter.
+intervals. The function can retrieve sequences in one of two ways. Either
+specify an installed BSgenome from which to retrieve sequences or retrieve
+sequences through API request to the UCSC database based on supplied species
+and genome assembly.
 
 Supply regions with a filepath, data frame or GRanges object containing the
 specified genomic intervals. TwinStrand's Mutagenesis Panels are stored in
 package files and can easily be retrieved. 
+
+Supply the function with the appropriate BS_genome from which to retrieve
+sequences. You can use the find_BS_genome() function to identify a BS genome
+to use based on species and genome assembly. Be sure to install the BS genome
+prior to running get_seq() with BiocManager().
+
+To retrieve sequences from the UCSC data base, please input the species and
+assembly genome to the species and genome parameters.
+
+**BS_genome, species, or genome*
+*do not need to be specified for the Mutagenesis Panels as this information*
+*is stored*.
 
 Sequences are returned within a *GRanges* object.
 
@@ -2535,15 +2556,24 @@ regions_seq
 *Example 8.2. Retrieve sequences for a custom interval of regions. We will use*
 *the Human Mutagenesis Panel as an example.*
 ```{r get-seq-custom}
-# We will load the TSpanel_human regions file as an example
+# We will load the TSpanel_human regions file to obtain
+# an example list of regions.
 human <- load_regions_file("TSpanel_human")
 regions_seq <- get_seq(regions = human,
                        is_0_based_rg = FALSE,
-                       species = "human",
-                       genome = "hg38",
-                       masked = FALSE,
+                       BS_genome = find_BS_genome("human", "hg38"),
                        padding = 0)
 regions_seq
+```
+
+*Example 8.3. Retrieve sequences using UCSC database.*
+```{r get-seq-ucsc}
+regions_seq <- get_seq(regions = human,
+                       is_0_based_rg = FALSE,
+                       padding = 0,
+                       species = "human",
+                       genome = "hg38",
+                       ucsc = TRUE)
 ```
 
 Sequences can be exported as FASTA files with `write_reference_fasta()`.
@@ -2693,10 +2723,10 @@ genome. Ex. GRCh38 requires users to remove "chr" from the Chromosome value.
 
 Data Import
 
-- *species*: The species of the model organism. This can be the common name or
- the scientific name. Ex. "Mouse" or "Mus musculus".
-- *genome*: The reference genome. This is used to populate the sequence context
-column. Ex. "mm10".
+- *BS_genome*: The BS genome to use to populate the sequence context. The given
+BS genome must be installed prior to running the render_report() function.
+To identify an appropriate BS genome based on species and genome assembly,
+use find_BS_genome(). Ex. "BSgenome.Mmusculus.UCSC.mm10"
 - *file_type*: The format of the mutation data to be imported. Options are table
 or vcf.
 - *mutation_file*: The file path to the mutation data file(s). This can be an
@@ -2784,12 +2814,6 @@ concentration values.
 - *bmr*: A numeric value indicating the benchmark response for the bmd analysis.
 The Summary Report defines the bmr as a bmr-% increase in MF from the reference
 level. Default is 0.5.
-- *run_sigfitting*: A logical variable indicating whether to run
-signature_fitting. If an exp_variable is provided,the signature analysis
-will be performed per exp_variable level, otherwise it will be performed per
-sample. If TRUE, this will create a virtual environment to run python on first
-use.
-- *python_version*: The python version installed on the operating system.
 
 Custom Profile Parameters
 
