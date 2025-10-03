@@ -21,12 +21,12 @@ render_report <- function(
 ) {
   # Check if yaml package is available, install if not
   if (!requireNamespace("yaml", quietly = TRUE)) {
-    install.packages("yaml")
+    stop("This function requires the yaml library. Please install using install.packages('yaml')")
   }
 
   # Check if rmarkdown package is available, install if not
   if (!requireNamespace("rmarkdown", quietly = TRUE)) {
-    install.packages("rmarkdown")
+    stop("This function requres rmarkdown library. Please install using install.packages('rmarkdown')")
   }
 
   # Validate config_filepath
