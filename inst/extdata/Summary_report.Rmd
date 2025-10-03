@@ -99,8 +99,7 @@ if (params$file_type == "table") {
                     regions = params$regions,
                     rg_sep = "\t",
                     is_0_based_rg = params$is_0_based_rg,
-                    species = params$species,
-                    genome = params$genome),
+                    BS_genome = params$BS_genome),
     warning = function(w) {
       warnings_list <<- c(warnings_list, w$message)
     }
@@ -119,8 +118,7 @@ if (params$file_type == "table") {
                     regions = params$regions,
                     rg_sep = "\t",
                     is_0_based_rg = params$is_0_based_rg,
-                    species = params$species,
-                    genome = params$genome),
+                    BS_genome = params$BS_genome),
     warning = function(w) {
       warnings_list <<- c(warnings_list, w$message)
     }

@@ -34,20 +34,15 @@
 #' in both directions by the given amount. Ex. Structural variants and
 #' indels may start outside of the regions. Adjust the `padding` to
 #' include these variants in your region's ranges.
-#' @param genome The genome assembly version of the reference genome. This is
-#' required if your data does not include a context column. The
-#' function will install a BS genome for the given species/genome/masked
-#' arguments to populate the context column.
-#' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
-#' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
-#' @param species The species. Required if your data does not include a
-#' context column. The function will install a BS genome for the given
-#' species/genome/masked to populate the context column. The species can
-#' be the common name of the species or the scientific name.
-#' Ex. "human" or "Homo sapiens".
-#' @param masked_BS_genome A logical value. Required when using a BS genome
-#' to poulate the context column. Whether to use the masked version of the
-#' BS genome (TRUE) or not (FALSE). Default is FALSE.
+#' @param BS_genome The pkgname of a BS genome. A BS genome must be installed
+#' prior to import to populate the context column (trinucleotide context for each position).
+#' Only required if data does not already include a context column. Please install the
+#' appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
+#' name of the BSgenome package. The pkgname can be found using the find_BS_genome()
+#' function, which requires the species and assembly version.
+#' Ex. "BSgenome.Hsapiens.UCSC.hg38" | "BSgenome.Hsapiens.UCSC.hg19" |
+#' "BSgenome.Mmusculus.UCSC.mm10" | "BSgenome.Mmusculus.UCSC.mm39" |
+#' "BSgenome.Rnorvegicus.UCSC.rn6"
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation
 #' data to output as a GRanges object. Default output is as a dataframe.
 #' @details The required fields are:
@@ -150,9 +145,8 @@
 #' imported_example_data <- import_vcf_data(vcf_file = example_file,
 #'                                          sample_data = sample_meta,
 #'                                          regions = "TSpanel_mouse",
-#'                                          genome = "mm10",
-#'                                          species = "mouse",
-#'                                          masked_BS_genome = FALSE)
+#'                                          BS_genome = find_BS_genome("mouse", "mm10")
+#' )
 #' }
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
@@ -166,6 +160,7 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom BiocGenerics strand start end
 #' @importFrom Seqinfo seqnames
+#' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 import_vcf_data <- function(vcf_file,
                             sample_data = NULL,
@@ -174,9 +169,7 @@ import_vcf_data <- function(vcf_file,
                             rg_sep = "\t",
                             is_0_based_rg = FALSE,
                             padding = 0,
-                            genome = NULL,
-                            species = NULL,
-                            masked_BS_genome = FALSE,
+                            BS_genome = NULL,
                             output_granges = FALSE) {
   vcf_file <- file.path(vcf_file)
 
@@ -370,12 +363,15 @@ import_vcf_data <- function(vcf_file,
   }
   # Create a context column, if needed
   if (!context_exists) {
-    if (is.null(genome) || is.null(species)) {
-      stop("Error: We need to populate the context column for your data. Please provide a genome and species so that we can retrieve the sequences.")
+    if (is.null(BS_genome)) {
+      stop("Error: The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
-    ref_genome <- install_ref_genome(organism = species,
-                                     genome = genome,
-                                     masked = masked_BS_genome)
+    installed_BS_genomes <- BSgenome::installed.genomes()
+    if (!(BS_genome %in% installed_BS_genomes)) {
+      stop("Error: The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+    }
+    message("Loading reference genome: ", BS_genome, ".")
+    ref_genome <- BSgenome::getBSgenome(BS_genome)
 
     extract_context <- function(mut_gr,
                                 bsgenome) {

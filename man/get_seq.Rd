@@ -8,11 +8,11 @@ get_seq(
   regions,
   rg_sep = "\\t",
   is_0_based_rg = TRUE,
-  species = NULL,
-  genome = NULL,
-  masked = FALSE,
   padding = 0,
-  ucsc = FALSE
+  BS_genome = NULL,
+  ucsc = FALSE,
+  species = NULL,
+  genome = NULL
 )
 }
 \arguments{
@@ -32,6 +32,15 @@ coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).
 If TRUE, positions will be converted to 1-based (start + 1). Need not be
 supplied for TSpanels. Default is TRUE.}
 
+\item{padding}{An integer value by which the function will extend the range
+of the target sequence on both sides. Start and end coordinates will be
+adjusted accordingly. Default is 0.}
+
+\item{ucsc}{A logical value. If TRUE, the function will retrieve the
+sequences from the UCSC genome browser using an API. If FALSE, the function
+will retrieve sequences using the appropriate BSgenome package, which will
+be installed as needed. Default is FALSE.}
+
 \item{species}{The species for which to retrieve the sequences.
 Species may be given as the scientific name or the common name.
 Ex. "Human", "Homo sapien". Used to choose the appropriate
@@ -43,15 +52,6 @@ Ex. hg38, hg19, mm10, mm39, rn6, rn7. Need not be supplied for TSpanels.}
 
 \item{masked}{A logical value indicating whether to use the masked version
 of the BS genome when retrieving sequences. Default is FALSE.}
-
-\item{padding}{An integer value by which the function will extend the range
-of the target sequence on both sides. Start and end coordinates will be
-adjusted accordingly. Default is 0.}
-
-\item{ucsc}{A logical value. If TRUE, the function will retrieve the
-sequences from the UCSC genome browser using an API. If FALSE, the function
-will retrieve sequences using the appropriate BSgenome package, which will
-be installed as needed. Default is FALSE.}
 }
 \value{
 a GRanges object with sequences of targeted regions.
