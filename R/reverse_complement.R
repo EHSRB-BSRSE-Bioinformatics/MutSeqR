@@ -20,9 +20,13 @@ reverseComplement <- function(x,
   strreverse <- function(x) {
   if (!is.character(x))
     stop("x must be a character vector")
-  sapply(strsplit(x, ""), function(y) paste(rev(y), collapse = ""))
-} 
- #Check arguments
+  vapply(
+    strsplit(x, ""),
+    function(y) paste(rev(y), collapse = ""),
+    character(1)
+  )
+  } 
+ # Check arguments
 if (!is.character(x)) x <- as.character(x) #coerse x to a character vector
   content <- match.arg(content)
   case <- match.arg(case)

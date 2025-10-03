@@ -171,7 +171,7 @@ plot_model_mf <- function(model,
     # Define the reference effect
     if (is.null(ref_effect)) {
       split_names <- strsplit(row.names(signif_data), " vs ")
-      signif_data$ref_level <- sapply(split_names, function(x) x[2])
+      signif_data$ref_level <- vapply(split_names, function(x) x[2], character(1))
     } else {
       signif_data <- dplyr::rename(signif_data,
                                    ref_level = paste0(ref_effect, "_2"))
