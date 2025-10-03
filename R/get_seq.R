@@ -60,16 +60,17 @@
 #' @importFrom BiocGenerics start end
 #' @importFrom S4Vectors mcols
 #' @importFrom Seqinfo seqnames
+#' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 
 get_seq <- function(regions,
                     rg_sep = "\t",
                     is_0_based_rg = TRUE,
-                    species = NULL,
-                    genome = NULL,
-                    masked = FALSE,
                     padding = 0,
-                    ucsc = FALSE) {
+                    BS_genome = NULL,
+                    ucsc = FALSE,
+                    species = NULL,
+                    genome = NULL) {
   if (ucsc && !requireNamespace("xml2", quietly = TRUE)) {
     stop("The 'xml2' package is required for UCSC API access.")
   }
@@ -81,19 +82,19 @@ get_seq <- function(regions,
                                            is_0_based_rg = is_0_based_rg)
   if (is.character(regions)) {
     if (regions == "TSpanel_human") {
-      species <- "human"
-      genome <- "hg38"
-      masked <- FALSE
+      BS_genome <- "BSgenome.Hsapiens.UCSC.hg38"
+      species = "human"
+      genome = "hg38"
     }
     if (regions == "TSpanel_mouse") {
-      species <- "mouse"
-      genome <- "mm10"
-      masked <- FALSE
+      BS_genome <- "BSgenome.Mmusculus.UCSC.mm10"
+      species = "mouse"
+      genome = "mm10"
     }
     if (regions == "TSpanel_rat") {
-      species <- "rat"
-      genome <- "rn6"
-      masked <- FALSE
+      BS_genome <- "BSgenome.Rnorvegicus.UCSC.rn6"
+      species = "rat"
+      genome = "rn6"
     }
   }
 
@@ -121,9 +122,15 @@ get_seq <- function(regions,
                    BiocGenerics::end(regions_gr))
     S4Vectors::mcols(regions_gr)$sequence <- seqs
   } else {
-    ref_genome <- install_ref_genome(organism = species,
-                                     genome = genome,
-                                     masked = masked)
+    if (is.null(BS_genome)) {
+      stop("Error: If not using the UCSC method, please indicate the appropriate BS genome (must be installed). If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+    }
+    installed_BS_genomes <- BSgenome::installed.genomes()
+    if (!(BS_genome %in% installed_BS_genomes)) {
+      stop("Error: The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+    }
+    message("Loading reference genome: ", BS_genome, ".")
+    ref_genome <- BSgenome::getBSgenome(BS_genome)
     seqs <- Biostrings::getSeq(ref_genome, names = regions_gr)
     S4Vectors::mcols(regions_gr)$sequence <- seqs
   }
