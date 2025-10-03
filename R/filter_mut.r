@@ -304,7 +304,11 @@ filter_mut <- function(mutation_data,
     if (custom_filter_rm) {
       if (return_filtered_rows) {
         rm_custom <- mutation_data[custom_filtered_rows, ]
-        matching_filter_values <- custom_filter_val[sapply(custom_filter_val, function(val) grepl(val, rm_custom[[custom_filter_col]]))]
+        matching_filter_values <- custom_filter_val[
+          vapply(custom_filter_val,
+                 function(val) grepl(val, rm_custom[[custom_filter_col]]),
+                 logical(1))
+        ]
         rm_custom <- rm_custom %>%
           dplyr::mutate(filter_reason =
             ifelse(.data$filter_reason == "",

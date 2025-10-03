@@ -91,15 +91,23 @@ test_that("calculate_mf works with subtypes", {
   )
   expect_equal(mf_data$mf_min, mf_data$sum_min / mf_data$subtype_depth)
   expect_equal(mf_data$mf_max, mf_data$sum_max / mf_data$subtype_depth)
-  expected_prop_min <- sapply(seq_len(nrow(mf_data)), function(i) {
-    sample <- mf_data$sample[i]
-    mf_data$mf_min[i] / sum(mf_data$mf_min[mf_data$sample == sample])
-  })
+  expected_prop_min <- vapply(
+    seq_len(nrow(mf_data)),
+    function(i) {
+      sample <- mf_data$sample[i]
+      mf_data$mf_min[i] / sum(mf_data$mf_min[mf_data$sample == sample])
+    },
+    numeric(1)
+  )
   expect_equal(mf_data$proportion_min, expected_prop_min)
-  expected_prop_max <- sapply(seq_len(nrow(mf_data)), function(i) {
-    sample <- mf_data$sample[i]
-    mf_data$mf_max[i] / sum(mf_data$mf_max[mf_data$sample == sample])
-  })
+  expected_prop_max <- vapply(
+    seq_len(nrow(mf_data)),
+    function(i) {
+      sample <- mf_data$sample[i]
+      mf_data$mf_max[i] / sum(mf_data$mf_max[mf_data$sample == sample])
+    },
+    numeric(1)
+  )
   expect_equal(mf_data$proportion_max, expected_prop_max)
 })
 
@@ -151,15 +159,23 @@ test_that("calculate_mf works with precalculated depth", {
 
   expect_equal(mf_data$mf_min, mf_data$sum_min / mf_data$subtype_depth)
   expect_equal(mf_data$mf_max, mf_data$sum_max / mf_data$subtype_depth)
-  expected_prop_min <- sapply(seq_len(nrow(mf_data)), function(i) {
-    sample <- mf_data$sample[i]
-    mf_data$mf_min[i] / sum(mf_data$mf_min[mf_data$sample == sample])
-  })
+  expected_prop_min <- vapply(
+    seq_len(nrow(mf_data)),
+    function(i) {
+      sample <- mf_data$sample[i]
+      mf_data$mf_min[i] / sum(mf_data$mf_min[mf_data$sample == sample])
+    },
+    numeric(1)
+  )
   expect_equal(mf_data$proportion_min, expected_prop_min)
-  expected_prop_max <- sapply(seq_len(nrow(mf_data)), function(i) {
-    sample <- mf_data$sample[i]
-    mf_data$mf_max[i] / sum(mf_data$mf_max[mf_data$sample == sample])
-  })
+  expected_prop_max <- vapply(
+    seq_len(nrow(mf_data)),
+    function(i) {
+      sample <- mf_data$sample[i]
+      mf_data$mf_max[i] / sum(mf_data$mf_max[mf_data$sample == sample])
+    },
+    numeric(1)
+    )
   expect_equal(mf_data$proportion_max, expected_prop_max)
 })
 test_that("calculate_mf selects variation types", {
