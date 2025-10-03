@@ -245,7 +245,7 @@ import_vcf_data <- function(vcf_file,
   for (field_name in names(geno)) {
     field <- geno[[field_name]]
     if (is.list(field)) { # Ex. AD
-      max_length <- max(sapply(field, length))
+      max_length <- max(vapply(field, length, integer(1)))
       expanded_field <- do.call(rbind, lapply(field, function(x) {
         c(x, rep(NA, max_length - length(x)))
       }))

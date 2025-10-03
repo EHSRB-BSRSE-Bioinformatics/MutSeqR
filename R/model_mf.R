@@ -411,7 +411,11 @@ model_mf <- function(mf_data,
   # Extract rownames into a column for each contrast variable
   for (i in 1:count) {
     var_i <- get(paste0("var", i))
-    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+    model_estimates[[var_i]] <- vapply(
+        strsplit(rownames(model_estimates), ":"),
+        function(x) x[i],
+        character(1)
+    )
   }
 
   # Pairwise Comparisons
@@ -487,12 +491,28 @@ model_mf <- function(mf_data,
                                              adj_p.value <= 0.01 ~ "**",
                                              adj_p.value <= 0.05 ~ "*",
                                              TRUE ~ ""))
-    pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
-    pairwise_comparisons$contrast_group2 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 2)
+    pairwise_comparisons$contrast_group1 <- vapply(
+      strsplit(rownames(pairwise_comparisons), " vs "),
+      function(x) x[1],
+      character(1)
+    )
+    pairwise_comparisons$contrast_group2 <- vapply(
+      strsplit(rownames(pairwise_comparisons), " vs "),
+      function(x) x[2],
+      character(1)
+    )
     for (i in 1:count) {
       var_i <- get(paste0("var", i))
-      pairwise_comparisons[[paste0(var_i, "_1")]] <- sapply(strsplit(pairwise_comparisons$contrast_group1, ":"), "[", i)
-      pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
+      pairwise_comparisons[[paste0(var_i, "_1")]] <- vapply(
+        strsplit(pairwise_comparisons$contrast_group1, ":"),
+        function(x) x[i],
+        character(1)
+      )
+      pairwise_comparisons[[paste0(var_i, "_2")]] <- vapply(
+        strsplit(pairwise_comparisons$contrast_group2, ":"),
+        function(x) x[i],
+        character(1)
+      )
     }
     pairwise_comparisons <- pairwise_comparisons %>%
       dplyr::select(-"contrast_group1", -"contrast_group2")
