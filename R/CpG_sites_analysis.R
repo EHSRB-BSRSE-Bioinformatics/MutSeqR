@@ -35,7 +35,6 @@
 #' @importFrom plyranges find_overlaps
 #' @importFrom rlang .data
 #' @importFrom Seqinfo seqnames
-#' @export
 get_cpg_mutations <- function(mutation_data,
                               regions,
                               variant_types = c("-no_variant"),
@@ -101,7 +100,6 @@ get_cpg_mutations <- function(mutation_data,
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges ranges
 #' @importFrom Seqinfo seqnames
-#' @export
 get_cpg_regions <- function(regions, motif = "CG") {
 
   all_CpGs_rg <- list()
@@ -140,7 +138,6 @@ get_cpg_regions <- function(regions, motif = "CG") {
 #' the target sequence of the mutation.
 #' @importFrom Biostrings vcountPattern
 #' @importFrom rlang .data
-#' @export
 annotate_cpg_sites <- function(mutation_data,
                                motif = "CG",
                                column_query = "context",
