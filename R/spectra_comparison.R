@@ -20,6 +20,8 @@
 #' Default is tab.
 #' @param mf_type The type of mutation frequency to use. Default is "min"
 #' (recommended).
+#' @param seed An integer to set the seed for reproducibility when
+#' using Monte Carlo simulations to compute the p-value. Default is 1234.
 #' @returns the log-likelihood statistic G2 for the specified comparisons with
 #' the p-value adjusted for multiple-comparisons.
 #' @export
@@ -92,7 +94,8 @@ spectra_comparison <- function(mf_data,
                                exp_variable,
                                mf_type = "min",
                                contrasts,
-                               cont_sep = "\t") {
+                               cont_sep = "\t",
+                               seed = 1234) {
   # Prepare Data
   sum_col <- paste0("sum_", mf_type)
   # Find the subtype column
@@ -132,7 +135,8 @@ spectra_comparison <- function(mf_data,
 
   # G2 Statistic - Likelihood Ratio Statistic
   ## Piegorsch and Bailer 1994 doi: 10.1093/genetics/136.1.403.
-  G2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234) {
+  # Note: we are NOT using the Monte Carlo simulation approach to compute p.
+  G2 <- function(x) {
     N <- sum(x)
     r <- apply(x, 1, sum)
     c <- apply(x, 2, sum)
@@ -145,37 +149,12 @@ spectra_comparison <- function(mf_data,
     G2 <- 2 * G2
     R <- nrow(x) - 1
     df <- R * (ncol(x) - 1)
-    if (monte.carlo == FALSE) {
-      if (N / R > 20) {
-        p.value <- 1 - pchisq(G2, df)
-        message("Using chi-squared distribution to compute p-value")
-      } else {
-        p.value <- 1 - pf(G2 / R, R, N - df)
-        message("Using F-distribution to compute p-value")
-      }
+    if (N / R > 20) {
+      p.value <- 1 - pchisq(G2, df)
+      message("Using chi-squared distribution to compute p-value")
     } else {
-      #Monte Carlo
-      #Generate random rxc tables
-      set.seed(seed)
-      r <- apply(x, 1, sum)
-      c <- apply(x, 2, sum)
-      rtbl <- r2dtable(1, r, c)
-      ref.dist <- rep(0, n.sim)
-      for (k in 1:length(ref.dist)){
-        x <- r2dtable(1, r, c)[[1]]
-        N <- sum(x)
-        r <- apply(x, 1, sum)
-        c <- apply(x, 2, sum)
-        e <- r %*% t(c) / N
-        G2.t <- 0
-        for (j in 1:ncol(x)){
-          flag <- x[, j] > 0
-          G2.t <- G2.t + t(x[flag, j]) %*% log(x[flag, j] / e[flag, j])
-        }
-        ref.dist[k] <- 2 * G2.t
-      }
-      flag <- ref.dist >= G2[1, 1]
-      p.value <- length(ref.dist[flag]) / 10000
+      p.value <- 1 - pf(G2 / R, R, N - df)
+      message("Using F-distribution to compute p-value")
     }
     data.frame(G2 = G2, p.value = p.value)
   }
