@@ -19,3 +19,14 @@ the mutation data with column names changed to match default.
 Map column names of mutation data to default column names.
 A utility function that renames columns of mutation data to default columns names.
 }
+\examples{
+df <- data.frame(
+ chromosome = c("chr1", "chr2", "chr3"),
+ pos = c(100, 200, 300),
+ end = c(100, 200, 300),
+ sample_id = c("S1", "S2", "S3"),
+ reference = c("G", "C", "T"),
+ alternate = c("A", "T", "G")
+)
+renamed_data <- rename_columns(df, column_map = op$column)
+}

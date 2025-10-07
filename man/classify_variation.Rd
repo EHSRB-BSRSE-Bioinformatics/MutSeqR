@@ -18,3 +18,10 @@ A character indicating the type of variation.
 Classify the variation type of a mutation based on its ref and
 alt values.
 }
+\examples{
+df <- data.frame(
+ ref = c("A", "CAGT", "GCC", "T", "ACG", "C", "G", "T", "A"),
+ alt = c("R", "TGA", "G", "TC", "TAC", "C", "<DEL>", "G", "???"))
+df$variation_type <- mapply(classify_variation, df$ref, df$alt)
+df
+}

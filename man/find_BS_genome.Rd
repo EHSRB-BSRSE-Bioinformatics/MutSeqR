@@ -23,3 +23,9 @@ which one should be installed for the specified organism and genome assembly
 version. If you cannot specify both organism and genome, the function can return
 a list of available genomes for a specified species.
 }
+\examples{
+# Find the reference genome for Mouse, mm10 assembly:
+mouse_mm10 <- find_BS_genome("mouse", "mm10")
+# Find all possible mouse BS genomesL
+mouse_all <- find_BS_genome("mouse")
+}

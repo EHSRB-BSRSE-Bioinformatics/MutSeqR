@@ -29,3 +29,7 @@ share/licenses/gpl-2 file in the R installation directory or from
 http://www.R-project.org/Licenses/GPL-2.
 reverseComplement.R
 }
+\examples{
+reverseComplement("A")
+reverseComplement("CA")
+}

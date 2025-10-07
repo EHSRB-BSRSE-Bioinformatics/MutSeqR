@@ -10,6 +10,11 @@
 #' @export
 #' @importFrom BSgenome available.genomes installed.genomes
 #' @return a BSgenome object
+#' @examples
+#' # Find the reference genome for Mouse, mm10 assembly:
+#' mouse_mm10 <- find_BS_genome("mouse", "mm10")
+#' # Find all possible mouse BS genomesL
+#' mouse_all <- find_BS_genome("mouse")
 find_BS_genome <- function(organism, genome, masked = FALSE) {
   # Common name mapping
   name_map <- list(

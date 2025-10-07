@@ -17,6 +17,20 @@
 #' @returns a GRanges object of the imported regions metadata file.
 #' @importFrom methods is
 #' @export
+#' @examples
+#' #' # Example 1: Load built-in TwinStrand's Human Mutagenesis
+#' human_rg <- load_regions_file(regions = "TSpanel_human")
+#' human_rg
+#' # Load a custom regions file from an interval list
+#' # We will use the human TSpanel system file for this example,
+#' # but any file can be imported.
+#' file <- system.file("extdata",
+#'                     "inputs",
+#'                    "metadata",
+#'                   "human_mutagenesis_panel_hg38.txt",
+#'                  package = "MutSeqR")
+#' custom_rg <- load_regions_file(regions = file, rg_sep = "\t", is_0_based_rg = TRUE)
+#' custom_rg
 
 load_regions_file <- function(regions,
                               rg_sep = "\t",
