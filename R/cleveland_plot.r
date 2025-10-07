@@ -7,7 +7,6 @@
 #' @return A list of ggplot objects for each response in results.
 #' @importFrom dplyr arrange filter mutate pull rename
 #' @import ggplot2
-#'
 cleveland_plot <- function(results,
                            covariate_col = NULL,
                            output_path = NULL) {

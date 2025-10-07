@@ -20,10 +20,21 @@ outputdir in config params.}
 "html_document" (default), "pdf_document", or "all".}
 }
 \value{
-None
+A rendered R Markdown document.
 }
 \description{
 This function reads a configuration file in YAML format,
 extracts the parameters, and renders an R Markdown document using the
 specified parameters.
+}
+\examples{
+# Step 1: Copy the example configuration file to your working directory
+## config <- system.file("extdata", "inputs", "summary_config.yaml", package = "MutSeqR")
+## file.copy(from = config, to = "your/working/directory/summary_config.yaml")
+# Step 2: Edit the configuration file with your inputs
+# Step 3: Render the report
+## render_report(config_filepath = "your/working/directory/summary_config.yaml",
+##  output_file = "MutSeqR_Summary_Report.html",
+##  output_format = "html_document")
+
 }

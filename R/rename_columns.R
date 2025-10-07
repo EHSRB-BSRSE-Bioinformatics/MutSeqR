@@ -4,6 +4,16 @@
 #' @param data mutation data
 #' @param column_map a list that maps synonymous column names to their default.
 #' @returns the mutation data with column names changed to match default.
+#' @examples
+#' df <- data.frame(
+#'  chromosome = c("chr1", "chr2", "chr3"),
+#'  pos = c(100, 200, 300),
+#'  end = c(100, 200, 300),
+#'  sample_id = c("S1", "S2", "S3"),
+#'  reference = c("G", "C", "T"),
+#'  alternate = c("A", "T", "G")
+#' )
+#' renamed_data <- rename_columns(df, column_map = op$column)
 #' @export
 
 rename_columns <- function(data, column_map = op$column) {

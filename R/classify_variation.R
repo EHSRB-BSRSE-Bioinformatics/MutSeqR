@@ -5,7 +5,13 @@
 #' @param alt The alternate allele.
 #' @return A character indicating the type of variation.
 #' @export
-#' 
+#' @examples
+#' df <- data.frame(
+#'  ref = c("A", "CAGT", "GCC", "T", "ACG", "C", "G", "T", "A"),
+#'  alt = c("R", "TGA", "G", "TC", "TAC", "C", "<DEL>", "G", "???"))
+#' df$variation_type <- mapply(classify_variation, df$ref, df$alt)
+#' df
+
 classify_variation <- function(ref, alt) {
   no_variant_indicators <- c(".", "", "<NON_REF>")
   structural_indicators <- c("<DEL>", "<INS>", "<DUP>", "<INV>", "<FUS>",

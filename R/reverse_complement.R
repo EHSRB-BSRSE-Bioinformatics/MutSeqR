@@ -12,6 +12,9 @@
 #' http://www.R-project.org/Licenses/GPL-2.
 #' reverseComplement.R
 #' @export
+#' @examples
+#' reverseComplement("A")
+#' reverseComplement("CA")
 reverseComplement <- function(x, 
                               content=c("dna", "rna"), 
                               case=c("lower", "upper", "as is")) {
