@@ -13,4 +13,8 @@ context_list
 \description{
 A list of reference contexts at different resolutions
 }
+\examples{
+context_list[["base_6"]]
+context_list[["base_12"]]
+}
 \keyword{datasets}

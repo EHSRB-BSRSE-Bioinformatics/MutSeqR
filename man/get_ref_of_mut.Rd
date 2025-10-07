@@ -12,3 +12,7 @@ get_ref_of_mut(mut_string)
 \description{
 A utility function that will return the reference context of a mutation
 }
+\examples{
+get_ref_of_mut("A>G")
+get_ref_of_mut("A[G>T]C")
+}

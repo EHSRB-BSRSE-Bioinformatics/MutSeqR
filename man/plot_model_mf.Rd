@@ -77,3 +77,109 @@ model_mf()
 \details{
 See model_mf() for examples.
 }
+\examples{
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut as in Example 4.
+# Sequenced on TS Mouse Mutagenesis Panel. Example data is
+# retrieved from MutSeqRData, an ExperimentHub data package.
+library(ExperimentHub)
+eh <- ExperimentHub()
+example_data <- eh[["EH9861"]]
+
+# Example 1: Model MFmin by dose
+mf_example <- calculate_mf(mutation_data = example_data,
+                           cols_to_group = "sample",
+                          retain_metadata_cols = "dose")
+# Create a contrasts table to define pairwise comparisons
+# We will compare all treated groups to the control group
+contrasts <- data.frame(col1 = c("12.5", "25", "50"),
+                        col2 = c("0", "0", "0"))
+# Fit the model
+model1 <- model_mf(mf_data = mf_example,
+                   fixed_effects = "dose",
+                   reference_level = "0",
+                   muts = "sum_min",
+                   total_count = "group_depth",
+                   contrasts = contrasts)
+# The residuals histogram and QQ plot will help you assess the normality
+# of the residuals.
+model1$summary # Model Summary
+model1$point_estimates # Point Estimates: Mean MFmin by dose
+model1$pairwise_comparisons # Pairwise Comparisons
+# All treated doses exhibited a significant increase in mutation frequency
+# compared to the control.
+
+# Plot the results using plot_model_mf()
+plot <- plot_model_mf(model1,
+                      plot_type = "bar",
+                      x_effect = "dose",
+                      plot_error_bars = TRUE,
+                      plot_signif = TRUE,
+                      x_order = c("0", "12.5", "25", "50"),
+                      x_label = "Dose (mg/kg-bw/d)",
+                      y_label = "Estimated Mean MF (mutations/bp)",
+                      plot_title = "")
+
+# Example 2: Model MFmin by dose and genomic target
+# We will compare the treated groups to the control group for each genomic
+# target
+
+# Calculate MF
+mf_example2 <- calculate_mf(mutation_data = example_data,
+                            cols_to_group = c("sample", "label"),
+                            retain_metadata_cols = "dose")
+# Create a contrasts table to define pairwise comparisons
+combinations <- expand.grid(dose = unique(mf_example2$dose),
+                            label = unique(mf_example2$label))
+combinations <- combinations[combinations$dose != 0, ]
+combinations$col1 <- with(combinations, paste(dose, label, sep=":"))
+combinations$col2 <- with(combinations, paste("0", label, sep=":"))
+contrasts2 <- combinations[, c("col1", "col2")]
+# Fit the model
+# Fixed effects of dose and label
+# Random effect of sample
+# Control the optimizer for convergence issues
+model2 <- model_mf(mf_data = mf_example2,
+                   fixed_effects = c("dose", "label"),
+                   random_effects = "sample",
+                   reference_level = c("0", "chr1"),
+                   muts = "sum_min",
+                   total_count = "group_depth",
+                   contrasts = contrasts2,
+                   control = lme4::glmerControl(optimizer = "bobyqa",
+                                       optCtrl = list(maxfun = 2e5)))
+model2$summary # Fits a GLMM
+model2$point_estimates
+model2$pairwise_comparisons
+
+# Plot the results using plot_model_mf()
+# Define the order of the labels for the x-axis
+label_order <- model2$point_estimates \%>\%
+ dplyr::filter(dose == "50") \%>\%
+ dplyr::arrange(Estimate) \%>\%
+ dplyr::pull(label)
+# Define the order of the doses for the fill
+dose_order <- c("0", "12.5", "25", "50")
+plot <- plot_model_mf(model = model2,
+                      plot_type = "bar",
+                      x_effect = "label",
+                      plot_error_bars = TRUE,
+                      plot_signif = TRUE,
+                      ref_effect = "dose",
+                      x_order = label_order,
+                      fill_order = dose_order,
+                      x_label = "Target",
+                      y_label = "MF (mutations/bp)",
+                      fill_label = "Dose",
+                      plot_title = "",
+                      custom_palette = c("#ef476f",
+                                         "#ffd166",
+                                         "#06d6a0",
+                                         "#118ab2"))
+# The output is a ggplot object and can be modified using ggplot2
+# functions. For example, to rotate the x-axis labels by 90 degrees,
+# use the following code:
+p <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+}
+}
