@@ -13,6 +13,9 @@ environment already exists.}
 \value{
 None
 }
+\value{
+None
+}
 \description{
 This function initializes the Python environment used by
 MutSeqR.
