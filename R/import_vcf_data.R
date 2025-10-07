@@ -208,21 +208,21 @@ import_vcf_data <- function(vcf_file,
     for (file in vcf_files) {
       vcf_list <- VariantAnnotation::readVcf(file)
       # Rename or create the "sample" column in the INFO field
-      vcf_list <- suppressWarnings(check_and_rename_sample(vcf_list))
+      vcf_list <- check_and_rename_sample(vcf_list)
       # Ensure consistent column names
       rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info"
       # Combine the VCF data
       if (is.null(vcf)) {
         vcf <- vcf_list
       } else {
-        vcf <- suppressWarnings(VariantAnnotation::rbind(vcf, vcf_list))
+        vcf <- VariantAnnotation::rbind(vcf, vcf_list)
       }
     }
   } else {
     # Read a single vcf file
     vcf <- VariantAnnotation::readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
-    vcf <- suppressWarnings(check_and_rename_sample(vcf))
+    vcf <- check_and_rename_sample(vcf)
   }
   # Extract and Clean alt column
   ## May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
