@@ -8,8 +8,7 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
   # Call the import_mut_data function on the test data
   mut_data <- import_vcf_data(vcf_file = file,
     regions = NULL,
-    species = "mouse",
-    genome = "mm10",
+    BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
     output_granges = FALSE
   )
   colnames <- c(
