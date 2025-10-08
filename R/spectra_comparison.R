@@ -142,7 +142,7 @@ spectra_comparison <- function(mf_data,
     c <- apply(x, 2, sum)
     e <- r %*% t(c) / N
     G2 <- 0
-    for (k in 1:ncol(x)){
+    for (k in seq_len(ncol(x))){
       flag <- x[, k] > 0
       G2 <- G2 + t(x[flag, k]) %*% log(x[flag, k] / e[flag, k])
     }

@@ -85,7 +85,7 @@ plot_radar <- function(mf_data,
   n_plots <- length(facet_levels)
   n_cols <- 2  # Number of columns in the grid
   n_rows <- ceiling(n_plots / n_cols)  # Number of rows needed
-  graphics::layout(matrix(1:n_plots, nrow = n_rows, ncol = n_cols, byrow = TRUE))
+  graphics::layout(matrix(seq_len(n_plots), nrow = n_rows, ncol = n_cols, byrow = TRUE))
 
   for (i in seq_along(facet_levels)) {
     facet <- facet_levels[i]
