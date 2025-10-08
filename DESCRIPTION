@@ -31,9 +31,9 @@ Authors@R: c(
       comment = c(ORCID = "0000-0001-8199-8754")),
     person("Geronimo", "Matteo", role = "ctb",
       comment = c(ORCID = "0000-0003-0819-4471")),
-    person(organization = "Health Canada's Genomics Research and Development Initiative", role = "fnd"),
-    person(organization = "Canada Research Chairs Program", role = "fnd", comment = "CRC-2020-00060"),
-    person(organization = "Burroughs Wellcome Fund", role = "fnd")
+    person("Health Canada's Genomics Research and Development Initiative", role = "fnd"),
+    person("Canada Research Chairs Program", role = "fnd", comment = "CRC-2020-00060"),
+    person("Burroughs Wellcome Fund", role = "fnd")
   )
 Description: Standard methods for analysis of mutation data following error-
     corrected sequencing (ECS) for the purpose of mutagencity assessment.
@@ -47,7 +47,6 @@ Depends:
 biocViews: Sequencing, SomaticMutation, Visualization, GenomicVariation, DriverMutation, StatisticalMethod, GeneTarget
 Imports:
     BiocGenerics,
-    BiocManager,
     Biostrings,
     BSgenome,
     data.table,
@@ -69,6 +68,7 @@ Imports:
     VariantAnnotation
 Suggests:
     binom,
+    BiocManager,
     BiocStyle,
     bs4Dash,
     BSgenome.Hsapiens.UCSC.hg38,
