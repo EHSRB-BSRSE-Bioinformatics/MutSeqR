@@ -22,7 +22,7 @@ sidak <- function(vecP) {
   k <- length(vecP)
   vecPB <- 0
   vecPS <- 0
-  for(i in 1:k) {
+  for(i in seq_len(k)) {
     bonf = vecP[i] * k
       if(bonf > 1) bonf = 1
       vecPB <- c(vecPB, bonf)

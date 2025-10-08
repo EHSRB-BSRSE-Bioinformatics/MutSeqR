@@ -409,7 +409,7 @@ model_mf <- function(mf_data,
     assign(paste("var", i, sep = ""), chars[[i]])
   }
   # Extract rownames into a column for each contrast variable
-  for (i in 1:count) {
+  for (i in seq_len(count)) {
     var_i <- get(paste0("var", i))
     model_estimates[[var_i]] <- vapply(
         strsplit(rownames(model_estimates), ":"),
@@ -501,7 +501,7 @@ model_mf <- function(mf_data,
       function(x) x[2],
       character(1)
     )
-    for (i in 1:count) {
+    for (i in seq_len(count)) {
       var_i <- get(paste0("var", i))
       pairwise_comparisons[[paste0(var_i, "_1")]] <- vapply(
         strsplit(pairwise_comparisons$contrast_group1, ":"),

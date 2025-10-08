@@ -108,7 +108,7 @@ write_excel <- function(data,
       keepNA = TRUE,
       na.string = "NA"
     )
-    openxlsx::setColWidths(wb1, sheet = 1, cols = 1:ncol(dataToWrite), widths = "auto")
+    openxlsx::setColWidths(wb1, sheet = 1, cols = seq_len(ncol(dataToWrite)), widths = "auto")
     fname <- file.path(output_dir, paste0(workbook_name, ".xlsx"))
     openxlsx::saveWorkbook(wb1, fname, overwrite = TRUE)
   } else if (is.list(data)) {
@@ -137,7 +137,7 @@ write_excel <- function(data,
                                headerStyle = hs1,
                                keepNA = TRUE,
                                na.string = "NA")
-      openxlsx::setColWidths(wb1, sheet = i, cols = 1:ncol(dataToWrite),
+      openxlsx::setColWidths(wb1, sheet = i, cols = seq_len(ncol(dataToWrite)),
                              widths = "auto")
     }
     fname <- file.path(output_dir, paste0(workbook_name, ".xlsx"))
