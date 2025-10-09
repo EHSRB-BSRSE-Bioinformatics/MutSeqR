@@ -141,28 +141,22 @@
 #' \emph{4 : previous option with lognormal DR model added}
 #' }
 #' @examples
-#' # Calculate the BMD for a 50% increase in mutation frequency from control
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut().
+#' # Data was summarized per sample using calculate_mf() (see relevant
+#' # examples).
+#' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+#'                                package = "MutSeqR"))
+#' # We will calculate the BMD for a 50% increase in mutation frequency from control
 #' # With Model averaging.
-#' # For the purpose of this example, num_bootstraps is set to 5 to reduce
+#' # For the purpose of this example, num_bootstraps is set to 3 to reduce
 #' # run time. 200 bootstraps is recommended.
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'  library(ExperimentHub)
-#'  eh <- ExperimentHub()
-#'  example_data <- eh[["EH9861"]]
-#' 
-#'  mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
-#'  bmd <- bmd_proast(mf_data = mf,
+#'  bmd <- bmd_proast(mf_data = mf_example,
 #'                    dose_col = "dose",
-#'                    response_col = c("mf_min", "mf_max"),
+#'                    response_col = "mf_min",
 #'                    bmr = 0.5,
 #'                    model_averaging = TRUE,
-#'                    num_bootstraps = 5)
-#'  # Plot the Model Averaging 90% CI using plot_ci()
-#'  plot_df <- bmd %>%
-#'   dplyr::filter(Model == "Model averaging") %>%
-#'   dplyr::select(Response, BMD, BMDL, BMDU)
-#'  plot <- plot_ci(plot_df, order = "asc", log_scale = FALSE)
-#' }
+#'                    num_bootstraps = 3)
 #' @export
 #' @importFrom dplyr arrange filter mutate pull rename
 bmd_proast <- function(
