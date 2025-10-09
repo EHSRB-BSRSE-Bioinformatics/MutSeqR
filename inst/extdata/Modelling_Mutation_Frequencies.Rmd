@@ -14,7 +14,7 @@ output:
     code_folding: show
     code_download: yes
     css: custom.css
-bibliography: Modelling Mutation Frequencies.bib
+bibliography: Modelling_Mutation_Frequencies.bib
 ---
   
 ```{r setup, include=FALSE}
