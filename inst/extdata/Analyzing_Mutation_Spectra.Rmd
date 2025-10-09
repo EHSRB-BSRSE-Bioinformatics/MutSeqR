@@ -14,7 +14,7 @@ output:
     code_folding: show
     code_download: yes
     css: custom.css
-bibliography: Analyzing Mutation Spectra.bib
+bibliography: Analyzing_Mutation_Spectra.bib
 ---
   
 ```{r setup, include=FALSE}
