@@ -86,23 +86,20 @@ A ggplot object
 This function creates a plot of the mutation frequency.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut as in Example 4.
-# Sequenced on TS Mouse Mutagenesis Panel. Example data is
-# retrieved from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
-
-example_data$dose_group <- factor(example_data$dose_group,
-                                  levels = c("Control", "Low",
-                                             "Medium", "High"))
-mf <- calculate_mf(mutation_data = example_data,
-                   cols_to_group = "sample",
-                   subtype_resolution = "none",
-                   retain_metadata_cols = "dose_group")
-plot <- plot_mf(mf_data = mf,
+# using import_mut_data() and filtered with filter_mut.
+# Data was summarized per sample using calculate_mf() (see relevant
+# examples). We will plot the MF per sample, organized and coloured
+# by dose group.
+# Load Example MF data
+mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+                               package = "MutSeqR"))
+# Specify the order of the dose groups along the x-axis
+mf_example$dose_group <- factor(mf_example$dose_group,
+                                levels = c("Control", "Low",
+                                           "Medium", "High"))
+# Plot the min MF per sample as a bar plot with count labels
+plot <- plot_mf(mf_data = mf_example,
                 group_col = "sample",
                 plot_type = "bar",
                 mf_type = "min",
@@ -111,5 +108,4 @@ plot <- plot_mf(mf_data = mf,
                 group_order_input = "dose_group",
                 labels = "count",
                 title = "Mutation Frequency per Sample")
-}
 }
