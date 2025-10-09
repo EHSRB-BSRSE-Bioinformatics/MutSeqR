@@ -15,8 +15,12 @@ navbar:
     articles:
       text: Articles
       menu:
-        - text: Overview of MutSeqR workflow
+        - text: Intro to MutSeqR
           href: articles/MutSeqR_introduction.html
+        - text: Analyzing Mutation Spectra
+          href: articles/analyzing-mutation-spectra.html
+        - text: Modelling Mutation Frequencies
+          href: articles/modelling-mutation-frequencies.html
 
 news:
   one_page: true
