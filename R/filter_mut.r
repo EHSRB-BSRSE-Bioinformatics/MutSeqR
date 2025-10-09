@@ -82,38 +82,27 @@
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' example_data <- eh[["EH9860"]]
-#' # Filter the data
-#' # Basic Usage: Filter out putative germline variants
-#' filter_example_1 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01)
-#' # Remove rows outside of the TwinStand Mouse Mutagenesis Panel regions
-#' filter_example_2 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01,
-#'                                regions = "TSpanel_mouse",
-#'                                regions_filter = "keep_within")
-#' # Apply a custom filter to flag rows with "EndRepairFillInArtifact"
-#' # in the column 'filter'
-#' filter_example_3 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01,
-#'                                regions = "TSpanel_mouse",
-#'                                regions_filter = "keep_within",
-#'                                custom_filter_col = "filter",
-#'                                custom_filter_val = "EndRepairFillInArtifact",
-#'                                custom_filter_rm = FALSE)
-#' # Flag snv variants that overlap with germline mnv variants.
-#' # Subtract the alt_depth of these variants from their total_depth
-#' # (treat them as No-calls).
-#' # Return all the flagged/removed rows in a seperate data frame
-#' filter_example_4 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01,
-#'                                regions = "TSpanel_mouse",
-#'                                regions_filter = "keep_within",
-#'                                custom_filter_col = "filter",
-#'                                custom_filter_val = "EndRepairFillInArtifact",
-#'                                custom_filter_rm = FALSE,
-#'                                snv_in_germ_mnv = TRUE,
-#'                                rm_filtered_mut_from_depth = TRUE,
-#'                                return_filtered_rows = TRUE)
+#' # In this example, we will apply the following filters:
+#' # 1) Filter out putative germline variants using a VAF cutoff of 0.01
+#' # 2) Remove rows whose position falls outside the intervals of the
+#' #    TwinStrand Mouse Mutagenesis Panel regions.
+#' # 3) Apply a custom filter to flag rows with "EndRepairFillInArtifact"
+#' #    in the column 'filter'. This is a filter step commonly applied to
+#' #    TwinStrand Duplex Sequencing data.
+#' # 4) Flag snv variants that overlap with germline mnv variants and
+#' # 5) Subtract the alt_depth of these variants from their total_depth
+#' #    (treat them as No-calls).
+#' # 6) Return all the flagged/removed rows in a seperate data frame.
+#' filter_example <- filter_mut(mutation_data = example_data,
+#'                              vaf_cutoff = 0.01,
+#'                              regions = "TSpanel_mouse",
+#'                              regions_filter = "keep_within",
+#'                              custom_filter_col = "filter",
+#'                              custom_filter_val = "EndRepairFillInArtifact",
+#'                              custom_filter_rm = FALSE, # Flagging, not removing
+#'                              snv_in_germ_mnv = TRUE,
+#'                              rm_filtered_mut_from_depth = TRUE,
+#'                              return_filtered_rows = TRUE)
 #' # Flagging germline mutations...
 #' # Found 612 germline mutations.
 #' # Flagging SNVs overlapping with germline MNVs...
@@ -127,8 +116,10 @@
 #' # Removing filtered mutations from the total_depth...
 #' # Filtering complete.
 #' # Returning a list: mutation_data and filtered_rows.
-#' filtered_rows <- filter_example_4$filtered_rows
-#' filtered_example_mutation_data <- filter_example_4$mutation_data
+#' 
+#' # To separately access the filtered rows and the filtered mutation data:
+#' filtered_rows <- filter_example$filtered_rows
+#' filtered_example_mutation_data <- filter_example$mutation_data
 #' }
 #' @importFrom dplyr group_by mutate ungroup select filter starts_with
 #' n_distinct first case_when if_else

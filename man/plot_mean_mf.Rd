@@ -121,22 +121,18 @@ samples for given groups and plots the results.
 }
 \examples{
 # Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut as in Example 4.
-# Sequenced on TS Mouse Mutagenesis Panel. Example data is
-# retrieved from MutSeqRData, an ExperimentHub data package.
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
-
-example_data$dose_group <- factor(example_data$dose_group,
-                                  levels = c("Control", "Low",
-                                             "Medium", "High"))
-mf <- calculate_mf(mutation_data = example_data,
-                   cols_to_group = "sample",
-                   subtype_resolution = "none",
-                   retain_metadata_cols = "dose_group")
-plot <- plot_mean_mf(mf_data = mf,
+# using import_mut_data() and filtered with filter_mut.
+# Data was summarized per sample using calculate_mf() (see relevant
+# examples). We will plot the mean MF per dose group.
+# Load Example MF data
+mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+                               package = "MutSeqR"))
+# Specify the order of the dose groups along the x-axis
+mf_example$dose_group <- factor(mf_example$dose_group,
+                                levels = c("Control", "Low",
+                                           "Medium", "High"))
+# Plot the mean min MF per dose group as a bar plot with error bars
+plot <- plot_mean_mf(mf_data = mf_example,
                      group_col = "dose_group",
                      mf_type = "min",
                      plot_type = "line",
@@ -144,5 +140,4 @@ plot <- plot_mean_mf(mf_data = mf,
                      plot_error_bars = TRUE,
                      plot_indiv_vals = TRUE,
                      add_labels = "none")
-}
 }
