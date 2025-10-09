@@ -1,0 +1,243 @@
+---
+title: "MutSeqR: Target Analysis"
+author:
+- name: Annette E. Dodge
+  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+- name: Matthew J. Meier
+  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  email: matthew.meier@hc-sc.gc.ca
+package: MutSeqR
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_float: yes
+    code_folding: show
+    code_download: yes
+    css: custom.css
+---
+  
+```{r setup, include=FALSE}
+BiocStyle::markdown()
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(DT)
+library(htmltools)
+```
+
+In this vignette, we will provide examples on how to perform an analysis of mutation frequencies across a panel of genomic targets. We are using TwinStrand's [Mouse Mutagenesis Panel](https://github.com/twinstrandbio/twinstrandbio-reference-data/) as an example which consists of 20 2.4kb targets; one on each autosome, with the exeption of chromosome 1 which has 2 targets (chr1 & chr1.2).
+
+The example data is taken from @leblanc-2022. This data consists of 24 mouse
+bone marrow samples sequenced with Duplex Sequencing. Mice were exposed to
+three doses of benzo[a]pyrene (BaP) alongside vehicle controls, n = 6. The goal
+of this project was to quntify the mutagenic effects of BaP in mouse bone
+marrow. Example data is retrieved from MutSeqRData, an ExperimentHub data
+package available via Bioconductor. Example data is retrieved from the
+ExperimentHub index (eh) through specific accessors.
+
+
+# Load MutSeqR and Example Data
+
+```{r load-lib}
+library(MutSeqR)
+
+library(ExperimentHub)
+# load the index
+eh <- ExperimentHub()
+```
+
+# Generalized Linear Modeling by Target
+
+## Model by Target {.tabset}
+
+We will measure the effect of genomic target and BaP dose on mutation frequency (MF) using a generalized linear mixed model using `model_mf()`. We will determine whether the MF of each BaP dose group is significantly different from the Control individually for all 20 genomic targets. In this model, dose group and target label will be our fixed effects. We include the interaction between the two fixed effects. Sample will be used as a random effect to control for  repeated measurements.
+
+First, load the example data. This mutation data has already undergone necessary filtering with `filter_mut` (demonstrated in the vignette; MutSeqR Introduction). We will then calculate MF for each sample and genomic locus, while retaining the dose column. The "label" column refers to the label of the genomic target.
+
+```{r mf-rg}
+example_data <- eh[["EH9861"]]
+
+mf_data_rg <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = c("sample", "label"),
+  subtype_resolution = "none",
+  retain_metadata_cols = "dose_group"
+)
+```
+
+Next, create a contrasts table that compares each dose group back to the
+control for each genomic locus:
+
+```{r make-contrasts2}
+combinations <- expand.grid(dose_group = unique(mf_data_rg$dose_group),
+                            label = unique(mf_data_rg$label))
+combinations <- combinations[combinations$dose_group != "Control", ]
+combinations$col1 <- with(combinations, paste(dose_group, label, sep = ":"))
+combinations$col2 <- with(combinations, paste("Control", label, sep = ":"))
+contrasts2 <- combinations[, c("col1", "col2")]
+```
+
+Finally, run the model. As this model is more complex, we will improve
+covergence by supplying the control argument, which is passed directly to
+`lme4::glmer()`.
+
+``` {r model-mf-rg, fig.show='hide'}
+model_by_target <- model_mf(mf_data = mf_data_rg,
+  fixed_effects = c("dose_group", "label"),
+  test_interaction = TRUE,
+  random_effects = "sample",
+  muts = "sum_min",
+  total_count = "group_depth",
+  contrasts = contrasts2,
+  reference_level = c("Control", "chr1"),
+  control = lme4::glmerControl(optimizer = "bobyqa",
+                               optCtrl = list(maxfun = 2e5))
+)
+```
+
+### Residuals Histogram
+
+```{r hist-caption2, include=FALSE}
+caption <- paste(
+  "GLMM residuals of MFmin modelled as an effect of Dose and Genomic Target.",
+  "x is pearson's residuals, y is frequency.",
+  "Plotted to validate model assumptions. n = 24."
+)
+```
+
+```{r model-rg-hist, echo=FALSE, fig.small=TRUE, fig.cap=caption}
+model_data <- model_by_target$model_data
+hist_data <- hist(model_data$residuals, plot = FALSE)
+ylim_max <- max(hist_data$counts) + 1
+plot <- hist(model_data$residuals,
+  main = "Pearson Residuals",
+  col = "yellow",
+  ylim = c(0, ylim_max)
+)
+```
+
+### Residuals QQ-plot
+
+```{r qq-caption2, include=FALSE}
+caption <- paste(
+  "GLMM residuals of MFmin modelled as an effect of Dose and Genomic Target",
+  "expressed as a quantile-quantile plot.",
+  "Y is the pearson's residuals of the model in ascending order",
+  "x is the quantiles of standard normal distribution for n of 24.",
+  "Plotted to validate model assumptions."
+)
+```
+
+```{r model-rg-qq, echo=FALSE, fig.small=TRUE, fig.cap=caption}
+qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
+stats::qqline(model_data$residuals, col = "red")
+```
+
+### Model Summary
+```{r model-rg-summary}
+model_by_target$summary
+```
+
+### ANOVA
+
+```{r model-rg-anova}
+model_by_target$anova
+```
+
+### Model Estimates
+
+**Table 20.** model_by_target$point_estimates: Estimated Mean Mutation Frequency per Dose and Genomic Target.
+
+```{r model-rg-est, echo=FALSE}
+DT::datatable(
+  model_by_target$point_estimates,
+  options = list(
+    columnDefs = list(
+      list(targets = 1:4,
+           render = DT::JS("function(data, type, row, meta) {
+            return data.toExponential(2); 
+          }"))
+    ),
+    rowCallback = DT::JS("function(row, data, dataIndex) {
+        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }")
+  )
+)
+```
+
+### Pairwise Comparisons
+
+**Table 21.** model_by_target$pairwise_comparisons.
+
+```{r model-rg-comp, echo=FALSE}
+DT::datatable(
+  model_by_target$pairwise_comparisons,
+  options = list(
+    scrollX = TRUE,
+    columnDefs = list(
+      list(targets = c("p.value", "adj_p.value"),
+        render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
+      )
+    ),
+    rowCallback = DT::JS(
+      "function(row, data, dataIndex) {
+      $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }"
+    )
+  )
+) %>%
+  DT::formatRound(columns = c(1:3, 6:7), digits = 2)
+```
+
+### Plot Model by Dose and Target
+
+```{r plot-model-cap2, include=FALSE}
+caption <- paste(
+  "Mean Mutation Frequency Minimum (mutations/bp) per Genomic Target and Dose",
+  "estimated using a generalized linear mixed model. Error bars are the SEM.",
+  "Symbols indicate significance differences (p < 0.05) between dose levels",
+  "for individual genomic regions."
+)
+```
+
+```{r plot-model-rg, fig.wide=TRUE, fig.cap=caption}
+# Define the order of the genomic targets for the x-axis:
+# We will order them from lowest to highest MF at the High dose.
+label_order <- model_by_target$point_estimates %>%
+  dplyr::filter(dose_group == "High") %>%
+  dplyr::arrange(Estimate) %>%
+  dplyr::pull(label)
+
+# Define the order of the doses for the fill
+dose_order <- c("Control", "Low", "Medium", "High")
+
+plot <- plot_model_mf(
+  model = model_by_target,
+  plot_type = "bar",
+  x_effect = "label",
+  plot_error_bars = TRUE,
+  plot_signif = TRUE,
+  ref_effect = "dose_group",
+  x_order = label_order,
+  fill_order = dose_order,
+  x_label = "Target",
+  y_label = "Mutation Frequency (mutations/bp)",
+  fill_label = "Dose",
+  plot_title = "",
+  custom_palette = c("#ef476f",
+                     "#ffd166",
+                     "#06d6a0",
+                     "#118ab2")
+)
+# Rotate the x-axis labels for clarity using ggplot2 functions.
+plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+plot
+```
+
+# References
+
+# Appendix
+
+## Session Info
+
+```{r session-info, echo=FALSE}
+sessionInfo()
+```

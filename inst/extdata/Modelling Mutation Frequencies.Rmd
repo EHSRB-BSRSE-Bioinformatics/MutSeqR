@@ -8,12 +8,13 @@ author:
   email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
 output:
-  BiocStyle::html_document:
+  rmarkdown::html_document:
     toc: true
     toc_float: yes
     code_folding: show
     code_download: yes
     css: custom.css
+bibliography: Modelling Mutation Frequencies.bib
 ---
   
 ```{r setup, include=FALSE}
@@ -27,12 +28,12 @@ library(htmltools)
 
 ```{r load-lib}
 library(MutSeqR)
+```
 
+```{r load-ex}
 library(ExperimentHub)
 # load the index
 eh <- ExperimentHub()
-# Query the index for MutSeqRData records and their associated accessors.
-query(eh, "MutSeqRData")
 ```
 
 # Generalized Linear Modeling
@@ -168,9 +169,9 @@ comparisons specified in the `contrasts`.
 
 ## Examples
 
-### Example 1.1 Model by Dose {.tabset}
+### Example 1. Model by Dose {.tabset}
 
-*Example 1.1. Model the effect of dose on MF. Our example data consists of 24*
+*Example 1. Model the effect of dose on MF. Our example data consists of 24*
 *mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups*
 *are : Control, Low, Medium, and High. We will determine if the MFmin of each*
 *BaP dose group is significantly increased from that of the Control group.*
@@ -304,9 +305,9 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
-### Example 1.2 Model by Dose and Target {.tabset}
+### Example 2. Model by Dose and Target {.tabset}
 
-*Example 1.2 Model the effects of dose and genomic locus on MF. Sequencing for*
+*Example 2. Model the effects of dose and genomic locus on MF. Sequencing for*
 *the example data was done on a panel of 20 genomic targets. We will determine*
 *if the MF of each BaP dose group is significantly different from the Control*
 *individually for all 20 targets. In this model, dose group and target label*
@@ -545,6 +546,22 @@ plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
 
+## Exporting Model Results
+
+`write_excel()` will extract the mf_data, point_estimates, and
+pairwise_comparisons from `model_mf()` output to write to an excel workbook.
+To export model results, provide `write_excel` with the output of `model_mf`
+and set the `model_results` parameter to TRUE.
+
+*Example 3. Export model results*
+```{r write-excel-model, eval=FALSE}
+write_excel(
+  model_by_dose,
+  workbook_name = "Example_model",
+  model_results = TRUE
+)
+```
+
 # Benchmark Dose Modeling
 
 Dose-response models are essential for quatitative risk assessment of
@@ -554,7 +571,7 @@ exposure to a substance might cause an adverse effect. The **benchmark dose**
 defined as the **benchmark response** (BMR). The BMD is used as a point of
 departure to derive human health-based guidance values to inform regulatory
 risk assessment such as the reference dose (RfD), the derived no-effect level
-(DNEL) or the acceptable daily intake (ADI).
+(DNEL) or the acceptable daily intake (ADI) [@efsa-2022].
 
 The BMD is estimated by applying various mathmatical models to fit the
 dose-response data. Some requirements must be met before modelling the BMD.
