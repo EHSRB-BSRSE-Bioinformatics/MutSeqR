@@ -24,7 +24,6 @@ Export your mutation_data to a VCF file for downstream applications.
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-\donttest{
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut as in Example 4.
 # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -33,7 +32,6 @@ library(ExperimentHub)
 eh <- ExperimentHub()
 example_data <- eh[["EH9861"]]
 
-write_vcf_from_mut(example_data)
-}
+write_vcf_from_mut(mutation_data = example_data, output_path = tempdir())
 }
 }

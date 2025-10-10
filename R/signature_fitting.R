@@ -95,12 +95,12 @@ signature_fitting <- function(mutation_data,
     reticulate::use_virtualenv(env_name)
   } else {
     # Ask the user for confirmation
-    user_input <- utils::menu("Do you want to create a virtual environment and 
-                              install the required Python packages? This may 
-                              take several minutes",
-                              title = "Confirmation", choices = c("Yes", "No"))
+    # user_input <- utils::menu("Do you want to create a virtual environment and 
+    #                           install the required Python packages? This may 
+    #                           take several minutes",
+    #                           title = "Confirmation", choices = c("Yes", "No"))
 
-    if (user_input == 1) {
+    # if (user_input == 1) {
       # Create venv and install packages
       reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
       # Install required packages
@@ -111,10 +111,10 @@ signature_fitting <- function(mutation_data,
                                                  "pandas==1.5.3",
                                                  "scipy==1.11.4",
                                                  "pypdf==4.3.1"))
-    } else {
-      # User chose not to install the packages
-      stop("Installation aborted by the user. Function terminated.")
-    }
+    # } else {
+    #   # User chose not to install the packages
+    #   stop("Installation aborted by the user. Function terminated.")
+    # }
   }
 
   # reticulate::install_python(version = python_version)

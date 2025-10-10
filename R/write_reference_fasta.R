@@ -13,12 +13,10 @@
 #' (contig) of the range.
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' \donttest{
 #' # Write FASTA files for the 20 genomic target sequences
 #' # of TwinStrand's Mouse Mutagenesis Panel.
 #' rg <- get_seq("TSpanel_mouse")
-#' write_reference_fasta(rg, output_path = NULL)
-#' }
+#' write_reference_fasta(rg, output_path = tmpdir())
 #' }
 #' @importFrom Biostrings writeXStringSet
 #' @export
