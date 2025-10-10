@@ -15,7 +15,8 @@ bmd_proast(
   num_bootstraps = 200,
   plot_results = FALSE,
   output_path = NULL,
-  raw_results = FALSE
+  raw_results = FALSE,
+  seed = 125
 )
 }
 \arguments{
@@ -61,6 +62,9 @@ window and then returned as a list alongside the bmd results.}
 \item{raw_results}{A logical value indicating whether to return the raw
 results from the PROAST analysis. If FALSE, data is returned as a
 summary table.}
+
+\item{seed}{An integer value to set the random seed for reproducibility
+when using model averaging. Default is 125.}
 }
 \value{
 A summmary data frame of final results. If plots or raw results

@@ -36,6 +36,8 @@
 #' @param output_path The file path indicating where to save the plots.
 #' If NULL, the plots will automatically be displayed to the graphics
 #' window and then returned as a list alongside the bmd results.
+#' @param seed An integer value to set the random seed for reproducibility
+#' when using model averaging. Default is 125.
 #' @return A summmary data frame of final results. If plots or raw results
 #' are selected, all data will be returned within a list.
 #'
@@ -170,7 +172,8 @@ bmd_proast <- function(
   num_bootstraps = 200,
   plot_results = FALSE,
   output_path = NULL,
-  raw_results = FALSE
+  raw_results = FALSE,
+  seed = 125
 ) {
 
   if (!dose_col %in% colnames(mf_data)) {
@@ -215,7 +218,8 @@ bmd_proast <- function(
     selected_model = "exponential",
     model_averaging = model_averaging,
     num_bootstraps = num_bootstraps,
-    display_plots = FALSE
+    display_plots = FALSE,
+    seed = seed
   )
 
   if (plot_results == TRUE) {
