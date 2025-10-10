@@ -68,12 +68,12 @@ f.proast <- function(odt = list(),
                      nonzero_val = NULL,
                      detection_limit = NULL,
                      seed = 125) {
-    message(paste0("Independent variable: ", indep_var_choice))
+    message("Independent variable: ", indep_var_choice)
     if (interactive_mode == TRUE) {
         message("Running in interactive mode...")
     } else {
         message("Running in batch/command line mode...")
-        message(paste0("Independent variable: ", indep_var_choice))
+        message("Independent variable: ", indep_var_choice)
         .proast_env <- new.env()
     }
     if (is.list(odt)) 
@@ -107,7 +107,7 @@ f.proast <- function(odt = list(),
             }
         }
     }
-    message(paste0("Independent variable: ", indep_var_choice))
+    message("Independent variable: ", indep_var_choice)
     if (!er) {
         ans.all <- f.ini(odt, seed = seed)
         ans.all$odt.name <- odt.name
@@ -129,7 +129,7 @@ f.proast <- function(odt = list(),
                            "clustered continuous, summary data", "quantal, CxT", 
                            "other"))
             dtype <- dtype_options[datatype]
-            message(paste0("Setting data type to ", names(dtype_options[datatype])))
+            message("Setting data type to ", names(dtype_options[datatype]))
         }
         if (dtype == 10) 
             dtype <- eval(parse(prompt = "Give value for dtype > "))
@@ -170,14 +170,14 @@ f.proast <- function(odt = list(),
             } else {
                 if (!is.null(model_choice)) {
                     ans.all$quick.ans <- which(model_options == model_choice)
-                    message(paste0("Selected model option: '", model_choice, "' (", ans.all$quick.ans, ")"))
+                    message("Selected model option: '", model_choice, "' (", ans.all$quick.ans, ")")
                 } else {
                     stop("Parameter 'model_choice' must be provided in non-interactive mode.")
                 }
             }
             if (ans.all$quick.ans == 2) {
                 ans.all$change <- rep(FALSE, ans.all$nrQ)
-                message(paste0("Independent variable: ", indep_var_choice))
+                message("Independent variable: ", indep_var_choice)
                 message(ans.all)
                 ans.all <- f.change.settings(ans.all,
                                              choose = TRUE,
@@ -191,7 +191,7 @@ f.proast <- function(odt = list(),
                 } else {
                     if (!is.null(nested_model_choice)) {
                         ans.all$quick.ans <- which(nested_model_options == nested_model_choice)
-                        message(paste0("Selected nested model option: '", nested_model_choice, "' (", ans.all$quick.ans, ")"))
+                        message("Selected nested model option: '", nested_model_choice, "' (", ans.all$quick.ans, ")")
                     } else {
                         stop("Parameter 'nested_model_choice' must be provided in non-interactive mode.")
                     }
@@ -207,7 +207,7 @@ f.proast <- function(odt = list(),
                                           title = "\nDo you want to fit a set of models, or choose a single model?")
                 if (ans.all$quick.ans == 2) {
                     ans.all$change <- rep(FALSE, ans.all$nrQ)
-                    message(paste0("Independent variable: ", indep_var_choice))
+                    message("Independent variable: ", indep_var_choice)
                     message(ans.all)
                     ans.all <- f.change.settings(ans.all,
                                                  choose = TRUE,
@@ -225,7 +225,7 @@ f.proast <- function(odt = list(),
             } else {
                 if (!is.null(setting_choice)) {
                     ans.all$quick.ans <- which(setting_options == setting_choice)
-                    message(paste0("Selected model option: '", setting_choice, "' (", ans.all$quick.ans, ")"))
+                    message("Selected model option: '", setting_choice, "' (", ans.all$quick.ans, ")")
                 } else {
                     stop("Parameter 'setting_choice' must be provided in non-interactive mode.")
                 }
@@ -713,11 +713,11 @@ f.change.settings <- function(ans.all,
               message(indep_var_choice)
               message("moving on...")
               if (!is.null(indep_var_choice)) {
-                message(paste0("Using ", indep_var_choice, " as the independent variable."))
+                message("Using ", indep_var_choice, " as the independent variable.")
                 if (indep_var_choice %in% ans.all$varnames) {
                     ans.all$xans <- which(ans.all$varnames == indep_var_choice)
                 } else {
-                    stop(paste("The specified independent variable choice '", indep_var_choice, "' is not one of the column names."))
+                    stop("The specified independent variable choice '", indep_var_choice, "' is not one of the column names.")
                 }
                 change[1] <- FALSE  # Set change[1] to FALSE after successful setting of independent variable.
               } else {
@@ -9417,7 +9417,7 @@ f.quick.con <- function(ans.all,
                         add_nonzero_val_to_dat = FALSE,
                         nonzero_val = NULL,
                         detection_limit = NULL) {
-        message(paste0("indep_var_choice: ", indep_var_choice))
+        message("indep_var_choice: ", indep_var_choice)
     if (ans.all$WAPP) {
         ans.all$gui <- TRUE
         ans.all$interrupt <- FALSE
@@ -9589,7 +9589,7 @@ f.quick.con <- function(ans.all,
                 else if (length(ans.all$xans) == 1) {
                   if (interactive_mode == FALSE) {
                     message("Model averaging enabled.")
-                    message(paste0("ans.all$CES: ", ans.all$CES))
+                    message("ans.all$CES: ", ans.all$CES)
                     do.MA <- model_averaging
                   } else {
                     do.MA <- menu(c("no", "yes"), title = "Do you want to calculate the BMD confidence interval by model averaging?") - 
@@ -13113,6 +13113,7 @@ f.profile.all <- function(ans.all, nolog = FALSE, debug = FALSE, display_plots =
 #' @param return_plots A logical variable indicating whether you want to return the plots as a list (TRUE) or not (FALSE, the default). If TRUE, the function will return a list of recorded plots.
 #' @importFrom graphics title text mtext
 #' @importFrom grDevices recordPlot dev.off
+#' @return Either the proast object (default) or a list of recorded plots if return_plots = TRUE.
 f.plot.gui <- function(
   ans.all,
   HTML = FALSE,
