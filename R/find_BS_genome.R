@@ -84,10 +84,9 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
   selected_genome <- possible_genomes[
     possible_genomes$genome == genome, ]
   if (nrow(selected_genome) == 0) {
-    msg <- paste0("No BS genome found for the specified organism, assembly version and masked setting.\n",
-                  "Available assemblies for this organism (masked = ", masked, ") are:\n",
-                  paste(unique(possible_genomes$genome), collapse=", "))
-    stop(msg)
+    stop("No BS genome found for the specified organism, assembly version and masked setting.\n",
+      "Available assemblies for this organism (masked = ", masked, ") are:\n",
+      paste(unique(possible_genomes$genome), collapse=", "))
   }
 
   ref_genome <- selected_genome$pkgname

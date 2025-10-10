@@ -82,7 +82,9 @@ check_required_columns <- function(data,
 
   if (length(missing_columns) > 0) {
     missing_col_names <- paste(missing_columns, collapse = ", ")
-    stop(paste("Some required columns are missing or their synonyms are not found: ", missing_col_names))
+    stop("Some required columns are missing or their synonyms are not found: ",
+      missing_col_names
+    )
  } else {
   return(data)
  }

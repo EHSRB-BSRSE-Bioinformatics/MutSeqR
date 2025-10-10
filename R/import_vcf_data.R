@@ -277,15 +277,15 @@ import_vcf_data <- function(vcf_file,
     if (is.data.frame(sample_data)) {
       sampledata <- sample_data
       if (nrow(sampledata) == 0) {
-        stop("Error: The sample data frame you've provided is empty")
+        stop("The sample data frame you've provided is empty")
       }
     } else if (is.character(sample_data)) {
       sample_file <- file.path(sample_data)
       if (!file.exists(sample_file)) {
-        stop("Error: The sample data file path you've specified is invalid")
+        stop("The sample data file path you've specified is invalid")
       }
       if (file.info(sample_file)$size == 0) {
-        stop("Error: You are trying to import an empty sample data file")
+        stop("You are trying to import an empty sample data file")
       }
       sampledata <- read.delim(file.path(sample_data),
                                sep = sd_sep,
@@ -296,7 +296,7 @@ import_vcf_data <- function(vcf_file,
                             the delimiter used for the data you are importing.")
       }
     } else {
-      stop("Error: sample_data must be a character string or a data frame")
+      stop("sample_data must be a character string or a data frame")
     }
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
@@ -315,10 +315,10 @@ import_vcf_data <- function(vcf_file,
   na_columns_required <- intersect(columns_with_na,
                                    required_columns)
   if (length(na_columns_required) > 0) {
-    stop(paste0("Error: NA values were found within the following required
-                column(s): ", paste(na_columns_required, collapse = ", "),
-                ".
-                Please confirm that your data is complete before proceeding."))
+    stop("NA values were found within the following required column(s): ",
+      paste(na_columns_required, collapse = ", "),
+      ". Please confirm that your data is complete before proceeding."
+    )
   }
   # Check for NA values in the context column. If so, will populate it.
   if (context_exists) {
@@ -358,17 +358,17 @@ import_vcf_data <- function(vcf_file,
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function")
+      warning(false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function")
     }
   }
   # Create a context column, if needed
   if (!context_exists) {
     if (is.null(BS_genome)) {
-      stop("Error: The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+      stop("The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
     installed_BS_genomes <- BSgenome::installed.genomes()
     if (!(BS_genome %in% installed_BS_genomes)) {
-      stop("Error: The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+      stop("The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
     message("Loading reference genome: ", BS_genome, ".")
     ref_genome <- BSgenome::getBSgenome(BS_genome)

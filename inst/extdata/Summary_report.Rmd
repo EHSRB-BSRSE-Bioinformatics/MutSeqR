@@ -31,10 +31,8 @@ check_pkgs <- function(pkgs) {
     }
   }
   if (length(missing_packages) > 0) {
-    stop(paste0(
-      "Rendering halted: The following required packages are not installed:\n  ",
-      paste(missing_packages, collapse = ", ")
-    ), call. = FALSE)
+    stop("Rendering halted: The following required packages are not installed:\n  ",
+      paste(missing_packages, collapse = ", "), call. = FALSE)
   } else {
     return(invisible(TRUE))
   }

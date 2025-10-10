@@ -189,7 +189,7 @@ signature_data <- signature_data %>%
     )
   }
 
-  message(paste0("Creating directory ", output_path))
+  message("Creating directory ", output_path)
   if (!dir.exists(file.path(output_path, "matrices"))) {
     dir.create(file.path(output_path, "matrices"), recursive = TRUE)
   }

@@ -171,32 +171,32 @@ import_mut_data <- function(mut_file,
                             output_granges = FALSE) {                             
 
   if (!is.numeric(padding) || padding < 0) {
-    stop("Error: The range buffer must be a non-negative number")
+    stop("The range buffer must be a non-negative number")
   }
   if (!is.logical(is_0_based_mut) || !is.logical(is_0_based_rg)) {
-    stop("Error: is_0_based must be a logical variable")
+    stop("is_0_based must be a logical variable")
   }
 
   if (!is.null(custom_column_names)) {
     if (!is.list(custom_column_names)) {
-      stop("Error: custom_column_names must be a list")
+      stop("custom_column_names must be a list")
     }
   }
   if (!is.logical(output_granges)) {
-    stop("Error: output_granges must be a logical variable")
+    stop("output_granges must be a logical variable")
   }
 
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
     dat <- mut_file
     if (nrow(dat) == 0) {
-      stop("Error: The data frame you've provided is empty")
+      stop("The data frame you've provided is empty")
     }
   } else if (is.character(mut_file)) {
     mut_file <- file.path(mut_file)
     # Validate file/folder input
     if (!file.exists(mut_file)) {
-      stop("Error: The file path you've specified is invalid")
+      stop("The file path you've specified is invalid")
     }
     file_info <- file.info(mut_file)
     if (file_info$isdir == TRUE) {
@@ -204,7 +204,7 @@ import_mut_data <- function(mut_file,
       mut_files <- list.files(path = mut_file, full.names = TRUE, no.. = TRUE)
 
       if (length(mut_files) == 0) {
-        stop("Error: The folder you've specified is empty")
+        stop("The folder you've specified is empty")
       }
       # Warning if any of the files in folder are empty
       files_info_all <- file.info(mut_files)
@@ -215,10 +215,10 @@ import_mut_data <- function(mut_file,
       empty_list_str <- paste(empty_list, collapse = ", ")
 
       if (length(empty_list) == length(mut_files)) {
-        stop("Error: All the files in the specified directory are empty")
+        stop("All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning(paste("Warning: The following files in the specified directory are empty and will not be imported: ", empty_list_str))
+        warning("The following files in the specified directory are empty and will not be imported: ", empty_list_str)
       }
 
       # Remove empty files from mut_files
@@ -234,7 +234,7 @@ import_mut_data <- function(mut_file,
     } else {
       # Handle the case where mut_file exists and is a file
       if (file_info$size == 0 || is.na(file_info$size)) {
-        stop("Error: You are trying to import an empty file")
+        stop("You are trying to import an empty file")
       }
       dat <- read.table(mut_file,
         header = TRUE, sep = mut_sep,
@@ -247,7 +247,7 @@ import_mut_data <- function(mut_file,
            the delimiter used for the data you are importing.")
     }
   } else {
-    stop("Error: mut_file must be a character string or a data frame")
+    stop("mut_file must be a character string or a data frame")
   }
   ## Sample Data File
   # Validate and join sample data file if provided
@@ -255,15 +255,15 @@ import_mut_data <- function(mut_file,
     if (is.data.frame(sample_data)) {
       sampledata <- sample_data
       if (nrow(sampledata) == 0) {
-        stop("Error: The sample data frame you've provided is empty")
+        stop("The sample data frame you've provided is empty")
       }
     } else if (is.character(sample_data)) {
       sample_file <- file.path(sample_data)
       if (!file.exists(sample_file)) {
-        stop("Error: The sample data file path you've specified is invalid")
+        stop("The sample data file path you've specified is invalid")
       }
       if (file.info(sample_file)$size == 0) {
-        stop("Error: You are trying to import an empty sample data file")
+        stop("You are trying to import an empty sample data file")
       }
       sampledata <- read.delim(file.path(sample_data),
                                sep = sd_sep,
@@ -274,7 +274,7 @@ import_mut_data <- function(mut_file,
              the delimiter used for the data you are importing.")
       }
     } else {
-      stop("Error: sample_data must be a character string or a data frame")
+      stop("sample_data must be a character string or a data frame")
     }
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
@@ -297,10 +297,10 @@ import_mut_data <- function(mut_file,
   na_columns_required <- intersect(columns_with_na,
                                    MutSeqR::op$base_required_mut_cols)
   if (length(na_columns_required) > 0) {
-    stop(paste0("Error: NA values were found within the following required
-                column(s): ", paste(na_columns_required, collapse = ", "),
-                ".
-                Please confirm that your data is complete before proceeding."))
+    stop("NA values were found within the following required column(s): ",
+      paste(na_columns_required, collapse = ", "),
+      ". Please confirm that your data is complete before proceeding."
+    )
   }
   # Check for NA values in the context column. If so, will populate it.
   if (context_exists) {
@@ -342,17 +342,17 @@ import_mut_data <- function(mut_file,
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
+      warning(false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
     }
   }
   # Create a context column, if needed: BSGenome
   if (!context_exists) {
     if (is.null(BS_genome)) {
-      stop("Error: The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+      stop("The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
     installed_BS_genomes <- BSgenome::installed.genomes()
     if (!(BS_genome %in% installed_BS_genomes)) {
-      stop("Error: The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+      stop("The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
     message("Loading reference genome: ", BS_genome, ".")
     ref_genome <- BSgenome::getBSgenome(BS_genome)
