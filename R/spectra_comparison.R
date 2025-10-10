@@ -166,7 +166,7 @@ spectra_comparison <- function(mf_data,
   if (is.data.frame(contrasts)) {
     contrast_table <- contrasts
   } else {
-    contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
+    contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = FALSE)
     if (ncol(contrast_table) <= 1) {
       stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
     }
