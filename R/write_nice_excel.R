@@ -23,7 +23,8 @@
 #'                       package = "MutSeqR"))
 #' mf_example2 <- readRDS(system.file("extdata/Example_files/mf_data_6.rds",
 #'                        package = "MutSeqR"))
-#' mf_example3 <- readRDS(system.file("extdata/Example_files/mf_data_6_sample.rds",
+#'  mf_example3 <- readRDS(system.file("extdata/Example_files/mf_data_6_sample.rds",
+#'                         package = "MutSeqR"))
 #' list <- list(mf_example, mf_example2, mf_example3)
 #' names(list) <- c("Global MF", "Base 6 Spectra", "Base 6 Sample Spectra")
 #'

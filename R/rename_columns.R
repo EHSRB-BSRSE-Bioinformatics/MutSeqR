@@ -74,6 +74,16 @@ rename_columns <- function(data, column_map = op$column) {
 #' @param data mutation data
 #' @param required_columns a list of required column names.
 #' @returns an error
+#' @examples
+#' df <- data.frame(
+#'  contig = c("chr1", "chr2", "chr3"),
+#'  start = c(100, 200, 300),
+#'  end = c(100, 200, 300),
+#'  sample = c("S1", "S2", "S3"),
+#'  ref = c("G", "C", "T"),
+#'  alt = c("A", "T", "G")
+#' )
+#' check_required_columns(df, required_columns = op$base_required_mut_cols)
 #' @export
 
 check_required_columns <- function(data,
