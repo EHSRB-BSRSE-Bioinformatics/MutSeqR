@@ -103,7 +103,7 @@
 #'                      response = "proportion",
 #'                      group_order = "clustered")
 #' }
-
+#' @return A ggplot object representing the mutation spectra plot.
 plot_spectra <- function(mf_data,
                          group_col = "sample",
                          subtype_resolution = "base_6",

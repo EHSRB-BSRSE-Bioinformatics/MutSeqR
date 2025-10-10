@@ -84,18 +84,18 @@ get_seq <- function(regions,
   if (is.character(regions)) {
     if (regions == "TSpanel_human") {
       BS_genome <- "BSgenome.Hsapiens.UCSC.hg38"
-      species = "human"
-      genome = "hg38"
+      species <- "human"
+      genome <- "hg38"
     }
     if (regions == "TSpanel_mouse") {
       BS_genome <- "BSgenome.Mmusculus.UCSC.mm10"
-      species = "mouse"
-      genome = "mm10"
+      species <- "mouse"
+      genome <- "mm10"
     }
     if (regions == "TSpanel_rat") {
       BS_genome <- "BSgenome.Rnorvegicus.UCSC.rn6"
-      species = "rat"
-      genome = "rn6"
+      species <- "rat"
+      genome <- "rn6"
     }
   }
 

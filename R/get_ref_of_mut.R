@@ -3,6 +3,7 @@
 #' @examples
 #' get_ref_of_mut("A>G")
 #' get_ref_of_mut("A[G>T]C")
+#' @return the reference context of the mutation
 #' @export
 get_ref_of_mut <- function(mut_string) {
   a <- str_extract(mut_string, ".*(?=\\s*>)")

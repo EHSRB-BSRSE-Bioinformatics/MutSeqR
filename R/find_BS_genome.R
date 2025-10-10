@@ -75,9 +75,13 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
   } 
   # If genome argument is missing, return possibilities
   if (missing(genome) || is.null(genome) || nchar(genome)==0) {
-    message("Possible BS genomes for organism = '", organism, "', masked = ", masked, ":")
-    print(possible_genomes[, c("pkgname", "genome", "masked")])
-    message("Please install one of the possible BS genomes using BiocManager::install('pkgname') and provide the pkgname to import_mut/vcf_data().")
+    message(
+      "Possible BS genomes for organism = '", organism,
+      "', masked = ", masked, ": ", possible_genomes$pkgname,
+      ". Please install one of the possible BS genomes using",
+      " BiocManager::install('pkgname') and provide the pkgname to",
+      " import_mut/vcf_data()."
+    )
     return(possible_genomes[, c("pkgname", "organism", "genome", "masked")])
   }
   # If genome specified, filter further for genome assembly
