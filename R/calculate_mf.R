@@ -264,15 +264,14 @@ calculate_mf <- function(mutation_data,
     warning("You should use a data frame as input here.")
   }
   if (!subtype_resolution %in% names(MutSeqR::subtype_dict)) {
-    stop("Error: you need to set subtype_resolution to one of:
+    stop("You need to set subtype_resolution to one of:
       none, type, base_6, base_12, base_96, base_192")
   }
   if (any(!variant_types %in% MutSeqR::subtype_list$type)) {
-    stop(paste0(
-      "Error: you need to set variant_types to one or more of: ",
+    stop("You need to set variant_types to one or more of: ",
       paste(MutSeqR::subtype_list$type, collapse = ", "),
       ". Variation_types outside of this list will not be included in the mutation frequency calculation."
-    ))
+    )
   }
   if (!is.logical(summary)) {
     stop("summary must be a logical variable.")
@@ -283,7 +282,7 @@ calculate_mf <- function(mutation_data,
 
   if (calculate_depth && correct_depth) {
     if (!"total_depth" %in% colnames(mutation_data)) {
-      stop("Error: `correct_depth` is TRUE but 'total_depth' column not found in mutation_data.")
+      stop("`correct_depth` is TRUE but 'total_depth' column not found in mutation_data.")
     }
 
     message("Performing internal depth correction to prevent double-counting...")
@@ -385,7 +384,7 @@ calculate_mf <- function(mutation_data,
           stop("The precalc_depth_data does not exist.")
         }
         if (file.info(depth_file)$size == 0) {
-          stop("Error: You are trying to import an empty precalc_depth_data")
+          stop("You are trying to import an empty precalc_depth_data")
         }
         depth_df <- read.delim(file.path(depth_file),
                                sep = d_sep,

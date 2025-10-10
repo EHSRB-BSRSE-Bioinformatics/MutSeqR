@@ -108,7 +108,7 @@ plot_model_mf <- function(model,
       stop("Multiple fixed effects found. Please specify the fixed effect to plot on the x-axis using x_effect.")
     }
     if (!x_effect %in% names(plot_data)) {
-    stop(paste("The fixed effect", x_effect, "is not found in point_estimates dataframe."))
+    stop("The fixed effect", x_effect, "is not found in point_estimates dataframe.")
     }
     x_var <- x_effect
     other_effect <- setdiff(names(plot_data)[5:(4 + nfixef)], x_effect)
@@ -155,7 +155,9 @@ plot_model_mf <- function(model,
   } else {
     palette <- custom_palette
     if (length(palette) < n_colors) {
-      stop(paste0("The number of colors in the custom_palette is less than the number of levels in the fill aesthetic. ", n_colors, " needed but ", length(custom_palette), " provided."))
+      stop("The number of colors in the custom_palette is less than the number of levels in the fill aesthetic. ",
+        n_colors, " needed but ", length(custom_palette), " provided."
+      )
     }
   }
   # Estimate: bars or points

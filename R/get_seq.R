@@ -124,11 +124,11 @@ get_seq <- function(regions,
     S4Vectors::mcols(regions_gr)$sequence <- seqs
   } else {
     if (is.null(BS_genome)) {
-      stop("Error: If not using the UCSC method, please indicate the appropriate BS genome (must be installed). If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+      stop("If not using the UCSC method, please indicate the appropriate BS genome (must be installed). If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
     installed_BS_genomes <- BSgenome::installed.genomes()
     if (!(BS_genome %in% installed_BS_genomes)) {
-      stop("Error: The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+      stop("The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
     message("Loading reference genome: ", BS_genome, ".")
     ref_genome <- BSgenome::getBSgenome(BS_genome)
