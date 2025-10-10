@@ -1,0 +1,825 @@
+---
+title: "MutSeqR: Modelling Mutation Frequencies"
+author:
+- name: Annette E. Dodge
+  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+- name: Matthew J. Meier
+  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  email: matthew.meier@hc-sc.gc.ca
+package: MutSeqR
+output:
+  rmarkdown::html_document:
+    toc: true
+    toc_float: yes
+    code_folding: show
+    code_download: yes
+    css: custom.css
+bibliography: Modelling_Mutation_Frequencies.bib
+---
+  
+```{r setup, include=FALSE}
+BiocStyle::markdown()
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(DT)
+library(htmltools)
+```
+
+# Load MutSeqR and Example Data
+
+```{r load-lib}
+library(MutSeqR)
+```
+
+```{r load-ex}
+library(ExperimentHub)
+# load the index
+eh <- ExperimentHub()
+```
+
+# Generalized Linear Modeling
+
+An important component of analysing mutagencity data is how
+mutation frequency (MF) changes based on experimental variables.
+
+The `model_mf()` function can be used to quantitatively evaluate
+how MF changes based on experimental variables. The function models
+the proportion of reads that carry a mutation (i.e. the MF) across
+user-supplied fixed and/or random effects and interaction parameters.
+Depending on the supplied effects, `model_mf()` will automatically
+choose to fit either a generalized linear model (GLM) using the `glm()`
+function from the `r CRANpkg("stats")` library or a generalized linear mixed model
+(GLMM) using the `glmer()` function from the `r CRANpkg("lme4")` library.
+
+## Model Formula
+- **Fixed effects**: The experimental variable(s)/factor(s) of interest.
+- **Random effects**: Variable used to account for variability within a larger
+group. Covariate.
+- **Interaction**: The product of two or more interacting fixed_effects. An
+interaction implies that the effect of one fixed effect changes depending on
+the levels of another fixed effect, indicating a non-additive reationship.
+- **Response**: the function will model the MF, taking the mutation count
+(`sum`) and the `group_depth` as input.
+
+The model formula is built as:
+
+`cbind(sum, group_depth) ~ fixed_effect1 + fixed_effect2 + ... + (1|random_effect)`
+
+If `test_interaction` is set to TRUE, the model will use the product of
+the fixed_effects:
+
+`cbind(sum, group_depth) ~ fixed_effect1 * fixed_effect2 * ... + (1|random_effect)`
+
+## Family
+The occurence of mutations is assumed to follow a binomial distribution as:
+
+1. There is a finite number of sequenced bases.
+2. A mutation at any given base is equally probable*.
+3. Mutations occur independently of other mutations.
+
+* We acknowledge that this does not reflect biological reality.
+
+To account for over-dispersion, the function will fit a GLM with a
+quasibinomial distribution.  If the dispersion parameter of the model
+is less than 1, the model will be refit using a binomial distribution.
+The GLMM will always use a binomial distribution.
+
+The `model_mf` function will fit a generalized linear model to analyse
+the effect(s) of given fixed_effects(s) on MF and perform specified
+pairwise comparisons between levels of your factors. 
+
+Additional arguments can be passed to the model to further customize it to
+your needs. Details on the arguments for the generalized linear model can be
+found at
+[stats::glm](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm)
+and for the general linear mixed model at
+[lme4::glmer](https://www.rdocumentation.org/packages/lme4/versions/1.1-35.3/topics/glmer). 
+
+## Estimates & Comparisons
+
+`model_mf()` provides estimates of the mean for each level of the fixed
+effects. Furthermore, pairwise comparisons can be performed based on a
+user-supplied table. Mean estimates and comparisons are conducted using the
+doBy R library [@doBy]. Estimates of the back-transformed
+standard errors are approximated using the delta method. The p-values are
+adjusted for multiple comparisons using the Sidak method. 
+
+## Goodness of Fit
+
+The `model_mf` function will output the Pearson residuals appended to the
+`mf_data`. The row with the highest residual will be printed to the console
+so that users may assess it as an outlier. Additionally, Pearson residuals
+will be plotted as a histogram and a QQ-plot to check for deviances from model
+assumptions. We assume that residuals will follow a normal distribution with
+a mean of 0. Thus, we expect the histogram to follow a bell curve and the
+QQ-plot to be plotted along the y=x line.
+
+## General Usage
+
+Mutation data should first be summarised by sample using `calculate_mf()`.
+The `mf_data` should be output as a summary table. Be sure to retain the
+columns for experimental variables of interest using the
+`retain_metadata_cols` parameter.
+
+You may specify factors and covariates for your model using the `fixed_effects`
+and `random_effects` parameters respectively. If more than one fixed_effect is
+supplied, then you may specify whether you wish to test the interaction between
+your fixed_effects using the `test_interaction` parameter. 
+
+You must specify the columns in your `mf_data` that contain the mutation counts
+and the total_depth per sample using the `muts` and `total_counts` parameters
+respectively. 
+
+To perform pairwise comparisons between levels of your fixed effects, supply a
+constrast table using the `contrasts` parameter. This can either be a data
+frame  or a filepath to a text file that will be loaded into R. The table must
+consist of two columns, each containing levels within the fixed_effects.
+The level in the first column will be compared to the level in the second
+column for each row. You should also provide the reference level for each
+fixed effect using the `reference_level` parameter. If you specify
+multiple pairwise comparisons, then the p-values will automatically be
+corrected for multiple comparisons using the Sidak method. For multiple
+fixed effects, the user must include levels for all fixed_effects in each
+value of the contrasts table. Within each value, the levels of the different
+fixed_effects should be seperated by a colon.
+
+## Output
+
+The function will output a list of results.
+
+- model: the glmm or glmer model object.
+- model_formula: the formula given to glm or glmer.
+- model_data: the supplied `mf_data` with added column for Pearson residuals.
+- summary: the summary of the model.
+- anova: the analysis of variance for models with two or more fixed_effects.
+See
+[car::Anova.](https://www.rdocumentation.org/packages/car/versions/1.0-9/topics/Anova).
+- residuals_histogram: the Pearson residuals plotted as a histogram. This is
+used to check whether the variance is normally distributed. A symmetric
+bell-shaped histogram, evenly distributed around zero indicates that the
+normality assumption is likely to be true.
+- residuals_qq_plot: the Pearson residuals plotted in a quantile-quantile plot.
+For a normal distribution, we expect points to roughly follow the y=x line.  
+- point_estimates_matrix: the contrast matrix used to generate point-estimates
+for the fixed effects. 
+- point_estimates: the point estimates for the fixed effects.
+- pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise
+comparisons specified in the `contrasts`.
+- pairwise_comparisons: the results of pairwise comparisons specified in the
+`contrasts`.
+
+## Examples
+
+### Example 1. Model by Dose {.tabset}
+
+*Example 1. Model the effect of dose on MF. Our example data consists of 24*
+*mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups*
+*are : Control, Low, Medium, and High. We will determine if the MFmin of each*
+*BaP dose group is significantly increased from that of the Control group.*
+*Example data is the same as that used in the vignette. See the vignette*
+*for information on importing and filtering the data.*
+
+First, we will calculate MF per sample while retaining the dose column.
+
+```{r calculate-mf-global}
+# load example data:
+example_data <- eh[["EH9861"]]
+
+mf_data_global <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "sample",
+  subtype_resolution = "none",
+  retain_metadata_cols = c("dose_group", "dose")
+)
+```
+
+Next, we will build a contrasts table that compares each BaP dose group
+back to the control group.
+
+```{r make-contrasts1}
+# Create a contrasts table for pairwise comparisons
+contrasts_table <- data.frame(
+  col1 = c("Low", "Medium", "High"),
+  col2 = c("Control", "Control", "Control")
+)
+```
+
+Finally, we will run the model.
+
+```{r model-mf-dose, fig.show='hide'}
+# Run the model
+model_by_dose <- model_mf(
+  mf_data = mf_data_global,
+  fixed_effects = "dose_group",
+  muts = "sum_min",
+  total_count = "group_depth",
+  reference_level = "Control",
+  contrasts = contrasts_table
+)
+```
+
+#### Residuals Histogram
+
+```{r hist-caption1, include=FALSE}
+caption <- paste(
+  "GLM residuals of MFmin modelled as an effect of Dose.",
+  "x is pearson's residuals, y is frequency.",
+  "Plotted to validate model assumptions. n = 24."
+)
+```
+
+```{r model-dose-hist, echo=FALSE, fig.small=TRUE, fig.cap=caption}
+model_data <- model_by_dose$model_data
+hist_data <- hist(model_data$residuals, plot = FALSE)
+ylim_max <- max(hist_data$counts) + 1
+plot <- hist(model_data$residuals,
+  main = "Pearson Residuals",
+  col = "yellow",
+  ylim = c(0, ylim_max)
+)
+```
+
+#### Residuals QQ-plot
+
+```{r qq-caption1, include=FALSE}
+caption <- paste(
+  "GLM residuals of MFmin modelled as an effect of Dose",
+  "expressed as a quantile-quantile plot.",
+  "Y is the pearson's residuals of the model in ascending order",
+  "x is the quantiles of standard normal distribution for n of 24.",
+  "Plotted to validate model assumptions."
+)
+```
+
+```{r model-dose-qq, echo=FALSE, fig.small=TRUE, fig.cap=caption}
+qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
+stats::qqline(model_data$residuals, col = "red")
+```
+
+#### Model Summary
+```{r model-dose-summary}
+model_by_dose$summary
+```
+
+#### Model Estimates
+
+**Table 18.** model_by_dose$point_estimates: Estimated Mean Mutation Frequency per Dose.
+
+```{r model-dose-est, echo=FALSE}
+DT::datatable(
+  model_by_dose$point_estimates,
+  options = list(
+    columnDefs = list(
+      list(targets = 1:4,
+           render = DT::JS("function(data, type, row, meta) {
+            return data.toExponential(2); 
+          }"))
+    ),
+    rowCallback = DT::JS("function(row, data, dataIndex) {
+        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }")
+  )
+)
+```
+
+#### Pairwise Comparisons
+
+**Table 19.** model_by_dose$pairwise_comparisons
+
+```{r model-dose-comp, echo=FALSE}
+DT::datatable(
+  model_by_dose$pairwise_comparisons,
+  options = list(
+    scrollX = TRUE,
+    columnDefs = list(
+      list(targets = c("p.value", "adj_p.value"),
+        render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
+      )
+    ),
+    rowCallback = DT::JS(
+      "function(row, data, dataIndex) {
+      $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }"
+    )
+  )
+) %>%
+  DT::formatRound(columns = c(1:3, 6:7), digits = 2)
+```
+
+### Example 2. Model by Dose and Target {.tabset}
+
+*Example 2. Model the effects of dose and genomic locus on MF. Sequencing for*
+*the example data was done on a panel of 20 genomic targets. We will determine*
+*if the MF of each BaP dose group is significantly different from the Control*
+*individually for all 20 targets. In this model, dose group and target label*
+*will be our fixed effects. We include the interaction between the two fixed*
+*effects. Because sample will be a repeated measure, we will use it as a random*
+*effect. See the vignette for more information on how we imported and filtered*
+*this dataset.*
+
+First, calculate MF for each sample and genomic locus, while retaining the dose
+column.
+
+```{r mf-rg}
+mf_data_rg <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = c("sample", "label"),
+  subtype_resolution = "none",
+  retain_metadata_cols = "dose_group"
+)
+```
+
+Next, create a contrasts table the compares each dose group back to the
+control for each genomic locus:.
+
+```{r make-contrasts2}
+combinations <- expand.grid(dose_group = unique(mf_data_rg$dose_group),
+                            label = unique(mf_data_rg$label))
+combinations <- combinations[combinations$dose_group != "Control", ]
+combinations$col1 <- with(combinations, paste(dose_group, label, sep = ":"))
+combinations$col2 <- with(combinations, paste("Control", label, sep = ":"))
+contrasts2 <- combinations[, c("col1", "col2")]
+```
+
+Finally, run the model. As this model is more complex, we will improve
+covergence by supplying the control argument, which is passed directly to
+`lme4::glmer()`.
+
+``` {r model-mf-rg, fig.show='hide'}
+model_by_target <- model_mf(mf_data = mf_data_rg,
+  fixed_effects = c("dose_group", "label"),
+  test_interaction = TRUE,
+  random_effects = "sample",
+  muts = "sum_min",
+  total_count = "group_depth",
+  contrasts = contrasts2,
+  reference_level = c("Control", "chr1"),
+  control = lme4::glmerControl(optimizer = "bobyqa",
+                               optCtrl = list(maxfun = 2e5))
+)
+```
+
+#### Residuals Histogram
+
+```{r hist-caption2, include=FALSE}
+caption <- paste(
+  "GLMM residuals of MFmin modelled as an effect of Dose and Genomic Target.",
+  "x is pearson's residuals, y is frequency.",
+  "Plotted to validate model assumptions. n = 24."
+)
+```
+
+```{r model-rg-hist, echo=FALSE, fig.small=TRUE, fig.cap=caption}
+model_data <- model_by_target$model_data
+hist_data <- hist(model_data$residuals, plot = FALSE)
+ylim_max <- max(hist_data$counts) + 1
+plot <- hist(model_data$residuals,
+  main = "Pearson Residuals",
+  col = "yellow",
+  ylim = c(0, ylim_max)
+)
+```
+
+#### Residuals QQ-plot
+
+```{r qq-caption2, include=FALSE}
+caption <- paste(
+  "GLMM residuals of MFmin modelled as an effect of Dose and Genomic Target",
+  "expressed as a quantile-quantile plot.",
+  "Y is the pearson's residuals of the model in ascending order",
+  "x is the quantiles of standard normal distribution for n of 24.",
+  "Plotted to validate model assumptions."
+)
+```
+
+```{r model-rg-qq, echo=FALSE, fig.small=TRUE, fig.cap=caption}
+qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
+stats::qqline(model_data$residuals, col = "red")
+```
+
+#### Model Summary
+```{r model-rg-summary}
+model_by_target$summary
+```
+
+#### ANOVA
+
+```{r model-rg-anova}
+model_by_target$anova
+```
+
+#### Model Estimates
+
+**Table 20.** model_by_target$point_estimates: Estimated Mean Mutation Frequency per Dose and Genomic Target.
+
+```{r model-rg-est, echo=FALSE}
+DT::datatable(
+  model_by_target$point_estimates,
+  options = list(
+    columnDefs = list(
+      list(targets = 1:4,
+           render = DT::JS("function(data, type, row, meta) {
+            return data.toExponential(2); 
+          }"))
+    ),
+    rowCallback = DT::JS("function(row, data, dataIndex) {
+        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }")
+  )
+)
+```
+
+#### Pairwise Comparisons
+
+**Table 21.** model_by_target$pairwise_comparisons.
+
+```{r model-rg-comp, echo=FALSE}
+DT::datatable(
+  model_by_target$pairwise_comparisons,
+  options = list(
+    scrollX = TRUE,
+    columnDefs = list(
+      list(targets = c("p.value", "adj_p.value"),
+        render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }")
+      )
+    ),
+    rowCallback = DT::JS(
+      "function(row, data, dataIndex) {
+      $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
+      }"
+    )
+  )
+) %>%
+  DT::formatRound(columns = c(1:3, 6:7), digits = 2)
+```
+
+## Plot Model Results {.tabset}
+
+Plot the results of `model_mf()` using `plot_model_mf()`. This function will
+create a bar or line plot of the point estimates. Users can include the
+estimated standard error as error bars with `plot_error_bars` and add
+significance labels based on the pairwise comparisons with `plot_signif`.
+The function can plot model results with up to two fixed effects. Users must
+specify which fixed effect should be represented on the x-axis with `x_effect`.
+The other fixed effect will be represented by the fill aesthetic.
+
+When adding significance labels, the function will generate a unique symbol for
+each unique level or combination of levels in column 2 of the contrasts table.
+If using two fixed effects, but your comparisons only contrast levels of one
+fixed effect, you may specify this using the `ref_effect` parameter. Supply it
+with the fixed effect that is being contrasted to reduce the number of unique
+symbols generated.
+
+The output is a ggplot object that can be modified with ggplot2.
+
+
+### Plot Model by Dose
+
+```{r plot-model-cap, include=FALSE}
+caption <- paste(
+  "Mean Mutation Frequency Minimum (mutations/bp) per Dose",
+  "estimated using a generalized linear model. Error bars are the S.E.M.",
+  "Symbols indicate significance differences (p < 0.05)."
+)
+```
+
+```{r plot-model-dose, fig.cap=caption}
+plot <- plot_model_mf(
+  model_by_dose,
+  plot_type = "bar",
+  x_effect = "dose",
+  plot_error_bars = TRUE,
+  plot_signif = TRUE,
+  x_order = c("Control", "Low", "Medium", "High"),
+  x_label = "Dose Group",
+  y_label = "Estimated Mean Mutation Frequency (mutations/bp)"
+)
+plot
+```
+
+### Plot Model by Dose and Target
+
+In this example, we only made comparisons between dose groups. For each
+contrast, we held the label (target) constant. Thus, we will set the
+ref_effect to dose_group so that significance labels are generated to
+indicate differences in dose, and not label.
+
+```{r plot-model-cap2, include=FALSE}
+caption <- paste(
+  "Mean Mutation Frequency Minimum (mutations/bp) per Genomic Target and Dose",
+  "estimated using a generalized linear mixed model. Error bars are the SEM.",
+  "Symbols indicate significance differences (p < 0.05) between dose levels",
+  "for individual genomic regions."
+)
+```
+
+```{r plot-model-rg, fig.wide=TRUE, fig.cap=caption}
+# Define the order of the genomic targets for the x-axis:
+# We will order them from lowest to highest MF at the High dose.
+label_order <- model_by_target$point_estimates %>%
+  dplyr::filter(dose_group == "High") %>%
+  dplyr::arrange(Estimate) %>%
+  dplyr::pull(label)
+
+# Define the order of the doses for the fill
+dose_order <- c("Control", "Low", "Medium", "High")
+
+plot <- plot_model_mf(
+  model = model_by_target,
+  plot_type = "bar",
+  x_effect = "label",
+  plot_error_bars = TRUE,
+  plot_signif = TRUE,
+  ref_effect = "dose_group",
+  x_order = label_order,
+  fill_order = dose_order,
+  x_label = "Target",
+  y_label = "Mutation Frequency (mutations/bp)",
+  fill_label = "Dose",
+  plot_title = "",
+  custom_palette = c("#ef476f",
+                     "#ffd166",
+                     "#06d6a0",
+                     "#118ab2")
+)
+# Rotate the x-axis labels for clarity using ggplot2 functions.
+plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+plot
+```
+
+## Exporting Model Results
+
+`write_excel()` will extract the mf_data, point_estimates, and
+pairwise_comparisons from `model_mf()` output to write to an excel workbook.
+To export model results, provide `write_excel` with the output of `model_mf`
+and set the `model_results` parameter to TRUE.
+
+*Example 3. Export model results*
+```{r write-excel-model, eval=FALSE}
+write_excel(
+  model_by_dose,
+  workbook_name = "Example_model",
+  model_results = TRUE
+)
+```
+
+# Benchmark Dose Modeling
+
+Dose-response models are essential for quatitative risk assessment of
+mutagenicity, as they provide a framework to evaluate the levels at which
+exposure to a substance might cause an adverse effect. The **benchmark dose**
+(BMD) is a dose that produces a predetermined change in the measured response,
+defined as the **benchmark response** (BMR). The BMD is used as a point of
+departure to derive human health-based guidance values to inform regulatory
+risk assessment such as the reference dose (RfD), the derived no-effect level
+(DNEL) or the acceptable daily intake (ADI) [@efsa-2022].
+
+The BMD is estimated by applying various mathmatical models to fit the
+dose-response data. Some requirements must be met before modelling the BMD.
+There must be a clear dose-response trend in the MF data. We suggest using
+`model_mf()` to test for significant increases in MF with dose prior to running
+a BMD analysis. In general, studies with more dose groups and a graded
+monotonic response with dose will be more useful for BMD analysis. A minimum of
+three dose groups + 1 control group is suggested. Datasets in which a response
+is only observed at the high dose are usually not suitable for BMD modeling.
+However, if the one elevated response is near the BMR, adequate BMD computation
+may result. For a better estimate of the BMD, it is preferable to have studies
+with one or more doses near the level of the BMR.
+
+Protection and safety authorities recommend the use of model averaging to
+determine the BMD and its confidence intervals. Model averaging incorporates
+information across multiple models to acount for model uncertainty, allowing
+the BMD to be more accurately estimated.
+
+Ideally, the BMR would be based on a consensus scientific definition of what
+minimal level of change in MF is biologically significant. Currently, the
+default provided by this package calculates the BMD at a 50% relative increase
+in MF from the background. This BMR was selected based on previous
+recommendations for genotoxicity assessment by @white-2020.
+
+MutSeqR provides `bmd_proast` for BMD modelling, which runs a modified version of the
+[proast71.1](https://www.rivm.nl/en/proast) R library that is parametirized instead of
+menu-based.
+
+`bmd_proast` will analyze the continuous, individual MF data following a log
+transformation. PROAST uses four families of nested models: exponential, Hill,
+inverse exponential, and log-normal. The Akaike information criterion (AIC) is
+used to select best fit. BMD confidence intervals are assessed by the Maximum
+Likelihood Profile method, or by model averaging via bootstrapping (recommended).
+BMR values are a user-defined relative increase in MF from the
+control. Alternatively, users may set the BMR as one standard-deviation from
+the control.
+
+## General Usage: bmd_proast
+
+Supply `bmd_proast` with per-sample mf data calculated using `calculate_mf()`,
+with the dose column retained in the summary table. Dose column must be numeric.
+
+Specify the column that contains the numeric dose values in `dose_col`. The
+function can model more than one response variable at once. Supply all response
+variables to `response_col`. If you wish to include a covariate in the analysis,
+supply the covariate variable to `covariate_col`. PROAST will assess if the BMD
+values differ significantly between levels of the covariate and give a BMD
+estimate for each.
+
+It is highly recommended to use model averaging when calculating the BMD
+confidence intervals. Specify the number of bootstraps to run with
+`num_bootstraps`. The recommended value is 200, but be aware that this may
+take some time to run. PROAST model averaging will return the upper and lower
+90% BMD confidence intervals. MutSeqR calculates the model-averaged BMD value
+as the median BMD of all bootstrap runs.
+
+Users may choose to generate model plots with `plot_results`. Plots may be
+automatically saved to an output directory specified in `output_path`.
+Alternatively, when output_path is NULL, plots will automcatically
+be displayed and then returned within a list alongside the BMD
+summary results.
+
+The function will output a data frame of final results, including a BMD
+estimate for each model family and the model averaging results, if applicable.
+Users may access the raw, unparsed PROAST results by setting
+`raw_results = TRUE`.
+
+## Example
+
+*Example 2.1. Calculate the BMD with model averaging for a 50% relative*
+*increase in MF from control. This will be calculated for both MFmin and MFmax.*
+*See the vignette to see information on how we imported and filtered the data.*
+
+Fist, calculate MF per sample while retaining the numeric dose column:
+
+```{r calculate-mf-global-bmd}
+# load example data:
+example_data <- eh[["EH9861"]]
+
+mf_data_global <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "sample",
+  subtype_resolution = "none",
+  retain_metadata_cols = c("dose")
+)
+```
+
+Next, run bmd_proast()
+
+```{r proast, results='hide', fig.show = 'hide'}
+proast_results <- bmd_proast(
+  mf_data = mf_data_global,
+  dose_col = "dose",
+  response_col = c("mf_min", "mf_max"),
+  bmr = 0.5,
+  model_averaging = TRUE,
+  num_bootstraps = 10, # recommended value 200
+  plot_results = TRUE,
+  output_path = NULL
+)
+```
+
+## BMD Results {.tabset}
+
+### Summary
+
+**Table 22.** BMD Estimates by PROAST.
+
+```{r proast-results, echo=FALSE}
+DT::datatable(proast_results$summary) %>%
+  DT::formatRound(columns = 3:8, digits = 2)
+```
+
+### Exponential & Hill Models
+
+```{r bmd-exphill-cap, include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmin by Dose following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each dose is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Exponenetial (left) and Hill (right)",
+  "models. Data is MFmax by Dose following",
+  "log-transformation. Individual data points are plotted using small",
+  "triangles. The geometric mean at each dose is plotted",
+  "as a large triangle. The estimated BMD is indicated by a dotted line."
+)
+```
+
+```{r bmd-exphill-plot1, fig.cap=caption1}
+replayPlot(proast_results$mf_min_Expon_HILL)
+```
+
+```{r bmd-exphill-plot2, fig.cap=caption2}
+replayPlot(proast_results$mf_max_Expon_HILL)
+```
+
+###  Inverse Exponential & Log-Normal Models
+
+```{r bmd-invln-cap, include=FALSE}
+caption1 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmin by Dose",
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each dose",
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+caption2 <- paste(
+  "The fitted curve of the selected Inverse-Exponenetial (left) and",
+  "Log-Normal (right) models. Data is MFmax by Dose",
+  "following log-transformation. Individual data points are plotted using",
+  "small triangles. The geometric mean at each dose",
+  "is plotted as a large triangle. The estimated BMD is indicated by a dotted",
+  "line."
+)
+```
+
+```{r bmd-invln-plot1, fig.cap=caption1}
+replayPlot(proast_results$mf_min_InvExp_LN)
+```
+
+```{r bmd-invln-plot2, fig.cap=caption2}
+replayPlot(proast_results$mf_max_InvExp_LN)
+```
+
+###  Bootstrap Curves
+
+```{r bmd-boot-cap, include=FALSE}
+caption1 <- paste(
+  "The bootstrap curves based on model averaging. Data is MFmin (left) and MFmax (right) by",
+  " Dose with log-transformation. The geometric mean at each dose",
+  "is plotted as a triangle. Number of bootstraps = 10 (although the recommended value is 200)."
+)
+```
+
+```{r bmd-boot-plot2, fig.cap=caption1}
+replayPlot(proast_results$mf_max_bootstrap_curves)
+```
+
+### Cleveland Plots
+
+```{r bmd-cvd-cap, include=FALSE}
+caption1 <- paste(
+  "MFmin. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging based on AIC."
+)
+caption2 <- paste(
+  "MFmax. The BMD estimate for each model plotted as a red point alongside the 90%",
+  "confidence intervals. The size of the BMD point represents the model weight",
+  "assigned during model averaging based on AIC."
+)
+```
+
+```{r bmd-cvd-plot1, fig.cap=caption1}
+proast_results$mf_min_cleveland
+```
+
+```{r bmd-cvd-plot2, fig.cap=caption2}
+proast_results$mf_max_cleveland
+```
+
+## Plot BMD CIs
+
+`plot_ci()` creates a confidence interval (CI) plot of BMD results for easy
+comparison of BMDs between response variables.
+
+The BMD values can be plotted on the log scale, if required.
+
+*Example 2.2. Compare the estimated BMD for MFmin (50% relative increase)*
+*by PROAST versus ToxicR (another BMD software available on Github,*
+* calculated independently)*
+
+```{r ci-plot-caption, include=FALSE}
+caption <- paste(
+  "Benchmark dose with 90% confidence intervals representing the dose at,",
+  "which a 50% increase in mutation frequency occurs from reference level.",
+  "Calculated using ROAST software. Black points represent the BMD,",
+  "red points the BMDL, and blue points, the BMDU"
+)
+```
+
+```{r plot-ci, fig.cap=caption}
+plot_results <- data.frame(
+  Response = c("PROAST", "ToxicR"),
+  BMD = c(9.111, 9.641894),
+  BMDL = c(7.38, 8.032936),
+  BMDU = c(10.9, 10.97636)
+)
+plot <- plot_ci(
+  data = plot_results,
+  order = "asc",
+  x_lab = "Dose (mg/kg-bw/d)",
+  y_lab = "BMD Method"
+)
+plot
+```
+
+# References
+
+# Appendix
+
+## Session Info
+
+```{r session-info, echo=FALSE}
+sessionInfo()
+```

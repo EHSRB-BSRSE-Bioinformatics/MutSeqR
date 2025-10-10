@@ -82,38 +82,27 @@
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' example_data <- eh[["EH9860"]]
-#' # Filter the data
-#' # Basic Usage: Filter out putative germline variants
-#' filter_example_1 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01)
-#' # Remove rows outside of the TwinStand Mouse Mutagenesis Panel regions
-#' filter_example_2 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01,
-#'                                regions = "TSpanel_mouse",
-#'                                regions_filter = "keep_within")
-#' # Apply a custom filter to flag rows with "EndRepairFillInArtifact"
-#' # in the column 'filter'
-#' filter_example_3 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01,
-#'                                regions = "TSpanel_mouse",
-#'                                regions_filter = "keep_within",
-#'                                custom_filter_col = "filter",
-#'                                custom_filter_val = "EndRepairFillInArtifact",
-#'                                custom_filter_rm = FALSE)
-#' # Flag snv variants that overlap with germline mnv variants.
-#' # Subtract the alt_depth of these variants from their total_depth
-#' # (treat them as No-calls).
-#' # Return all the flagged/removed rows in a seperate data frame
-#' filter_example_4 <- filter_mut(mutation_data = example_data,
-#'                                vaf_cutoff = 0.01,
-#'                                regions = "TSpanel_mouse",
-#'                                regions_filter = "keep_within",
-#'                                custom_filter_col = "filter",
-#'                                custom_filter_val = "EndRepairFillInArtifact",
-#'                                custom_filter_rm = FALSE,
-#'                                snv_in_germ_mnv = TRUE,
-#'                                rm_filtered_mut_from_depth = TRUE,
-#'                                return_filtered_rows = TRUE)
+#' # In this example, we will apply the following filters:
+#' # 1) Filter out putative germline variants using a VAF cutoff of 0.01
+#' # 2) Remove rows whose position falls outside the intervals of the
+#' #    TwinStrand Mouse Mutagenesis Panel regions.
+#' # 3) Apply a custom filter to flag rows with "EndRepairFillInArtifact"
+#' #    in the column 'filter'. This is a filter step commonly applied to
+#' #    TwinStrand Duplex Sequencing data.
+#' # 4) Flag snv variants that overlap with germline mnv variants and
+#' # 5) Subtract the alt_depth of these variants from their total_depth
+#' #    (treat them as No-calls).
+#' # 6) Return all the flagged/removed rows in a seperate data frame.
+#' filter_example <- filter_mut(mutation_data = example_data,
+#'                              vaf_cutoff = 0.01,
+#'                              regions = "TSpanel_mouse",
+#'                              regions_filter = "keep_within",
+#'                              custom_filter_col = "filter",
+#'                              custom_filter_val = "EndRepairFillInArtifact",
+#'                              custom_filter_rm = FALSE, # Flagging, not removing
+#'                              snv_in_germ_mnv = TRUE,
+#'                              rm_filtered_mut_from_depth = TRUE,
+#'                              return_filtered_rows = TRUE)
 #' # Flagging germline mutations...
 #' # Found 612 germline mutations.
 #' # Flagging SNVs overlapping with germline MNVs...
@@ -127,14 +116,26 @@
 #' # Removing filtered mutations from the total_depth...
 #' # Filtering complete.
 #' # Returning a list: mutation_data and filtered_rows.
-#' filtered_rows <- filter_example_4$filtered_rows
-#' filtered_example_mutation_data <- filter_example_4$mutation_data
+#' 
+#' # To separately access the filtered rows and the filtered mutation data:
+#' filtered_rows <- filter_example$filtered_rows
+#' filtered_example_mutation_data <- filter_example$mutation_data
 #' }
 #' @importFrom dplyr group_by mutate ungroup select filter starts_with
 #' n_distinct first case_when if_else
 #' @importFrom GenomicRanges makeGRangesFromDataFrame findOverlaps
 #' @importFrom S4Vectors queryHits mcols
 #' @importFrom plyranges join_overlap_left_directed join_overlap_left_within_directed
+#' @return A data frame or a list of two data frames, depending on the
+#' value of \code{return_filtered_rows}. If \code{return_filtered_rows} is
+#' FALSE (default), a data frame of the same structure as \code{mutation_data}
+#' is returned, with an additional column, \code{filter_mut}, indicating
+#' whether each record has been flagged for filtering (TRUE) or not (FALSE).
+#' If \code{return_filtered_rows} is TRUE, a list containing two data frames
+#' is returned. The first data frame, named \code{mutation_data}, is the
+#' filtered mutation data as described above. The second data frame,
+#' named \code{filtered_rows}, contains all records that were either
+#' removed from \code{mutation_data} or flagged with \code{filter_mut == TRUE}.
 #' @export
 filter_mut <- function(mutation_data,
                        vaf_cutoff = 1,
@@ -185,13 +186,13 @@ filter_mut <- function(mutation_data,
   ## total depth ratio is >0.95 (5% of all reads were excluded as no calls)
 
   if (vaf_cutoff < 0 || vaf_cutoff > 1) {
-    stop("Error: The VAF cutoff must be between 0 and 1")
+    stop("The VAF cutoff must be between 0 and 1")
   }
 
   ######## VAF Filter #########################################################
   if (vaf_cutoff < 1) {
     if (!("vaf" %in% colnames(mutation_data))) {
-      stop("\nError: You have set a vaf_cutoff but there is no 'vaf' column in
+      stop("You have set a vaf_cutoff but there is no 'vaf' column in
       your mutation_data. vaf = alt_depth/total_depth or vaf = alt_depth/depth,
       if the total_depth column is not available.")
     }
@@ -265,7 +266,7 @@ filter_mut <- function(mutation_data,
   ######## rm_abnormal_vaf Filter #############################################
   if (rm_abnormal_vaf) {
     if (!("vaf" %in% colnames(mutation_data))) {
-      stop("\nError: You have set rm_abnormal_vaf to TRUE but there is no 'vaf'
+      stop("You have set rm_abnormal_vaf to TRUE but there is no 'vaf'
       column in your mutation_data. vaf = alt_depth/total_depth or vaf =
       alt_depth/depth, if the total_depth column is not available.")
     }
@@ -291,12 +292,12 @@ filter_mut <- function(mutation_data,
   if (!is.null(custom_filter_col)) {
     message("Applying custom filter...")
     if (is.null(custom_filter_val)) {
-      stop("Error: You provided a custom filter column but did not specify the
+      stop("You provided a custom filter column but did not specify the
       filter value(s). Please provide the value(s) within the custom filter
       column that should be used to apply the filter")
     }
     if (!(custom_filter_col) %in% colnames(mutation_data)) {
-      stop(paste("Error: could not find", custom_filter_col, "in mutation_data"))
+      stop("could not find", custom_filter_col, "in mutation_data")
     }
     pattern <- paste(custom_filter_val, collapse = "|")
     custom_filtered_rows <- grepl(pattern, mutation_data[[custom_filter_col]])
@@ -304,7 +305,6 @@ filter_mut <- function(mutation_data,
     if (custom_filter_rm) {
       if (return_filtered_rows) {
         rm_custom <- mutation_data[custom_filtered_rows, ]
-        matching_filter_values <- custom_filter_val[sapply(custom_filter_val, function(val) grepl(val, rm_custom[[custom_filter_col]]))]
         rm_custom <- rm_custom %>%
           dplyr::mutate(filter_reason =
             ifelse(.data$filter_reason == "",

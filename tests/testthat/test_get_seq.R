@@ -13,8 +13,7 @@ test_that("get_seq retrieves sequences and creates GRanges object", {
   )
 
   gr <- get_seq(regions = tmpfile,
-                species = "mouse",
-                genome = "mm10",
+                BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
                 is_0_based_rg = FALSE)
 
   # Check if the result is a GRanges object

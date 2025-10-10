@@ -240,7 +240,7 @@ plot_bubbles <- function(mutation_data,
     dplyr::mutate(label = ifelse(.data$label < 1,
                                  sprintf("%#.2e", label),
                                  as.character(label)))
-  legend_data <- packcircles::circleLayoutVertices(size_legend_df, idcol = NULL, xysizecols = 1:3)
+  legend_data <- packcircles::circleLayoutVertices(size_legend_df, idcol = NULL, xysizecols = seq_len(3))
   if (!is.null(facet_col)) {
     legend_data$facet <- factor("Legend", levels = all_facet_levels)
     size_legend_df$facet <- factor("Legend", levels = all_facet_levels)

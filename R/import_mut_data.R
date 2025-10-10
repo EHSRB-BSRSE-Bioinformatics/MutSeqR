@@ -38,20 +38,15 @@
 #' in both directions by the given amount. Ex. Structural variants and
 #' indels may start outside of the regions. Adjust the padding to
 #' include these variants in your region's ranges.
-#' @param genome The genome assembly version of the reference genome. This is
-#' required if your data does not include a context column. The
-#' function will install a BS genome for the given species/genome/masked
-#' arguments to populate the context column.
-#' Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
-#' Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7
-#' @param species The species. Required if your data does not include a
-#' context column. The function will install a BS genome for the given
-#' species/genome/masked to populate the context column. The species can
-#' be the common name of the species or the scientific name.
-#' Ex. "human" or "Homo sapiens".
-#' @param masked_BS_genome A logical value. Required when using a BS genome
-#' to poulate the context column. Whether to use the masked version of the
-#' BS genome (TRUE) or not (FALSE). Default is FALSE.
+#' @param BS_genome The pkgname of a BS genome. A BS genome must be installed
+#' prior to import to populate the context column (trinucleotide context for each position).
+#' Only required if data does not already include a context column. Please install the
+#' appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
+#' name of the BSgenome package. The pkgname can be found using the find_BS_genome()
+#' function, which requires the species and assembly version.
+#' Ex."BSgenome.Hsapiens.UCSC.hg38" | "BSgenome.Hsapiens.UCSC.hg19" |
+#' "BSgenome.Mmusculus.UCSC.mm10" | "BSgenome.Mmusculus.UCSC.mm39" |
+#' "BSgenome.Rnorvegicus.UCSC.rn6"
 #' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
 #'  digest the mutation data properly. Typical defaults are set, but can
@@ -146,9 +141,8 @@
 #' imported_example_data <- import_mut_data(mut_file = example_data,
 #'                                          sample_data = sample_meta,
 #'                                          regions = "TSpanel_mouse",
-#'                                          genome = "mm10",
-#'                                          species = "mouse",
-#'                                          masked_BS_genome = FALSE)
+#'                                          BS_genome = find_BS_genome("mouse", "mm10")
+#' )
 #' }
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -161,6 +155,7 @@
 #' @importFrom IRanges IRanges
 #' @importFrom Biostrings getSeq
 #' @importFrom Seqinfo seqnames
+#' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
@@ -171,39 +166,37 @@ import_mut_data <- function(mut_file,
                             rg_sep = "\t",
                             is_0_based_rg = TRUE,
                             padding = 0,
-                            genome = NULL,
-                            species = NULL,
-                            masked_BS_genome = FALSE,
+                            BS_genome = NULL,
                             custom_column_names = NULL,
                             output_granges = FALSE) {                             
 
   if (!is.numeric(padding) || padding < 0) {
-    stop("Error: The range buffer must be a non-negative number")
+    stop("The range buffer must be a non-negative number")
   }
   if (!is.logical(is_0_based_mut) || !is.logical(is_0_based_rg)) {
-    stop("Error: is_0_based must be a logical variable")
+    stop("is_0_based must be a logical variable")
   }
 
   if (!is.null(custom_column_names)) {
     if (!is.list(custom_column_names)) {
-      stop("Error: custom_column_names must be a list")
+      stop("custom_column_names must be a list")
     }
   }
   if (!is.logical(output_granges)) {
-    stop("Error: output_granges must be a logical variable")
+    stop("output_granges must be a logical variable")
   }
 
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
     dat <- mut_file
     if (nrow(dat) == 0) {
-      stop("Error: The data frame you've provided is empty")
+      stop("The data frame you've provided is empty")
     }
   } else if (is.character(mut_file)) {
     mut_file <- file.path(mut_file)
     # Validate file/folder input
     if (!file.exists(mut_file)) {
-      stop("Error: The file path you've specified is invalid")
+      stop("The file path you've specified is invalid")
     }
     file_info <- file.info(mut_file)
     if (file_info$isdir == TRUE) {
@@ -211,7 +204,7 @@ import_mut_data <- function(mut_file,
       mut_files <- list.files(path = mut_file, full.names = TRUE, no.. = TRUE)
 
       if (length(mut_files) == 0) {
-        stop("Error: The folder you've specified is empty")
+        stop("The folder you've specified is empty")
       }
       # Warning if any of the files in folder are empty
       files_info_all <- file.info(mut_files)
@@ -222,10 +215,10 @@ import_mut_data <- function(mut_file,
       empty_list_str <- paste(empty_list, collapse = ", ")
 
       if (length(empty_list) == length(mut_files)) {
-        stop("Error: All the files in the specified directory are empty")
+        stop("All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning(paste("Warning: The following files in the specified directory are empty and will not be imported: ", empty_list_str))
+        warning("The following files in the specified directory are empty and will not be imported: ", empty_list_str)
       }
 
       # Remove empty files from mut_files
@@ -241,7 +234,7 @@ import_mut_data <- function(mut_file,
     } else {
       # Handle the case where mut_file exists and is a file
       if (file_info$size == 0 || is.na(file_info$size)) {
-        stop("Error: You are trying to import an empty file")
+        stop("You are trying to import an empty file")
       }
       dat <- read.table(mut_file,
         header = TRUE, sep = mut_sep,
@@ -254,7 +247,7 @@ import_mut_data <- function(mut_file,
            the delimiter used for the data you are importing.")
     }
   } else {
-    stop("Error: mut_file must be a character string or a data frame")
+    stop("mut_file must be a character string or a data frame")
   }
   ## Sample Data File
   # Validate and join sample data file if provided
@@ -262,15 +255,15 @@ import_mut_data <- function(mut_file,
     if (is.data.frame(sample_data)) {
       sampledata <- sample_data
       if (nrow(sampledata) == 0) {
-        stop("Error: The sample data frame you've provided is empty")
+        stop("The sample data frame you've provided is empty")
       }
     } else if (is.character(sample_data)) {
       sample_file <- file.path(sample_data)
       if (!file.exists(sample_file)) {
-        stop("Error: The sample data file path you've specified is invalid")
+        stop("The sample data file path you've specified is invalid")
       }
       if (file.info(sample_file)$size == 0) {
-        stop("Error: You are trying to import an empty sample data file")
+        stop("You are trying to import an empty sample data file")
       }
       sampledata <- read.delim(file.path(sample_data),
                                sep = sd_sep,
@@ -281,7 +274,7 @@ import_mut_data <- function(mut_file,
              the delimiter used for the data you are importing.")
       }
     } else {
-      stop("Error: sample_data must be a character string or a data frame")
+      stop("sample_data must be a character string or a data frame")
     }
     # Join
     dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
@@ -304,10 +297,10 @@ import_mut_data <- function(mut_file,
   na_columns_required <- intersect(columns_with_na,
                                    MutSeqR::op$base_required_mut_cols)
   if (length(na_columns_required) > 0) {
-    stop(paste0("Error: NA values were found within the following required
-                column(s): ", paste(na_columns_required, collapse = ", "),
-                ".
-                Please confirm that your data is complete before proceeding."))
+    stop("NA values were found within the following required column(s): ",
+      paste(na_columns_required, collapse = ", "),
+      ". Please confirm that your data is complete before proceeding."
+    )
   }
   # Check for NA values in the context column. If so, will populate it.
   if (context_exists) {
@@ -349,18 +342,21 @@ import_mut_data <- function(mut_file,
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
-      warning("Warning: ", false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
+      warning(false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
     }
   }
   # Create a context column, if needed: BSGenome
   if (!context_exists) {
-    if (is.null(genome) || is.null(species)) {
-      stop("Error: We need to calculate the context column for your data. Please provide a genome and species so that we can retrieve the appropriate BS genome.")
+    if (is.null(BS_genome)) {
+      stop("The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
     }
-    ref_genome <- install_ref_genome(organism = species,
-                                     genome = genome,
-                                     masked = masked_BS_genome)
-
+    installed_BS_genomes <- BSgenome::installed.genomes()
+    if (!(BS_genome %in% installed_BS_genomes)) {
+      stop("The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+    }
+    message("Loading reference genome: ", BS_genome, ".")
+    ref_genome <- BSgenome::getBSgenome(BS_genome)
+    
     extract_context <- function(mut_gr,
                                 bsgenome) {
       # Resize the mut_ranges to include the context

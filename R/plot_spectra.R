@@ -66,30 +66,25 @@
 #' @importFrom dplyr select arrange across all_of
 #' @export
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#'
-#' # Example 1: plot the proportion of 6-based mutation subtypes
-#' # for each sample, organized by dose group:
-#'
-#' # Calculate the mutation frequency data at the 6-base resolution.
-#' # Retain the dose_group column to use for ordering the samples.
-#' mf_data <- calculate_mf(mutation_data = example_data,
-#'                         cols_to_group = "sample",
-#'                         subtype_resolution = "base_6",
-#'                         retain_metadata_cols = "dose_group")
-#' # Set the desired order for the dose_group levels.
-#' mf_data$dose_group <- factor(mf_data$dose_group,
-#'                              levels = c("Control", "Low", "Medium", "High"))
+#' # using import_mut_data() and filtered with filter_mut. Filtered
+#' # mutation data is available in the MutSeqRData ExperimentHub package:
+#' # eh <- ExperimentHub::ExperimentHub()
+#' # Example 1: Visualized the 6-base mutation proportions per dose group.
+#' # Data was summarized per dose_group using:
+#' # calculate_mf(mutation_data = eh[["EH9861"]],
+#' #              cols_to_group = "dose_group",
+#' #              subtype_resolution = "base_6")
+#' # Load the example data
+#' mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
+#'                                   package = "MutSeqR"))
+#' # Convert dose_group to a factor with the desired order.
+#' mf_example$dose_group <- factor(mf_example$dose_group,
+#'  levels = c("Control", "Low", "Medium", "High")
+#' )
 #' # Plot the mutation spectra
-#' plot <- plot_spectra(mf_data = mf_data,
-#'                      group_col = "sample",
+#' plot <- plot_spectra(mf_data = mf_example,
+#'                      group_col = "dose_group",
 #'                      subtype_resolution = "base_6",
 #'                      response = "proportion",
 #'                      group_order = "arranged",
@@ -97,13 +92,19 @@
 #'
 #' # Example 2: plot the proportion of 6-based mutation subtypes
 #' # for each sample, ordered by hierarchical clustering:
-#' plot <- plot_spectra(mf_data = mf_data,
+#' # Data was summarized per dose_group using:
+#' # calculate_mf(mutation_data = eh[["EH9861"]],
+#' #              cols_to_group = "sample",
+#' #              subtype_resolution = "base_6")
+#' # Load the example data
+#' mf_example2 <- readRDS(system.file("extdata", "Example_files", "mf_data_6_sample.rds",
+#'                                   package = "MutSeqR"))
+#' plot <- plot_spectra(mf_data = mf_example2,
 #'                      group_col = "sample",
 #'                      subtype_resolution = "base_6",
 #'                      response = "proportion",
 #'                      group_order = "clustered")
-#' }
-
+#' @return A ggplot object representing the mutation spectra plot.
 plot_spectra <- function(mf_data,
                          group_col = "sample",
                          subtype_resolution = "base_6",

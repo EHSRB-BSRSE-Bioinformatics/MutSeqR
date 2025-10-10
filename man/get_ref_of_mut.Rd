@@ -9,6 +9,13 @@ get_ref_of_mut(mut_string)
 \arguments{
 \item{mut_string}{the mutation. Ex. T>C, \verb{A[G>T]C}}
 }
+\value{
+the reference context of the mutation
+}
 \description{
 A utility function that will return the reference context of a mutation
+}
+\examples{
+get_ref_of_mut("A>G")
+get_ref_of_mut("A[G>T]C")
 }

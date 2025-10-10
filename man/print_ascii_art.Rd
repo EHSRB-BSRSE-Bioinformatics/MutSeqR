@@ -6,6 +6,9 @@
 \usage{
 print_ascii_art()
 }
+\value{
+None
+}
 \description{
 This function prints ASCII art when the package is loaded
 }

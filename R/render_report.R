@@ -9,11 +9,20 @@
 #' outputdir in config params.
 #' @param output_format The format of the output file. Options are
 #' "html_document" (default), "pdf_document", or "all".
-#' @return None
-#'
+#' @return A rendered R Markdown document.
 #' @importFrom utils install.packages
 #' @importFrom here here
 #' @export
+#' @examples
+#' # Step 1: Copy the example configuration file to your working directory
+#' ## config <- system.file("extdata", "inputs", "summary_config.yaml", package = "MutSeqR")
+#' ## file.copy(from = config, to = "your/working/directory/summary_config.yaml")
+#' # Step 2: Edit the configuration file with your inputs
+#' # Step 3: Render the report
+#' ## render_report(config_filepath = "your/working/directory/summary_config.yaml",
+#' ##  output_file = "MutSeqR_Summary_Report.html",
+#' ##  output_format = "html_document")
+#' 
 render_report <- function(
   config_filepath,
   output_file = "./MutSeqR_Summary_Report.html",
@@ -21,12 +30,12 @@ render_report <- function(
 ) {
   # Check if yaml package is available, install if not
   if (!requireNamespace("yaml", quietly = TRUE)) {
-    install.packages("yaml")
+    stop("This function requires the yaml library. Please install using install.packages('yaml')")
   }
 
   # Check if rmarkdown package is available, install if not
   if (!requireNamespace("rmarkdown", quietly = TRUE)) {
-    install.packages("rmarkdown")
+    stop("This function requres rmarkdown library. Please install using install.packages('rmarkdown')")
   }
 
   # Validate config_filepath

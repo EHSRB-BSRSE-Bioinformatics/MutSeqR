@@ -31,10 +31,8 @@ check_pkgs <- function(pkgs) {
     }
   }
   if (length(missing_packages) > 0) {
-    stop(paste0(
-      "Rendering halted: The following required packages are not installed:\n  ",
-      paste(missing_packages, collapse = ", ")
-    ), call. = FALSE)
+    stop("Rendering halted: The following required packages are not installed:\n  ",
+      paste(missing_packages, collapse = ", "), call. = FALSE)
   } else {
     return(invisible(TRUE))
   }
@@ -99,8 +97,7 @@ if (params$file_type == "table") {
                     regions = params$regions,
                     rg_sep = "\t",
                     is_0_based_rg = params$is_0_based_rg,
-                    species = params$species,
-                    genome = params$genome),
+                    BS_genome = params$BS_genome),
     warning = function(w) {
       warnings_list <<- c(warnings_list, w$message)
     }
@@ -119,8 +116,7 @@ if (params$file_type == "table") {
                     regions = params$regions,
                     rg_sep = "\t",
                     is_0_based_rg = params$is_0_based_rg,
-                    species = params$species,
-                    genome = params$genome),
+                    BS_genome = params$BS_genome),
     warning = function(w) {
       warnings_list <<- c(warnings_list, w$message)
     }
@@ -1609,7 +1605,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(total_mutations = sum(n)) %>%
 #   ungroup() %>%
 #   mutate(percent = 100*n/total_mutations) %>%
-#   filter(CpG_site == T) %>%
+#   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
 # 
 # cpg_base_6_pct <- as.data.frame(mutation_data_cpgs) %>%
@@ -1620,7 +1616,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(total_mutations = sum(n)) %>%
 #   ungroup() %>%
 #   mutate(percent = 100*n/total_mutations) %>%
-#   filter(CpG_site == T) %>%
+#   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
 # 
 # cpg_base_96_pct <- as.data.frame(mutation_data_cpgs) %>%
@@ -1631,7 +1627,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(total_mutations = sum(n)) %>%
 #   ungroup() %>%
 #   mutate(percent = 100*n/total_mutations) %>%
-#   filter(CpG_site == T) %>%
+#   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
 # 
 # cpg_tables <- list(CpGs_base_12_percentage = cpg_base_12_pct,

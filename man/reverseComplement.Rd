@@ -17,6 +17,9 @@ reverseComplement(
 
 \item{case}{c("lower", "upper", "as is") The case of the output sequence.}
 }
+\value{
+A character vector of the reverse complement sequences.
+}
 \description{
 Get the reverse complement of a DNA or RNA sequence.
 }
@@ -28,4 +31,8 @@ A copy of Version 2 of the GNU Public License is available in the
 share/licenses/gpl-2 file in the R installation directory or from
 http://www.R-project.org/Licenses/GPL-2.
 reverseComplement.R
+}
+\examples{
+reverseComplement("A")
+reverseComplement("CA")
 }

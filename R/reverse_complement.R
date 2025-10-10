@@ -12,6 +12,10 @@
 #' http://www.R-project.org/Licenses/GPL-2.
 #' reverseComplement.R
 #' @export
+#' @return A character vector of the reverse complement sequences.
+#' @examples
+#' reverseComplement("A")
+#' reverseComplement("CA")
 reverseComplement <- function(x, 
                               content=c("dna", "rna"), 
                               case=c("lower", "upper", "as is")) {
@@ -20,9 +24,13 @@ reverseComplement <- function(x,
   strreverse <- function(x) {
   if (!is.character(x))
     stop("x must be a character vector")
-  sapply(strsplit(x, ""), function(y) paste(rev(y), collapse = ""))
-} 
- #Check arguments
+  vapply(
+    strsplit(x, ""),
+    function(y) paste(rev(y), collapse = ""),
+    character(1)
+  )
+  } 
+ # Check arguments
 if (!is.character(x)) x <- as.character(x) #coerse x to a character vector
   content <- match.arg(content)
   case <- match.arg(case)

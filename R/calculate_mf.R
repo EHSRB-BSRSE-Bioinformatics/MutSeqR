@@ -195,7 +195,7 @@
 #' eh <- ExperimentHub()
 #' example_data <- eh[["EH9861"]]
 #' 
-#' # Example 1 Calculate mutation frequency by sample.
+#' # Calculate mutation frequency by sample.
 #' # Calculate depth from the mutation data (default)
 #' # Correct the Depth (default) with indel priority (set)
 #' mf_example <- calculate_mf(
@@ -203,91 +203,6 @@
 #'  cols_to_group = "sample",
 #'  correct_depth_by_indel_priority = TRUE
 #' )
-#'
-#'
-#' # Example 2: Calculate the trinucleotide mutation proportions for each dose
-#' # Calculate and correct depth to indel priority.
-#' mf_96_example <- calculate_mf(
-#'  mutation_data = example_data,
-#'  cols_to_group = "dose",
-#'  subtype_resolution = "base_96",
-#'  variant_types  = "snv",
-#'  correct_depth_by_indel_priority = TRUE
-#' )
-#'
-#'
-#' # Example 3: Calculate the mean mutation frequency for each 6 base subtype
-#' # per dose
-#' # calculate_mf does not calculate mean mutation frequency for
-#' # groups; this function only sums mutations across groups. Thus, if you are
-#' # interested in calculating the mean of a group, this must be done
-#' # separately.
-#' # First, calculate 6 base MF per sample. Retain the dose column.
-#' mf_6_example <- calculate_mf(
-#'  mutation_data = example_data,
-#'  cols_to_group = "sample",
-#'  subtype_resolution = "base_6",
-#'  retain_metadata_cols = "dose",
-#'  correct_depth_by_indel_priority = TRUE
-#' )
-#' # Note: our example_data does not contain any ambiguous
-#' # or uncategorized mutations, so the dose column is NA for all those
-#' # mutations in the summary table. This will not affect our mean calculation.
-#'
-#' # Calculate the mean MF for each 6 base subtype per dose
-#' mf_6_mean_example <- mf_6_example %>%
-#'  dplyr::group_by(dose, normalized_subtype) %>%
-#'  dplyr::summarise(mean_mf_min = mean(mf_min),
-#'                   se_mf_min = sd(mf_min) / sqrt(dplyr::n()),
-#'                   mean_mf_max = mean(mf_max),
-#'                   se_mf_max = sd(mf_max) / sqrt(dplyr::n()))
-#'
-#'
-#' # Example 4: Calculate MF using precalculated depth data
-#' sample_depth_example <- data.frame(
-#'  sample = c(
-#'  "dna00973.1", "dna00974.1", "dna00975.1", "dna00976.1", "dna00977.1",
-#'  "dna00978.1", "dna00979.1", "dna00980.1", "dna00981.1", "dna00982.1",
-#'  "dna00983.1", "dna00984.1", "dna00985.1", "dna00986.1", "dna00987.1",
-#'  "dna00988.1", "dna00989.1", "dna00990.1", "dna00991.1", "dna00992.1",
-#'  "dna00993.1", "dna00994.1", "dna00995.1", "dna00996.1"
-#'  ),
-#'  group_depth = c(
-#'    565395266, 755574283, 639909215, 675090988, 598104021,
-#'    611295330, 648531765, 713240735, 669734626, 684951248,
-#'    716913381, 692323218, 297661400, 172863681, 672259724,
-#'    740901132, 558051386, 733727643, 703349287, 884821671,
-#'    743311822, 799605045, 677693752, 701163532
-#'  )
-#' )
-#' mf_example_precalc <- calculate_mf(
-#'  mutation_data = example_data,
-#'  cols_to_group = "sample",
-#'  calculate_depth = FALSE,
-#'  precalc_depth_data = sample_depth_example
-#' )
-#'
-#'
-#' # Example 5: Calculate MF using precalculated depth data for 6 base
-#' # mutation subtypes per sample.
-#' # The base_6 resolution uses reference context 'normalized_ref'; C or T.
-#' # Our precalc_depth_data needs group_depth (depth per sample) and the
-#' # subtype_depth (depth per sample AND per normalized_ref)
-#' base_6_precalc_depth <- eh[["EH9862"]]
-#'
-#' mf_6_example_precalc <- calculate_mf(
-#'  mutation_data = example_data,
-#'  cols_to_group = "sample",
-#'  subtype_resolution = "base_6",
-#'  calculate_depth = FALSE,
-#'  precalc_depth_data = base_6_precalc_depth
-#' )
-#' #' sample_subtype_depth_example <- eh[["EH9862"]]
-#' # Examples of the precalculated depth files for base_12, base_96, and
-#' # base_192 can be retrieved with:
-#'  base_12_precalc_depth <- eh[["EH9863"]]
-#'  base_96_precalc_depth <- eh[["EH9864"]]
-#'  base_192_precalc_depth <- eh[["EH9865"]]
 #' }
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
 #' select distinct ungroup
@@ -349,17 +264,14 @@ calculate_mf <- function(mutation_data,
     warning("You should use a data frame as input here.")
   }
   if (!subtype_resolution %in% names(MutSeqR::subtype_dict)) {
-    stop(paste0(
-      "Error: you need to set subtype_resolution to one of:
+    stop("You need to set subtype_resolution to one of:
       none, type, base_6, base_12, base_96, base_192")
-    )
   }
   if (any(!variant_types %in% MutSeqR::subtype_list$type)) {
-    stop(paste0(
-      "Error: you need to set variant_types to one or more of: ",
+    stop("You need to set variant_types to one or more of: ",
       paste(MutSeqR::subtype_list$type, collapse = ", "),
       ". Variation_types outside of this list will not be included in the mutation frequency calculation."
-    ))
+    )
   }
   if (!is.logical(summary)) {
     stop("summary must be a logical variable.")
@@ -370,7 +282,7 @@ calculate_mf <- function(mutation_data,
 
   if (calculate_depth && correct_depth) {
     if (!"total_depth" %in% colnames(mutation_data)) {
-      stop("Error: `correct_depth` is TRUE but 'total_depth' column not found in mutation_data.")
+      stop("`correct_depth` is TRUE but 'total_depth' column not found in mutation_data.")
     }
 
     message("Performing internal depth correction to prevent double-counting...")
@@ -472,7 +384,7 @@ calculate_mf <- function(mutation_data,
           stop("The precalc_depth_data does not exist.")
         }
         if (file.info(depth_file)$size == 0) {
-          stop("Error: You are trying to import an empty precalc_depth_data")
+          stop("You are trying to import an empty precalc_depth_data")
         }
         depth_df <- read.delim(file.path(depth_file),
                                sep = d_sep,

@@ -9,7 +9,8 @@ spectra_comparison(
   exp_variable,
   mf_type = "min",
   contrasts,
-  cont_sep = "\\t"
+  cont_sep = "\\t",
+  seed = 1234
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ examples.}
 
 \item{cont_sep}{The delimiter used to import the contrasts table.
 Default is tab.}
+
+\item{seed}{An integer to set the seed for reproducibility when
+using Monte Carlo simulations to compute the p-value. Default is 1234.}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with
@@ -82,27 +86,25 @@ the contrast table would look like:
 50:bone_marrow	50:liver
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 # Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut as in Example 4.
-# Sequenced on TS Mouse Mutagenesis Panel. Example data is
-# retrieved from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
+# using import_mut_data() and filtered with filter_mut. Filtered
+# mutation data is available in the MutSeqRData ExperimentHub package:
+# eh <- ExperimentHub::ExperimentHub()
+# Data was summarized per sample using:
+# calculate_mf(mutation_data = eh[["EH9861"]],
+#              cols_to_group = "dose_group",
+#              subtype_resolution = "base_6")
 
 # Example: compare 6-base mutation spectra between dose groups
-# Calculate the mutation frequency data at the 6-base resolution
-mf_data <- calculate_mf(mutation_data = example_data,
-                        cols_to_group = "dose_group",
-                         subtype_resolution = "base_6")
+# Load the example data
+mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
+                                  package = "MutSeqR"))
 # Create the contrasts table
 contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
                         col2 = rep("Control", 3))
 # Run the comparison
-spectra_comparison(mf_data = mf_data,
+spectra_comparison(mf_data = mf_example,
                    exp_variable = "dose_group",
                    mf_type = "min",
                    contrasts = contrasts)
-}
 }

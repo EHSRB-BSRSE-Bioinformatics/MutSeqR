@@ -44,7 +44,34 @@
 #' element_blank element_line
 #' @importFrom grDevices colorRampPalette
 #' @importFrom stats setNames
-
+#' @examples
+#' # Example data consists of 24 mouse bone marrow DNA samples imported
+#' # using import_mut_data() and filtered with filter_mut.
+#' # Data was summarized per sample using calculate_mf() (see relevant
+#' # examples). We will run the model with model_mf then plot the results.
+#' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+#'                                package = "MutSeqR"))
+#' # We will compare all treated groups to the control group
+#' contrasts <- data.frame(col1 = c("12.5", "25", "50"),
+#'                         col2 = c("0", "0", "0"))
+#' # Fit the model
+#' model <- model_mf(mf_data = mf_example,
+#'                    fixed_effects = "dose",
+#'                    reference_level = "0",
+#'                    muts = "sum_min",
+#'                    total_count = "group_depth",
+#'                    contrasts = contrasts)
+#'
+#' # Plot the results using plot_model_mf()
+#' plot <- plot_model_mf(model,
+#'                       plot_type = "bar",
+#'                       x_effect = "dose",
+#'                       plot_error_bars = TRUE,
+#'                       plot_signif = TRUE,
+#'                       x_order = c("0", "12.5", "25", "50"),
+#'                       x_label = "Dose (mg/kg-bw/d)",
+#'                       y_label = "Estimated Mean MF (mutations/bp)",
+#'                       plot_title = "")
 plot_model_mf <- function(model,
                           plot_type = "point",
                           x_effect = NULL,
@@ -81,7 +108,7 @@ plot_model_mf <- function(model,
       stop("Multiple fixed effects found. Please specify the fixed effect to plot on the x-axis using x_effect.")
     }
     if (!x_effect %in% names(plot_data)) {
-    stop(paste("The fixed effect", x_effect, "is not found in point_estimates dataframe."))
+    stop("The fixed effect", x_effect, "is not found in point_estimates dataframe.")
     }
     x_var <- x_effect
     other_effect <- setdiff(names(plot_data)[5:(4 + nfixef)], x_effect)
@@ -128,7 +155,9 @@ plot_model_mf <- function(model,
   } else {
     palette <- custom_palette
     if (length(palette) < n_colors) {
-      stop(paste0("The number of colors in the custom_palette is less than the number of levels in the fill aesthetic. ", n_colors, " needed but ", length(custom_palette), " provided."))
+      stop("The number of colors in the custom_palette is less than the number of levels in the fill aesthetic. ",
+        n_colors, " needed but ", length(custom_palette), " provided."
+      )
     }
   }
   # Estimate: bars or points
@@ -171,7 +200,7 @@ plot_model_mf <- function(model,
     # Define the reference effect
     if (is.null(ref_effect)) {
       split_names <- strsplit(row.names(signif_data), " vs ")
-      signif_data$ref_level <- sapply(split_names, function(x) x[2])
+      signif_data$ref_level <- vapply(split_names, function(x) x[2], character(1))
     } else {
       signif_data <- dplyr::rename(signif_data,
                                    ref_level = paste0(ref_effect, "_2"))

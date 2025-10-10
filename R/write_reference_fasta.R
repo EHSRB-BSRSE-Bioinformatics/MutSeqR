@@ -12,14 +12,11 @@
 #' written to a single FASTA file. Sequences names will be the seqnames
 #' (contig) of the range.
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' \dontrun{
 #' # Write FASTA files for the 20 genomic target sequences
 #' # of TwinStrand's Mouse Mutagenesis Panel.
+#' output_path <- tempdir()
 #' rg <- get_seq("TSpanel_mouse")
-#' write_reference_fasta(rg, output_path = NULL)
-#' }
-#' }
+#' write_reference_fasta(rg, output_path = output_path)
 #' @importFrom Biostrings writeXStringSet
 #' @export
 write_reference_fasta <- function(regions_gr,

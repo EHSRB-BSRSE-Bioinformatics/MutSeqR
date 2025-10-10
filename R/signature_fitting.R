@@ -43,7 +43,7 @@
 #' @details Mutation data will be filtered to only include SNVs. Variants
 #' flagged by the filter_mut column will be excluded.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'  if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #'    # Example data consists of 24 mouse bone marrow DNA samples imported
 #'    # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -95,12 +95,12 @@ signature_fitting <- function(mutation_data,
     reticulate::use_virtualenv(env_name)
   } else {
     # Ask the user for confirmation
-    user_input <- utils::menu("Do you want to create a virtual environment and 
-                              install the required Python packages? This may 
-                              take several minutes",
-                              title = "Confirmation", choices = c("Yes", "No"))
+    # user_input <- utils::menu("Do you want to create a virtual environment and 
+    #                           install the required Python packages? This may 
+    #                           take several minutes",
+    #                           title = "Confirmation", choices = c("Yes", "No"))
 
-    if (user_input == 1) {
+    # if (user_input == 1) {
       # Create venv and install packages
       reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
       # Install required packages
@@ -111,11 +111,10 @@ signature_fitting <- function(mutation_data,
                                                  "pandas==1.5.3",
                                                  "scipy==1.11.4",
                                                  "pypdf==4.3.1"))
-    } else {
-      # User chose not to install the packages
-      cat("Installation aborted by the user.\n")
-      stop("Function terminated.")
-    }
+    # } else {
+    #   # User chose not to install the packages
+    #   stop("Installation aborted by the user. Function terminated.")
+    # }
   }
 
   # reticulate::install_python(version = python_version)
@@ -190,7 +189,7 @@ signature_data <- signature_data %>%
     )
   }
 
-  message(paste0("Creating directory ", output_path))
+  message("Creating directory ", output_path)
   if (!dir.exists(file.path(output_path, "matrices"))) {
     dir.create(file.path(output_path, "matrices"), recursive = TRUE)
   }

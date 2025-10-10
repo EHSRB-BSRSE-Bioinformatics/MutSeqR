@@ -7,9 +7,15 @@
 setup_mutseqr_python(force = FALSE)
 }
 \arguments{
-\item{force}{Logical. Whether to force reconfiguration even if an environment already exists.}
+\item{force}{Logical. Whether to force reconfiguration even if an
+environment already exists.}
+}
+\value{
+None
 }
 \description{
-This function initializes the Python environment used by MutSeqR.
-It is not run automatically to avoid issues during installation and checks.
+This function initializes the Python environment used by
+MutSeqR.
+It is not run automatically to avoid issues during installation and
+checks.
 }

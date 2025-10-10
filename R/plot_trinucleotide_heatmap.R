@@ -83,11 +83,15 @@ plot_trinucleotide_heatmap <- function(mf_data,
   if(length(found_prop_col) == 1) {
     mf_data <- dplyr::rename(mf_data, proportion = dplyr::all_of(found_prop_col))
   } else if (length(found_prop_col) > 1) {
-    stop(paste("More than one possible proportion column name found in mf_data: ",
-               paste(found_prop_col, collapse = ", "),
-              " Please remove columns that are not the proportion column to be plotted."))
+    stop("More than one possible proportion column name found in mf_data: ",
+      paste(found_prop_col, collapse = ", "),
+      " Please remove columns that are not the proportion column to be plotted."
+    )
   } else if (length(found_prop_col) == 0) {
-  stop(paste0("The dataframe does not contain a proportion column. Please add a column that contains the mutation proportion to be plotted or rename column to 'proportion'."))
+  stop("The dataframe does not contain a proportion column.",
+    "Please add a column that contains the mutation proportion",
+    "to be plotted or rename column to 'proportion'."
+  )
   }
 
   # Check for mutation count column
@@ -105,13 +109,16 @@ plot_trinucleotide_heatmap <- function(mf_data,
     # Rename the subtype column to "subtype"
     mf_data <- dplyr::rename(mf_data, subtype = dplyr::all_of(found_subtype_cols))
   } else if (length(found_subtype_cols) > 1) {
-    stop(paste("More than one possible subtype column name found in mf_data: ",
-               paste(found_subtype_cols, collapse = ", "),
-              " Please remove columns that are not the subtype column to be plotted."))
+    stop("More than one possible subtype column name found in mf_data: ",
+      paste(found_subtype_cols, collapse = ", "),
+      " Please remove columns that are not the subtype column to be plotted."
+    )
   } else if (length(found_subtype_cols) == 0) {
-    stop(paste("No subtype column name found in mf_data from the following options: ", 
-               paste(subtype_column_names, collapse = ", "),
-                " Please add a column that contains the mutation subtype to be plotted or rename column to one of the listed options.")) 
+    stop("No subtype column name found in mf_data from the following options: ",
+      paste(subtype_column_names, collapse = ", "),
+      " Please add a column that contains the mutation subtype to be plotted",
+      "or rename column to one of the listed options."
+    )
   }
 
   # Context Column synonyms
@@ -140,14 +147,15 @@ plot_trinucleotide_heatmap <- function(mf_data,
                                           x_variable))
       plot_context <- TRUE
     } else {
-      print("No context column found in mf_data, plotting by subtype.")
+      message("No context column found in mf_data, plotting by subtype.")
       mf_data$x_variable <- mf_data$subtype
       plot_context <- FALSE
     }
   } else if (length(found_context_cols) > 1) {
-    stop(paste("More than one possible context column name found in mf_data: ",
-               paste(found_context_cols, collapse = ", "),
-               " Please remove columns that are not the context column to be plotted.")) 
+    stop("More than one possible context column name found in mf_data: ",
+      paste(found_context_cols, collapse = ", "),
+      " Please remove columns that are not the context column to be plotted."
+    )
   }
 
   context_size <- max(stringr::str_length(mf_data$x_variable))
@@ -222,22 +230,22 @@ plot_trinucleotide_heatmap <- function(mf_data,
   # If user specifies a mutation proportion max, then if value is higher than max,
   # change it to max (i.e., cut off the values at max)
   if (max < 1 && !rescale_data) {
-    message(paste0("Cutting off at maximum mutation proportion value of ", max))
+    message("Cutting off at maximum mutation proportion value of ", max)
     df <- mf_data %>%
       dplyr::mutate(ProportionPlot = ifelse(proportion > max, max, proportion))
   } else if (max == 1 && rescale_data) {
   # If user specifies scaling to max value (the default), rescale the values to 0-1
-    message(paste0("Rescaling bewteen 0 and 1"))
+    message("Rescaling bewteen 0 and 1")
     df <- mf_data %>%
       dplyr::mutate(ProportionPlot = scales::rescale(proportion, to = c(0, 1)))
   } else if (rescale_data && max < 1) {
     # If user specifies both scaling and cutting off at max, then do both
-    message(paste0("Rescaling and cutting off at maximum mutation proportion value of ", max))
+    message("Rescaling and cutting off at maximum mutation proportion value of ", max)
     df <- mf_data %>%
       dplyr::mutate(ProportionPlot = scales::rescale(proportion, to = c(0, 1))) %>%
       dplyr::mutate(ProportionPlot = ifelse(proportion > max, max, proportion))
   } else {
-    message(paste0("No scaling or maximum mutation proportion value applied"))
+    message("No scaling or maximum mutation proportion value applied")
     df <- mf_data
     df$ProportionPlot <- mf_data$proportion
   }

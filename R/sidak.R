@@ -13,14 +13,18 @@
 #' Biometrics 48: 1005-1013.
 #' Pierre Legendre, May 2007
 #' @export
+#' @examples
+#' p_values <- c(0.01, 0.04, 0.03, 0.08, 0.05)
+#' adjusted_p <- sidak(p_values)
+#' adjusted_p$SidakP
 
 sidak <- function(vecP) {
   k <- length(vecP)
   vecPB <- 0
   vecPS <- 0
-  for(i in 1:k) {
-    bonf = vecP[i] * k
-      if(bonf > 1) bonf = 1
+  for(i in seq_len(k)) {
+    bonf <- vecP[i] * k
+      if(bonf > 1) bonf <- 1
       vecPB <- c(vecPB, bonf)
       vecPS <- c(vecPS, (1- (1 - vecP[i])^k))
     }

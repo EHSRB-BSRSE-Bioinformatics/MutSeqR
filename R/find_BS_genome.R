@@ -1,17 +1,21 @@
-#' Install the reference genome for the specified organism.
-#' @description This function will use BSgenome to install the reference genome
-#' for a specified organism and assembly version.
+#' Find the appropriate BS genome for the specified organism and genome.
+#' @description This function will browse available BSgenomes, indicating
+#' which one should be installed for the specified organism and genome assembly
+#' version. If you cannot specify both organism and genome, the function can return
+#' a list of available genomes for a specified species.
 #' @param organism the name of the organism for which to install the reference genome.
 #' This can be the scientific name or a common name. For example Homo Sapiens, H. sapiens, or human
 #' @param genome The reference genome assembly version. Ex. hg18, mm10, rn6.
 #' @param masked Logical value. Whether to search for the 'masked' BSgenome. Default is FALSE.
-#' @importFrom BiocManager install
 #' @export
+#' @importFrom BSgenome available.genomes installed.genomes
 #' @return a BSgenome object
-install_ref_genome <- function(organism, genome, masked = FALSE) {
-  if (!requireNamespace("BSgenome", quietly = TRUE)) {
-    stop("Package BSgenome is required. Please install from Bioconductor.")
-  }
+#' @examples
+#' # Find the reference genome for Mouse, mm10 assembly:
+#' mouse_mm10 <- find_BS_genome("mouse", "mm10")
+#' # Find all possible mouse BS genomesL
+#' mouse_all <- find_BS_genome("mouse")
+find_BS_genome <- function(organism, genome, masked = FALSE) {
   # Common name mapping
   name_map <- list(
     "Alyrata" = "arabidopsis lyrata",
@@ -48,46 +52,56 @@ install_ref_genome <- function(organism, genome, masked = FALSE) {
     "Tguttata" = c("taeniopygia guttata", "zebra finch"),
     "Vvinifera" = c("vitis vinifera", "grape")
   )
-  # Map the input name to the Organism name in available.genomes
-  organism <- gsub("\\.\\s", "", organism)  # Clean up the input: collapse scientifc names
+  # Map the input name to the organism name in available.genomes
+  organism <- gsub("\\.\\s", "", organism)
   convertToOrganismName <- function(name) {
     for (org_name in names(name_map)) {
-      # Convert both user input and name_map keys to lowercase for case-insensitive comparison
-      if (tolower(name) %in% c(tolower(org_name),
-        tolower(name_map[[org_name]]))) {
+      if (tolower(name) %in% c(tolower(org_name), tolower(name_map[[org_name]]))) {
         return(org_name)
       }
     }
-    stop("Unrecognized organism name: ", name, "Please consult BSgenome::available.genomes for a full list of the available genomes and their associated organism names.")
+    stop("Unrecognized organism name: ", name,
+         ". Please consult BSgenome::available.genomes for valid names.")
   }
   organism_name <- convertToOrganismName(organism)
-
-  # Choose the genome associated with the organism and genome assembly version
+  # Search available genomes
   available_genomes <- BSgenome::available.genomes(splitNameParts = TRUE)
-  selected_genome <- available_genomes[available_genomes$organism == organism_name & available_genomes$genome == genome, ]  
+  
+  possible_genomes <- available_genomes[
+    available_genomes$organism == organism_name & 
+      available_genomes$masked == masked, ]
+  if (nrow(possible_genomes) == 0) {
+      stop("No genomes found for specified organism.")
+  } 
+  # If genome argument is missing, return possibilities
+  if (missing(genome) || is.null(genome) || nchar(genome)==0) {
+    message(
+      "Possible BS genomes for organism = '", organism,
+      "', masked = ", masked, ": ", possible_genomes$pkgname,
+      ". Please install one of the possible BS genomes using",
+      " BiocManager::install('pkgname') and provide the pkgname to",
+      " import_mut/vcf_data()."
+    )
+    return(possible_genomes[, c("pkgname", "organism", "genome", "masked")])
+  }
+  # If genome specified, filter further for genome assembly
+  selected_genome <- possible_genomes[
+    possible_genomes$genome == genome, ]
   if (nrow(selected_genome) == 0) {
-    stop("No reference genome found for the specified organism and assembly version. Please consult BSgenome::available.genomes for a full list of the available genomes and their associated organism names.")
-  } else if (nrow(selected_genome) > 1) {
-    if(masked) {
-      selected_genome <- selected_genome[selected_genome$masked == TRUE, ]
-    } else {
-      selected_genome <- selected_genome[selected_genome$masked == FALSE, ]
-    }
-  } else {
-    selected_genome <- selected_genome
+    stop("No BS genome found for the specified organism, assembly version and masked setting.\n",
+      "Available assemblies for this organism (masked = ", masked, ") are:\n",
+      paste(unique(possible_genomes$genome), collapse=", "))
   }
 
   ref_genome <- selected_genome$pkgname
+  message("Selected reference genome: ", ref_genome)
   # Install the reference genome
   installed_BS_genomes <- BSgenome::installed.genomes()
   if (ref_genome %in% installed_BS_genomes) {
-    message("Reference genome already installed.")
+    message("Reference genome is already installed.")
   } else {
-    message("Installing reference genome: ", ref_genome, "from Bioconductor.")
-    BiocManager::install(ref_genome)
+    message("Reference genome is not installed. Please install using BiocManager::install(", ref_genome, ")")
   }
-  message("Loading reference genome: ", ref_genome, ".")
-  reference_genome <- suppressMessages(BSgenome::getBSgenome(ref_genome))
-
-  return(reference_genome)
+  message("Once installed, supply: ", ref_genome, " as the BS_genome parameter in import_mut/vcf_data()")
+  return(ref_genome)
 }

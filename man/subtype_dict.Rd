@@ -14,4 +14,8 @@ subtype_dict
 These values are used to enable user input to translate to columns in a
 mut file
 }
+\examples{
+subtype_dict["base_96"]
+subtype_dict["type"]
+}
 \keyword{datasets}

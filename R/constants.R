@@ -3,6 +3,11 @@
 #' A list of column specifications
 #'
 #' @format A list with potential variable column names
+#' @examples
+#' # examples of "alt" synonyms
+#' op$column$alternate
+#' op$column$alt_value
+#' op$column$tumor_seq_allele2
 #' @export
 op <- list()
 op$column <- list()
@@ -65,6 +70,9 @@ op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 #' mut file
 #'
 #' @format A vector with corresponding values
+#' @examples
+#' subtype_dict["base_96"]
+#' subtype_dict["type"]
 #' @export
 subtype_dict <- c(
   "none" = NA,
@@ -77,6 +85,9 @@ subtype_dict <- c(
 
 #' A list of mutation subtypes at different resolutions
 #' @format A list with corresponding values
+#' @examples 
+#' subtype_list[["type"]]
+#' subtype_list[["base_6"]]
 #' @export
 subtype_list <- list(
   type = c("ambiguous", "complex", "deletion", "insertion",
@@ -143,6 +154,9 @@ subtype_list <- list(
 #' column which would contain only T or C (i.e., the pyrimidine context for
 #' base substitutions).
 #' @format A vector with corresponding values
+#' @examples
+#' denominator_dict["base_96"]
+#' denominator_dict["type"]
 #' @export
 denominator_dict <- c(
   "none" = NA,
@@ -154,6 +168,9 @@ denominator_dict <- c(
 )
 #' A list of reference contexts at different resolutions
 #' @format A list with corresponding values
+#' @examples
+#' context_list[["base_6"]]
+#' context_list[["base_12"]]
 #' @export
 context_list <- list(
   none = NA,

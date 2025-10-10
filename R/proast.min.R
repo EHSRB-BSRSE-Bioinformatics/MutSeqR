@@ -36,6 +36,7 @@
 #' @param resize Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.
 #' @param scale.ans Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.
 #' @param const.var Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.
+#' @param seed Integer. Random seed for reproducibility. Defaults to 125.
 #' @importFrom utils menu
 #' @importFrom stats setNames
 #' @return Results from PROAST.
@@ -65,13 +66,14 @@ f.proast <- function(odt = list(),
                      display_plots = TRUE,
                      add_nonzero_val_to_dat = FALSE,
                      nonzero_val = NULL,
-                     detection_limit = NULL) {
-    message(paste0("Independent variable: ", indep_var_choice))
+                     detection_limit = NULL,
+                     seed = 125) {
+    message("Independent variable: ", indep_var_choice)
     if (interactive_mode == TRUE) {
         message("Running in interactive mode...")
     } else {
         message("Running in batch/command line mode...")
-        message(paste0("Independent variable: ", indep_var_choice))
+        message("Independent variable: ", indep_var_choice)
         .proast_env <- new.env()
     }
     if (is.list(odt)) 
@@ -83,12 +85,12 @@ f.proast <- function(odt = list(),
         }
     odt.name <- deparse(substitute(odt))
     f.overlap()
-    quit <- F
+    quit <- FALSE
     if (mode(ans.all) == "list") {
         ans.all$const.var <- const.var
         ans.all$quick.ans <- 1
         if (ans.all$cont) 
-            quit <- f.con(ans.all, list.logic = T, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat,nonzero_val = nonzero_val,detection_limit = detection_limit)
+            quit <- f.con(ans.all, list.logic = TRUE, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat,nonzero_val = nonzero_val,detection_limit = detection_limit)
         if (quit) {
             if (interactive_mode == FALSE) {
                 result <- as.list(.proast_env)
@@ -105,9 +107,9 @@ f.proast <- function(odt = list(),
             }
         }
     }
-    message(paste0("Independent variable: ", indep_var_choice))
+    message("Independent variable: ", indep_var_choice)
     if (!er) {
-        ans.all <- f.ini(odt)
+        ans.all <- f.ini(odt, seed = seed)
         ans.all$odt.name <- odt.name
         ans.all$scale.ans <- scale.ans
         ans.all$const.var <- const.var
@@ -127,7 +129,7 @@ f.proast <- function(odt = list(),
                            "clustered continuous, summary data", "quantal, CxT", 
                            "other"))
             dtype <- dtype_options[datatype]
-            message(paste0("Setting data type to ", names(dtype_options[datatype])))
+            message("Setting data type to ", names(dtype_options[datatype]))
         }
         if (dtype == 10) 
             dtype <- eval(parse(prompt = "Give value for dtype > "))
@@ -142,7 +144,7 @@ f.proast <- function(odt = list(),
             ans.all$plt.mns <- 1
         if (dtype %in% c(10, 15, 250, 260)) {
             ans.all$plt.mns <- 3
-            ans.all$CI.plt <- T
+            ans.all$CI.plt <- TRUE
         }
         f.assign(".Pr.last", ans.all)
 
@@ -168,14 +170,14 @@ f.proast <- function(odt = list(),
             } else {
                 if (!is.null(model_choice)) {
                     ans.all$quick.ans <- which(model_options == model_choice)
-                    message(paste0("Selected model option: '", model_choice, "' (", ans.all$quick.ans, ")"))
+                    message("Selected model option: '", model_choice, "' (", ans.all$quick.ans, ")")
                 } else {
                     stop("Parameter 'model_choice' must be provided in non-interactive mode.")
                 }
             }
             if (ans.all$quick.ans == 2) {
-                ans.all$change <- rep(F, ans.all$nrQ)
-                message(paste0("Independent variable: ", indep_var_choice))
+                ans.all$change <- rep(FALSE, ans.all$nrQ)
+                message("Independent variable: ", indep_var_choice)
                 message(ans.all)
                 ans.all <- f.change.settings(ans.all,
                                              choose = TRUE,
@@ -189,7 +191,7 @@ f.proast <- function(odt = list(),
                 } else {
                     if (!is.null(nested_model_choice)) {
                         ans.all$quick.ans <- which(nested_model_options == nested_model_choice)
-                        message(paste0("Selected nested model option: '", nested_model_choice, "' (", ans.all$quick.ans, ")"))
+                        message("Selected nested model option: '", nested_model_choice, "' (", ans.all$quick.ans, ")")
                     } else {
                         stop("Parameter 'nested_model_choice' must be provided in non-interactive mode.")
                     }
@@ -204,8 +206,8 @@ f.proast <- function(odt = list(),
                 ans.all$quick.ans <- menu(c("single model", "change settings first", "set of models"),
                                           title = "\nDo you want to fit a set of models, or choose a single model?")
                 if (ans.all$quick.ans == 2) {
-                    ans.all$change <- rep(F, ans.all$nrQ)
-                    message(paste0("Independent variable: ", indep_var_choice))
+                    ans.all$change <- rep(FALSE, ans.all$nrQ)
+                    message("Independent variable: ", indep_var_choice)
                     message(ans.all)
                     ans.all <- f.change.settings(ans.all,
                                                  choose = TRUE,
@@ -223,7 +225,7 @@ f.proast <- function(odt = list(),
             } else {
                 if (!is.null(setting_choice)) {
                     ans.all$quick.ans <- which(setting_options == setting_choice)
-                    message(paste0("Selected model option: '", setting_choice, "' (", ans.all$quick.ans, ")"))
+                    message("Selected model option: '", setting_choice, "' (", ans.all$quick.ans, ")")
                 } else {
                     stop("Parameter 'setting_choice' must be provided in non-interactive mode.")
                 }
@@ -246,7 +248,7 @@ f.proast <- function(odt = list(),
                 return(invisible())
             }
         }
-        ans.all$change[1] <- T
+        ans.all$change[1] <- TRUE
         ans.all <- f.change.settings(ans.all,
                                      indep_var_choice = indep_var_choice,
                                      interactive_mode = interactive_mode,
@@ -259,7 +261,7 @@ f.proast <- function(odt = list(),
         if (is.list(x)) 
             for (jj in 1:length(x)) f.check.nonneg.num(x[, jj])
         else f.check.nonneg.num(x)
-        ans.all$change[2] <- T
+        ans.all$change[2] <- TRUE
         ans.all <- f.change.settings(ans.all,
                                      indep_var_choice = indep_var_choice,
                                      interactive_mode = interactive_mode,
@@ -274,7 +276,7 @@ f.proast <- function(odt = list(),
     if (er) {
 #         ans.all <- .Pr.last
         if (ans.all$xans[1] == 0 || ans.all$yans[1] == 0) {
-            cat("\nOption er=T cannot be used, start analysis all over\n\n")
+            cat("\nOption er = TRUE cannot be used, start analysis all over\n\n")
             return(invisible())
         }
         ans.all$quick.ans <- 1
@@ -355,10 +357,10 @@ f.overlap <- function() {
 }
 
 
-f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
+f.ini <- function(odt = NULL, gui = FALSE, seed = 125) {
     ans.all <- list()
-    if (!no.seed) 
-        ans.all$seed.bt <- 125
+    if (seed != 0) 
+        ans.all$seed.bt <- seed
     else ans.all$seed.bt <- 0
     ans.all$PRversion <- f.version()
     nrQ <- 27
@@ -377,20 +379,20 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     }
     ans.all$data.0 <- ans.all$odt
     ans.all$nrQ <- nrQ
-    ans.all$change <- rep(F, nrQ + 1)
+    ans.all$change <- rep(FALSE, nrQ + 1)
     ans.all$xans <- 0
     ans.all$yans <- 0
     ans.all$sf.x <- 1
     ans.all$sf.y <- 1
     ans.all$nans <- 0
-    ans.all$CED.model <- F
+    ans.all$CED.model <- FALSE
     ans.all$sans <- 0
     ans.all$sd.se <- 0
     ans.all$detlim <- 0
     ans.all$Vdetlim <- 0
     ans.all$ans.detlim <- 1
     ans.all$detlim.col <- 0
-    ans.all$auto.detlim <- F
+    ans.all$auto.detlim <- FALSE
     ans.all$transf.ans <- 3
     ans.all$cens.up <- NA
     ans.all$nest.no <- 0
@@ -419,7 +421,7 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$alfa.start <- 10
     ans.all$alfa.Pvalue <- NA
     ans.all$nr.gr <- 1
-    ans.all$CI.plt <- F
+    ans.all$CI.plt <- FALSE
     ans.all$shift.tmp <- 0
     ans.all$cc.inf <- 1e+18
     ans.all$logit.ma <- FALSE
@@ -484,31 +486,31 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$identify <- FALSE
     ans.all$label <- 0
     ans.all$ans.plt <- 0
-    ans.all$down <- F
+    ans.all$down <- FALSE
     ans.all$CI.dum <- 1
-    ans.all$LVM <- T
-    ans.all$logprob <- F
-    ans.all$do.MA <- F
-    ans.all$MA.running <- F
-    ans.all$combi.ans <- F
-    ans.all$svg.plots <- F
+    ans.all$LVM <- TRUE
+    ans.all$logprob <- FALSE
+    ans.all$do.MA <- FALSE
+    ans.all$MA.running <- FALSE
+    ans.all$combi.ans <- FALSE
+    ans.all$svg.plots <- FALSE
     ans.all$ans.scale <- 0
     ans.all$bounds.ans <- 2
     ans.all$modelname <- ""
     assign(".ypos", 0, envir = .proast_env)
     ans.all$store.name <- 0
-    ans.all$list.logic <- F
+    ans.all$list.logic <- FALSE
     ans.all$CES.cat <- 1
     ans.all$def.exc <- NA
-    ans.all$ced.lines <- F
+    ans.all$ced.lines <- FALSE
     ans.all$categ.ans <- 0
     ans.all$cat.ans <- 0
     ans.all$reverse.ans <- 0
-    ans.all$trace <- T
+    ans.all$trace <- TRUE
     ans.all$group <- 0
     ans.all$nruns <- 0
     ans.all$constr.steepness <- 0.01
-    ans.all$no.CI <- F
+    ans.all$no.CI <- FALSE
     ans.all$interrupt <- TRUE
     if (gui) 
         ans.all$interrupt <- FALSE
@@ -559,18 +561,18 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$fct4.name <- ""
     ans.all$fct5.name <- ""
     ans.all$covar.name <- ""
-    ans.all$twice <- F
+    ans.all$twice <- FALSE
     ans.all$par.start <- NA
     ans.all$eps <- 1e-12
     ans.all$fit.ans <- 1
-    ans.all$fitted <- F
-    ans.all$new.model <- F
+    ans.all$fitted <- FALSE
+    ans.all$new.model <- FALSE
     ans.all$scale.dum <- 0
     ans.all$text.par <- character()
     ans.all$text.par.0 <- NA
     ans.all$nrp <- 0
     ans.all$npar <- NA
-    ans.all$adjust.start <- F
+    ans.all$adjust.start <- FALSE
     ans.all$cond.ans <- 3
     ans.all$lst.control <- f.control(3)
     ans.all$loglik <- NA
@@ -581,7 +583,7 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$sp <- " "
     ans.all$sep <- FALSE
     ans.all$par.boot <- 0
-    ans.all$boot <- F
+    ans.all$boot <- FALSE
     ans.all$xy.lim <- NA
     ans.all$y.lim.CI <- NA
     ans.all$pi.full <- NA
@@ -602,7 +604,7 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
     ans.all$th.par.vec <- NA
     ans.all$nth <- 1
     ans.all$sig.par <- NA
-    ans.all$decr.zz <- T
+    ans.all$decr.zz <- TRUE
     ans.all$response.matr <- 0
     ans.all$plotcurve <- FALSE
     conf.int <- matrix(NA, ncol = 2)
@@ -638,7 +640,7 @@ f.ini <- function(odt = NULL, gui = FALSE, no.seed = FALSE) {
 
 #' @importFrom utils menu
 #' @importFrom grDevices dev.list dev.cur dev.off
-f.graphwin.size <- function(resize = F) {
+f.graphwin.size <- function(resize = FALSE) {
     if (!exists(".gw.size")) {
         size.x <- 5
         size.y <- 5
@@ -646,7 +648,7 @@ f.graphwin.size <- function(resize = F) {
     }
     if (resize) {
 #         f.create.graphwin(.gw.size[1], .gw.size[2])
-        oke <- F
+        oke <- FALSE
         while (!oke) {
 #             gw.x <- .gw.size[[1]][1]
 #             gw.y <- .gw.size[[2]][1]
@@ -688,10 +690,10 @@ f.change.settings <- function(ans.all,
             if (quick.ans == 1 && change[2]) {
                 if (dtype %in% c(10, 15, 250, 260)) 
                   if (sans[1] == 0) 
-                    change[3] <- T
+                    change[3] <- TRUE
                 if (dtype %in% c(4, 6, 84)) 
                   if (nans[1] == 0) 
-                    change[8] <- T
+                    change[8] <- TRUE
             }
         }
         while (choose || sum(change[1:(nrQ - 1)]) != 0) {
@@ -703,28 +705,28 @@ f.change.settings <- function(ans.all,
                   settings[c(14, 16, 17)] <- ""
                 set.ans <- menu(settings, title = "\nWhich setting(s) do you want to change?")
                 if (!(set.ans %in% c(9, 18, 23, nrQ))) 
-                  ans.all$fitted <- F
-                change[set.ans] <- T
+                  ans.all$fitted <- FALSE
+                change[set.ans] <- TRUE
             }
             if (change[1]) {
               message("Independent variable:")
               message(indep_var_choice)
               message("moving on...")
               if (!is.null(indep_var_choice)) {
-                message(paste0("Using ", indep_var_choice, " as the independent variable."))
+                message("Using ", indep_var_choice, " as the independent variable.")
                 if (indep_var_choice %in% ans.all$varnames) {
                     ans.all$xans <- which(ans.all$varnames == indep_var_choice)
                 } else {
-                    stop(paste("The specified independent variable choice '", indep_var_choice, "' is not one of the column names."))
+                    stop("The specified independent variable choice '", indep_var_choice, "' is not one of the column names.")
                 }
-                change[1] <- F  # Set change[1] to FALSE after successful setting of independent variable.
+                change[1] <- FALSE  # Set change[1] to FALSE after successful setting of independent variable.
               } else {
                   cat("\nQ1: Which variable do you want to consider as the independent variable?\n    (e.g. dose, age)\n")
                   cat(" ")
                   cat(paste(1:nvar, ":", varnames, "\n"))
                   xans <- eval(parse(prompt = paste(" -------- > ")))
                   ans.all$xans <- xans
-                  change[1] <- F
+                  change[1] <- FALSE
                   DA.ans <- 2
                   if (length(xans) > 1) {
                     ans.all$displ.no <- menu(varnames[1:nvar], 
@@ -744,11 +746,11 @@ f.change.settings <- function(ans.all,
             if (change[2]) {
                 yans <- menu(varnames[1:nvar], title = "\nQ2: Which response variable do you want to analyse ? \n")
                 ans.all$yans <- yans
-                change[2] <- F
+                change[2] <- FALSE
                 if (dtype %in% c(4, 6, 84)) 
-                  change[8] <- T
+                  change[8] <- TRUE
                 if (dtype %in% c(10, 15, 250, 260)) 
-                  change[3] <- T
+                  change[3] <- TRUE
                 if (dtype == 5) {
                   ans.all$nest.no <- menu(varnames[1:nvar], title = "\nGive column number of the nested factor \n                         (type 0 to skip nested analysis)")
                 }
@@ -772,7 +774,7 @@ f.change.settings <- function(ans.all,
                   ans.all$sd.se <- sd.se
                   ans.all$nans <- nans
                 }
-                change[3] <- F
+                change[3] <- FALSE
             }
             if (change[4]) {
                 go.on <- 1
@@ -807,7 +809,7 @@ f.change.settings <- function(ans.all,
                     ans.all$remove.lev <- sort(tmp.lev)
                     ans.all$remove.no <- remove.no
                     ans.all$data.0 <- data.0
-                    data.0 <- f.subset(ans.all, remove = T)
+                    data.0 <- f.subset(ans.all, remove = TRUE)
                     ans.all$data.0 <- data.0
                     remove.tmp <- paste(paste(varnames[remove.no], 
                       ":", paste(tmp.lev, collapse = " ")), sep = "\n")
@@ -833,11 +835,11 @@ f.change.settings <- function(ans.all,
                   ans.all$remove.name <- remove.name
                 }
                 ans.all$covar.no <- 0
-                change[4] <- F
+                change[4] <- FALSE
             }
             if (change[5]) {
                 yans.denom <- menu(varnames[1:nvar], title = "\nWhich variable do you want as denominator ? (0 = NONE)\n")
-                change[5] <- F
+                change[5] <- FALSE
                 ans.all$yans.denom <- yans.denom
             }
             if (change[6]) {
@@ -862,7 +864,7 @@ f.change.settings <- function(ans.all,
                   ans.all$nvar <- nvar + 1
                   ans.all$varnames[ans.all$nvar] <- "detlim"
                 }
-                change[6] <- F
+                change[6] <- FALSE
             }
             if (change[7]) {
                 y <- data.0[, yans]
@@ -870,18 +872,18 @@ f.change.settings <- function(ans.all,
                 cat("\nthe lowest nonzero observation is: ", 
                   min(y[y > 0]), "\n")
                 y.add <- eval(parse(prompt = "\n\nQ7: Give small value to be added to the data > "))
-                change[7] <- F
+                change[7] <- FALSE
                 ans.all$y.add <- y.add
             }
             if (change[8]) {
                 ans.all$nans <- menu(varnames[1:nvar], title = "\nQ3b: Give the associated sample sizes")
                 if (dtype == 84) 
                   ans.all$tans <- menu(varnames[1:nvar], title = "\nQ3c: Give number of time variable")
-                change[8] <- F
+                change[8] <- FALSE
             }
             if (change[9]) {
                 ans.all$displ.no <- menu(varnames[1:nvar], title = "\nQ9: Which variable do you want to consider for distinct plotting?\n    (type 0 if none)")
-                change[9] <- F
+                change[9] <- FALSE
             }
             if (change[10]) {
                 xy.ans <- menu(c("dose", "response"), title = "\nQ10: Do you want to scale dose or response? \n")
@@ -889,7 +891,7 @@ f.change.settings <- function(ans.all,
                   if (ans.all$xans != 0) {
                     x <- data.0[, xans]
                     cat("\n(Nonzero) doses range from ", min(x[x != 
-                      0], na.rm = T), "to ", max(x))
+                      0], na.rm = TRUE), "to ", max(x))
                   }
                   ans.all$sf.x <- eval(parse(prompt = "\nQ10a: Give scaling factor for dose > "))
                 }
@@ -903,7 +905,7 @@ f.change.settings <- function(ans.all,
                   sf.t <- eval(parse(prompt = "\nQ10: Give scaling factor for time > "))
                   ans.all$sf.t <- sf.t
                 }
-                change[10] <- F
+                change[10] <- FALSE
                 if (model.ans == 46) {
                   cat("\nscaling factor on dose not implemented for model 46, it will be ignored\n")
                 }
@@ -939,7 +941,7 @@ f.change.settings <- function(ans.all,
                     ans.all$select.no <- select.no
                     ans.all$select.lev <- tmp.lev
                     ans.all$data.0 <- data.0
-                    data.0 <- f.subset(ans.all, select = T)
+                    data.0 <- f.subset(ans.all, select = TRUE)
                     ans.all$data.0 <- data.0
                     name.tmp <- paste(varnames[select.no], paste(tmp.lev, 
                       collapse = " "))
@@ -963,7 +965,7 @@ f.change.settings <- function(ans.all,
                 }
                 if (length(select.name) == 0) 
                   select.name <- "all"
-                change[11] <- F
+                change[11] <- FALSE
                 ans.all$select.lev <- tmp.lev
                 ans.all$select.name <- select.name
                 ans.all$covar.no <- 0
@@ -976,17 +978,17 @@ f.change.settings <- function(ans.all,
                   ans.all$lump.ans <- lump.ans
                   ans.all$yans <- 0
                 }
-                change[12] <- F
+                change[12] <- FALSE
             }
             if (change[13]) {
                 fct1.no <- menu(varnames[1:nvar], title = "\nQ13: Give number of factor serving as covariate with respect to parameter a \n --- type 0 if none --- \n  ")
-                change[13] <- F
+                change[13] <- FALSE
                 ans.all$fct1.no <- fct1.no
                 ans.all$fct1.name <- varnames[fct1.no]
             }
             if (change[14]) {
                 fct2.no <- menu(varnames[1:nvar], title = "\nQ14: Give number of factor serving as covariate with respect to parameter b \n --- type 0 if none --- \n  ")
-                change[14] <- F
+                change[14] <- FALSE
                 ans.all$fct2.no <- fct2.no
                 ans.all$fct2.name <- varnames[fct2.no]
             }
@@ -998,7 +1000,7 @@ f.change.settings <- function(ans.all,
                 else if (dtype == 6) 
                   fct3.no <- menu(varnames[1:nvar], title = "\nQ15: Give number of factor serving as covariate with respect to    \n                    parameter alpha \n --- type 0 if none --- \n")
                 else fct3.no <- menu(varnames[1:nvar], title = "\nQ15: Give number of factor serving as covariate with respect to    \n                    parameter var \n --- type 0 if none --- \n")
-                change[15] <- F
+                change[15] <- FALSE
                 ans.all$fct3.no <- fct3.no
                 ans.all$fct3.name <- varnames[fct3.no]
             }
@@ -1015,7 +1017,7 @@ f.change.settings <- function(ans.all,
                 if (model.ans != 57) 
                   fct5.no <- menu(varnames[1:nvar], title = "\nQ16: Give number of factor serving as covariate with respect to\n    parameter d \n --- type 0 if none --- \n  ")
                 else fct5.no <- menu(varnames[1:nvar], title = "\nQ16: Give number of factor serving as covariate with respect to\n    parameter b1 \n --- type 0 if none --- \n  ")
-                change[16] <- F
+                change[16] <- FALSE
                 ans.all$fct5.no <- fct5.no
                 ans.all$fct5.name <- varnames[fct5.no]
             }
@@ -1029,7 +1031,7 @@ f.change.settings <- function(ans.all,
                   return(ans.all)
                 }
                 fct4.no <- menu(varnames[1:nvar], title = "\nQ16: Give number of factor serving as covariate with respect to\n    parameter c \n --- type 0 if none --- \n  ")
-                change[17] <- F
+                change[17] <- FALSE
                 ans.all$fct4.no <- fct4.no
                 ans.all$fct4.name <- varnames[fct4.no]
             }
@@ -1050,7 +1052,7 @@ f.change.settings <- function(ans.all,
                 }
                 else cat("\n\nNOAEL approach not implemented for dtype", 
                   dtype, "\n\n")
-                change[18] <- F
+                change[18] <- FALSE
             }
             if (change[19] && cont) 
                 if (dtype %in% c(1, 5, 10, 15, 25, 26, 250, 260)) {
@@ -1079,16 +1081,16 @@ f.change.settings <- function(ans.all,
                                          add_nonzero_val_to_dat = add_nonzero_val_to_dat,
                                          nonzero_val = nonzero_val,
                                          detection_limit = detection_limit)
-                  change[19] <- F
+                  change[19] <- FALSE
                 }
                 else cat("\nATTENTION : data cannot be transformed\n")
             if (change[19] && !cont) {
                 ans.all$constr.steepness <- eval(parse(prompt = paste("Q19: Give value for lower constraint on the steepness parameter > ")))
-                change[19] <- F
+                change[19] <- FALSE
             }
             if (change[20]) {
                 ans.all$aic.crit <- eval(parse(prompt = paste("Q20: Give value for \n      critical difference in AICs among models (default = 2) > ")))
-                change[20] <- F
+                change[20] <- FALSE
             }
             if (change[21]) {
                 if (cont) {
@@ -1103,41 +1105,41 @@ f.change.settings <- function(ans.all,
                   cens.no <- eval(parse(prompt = paste("\n\nQ21: Give column number indicating the censoring > ")))
                   cens.up <- data.0[, cens.no]
                 }
-                change[21] <- F
+                change[21] <- FALSE
                 ans.all$cens.up <- cens.up
-                change[21] <- F
+                change[21] <- FALSE
             }
             if (change[22]) {
                 ans.all$fit.ans <- menu(c("error in response only (default)", 
                   "error in both response and dose (minimize sum of products)"), 
                   title = "\nQ22: What type of regression do you want?")
-                change[22] <- F
+                change[22] <- FALSE
             }
             if (change[23]) {
                 ans.all$cond.ans <- menu(c("mild conditions", 
                   "moderate conditions", "strict conditions (R default)"), 
                   title = "\nQ23: How strict do you want the fitting conditions to be?")
                 ans.all$lst.control <- f.control(ans.all$cond.ans)
-                change[23] <- F
-                change[nrQ] <- T
+                change[23] <- FALSE
+                change[nrQ] <- TRUE
             }
             if (change[24]) {
                 ans.all$tans <- menu(varnames[1:nvar], title = "\nQ24: Give column number of time variable \n")
-                change[24] <- F
+                change[24] <- FALSE
             }
             if (change[25]) {
                 ans.all$conf.lev <- eval(parse(prompt = paste(" give confidence level --- > ")))
-                change[25] <- F
+                change[25] <- FALSE
             }
             if (change[26]) {
                 if (model.ans %in% c(0, 6, 15, 25, 52, 54, 46)) 
                   ans.all$incr.decr.no <- menu(varnames[1:nvar], 
                     title = "\nQ24: Give column number indicating increasing or decreasing dose-response \n")
                 else cat("\n\n this option is not possibe for this model, choose model 6, 15, 25, 52, 54 or 46 \n\n")
-                change[26] <- F
+                change[26] <- FALSE
             }
             if (change[27]) {
-                choose <- F
+                choose <- FALSE
             }
             ans.all$show <- ""
             ans.all$change <- change
@@ -1161,16 +1163,16 @@ f.remove.NAs <- function(xans = 0, tans = 0, yans = 0, sans = 0, nans = 0, covar
         Mx.sum <- rowSums(Mx)
         lst.na.x <- Mx.sum != nr.dosecol
     }
-    lst.na.t <- rep(F, length(dfr[, 1]))
-    lst.na.y <- rep(F, length(dfr[, 1]))
-    lst.na.sd <- rep(F, length(dfr[, 1]))
-    lst.na.nn <- rep(F, length(dfr[, 1]))
-    lst.na.covar <- rep(F, length(dfr[, 1]))
-    lst.na.fct1 <- rep(F, length(dfr[, 1]))
-    lst.na.fct2 <- rep(F, length(dfr[, 1]))
-    lst.na.fct3 <- rep(F, length(dfr[, 1]))
-    lst.na.fct4 <- rep(F, length(dfr[, 1]))
-    lst.na.fct5 <- rep(F, length(dfr[, 1]))
+    lst.na.t <- rep(FALSE, length(dfr[, 1]))
+    lst.na.y <- rep(FALSE, length(dfr[, 1]))
+    lst.na.sd <- rep(FALSE, length(dfr[, 1]))
+    lst.na.nn <- rep(FALSE, length(dfr[, 1]))
+    lst.na.covar <- rep(FALSE, length(dfr[, 1]))
+    lst.na.fct1 <- rep(FALSE, length(dfr[, 1]))
+    lst.na.fct2 <- rep(FALSE, length(dfr[, 1]))
+    lst.na.fct3 <- rep(FALSE, length(dfr[, 1]))
+    lst.na.fct4 <- rep(FALSE, length(dfr[, 1]))
+    lst.na.fct5 <- rep(FALSE, length(dfr[, 1]))
     if (tans != 0) 
         lst.na.t <- is.na(dfr[, tans])
     if (yans != 0) 
@@ -1230,9 +1232,9 @@ f.remove.NAs <- function(xans = 0, tans = 0, yans = 0, sans = 0, nans = 0, covar
 
 f.cont <- function(ans.all) {
     if (ans.all$dtype %in% c(1, 5, 15, 10, 25, 26, 250, 260)) 
-        cont <- T
+        cont <- TRUE
     if (ans.all$dtype %in% c(2, 3, 4, 6, 84)) 
-        cont <- F
+        cont <- FALSE
     return(cont)
     print("f.cont: END")
 }
@@ -1240,7 +1242,7 @@ f.cont <- function(ans.all) {
 
 #' @importFrom utils menu
 f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
-    check.out <- F
+    check.out <- FALSE
     if (quick.ans == 1) {
         if (!is.numeric(vec)) {
             cat("\na problem was encountered in a column of the data\n")
@@ -1253,25 +1255,25 @@ f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
         if (any(vec < 0)) {
             if (gui) 
                 stop("\nvariable contain negative values\n", 
-                  call. = F)
+                  call. = FALSE)
             if (!gui) {
                 cat("\n\nATTENTION: variable contains negative values\n")
                 if (!(dtype %in% c(25, 250))) {
                   ans.cont <- menu(c("no, this is an error, stop analysis", 
                     "yes, but omit log-transformation"), title = "\nDo you want to continue nonetheless?")
                   switch(ans.cont, stop(message = "PROAST interrupted", 
-                    call. = F), check.out <- T)
+                    call. = FALSE), check.out <- TRUE)
                 }
             }
         }
         if (!any(vec > 0)) {
             if (gui) 
-                stop("\nvariable contains zeros only\n", call. = F)
+                stop("\nvariable contains zeros only\n", call. = FALSE)
             if (!gui) {
                 cat("\n\nATTENTION: variable contains zeros only\n")
                 ans.cont <- 0
                 switch(ans.cont, stop(message = "PROAST interrupted", 
-                  call. = F), check.out <- T)
+                  call. = FALSE), check.out <- TRUE)
             }
         }
     }
@@ -1280,30 +1282,36 @@ f.check.nonneg.num <- function(vec, gui = FALSE, dtype = NA, quick.ans = 1) {
             cat("\nATTENTION: response data contain negative values, or only zeros,\n              or non-numerical values\nno analysis possible")
             print("the response data are:")
             print(vec)
-            check.out <- T
+            check.out <- TRUE
         }
     }
     invisible(check.out)
 }
 
 
-f.execute <- function(ans.all,
-                      no.plot = FALSE,
-                      interactive_mode = TRUE,
-                      add_nonzero_val_to_dat = FALSE,
-                      nonzero_val = NULL,
-                      detection_limit = NULL) {
+f.execute <- function(
+  ans.all,
+  no.plot = FALSE,
+  interactive_mode = TRUE,
+  add_nonzero_val_to_dat = FALSE,
+  nonzero_val = NULL,
+  detection_limit = NULL
+) {
   ans.all$no.plot <- no.plot
   ans.all$cont <- f.cont(ans.all)
   with(ans.all, {
     if (length(xans) > 1) {
-      if (ans.all$aic.crit == 2)
+      if (ans.all$aic.crit == 2) {
         ans.all$aic.crit <- 5
-      if (model.ans != 42)
+      }
+      if (model.ans != 42) {
         x.leg <- "dose after addition"
-      if (model.ans != 42)
-        if (sf.x != 1)
+      }
+      if (model.ans != 42) {
+        if (sf.x != 1) {
           x.leg <- paste("dose/", sf.x, " after addition", sep = "")
+        }
+      }
       Mx <- data.0[, xans] / sf.x
       ans.all$full.ans <- 2
     }
@@ -1311,8 +1319,9 @@ f.execute <- function(ans.all,
       x <- as.numeric(data.0[, xans]) / sf.x
       f.check.nonneg.num(x, gui)
       x.leg <- varnames[xans]
-      if (sf.x != 1)
+      if (sf.x != 1) {
         x.leg <- paste(x.leg, "/", sf.x, sep = "")
+      }
     }
     if (length(xans) > 1) {
       data.0 <- data.0[order(Mx[, 1]), ]
@@ -1333,64 +1342,84 @@ f.execute <- function(ans.all,
         y <- as.numeric(data.0[, yans]) / sf.y
         yy <- y
         y.leg <- varnames[yans]
-        if (sf.y != 1)
+        if (sf.y != 1) {
           y.leg <- paste(y.leg, "/", sf.y, sep = "")
+        }
         if (dtype %in% c(1, 5, 10, 15)) {
           data.problem <- f.check.nonneg.num(y, gui, dtype)
           if (data.problem) {
-            cat("\nATTENTION: analyses will be done without log-transformation,
-            due to negative observations\n\n")
-            if (dtype == 1)
+            cat(
+              "\nATTENTION: analyses will be done without log-transformation,
+            due to negative observations\n\n"
+            )
+            if (dtype == 1) {
               dtype <- 25
-            if (dtype %in% c(10))
+            }
+            if (dtype %in% c(10)) {
               dtype <- 250
+            }
           }
         }
       }
       if (auto.detlim) {
-        if (min(y) == 0)
+        if (min(y) == 0) {
           detlim <- min(y[y > 0])
+        }
         detlim.col <- nvar + 1
         data.0[, detlim.col] <- detlim
         Vdetlim <- data.0[, detlim.col]
-      }
-      else if (detlim.col > 0)
-          Vdetlim <- data.0[, detlim.col]
-      else if (detlim > 0) {
+      } else if (detlim.col > 0) {
+        Vdetlim <- data.0[, detlim.col]
+      } else if (detlim > 0) {
         Vdetlim <- rep(detlim, length(data.0[, 1]))
         data.0 <- cbind(data.0, Vdetlim)
       }
       if (dtype %in% c(1, 5) && min(y) == 0 && min(Vdetlim) == 0) {
         cat("\n\nATTENTION:  minimum value of observed response data is zero\n")
-        if (dtype %in% c(10, 15, 250, 260))
-          cat("(note that detection limit does not really apply to summary
-              data)\n")
+        if (dtype %in% c(10, 15, 250, 260)) {
+          cat(
+            "(note that detection limit does not really apply to summary
+              data)\n"
+          )
+        }
         if (interactive_mode == TRUE) {
-          ans.detlim <- menu(c("Give detection limit",
-                               "Add nonzero value to observations"),
-                             title = "Q6-7: What do you want to do?")
+          ans.detlim <- menu(
+            c("Give detection limit", "Add nonzero value to observations"),
+            title = "Q6-7: What do you want to do?"
+          )
         } else {
           ans.detlim <- as.numeric(add_nonzero_val_to_dat) + 1
         }
         if (ans.detlim == 1) {
-          cat("\nthe lowest nonzero value is: ", min(y[y >  0]), "\n")
+          cat("\nthe lowest nonzero value is: ", min(y[y > 0]), "\n")
           if (interactive_mode == TRUE) {
-            detlim <- eval(parse(prompt = paste("\n\nQ6: Give global value of detection limit,\n or type 0 if you have individual values > ")))
+            detlim <- eval(parse(
+              prompt = paste(
+                "\n\nQ6: Give global value of detection limit,\n or type 0 if you have individual values > "
+              )
+            ))
             if (detlim == 0) {
-              detlim.col <- menu(varnames[1:nvar], title = "\nQ6a: Give column with individual detection limits\n")
+              detlim.col <- menu(
+                varnames[1:nvar],
+                title = "\nQ6a: Give column with individual detection limits\n"
+              )
               Vdetlim <- data.0[, detlim.col]
             }
-            if (detlim != 0 && detlim.col > 0) { # but why would detlim.col be > 0 if detlim is not 0?
+            if (detlim != 0 && detlim.col > 0) {
+              # but why would detlim.col be > 0 if detlim is not 0?
               Vdetlim <- data.0[, detlim.col]
               if (min(Vdetlim <= 0)) {
                 cat("\n ATTENTION: there are non-positive detection limits !\n")
               }
               if (any(is.na(Vdetlim))) {
-                cat("\nATTENTION:  column with detection limits contains NAs; \n
-                    replace NAs with (large) numbers\n\n")
+                cat(
+                  "\nATTENTION:  column with detection limits contains NAs; \n
+                    replace NAs with (large) numbers\n\n"
+                )
               }
             }
-            if (detlim.col == 0) { # when will this happen?
+            if (detlim.col == 0) {
+              # when will this happen?
               message("detlim.col == 0")
               Vdetlim <- rep(detlim, length(y))
               data.0 <- cbind(data.0, Vdetlim)
@@ -1401,18 +1430,25 @@ f.execute <- function(ans.all,
             }
           } else {
             if (is.null(detection_limit)) {
-              detlim <- min(y[y >  0])
-              message("\nThe detection limit has been set to the minimum positive value in the data.\n
+              detlim <- min(y[y > 0])
+              message(
+                "\nThe detection limit has been set to the minimum positive value in the data.\n
                       Observations below the detection limit will be plotted as half the detection limit.\n
-                      If you would like to set the detection limit to a different value, please re-run the function with the 'detection_limit' parameter set to the desired value.\n")
+                      If you would like to set the detection limit to a different value, please re-run the function with the 'detection_limit' parameter set to the desired value.\n"
+              )
             }
-            if (is.numeric(detection_limit)) { # single value
+            if (is.numeric(detection_limit)) {
+              # single value
               detlim <- detection_limit
-              cat("\nThe detection limit has been set to", detection_limit,
-                  "\nObservations below the detection limit will be plotted
-                  as half the detection limit.\n")
+              cat(
+                "\nThe detection limit has been set to",
+                detection_limit,
+                "\nObservations below the detection limit will be plotted
+                  as half the detection limit.\n"
+              )
             }
-            if (is.character(detection_limit)) { # use a column.
+            if (is.character(detection_limit)) {
+              # use a column.
               detlim <- 0
               detlim.col <- which(colnames(data.0) == detection_limit)
               Vdetlim <- data.0[, detlim.col]
@@ -1420,11 +1456,15 @@ f.execute <- function(ans.all,
             if (detlim != 0 && detlim.col > 0) {
               Vdetlim <- data.0[, detlim.col]
               if (min(Vdetlim <= 0)) {
-                stop("\nERROR: there are non-positive values in the detection limit column !\n")
+                stop(
+                  "\nERROR: there are non-positive values in the detection limit column !\n"
+                )
               }
               if (any(is.na(Vdetlim))) {
-                stop("\nERROR:  The detection limit column contains NAs; \n
-                     replace NAs with (large) numbers\n\n")
+                stop(
+                  "\nERROR:  The detection limit column contains NAs; \n
+                     replace NAs with (large) numbers\n\n"
+                )
               }
             }
             if (detlim.col == 0) {
@@ -1437,10 +1477,14 @@ f.execute <- function(ans.all,
         if (ans.detlim == 2) {
           cat("\nThe lowest nonzero observation is: ", min(y[y > 0]), "\n")
           if (interactive_mode == TRUE) {
-            y.add <- eval(parse(prompt = "\n\nQ7: Give small value to be added to the data > "))
+            y.add <- eval(parse(
+              prompt = "\n\nQ7: Give small value to be added to the data > "
+            ))
           } else {
             if (is.null(nonzero_val)) {
-              stop("\nERROR: nonzero_val must be specified when add_nonzero_val_to_dat is TRUE\n")
+              stop(
+                "\nERROR: nonzero_val must be specified when add_nonzero_val_to_dat is TRUE\n"
+              )
             }
             if (nonzero_val <= 0) {
               stop("\nERROR: nonzero_val must be a positive number\n")
@@ -1457,9 +1501,11 @@ f.execute <- function(ans.all,
         y[y >= cens.up] <- -2000
         yy <- yy * (y != -2000) + (1 * cens.up) * (y == -2000)
       }
-      if (max(Vdetlim) > 0)
+      if (max(Vdetlim) > 0) {
         ans.all$low.y <- min(Vdetlim) / 2
-      else ans.all$low.y <- 0.98 * min(yy)
+      } else {
+        ans.all$low.y <- 0.98 * min(yy)
+      }
       ans.all$upp.y <- 1.02 * max(yy)
       if (ans.detlim == 2) {
         y <- y + y.add
@@ -1469,8 +1515,9 @@ f.execute <- function(ans.all,
         y.denom <- 1
         if (yans.denom != 0) {
           y.denom <- data.0[, yans.denom]
-          if (min(y.denom) == 0)
+          if (min(y.denom) == 0) {
             cat("\nATTENTION: zero values in denominator ! \n\n")
+          }
           y <- y / y.denom
           yy <- yy / y.denom
           y.leg <- paste(y.leg, "/", varnames[yans.denom])
@@ -1479,10 +1526,12 @@ f.execute <- function(ans.all,
       nn <- 0
       sd <- NA
       if (dtype %in% c(10, 15, 250, 260)) {
-        if (sans == 0)
+        if (sans == 0) {
           stop(message = "no data for variation statistics provided\n")
-        if (nans == 0)
+        }
+        if (nans == 0) {
           stop(message = "no data for group sizes provided\n")
+        }
         sd <- as.numeric(data.0[, sans]) / sf.y
         nn <- as.numeric(data.0[, nans])
         if (any(y == 0)) {
@@ -1497,12 +1546,17 @@ f.execute <- function(ans.all,
           cat("the analysis will be interrupted\n")
           stop()
         }
-        if (sd.se == 2)
+        if (sd.se == 2) {
           sd <- sd * sqrt(nn)
+        }
         if (0) {
           f.graph.window(2)
-          plot(log10(y), log10(sd), xlab = "mean (log10-scale)",
-               ylab = "sd (log10-scale)")
+          plot(
+            log10(y),
+            log10(sd),
+            xlab = "mean (log10-scale)",
+            ylab = "sd (log10-scale)"
+          )
           title(main = "correlation between mean of y and sd of y")
           y.mn <- y
           CV <- sd / y.mn
@@ -1510,15 +1564,16 @@ f.execute <- function(ans.all,
           mn.log <- mn.log / logb(10)
           sd2.log <- logb(CV^2 + 1)
           sd2.log <- sd2.log / logb(10)^2
-          plot(mn.log, sd2.log, xlab = "mean of log-y",
-               ylab = "sd of log-y")
+          plot(mn.log, sd2.log, xlab = "mean of log-y", ylab = "sd of log-y")
           title(main = "correlation between mean of log-y and sd of log-y")
-          eval(parse(prompt = "\n\nCheck plot and type c to continue .................. >   "))
+          eval(parse(
+            prompt = "\n\nCheck plot and type c to continue .................. >   "
+          ))
         }
         if (dtype %in% c(10, 15)) {
           y.mn <- y
-          CV <- sd/y.mn
-          mn.log <- logb(y.mn/sqrt(1 + CV^2))
+          CV <- sd / y.mn
+          mn.log <- logb(y.mn / sqrt(1 + CV^2))
           yy <- exp(mn.log)
           ans.all$mn.log <- mn.log
           ans.all$sd2.log <- logb(CV^2 + 1)
@@ -1544,9 +1599,11 @@ f.execute <- function(ans.all,
       }
       y <- kk / nn
       yy <- y
-      if (max(y, na.rm = TRUE) < 0.5)
+      if (max(y, na.rm = TRUE) < 0.5) {
         ans.all$y.lim.plt <- c(0, 1.2 * max(y))
-      else ans.all$y.lim.plt <- c(0, 1)
+      } else {
+        ans.all$y.lim.plt <- c(0, 1)
+      }
     }
     if (!cont) {
       cens <- 0
@@ -1569,17 +1626,24 @@ f.execute <- function(ans.all,
       xmn <- tapply(x, x, mean)
       ymn <- as.numeric(ymn)
       if (reverse.ans == 0) {
-        if (length(xmn) > 1) 
-          if (var(xmn != 0) && var(ymn != 0)) 
+        if (length(xmn) > 1) {
+          if (var(xmn != 0) && var(ymn != 0)) {
             if (cor(xmn, ymn) < 0) {
-              cat("\nProast assumes zero to represent normal, and higher scores abnormal")
+              cat(
+                "\nProast assumes zero to represent normal, and higher scores abnormal"
+              )
               cat("\nYour data seem to have the opposite direction\n")
-              ans.all$reverse.ans <- menu(c("yes", "no"),
-                title = "Do your scores have opposite direction?\n")
+              ans.all$reverse.ans <- menu(
+                c("yes", "no"),
+                title = "Do your scores have opposite direction?\n"
+              )
             }
+          }
+        }
       }
-      if (ans.all$reverse.ans == 1)
+      if (ans.all$reverse.ans == 1) {
         scores.orig <- rev(scores.orig)
+      }
       score <- 0
       n.lev <- length(scores.orig)
       for (ii in 1:n.lev) {
@@ -1588,9 +1652,12 @@ f.execute <- function(ans.all,
       }
       scores.mtr <- cbind(scores.orig, levels(factor(y)))
       dimnames(scores.mtr) <- list(NULL, c("orig.scores", "temp.scores"))
-      dum.ord <- sum(scores.mtr[, 1] == scores.mtr[, 2]) != length(scores.mtr[, 1])
+      dum.ord <- sum(scores.mtr[, 1] == scores.mtr[, 2]) !=
+        length(scores.mtr[, 1])
       if (dum.ord) {
-        cat("\n\nATTENTION: the original scores have been transformed for analysis as follows:\n")
+        cat(
+          "\n\nATTENTION: the original scores have been transformed for analysis as follows:\n"
+        )
         print(scores.mtr)
       }
       ans.all$y.transf <- y
@@ -1610,7 +1677,9 @@ f.execute <- function(ans.all,
         fct1 <- as.numeric(factor(data.0[, fct1.no]))
         fct1.txt <- levels(factor(data.0[, fct1.no]))
         if (interrupt && max(fct1) == 1) {
-          cat("\nAttention 1: The factor you chose as covariate on par a has only one level\n")
+          cat(
+            "\nAttention 1: The factor you chose as covariate on par a has only one level\n"
+          )
           cat("you might have selected a subgroup for this factor\n")
         }
       }
@@ -1618,11 +1687,15 @@ f.execute <- function(ans.all,
         fct2 <- as.numeric(factor(data.0[, fct2.no]))
         fct2.txt <- levels(factor(data.0[, fct2.no]))
         if ((cont || model.type == 2) && model.ans %in% c(32, 45)) {
-          cat("\nATTENTION: covariate on parameter b is not possible in these NMDRs\n\n")
+          cat(
+            "\nATTENTION: covariate on parameter b is not possible in these NMDRs\n\n"
+          )
           fct2 <- 1
         }
         if (max(fct2) == 1) {
-          cat("\nAttention: the factor you chose as covariate on par b has only one level\n")
+          cat(
+            "\nAttention: the factor you chose as covariate on par b has only one level\n"
+          )
           cat("you might have selected a subgroup for this factor\n")
         }
       }
@@ -1632,54 +1705,73 @@ f.execute <- function(ans.all,
         if (cont) {
           fct3 <- as.numeric(factor(data.0[, fct3.no]))
           if (max(fct3) == 1) {
-            cat("\nAttention: the factor you chose as covariate on var has only one level\n")
+            cat(
+              "\nAttention: the factor you chose as covariate on var has only one level\n"
+            )
             cat("you might have selected a subgroup for this factor\n")
           }
-        }
-        else if (dtype == 4) {
+        } else if (dtype == 4) {
           fct3 <- log(data.0[, fct3.no])
-          ans.all$th.par <- log(as.numeric(levels(as.factor(data.0[, 
-            fct3.no]))))
-        }
-        else if (dtype == 6) {
+          ans.all$th.par <- log(as.numeric(levels(as.factor(data.0[,
+            fct3.no
+          ]))))
+        } else if (dtype == 6) {
           fct3 <- as.numeric(factor(data.0[, fct3.no]))
         }
         ans.all$nr.var <- max(fct3)
+      } else {
+        ans.all$nr.var <- 1
       }
-      else ans.all$nr.var <- 1
       if (fct4.no > 0) {
         fct4 <- as.numeric(factor(data.0[, fct4.no]))
         fct4.txt <- levels(factor(data.0[, fct4.no]))
-        if ((cont || model.type == 2) && model.ans %in% 
-          c(32, 45)) {
-          cat("\nATTENTION: covariate on parameter c is not possible in NMDRs\n\n")
+        if (
+          (cont || model.type == 2) &&
+            model.ans %in%
+              c(32, 45)
+        ) {
+          cat(
+            "\nATTENTION: covariate on parameter c is not possible in NMDRs\n\n"
+          )
           fct4 <- 1
         }
         if (max(fct4) == 1) {
-          cat("\nAttention: the factor you chose as covariate on par c has only one level\n")
+          cat(
+            "\nAttention: the factor you chose as covariate on par c has only one level\n"
+          )
           cat("you might have selected a subgroup for this factor\n")
         }
       }
       if (fct5.no > 0) {
         fct5 <- as.numeric(factor(data.0[, fct5.no]))
         fct5.txt <- levels(factor(data.0[, fct5.no]))
-        if ((cont || model.type == 2) && model.ans %in% 
-          c(31, 32, 33, 45)) {
-          cat("\nATTENTION: covariate on parameter d is not possible in NMDRs\n\n")
+        if (
+          (cont || model.type == 2) &&
+            model.ans %in%
+              c(31, 32, 33, 45)
+        ) {
+          cat(
+            "\nATTENTION: covariate on parameter d is not possible in NMDRs\n\n"
+          )
           fct5 <- 1
         }
         if (max(fct5) == 1) {
-          cat("\nAttention: the factor you chose as covariate on par d has only one level\n")
+          cat(
+            "\nAttention: the factor you chose as covariate on par d has only one level\n"
+          )
           cat("you might have selected a subgroup for this factor\n")
         }
       }
       twice <- FALSE
-      if (fct1.no != 0)
+      if (fct1.no != 0) {
         twice <- fct1.no == fct2.no
-      if (!twice && fct1.no > 1)
+      }
+      if (!twice && fct1.no > 1) {
         twice <- fct1.no == fct5.no
-      if (!twice && fct1.no > 1)
+      }
+      if (!twice && fct1.no > 1) {
         twice <- fct1.no == fct4.no
+      }
     }
     if (quick.ans > 1) {
       twice <- TRUE
@@ -1687,8 +1779,10 @@ f.execute <- function(ans.all,
       covar.txt <- ""
       if (covar.no > 0) {
         covariate <- as.numeric(factor(data.0[, covar.no]))
-        if (max(covariate, na.rm = T) == 1) {
-          cat("\nAttention: the factor you chose as covariate has only one level\n")
+        if (max(covariate, na.rm = TRUE) == 1) {
+          cat(
+            "\nAttention: the factor you chose as covariate has only one level\n"
+          )
           ans.all$covar.no <- 0
         }
         covar.txt <- levels(factor(data.0[, covar.no]))
@@ -1719,47 +1813,60 @@ f.execute <- function(ans.all,
     ans.all$fct5 <- fct5
     ans.all$fct1.txt <- fct1.txt
     ans.all$fct2.txt <- fct2.txt
-    if (length(xans) > 1)
+    if (length(xans) > 1) {
       ans.all$fct2.txt <- substring(varnames[xans[1:length(xans)]], 1, 3)
+    }
     ans.all$fct3.txt <- fct3.txt
     ans.all$fct4.txt <- fct4.txt
     ans.all$fct5.txt <- fct5.txt
     ans.all$cont <- cont
-    if (0)
+    if (0) {
       if (length(xans) == 1) {
         if (quick.ans == 1) {
           if (length(unique(fct3)) > 1 && dtype == 4) {
             ans.all$get.gr.txt <- TRUE
             ans.all$gr.txt <- f.pars.frq(ans.all)$gr.txt
+          } else {
+            ans.all$gr.txt <- f.pars(ans.all)$gr.txt
           }
-          else ans.all$gr.txt <- f.pars(ans.all)$gr.txt
         }
-        if (quick.ans > 1)
+        if (quick.ans > 1) {
           ans.all$gr.txt <- covar.txt
+        }
       }
+    }
     if (displ.no > 0) {
       ans.all$displ.fact <- factor(data.0[, displ.no])
       ans.all$displ.txt <- levels(ans.all$displ.fact)
-      if (model.ans == 42) 
+      if (model.ans == 42) {
         ans.all$fct2 <- ans.all$displ.fact
+      }
     }
     if (displ.no == 0) {
       ans.all$displ.fact <- 1
       ans.all$displ.txt <- NA
     }
     ans.all$displ.no <- displ.no
-    if (quick.ans == 1)
+    if (quick.ans == 1) {
       trace.plt <- TRUE
-    else trace.plt <- FALSE
-    if (quick.ans == 1)
-        trace <- TRUE
-    else trace <- FALSE
-    if (min(x) == 0)
+    } else {
+      trace.plt <- FALSE
+    }
+    if (quick.ans == 1) {
+      trace <- TRUE
+    } else {
+      trace <- FALSE
+    }
+    if (min(x) == 0) {
       dum.contr <- min(x[x > 0]) / 4
-    else dum.contr <- min(x)
-    if (min(y) == 0)
+    } else {
+      dum.contr <- min(x)
+    }
+    if (min(y) == 0) {
       dum.zero.resp <- min(yy[yy > 0]) / 2
-    else dum.zero.resp <- min(yy)
+    } else {
+      dum.zero.resp <- min(yy)
+    }
     xy.lim[1] <- dum.contr
     xy.lim[2] <- min(x)
     if (xy.lim[2] > 0) {
@@ -1767,57 +1874,68 @@ f.execute <- function(ans.all,
       xy.lim[1] <- min(x) / 3
     }
     xy.lim[3] <- max(x)
-    if (0)
+    if (0) {
       if (length(xans) > 1) {
         xy.lim[2] <- min(Mx)
         xy.lim[3] <- max(Mx)
       }
+    }
     xy.lim[4] <- min(yy)
     xy.lim[5] <- max(yy)
     if (!cont) {
       xy.lim[4] <- 0
       xy.lim[5] <- 1
-      if (max(y) < 0.5)
+      if (max(y) < 0.5) {
         xy.lim[5] <- (max(y) + 0.1) * 1.2
+      }
     }
     xy.lim[6] <- dum.zero.resp
     xy.lim[3] <- 1.05 * xy.lim[3]
     xy.lim[5] <- 1.05 * xy.lim[5]
     xy.lim <- signif(xy.lim, 3)
-    if (WAPP)
+    if (WAPP) {
       ans.all$logprob <- FALSE
+    }
     if (cont) {
-      if (plt.mns == 2)
+      if (plt.mns == 2) {
         cex.1 <- 1
-      else cex.1 <- 0.75
-      if (plot.type == 9)
+      } else {
+        cex.1 <- 0.75
+      }
+      if (plot.type == 9) {
         cex.1 <- 0.6
-      if (dtype %in% c(10, 15, 250, 260))
+      }
+      if (dtype %in% c(10, 15, 250, 260)) {
         cex.1 <- 1.6
-        cex.2 <- 1.2
-      if (dtype == 5)
+      }
+      cex.2 <- 1.2
+      if (dtype == 5) {
         cex.1 <- 0.5
-      if (dtype == 15)
+      }
+      if (dtype == 15) {
         cex.2 <- 0.75
+      }
     }
     if (!cont) {
-      if (dtype == 6)
+      if (dtype == 6) {
         cex.1 <- 0.6
-      else cex.1 <- 1.2
+      } else {
+        cex.1 <- 1.2
+      }
       cex.2 <- 1.5
     }
     ans.all$cex.1 <- cex.1
     ans.all$cex.2 <- cex.2
     ans.all$quick.ans <- quick.ans
-    if (quick.ans > 1)
+    if (quick.ans > 1) {
       ans.all$quick <- TRUE
+    }
     ans.all$data.0 <- data.0
     ans.all$x <- x
     if (length(xans) > 1) {
       ans.all$nr.dosecol <- length(Mx[1, ])
       ans.all$Mx <- as.matrix(Mx)
-    }
-    else {
+    } else {
       ans.all$nr.dosecol <- 1
       ans.all$Mx <- NA
     }
@@ -1825,11 +1943,13 @@ f.execute <- function(ans.all,
     ans.all$yy <- yy
     ans.all$dtype <- dtype
     ans.all$cont <- cont
-    if (cont)
-      ans.all$model.names <- f.expect.con(name = T)
+    if (cont) {
+      ans.all$model.names <- f.expect.con(name = TRUE)
+    }
     ans.all$x.leg <- x.leg
-    if (yans > 0)
+    if (yans > 0) {
       ans.all$y.leg <- y.leg
+    }
     ans.all$sd <- sd
     ans.all$nn <- nn
     ans.all$detlim <- detlim
@@ -1852,11 +1972,13 @@ f.execute <- function(ans.all,
     ans.all$factor.name <- f.factorname(ans.all)
     ans.all$low.y <- low.y
     ans.all$upp.y <- upp.y
-    if (dtype == 11)
+    if (dtype == 11) {
       ans.all$fit.ans <- 2
+    }
     if (ans.all$fit.ans == 2) {
-      if (!cont)
+      if (!cont) {
         print("fit.ans has value 2 !!")
+      }
       ans.all$plot.type <- 4
     }
     ans.all$trace <- trace
@@ -1878,32 +2000,51 @@ f.execute <- function(ans.all,
         ans.all$plot.type <- 2
       }
     }
-    if (dtype %in% c(2, 3, 6, 15))
+    if (dtype %in% c(2, 3, 6, 15)) {
       ans.all$CI.plt <- FALSE
-    if (dtype %in% c(4, 10, 250))
+    }
+    if (dtype %in% c(4, 10, 250)) {
       ans.all$CI.plt <- TRUE
+    }
     if (!no.plot) {
       f.graph.window(1)
-      if (!fitted)
+      if (!fitted) {
         ans.all$heading <- "data"
-      if (cont)
+      }
+      if (cont) {
         f.plot.con(ans.all)
+      }
       if (dtype %in% c(4, 6, 84)) {
-        if (max(fct2) == 1)
+        if (max(fct2) == 1) {
           kk.dum <- kk
-        else kk.dum <- 1
-        if (dtype == 6)
+        } else {
           kk.dum <- 1
-        if (length(y) > 200)
+        }
+        if (dtype == 6) {
           kk.dum <- 1
-        if (ans.all$plot.type == 0)
+        }
+        if (length(y) > 200) {
+          kk.dum <- 1
+        }
+        if (ans.all$plot.type == 0) {
           ans.all$plot.type <- 1
+        }
         f.plot.frq(ans.all)
       }
-      if (dtype %in% 2:3)
-        f.plot.cat(plot.type = 1, x, y, x.leg, y.leg,
-                    fct1 = fct1, fct2 = fct2, shift = 0, heading = "",
-                    color = color)
+      if (dtype %in% 2:3) {
+        f.plot.cat(
+          plot.type = 1,
+          x,
+          y,
+          x.leg,
+          y.leg,
+          fct1 = fct1,
+          fct2 = fct2,
+          shift = 0,
+          heading = "",
+          color = color
+        )
+      }
     }
     if (dtype != 6 && !do.MA) {
       ans.all$pi.full <- NA
@@ -1916,37 +2057,45 @@ f.execute <- function(ans.all,
     if (dtype == 6) {
       ans.all$nr.alfa <- max(fct3)
     }
-    if (0)
+    if (0) {
       if (!gui) {
         dtype.tmp <- odt$dtype[ans.all$yans]
         if (dtype.tmp != ans.all$dtype) {
-          cat("\nThe type of data you indicated does not match the one indicated in the dataset\n")
+          cat(
+            "\nThe type of data you indicated does not match the one indicated in the dataset\n"
+          )
           cat("indicated in dataset:", dtype.tmp)
           cat("\nintended:", ans.all$dtype, "\n")
         }
       }
-    if (cont && length(xans) == 1)
+    }
+    if (cont && length(xans) == 1) {
       ans.all$x.mn <- mean(x)
+    }
     if (cont) {
       dum.nn <- f.nr.replicates(ans.all)
-      if (mean(dum.nn) < 3)
+      if (mean(dum.nn) < 3) {
         ans.all$plt.mns <- 2
+      }
       if (length(xans) > 1) {
         ans.all$plt.mns <- 3
         ans.all$CI.plt <- TRUE
       }
     }
     ans.all$dtype.0 <- dtype
-    if (lump.ans == 1)
+    if (lump.ans == 1) {
       ans.all <- f.lump.bin(ans.all)
+    }
     if (incr.decr.no > 0) {
       ans.all$fct4 <- as.numeric(factor(data.0[, incr.decr.no]))
       ans.all$nr.cc <- 2
       ans.all$fct4.txt <- c("decr", "incr")
     }
-    if (quick.ans %in% c(1, 6))
+    if (quick.ans %in% c(1, 6)) {
       ans.all$model.fam <- 1
-    else ans.all$model.fam <- 0
+    } else {
+      ans.all$model.fam <- 0
+    }
     f.assign(".Pr.last", ans.all)
     return(ans.all)
   })
@@ -1961,7 +2110,7 @@ f.clear <- function(ans.all) {
     ans.all$CED.matr <- matrix(NA)
     ans.all$regr.par.matr <- matrix(NA)
     ans.all$conf.int <- matrix(NA, ncol = 2)
-    ans.all$fitted <- F
+    ans.all$fitted <- FALSE
     ans.all$ans.plt <- 3
     ans.all$par.start <- NA
     ans.all$scale.dum <- NA
@@ -1981,8 +2130,9 @@ f.clear <- function(ans.all) {
 
 
 f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
-    if (gui == T) 
-        ans.all$gui <- T
+    if (gui == TRUE) {
+        ans.all$gui <- TRUE
+    }
     with(ans.all, {
         if (dtype %in% c(2, 3)) {
             full.ans <- 2
@@ -2001,40 +2151,59 @@ f.full.ans <- function(ans.all, gui, interactive_mode = TRUE) {
         if (!cont) {
             ans.all$model.type <- 1
             ans.all$model.ans <- 14
-            ans.all <- f.start.bin(ans.all, tmp.quick = T)
+            ans.all <- f.start.bin(ans.all, tmp.quick = TRUE)
             nr.dosegr <- length(ans.all$regr.par)
         }
         full.ans <- ans.all$full.ans
         if (!gui && dtype != 15) {
             if (mean(dum.nn) < 3) {
                 if (interactive_mode == TRUE) {
-                  cat("\n\naverage group size is only", round(mean(dum.nn), 1))
-                  full.ans <- menu(c("yes", "no"), title = "\nDo you nonetheless want to fit full model?\n")
+                    cat(
+                        "\n\naverage group size is only",
+                        round(mean(dum.nn), 1)
+                    )
+                    full.ans <- menu(
+                        c("yes", "no"),
+                        title = "\nDo you nonetheless want to fit full model?\n"
+                    )
                 } else {
-                  warning("average group size is only ", round(mean(dum.nn), 1))
-                  full.ans <- 1
+                    warning(
+                        "average group size is only ",
+                        round(mean(dum.nn), 1)
+                    )
+                    full.ans <- 1
                 }
-            }
-            else if (nr.dosegr > 100 || length(dum.nn) > 100) {
+            } else if (nr.dosegr > 100 || length(dum.nn) > 100) {
                 if (interactive_mode == TRUE) {
-                  cat("\ndataset is large (total number of dose groups: ", nr.dosegr, "), fitting full model may take long")
-                  full.ans <- menu(c("yes", "no"), title = "\nDo you nonetheless want to fit full model?\n")
+                    cat(
+                        "\ndataset is large (total number of dose groups: ",
+                        nr.dosegr,
+                        "), fitting full model may take long"
+                    )
+                    full.ans <- menu(
+                        c("yes", "no"),
+                        title = "\nDo you nonetheless want to fit full model?\n"
+                    )
                 } else {
-                  warning("dataset is large (total number of dose groups: ", nr.dosegr, "), fitting full model may take a while")
-                  full.ans <- 1
+                    warning(
+                        "dataset is large (total number of dose groups: ",
+                        nr.dosegr,
+                        "), fitting full model may take a while"
+                    )
+                    full.ans <- 1
                 }
             }
         }
         if (gui) {
             full.ans <- 1
             if (mean(dum.nn) < 3) {
-                cat("\n\naverage group size is only", round(mean(dum.nn), 
-                  1))
+                cat("\n\naverage group size is only", round(mean(dum.nn), 1))
                 cat("\ntherefore full model will not be fitted\n")
                 full.ans <- 2
-            }
-            else if (nr.dosegr > 100 || length(dum.nn) > 100) {
-                cat("\ndataset is large, therefore full model will not be fitted\n")
+            } else if (nr.dosegr > 100 || length(dum.nn) > 100) {
+                cat(
+                    "\ndataset is large, therefore full model will not be fitted\n"
+                )
                 full.ans <- 2
             }
         }
@@ -2294,7 +2463,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, .pr
         skip.0 <- FALSE
     }
     if (nr.covar > 10) 
-        skip.0 <- T
+        skip.0 <- TRUE
     if (ans.all$DA.ans == 2) {
         skip.0 <- TRUE
         skip.a <- TRUE
@@ -2641,7 +2810,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, .pr
         if (cont) 
             ans.all.fit$nr.var <- max(ans.all.fit$fct3)
         if (cont) 
-            par.start.tmp <- f.start.con(ans.all.fit, tmp.quick = T)$par.start
+            par.start.tmp <- f.start.con(ans.all.fit, tmp.quick = TRUE)$par.start
         if (!cont) {
             message("not cont")
         }
@@ -2898,11 +3067,11 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, .pr
             message(" \nstoring results in results.m3.a for ", results.m3.a$modelname)
             if (model.switch == 0) 
                 if (Vaic[ii - 1] - Vaic[ii] > 10) {
-                  skip.b <- T
-                  skip.0 <- T
+                  skip.b <- TRUE
+                  skip.0 <- TRUE
                 }
                 else {
-                  skip.b <- F
+                  skip.b <- FALSE
                 }
             if (length(xans) > 1) {
                 skip.b <- TRUE
@@ -3526,7 +3695,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, .pr
     if (dtype %in% c(1, 5, 15) && !ans.all$MA.running) 
         ans.all.tmp <- f.resid.con(ans.all.tmp)
     if (dtype %in% c(5, 15)) {
-        if (max(ans.all.tmp$Vdetlim, na.rm = T) != 0) 
+        if (max(ans.all.tmp$Vdetlim, na.rm = TRUE) != 0) 
             cat("\n litter effects not implemented for nonzero detection limit\n ")
         if (dtype == 5 && ans.all.tmp$nest.no == 0) 
             dtype <- 1
@@ -3623,7 +3792,7 @@ f.select.m5.con <- function(ans.all, output = TRUE, interactive_mode = TRUE, .pr
         ans.all$loglik.full <- ans.all$FULL.model$loglik
         ans.all$aic.full <- ans.all$FULL.model$aic
     }
-    ans.all$fitted <- T
+    ans.all$fitted <- TRUE
     if (model.switch == 0) {
         ans.all$row.sel.m1 <- row.sel.m1
         ans.all$aic.m1 <- aic.m1
@@ -3850,161 +4019,211 @@ f.create.graphwin <- function(
     return(invisible())
 }
 
-f.qfit <- function(ans.all.fit, plot.type, plt.mns = 3, output = TRUE, display_plots = TRUE) {
-    plot.type.save <- ans.all.fit$plot.type
-    ans.all.fit$plot.type <- plot.type
-    ans.all.fit$plt.mns <- plt.mns
-    if (!output) 
-        ans.all.fit$plot.type <- 0
-    with(ans.all.fit, {
-        if (cont) {
-            increase.00 <- ans.all.fit$increase
-            ans.all.fit$text.par <- f.text.par(ans.all.fit)
-            par.start.tmp <- ans.all.fit$par.start
-            if (any(!is.finite(par.start.tmp))) {
-                ans.all.fit <- f.start.con(ans.all.fit, adjust = F, 
-                  fitted = F, tmp.quick = T)
-                if (ans.all.fit$adjust.start && !WAPP) {
-                  cat("\nadjust start values")
-                  ans.all.fit <- f.start.con(ans.all.fit, adjust = T, 
-                    fitted = F, tmp.quick = T)
-                  par.start <- ans.all.fit$par.start
-                }
-                if (ans.all.fit$par.start[1] == 0) {
-                  ans.all.fit <- f.start.con(ans.all.fit, adjust = T)
-                }
-            }
-            else {
-                ans.all.fit$regr.par <- par.start.tmp[-(1:max(fct3))]
-                ans.all.fit$par.start <- par.start.tmp
-                ans.all.fit$npar <- length(par.start.tmp)
-                ans.all.fit <- f.constr.con(ans.all.fit, tmp.quick = T)
-            }
-            ans.all.fit$increase <- increase.00
-            ans.all.fit <- f.nlminb(ans.all.fit, tmp.quick = T)
-            if (ans.all.fit$MLE[1] == 0) 
-                return(ans.all.fit)
-            ans.all.fit <- f.pars(ans.all.fit)
-            if (output) 
-                ans.all.fit$report.pars <- f.report.pars(ans.all.fit)
-            MLE <- ans.all.fit$MLE
-            ans.all.fit$regr.par <- MLE[(max(fct3) + 1):length(MLE)]
-            if (length(xans) > 1) {
-                RPF.vec <- ans.all.fit$regr.par[(length(ans.all.fit$regr.par) - 
-                  nr.dosecol + 2):length(ans.all.fit$regr.par)]
-                if (model.ans != 42) 
-                  x <- Mx %*% c(1, RPF.vec)
-                ans.all.fit$x <- x
-                ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
-                if (min(x) == 0) 
-                  dum.contr <- min(x[x > 0])/4
-                else dum.contr <- min(x)
-                ans.all.fit$xy.lim[1] <- dum.contr
-            }
-            if (interrupt && plot.type > 0 && !WAPP) {
-                ans.all.fit$heading <- ""
-                ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
-                ignore <- f.plot.con(ans.all.fit, display_plots = display_plots)
-                modelname <- ans.all.fit$modelname
-                if (display_plots == TRUE) {
-                  title(main = paste(modelname))
-                }
-                ans.all.fit$l.ty = 1
-                if (model.ans != 11) 
-                  f.lines.con(ans.all.fit, display_plots = display_plots)
-            }
+f.qfit <- function(
+  ans.all.fit,
+  plot.type,
+  plt.mns = 3,
+  output = TRUE,
+  display_plots = TRUE
+) {
+  plot.type.save <- ans.all.fit$plot.type
+  ans.all.fit$plot.type <- plot.type
+  ans.all.fit$plt.mns <- plt.mns
+  if (!output) {
+    ans.all.fit$plot.type <- 0
+  }
+  with(ans.all.fit, {
+    if (cont) {
+      increase.00 <- ans.all.fit$increase
+      ans.all.fit$text.par <- f.text.par(ans.all.fit)
+      par.start.tmp <- ans.all.fit$par.start
+      if (any(!is.finite(par.start.tmp))) {
+        ans.all.fit <- f.start.con(
+          ans.all.fit,
+          adjust = FALSE,
+          fitted = FALSE,
+          tmp.quick = TRUE
+        )
+        if (ans.all.fit$adjust.start && !WAPP) {
+          cat("\nadjust start values")
+          ans.all.fit <- f.start.con(
+            ans.all.fit,
+            adjust = TRUE,
+            fitted = FALSE,
+            tmp.quick = TRUE
+          )
+          par.start <- ans.all.fit$par.start
         }
-        if (!cont) {
-            ans.all.fit$nr.aa <- max(fct1)
-            ans.all.fit$nr.bb <- max(fct2)
-            if (model.type == 1) {
-                if (model.ans != 14) {
-                  cat("\n error in f.qfit: model.type and model.ans do not match\n")
-                  stop()
-                }
-                ans.all.fit <- f.start.bin(ans.all.fit, tmp.quick = T)
-                ans.all.fit <- f.nlminb(ans.all.fit, tmp.quick = T)
-                if (dtype == 6) {
-                  ans.all.fit$pi.full <- ans.all.fit$MLE[-1]
-                  ans.all.fit$alfa.start <- ans.all.fit$MLE[1]
-                }
-                if (interrupt && plot.type > 0 && hill == 0) {
-                  ans.all.fit$heading <- ""
-                  ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
-                  ans.all.fit$shift.tmp <- f.plot.frq(ans.all.fit)$shift.tmp
-                  title(main = paste(modelname))
-                }
-                ans.all.fit$npar <- length(ans.all.fit$MLE)
-            }
-            if (model.type == 2) {
-                par.start.tmp <- ans.all.fit$par.start
-                if (any(is.na(par.start.tmp)) || length(xans) > 
-                  1) {
-                  nrp <- ans.all.fit$nrp
-                  ans.all.fit$text.par <- f.text.par(ans.all.fit)
-                }
-                else {
-                  nrp <- length(par.start.tmp) - nth - 1
-                  if (dtype == 6) 
-                    nrp <- nrp - 1
-                  loglik.start <- -f.lik.cat(par.start.tmp, x, 
-                    y, kk, nn, dtype, fct1, fct2, nrp, nth, nr.aa, 
-                    nr.bb, model.ans, model.type, CES.cat = CES.cat, 
-                    ttt = ttt, twice = twice, CES = CES, decr.zz = decr.zz, 
-                    cc.inf = cc.inf, cens.up = cens.up, fct3 = fct3, 
-                    ces.ans = ces.ans, Mx = Mx, kk.tot = kk.tot, 
-                    nn.tot = nn.tot, quick.ans = quick.ans)
-                  if (is.na(loglik.start) | loglik.start == -1e+12) {
-                  }
-                  else {
-                    ans.all.fit$par.start <- par.start.tmp
-                    ans.all.fit$npar <- length(par.start.tmp)
-                  }
-                  ans.all.fit$text.par <- f.text.par(ans.all.fit)
-                }
-                ans.all.fit$nrp <- nrp
-                ans.all.fit <- f.constr.con(ans.all.fit, tmp.quick = T)
-                ans.all.fit <- f.nlminb(ans.all.fit, tmp.quick = T)
-                par.lst <- f.split.par(ans.all.fit$MLE, ans.all.fit$nrp, 
-                  ans.all.fit$nth, dtype, fct3)
-                regr.par <- par.lst$regr.par
-                th.par <- par.lst$th.par
-                sig.par <- par.lst$sig.par
-                ans.all.fit <- f.pars(ans.all.fit)
-                ans.all.fit$report.pars <- f.report.pars(ans.all.fit)
-                if (interrupt && plot.type > 0 && hill == 0) {
-                  print("f.qfit 000000")
-                  print("Attention to programmer: this part of the code is used, which is unexpected")
-                  ans.all.fit$heading <- ""
-                  ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
-                  ans.all.fit$regr.par <- regr.par
-                  ans.all.fit$th.par <- th.par
-                  ans.all.fit$sig.par <- sig.par
-                  if (dtype %in% 2:3) {
-                    ans.all.fit$plot.type <- plot.type.save
-                    f.lines.cat(ans.all.fit)
-                    ans.all.fit$regr.par <- regr.par
-                  }
-                  else {
-                    kk.dum <- 1
-                    f.plot.frq(ans.all.fit)
-                    f.lines.frq(ans.all.fit)
-                    ans.all.fit$regr.par <- regr.par
-                  }
-                  title(main = paste(modelname))
-                }
-            }
+        if (ans.all.fit$par.start[1] == 0) {
+          ans.all.fit <- f.start.con(ans.all.fit, adjust = TRUE)
         }
-        if (!is.finite(ans.all.fit$loglik)) 
-            ans.all.fit$loglik <- -1e+12
-        ans.all.fit$plot.type <- plot.type.save
-        ans.all.fit$fitted <- TRUE
+      } else {
+        ans.all.fit$regr.par <- par.start.tmp[-(1:max(fct3))]
+        ans.all.fit$par.start <- par.start.tmp
+        ans.all.fit$npar <- length(par.start.tmp)
+        ans.all.fit <- f.constr.con(ans.all.fit, tmp.quick = TRUE)
+      }
+      ans.all.fit$increase <- increase.00
+      ans.all.fit <- f.nlminb(ans.all.fit, tmp.quick = TRUE)
+      if (ans.all.fit$MLE[1] == 0) {
         return(ans.all.fit)
-    })
+      }
+      ans.all.fit <- f.pars(ans.all.fit)
+      if (output) {
+        ans.all.fit$report.pars <- f.report.pars(ans.all.fit)
+      }
+      MLE <- ans.all.fit$MLE
+      ans.all.fit$regr.par <- MLE[(max(fct3) + 1):length(MLE)]
+      if (length(xans) > 1) {
+        RPF.vec <- ans.all.fit$regr.par[
+          (length(ans.all.fit$regr.par) -
+            nr.dosecol +
+            2):length(ans.all.fit$regr.par)
+        ]
+        if (model.ans != 42) {
+          x <- Mx %*% c(1, RPF.vec)
+        }
+        ans.all.fit$x <- x
+        ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
+        if (min(x) == 0) {
+          dum.contr <- min(x[x > 0]) / 4
+        } else {
+          dum.contr <- min(x)
+        }
+        ans.all.fit$xy.lim[1] <- dum.contr
+      }
+      if (interrupt && plot.type > 0 && !WAPP) {
+        ans.all.fit$heading <- ""
+        ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
+        ignore <- f.plot.con(ans.all.fit, display_plots = display_plots)
+        modelname <- ans.all.fit$modelname
+        if (display_plots == TRUE) {
+          title(main = paste(modelname))
+        }
+        ans.all.fit$l.ty = 1
+        if (model.ans != 11) {
+          f.lines.con(ans.all.fit, display_plots = display_plots)
+        }
+      }
+    }
+    if (!cont) {
+      ans.all.fit$nr.aa <- max(fct1)
+      ans.all.fit$nr.bb <- max(fct2)
+      if (model.type == 1) {
+        if (model.ans != 14) {
+          cat("\n error in f.qfit: model.type and model.ans do not match\n")
+          stop()
+        }
+        ans.all.fit <- f.start.bin(ans.all.fit, tmp.quick = TRUE)
+        ans.all.fit <- f.nlminb(ans.all.fit, tmp.quick = TRUE)
+        if (dtype == 6) {
+          ans.all.fit$pi.full <- ans.all.fit$MLE[-1]
+          ans.all.fit$alfa.start <- ans.all.fit$MLE[1]
+        }
+        if (interrupt && plot.type > 0 && hill == 0) {
+          ans.all.fit$heading <- ""
+          ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
+          ans.all.fit$shift.tmp <- f.plot.frq(ans.all.fit)$shift.tmp
+          title(main = paste(modelname))
+        }
+        ans.all.fit$npar <- length(ans.all.fit$MLE)
+      }
+      if (model.type == 2) {
+        par.start.tmp <- ans.all.fit$par.start
+        if (any(is.na(par.start.tmp)) || length(xans) > 1) {
+          nrp <- ans.all.fit$nrp
+          ans.all.fit$text.par <- f.text.par(ans.all.fit)
+        } else {
+          nrp <- length(par.start.tmp) - nth - 1
+          if (dtype == 6) {
+            nrp <- nrp - 1
+          }
+          loglik.start <- -f.lik.cat(
+            par.start.tmp,
+            x,
+            y,
+            kk,
+            nn,
+            dtype,
+            fct1,
+            fct2,
+            nrp,
+            nth,
+            nr.aa,
+            nr.bb,
+            model.ans,
+            model.type,
+            CES.cat = CES.cat,
+            ttt = ttt,
+            twice = twice,
+            CES = CES,
+            decr.zz = decr.zz,
+            cc.inf = cc.inf,
+            cens.up = cens.up,
+            fct3 = fct3,
+            ces.ans = ces.ans,
+            Mx = Mx,
+            kk.tot = kk.tot,
+            nn.tot = nn.tot,
+            quick.ans = quick.ans
+          )
+          if (is.na(loglik.start) | loglik.start == -1e+12) {
+          } else {
+            ans.all.fit$par.start <- par.start.tmp
+            ans.all.fit$npar <- length(par.start.tmp)
+          }
+          ans.all.fit$text.par <- f.text.par(ans.all.fit)
+        }
+        ans.all.fit$nrp <- nrp
+        ans.all.fit <- f.constr.con(ans.all.fit, tmp.quick = TRUE)
+        ans.all.fit <- f.nlminb(ans.all.fit, tmp.quick = TRUE)
+        par.lst <- f.split.par(
+          ans.all.fit$MLE,
+          ans.all.fit$nrp,
+          ans.all.fit$nth,
+          dtype,
+          fct3
+        )
+        regr.par <- par.lst$regr.par
+        th.par <- par.lst$th.par
+        sig.par <- par.lst$sig.par
+        ans.all.fit <- f.pars(ans.all.fit)
+        ans.all.fit$report.pars <- f.report.pars(ans.all.fit)
+        if (interrupt && plot.type > 0 && hill == 0) {
+          print("f.qfit 000000")
+          print(
+            "Attention to programmer: this part of the code is used, which is unexpected"
+          )
+          ans.all.fit$heading <- ""
+          ans.all.fit$xy.lim[2:3] <- c(min(x), max(x))
+          ans.all.fit$regr.par <- regr.par
+          ans.all.fit$th.par <- th.par
+          ans.all.fit$sig.par <- sig.par
+          if (dtype %in% 2:3) {
+            ans.all.fit$plot.type <- plot.type.save
+            f.lines.cat(ans.all.fit)
+            ans.all.fit$regr.par <- regr.par
+          } else {
+            kk.dum <- 1
+            f.plot.frq(ans.all.fit)
+            f.lines.frq(ans.all.fit)
+            ans.all.fit$regr.par <- regr.par
+          }
+          title(main = paste(modelname))
+        }
+      }
+    }
+    if (!is.finite(ans.all.fit$loglik)) {
+      ans.all.fit$loglik <- -1e+12
+    }
+    ans.all.fit$plot.type <- plot.type.save
+    ans.all.fit$fitted <- TRUE
+    return(ans.all.fit)
+  })
 }
 
 
-f.text.par <- function(ans.all, brief = F) {
+f.text.par <- function(ans.all, brief = FALSE) {
     with(ans.all, {
         if (brief) {
             nr.var <- 1
@@ -4418,7 +4637,7 @@ f.text.par <- function(ans.all, brief = F) {
 }
 
 
-f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_plots = TRUE) {
+f.start.con <- function(ans.all, adjust = FALSE, fitted = FALSE, tmp.quick = FALSE, display_plots = TRUE) {
     if (ans.all$model.ans == 0) {
         cat("\n\nchoose model first\n")
         return(ans.all)
@@ -4450,14 +4669,14 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 loglik.start <- -f.lik.con(par.start, x, y, dtype, 
                   fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
                   nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                  ttt = ttt, trace = F, fct4 = fct4, fct5 = fct5, 
+                  ttt = ttt, trace = FALSE, fct4 = fct4, fct5 = fct5, 
                   cens.up = cens.up, par.tmp = NA, increase = increase, 
                   ref.lev = ref.lev, sign.q = sign.q, ans.m6.sd = ans.m6.sd, 
                   Mx = Mx, x1 = 1, x2 = x2, cc.inf = cc.inf)
                 cat("\n\nlog-likelihood at start values: ", round(loglik.start, 
                   2), "\n\n")
             })
-            ans.all <- f.constr.con(ans.all, tmp.quick = T)
+            ans.all <- f.constr.con(ans.all, tmp.quick = TRUE)
             return(ans.all)
         }
     }
@@ -4483,16 +4702,16 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
         dd.upp <- 10
         if (dtype == 5) 
             dtype <- 1
-        trace.tmp <- F
+        trace.tmp <- FALSE
         if (quick.ans == 1) 
-            trace.tmp <- T
+            trace.tmp <- TRUE
         y.sort <- yy[order(x)]
         x.sort <- sort(x)
         lower.var <- 1e-06
         upper.var <- 10
         if (dtype %in% c(25, 250, 26, 260)) 
             upper.var <- Inf
-        if (adjust == F) {
+        if (adjust == FALSE) {
             if (dtype %in% c(10, 15, 250, 260) & length(x) < 10) {
                 xtmp <- x.sort
                 ytmp <- y.sort
@@ -4508,15 +4727,15 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 for (k in 1:5) {
                   e2 <- e2 + sub
                   qq <- x.sort[e1:e2]
-                  xtmp[k] <- mean(qq[is.na(qq) == F])
+                  xtmp[k] <- mean(qq[is.na(qq) == FALSE])
                   qq <- y.sort[e1:e2]
                   if (dtype %in% c(25, 250)) 
-                    ytmp[k] <- mean(qq[is.na(qq) == F])
+                    ytmp[k] <- mean(qq[is.na(qq) == FALSE])
                   if (dtype %in% c(26, 260)) 
-                    ytmp[k] <- mean(sqrt(qq[is.na(qq) == F]))^2
+                    ytmp[k] <- mean(sqrt(qq[is.na(qq) == FALSE]))^2
                   else if (!(dtype %in% c(25, 26, 250, 260))) 
                     ytmp[k] <- exp(mean(logb(qq[is.na(qq) == 
-                      F])))
+                      FALSE])))
                   e1 <- e1 + sub
                 }
             }
@@ -4613,7 +4832,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 aa <- mean(ytmp)
                 regr.par <- rep(aa, nr.aa)
             }, {
-                if (fitted == T) {
+                if (fitted == TRUE) {
                   aa <- par.start[nr.var + 1]
                   bb <- par.start[nr.var + nr.aa + 1]
                 }
@@ -4701,11 +4920,11 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 regr.par <- f.regr.par.full(ans.all)
                 ans.all$regr.par <- regr.par
             }, {
-                if (fitted == T) {
+                if (fitted == TRUE) {
                   aa <- par.start[nr.var + 1]
                   bb <- par.start[nr.var + nr.aa + 1]
                 }
-                if (fitted == F || is.na(bb) || bb == 0) {
+                if (fitted == FALSE || is.na(bb) || bb == 0) {
                   if (is.na(bb) || bb == 0) bb <- mean(xtmp)
                   CED <- (1/bb) * logb(CES + 1)
                   CED <- abs(CED)
@@ -4714,11 +4933,11 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 }
                 regr.par <- c(rep(aa, nr.aa), rep(CED, nr.bb))
             }, {
-                if (fitted == T) {
+                if (fitted == TRUE) {
                   aa <- par.start[nr.var + 1]
                   bb <- par.start[nr.var + nr.aa + 1]
                 }
-                if (fitted == F || is.na(bb) || bb == 0) {
+                if (fitted == FALSE || is.na(bb) || bb == 0) {
                   if (is.na(bb) || bb == 0) bb <- mean(xtmp)
                   CED <- (1/bb) * logb(CES + 1)
                   CED <- abs(CED)
@@ -4729,12 +4948,12 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 regr.par <- c(rep(aa, nr.aa), rep(CED, nr.bb), 
                   rep(dd, nr.dd))
             }, {
-                if (fitted == T) {
+                if (fitted == TRUE) {
                   aa <- par.start[nr.var + 1]
                   bb <- par.start[nr.var + nr.aa + 1]
                   cc <- 0
                 }
-                if (fitted == F || is.na(bb) || bb == 0) {
+                if (fitted == FALSE || is.na(bb) || bb == 0) {
                   cc <- ytmp[top]/aa
                   if (cont) {
                     if (CES < 0 & cc > 1 + CES) {
@@ -5137,11 +5356,11 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                     100)
                 }
             }, {
-                if (fitted == T) {
+                if (fitted == TRUE) {
                   aa <- par.start[nr.var + 1]
                   bb <- par.start[nr.var + nr.aa + 1]
                 }
-                if (fitted == F || is.na(bb) || bb == 0) {
+                if (fitted == FALSE || is.na(bb) || bb == 0) {
                   aa <- mean(logb(yy))
                   bb <- logb(ytmp[5]/ytmp[1])/(xtmp[top] - xtmp[1])
                 }
@@ -5208,7 +5427,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 bb <- 1/bb
                 dd <- 1
                 bb <- bb/(log(2))^(1/dd)
-                if (fitted == F) {
+                if (fitted == FALSE) {
                   cc <- 1.01 * ytmp[top]/aa
                   if (!is.finite(bb)) bb <- xtmp[5]/100
                 } else {
@@ -5401,7 +5620,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 ans.all$upper <- c(upper.var, Inf, Inf, Inf)
             }, {
                 dd <- 1
-                if (fitted == F) {
+                if (fitted == FALSE) {
                   cc <- ytmp[top]/aa
                   if (!is.finite(bb)) bb <- xtmp[5]/100
                 } else {
@@ -5448,10 +5667,10 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
             ans.all$nrp <- length(text.par) - nr.var
             if (!(dtype %in% c(10, 15, 250, 260))) {
                 expect.trans <- f.expect.con(model.ans, x, regr.par, 
-                  fct1, fct2, fct3, fct4, fct5, name = F, CES = CES, 
+                  fct1, fct2, fct3, fct4, fct5, name = FALSE, CES = CES, 
                   twice = twice, ttt = ttt, y = yy, yy == yy, 
                   increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
-                  trace.expect = F, par.start = par.start, sign.q = sign.q, 
+                  trace.expect = FALSE, par.start = par.start, sign.q = sign.q, 
                   ans.m6.sd = ans.m6.sd, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
                 yy.trans <- yy
                 if (sum(expect.trans <= 0) > 0 && !(dtype %in% 
@@ -5475,7 +5694,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                   else if (!WAPP) {
                     cat("\n adjust start values\n")
                     ans.all$text.par <- text.par
-                    ans.all$adjust.start <- T
+                    ans.all$adjust.start <- TRUE
                   }
                   return(ans.all)
                 }
@@ -5518,10 +5737,10 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = 1, x2 = x2, 
                 cc.inf = cc.inf, incr.decr.no = incr.decr.no), 
                 loglik.start <- f.lik.biv(par.start, x, yy, fct1, 
-                  fct2, model.ans, trace = F, twice = twice))
+                  fct2, model.ans, trace = FALSE, twice = twice))
             if (is.na(loglik.start) | loglik.start < -1e+20) {
                 cat("\nATTENTION: You need to adjust start values before fitting the model...\n")
-                ans.all$adjust.start <- T
+                ans.all$adjust.start <- TRUE
                 if (!WAPP) {
                   return(ans.all)
                 }
@@ -5536,9 +5755,9 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                   round(loglik.start, 2), "\n\n")
             }
             ans.all$loglik.start <- loglik.start
-            ans.all <- f.constr.con(ans.all, tmp.quick = T)
+            ans.all <- f.constr.con(ans.all, tmp.quick = TRUE)
         }
-        if (adjust == T) {
+        if (adjust == TRUE) {
             ans.all.plt <- ans.all
             switch(fit.ans, ans.all.plt$regr.par <- par.start[-(1:ans.all$nr.var)], 
                 ans.all.plt$regr.par <- par.start)
@@ -5571,7 +5790,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                   ref.lev = ref.lev, sign.q = sign.q, Mx = Mx, 
                   x1 = x1, x2 = x2, ans.m6.sd = ans.m6.sd, cc.inf = cc.inf, 
                   incr.decr.no = incr.decr.no), loglik.new <- f.lik.biv(par.start, 
-                  x, yy, fct1, fct2, model.ans, trace = F, twice = twice))
+                  x, yy, fct1, fct2, model.ans, trace = FALSE, twice = twice))
                 cat("\nnew log-likelihood: ", round(loglik.new, 
                   3), "\n")
                 cat("=======================================================\n\n")
@@ -5638,7 +5857,7 @@ f.start.con <- function(ans.all, adjust = F, fitted = F, tmp.quick = F, display_
                 loglik.old <- loglik.new
             }
             ans.all$par.start <- par.start
-            ans.all$adjust.start <- F
+            ans.all$adjust.start <- FALSE
             ans.all$loglik.start <- loglik.new
         }
         ans.all$nr.var <- nr.var
@@ -5822,20 +6041,20 @@ f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = 
                 if (!is.finite(x.lim.tmp)[1]) 
                   x.lim.tmp[1] <- log10(dum.contr)
                 if (is.na(xy.lim[4])) 
-                  y.lim <- c(min(y.plt, na.rm = T), max(y.plt, 
-                    na.rm = T))
-                y.lim.tmp <- c(min(y.plt, na.rm = T), max(y.plt, 
-                  na.rm = T))
+                  y.lim <- c(min(y.plt, na.rm = TRUE), max(y.plt, 
+                    na.rm = TRUE))
+                y.lim.tmp <- c(min(y.plt, na.rm = TRUE), max(y.plt, 
+                  na.rm = TRUE))
             }
-        if (max(Vdetlim, na.rm = T) > 0 & plot.type < 9) {
+        if (max(Vdetlim, na.rm = TRUE) > 0 & plot.type < 9) {
           if (display_plots == TRUE) {
             abline(detlim.plt.1, 0, lty = 3)
             abline(detlim.plt.2, 0, lty = 3)
           }
         }
         if (!is.na(cens.up) & plot.type < 9) {
-            lines(c(min(xy.plt$x.plt, na.rm = T), max(xy.plt$x.plt, 
-                na.rm = T)), rep(cens.up, 2), lty = 3)
+            lines(c(min(xy.plt$x.plt, na.rm = TRUE), max(xy.plt$x.plt, 
+                na.rm = TRUE)), rep(cens.up, 2), lty = 3)
         }
         if (any(label != 0)) {
             if (plot.type == 10) 
@@ -5854,443 +6073,581 @@ f.plot.con <- function(ans.all, sep = FALSE, display_plots = TRUE, save_plots = 
 
 
 f.data.plt.con <- function(ans.all, sep = FALSE) {
-    ans.all$sep <- sep
-    with(ans.all, {
-        if (is.na(cex.2)) {
-            if (plt.mns == 2) 
-                cex.2 <- 1
-            else cex.2 <- 1.5
+  ans.all$sep <- sep
+  with(ans.all, {
+    if (is.na(cex.2)) {
+      if (plt.mns == 2) {
+        cex.2 <- 1
+      } else {
+        cex.2 <- 1.5
+      }
+    }
+    if (dtype %in% c(10, 15, 250, 260)) {
+      plt.mns <- 3
+    }
+    if (covar.no > 0) {
+      nr.bb <- max(covariate)
+    }
+    fct2.save <- fct2
+    fct2.txt.save <- fct2.txt
+    if (length(xans) > 1) {
+      fct2 <- as.numeric(as.factor(displ.fact))
+      nr.bb <- max(fct2)
+      fct1 <- rep(1, length(fct2))
+      nr.aa <- 1
+      fct3 <- rep(1, length(fct2))
+      fct4 <- rep(1, length(fct2))
+      fct5 <- rep(1, length(fct2))
+      if (model.ans == 42) {
+        nr.bb <- 2
+      }
+    } else {
+      if (covar.no > 0) {
+        displ.fact <- covariate
+      }
+      if (max(as.numeric(as.factor(displ.fact))) > 1) {
+        fct2 <- as.numeric(as.factor(displ.fact))
+        ans.all$fct2 <- fct2
+        ans.all$fct2.txt <- levels(factor(displ.fact))
+        nr.bb <- max(fct2)
+      }
+      if (tans == 0) {
+        if (ans.m6.sd != 2) {
+          if (model.ans %in% c(31, 33, 57)) {
+            gr.txt <- f.pars.m31(ans.all)$gr.txt
+          } else {
+            gr.txt <- f.pars(ans.all)$gr.txt
+          }
+          ans.all$gr.txt.saved <- gr.txt
         }
-        if (dtype %in% c(10, 15, 250, 260)) 
-            plt.mns <- 3
-        if (covar.no > 0) 
-            nr.bb <- max(covariate)
-        fct2.save <- fct2
-        fct2.txt.save <- fct2.txt
-        if (length(xans) > 1) {
-            fct2 <- as.numeric(as.factor(displ.fact))
-            nr.bb <- max(fct2)
-            fct1 <- rep(1, length(fct2))
-            nr.aa <- 1
-            fct3 <- rep(1, length(fct2))
-            fct4 <- rep(1, length(fct2))
-            fct5 <- rep(1, length(fct2))
-            if (model.ans == 42) 
-                nr.bb <- 2
+        if (ans.m6.sd == 2) {
+          gr.txt <- ans.all$gr.txt.saved
         }
-        else {
-            if (covar.no > 0) 
-                displ.fact <- covariate
-            if (max(as.numeric(as.factor(displ.fact))) > 1) {
-                fct2 <- as.numeric(as.factor(displ.fact))
-                ans.all$fct2 <- fct2
-                ans.all$fct2.txt <- levels(factor(displ.fact))
-                nr.bb <- max(fct2)
+      }
+      if (nr.aa == 1 && nr.bb == 1 && nr.cc == 1 && nr.dd == 1 && nr.var > 1) {
+        fct2 <- fct3
+        gr.txt <- fct3.txt
+        nr.bb <- max(fct2)
+      }
+      if (tans > 0 && sep) {
+        gr.txt <- ""
+      }
+    }
+    dum.contr <- xy.lim[1]
+    dum.zero.resp <- xy.lim[6]
+    x.lim <- xy.lim[2:3]
+    y.lim <- xy.lim[4:5]
+    if (!is.na(cens.up)) {
+      y.lim <- c(xy.lim[4], max(xy.lim[5], 1.5 * cens.up))
+    }
+    if (1) {
+      low.x <- x.lim[1]
+      upp.x <- x.lim[2]
+      yy <- yy[x >= low.x & x <= upp.x]
+      nn <- nn[x >= low.x & x <= upp.x]
+      if (length(label) > 1) {
+        ans.all$label <- label[x >= low.x & x <= upp.x]
+      }
+      sd2.log <- sd2.log[x >= low.x & x <= upp.x]
+      if (length(fct1) > 1) {
+        fct1 <- fct1[x >= low.x & x <= upp.x]
+      }
+      if (length(fct2) > 1) {
+        fct2 <- fct2[x >= low.x & x <= upp.x]
+      }
+      if (length(fct3) > 1) {
+        fct3 <- fct3[x >= low.x & x <= upp.x]
+      }
+      if (length(fct4) > 1) {
+        fct4 <- fct4[x >= low.x & x <= upp.x]
+      }
+      if (length(fct3) > 1) {
+        fct5 <- fct5[x >= low.x & x <= upp.x]
+      }
+      x <- x[x >= low.x & x <= upp.x]
+    }
+    mark <- c(1:2, 4:25, 33:500)
+    f.means <- function(xx, yy, dtype, plot.type, CI = FALSE, sd2.log, nn) {
+      if (exists("track2")) {
+        print("f.means within f.data.plt.con")
+      }
+      mean.y <- yy
+      if (dtype %in% c(1, 5)) {
+        mean.y <- exp(tapply(logb(yy), xx, mean))
+      }
+      if (dtype %in% c(26)) {
+        mean.y <- (tapply(sqrt(yy), xx, mean))^2
+      }
+      if (dtype %in% c(25)) {
+        mean.y <- tapply(yy, xx, mean)
+      }
+      if (plot.type %in% c(1, 2, 5, 10, 11, 15)) {
+        mean.y.plt <- mean.y
+      }
+      if (plot.type %in% c(3, 4, 6)) {
+        mean.y.plt <- log10(mean.y)
+      }
+      if (plot.type %in% c(7, 8)) {
+        mean.y.plt <- sqrt(mean.y)
+      }
+      if (!CI) {
+        return(mean.y.plt)
+      }
+      if (CI) {
+        f.var <- function(dtype, xx, yy, sd2.log, nn) {
+          if (exists("track2")) {
+            print("f.var within f.data.plt.con")
+          }
+          yy <- yy[order(xx)]
+          xx <- sort(xx)
+          if (dtype %in% c(10, 15, 250)) {
+            SS <- sum(sd2.log * (nn - 1))
+            df <- sum(nn - 1)
+            if (is.na(df)) {
+              cat(
+                "\nATTENTION: variable nn appears to contain NAs;\nthis might be solved by setting ans.all$covar.no equal to 0\n\n"
+              )
             }
-            if (tans == 0) {
-                if (ans.m6.sd != 2) {
-                  if (model.ans %in% c(31, 33, 57)) 
-                    gr.txt <- f.pars.m31(ans.all)$gr.txt
-                  else gr.txt <- f.pars(ans.all)$gr.txt
-                  ans.all$gr.txt.saved <- gr.txt
+            var.within <- SS / df
+          } else {
+            if (dtype %in% c(1, 5)) {
+              yy <- log10(yy)
+            }
+            if (dtype %in% c(26)) {
+              yy <- sqrt(yy)
+            }
+            mn <- tapply(yy, xx, mean)
+            nn <- tapply(yy, xx, length)
+            Vmn <- rep(mn[1], nn[1])
+            if (length(mn) > 1) {
+              for (ii in 2:length(mn)) {
+                Vmn <- c(Vmn, rep(mn[ii], nn[ii]))
+              }
+            }
+            resid <- yy - Vmn
+            df <- sum(nn - 1)
+            if (df == 0) {
+              cat("\nconf intervals cannot be calculated, df = 0\n")
+              var.within <- NA
+            } else {
+              var.within <- (sum(nn) - 1) * var(resid) / df
+            }
+          }
+          Vsem <- sqrt(var.within / nn)
+          out.lst <- list(Vsem = Vsem, df = df, var.within = var.within)
+          return(out.lst)
+        }
+        var.out <- f.var(dtype, xx, yy, sd2.log, nn)
+        Vsem <- var.out$Vsem
+        df <- var.out$df
+        if (df > 0) {
+          Vconf <- qt(0.975, df) * Vsem
+        } else {
+          Vconf <- NA
+        }
+        if (dtype %in% c(1, 5, 10, 15)) {
+          conf.L <- mean.y / exp(Vconf)
+          conf.U <- mean.y * exp(Vconf)
+        }
+        if (dtype %in% c(25, 250)) {
+          conf.L <- mean.y - Vconf
+          conf.U <- mean.y + Vconf
+        }
+        if (dtype %in% c(26)) {
+          conf.L <- (sqrt(mean.y) - Vconf)^2
+          conf.U <- (sqrt(mean.y) + Vconf)^2
+        }
+        if (plot.type %in% c(3, 4, 6)) {
+          conf.L <- log10(conf.L)
+          conf.U <- log10(conf.U)
+        }
+        if (plot.type %in% c(7, 8)) {
+          conf.L <- sqrt(conf.L)
+          conf.U <- sqrt(conf.U)
+        }
+        y.lim.plt <- c(min(conf.L), max(conf.U))
+        out.lst <- list(
+          conf.L = conf.L,
+          conf.U = conf.U,
+          y.lim.plt = y.lim.plt,
+          var.within = var.out$var.within
+        )
+        return(out.lst)
+      }
+    }
+    detlim.plt.1 <- NA
+    detlim.plt.2 <- NA
+    if (max(Vdetlim, na.rm = TRUE) > 0) {
+      detlim.plt.1 <- min(Vdetlim[Vdetlim > 0], na.rm = TRUE)
+      detlim.plt.2 <- max(Vdetlim[Vdetlim > 0], na.rm = TRUE)
+    }
+    x.plt <- NA
+    y.plt <- NA
+    if (plot.type == 0) {
+      cat("\nTechnical note: plot.type has value 0, in f.data.plt.con\n")
+      return(ans.all)
+    }
+    switch(
+      plot.type,
+      {
+        x.plt <- x
+        y.plt <- yy
+        xleg <- x.leg
+        yleg <- y.leg
+        x.lim.plt <- x.lim
+        y.lim.plt <- y.lim
+      },
+      {
+        x.plt <- x
+        x.plt[x.plt == 0] <- dum.contr
+        x.plt <- log10(x.plt)
+        y.plt <- yy
+        if (x.leg != "") {
+          xleg <- paste("log10-", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        yleg <- y.leg
+        y.lim.plt <- y.lim
+        x.lim.plt <- log10(x.lim)
+        if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
+      },
+      {
+        x.plt <- x
+        y.plt <- log10(yy)
+        cens.up <- log10(cens.up)
+        xleg <- x.leg
+        if (y.leg != "") {
+          yleg <- paste("log10-", y.leg, sep = "")
+        } else {
+          yleg <- ""
+        }
+        if (max(Vdetlim, na.rm = TRUE) > 0) {
+          detlim.plt.1 <- log10(detlim.plt.1)
+          detlim.plt.2 <- log10(detlim.plt.2)
+        }
+        x.lim.plt <- x.lim
+        y.lim.plt <- log10(y.lim)
+        if (!is.finite(y.lim.plt)[1]) y.lim.plt[1] <- log10(dum.zero.resp)
+      },
+      {
+        x.plt <- x
+        x.plt[x.plt == 0] <- dum.contr
+        x.plt <- log10(x.plt)
+        y.plt <- log10(yy)
+        if (is.na(y.lim[1])) {
+          y.lim <- xy.lim[4:5]
+        }
+        cens.up <- log10(cens.up)
+        if (x.leg != "") {
+          xleg <- paste("log10-", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        if (y.leg != "") {
+          yleg <- paste("log10-", y.leg, sep = "")
+        } else {
+          yleg <- ""
+        }
+        if (max(Vdetlim, na.rm = TRUE) > 0) {
+          detlim.plt.1 <- log10(detlim.plt.1)
+          detlim.plt.2 <- log10(detlim.plt.2)
+        }
+        y.lim.plt <- log10(y.lim)
+        x.lim.plt <- log10(x.lim)
+        if (!is.finite(x.lim.plt)[1]) {
+          x.lim.plt[1] <- log10(dum.contr)
+        }
+        if (!is.finite(y.lim.plt)[1]) y.lim.plt[1] <- log10(dum.zero.resp)
+      },
+      {
+        y.plt <- yy
+        x.plt <- sqrt(x)
+        if (x.leg != "") {
+          xleg <- paste("sqrt-", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        yleg <- y.leg
+        y.lim.plt <- y.lim
+        x.lim.plt <- sqrt(x.lim)
+      },
+      {
+        x.plt <- sqrt(x)
+        y.plt <- log10(yy)
+        cens.up <- log10(cens.up)
+        if (is.na(y.lim[1])) {
+          y.lim <- xy.lim[4:5]
+        }
+        if (y.leg != "") {
+          yleg <- paste("log10-", y.leg, sep = "")
+        } else {
+          yleg <- ""
+        }
+        if (x.leg != "") {
+          xleg <- paste("sqrt-", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        if (max(Vdetlim, na.rm = TRUE) > 0) {
+          detlim.plt.1 <- log10(detlim.plt.1)
+          detlim.plt.2 <- log10(detlim.plt.2)
+        }
+        x.lim.plt <- sqrt(x.lim)
+        y.lim.plt <- log10(y.lim)
+        if (!is.finite(y.lim.plt)[1]) y.lim.plt[1] <- log10(dum.zero.resp)
+      },
+      {
+        x.plt <- x
+        y.plt <- sqrt(yy)
+        cens.up <- sqrt(cens.up)
+        if (is.na(y.lim[1])) {
+          y.lim <- xy.lim[4:5]
+        }
+        xleg <- x.leg
+        if (y.leg != "") {
+          yleg <- paste("sqrt-", y.leg, sep = "")
+        } else {
+          yleg <- ""
+        }
+        if (max(Vdetlim, na.rm = TRUE) > 0) {
+          detlim.plt.1 <- sqrt(detlim.plt.1)
+          detlim.plt.2 <- sqrt(detlim.plt.2)
+        }
+        x.lim.plt <- x.lim
+        y.lim.plt <- sqrt(y.lim)
+      },
+      {
+        x.plt <- x
+        x.plt[x.plt == 0] <- dum.contr
+        x.plt <- log10(x.plt)
+        y.plt <- sqrt(yy)
+        cens.up <- sqrt(cens.up)
+        if (is.na(y.lim[1])) {
+          y.lim <- xy.lim[4:5]
+        }
+        if (y.leg != "") {
+          yleg <- paste("sqrt-", y.leg, sep = "")
+        } else {
+          yleg <- ""
+        }
+        if (x.leg != "") {
+          xleg <- paste("log10-", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        if (max(Vdetlim, na.rm = TRUE) > 0) {
+          detlim.plt.1 <- sqrt(detlim.plt.1)
+          detlim.plt.2 <- sqrt(detlim.plt.2)
+        }
+        y.lim.plt <- sqrt(y.lim)
+        x.lim.plt <- log10(x.lim)
+        if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
+      },
+      {
+        ans.all$y.plt <- regr.resid
+        ans.all$y.lim.plt <- c(
+          min(ans.all$y.plt, na.rm = TRUE),
+          max(ans.all$y.plt, na.rm = TRUE)
+        )
+        ans.all$cex.1 <- cex.1
+        return(ans.all)
+      },
+      {
+        y.plt <- regr.resid
+        x.plt <- x
+        x.plt[x.plt == 0] <- dum.contr
+        x.plt <- log10(x.plt)
+        x.plt <- x.plt[!is.na(y.plt)]
+        if (x.leg != "") {
+          xleg <- paste("log10-", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        yleg <- "residual"
+        x.lim.plt <- log10(x.lim)
+        if (!is.finite(x.lim.plt)[1]) {
+          x.lim.plt[1] <- log10(dum.contr)
+        }
+        y.lim.plt <- c(min(y.plt, na.rm = TRUE), max(y.plt, na.rm = TRUE))
+        if (plt.mns == 3) plt.mns <- 2
+      },
+      {
+        x.plt <- x
+        if (x.leg != "") {
+          xleg <- paste("log10 of normalized ", x.leg, sep = "")
+        } else {
+          xleg <- ""
+        }
+        y.plt <- yy
+        x.plt <- x.plt[!is.na(y.plt)]
+        y.plt <- y.plt[!is.na(y.plt)]
+        yleg <- "residual"
+        yleg <- "residual"
+        x.lim.plt <- log10(x.lim)
+        if (!is.finite(x.lim.plt)[1]) {
+          x.lim.plt[1] <- log10(dum.contr)
+        }
+        if (is.na(xy.lim[4])) {
+          y.lim <- c(min(y.plt, na.rm = TRUE), max(y.plt, na.rm = TRUE))
+        }
+        y.lim.plt <- c(min(y.plt, na.rm = TRUE), max(y.plt, na.rm = TRUE))
+      }
+    )
+    shift.plt <- 0
+    shift.tmp <- 0
+    if (shift > 0) {
+      shift.plt <- (max(x.plt, na.rm = TRUE) - min(x.plt, na.rm = TRUE)) / shift
+      x.lim.plt[2] <- x.lim.plt[2] + shift.plt
+    }
+    if (gr.txt[1] == "" || is.na(gr.txt[1])) {
+      if (covar.no > 0 && !sep) {
+        gr.txt <- fct3.txt
+      } else if (max(fct1) > 1) {
+        gr.txt <- fct1.txt
+      } else if (max(fct2.save) > 1) {
+        gr.txt <- fct2.txt
+      } else if (max(fct3) > 1) {
+        gr.txt <- fct3.txt
+      }
+    }
+    if (CI.plt) {
+      for (jj in 1:nr.bb) {
+        for (ii in 1:nr.aa) {
+          for (kk in 1:nr.cc) {
+            for (ll in 1:nr.dd) {
+              lst <- fct1 == ii & fct2 == jj & fct4 == kk & fct5 == ll
+              x.part <- x.plt[lst]
+              y.part <- y.plt[lst]
+              y.tmp <- yy[lst]
+              if (plot.type == 11) {
+                x.part <- (x.part / max(x.part, na.rm = TRUE))
+                x.part[x.part == 0] <- dum.contr
+                x.part <- log10(x.part)
+              }
+              if (length(y.part) > 0) {
+                if (dtype %in% c(10, 15, 250)) {
+                  sd2.log.part <- sd2.log[lst]
+                  nn.part <- nn[lst]
                 }
-                if (ans.m6.sd == 2) 
-                  gr.txt <- ans.all$gr.txt.saved
-            }
-            if (nr.aa == 1 && nr.bb == 1 && nr.cc == 1 && nr.dd == 
-                1 && nr.var > 1) {
-                fct2 <- fct3
-                gr.txt <- fct3.txt
-                nr.bb <- max(fct2)
-            }
-            if (tans > 0 && sep) 
-                gr.txt <- ""
-        }
-        dum.contr <- xy.lim[1]
-        dum.zero.resp <- xy.lim[6]
-        x.lim <- xy.lim[2:3]
-        y.lim <- xy.lim[4:5]
-        if (!is.na(cens.up)) 
-            y.lim <- c(xy.lim[4], max(xy.lim[5], 1.5 * cens.up))
-        if (1) {
-            low.x <- x.lim[1]
-            upp.x <- x.lim[2]
-            yy <- yy[x >= low.x & x <= upp.x]
-            nn <- nn[x >= low.x & x <= upp.x]
-            if (length(label) > 1) 
-                ans.all$label <- label[x >= low.x & x <= upp.x]
-            sd2.log <- sd2.log[x >= low.x & x <= upp.x]
-            if (length(fct1) > 1) 
-                fct1 <- fct1[x >= low.x & x <= upp.x]
-            if (length(fct2) > 1) 
-                fct2 <- fct2[x >= low.x & x <= upp.x]
-            if (length(fct3) > 1) 
-                fct3 <- fct3[x >= low.x & x <= upp.x]
-            if (length(fct4) > 1) 
-                fct4 <- fct4[x >= low.x & x <= upp.x]
-            if (length(fct3) > 1) 
-                fct5 <- fct5[x >= low.x & x <= upp.x]
-            x <- x[x >= low.x & x <= upp.x]
-        }
-        mark <- c(1:2, 4:25, 33:500)
-        f.means <- function(xx, yy, dtype, plot.type, CI = F, 
-            sd2.log, nn) {
-            if (exists("track2")) 
-                print("f.means within f.data.plt.con")
-            mean.y <- yy
-            if (dtype %in% c(1, 5)) 
-                mean.y <- exp(tapply(logb(yy), xx, mean))
-            if (dtype %in% c(26)) 
-                mean.y <- (tapply(sqrt(yy), xx, mean))^2
-            if (dtype %in% c(25)) 
-                mean.y <- tapply(yy, xx, mean)
-            if (plot.type %in% c(1, 2, 5, 10, 11, 15)) 
-                mean.y.plt <- mean.y
-            if (plot.type %in% c(3, 4, 6)) 
-                mean.y.plt <- log10(mean.y)
-            if (plot.type %in% c(7, 8)) 
-                mean.y.plt <- sqrt(mean.y)
-            if (!CI) 
-                return(mean.y.plt)
-            if (CI) {
-                f.var <- function(dtype, xx, yy, sd2.log, nn) {
-                  if (exists("track2")) 
-                    print("f.var within f.data.plt.con")
-                  yy <- yy[order(xx)]
-                  xx <- sort(xx)
-                  if (dtype %in% c(10, 15, 250)) {
-                    SS <- sum(sd2.log * (nn - 1))
-                    df <- sum(nn - 1)
-                    if (is.na(df)) 
-                      cat("\nATTENTION: variable nn appears to contain NAs;\nthis might be solved by setting ans.all$covar.no equal to 0\n\n")
-                    var.within <- SS/df
-                  }
-                  else {
-                    if (dtype %in% c(1, 5)) 
-                      yy <- log10(yy)
-                    if (dtype %in% c(26)) 
-                      yy <- sqrt(yy)
-                    mn <- tapply(yy, xx, mean)
-                    nn <- tapply(yy, xx, length)
-                    Vmn <- rep(mn[1], nn[1])
-                    if (length(mn) > 1) {
-                      for (ii in 2:length(mn)) Vmn <- c(Vmn, 
-                        rep(mn[ii], nn[ii]))
-                    }
-                    resid <- yy - Vmn
-                    df <- sum(nn - 1)
-                    if (df == 0) {
-                      cat("\nconf intervals cannot be calculated, df = 0\n")
-                      var.within <- NA
-                    }
-                    else var.within <- (sum(nn) - 1) * var(resid)/df
-                  }
-                  Vsem <- sqrt(var.within/nn)
-                  out.lst <- list(Vsem = Vsem, df = df, var.within = var.within)
-                  return(out.lst)
+                out.lst <- f.means(
+                  x.part,
+                  y.tmp,
+                  dtype,
+                  plot.type,
+                  CI = TRUE,
+                  sd2.log = sd2.log.part,
+                  nn = nn.part
+                )
+                if (!is.na(out.lst$conf.L[1])) {
+                  y.lim.CI <- out.lst$y.lim.plt
+                  y.lim.plt[1] <- min(y.lim.CI[1], y.lim.plt[1], na.rm = TRUE)
+                  y.lim.plt[2] <- max(y.lim.CI[2], y.lim.plt[2], na.rm = TRUE)
                 }
-                var.out <- f.var(dtype, xx, yy, sd2.log, nn)
-                Vsem <- var.out$Vsem
-                df <- var.out$df
-                if (df > 0) 
-                  Vconf <- qt(0.975, df) * Vsem
-                else Vconf <- NA
-                if (dtype %in% c(1, 5, 10, 15)) {
-                  conf.L <- mean.y/exp(Vconf)
-                  conf.U <- mean.y * exp(Vconf)
-                }
-                if (dtype %in% c(25, 250)) {
-                  conf.L <- mean.y - Vconf
-                  conf.U <- mean.y + Vconf
-                }
-                if (dtype %in% c(26)) {
-                  conf.L <- (sqrt(mean.y) - Vconf)^2
-                  conf.U <- (sqrt(mean.y) + Vconf)^2
-                }
-                if (plot.type %in% c(3, 4, 6)) {
-                  conf.L <- log10(conf.L)
-                  conf.U <- log10(conf.U)
-                }
-                if (plot.type %in% c(7, 8)) {
-                  conf.L <- sqrt(conf.L)
-                  conf.U <- sqrt(conf.U)
-                }
-                y.lim.plt <- c(min(conf.L), max(conf.U))
-                out.lst <- list(conf.L = conf.L, conf.U = conf.U, 
-                  y.lim.plt = y.lim.plt, var.within = var.out$var.within)
-                return(out.lst)
+              }
             }
+          }
         }
-        detlim.plt.1 <- NA
-        detlim.plt.2 <- NA
-        if (max(Vdetlim, na.rm = T) > 0) {
-            detlim.plt.1 <- min(Vdetlim[Vdetlim > 0], na.rm = T)
-            detlim.plt.2 <- max(Vdetlim[Vdetlim > 0], na.rm = T)
-        }
-        x.plt <- NA
-        y.plt <- NA
-        if (plot.type == 0) {
-            cat("\nTechnical note: plot.type has value 0, in f.data.plt.con\n")
-            return(ans.all)
-        }
-        switch(plot.type, {
-            x.plt <- x
-            y.plt <- yy
-            xleg <- x.leg
-            yleg <- y.leg
-            x.lim.plt <- x.lim
-            y.lim.plt <- y.lim
-        }, {
-            x.plt <- x
-            x.plt[x.plt == 0] <- dum.contr
-            x.plt <- log10(x.plt)
-            y.plt <- yy
-            if (x.leg != "") xleg <- paste("log10-", x.leg, sep = "") else xleg <- ""
-            yleg <- y.leg
-            y.lim.plt <- y.lim
-            x.lim.plt <- log10(x.lim)
-            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
-        }, {
-            x.plt <- x
-            y.plt <- log10(yy)
-            cens.up <- log10(cens.up)
-            xleg <- x.leg
-            if (y.leg != "") yleg <- paste("log10-", y.leg, sep = "") else yleg <- ""
-            if (max(Vdetlim, na.rm = T) > 0) {
-                detlim.plt.1 <- log10(detlim.plt.1)
-                detlim.plt.2 <- log10(detlim.plt.2)
-            }
-            x.lim.plt <- x.lim
-            y.lim.plt <- log10(y.lim)
-            if (!is.finite(y.lim.plt)[1]) y.lim.plt[1] <- log10(dum.zero.resp)
-        }, {
-            x.plt <- x
-            x.plt[x.plt == 0] <- dum.contr
-            x.plt <- log10(x.plt)
-            y.plt <- log10(yy)
-            if (is.na(y.lim[1])) y.lim <- xy.lim[4:5]
-            cens.up <- log10(cens.up)
-            if (x.leg != "") xleg <- paste("log10-", x.leg, sep = "") else xleg <- ""
-            if (y.leg != "") yleg <- paste("log10-", y.leg, sep = "") else yleg <- ""
-            if (max(Vdetlim, na.rm = T) > 0) {
-                detlim.plt.1 <- log10(detlim.plt.1)
-                detlim.plt.2 <- log10(detlim.plt.2)
-            }
-            y.lim.plt <- log10(y.lim)
-            x.lim.plt <- log10(x.lim)
-            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
-            if (!is.finite(y.lim.plt)[1]) y.lim.plt[1] <- log10(dum.zero.resp)
-        }, {
-            y.plt <- yy
-            x.plt <- sqrt(x)
-            if (x.leg != "") xleg <- paste("sqrt-", x.leg, sep = "") else xleg <- ""
-            yleg <- y.leg
-            y.lim.plt <- y.lim
-            x.lim.plt <- sqrt(x.lim)
-        }, {
-            x.plt <- sqrt(x)
-            y.plt <- log10(yy)
-            cens.up <- log10(cens.up)
-            if (is.na(y.lim[1])) y.lim <- xy.lim[4:5]
-            if (y.leg != "") yleg <- paste("log10-", y.leg, sep = "") else yleg <- ""
-            if (x.leg != "") xleg <- paste("sqrt-", x.leg, sep = "") else xleg <- ""
-            if (max(Vdetlim, na.rm = T) > 0) {
-                detlim.plt.1 <- log10(detlim.plt.1)
-                detlim.plt.2 <- log10(detlim.plt.2)
-            }
-            x.lim.plt <- sqrt(x.lim)
-            y.lim.plt <- log10(y.lim)
-            if (!is.finite(y.lim.plt)[1]) y.lim.plt[1] <- log10(dum.zero.resp)
-        }, {
-            x.plt <- x
-            y.plt <- sqrt(yy)
-            cens.up <- sqrt(cens.up)
-            if (is.na(y.lim[1])) y.lim <- xy.lim[4:5]
-            xleg <- x.leg
-            if (y.leg != "") yleg <- paste("sqrt-", y.leg, sep = "") else yleg <- ""
-            if (max(Vdetlim, na.rm = T) > 0) {
-                detlim.plt.1 <- sqrt(detlim.plt.1)
-                detlim.plt.2 <- sqrt(detlim.plt.2)
-            }
-            x.lim.plt <- x.lim
-            y.lim.plt <- sqrt(y.lim)
-        }, {
-            x.plt <- x
-            x.plt[x.plt == 0] <- dum.contr
-            x.plt <- log10(x.plt)
-            y.plt <- sqrt(yy)
-            cens.up <- sqrt(cens.up)
-            if (is.na(y.lim[1])) y.lim <- xy.lim[4:5]
-            if (y.leg != "") yleg <- paste("sqrt-", y.leg, sep = "") else yleg <- ""
-            if (x.leg != "") xleg <- paste("log10-", x.leg, sep = "") else xleg <- ""
-            if (max(Vdetlim, na.rm = T) > 0) {
-                detlim.plt.1 <- sqrt(detlim.plt.1)
-                detlim.plt.2 <- sqrt(detlim.plt.2)
-            }
-            y.lim.plt <- sqrt(y.lim)
-            x.lim.plt <- log10(x.lim)
-            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
-        }, {
-            ans.all$y.plt <- regr.resid
-            ans.all$y.lim.plt <- c(min(ans.all$y.plt, na.rm = T), 
-                max(ans.all$y.plt, na.rm = T))
-            ans.all$cex.1 <- cex.1
-            return(ans.all)
-        }, {
-            y.plt <- regr.resid
-            x.plt <- x
-            x.plt[x.plt == 0] <- dum.contr
-            x.plt <- log10(x.plt)
-            x.plt <- x.plt[!is.na(y.plt)]
-            if (x.leg != "") xleg <- paste("log10-", x.leg, sep = "") else xleg <- ""
-            yleg <- "residual"
-            x.lim.plt <- log10(x.lim)
-            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
-            y.lim.plt <- c(min(y.plt, na.rm = T), max(y.plt, 
-                na.rm = T))
-            if (plt.mns == 3) plt.mns <- 2
-        }, {
-            x.plt <- x
-            if (x.leg != "") xleg <- paste("log10 of normalized ", 
-                x.leg, sep = "") else xleg <- ""
-            y.plt <- yy
-            x.plt <- x.plt[!is.na(y.plt)]
-            y.plt <- y.plt[!is.na(y.plt)]
-            yleg <- "residual"
-            yleg <- "residual"
-            x.lim.plt <- log10(x.lim)
-            if (!is.finite(x.lim.plt)[1]) x.lim.plt[1] <- log10(dum.contr)
-            if (is.na(xy.lim[4])) y.lim <- c(min(y.plt, na.rm = T), 
-                max(y.plt, na.rm = T))
-            y.lim.plt <- c(min(y.plt, na.rm = T), max(y.plt, 
-                na.rm = T))
-        })
-        shift.plt <- 0
-        shift.tmp <- 0
-        if (shift > 0) {
-            shift.plt <- (max(x.plt, na.rm = T) - min(x.plt, 
-                na.rm = T))/shift
-            x.lim.plt[2] <- x.lim.plt[2] + shift.plt
-        }
-        if (gr.txt[1] == "" || is.na(gr.txt[1])) {
-            if (covar.no > 0 && !sep) 
-                gr.txt <- fct3.txt
-            else if (max(fct1) > 1) 
-                gr.txt <- fct1.txt
-            else if (max(fct2.save) > 1) 
-                gr.txt <- fct2.txt
-            else if (max(fct3) > 1) 
-                gr.txt <- fct3.txt
-        }
-        if (CI.plt) 
-            for (jj in 1:nr.bb) for (ii in 1:nr.aa) for (kk in 1:nr.cc) for (ll in 1:nr.dd) {
-                lst <- fct1 == ii & fct2 == jj & fct4 == kk & 
-                  fct5 == ll
-                x.part <- x.plt[lst]
-                y.part <- y.plt[lst]
-                y.tmp <- yy[lst]
-                if (plot.type == 11) {
-                  x.part <- (x.part/max(x.part, na.rm = T))
-                  x.part[x.part == 0] <- dum.contr
-                  x.part <- log10(x.part)
-                }
-                if (length(y.part) > 0) {
-                  if (dtype %in% c(10, 15, 250)) {
-                    sd2.log.part <- sd2.log[lst]
-                    nn.part <- nn[lst]
-                  }
-                  out.lst <- f.means(x.part, y.tmp, dtype, plot.type, 
-                    CI = TRUE, sd2.log = sd2.log.part, nn = nn.part)
-                  if (!is.na(out.lst$conf.L[1])) {
-                    y.lim.CI <- out.lst$y.lim.plt
-                    y.lim.plt[1] <- min(y.lim.CI[1], y.lim.plt[1], 
-                      na.rm = T)
-                    y.lim.plt[2] <- max(y.lim.CI[2], y.lim.plt[2], 
-                      na.rm = T)
-                  }
-                }
-            }
-        if (nr.aa > 1 && nr.bb > 1 && sum(fct1 != fct2) == 0) {
-            nr.aa <- 1
-            fct1 <- rep(1, length(x))
-        }
-        if (nr.aa > 1 & nr.bb > 1 && sum(fct1 != fct2) == 0) {
-            nr.aa <- 1
-            fct1 <- rep(1, length(x))
-        }
-        points.plt.lst <- list()
-        means.plt.lst <- list()
-        if (gr.txt[1] == "") 
-            gr.txt <- "all"
-        zz <- 0
-        for (jj in 1:nr.bb) for (ii in 1:nr.aa) for (kk in 1:nr.cc) for (ll in 1:nr.dd) {
-            lst <- fct1 == ii & fct2 == jj & fct4 == kk & fct5 == 
-                ll
+      }
+    }
+    if (nr.aa > 1 && nr.bb > 1 && sum(fct1 != fct2) == 0) {
+      nr.aa <- 1
+      fct1 <- rep(1, length(x))
+    }
+    if (nr.aa > 1 & nr.bb > 1 && sum(fct1 != fct2) == 0) {
+      nr.aa <- 1
+      fct1 <- rep(1, length(x))
+    }
+    points.plt.lst <- list()
+    means.plt.lst <- list()
+    if (gr.txt[1] == "") {
+      gr.txt <- "all"
+    }
+    zz <- 0
+    for (jj in 1:nr.bb) {
+      for (ii in 1:nr.aa) {
+        for (kk in 1:nr.cc) {
+          for (ll in 1:nr.dd) {
+            lst <- fct1 == ii & fct2 == jj & fct4 == kk & fct5 == ll
             x.part <- x.plt[lst]
             y.part <- y.plt[lst]
             y.tmp <- yy[lst]
             if (plot.type == 11) {
-                x.part <- (x.part/max(x.part, na.rm = T))
-                x.part[x.part == 0] <- dum.contr
-                x.part <- log10(x.part)
+              x.part <- (x.part / max(x.part, na.rm = TRUE))
+              x.part[x.part == 0] <- dum.contr
+              x.part <- log10(x.part)
             }
             if (length(y.part) > 0) {
-                zz <- zz + 1
-                if (zz > 500) 
-                  cat("\nATTENTION: number of subgroups too large for plotting\n\n")
-                x.part <- x.part + shift.tmp
-                mean.x <- NA
-                if (plt.mns %in% c(1, 3)) {
-                  if (dtype %in% c(1, 5, 15, 25, 26)) {
-                    mean.x <- as.numeric(tapply(x.part, x.part, 
-                      mean))
-                    mean.y <- f.means(x.part, y.tmp, dtype, plot.type)
-                  }
+              zz <- zz + 1
+              if (zz > 500) {
+                cat(
+                  "\nATTENTION: number of subgroups too large for plotting\n\n"
+                )
+              }
+              x.part <- x.part + shift.tmp
+              mean.x <- NA
+              if (plt.mns %in% c(1, 3)) {
+                if (dtype %in% c(1, 5, 15, 25, 26)) {
+                  mean.x <- as.numeric(tapply(x.part, x.part, mean))
+                  mean.y <- f.means(x.part, y.tmp, dtype, plot.type)
+                }
+                if (dtype %in% c(10, 15, 250)) {
+                  mean.x <- x.part
+                  mean.y <- y.part
+                }
+                if (CI.plt) {
                   if (dtype %in% c(10, 15, 250)) {
-                    mean.x <- x.part
-                    mean.y <- y.part
+                    sd2.log.part <- sd2.log[lst]
+                    nn.part <- nn[lst]
                   }
-                  if (CI.plt) {
-                    if (dtype %in% c(10, 15, 250)) {
-                      sd2.log.part <- sd2.log[lst]
-                      nn.part <- nn[lst]
-                    }
-                    out.lst <- f.means(x.part, y.tmp, dtype, 
-                      plot.type, CI = TRUE, sd2.log = sd2.log.part, 
-                      nn = nn.part)
-                    L025 <- out.lst$conf.L
-                    L975 <- out.lst$conf.U
-                  }
+                  out.lst <- f.means(
+                    x.part,
+                    y.tmp,
+                    dtype,
+                    plot.type,
+                    CI = TRUE,
+                    sd2.log = sd2.log.part,
+                    nn = nn.part
+                  )
+                  L025 <- out.lst$conf.L
+                  L975 <- out.lst$conf.U
                 }
-                if (plt.mns == 2 || !CI.plt) {
-                  L025 <- rep(NA, length(mean.x))
-                  L975 <- rep(NA, length(mean.x))
-                }
-                points.plt.lst[[gr.txt[zz]]] <- data.frame(x = x.part, 
-                  y = y.part)
-                if (plt.mns %in% c(1, 3)) 
-                  means.plt.lst[[gr.txt[zz]]] <- data.frame(x = as.numeric(mean.x), 
-                    y = as.numeric(mean.y), CI.low = as.numeric(L025), 
-                    CI.upp = as.numeric(L975))
-                shift.tmp <- shift.tmp + shift.plt
+              }
+              if (plt.mns == 2 || !CI.plt) {
+                L025 <- rep(NA, length(mean.x))
+                L975 <- rep(NA, length(mean.x))
+              }
+              points.plt.lst[[gr.txt[zz]]] <- data.frame(x = x.part, y = y.part)
+              if (plt.mns %in% c(1, 3)) {
+                means.plt.lst[[gr.txt[zz]]] <- data.frame(
+                  x = as.numeric(mean.x),
+                  y = as.numeric(mean.y),
+                  CI.low = as.numeric(L025),
+                  CI.upp = as.numeric(L975)
+                )
+              }
+              shift.tmp <- shift.tmp + shift.plt
             }
+          }
         }
-        ans.all$xy.plt <- data.frame(x.plt = x.plt, y.plt = y.plt)
-        ans.all$points.plt.lst <- points.plt.lst
-        ans.all$means.plt.lst <- means.plt.lst
-        ans.all$cex.1 <- cex.1
-        ans.all$cex.2 <- cex.2
-        ans.all$xleg <- xleg
-        ans.all$yleg <- yleg
-        ans.all$x.lim.plt <- x.lim.plt
-        ans.all$y.lim.plt <- y.lim.plt
-        ans.all$detlim.plt.1 <- detlim.plt.1
-        ans.all$detlim.plt.2 <- detlim.plt.2
-        ans.all$gr.txt <- gr.txt
-        ans.all$fct2 <- fct2.save
-        ans.all$fct2.txt <- fct2.txt.save
-        return(ans.all)
-    })
+      }
+    }
+    ans.all$xy.plt <- data.frame(x.plt = x.plt, y.plt = y.plt)
+    ans.all$points.plt.lst <- points.plt.lst
+    ans.all$means.plt.lst <- means.plt.lst
+    ans.all$cex.1 <- cex.1
+    ans.all$cex.2 <- cex.2
+    ans.all$xleg <- xleg
+    ans.all$yleg <- yleg
+    ans.all$x.lim.plt <- x.lim.plt
+    ans.all$y.lim.plt <- y.lim.plt
+    ans.all$detlim.plt.1 <- detlim.plt.1
+    ans.all$detlim.plt.2 <- detlim.plt.2
+    ans.all$gr.txt <- gr.txt
+    ans.all$fct2 <- fct2.save
+    ans.all$fct2.txt <- fct2.txt.save
+    return(ans.all)
+  })
 }
 
 
@@ -6606,7 +6963,7 @@ f.resid.con <- function(ans.all) {
     with(ans.all, {
         pred.value <- f.expect.con(model.ans, x, regr.par = regr.par, 
             fct1 = fct1, fct2 = fct2, fct3 = fct3, fct4 = fct4, 
-            fct5 = fct5, name = F, CES = CES, twice = twice, 
+            fct5 = fct5, name = FALSE, CES = CES, twice = twice, 
             ttt = 0, y = yy, increase = increase, ref.lev = ref.lev, 
             x.mn = x.mn, ans.m6.sd = ans.m6.sd, sign.q = sign.q, 
             x1 = x1, x2 = x2, cc.inf = cc.inf)
@@ -6781,9 +7138,9 @@ f.hit.constr <- function(ans.all) {
             lst <- (MLE == lb) * !(MLE == ub)
             lst <- lst == 1
             if (model.type == 2) 
-                lst[length(lst)] <- F
+                lst[length(lst)] <- FALSE
             if (model.type == 2 && dtype %in% c(4, 6)) 
-                lst[length(lst) - 1] <- F
+                lst[length(lst) - 1] <- FALSE
             if (any(lst)) {
                 hit.constr <- TRUE
                 cat("\nthe following parameter estimate was equal to the lower constraint:\n")
@@ -6792,9 +7149,9 @@ f.hit.constr <- function(ans.all) {
             lst <- (MLE == ub) * !(MLE == lb)
             lst <- lst == 1
             if (model.type == 2) 
-                lst[length(lst)] <- F
+                lst[length(lst)] <- FALSE
             if (model.type == 2 && dtype %in% c(4, 6)) 
-                lst[length(lst) - 1] <- F
+                lst[length(lst) - 1] <- FALSE
             if (any(lst)) {
                 hit.constr <- TRUE
                 cat("\nthe following parameter estimate was equal to the upper constraint:\n")
@@ -6856,7 +7213,7 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
                 loglik.try <- -f.lik.con(ans.all$par.start, x, 
                   y, dtype, fct1, fct2, fct3, model.ans, mn.log, 
                   sd2.log, nn, Vdetlim = Vdetlim, CES = CES, 
-                  twice = twice, ttt = ttt, trace = F, fct4 = fct4, 
+                  twice = twice, ttt = ttt, trace = FALSE, fct4 = fct4, 
                   fct5 = fct5, cens.up = cens.up, par.tmp = NA, 
                   increase = increase, ref.lev = ref.lev, sign.q = sign.q, 
                   ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2)
@@ -6875,7 +7232,7 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
             }
         }
         if (is.na(CED[1])) 
-            no.CI <- T
+            no.CI <- TRUE
         ans.all$par.start <- ans.all$par.start * 1.05
         model.txt[ii] <- modelname
         if (model.ans %in% c(15, 25, 52, 54)) {
@@ -6940,7 +7297,7 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
             CED <- rep(CED, nr.aa)
         if (dtype == 5) {
             if (nest.no != 0) {
-                if (max(Vdetlim, na.rm = T) != 0) 
+                if (max(Vdetlim, na.rm = TRUE) != 0) 
                   cat("\nlitter effects not implemented for nonzero detection limit\n")
                 else {
                 }
@@ -6972,8 +7329,8 @@ f.refit.nes <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
                 if (ans.all$loglik == 1e-12) 
                   cat("\nno finite log-likelihood found, CI will not be calculated\n")
                 else {
-                  ans.all$trace <- F
-                  ans.all$trace.plt <- F
+                  ans.all$trace <- FALSE
+                  ans.all$trace.plt <- FALSE
                   ans.all <- f.CI(ans.all, interactive_mode = interactive_mode)
                   conf.int <- ans.all$conf.int
                   if (ans.all$update) 
@@ -7113,20 +7470,20 @@ f.var.pooled <- function(ans.all) {
 
 f.check.cc <- function(ans.all) {
     with(ans.all, {
-        cc.OK <- T
+        cc.OK <- TRUE
         cc <- MLE[nr.var + nr.aa + nr.bb + 1]
         if (model.ans %in% c(4, 5, 9, 10, 14, 15, 24, 25, 52, 
             54)) {
             if (increase == 1) 
                 if (cc < 0.02 + (1 + CES)) {
                   cat("\n\nthe value of parameter c is too close to CES\n                  this indicates (nonrandom) errors in the data,\n                  or too high value of CES")
-                  cc.OK <- F
+                  cc.OK <- FALSE
                   return(cc.OK)
                 }
             if (increase == -1) {
                 if (cc > -0.02 + (1 - abs(CES))) {
                   cat("\n\nthe value of parameter c is too close to CES\n                  this indicates (nonrandom) errors in the data,\n                  or too high value of CES")
-                  cc.OK <- F
+                  cc.OK <- FALSE
                 }
                 return(cc.OK)
             }
@@ -7178,7 +7535,7 @@ f.lines.plt.con <- function(ans.all) {
                   xline <- (seq(from = sqrt(min.x), to = sqrt(max.x), 
                     length = nbins))^2
                 else xline <- seq(from = min.x, to = max.x, length = nbins)
-                twice <- F
+                twice <- FALSE
                 x1.line <- NA
                 x2.line <- NA
                 if (model.ans == 42) {
@@ -7200,7 +7557,7 @@ f.lines.plt.con <- function(ans.all) {
                 expect <- f.expect.con(model.ans, xline, regr.par, 
                   fct1 = rep(1, length(xline)), fct2 = rep(1, 
                     length(xline)), fct3 = 1, CES = CES, twice = twice, 
-                  trace = F, increase = increase, x.mn = x.mn, 
+                  trace = FALSE, increase = increase, x.mn = x.mn, 
                   ref.lev = ref.lev, sign.q = sign.q, ans.m6.sd = ans.m6.sd, 
                   x1 = x1.line, x2 = x2.line, opposing = opposing, 
                   cc.inf = cc.inf)
@@ -7673,7 +8030,7 @@ f.show.con <- function(ans.all) {
             if (length(unique(Vdetlim)) == 1) 
                 show <- paste(show, nl, "detlim", sp, Vdetlim[1])
             else show <- paste(show, nl, "detlim", sp, min(Vdetlim, 
-                na.rm = T), "-", max(Vdetlim, na.rm = T))
+                na.rm = TRUE), "-", max(Vdetlim, na.rm = TRUE))
         }
         if (!is.na(cens.up)) 
             show <- paste(show, nl, "cens.up", sp, cens.up)
@@ -7712,7 +8069,7 @@ f.show.con <- function(ans.all) {
 
 
 #' @importFrom utils menu
-f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE, 
+f.plot.all <- function(ans.all, sep = FALSE, bootstrap = FALSE, new.window = TRUE, 
     no.show = FALSE, display_plots = TRUE) {
     if (ans.all$plot.type == 0) 
         return(ans.all)
@@ -7830,7 +8187,7 @@ f.plot.all <- function(ans.all, sep = F, bootstrap = F, new.window = TRUE,
                 if (0) {
                   ans.all.plt$plot.type <- 9 + ans.scale
                   ans.all.plt$modelname <- ""
-                  ans.all.plt$ced.lines <- F
+                  ans.all.plt$ced.lines <- FALSE
                   out.list <- f.lines.cat(ans.all.plt)
                   ans.all.plt$y.lim <- out.list$y.lim
                   if (!is.na(CED.matr[1])) {
@@ -8779,9 +9136,9 @@ f.con <- function(ans.all,
             ans.all <- f.start.con(ans.all)
         main.ans <- 14
     }
-    while (T) {
+    while (TRUE) {
         switch(main.ans, {
-            ans.all$change <- rep(F, ans.all$nrQ)
+            ans.all$change <- rep(FALSE, ans.all$nrQ)
             ans.all <- f.change.settings(ans.all, choose = TRUE,
                                          interactive_mode = interactive_mode,
                                          add_nonzero_val_to_dat = add_nonzero_val_to_dat,
@@ -8796,7 +9153,7 @@ f.con <- function(ans.all,
                                        nonzero_val = nonzero_val,
                                        detection_limit = detection_limit)
                   if (ans.all$ans.m6.sd != 2) ans.all <- f.start.con(ans.all, 
-                    adjust = F, fitted = F, tmp.quick = F)
+                    adjust = FALSE, fitted = FALSE, tmp.quick = FALSE)
                 }
             } else {
                 ans.all <- f.execute(ans.all,
@@ -8817,7 +9174,7 @@ f.con <- function(ans.all,
                                           nonzero_val = nonzero_val,
                                           detection_limit = detection_limit)
                 if (ans.all$model.ans %in% c(48, 50)) {
-                  ans.all$change[24] <- T
+                  ans.all$change[24] <- TRUE
                   ans.all <- f.change.settings(ans.all,
                                                interactive_mode = interactive_mode,
                                                add_nonzero_val_to_dat = add_nonzero_val_to_dat,
@@ -8830,14 +9187,14 @@ f.con <- function(ans.all,
                                        detection_limit = detection_limit)
                 }
                 if (ans.all$model.ans == 6) ans.all$ans.m6.sd <- 1
-                ans.all$new.model <- T
+                ans.all$new.model <- TRUE
             }
             if (ans.all$quick.ans == 1) {
                 ans.all$modelname <- ans.all$model.names[ans.all$model.ans]
                 ans.all <- f.start.con(ans.all)
                 if (ans.all$adjust.start) {
-                  ans.all <- f.start.con(ans.all, adjust = T, 
-                    fitted = T, tmp.quick = F)
+                  ans.all <- f.start.con(ans.all, adjust = TRUE, 
+                    fitted = TRUE, tmp.quick = FALSE)
                 }
             }
             if (ans.all$quick.ans > 1) {
@@ -8925,8 +9282,8 @@ f.con <- function(ans.all,
                     nr.dd - 1))
                 }
             }
-            ans.all <- f.start.con(ans.all, adjust = T, fitted = ans.all$fitted, 
-                tmp.quick = F)
+            ans.all <- f.start.con(ans.all, adjust = TRUE, fitted = ans.all$fitted, 
+                tmp.quick = FALSE)
         }, {
         }, {
         }, {
@@ -8978,8 +9335,8 @@ f.con <- function(ans.all,
                 if (length(MLE) > 100 && !WAPP) {
                   cat("\n\nnumber of parameters exceeds 100\n")
                   cat("Consider to relax the convergence criteria\n\n")
-                  ans.all$change[23] <- T
-                  ans.all$change[nrQ] <- F
+                  ans.all$change[23] <- TRUE
+                  ans.all$change[nrQ] <- FALSE
                   ans.all <- f.change.settings(ans.all,
                                                interactive_mode = interactive_mode,
                                                add_nonzero_val_to_dat = add_nonzero_val_to_dat,
@@ -8987,7 +9344,7 @@ f.con <- function(ans.all,
                                                detection_limit = detection_limit)
                 }
                 conf.int.0 <- ans.all$conf.int
-                ans.all$trace <- T
+                ans.all$trace <- TRUE
                 ans.all <- f.CI(ans.all, interactive_mode = interactive_mode)
                 name.ci <- text.par[ans.all$group]
                 confint.spec <- ans.all$conf.int
@@ -9004,7 +9361,7 @@ f.con <- function(ans.all,
                 f.store.results(ans.all, interactive_mode = interactive_mode)
             })
         }, {
-            return(T)
+            return(TRUE)
         })
       if (interactive_mode == FALSE) {
         main.ans <- 12
@@ -9060,7 +9417,7 @@ f.quick.con <- function(ans.all,
                         add_nonzero_val_to_dat = FALSE,
                         nonzero_val = NULL,
                         detection_limit = NULL) {
-        message(paste0("indep_var_choice: ", indep_var_choice))
+        message("indep_var_choice: ", indep_var_choice)
     if (ans.all$WAPP) {
         ans.all$gui <- TRUE
         ans.all$interrupt <- FALSE
@@ -9105,7 +9462,7 @@ f.quick.con <- function(ans.all,
             dtype <- ans.all$dtype
             odt <- ans.all$odt
             if (ans.all$xans[1] == 0) {
-                ans.all$change[1] <- T
+                ans.all$change[1] <- TRUE
                 ans.all <- f.change.settings(ans.all,
                                              indep_var_choice = indep_var_choice,
                                              interactive_mode = interactive_mode,
@@ -9120,16 +9477,16 @@ f.quick.con <- function(ans.all,
               if (is.numeric(Vyans_input) || all(Vyans_input %in% varnames)) {
                 Vyans <- if (is.numeric(Vyans_input)) Vyans_input else match(Vyans_input, varnames)
                 ans.all$Vyans <- Vyans
-                zero.ind <- if (length(Vyans) > 1) any(data.0[, Vyans] == 0, na.rm = TRUE) else F
+                zero.ind <- if (length(Vyans) > 1) any(data.0[, Vyans] == 0, na.rm = TRUE) else FALSE
               } else {
                 stop("Vyans_input must be a vector of either numeric column indices or names that exist in 'varnames'.")
               }
             } else {
             Vyans <- eval(parse(prompt = paste(" -------- > ")))
             }
-            zero.ind <- F
+            zero.ind <- FALSE
             if (length(Vyans) > 1) 
-                zero.ind <- any(data.0[, Vyans] == 0, na.rm = T)
+                zero.ind <- any(data.0[, Vyans] == 0, na.rm = TRUE)
             Vsans <- 0
             Vnans <- 0
             if (dtype %in% c(10, 15, 250)) {
@@ -9232,7 +9589,7 @@ f.quick.con <- function(ans.all,
                 else if (length(ans.all$xans) == 1) {
                   if (interactive_mode == FALSE) {
                     message("Model averaging enabled.")
-                    message(paste0("ans.all$CES: ", ans.all$CES))
+                    message("ans.all$CES: ", ans.all$CES)
                     do.MA <- model_averaging
                   } else {
                     do.MA <- menu(c("no", "yes"), title = "Do you want to calculate the BMD confidence interval by model averaging?") - 
@@ -9275,10 +9632,10 @@ f.quick.con <- function(ans.all,
         }
         if (ans.all$NES.ans == 2) 
             ans.all$CES <- 0.05
-        ans.all$no.CI <- F
+        ans.all$no.CI <- FALSE
         if (ans.all$CES == 0) {
             ans.all$CES <- 0.05
-            ans.all$no.CI <- T
+            ans.all$no.CI <- TRUE
         }
         data.0.global <- f.remove.NAs(xans = ans.all$xans, yans = Vyans[1], 
             sans = Vsans[1], nans = Vnans[1], covar.no = 0, dfr = ans.all$data.0, 
@@ -9327,7 +9684,7 @@ f.quick.con <- function(ans.all,
         CI.matr.ma <- numeric()
         endpoint.ma <- character(0)
         data.0.global <- ans.all$data.0
-        first.loop <- T
+        first.loop <- TRUE
         ii <- 1
         for (yans.tmp in Vyans) {
             ans.all$yans <- yans.tmp
@@ -9361,10 +9718,10 @@ f.quick.con <- function(ans.all,
                                      nonzero_val = nonzero_val,
                                      detection_limit = detection_limit)
                 ans.all <- f.clear(ans.all)
-                ans.all$twice <- T
+                ans.all$twice <- TRUE
                 if (first.loop) 
                   ans.all$full.ans <- f.full.ans(ans.all, gui = gui, interactive_mode = interactive_mode)
-                first.loop <- F
+                first.loop <- FALSE
                 constr.dd <- f.constr.dd(model.ans = 5)
                 ans.all$lower.dd <- constr.dd[1]
                 ans.all$upper.dd <- constr.dd[2]
@@ -9500,7 +9857,7 @@ f.quick.con <- function(ans.all,
                   }
                 }
                 if (length(Vyans) > 1) 
-                  if (ans.all$no.CI != T) {
+                  if (ans.all$no.CI != TRUE) {
                     CED.all$covar.txt <- ans.all$covar.txt
                     CED.all <- f.CED.all(CED.all, ans.all$y.leg, 
                       ans.all$EXP, ans.all$HILL, ans.all$INVEXP, 
@@ -9515,7 +9872,7 @@ f.quick.con <- function(ans.all,
                   ans.all <- f.plot.gui(ans.all, display_plots = display_plots, .proast_env = .proast_env, interactive_mode = interactive_mode)
                   if (!WAPP && length(ans.all$xans) > 1 && ans.all$nr.aa > 
                     1) {
-                    f.plot.all(ans.all, sep = T, display_plots = display_plots)
+                    f.plot.all(ans.all, sep = TRUE, display_plots = display_plots)
                   }
                 }
                 if (length(ans.all$xans) > 1) {
@@ -9583,10 +9940,10 @@ f.quick.con <- function(ans.all,
                 CI = CI.matr.ma)
             ans.all$CED.matr.ma.plt <- CED.matr.ma.plt
         }
-        if (ans.all$no.CI == F && length(Vyans) == 1 && length(ans.all$EXP$conf.int[, 
+        if (ans.all$no.CI == FALSE && length(Vyans) == 1 && length(ans.all$EXP$conf.int[, 
             1]) > 1 && length(ans.all$xans) == 1) 
             f.plot.CI(ans.all, display_plots = display_plots)
-        if (ans.all$no.CI == F & length(Vyans) > 1) {
+        if (ans.all$no.CI == FALSE & length(Vyans) > 1) {
             if (sum(!is.na(CED.all$CED.matr[, 1]) > 0)) {
                 CED.all$CED.matr <- CED.all$CED.matr[-1, ]
                 dimnames(CED.all$CED.matr)[[1]] <- CED.all$endpoints
@@ -9623,7 +9980,7 @@ f.quick.con <- function(ans.all,
 
 #' @importFrom stats pnorm
 f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log, 
-    sd2.log, nn, Vdetlim, CES, twice = T, ttt = 0, trace.tmp = F, 
+    sd2.log, nn, Vdetlim, CES, twice = TRUE, ttt = 0, trace.tmp = FALSE, 
     fct4 = 1, fct5 = 1, cens.up = NA, lb = -Inf, ub = Inf, par.tmp, 
     increase = increase, x.mn = NA, ref.lev = ref.lev, ans.m6.sd = 1, 
     sign.q, Mx = 0, x1 = 0, x2 = 0, cc.inf, incr.decr.no = 0) {
@@ -9675,7 +10032,7 @@ f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log,
     if (dtype %in% c(1, 5, 25, 26)) 
         expect <- f.expect.con(model.ans, x, regr.par, fct1 = fct1, 
             fct2 = fct2, fct3 = fct3, fct4 = fct4, fct5 = fct5, 
-            CES = CES, twice = twice, ttt = ttt, yy = yy, trace.expect = F, 
+            CES = CES, twice = twice, ttt = ttt, yy = yy, trace.expect = FALSE, 
             increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
             sign.q = sign.q, ans.m6.sd = ans.m6.sd, x1 = x1, 
             x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
@@ -9765,14 +10122,14 @@ f.lik.con <- function(theta, x, y, dtype, fct1, fct2, fct3, model.ans, mn.log,
 
 #' @importFrom stats pnorm qnorm
 f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 1, 
-    fct4 = 1, fct5 = 1, name = F, CES = NA, twice = T, ttt = 0, 
-    yy = 0, trace.expect = F, increase, x.mn = NA, ref.lev, ans.m6.sd = 1, 
+    fct4 = 1, fct5 = 1, name = FALSE, CES = NA, twice = TRUE, ttt = 0, 
+    yy = 0, trace.expect = FALSE, increase, x.mn = NA, ref.lev, ans.m6.sd = 1, 
     par.start = NA, sign.q = 0, x1, x2, opposing = 1, cc.inf, 
     incr.decr.no = 0, cont = TRUE) {
     if (exists("track2")) 
         print("f.expect.con")
     if (0) 
-        if (name == !T) {
+        if (name == !TRUE) {
             print("f.expect.con ---    ")
             print(model.ans)
             print(x)
@@ -10240,7 +10597,7 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
 }
 
 
-f.constr.con <- function(ans.all, tmp.quick = F) {
+f.constr.con <- function(ans.all, tmp.quick = FALSE) {
     ans.all$tmp.quick <- tmp.quick
     with(ans.all, {
         nr.aa <- max(fct1)
@@ -10508,9 +10865,9 @@ f.constr.con <- function(ans.all, tmp.quick = F) {
                 lower <- c(lower, lower.RPF)
                 upper <- c(upper, upper.RPF)
             }
-        if (tmp.quick == F) {
+        if (tmp.quick == FALSE) {
             {
-                vabcd <- f.text.par(ans.all, brief = T)
+                vabcd <- f.text.par(ans.all, brief = TRUE)
                 if (incr.decr.no > 0) {
                 }
                 ans <- 1
@@ -10802,350 +11159,726 @@ f.constr.con <- function(ans.all, tmp.quick = F) {
 }
 
 
-f.nlminb <- function(ans.all, tmp.quick = F) {
-    if (exists("track2")) 
-        print("f.nlminb")
-    ans.all$tmp.quick <- tmp.quick
-    with(ans.all, {
-        th.par <- ans.all$th.par
-        scale.dum <- abs(1/par.start)
-        scale.dum[scale.dum == Inf] <- 1000
-        if (dtype == 6) {
-            nr.alfa <- max(fct3)
-            scale.dum[1:nr.alfa] <- 1
+f.nlminb <- function(ans.all, tmp.quick = FALSE) {
+  if (exists("track2")) {
+    print("f.nlminb")
+  }
+  ans.all$tmp.quick <- tmp.quick
+  with(ans.all, {
+    th.par <- ans.all$th.par
+    scale.dum <- abs(1 / par.start)
+    scale.dum[scale.dum == Inf] <- 1000
+    if (dtype == 6) {
+      nr.alfa <- max(fct3)
+      scale.dum[1:nr.alfa] <- 1
+    } else {
+      nr.alfa <- 0
+    }
+    if (
+      scale.ans &&
+        quick.ans == 1 &&
+        model.ans != 1 &&
+        !((model.ans == 14 & model.type == 1) ||
+          (model.ans == 11 & model.type == 2))
+    ) {
+      ans <- 1
+      while (ans <= npar) {
+        ans <- menu(
+          c(paste(text.par, ":      ", signif(scale.dum, 3)), "continue"),
+          title = "\n For what parameter do you want to change scaling used in nlminb? "
+        )
+        if (ans <= npar) {
+          scale.dum[ans] <- eval(parse(
+            prompt = paste("Give value larger than one ", text.par[ans], ": ")
+          ))
         }
-        else nr.alfa <- 0
-        if (scale.ans && quick.ans == 1 && model.ans != 1 && 
-            !((model.ans == 14 & model.type == 1) || (model.ans == 
-                11 & model.type == 2))) {
-            ans <- 1
-            while (ans <= npar) {
-                ans <- menu(c(paste(text.par, ":      ", signif(scale.dum, 
-                  3)), "continue"), title = "\n For what parameter do you want to change scaling used in nlminb? ")
-                if (ans <= npar) 
-                  scale.dum[ans] <- eval(parse(prompt = paste("Give value larger than one ", 
-                    text.par[ans], ": ")))
-            }
+      }
+    }
+    ans.all$scale.dum <- scale.dum
+    trace.tmp <- FALSE
+    if (cont) {
+      if (incr.decr.no == 0) {
+        if (model.ans %in% c(4, 5, 9, 10, 14, 15, 19, 20, 24, 25)) {
+          cc.start <- par.start[
+            (nr.var + nr.aa + nr.bb + 1):(nr.var + nr.aa + nr.bb + nr.cc)
+          ]
+          if (increase == -1 && cc.start >= (1 - abs(CES))) {
+            cc.start <- 0.9 * (1 - abs(CES))
+          }
+          if (increase == 1 && cc.start <= (1 + abs(CES))) {
+            cc.start <- 1.1 * (1 + abs(CES))
+          }
+          par.start[
+            (nr.var + nr.aa + nr.bb + 1):(nr.var +
+              nr.aa +
+              nr.bb +
+              nr.cc)
+          ] <- cc.start
         }
-        ans.all$scale.dum <- scale.dum
-        trace.tmp <- F
-        if (cont) {
-            if (incr.decr.no == 0) 
-                if (model.ans %in% c(4, 5, 9, 10, 14, 15, 19, 
-                  20, 24, 25)) {
-                  cc.start <- par.start[(nr.var + nr.aa + nr.bb + 
-                    1):(nr.var + nr.aa + nr.bb + nr.cc)]
-                  if (increase == -1 && cc.start >= (1 - abs(CES))) 
-                    cc.start <- 0.9 * (1 - abs(CES))
-                  if (increase == 1 && cc.start <= (1 + abs(CES))) 
-                    cc.start <- 1.1 * (1 + abs(CES))
-                  par.start[(nr.var + nr.aa + nr.bb + 1):(nr.var + 
-                    nr.aa + nr.bb + nr.cc)] <- cc.start
-                }
-            loglik.check <- f.lik.con(par.start, x, y, dtype, 
-                fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
-                nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                ttt = ttt, trace.tmp = trace.tmp, fct4 = fct4, 
-                fct5 = fct5, cens.up = cens.up, par.tmp = NA, 
-                increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
-                sign.q = sign.q, ans.m6.sd = ans.m6.sd, Mx = Mx, 
-                x1 = x1, x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
-            count <- 0
-            while (!is.finite(loglik.check) && model.ans %in% 
-                c(17, 18, 22, 23) && count < 30) {
-                ced.start <- par.start[(nr.var + nr.aa + 1):(nr.var + 
-                  nr.aa + nr.bb)]
-                ced.start <- 1.5 * ced.start
-                par.start[(nr.var + nr.aa + 1):(nr.var + nr.aa + 
-                  nr.bb)] <- ced.start
-                loglik.check <- f.lik.con(par.start, x, y, dtype, 
-                  fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
-                  nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                  ttt = ttt, trace.tmp = trace.tmp, fct4 = fct4, 
-                  fct5 = fct5, cens.up = cens.up, par.tmp = NA, 
-                  increase = increase, x.mn = x.mn, ref.lev = ref.lev, 
-                  sign.q = sign.q, ans.m6.sd = ans.m6.sd, Mx = Mx, 
-                  x1 = x1, x2 = x2, cc.inf = cc.inf, incr.decr.no = incr.decr.no)
-                count <- count + 1
-            }
-            if (model.ans == -51) {
-                cat("\n")
-                print("f.nlminb start")
-                print(model.ans)
-                print(CES)
-                print(increase)
-                print(cbind(text.par, par.start, lb, ub, scale.dum))
-                print(loglik.check)
-            }
-            fit.res <- nlminb(par.start, f.lik.con, scale = scale.dum, 
-                lower = lb, upper = ub, control = lst.control, 
-                x = x, y = y, dtype = dtype, fct1 = fct1, fct2 = fct2, 
-                fct3 = fct3, fct4 = fct4, fct5 = fct5, model.ans = model.ans, 
-                mn.log = mn.log, sd2.log = sd2.log, nn = nn, 
-                Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                ttt = ttt, trace.tmp = F, cens.up = cens.up, 
-                lb = lb, ub = ub, par.tmp = par.start, increase = increase, 
-                x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
-                ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
-                cc.inf = cc.inf, incr.decr.no = incr.decr.no)
-            if (is.na(fit.res$obj)) 
-                fit.res$obj <- 1e-12
-            count <- 0
-            while (is.na(fit.res$par[1]) || (fit.res$obj == 0) || 
-                abs(fit.res$obj) == 1e-12 || !is.finite(fit.res$obj) && 
-                count <= 20) {
-                cat("\n      model is refitted with other scaling parameter")
-                scale.dum <- rep(0.5, length(par.start))
-                scale.dum <- 2 * scale.dum
-                fit.res <- nlminb(par.start, f.lik.con, scale = scale.dum, 
-                  lower = lb, upper = ub, control = lst.control, 
-                  x = x, y = y, dtype = dtype, fct1 = fct1, fct2 = fct2, 
-                  fct3 = fct3, fct4 = fct4, fct5 = fct5, model.ans = model.ans, 
-                  mn.log = mn.log, sd2.log = sd2.log, nn = nn, 
-                  Vdetlim = Vdetlim, CES = CES, twice = T, cens.up = cens.up, 
-                  lb = lb, ub = ub, par.tmp = fit.res$par, increase = increase, 
-                  x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
-                  ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
-                  cc.inf = cc.inf, incr.decr.no = incr.decr.no)
-                if (is.na(fit.res$obj)) 
-                  fit.res$obj <- 1e-12
-                count <- count + 1
-            }
-            ans.all$MLE <- fit.res$par
-            if (model.ans == 47 || (model.ans == 6 && ans.m6.sd == 
-                2)) 
-                ans.all$regr.par <- ans.all$MLE
-            else ans.all$regr.par <- ans.all$MLE[-(1:max(fct3))]
-            if (model.ans %in% c(31, 33, 57)) 
-                ans.all$regr.par.matr <- f.pars.m31(ans.all)$regr.par.matr
-            else ans.all$regr.par.matr <- f.pars(ans.all)$regr.par.matr
-            if (0) {
-                loglik.tmp <- -f.lik.con(MLE, x, y, dtype, fct1, 
-                  fct2, fct3, model.ans, mn.log, sd2.log, nn, 
-                  Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                  ttt = ttt, trace.tmp = T, fct4 = fct4, fct5 = fct5, 
-                  cens.up = cens.up, par.tmp = NA, increase = increase, 
-                  x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
-                  ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, x2 = x2, 
-                  cc.inf = cc.inf, incr.decr.no = incr.decr.no)
-                print(loglik.tmp)
-            }
+      }
+      loglik.check <- f.lik.con(
+        par.start,
+        x,
+        y,
+        dtype,
+        fct1,
+        fct2,
+        fct3,
+        model.ans,
+        mn.log,
+        sd2.log,
+        nn,
+        Vdetlim = Vdetlim,
+        CES = CES,
+        twice = twice,
+        ttt = ttt,
+        trace.tmp = trace.tmp,
+        fct4 = fct4,
+        fct5 = fct5,
+        cens.up = cens.up,
+        par.tmp = NA,
+        increase = increase,
+        x.mn = x.mn,
+        ref.lev = ref.lev,
+        sign.q = sign.q,
+        ans.m6.sd = ans.m6.sd,
+        Mx = Mx,
+        x1 = x1,
+        x2 = x2,
+        cc.inf = cc.inf,
+        incr.decr.no = incr.decr.no
+      )
+      count <- 0
+      while (
+        !is.finite(loglik.check) &&
+          model.ans %in%
+            c(17, 18, 22, 23) &&
+          count < 30
+      ) {
+        ced.start <- par.start[
+          (nr.var + nr.aa + 1):(nr.var +
+            nr.aa +
+            nr.bb)
+        ]
+        ced.start <- 1.5 * ced.start
+        par.start[(nr.var + nr.aa + 1):(nr.var + nr.aa + nr.bb)] <- ced.start
+        loglik.check <- f.lik.con(
+          par.start,
+          x,
+          y,
+          dtype,
+          fct1,
+          fct2,
+          fct3,
+          model.ans,
+          mn.log,
+          sd2.log,
+          nn,
+          Vdetlim = Vdetlim,
+          CES = CES,
+          twice = twice,
+          ttt = ttt,
+          trace.tmp = trace.tmp,
+          fct4 = fct4,
+          fct5 = fct5,
+          cens.up = cens.up,
+          par.tmp = NA,
+          increase = increase,
+          x.mn = x.mn,
+          ref.lev = ref.lev,
+          sign.q = sign.q,
+          ans.m6.sd = ans.m6.sd,
+          Mx = Mx,
+          x1 = x1,
+          x2 = x2,
+          cc.inf = cc.inf,
+          incr.decr.no = incr.decr.no
+        )
+        count <- count + 1
+      }
+      if (model.ans == -51) {
+        cat("\n")
+        print("f.nlminb start")
+        print(model.ans)
+        print(CES)
+        print(increase)
+        print(cbind(text.par, par.start, lb, ub, scale.dum))
+        print(loglik.check)
+      }
+      fit.res <- nlminb(
+        par.start,
+        f.lik.con,
+        scale = scale.dum,
+        lower = lb,
+        upper = ub,
+        control = lst.control,
+        x = x,
+        y = y,
+        dtype = dtype,
+        fct1 = fct1,
+        fct2 = fct2,
+        fct3 = fct3,
+        fct4 = fct4,
+        fct5 = fct5,
+        model.ans = model.ans,
+        mn.log = mn.log,
+        sd2.log = sd2.log,
+        nn = nn,
+        Vdetlim = Vdetlim,
+        CES = CES,
+        twice = twice,
+        ttt = ttt,
+        trace.tmp = FALSE,
+        cens.up = cens.up,
+        lb = lb,
+        ub = ub,
+        par.tmp = par.start,
+        increase = increase,
+        x.mn = x.mn,
+        ref.lev = ref.lev,
+        sign.q = sign.q,
+        ans.m6.sd = ans.m6.sd,
+        Mx = Mx,
+        x1 = x1,
+        x2 = x2,
+        cc.inf = cc.inf,
+        incr.decr.no = incr.decr.no
+      )
+      if (is.na(fit.res$obj)) {
+        fit.res$obj <- 1e-12
+      }
+      count <- 0
+      while (
+        is.na(fit.res$par[1]) ||
+          (fit.res$obj == 0) ||
+          abs(fit.res$obj) == 1e-12 ||
+          !is.finite(fit.res$obj) &&
+            count <= 20
+      ) {
+        cat("\n      model is refitted with other scaling parameter")
+        scale.dum <- rep(0.5, length(par.start))
+        scale.dum <- 2 * scale.dum
+        fit.res <- nlminb(
+          par.start,
+          f.lik.con,
+          scale = scale.dum,
+          lower = lb,
+          upper = ub,
+          control = lst.control,
+          x = x,
+          y = y,
+          dtype = dtype,
+          fct1 = fct1,
+          fct2 = fct2,
+          fct3 = fct3,
+          fct4 = fct4,
+          fct5 = fct5,
+          model.ans = model.ans,
+          mn.log = mn.log,
+          sd2.log = sd2.log,
+          nn = nn,
+          Vdetlim = Vdetlim,
+          CES = CES,
+          twice = TRUE,
+          cens.up = cens.up,
+          lb = lb,
+          ub = ub,
+          par.tmp = fit.res$par,
+          increase = increase,
+          x.mn = x.mn,
+          ref.lev = ref.lev,
+          sign.q = sign.q,
+          ans.m6.sd = ans.m6.sd,
+          Mx = Mx,
+          x1 = x1,
+          x2 = x2,
+          cc.inf = cc.inf,
+          incr.decr.no = incr.decr.no
+        )
+        if (is.na(fit.res$obj)) {
+          fit.res$obj <- 1e-12
         }
-        if (!cont) {
-            loglik.check <- f.lik.cat(par.start, x = x, y = y, 
-                kk = kk, nn = nn, dtype = dtype, fct1 = fct1, 
-                fct2 = fct2, nrp = nrp, nth = nth, th.par = th.par, 
-                nr.aa = nr.aa, nr.bb = nr.bb, model.ans = model.ans, 
-                model.type = model.type, ans.nobg = 0, CES = CES, 
-                CES.cat = CES.cat, ttt = ttt, twice = twice, 
-                cens.up = cens.up, fct3 = fct3, fct4 = fct4, 
-                fct5 = fct5, x.full = x.full, fct1.full = fct1.full, 
-                fct2.full = fct2.full, trace.tmp = trace.tmp, 
-                ces.ans = ces.ans, cc.inf = cc.inf, decr.zz = decr.zz, 
-                CES1 = CES1, CES2 = CES2, nn.tot = nn.tot, kk.tot = kk.tot, 
-                ref.lev = ref.lev, x1 = x1, x2 = x2, output = output, 
-                Mx = Mx)
-            if (model.ans == -5) {
-                cat("\n")
-                print("f.nlminb start")
-                print(model.ans)
-                print(CES)
-                print(CES.cat)
-                print(cbind(text.par, par.start, lb, ub, scale.dum))
-                print(loglik.check)
-            }
+        count <- count + 1
+      }
+      ans.all$MLE <- fit.res$par
+      if (model.ans == 47 || (model.ans == 6 && ans.m6.sd == 2)) {
+        ans.all$regr.par <- ans.all$MLE
+      } else {
+        ans.all$regr.par <- ans.all$MLE[-(1:max(fct3))]
+      }
+      if (model.ans %in% c(31, 33, 57)) {
+        ans.all$regr.par.matr <- f.pars.m31(ans.all)$regr.par.matr
+      } else {
+        ans.all$regr.par.matr <- f.pars(ans.all)$regr.par.matr
+      }
+      if (0) {
+        loglik.tmp <- -f.lik.con(
+          MLE,
+          x,
+          y,
+          dtype,
+          fct1,
+          fct2,
+          fct3,
+          model.ans,
+          mn.log,
+          sd2.log,
+          nn,
+          Vdetlim = Vdetlim,
+          CES = CES,
+          twice = twice,
+          ttt = ttt,
+          trace.tmp = TRUE,
+          fct4 = fct4,
+          fct5 = fct5,
+          cens.up = cens.up,
+          par.tmp = NA,
+          increase = increase,
+          x.mn = x.mn,
+          ref.lev = ref.lev,
+          sign.q = sign.q,
+          ans.m6.sd = ans.m6.sd,
+          Mx = Mx,
+          x1 = x1,
+          x2 = x2,
+          cc.inf = cc.inf,
+          incr.decr.no = incr.decr.no
+        )
+        print(loglik.tmp)
+      }
+    }
+    if (!cont) {
+      loglik.check <- f.lik.cat(
+        par.start,
+        x = x,
+        y = y,
+        kk = kk,
+        nn = nn,
+        dtype = dtype,
+        fct1 = fct1,
+        fct2 = fct2,
+        nrp = nrp,
+        nth = nth,
+        th.par = th.par,
+        nr.aa = nr.aa,
+        nr.bb = nr.bb,
+        model.ans = model.ans,
+        model.type = model.type,
+        ans.nobg = 0,
+        CES = CES,
+        CES.cat = CES.cat,
+        ttt = ttt,
+        twice = twice,
+        cens.up = cens.up,
+        fct3 = fct3,
+        fct4 = fct4,
+        fct5 = fct5,
+        x.full = x.full,
+        fct1.full = fct1.full,
+        fct2.full = fct2.full,
+        trace.tmp = trace.tmp,
+        ces.ans = ces.ans,
+        cc.inf = cc.inf,
+        decr.zz = decr.zz,
+        CES1 = CES1,
+        CES2 = CES2,
+        nn.tot = nn.tot,
+        kk.tot = kk.tot,
+        ref.lev = ref.lev,
+        x1 = x1,
+        x2 = x2,
+        output = output,
+        Mx = Mx
+      )
+      if (model.ans == -5) {
+        cat("\n")
+        print("f.nlminb start")
+        print(model.ans)
+        print(CES)
+        print(CES.cat)
+        print(cbind(text.par, par.start, lb, ub, scale.dum))
+        print(loglik.check)
+      }
+      retry <- FALSE
+      if (!is.finite(loglik.check) || abs(loglik.check) == 2e+10) {
+        retry <- TRUE
+      }
+      if (retry) {
+        count <- 0
+        while (
+          retry &&
+            (model.type == 2 &&
+              model.ans %in%
+                c(13, 18, 23)) &&
+            count < 15
+        ) {
+          ced.start <- par.start[
+            (nr.alfa + nr.aa + 1):(nr.alfa +
+              nr.aa +
+              nr.bb)
+          ]
+          ced.start <- 1.5 * ced.start
+          par.start[
+            (nr.alfa + nr.aa + 1):(nr.alfa +
+              nr.aa +
+              nr.bb)
+          ] <- ced.start
+          if (count < 3) {
+            cat("\nModel re-fitted with new start values\n")
+          }
+          loglik.check <- f.lik.cat(
+            par.start,
+            x = x,
+            y = y,
+            kk = kk,
+            nn = nn,
+            dtype = dtype,
+            fct1 = fct1,
+            fct2 = fct2,
+            nrp = nrp,
+            nth = nth,
+            th.par = th.par,
+            nr.aa = nr.aa,
+            nr.bb = nr.bb,
+            model.ans = model.ans,
+            model.type = model.type,
+            ans.nobg = 0,
+            CES = CES,
+            CES.cat = CES.cat,
+            ttt = ttt,
+            twice = twice,
+            cens.up = cens.up,
+            fct3 = fct3,
+            fct4 = fct4,
+            fct5 = fct5,
+            x.full = x.full,
+            fct1.full = fct1.full,
+            fct2.full = fct2.full,
+            trace.tmp = trace.tmp,
+            ces.ans = ces.ans,
+            cc.inf = cc.inf,
+            decr.zz = decr.zz,
+            CES1 = CES1,
+            CES2 = CES2,
+            nn.tot = nn.tot,
+            kk.tot = kk.tot,
+            ref.lev = ref.lev,
+            Mx = Mx,
+            x1 = x1,
+            x2 = x2,
+            output = output
+          )
+          if (is.finite(loglik.check) && abs(loglik.check) < 2e+10) {
             retry <- FALSE
-            if (!is.finite(loglik.check) || abs(loglik.check) == 
-                2e+10) 
-                retry <- TRUE
-            if (retry) {
-                count <- 0
-                while (retry && (model.type == 2 && model.ans %in% 
-                  c(13, 18, 23)) && count < 15) {
-                  ced.start <- par.start[(nr.alfa + nr.aa + 1):(nr.alfa + 
-                    nr.aa + nr.bb)]
-                  ced.start <- 1.5 * ced.start
-                  par.start[(nr.alfa + nr.aa + 1):(nr.alfa + 
-                    nr.aa + nr.bb)] <- ced.start
-                  if (count < 3) 
-                    cat("\nModel re-fitted with new start values\n")
-                  loglik.check <- f.lik.cat(par.start, x = x, 
-                    y = y, kk = kk, nn = nn, dtype = dtype, fct1 = fct1, 
-                    fct2 = fct2, nrp = nrp, nth = nth, th.par = th.par, 
-                    nr.aa = nr.aa, nr.bb = nr.bb, model.ans = model.ans, 
-                    model.type = model.type, ans.nobg = 0, CES = CES, 
-                    CES.cat = CES.cat, ttt = ttt, twice = twice, 
-                    cens.up = cens.up, fct3 = fct3, fct4 = fct4, 
-                    fct5 = fct5, x.full = x.full, fct1.full = fct1.full, 
-                    fct2.full = fct2.full, trace.tmp = trace.tmp, 
-                    ces.ans = ces.ans, cc.inf = cc.inf, decr.zz = decr.zz, 
-                    CES1 = CES1, CES2 = CES2, nn.tot = nn.tot, 
-                    kk.tot = kk.tot, ref.lev = ref.lev, Mx = Mx, 
-                    x1 = x1, x2 = x2, output = output)
-                  if (is.finite(loglik.check) && abs(loglik.check) < 
-                    2e+10) 
-                    retry <- FALSE
-                  count <- count + 1
-                }
-            }
-            fit.res <- nlminb(par.start, f.lik.cat, scale = scale.dum, 
-                lower = lb, upper = ub, control = lst.control, 
-                x = x, y = y, kk = kk, nn = nn, dtype = dtype, 
-                fct1 = fct1, fct2 = fct2, nrp = nrp, nth = nth, 
-                th.par = th.par, nr.aa = nr.aa, nr.bb = nr.bb, 
-                model.ans = model.ans, model.type = model.type, 
-                ans.nobg = 0, CES = CES, CES.cat = CES.cat, ttt = ttt, 
-                twice = twice, cens.up = cens.up, fct3 = fct3, 
-                fct4 = fct4, fct5 = fct5, x.full = x.full, fct1.full = fct1.full, 
-                fct2.full = fct2.full, trace.tmp = trace.tmp, 
-                ces.ans = ces.ans, cc.inf = cc.inf, decr.zz = decr.zz, 
-                CES1 = CES1, CES2 = CES2, nn.tot = nn.tot, kk.tot = kk.tot, 
-                ref.lev = ref.lev, Mx = Mx, x1 = x1, x2 = x2, 
-                output = output)
-            if (dtype == 6 && model.type == 2 && model.ans %in% 
-                c(13, 15, 23, 25) && quick.ans > 1) {
-                scale.dum <- abs(1/par.start)
-                scale.dum[scale.dum == Inf] <- 1000
-                scale.dum[1:nr.alfa] <- 1
-                fit.res.test <- nlminb(par.start, f.lik.cat, 
-                  scale = scale.dum, lower = lb, upper = ub, 
-                  control = lst.control, x = x, y = y, kk = kk, 
-                  nn = nn, dtype = dtype, fct1 = fct1, fct2 = fct2, 
-                  nrp = nrp, nth = nth, th.par = th.par, nr.aa = nr.aa, 
-                  nr.bb = nr.bb, model.ans = model.ans, model.type = model.type, 
-                  ans.nobg = 0, CES = CES, CES.cat = CES.cat, 
-                  ttt = ttt, twice = twice, cens.up = cens.up, 
-                  fct3 = fct3, fct4 = fct4, fct5 = fct5, x.full = x.full, 
-                  fct1.full = fct1.full, fct2.full = fct2.full, 
-                  trace.tmp = trace.tmp, ces.ans = ces.ans, cc.inf = cc.inf, 
-                  decr.zz = decr.zz, CES1 = CES1, CES2 = CES2, 
-                  nn.tot = nn.tot, kk.tot = kk.tot, ref.lev = ref.lev, 
-                  Mx = Mx, x1 = x1, x2 = x2, output = output)
-                if (fit.res.test$objective < fit.res$objective) 
-                  fit.res <- fit.res.test
-            }
-            if (dtype == 3) 
-                if (model.type == 2 && model.ans %in% c(12:16, 
-                  22:25, 46:47)) {
-                  ced.start <- par.start[(nr.aa + 1):(nr.aa + 
-                    nr.bb)]
-                  par.start[(nr.aa + 1):(nr.aa + nr.bb)] <- ced.start/10
-                  fit.res.test <- nlminb(par.start, f.lik.cat, 
-                    scale = scale.dum, lower = lb, upper = ub, 
-                    control = lst.control, x = x, y = y, kk = kk, 
-                    nn = nn, dtype = dtype, fct1 = fct1, fct2 = fct2, 
-                    nrp = nrp, nth = nth, th.par = th.par, nr.aa = nr.aa, 
-                    nr.bb = nr.bb, model.ans = model.ans, model.type = model.type, 
-                    ans.nobg = 0, CES = CES, CES.cat = CES.cat, 
-                    ttt = ttt, twice = twice, cens.up = cens.up, 
-                    fct3 = fct3, fct4 = fct4, fct5 = fct5, x.full = x.full, 
-                    fct1.full = fct1.full, fct2.full = fct2.full, 
-                    trace.tmp = trace.tmp, ces.ans = ces.ans, 
-                    cc.inf = cc.inf, decr.zz = decr.zz, CES1 = CES1, 
-                    CES2 = CES2, nn.tot = nn.tot, kk.tot = kk.tot, 
-                    ref.lev = ref.lev, Mx = Mx, x1 = x1, x2 = x2, 
-                    output = output)
-                  if (fit.res.test$objective < fit.res$objective) 
-                    fit.res <- fit.res.test
-                }
-            if (model.ans == -10) {
-                print(" f.nlminb cont")
-                print(model.ans)
-                print(CES)
-                print(CES.cat)
-                print(cbind(text.par, par.start, lb, ub, scale.dum))
-                print(fit.res$objective)
-                print(fit.res$par)
-            }
-            count <- 0
-            while (is.na(fit.res$par[1]) || (fit.res$obj == 1e-12) | 
-                is.na(fit.res$obj)) {
-                cat("\n     model", model.ans, "refitted with other scaling parameter")
-                if (model.ans == 14 && model.type == 1 && dtype == 
-                  6) 
-                  par.start[1] <- eval(parse(prompt = paste("give start value for alfa", 
-                    "  > ")))
-                scale.dum <- rep(0.5, length(par.start))
-                scale.dum <- 2 * scale.dum
-                count <- count + 1
-                fit.res <- nlminb(par.start, f.lik.cat, scale = scale.dum, 
-                  lower = lb, upper = ub, control = lst.control, 
-                  x = x, y = y, kk = kk, nn = nn, dtype = dtype, 
-                  fct1 = fct1, fct2 = fct2, nrp = nrp, nth = nth, 
-                  th.par = th.par, nr.aa = nr.aa, nr.bb = nr.bb, 
-                  model.ans = model.ans, model.type = model.type, 
-                  ans.nobg = 0, CES = CES, CES.cat = CES.cat, 
-                  ttt = ttt, twice = twice, cens.up = cens.up, 
-                  fct3 = fct3, fct5 = fct5, x.full = x.full, 
-                  fct1.full = fct1.full, fct2.full = fct2.full, 
-                  cc.inf = cc.inf, trace.tmp = trace.tmp, ces.ans = ces.ans, 
-                  decr.zz = decr.zz, CES1 = CES1, CES2 = CES2, 
-                  ref.lev = ref.lev, Mx = Mx, x1 = x1, x2 = x2, 
-                  output = output)
-                if (count > 50) {
-                  fit.res$obj <- -1e+10
-                  fit.res$par <- 0
-                }
-            }
-            ans.all$MLE <- fit.res$par
-            if (model.type == 1) 
-                ans.all$regr.par <- ans.all$MLE
-            if (model.type == 2) 
-                if (length(unique(fct3)) == 1) {
-                  par.lst <- f.split.par(ans.all$MLE, nrp, nth, 
-                    dtype, fct3)
-                  ans.all$regr.par <- par.lst$regr.par
-                  ans.all$th.par <- par.lst$th.par
-                  ans.all$sig.par <- par.lst$sig.par
-                  ans.all <- f.pars(ans.all)
-                }
-                else {
-                  ans.all$get.gr.txt <- TRUE
-                  ans.all$regr.par <- ans.all$MLE[1:nrp]
-                  ans.all <- f.pars.frq(ans.all)
-                }
+          }
+          count <- count + 1
         }
-        ans.all$loglik <- round(-fit.res$objective, 2)
-        if (!tmp.quick) 
-            if (quick.ans == 1 && length(ans.all$loglik.start) > 
-                0) 
-                if (abs(ans.all$loglik - loglik.start) < 0.1) {
-                  cat("\n\nATTENTION:  log-likelihood hardly changed\n\n")
-                }
-        if ((model.type == 1 && model.ans == 14) || (cont && 
-            model.ans == 11)) 
-            npar.aic <- npar
-        else npar.aic <- length(ans.all$MLE) - sum(lb == ub)
-        ans.all$aic <- 2 * npar.aic - 2 * ans.all$loglik
-        ans.all$npar.aic <- npar.aic
-        if (!is.finite(ans.all$loglik)) 
-            ans.all$loglik <- -1e+12
-        mess <- fit.res$message
-        ans.all$converged <- f.converged(mess, fit.res$conv, 
-            tmp.quick = tmp.quick)
-        if (dtype == 6 && (model.ans == 14 & model.type == 1)) {
-            dum <- list()
-            dum$loglik <- ans.all$loglik
-            dum$MLE <- ans.all$MLE
-            ans.all$full.model <- dum
-            alfa.start <- ans.all$MLE[1]
-            nn.dum <- table(x, x)
-            nn.dum <- nn.dum[nn.dum != 0]
-            if (length(nn.dum) > 15 && alfa.start > 20) 
-                alfa.start <- 5
-            ans.all$alfa.start <- alfa.start
+      }
+      fit.res <- nlminb(
+        par.start,
+        f.lik.cat,
+        scale = scale.dum,
+        lower = lb,
+        upper = ub,
+        control = lst.control,
+        x = x,
+        y = y,
+        kk = kk,
+        nn = nn,
+        dtype = dtype,
+        fct1 = fct1,
+        fct2 = fct2,
+        nrp = nrp,
+        nth = nth,
+        th.par = th.par,
+        nr.aa = nr.aa,
+        nr.bb = nr.bb,
+        model.ans = model.ans,
+        model.type = model.type,
+        ans.nobg = 0,
+        CES = CES,
+        CES.cat = CES.cat,
+        ttt = ttt,
+        twice = twice,
+        cens.up = cens.up,
+        fct3 = fct3,
+        fct4 = fct4,
+        fct5 = fct5,
+        x.full = x.full,
+        fct1.full = fct1.full,
+        fct2.full = fct2.full,
+        trace.tmp = trace.tmp,
+        ces.ans = ces.ans,
+        cc.inf = cc.inf,
+        decr.zz = decr.zz,
+        CES1 = CES1,
+        CES2 = CES2,
+        nn.tot = nn.tot,
+        kk.tot = kk.tot,
+        ref.lev = ref.lev,
+        Mx = Mx,
+        x1 = x1,
+        x2 = x2,
+        output = output
+      )
+      if (
+        dtype == 6 &&
+          model.type == 2 &&
+          model.ans %in%
+            c(13, 15, 23, 25) &&
+          quick.ans > 1
+      ) {
+        scale.dum <- abs(1 / par.start)
+        scale.dum[scale.dum == Inf] <- 1000
+        scale.dum[1:nr.alfa] <- 1
+        fit.res.test <- nlminb(
+          par.start,
+          f.lik.cat,
+          scale = scale.dum,
+          lower = lb,
+          upper = ub,
+          control = lst.control,
+          x = x,
+          y = y,
+          kk = kk,
+          nn = nn,
+          dtype = dtype,
+          fct1 = fct1,
+          fct2 = fct2,
+          nrp = nrp,
+          nth = nth,
+          th.par = th.par,
+          nr.aa = nr.aa,
+          nr.bb = nr.bb,
+          model.ans = model.ans,
+          model.type = model.type,
+          ans.nobg = 0,
+          CES = CES,
+          CES.cat = CES.cat,
+          ttt = ttt,
+          twice = twice,
+          cens.up = cens.up,
+          fct3 = fct3,
+          fct4 = fct4,
+          fct5 = fct5,
+          x.full = x.full,
+          fct1.full = fct1.full,
+          fct2.full = fct2.full,
+          trace.tmp = trace.tmp,
+          ces.ans = ces.ans,
+          cc.inf = cc.inf,
+          decr.zz = decr.zz,
+          CES1 = CES1,
+          CES2 = CES2,
+          nn.tot = nn.tot,
+          kk.tot = kk.tot,
+          ref.lev = ref.lev,
+          Mx = Mx,
+          x1 = x1,
+          x2 = x2,
+          output = output
+        )
+        if (fit.res.test$objective < fit.res$objective) {
+          fit.res <- fit.res.test
         }
-        ans.all$fitted <- T
-        ans.all$l.ty <- 1
-        ans.all$new.model <- F
-        if (0) {
-            ans.all$fit.res <- fit.res
-            f.vcov(ans.all)
+      }
+      if (dtype == 3) {
+        if (model.type == 2 && model.ans %in% c(12:16, 22:25, 46:47)) {
+          ced.start <- par.start[
+            (nr.aa + 1):(nr.aa +
+              nr.bb)
+          ]
+          par.start[(nr.aa + 1):(nr.aa + nr.bb)] <- ced.start / 10
+          fit.res.test <- nlminb(
+            par.start,
+            f.lik.cat,
+            scale = scale.dum,
+            lower = lb,
+            upper = ub,
+            control = lst.control,
+            x = x,
+            y = y,
+            kk = kk,
+            nn = nn,
+            dtype = dtype,
+            fct1 = fct1,
+            fct2 = fct2,
+            nrp = nrp,
+            nth = nth,
+            th.par = th.par,
+            nr.aa = nr.aa,
+            nr.bb = nr.bb,
+            model.ans = model.ans,
+            model.type = model.type,
+            ans.nobg = 0,
+            CES = CES,
+            CES.cat = CES.cat,
+            ttt = ttt,
+            twice = twice,
+            cens.up = cens.up,
+            fct3 = fct3,
+            fct4 = fct4,
+            fct5 = fct5,
+            x.full = x.full,
+            fct1.full = fct1.full,
+            fct2.full = fct2.full,
+            trace.tmp = trace.tmp,
+            ces.ans = ces.ans,
+            cc.inf = cc.inf,
+            decr.zz = decr.zz,
+            CES1 = CES1,
+            CES2 = CES2,
+            nn.tot = nn.tot,
+            kk.tot = kk.tot,
+            ref.lev = ref.lev,
+            Mx = Mx,
+            x1 = x1,
+            x2 = x2,
+            output = output
+          )
+          if (fit.res.test$objective < fit.res$objective) {
+            fit.res <- fit.res.test
+          }
         }
-        if (exists("track2")) 
-            print("f.nlminb : END")
-        return(ans.all)
-    })
+      }
+      if (model.ans == -10) {
+        print(" f.nlminb cont")
+        print(model.ans)
+        print(CES)
+        print(CES.cat)
+        print(cbind(text.par, par.start, lb, ub, scale.dum))
+        print(fit.res$objective)
+        print(fit.res$par)
+      }
+      count <- 0
+      while (
+        is.na(fit.res$par[1]) || (fit.res$obj == 1e-12) | is.na(fit.res$obj)
+      ) {
+        cat("\n     model", model.ans, "refitted with other scaling parameter")
+        if (model.ans == 14 && model.type == 1 && dtype == 6) {
+          par.start[1] <- eval(parse(
+            prompt = paste("give start value for alfa", "  > ")
+          ))
+        }
+        scale.dum <- rep(0.5, length(par.start))
+        scale.dum <- 2 * scale.dum
+        count <- count + 1
+        fit.res <- nlminb(
+          par.start,
+          f.lik.cat,
+          scale = scale.dum,
+          lower = lb,
+          upper = ub,
+          control = lst.control,
+          x = x,
+          y = y,
+          kk = kk,
+          nn = nn,
+          dtype = dtype,
+          fct1 = fct1,
+          fct2 = fct2,
+          nrp = nrp,
+          nth = nth,
+          th.par = th.par,
+          nr.aa = nr.aa,
+          nr.bb = nr.bb,
+          model.ans = model.ans,
+          model.type = model.type,
+          ans.nobg = 0,
+          CES = CES,
+          CES.cat = CES.cat,
+          ttt = ttt,
+          twice = twice,
+          cens.up = cens.up,
+          fct3 = fct3,
+          fct5 = fct5,
+          x.full = x.full,
+          fct1.full = fct1.full,
+          fct2.full = fct2.full,
+          cc.inf = cc.inf,
+          trace.tmp = trace.tmp,
+          ces.ans = ces.ans,
+          decr.zz = decr.zz,
+          CES1 = CES1,
+          CES2 = CES2,
+          ref.lev = ref.lev,
+          Mx = Mx,
+          x1 = x1,
+          x2 = x2,
+          output = output
+        )
+        if (count > 50) {
+          fit.res$obj <- -1e+10
+          fit.res$par <- 0
+        }
+      }
+      ans.all$MLE <- fit.res$par
+      if (model.type == 1) {
+        ans.all$regr.par <- ans.all$MLE
+      }
+      if (model.type == 2) {
+        if (length(unique(fct3)) == 1) {
+          par.lst <- f.split.par(ans.all$MLE, nrp, nth, dtype, fct3)
+          ans.all$regr.par <- par.lst$regr.par
+          ans.all$th.par <- par.lst$th.par
+          ans.all$sig.par <- par.lst$sig.par
+          ans.all <- f.pars(ans.all)
+        } else {
+          ans.all$get.gr.txt <- TRUE
+          ans.all$regr.par <- ans.all$MLE[1:nrp]
+          ans.all <- f.pars.frq(ans.all)
+        }
+      }
+    }
+    ans.all$loglik <- round(-fit.res$objective, 2)
+    if (!tmp.quick) {
+      if (quick.ans == 1 && length(ans.all$loglik.start) > 0) {
+        if (abs(ans.all$loglik - loglik.start) < 0.1) {
+          cat("\n\nATTENTION:  log-likelihood hardly changed\n\n")
+        }
+      }
+    }
+    if (
+      (model.type == 1 && model.ans == 14) ||
+        (cont &&
+          model.ans == 11)
+    ) {
+      npar.aic <- npar
+    } else {
+      npar.aic <- length(ans.all$MLE) - sum(lb == ub)
+    }
+    ans.all$aic <- 2 * npar.aic - 2 * ans.all$loglik
+    ans.all$npar.aic <- npar.aic
+    if (!is.finite(ans.all$loglik)) {
+      ans.all$loglik <- -1e+12
+    }
+    mess <- fit.res$message
+    ans.all$converged <- f.converged(mess, fit.res$conv, tmp.quick = tmp.quick)
+    if (dtype == 6 && (model.ans == 14 & model.type == 1)) {
+      dum <- list()
+      dum$loglik <- ans.all$loglik
+      dum$MLE <- ans.all$MLE
+      ans.all$full.model <- dum
+      alfa.start <- ans.all$MLE[1]
+      nn.dum <- table(x, x)
+      nn.dum <- nn.dum[nn.dum != 0]
+      if (length(nn.dum) > 15 && alfa.start > 20) {
+        alfa.start <- 5
+      }
+      ans.all$alfa.start <- alfa.start
+    }
+    ans.all$fitted <- TRUE
+    ans.all$l.ty <- 1
+    ans.all$new.model <- FALSE
+    if (0) {
+      ans.all$fit.res <- fit.res
+      f.vcov(ans.all)
+    }
+    if (exists("track2")) {
+      print("f.nlminb : END")
+    }
+    return(ans.all)
+  })
 }
 
 
@@ -11407,12 +12140,12 @@ f.pars <- function(ans.all) {
 }
 
 
-f.converged <- function(mess, conv.out, tmp.quick = F) {
+f.converged <- function(mess, conv.out, tmp.quick = FALSE) {
     if (exists("track2")) 
         print("f.converged")
-    converged <- F
+    converged <- FALSE
     if (mode(mess) == "NULL") {
-        converged <- F
+        converged <- FALSE
         if (!tmp.quick) 
             cat("\nATTENTION: convergence message is NULL\n")
     }
@@ -11523,10 +12256,10 @@ f.grubb <- function(ss = 25, alfa = 0.05) {
 f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
     with(ans.all, {
         if (quick.ans == 1) 
-            ans.all$trace.plt <- T
+            ans.all$trace.plt <- TRUE
         profile.out <- f.profile.all(ans.all, display_plots = display_plots)
         conf.int <- profile.out$conf.int
-        update <- F
+        update <- FALSE
         count <- 0
         loglik.tmp <- profile.out$loglik - 0.5
         ans.all$CED.low <- profile.out$CED.low
@@ -11553,7 +12286,7 @@ f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
                   f.store.results(ans.all, "newfit", interactive_mode = interactive_mode)
                 profile.out <- f.profile.all(ans.all, display_plots = display_plots)
                 loglik.tmp <- profile.out$loglik
-                update <- T
+                update <- TRUE
                 if (count > 50) {
                   cat("\n\nno global optimum found\n\n")
                   profile.out$MLE.new <- 0
@@ -11609,7 +12342,7 @@ f.CI <- function(ans.all, display_plots = TRUE, interactive_mode = TRUE) {
 }
 
 
-f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRUE) {
+f.profile.all <- function(ans.all, nolog = FALSE, debug = FALSE, display_plots = TRUE) {
     date.start <- date()
     with(ans.all, {
         if (debug) {
@@ -11710,10 +12443,10 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
             }
             CED.low.inf <- FALSE
             CED.upp.inf <- FALSE
-            small.step.low <- F
-            small.step.upp <- F
-            large.step.low <- F
-            large.step.upp <- F
+            small.step.low <- FALSE
+            small.step.upp <- FALSE
+            large.step.low <- FALSE
+            large.step.upp <- FALSE
             if (trace) {
                 cat("\n=========== lower limit =================\n")
                 cat(text.par, "loglik", "loglik boundary", sep = tb)
@@ -11774,7 +12507,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
             step <- step.start
             run <- 0
             max.runs <- 1000
-            while (stop == F) {
+            while (stop == FALSE) {
                 run <- run + 1
                 if (!nolog) 
                   lb[jj] <- lb[jj]/step
@@ -11807,7 +12540,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                   loglik.try <- -f.lik.con(start, x, y, dtype, 
                     fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
                     nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                    ttt = ttt, trace = F, fct4 = fct4, fct5 = fct5, 
+                    ttt = ttt, trace = FALSE, fct4 = fct4, fct5 = fct5, 
                     cens.up = cens.up, par.tmp = NA, increase = increase, 
                     x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
                     ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, 
@@ -11831,7 +12564,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                     1.1)
                 }
                 else {
-                  nlminb.out <- f.nlminb(ans.all, tmp.quick = T)
+                  nlminb.out <- f.nlminb(ans.all, tmp.quick = TRUE)
                   MLE.current <- nlminb.out$MLE
                   loglik.current <- nlminb.out$loglik
                   start <- MLE.current * disturb
@@ -11896,26 +12629,26 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                   if (step < 1.00001) {
                     if (trace) 
                       cat("\nstep size too small, calculations stopped\n")
-                    stop <- T
-                    small.step.low <- T
+                    stop <- TRUE
+                    small.step.low <- TRUE
                   }
                   if (step > 1e+10) {
                     if (trace) 
                       cat("\nstep size too large, calculations stopped\n")
-                    stop <- T
-                    large.step.low <- T
+                    stop <- TRUE
+                    large.step.low <- TRUE
                   }
                   if (abs(CED.low[1]) < 1e-20) {
                     if (trace) 
                       cat("\ncurrent parameter value is too small:", 
                         CED.low[1], ", evaluating likelihood profile is stopped\n")
                     CED.low.inf <- TRUE
-                    stop <- T
+                    stop <- TRUE
                   }
                   if (run > max.runs) {
                     if (trace) 
                       cat("\nATTENTION: Maximum number of runs reached in gauching profile\n")
-                    stop <- T
+                    stop <- TRUE
                   }
                   if (!stop) {
                     if (loglik.low[2] - loglik.low[1] > 0.25 * 
@@ -11980,8 +12713,8 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
             else step.start <- 1.08
             step <- step.start
             run <- 0
-            stop <- F
-            while (stop == F) {
+            stop <- FALSE
+            while (stop == FALSE) {
                 run <- run + 1
                 if (!nolog) 
                   lb[jj] <- lb[jj] * step
@@ -12013,7 +12746,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                   loglik.try <- -f.lik.con(start, x, y, dtype, 
                     fct1, fct2, fct3, model.ans, mn.log, sd2.log, 
                     nn, Vdetlim = Vdetlim, CES = CES, twice = twice, 
-                    ttt = ttt, trace = F, fct4 = fct4, fct5 = fct5, 
+                    ttt = ttt, trace = FALSE, fct4 = fct4, fct5 = fct5, 
                     cens.up = cens.up, par.tmp = NA, increase = increase, 
                     x.mn = x.mn, ref.lev = ref.lev, sign.q = sign.q, 
                     ans.m6.sd = ans.m6.sd, Mx = Mx, x1 = x1, 
@@ -12040,7 +12773,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                     1.1)
                 }
                 else {
-                  nlminb.out <- f.nlminb(ans.all, tmp.quick = T)
+                  nlminb.out <- f.nlminb(ans.all, tmp.quick = TRUE)
                   MLE.current <- nlminb.out$MLE
                   loglik.current <- nlminb.out$loglik
                   start <- MLE.current * disturb
@@ -12095,14 +12828,14 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                     (length(unique(loglik.upp)) > 6)) 
                     stop <- TRUE
                   if (step < 1.00001) {
-                    stop <- T
-                    small.step.upp <- T
+                    stop <- TRUE
+                    small.step.upp <- TRUE
                     if (trace) 
                       cat("\nstep size too small, calculations stopped\n")
                   }
                   if (step > 1e+10) {
-                    stop <- T
-                    large.step.upp <- T
+                    stop <- TRUE
+                    large.step.upp <- TRUE
                     if (trace) 
                       cat("\nstep size too large, calculations stopped\n")
                   }
@@ -12111,12 +12844,12 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                       cat("\ncurrent parameter value is too large:", 
                         CED.upp[1], "\n")
                     CED.upp.inf <- TRUE
-                    stop <- T
+                    stop <- TRUE
                   }
                   if (run > max.runs) {
                     if (trace) 
                       cat("\nATTENTION: Maximum number of runs reached in establishing profile\n")
-                    stop <- T
+                    stop <- TRUE
                   }
                   if (!stop) {
                     if (loglik.upp[2] - loglik.upp[1] > 0.25 * 
@@ -12167,7 +12900,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                             print("f.profile.all:   c does not reach CES")
                             print(MLE.current)
                             print(cc)
-                            stop <- T
+                            stop <- TRUE
                             CED.upp.inf <- TRUE
                           }
                         if (increase == -1) 
@@ -12176,7 +12909,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
                             print(MLE.current)
                             print(cc)
                             print(1 - abs(CES))
-                            stop <- T
+                            stop <- TRUE
                             CED.upp.inf <- TRUE
                           }
                       }
@@ -12380,6 +13113,7 @@ f.profile.all <- function(ans.all, nolog = F, debug = FALSE, display_plots = TRU
 #' @param return_plots A logical variable indicating whether you want to return the plots as a list (TRUE) or not (FALSE, the default). If TRUE, the function will return a list of recorded plots.
 #' @importFrom graphics title text mtext
 #' @importFrom grDevices recordPlot dev.off
+#' @return Either the proast object (default) or a list of recorded plots if return_plots = TRUE.
 f.plot.gui <- function(
   ans.all,
   HTML = FALSE,
@@ -12611,7 +13345,7 @@ if (!WAPP) { # Record the plots, don't save to file.
               plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
         }
         else {
-            new.window <- T
+            new.window <- TRUE
             y.pos <- 0
             assign(".ypos", y.pos, pos = .proast_env)
         }
@@ -12831,7 +13565,7 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
             else ans.all$sens.lev <- NA
         }
         if (dtype %in% c(2, 4, 6)) 
-            no.CI <- T
+            no.CI <- TRUE
         if (!no.CI) {
             if (dtype %in% c(5, 15)) {
                 ans.all$plot.ans <- 1
@@ -12843,8 +13577,8 @@ f.CI.sel <- function(ans.all, interactive_mode = TRUE, .proast_env = NULL) {
                 if (ans.all$loglik == 1e-12) 
                   cat("\n\nno finite log-likelihood found, CI will not be calculated\n\n")
                 else {
-                  ans.all$trace <- F
-                  ans.all$trace.plt <- F
+                  ans.all$trace <- FALSE
+                  ans.all$trace.plt <- FALSE
                   if (length(xans) > 1) {
                     group <- nr.var + nr.aa + 1
                     RPF.rank <- (npar - nr.dosecol + 2):npar
@@ -13062,60 +13796,82 @@ f.CED.all <- function(CED.all, y.leg, exp.out = NA, hill.out = NA, invexp.out = 
 
 #' @importFrom graphics plot title lines mtext points
 #' @importFrom grDevices dev.off
-f.plot.CED <- function(ans.all,
-                       logscale = T,
-                       xx.lim = NA,
-                       WAPP = FALSE,
-                       plotprefix = "", 
-                       svg.plots = FALSE,
-                       display_plots = TRUE,
-                       interactive_mode = TRUE) {
+f.plot.CED <- function(
+    ans.all,
+    logscale = TRUE,
+    xx.lim = NA,
+    WAPP = FALSE,
+    plotprefix = "",
+    svg.plots = FALSE,
+    display_plots = TRUE,
+    interactive_mode = TRUE
+) {
     data <- ans.all$CED.all
     covar.txt <- data$covar.txt
     nr.lev <- length(covar.txt)
-    if (nr.lev == 0)
+    if (nr.lev == 0) {
         nr.lev <- 1
-    endp.name <- data$endpoints
-    if (ans.all$do.MA)
-        endp.name <- unique(endp.name)
-    if (0) {
-        if (ans.all$NES.ans == 2)
-            endp.name.legend <- paste(endp.name, "", data$Mces[, 
-                2])
-        else endp.name.legend <- endp.name
     }
-    endp.name.legend <- paste(unique(endp.name), data$Mces[, 
-        2])
+    endp.name <- data$endpoints
+    if (ans.all$do.MA) {
+        endp.name <- unique(endp.name)
+    }
+    if (0) {
+        if (ans.all$NES.ans == 2) {
+            endp.name.legend <- paste(
+                endp.name,
+                "",
+                data$Mces[,
+                    2
+                ]
+            )
+        } else {
+            endp.name.legend <- endp.name
+        }
+    }
+    endp.name.legend <- paste(
+        unique(endp.name),
+        data$Mces[,
+            2
+        ]
+    )
     CI <- data$CED.matr
     if (ans.all$do.MA) {
         CI <- ans.all$CED.matr.ma.plt
         CI <- CI[, -1]
     }
     if (is.na(xx.lim[1])) {
-        max.x <- max(CI[CI != Inf], na.rm = T)
-        zero.dum <- min(CI[CI > 0], na.rm = T)/1.1
+        max.x <- max(CI[CI != Inf], na.rm = TRUE)
+        zero.dum <- min(CI[CI > 0], na.rm = TRUE) / 1.1
         xx.lim <- c(log10(zero.dum), log10(max.x))
     }
     CES <- data$CES
     NES.ans <- data$NES.ans
-    if (logscale)
+    if (logscale) {
         CI <- log10(CI)
+    }
     nr.row <- length(CI[, 1])
     nr.endp <- length(unique(data$endpoints))
     mainjump <- 1
     subjump <- 0.35
-    if (ans.all$do.MA)
+    if (ans.all$do.MA) {
         max.y <- nr.endp
-    else max.y <- nr.endp * (data$nr.models * subjump + mainjump)
-    if (max.y > 40)
+    } else {
+        max.y <- nr.endp * (data$nr.models * subjump + mainjump)
+    }
+    if (max.y > 40) {
         cex.mtext <- 0.6
-    else cex.mtext <- 0.8
+    } else {
+        cex.mtext <- 0.8
+    }
     yy.lim <- c(1, max.y)
     xx.lab <- paste("CED", CES, sep = "-")
-    if (NES.ans == 2) 
+    if (NES.ans == 2) {
         xx.lab <- paste("CED (for endpoint-specific CES)")
-    if (logscale) 
+    }
+    if (logscale) {
         xx.lab <- paste("log10-", xx.lab)
+    }
     jj <- 1
     for (ii in 1:nr.lev) {
         ci.matr <- CI[, jj:(jj + 1)]
@@ -13123,18 +13879,43 @@ f.plot.CED <- function(ans.all,
         name.wapp <- paste("b", ii, "cedCI", sep = "")
         endp.nr <- 1
         if (display_plots) {
-          f.graph.window(1, WAPP = WAPP, title = "", name.wapp = name.wapp, 
-              plotprefix = plotprefix, svg.plots = svg.plots)
-          plot(1:max.y, 1:max.y, xlim = xx.lim, ylim = yy.lim,
-               ylab = "", yaxt = "n", xlab = xx.lab, type = "n")
-          if (length(covar.txt) > 1)
-              title(main = paste("group", covar.txt[ii]), cex.main = 1.2)
-          if (!ans.all$do.MA)
-              title(main = paste("\n\n\n", ans.all$nr.models, "models per endpoint"), 
-                  cex.main = 0.8)
-          if (ans.all$do.MA) 
-              title(main = paste("\n\n\n", "CIs based on model averaging"), 
-                  cex.main = 0.8)
+            f.graph.window(
+                1,
+                WAPP = WAPP,
+                title = "",
+                name.wapp = name.wapp,
+                plotprefix = plotprefix,
+                svg.plots = svg.plots
+            )
+            plot(
+                1:max.y,
+                1:max.y,
+                xlim = xx.lim,
+                ylim = yy.lim,
+                ylab = "",
+                yaxt = "n",
+                xlab = xx.lab,
+                type = "n"
+            )
+            if (length(covar.txt) > 1) {
+                title(main = paste("group", covar.txt[ii]), cex.main = 1.2)
+            }
+            if (!ans.all$do.MA) {
+                title(
+                    main = paste(
+                        "\n\n\n",
+                        ans.all$nr.models,
+                        "models per endpoint"
+                    ),
+                    cex.main = 0.8
+                )
+            }
+            if (ans.all$do.MA) {
+                title(
+                    main = paste("\n\n\n", "CIs based on model averaging"),
+                    cex.main = 0.8
+                )
+            }
         }
         yyy.tmp <- max.y
         if (!is.na(ci.tmp[1])) {
@@ -13148,65 +13929,88 @@ f.plot.CED <- function(ans.all,
                 ci.tmp[2] <- 100
             }
             if (display_plots) {
-              lines(ci.tmp, rep(yyy.tmp, 2), lty = lty.tmp)
-              mtext(endp.name.legend[1], 4, 1, adj = 0, las = 1,
-                    at = yyy.tmp, cex = cex.mtext)
+                lines(ci.tmp, rep(yyy.tmp, 2), lty = lty.tmp)
+                mtext(
+                    endp.name.legend[1],
+                    4,
+                    1,
+                    adj = 0,
+                    las = 1,
+                    at = yyy.tmp,
+                    cex = cex.mtext
+                )
             }
         } else {
-          if (display_plots) {
-            points(xx.lim[2], yyy.tmp, pch = "\"")
-            mtext(endp.name.legend[1], 4, 1, adj = 0, las = 1, 
-                at = yyy.tmp, cex = cex.mtext, col = 2)
-          }
+            if (display_plots) {
+                points(xx.lim[2], yyy.tmp, pch = "\"")
+                mtext(
+                    endp.name.legend[1],
+                    4,
+                    1,
+                    adj = 0,
+                    las = 1,
+                    at = yyy.tmp,
+                    cex = cex.mtext,
+                    col = 2
+                )
+            }
         }
         first.kk <- 2
         for (kk in first.kk:nr.row) {
             ci.tmp <- ci.matr[kk, 1:2]
-            if (endp.name[kk] == endp.name[kk - 1])
+            if (endp.name[kk] == endp.name[kk - 1]) {
                 yyy.tmp <- yyy.tmp - subjump
-            else {
+            } else {
                 endp.nr <- endp.nr + 1
                 yyy.tmp <- yyy.tmp - 1
-                if (!is.na(ci.tmp[1]))
-                  color.tmp <- 1
-                else {
-                  color.tmp <- 2
+                if (!is.na(ci.tmp[1])) {
+                    color.tmp <- 1
+                } else {
+                    color.tmp <- 2
                 }
                 if (display_plots) {
-                  mtext(endp.name.legend[endp.nr], 4, 1, adj = 0,
-                        las = 1, at = yyy.tmp, cex = cex.mtext,
-                        col = color.tmp)
+                    mtext(
+                        endp.name.legend[endp.nr],
+                        4,
+                        1,
+                        adj = 0,
+                        las = 1,
+                        at = yyy.tmp,
+                        cex = cex.mtext,
+                        col = color.tmp
+                    )
                 }
             }
             if (!is.na(ci.tmp[1])) {
                 lty.tmp <- 1
                 if (ci.tmp[1] == -Inf) {
-                  lty.tmp <- 2
-                  ci.tmp[1] <- -100
+                    lty.tmp <- 2
+                    ci.tmp[1] <- -100
                 }
                 if (ci.tmp[2] == Inf) {
-                  lty.tmp <- 2
-                  ci.tmp[2] <- 100
+                    lty.tmp <- 2
+                    ci.tmp[2] <- 100
                 }
                 if (display_plots) {
-                  lines(ci.tmp, rep(yyy.tmp, 2), lty = lty.tmp)
+                    lines(ci.tmp, rep(yyy.tmp, 2), lty = lty.tmp)
                 }
-            }
-            else {
+            } else {
                 if (display_plots) {
-                  points(xx.lim[2], yyy.tmp, pch = "\"")
+                    points(xx.lim[2], yyy.tmp, pch = "\"")
                 }
             }
         }
         jj <- jj + 2
         if (!WAPP) {
             cat("\nCED-CI plot created for subgroup", ii, "\n")
-            if (ii < nr.lev)
+            if (ii < nr.lev) {
                 if (interactive_mode == TRUE) {
                 }
+            }
         }
-        if (WAPP)
+        if (WAPP) {
             dev.off()
+        }
     }
 }
 
@@ -13587,8 +14391,16 @@ f.explain.marks <- function(ans.all) {
 
 #' @importFrom graphics title lines mtext
 #' @importFrom grDevices dev.off
-f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE, 
-    ref = NA, rm.NAs = TRUE, display_plots = TRUE) {
+f.plot.CI <- function(
+    ans.all,
+    sort = TRUE,
+    logscale = TRUE,
+    xx.lim = NA,
+    RPFs = FALSE,
+    ref = NA,
+    rm.NAs = TRUE,
+    display_plots = TRUE
+) {
     no.hill <- FALSE
     if (ans.all$do.MA) {
         CI <- ans.all$MA$conf.int.ma
@@ -13596,35 +14408,50 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         CI.hill <- matrix(c(NA, NA), nrow = 1)
         CI <- CI[, -1]
         no.hill <- TRUE
-    }
-    else {
-        if (length(ans.all$HILL) == 0 || is.na(ans.all$HILL[1])) 
-            no.hill <- T
-        if (length(ans.all$EXP) == 0) 
+    } else {
+        if (length(ans.all$HILL) == 0 || is.na(ans.all$HILL[1])) {
+            no.hill <- TRUE
+        }
+        if (length(ans.all$EXP) == 0) {
             ans.all$EXP$conf.int <- ans.all$conf.int
+        }
         if (ans.all$dtype %in% c(4, 6)) {
             CI <- ans.all$conf.int
             CI.hill <- matrix(c(NA, NA), nrow = 1)
-        }
-        else {
+        } else {
             CI <- ans.all$EXP$conf.int
-            if (!no.hill) 
+            if (!no.hill) {
                 CI.hill <- ans.all$HILL$conf.int
-            else CI.hill <- matrix(c(NA, NA), nrow = 1)
+            } else {
+                CI.hill <- matrix(c(NA, NA), nrow = 1)
+            }
         }
         if (ans.all$cont) {
-            if (length(CI[, 1]) == 1 && length(CI.hill[, 1]) > 
-                1) 
-                CI <- matrix(CI, ncol = 2, nrow = length(CI.hill[, 
-                  1]), byrow = TRUE)
-            if (length(CI[, 1]) > 1 && length(CI.hill[, 1]) == 
-                1) 
-                CI.hill <- matrix(CI.hill, ncol = 2, nrow = length(CI[, 
-                  1]), byrow = TRUE)
+            if (length(CI[, 1]) == 1 && length(CI.hill[, 1]) > 1) {
+                CI <- matrix(
+                    CI,
+                    ncol = 2,
+                    nrow = length(CI.hill[,
+                        1
+                    ]),
+                    byrow = TRUE
+                )
+            }
+            if (length(CI[, 1]) > 1 && length(CI.hill[, 1]) == 1) {
+                CI.hill <- matrix(
+                    CI.hill,
+                    ncol = 2,
+                    nrow = length(CI[,
+                        1
+                    ]),
+                    byrow = TRUE
+                )
+            }
         }
         covar.txt <- dimnames(CI)[[1]]
-        if (is.null(covar.txt)) 
+        if (is.null(covar.txt)) {
             covar.txt <- ans.all$fct2.txt
+        }
     }
     if (rm.NAs) {
         lst.na.1 <- is.na(CI[, 1])
@@ -13632,8 +14459,9 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         lst.na <- lst.na.1 | lst.na.2
         CI <- CI[!lst.na, ]
         if (!is.matrix(CI) && !is.data.frame(CI)) {
-            if (length(CI[1, ]) == 2) 
+            if (length(CI[1, ]) == 2) {
                 CI <- matrix(CI, ncol = 2)
+            }
             if (length(CI[1, ]) == 3) {
                 covar.txt <- CI[, 1]
                 CI <- as.matrix(CI[, 2:3])
@@ -13645,10 +14473,12 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
             lst.na <- lst.na.1 | lst.na.2
             CI.hill <- CI.hill[!lst.na, ]
             if (!is.matrix(CI.hill)) {
-                if (length(CI.hill[1, ]) == 2) 
-                  CI.hill <- matrix(CI.hill, ncol = 2)
-                if (length(CI.hill[1, ]) == 3) 
-                  CI.hill <- as.matrix(CI.hill[, 2:3])
+                if (length(CI.hill[1, ]) == 2) {
+                    CI.hill <- matrix(CI.hill, ncol = 2)
+                }
+                if (length(CI.hill[1, ]) == 3) {
+                    CI.hill <- as.matrix(CI.hill[, 2:3])
+                }
             }
         }
         covar.txt <- covar.txt[!lst.na]
@@ -13659,22 +14489,23 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         cat("\n No confidence intervals available\n")
         return()
     }
-    CI.matr <- data.frame(covar = covar.txt, LB.E = CI[, 1], 
-        UB.E = CI[, 2])
+    CI.matr <- data.frame(covar = covar.txt, LB.E = CI[, 1], UB.E = CI[, 2])
     if (!no.hill) {
         CI.matr$LB.H <- CI.hill[, 1]
         CI.matr$UB.H <- CI.hill[, 2]
     }
     max.x <- 1.1 * max(ans.all$x, na.rm = TRUE)
-    max.CI <- max(CI, na.rm = T)
-    if (is.infinite(max.CI)) 
+    max.CI <- max(CI, na.rm = TRUE)
+    if (is.infinite(max.CI)) {
         max.CI <- max(CI[is.finite(CI)]) * 10
+    }
     CI[, 2][is.na(CI[, 2])] <- max.CI
     if (!no.hill) {
-        max.CI.hill <- max(CI.hill, na.rm = T)
-        if (is.infinite(max.CI.hill)) 
-            max.CI.hill <- max(CI.hill[is.finite(CI.hill)]) * 
+        max.CI.hill <- max(CI.hill, na.rm = TRUE)
+        if (is.infinite(max.CI.hill)) {
+            max.CI.hill <- max(CI.hill[is.finite(CI.hill)]) *
                 10
+        }
         CI.hill[, 2][is.na(CI.hill[, 2])] <- max.CI.hill
         max.CI <- max(max.CI, max.CI.hill)
     }
@@ -13684,9 +14515,10 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
     ub <- CI[, 2]
     ub.pos <- ub[ub != 0]
     ub.min <- min(ub.pos, na.rm = TRUE)
-    min.CI <- min(lb.min/10, ub.min/10)
-    if (!is.na(xx.lim[1])) 
+    min.CI <- min(lb.min / 10, ub.min / 10)
+    if (!is.na(xx.lim[1])) {
         min.CI <- 10^xx.lim[1]
+    }
     CI[, 1][CI[, 1] == 0] <- min.CI
     if (!no.hill) {
         lb <- CI.hill[, 1]
@@ -13695,13 +14527,14 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         ub <- CI.hill[, 2]
         ub.pos <- ub[ub != 0]
         ub.min <- min(ub.pos, na.rm = TRUE)
-        min.CI <- min(lb.min/10, ub.min/10, min.CI)
+        min.CI <- min(lb.min / 10, ub.min / 10, min.CI)
         CI.hill[, 1][CI.hill[, 1] == 0] <- min.CI
     }
     if (logscale) {
         CI <- log10(CI)
-        if (!no.hill) 
+        if (!no.hill) {
             CI.hill <- log10(CI.hill)
+        }
         min.CI <- log10(min.CI)
         max.CI <- log10(max.CI)
     }
@@ -13716,50 +14549,77 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
     if (is.na(xx.lim[1])) {
         CI.tmp <- CI
         CI.tmp[, 1][CI.tmp[, 1] == 0] <- NA
-        if (!no.hill) 
+        if (!no.hill) {
             CI.tmp <- cbind(CI, CI.hill)
-        xx.lim <- c(min(CI.tmp, na.rm = T), max.CI)
+        }
+        xx.lim <- c(min(CI.tmp, na.rm = TRUE), max.CI)
     }
     if (max.CI < max.x) {
-        if (is.infinite(xx.lim[2])) 
+        if (is.infinite(xx.lim[2])) {
             xx.lim[2] <- log10(max.x)
-        if (is.na(xx.lim[2])) 
+        }
+        if (is.na(xx.lim[2])) {
             xx.lim[2] <- log10(max.x)
-    }
-    else {
-        if (is.infinite(xx.lim[2])) 
+        }
+    } else {
+        if (is.infinite(xx.lim[2])) {
             xx.lim[2] <- log10(max.CI)
-        if (is.na(xx.lim[2])) 
+        }
+        if (is.na(xx.lim[2])) {
             xx.lim[2] <- log10(max.CI)
+        }
     }
     xx.lab <- paste("CED", round(CES[1], 3), sep = "-")
-    if (logscale) 
+    if (logscale) {
         xx.lab <- paste("log10-", xx.lab)
+    }
     name.wapp <- paste("b", ans.all$yans, "cedCI", sep = "")
     if (display_plots) {
-        f.graph.window(1, WAPP = ans.all$WAPP, title = "", name.wapp = name.wapp, 
-        plotprefix = ans.all$plotprefix, svg.plots = ans.all$svg.plots)
-        plot(1:max.y, 1:max.y, xlim = xx.lim, ylim = yy.lim, ylab = "", 
-            yaxt = "n", xlab = xx.lab, type = "n")
+        f.graph.window(
+            1,
+            WAPP = ans.all$WAPP,
+            title = "",
+            name.wapp = name.wapp,
+            plotprefix = ans.all$plotprefix,
+            svg.plots = ans.all$svg.plots
+        )
+        plot(
+            1:max.y,
+            1:max.y,
+            xlim = xx.lim,
+            ylim = yy.lim,
+            ylab = "",
+            yaxt = "n",
+            xlab = xx.lab,
+            type = "n"
+        )
         par(cex.main = 0.9)
-        if (ans.all$do.MA) 
+        if (ans.all$do.MA) {
             title(main = "BMD confidence intervals based on MA")
-        else if (!RPFs) {
-            if (no.hill) 
+        } else if (!RPFs) {
+            if (no.hill) {
                 title(main = "BMD confidence intervals per subgroup")
-            else title(main = "BMD confidence intervals \n(exponential and Hill, per subgroup)")
-        }
-        else if (RPFs) {
-            if (no.hill) 
+            } else {
+                title(
+                    main = "BMD confidence intervals \n(exponential and Hill, per subgroup)"
+                )
+            }
+        } else if (RPFs) {
+            if (no.hill) {
                 title(main = "RPF confidence intervals per subgroup")
-            else title(main = "RPF confidence intervals \n(exponential and Hill, per subgroup)")
+            } else {
+                title(
+                    main = "RPF confidence intervals \n(exponential and Hill, per subgroup)"
+                )
+            }
             par(cex.main = 0.8)
-            if (!is.na(ref)) 
+            if (!is.na(ref)) {
                 title(main = paste("\n\nreference: ", ref))
+            }
         }
     }
     if (sort && length(CI[, 1]) > 1) {
-        ci.mn <- (CI[, 1] + CI[, 2])/2
+        ci.mn <- (CI[, 1] + CI[, 2]) / 2
         covar.txt <- covar.txt[order(ci.mn)]
         CI <- CI[order(ci.mn), ]
         if (!no.hill) {
@@ -13778,8 +14638,16 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         }
         if (display_plots) {
             lines(CI[ii, ], rep(yyy.tmp, 2), lty = l.ty)
-            mtext(covar.txt[ii], 4, 1, adj = 0, las = 1, at = 1.01 * 
-                yyy.tmp, cex = 0.8)
+            mtext(
+                covar.txt[ii],
+                4,
+                1,
+                adj = 0,
+                las = 1,
+                at = 1.01 *
+                    yyy.tmp,
+                cex = 0.8
+            )
         }
         l.ty <- 1
         if (!no.hill) {
@@ -13797,226 +14665,338 @@ f.plot.CI <- function(ans.all, sort = T, logscale = T, xx.lim = NA, RPFs = FALSE
         }
         l.ty <- 1
     }
-    if (ans.all$WAPP) 
+    if (ans.all$WAPP) {
         dev.off()
+    }
     return(CI.matr)
 }
 
 
-f.choose.model <- function(ans.all.tmp,
-                           cont = TRUE,
-                           interactive_mode = TRUE,
-                           add_nonzero_val_to_dat = FALSE,
-                           nonzero_val = NULL,
-                           detection_limit = NULL) {
-    with(ans.all.tmp, {
-        ans.all <- ans.all.tmp
-        if (cont) {
-            model.names <- f.expect.con(name = T)
-            if (length(xans) > 1) 
-                model.names[46:47] <- ""
-            model.ans <- menu(model.names, title = "\nWhich model do you want to fit ?\n                       (type 0 if none\n")
-            if (model.ans == 0) {
-                ans.all$model.ans <- 0
-                return(ans.all)
-            }
-            if (max(x, na.rm = T) > 1000 && model.ans %in% c(2:5, 
-                17:20)) {
-                cat("\n(Nonzero) doses range from ", min(x[x != 
-                  0], na.rm = T), "to ", max(x, na.rm = T))
-                cat("\nit may be helpful to scale dose x to prevent numerical problems\n")
-                ans.all$sf.x <- eval(parse(prompt = "\nQ10: Give scaling factor for dose (e.g. 1000) > "))
-            }
-            if (model.ans %in% c(58, 59)) {
-                if (y[1] == -1000) {
-                  cat("\n\nATTENTION: you need to remove or adjust the first response which equals zero\n or is below LOQ\n\n")
-                  print(cbind(x, y)[1:10, ])
-                }
-            }
-            ans.all$quick.ans <- 1
-            if (model.ans == 38) 
-                ans.all$quick.ans <- 5
-            if (model.ans == 39) 
-                ans.all$quick.ans <- 3
-            if (model.ans == 40) 
-                ans.all$quick.ans <- 4
-            if (yans == 0 && !(model.ans %in% 38:40)) {
-                cat("\nFirst choose response ... \n")
-                ans.all$change[2] <- T
-                ans.all <- f.change.settings(ans.all,
-                                             interactive_mode = interactive_mode,
-                                             add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                                             nonzero_val = nonzero_val,
-                                             detection_limit = detection_limit)
-                ans.all <- f.execute(ans.all,
-                                     interactive_mode = interactive_mode,
-                                     add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                                     nonzero_val = nonzero_val,
-                                     detection_limit = detection_limit)
-            }
-            if (model.ans == 16) 
-                cat("\nATTENTION: this model can only be fitted after fitting model 10!\n")
-            if (model.ans %in% c(12:15, 22:25, 46, 50:54, 60, 
-                61, 63)) 
-                CES <- eval(parse(prompt = paste("give value for CES (negative for decreasing response) > ")))
-            if (model.ans == 16) {
-                if (!pre.16) {
-                  model.ans <- 10
-                  cat("\nfirst model 10 will be fitted\n")
-                }
-                else ans.all$par.start <- MLE[(max(fct3) + 1):length(MLE)]
-            }
-            if (incr.decr.no > 0) {
-                if (model.ans %in% c(0, 15, 25, 52, 54, 46)) {
-                  cat("")
-                  CES.tmp <- CES
-                  CES <- rep(CES, length(x))
-                  CES[fct4 == 1] <- -CES.tmp
-                  ans.all$CES <- CES
-                }
-                else {
-                  cat("\n\nthe selected model is not applicable with both in- and decreasing DRs\n")
-                  cat("\nselect model 15,25,52,54 or 46\n")
-                  return(ans.all)
-                }
-            }
-            ans.all$modelname <- f.expect.con(name = T)[model.ans]
-        }
-        if (!cont) {
-            if (length(unique(fct3)) > 1 || dtype == 3) 
-                model.type <- 2
-            else model.type <- menu(c("classical models", "latent variable models", 
-                "set of models"), title = "\nChoose type of models")
-            switch(model.type, model.names <- f.expect.bin(name = T), 
-                {
-                  model.names <- f.expect.con(name = T)[c(1:25, 
-                    31, 32, 33, 45, 38, 39, 40, 46, 48, 50, 52, 
-                    54)]
-                }, {
-                  ans.all$quick.ans <- 3
-                  return(ans.all)
-                })
-            model.ans <- menu(model.names, title = "\nWhich model do you want to fit ?\n  (type 0 is you first want to change the settings\n")
-            if (model.type == 2) {
-                model.ans.tmp <- model.ans
-                if (model.ans.tmp == 26) 
-                  model.ans <- 31
-                if (model.ans.tmp == 27) 
-                  model.ans <- 32
-                if (model.ans.tmp == 28) 
-                  model.ans <- 33
-                if (model.ans.tmp == 29) 
-                  model.ans <- 45
-                if (model.ans.tmp == 30) 
-                  model.ans <- 38
-                if (model.ans.tmp == 31) 
-                  model.ans <- 39
-                if (model.ans.tmp == 32) 
-                  model.ans <- 40
-                if (model.ans.tmp == 33) 
-                  model.ans <- 46
-                if (model.ans == 38) 
-                  ans.all$quick.ans <- 5
-                if (model.ans == 39) 
-                  ans.all$quick.ans <- 3
-                if (model.ans == 40) 
-                  ans.all$quick.ans <- 4
-                if (model.ans %in% 38:40) 
-                  ans.all$displ.no <- 0
-                ans.all$modelname <- f.expect.con(name = T)[model.ans]
-            }
-            if (model.type == 2 && model.ans == 11) {
-                cat("\nfull LVM model not allowed, model 14 from classical models will be chosen\n")
-                ans.all$model.ans <- 14
-                ans.all$model.type <- 1
-                model.names <- f.expect.bin(name = T)
-                ans.all$modelname <- model.names[ans.all$model.ans]
-                return(ans.all)
-            }
-            if (model.type == 1) 
-                ans.all$modelname <- f.expect.bin(name = T)[model.ans]
-            dum <- F
-            if ((model.type == 1) & (model.ans %in% 15:26)) 
-                dum <- T
-            if ((model.type == 2) & (model.ans %in% c(12:15, 
-                22:25, 46)) && dtype != 3) 
-                dum <- T
-            if (dum) {
-                ans.all$ces.ans <- menu(c("ED50", "Additional risk, i.e. P[BMD] - P[0]", 
-                  "Extra risk, i.e. (P[BMD]-P[0])/(1-P[0])", 
-                  "CES for latent variable", "Relative risk"), 
-                  title = "\nWhat type of Benchmark response do you want to consider?")
-                switch(ans.all$ces.ans, CES <- 0, CES <- eval(parse(prompt = "\nGive value for the BMR,\nin terms of additional risk > ")), 
-                  CES <- eval(parse(prompt = "\nGive value for the BMR,\nin terms of extra risk > ")), 
-                  CES <- eval(parse(prompt = "\nGive value for the CES,\ndefined for latent variable > ")), 
-                  CES <- eval(parse(prompt = "\nGive value for the percent change in risk > ")))
-            }
-            if (dtype == 3) {
-                CES <- 0
-                ans.all$ces.ans <- 1
-            }
-            if (dtype == 3 && model.ans %in% c(12:15, 22:25, 
-                46)) {
-                cat("\n number of (temporary) severity categories for this endpoint:", 
-                  nth, "\n")
-                CES.cat <- eval(parse(prompt = paste("\nGive severity category (in temporary terms) associated with CED > ")))
-            }
-            if (length(unique(fct3)) > 1 && model.ans %in% c(12:15, 
-                22:25, 46)) {
-                cat("\n the levels of the covariate are:\n")
-                print(th.par)
-            }
-            if (model.type == 1 & model.ans == 25 & ans.all$ces.ans > 
-                1) {
-                ans.all$fct1 <- rep(1, length(x))
-                ans.all$fct2 <- rep(1, length(x))
-                ans.all$nr.aa <- 1
-                ans.all$nr.bb <- 1
-            }
-            ans.all$model.type <- model.type
-        }
-        if (model.ans == 46) {
-            fct2.no <- menu(varnames[1:nvar], title = "\n:Give number of factor for which RPFs need to be estimated\n  ")
-            fct2.fact <- data.0[, fct2.no]
-            levels.all <- levels(factor(fct2.fact))
-            nr.lev <- length(levels.all)
-            cat("\n: Give number associated with the reference\n")
-            cat(" ")
-            cat(paste(1:nr.lev, ":", levels.all, "\n"))
-            ans.all$ref.lev <- eval(parse(prompt = paste(" -------- > ")))
-            ans.all$fct2.no <- fct2.no
-            ans.all <- f.execute(ans.all,
-                                 interactive_mode = interactive_mode,
-                                 add_nonzero_val_to_dat = add_nonzero_val_to_dat,
-                                 nonzero_val = nonzero_val,
-                                 detection_limit = detection_limit)
-        }
-        ans.all$CES <- CES
-        ans.all$model.ans <- model.ans
-        ans.all$model.names <- model.names
-        if (cont) 
-            ans.all$modelname <- model.names[model.ans]
-        if (!cont) 
-            ans.all$CES.cat <- CES.cat
-        dum1 <- !cont & (model.type == 1) & (model.ans %in% c(15:16, 
-            18:26, 30, 33))
-        dum2 <- ((!cont & (model.type == 2)) | cont) & (model.ans %in% 
-            c(12:16, 22:25, 46:47, 51:54))
-        ans.all$CED.model <- dum1 | dum2
-        if (!cont && model.type == 1 && nr.aa > 1 && nr.bb == 
-            1 && ans.all$CED.model && ans.all$ces.ans != 3) {
-            cat("\nATTENTION:  this situation is not yet correctly implemented\n")
-            cat("the resulting BMDs may not be entirely correct\n\n")
-            if (quick.ans == 1)
-              message("quick ans 1")
-        }
-        ans.all$model.fam <- 1
-        if (model.ans == 42) {
-            ans.all$opposing <- menu(c("no", "yes"), title = "\ndo the curves have opposing direction?") - 
-                1
-        }
+f.choose.model <- function(
+  ans.all.tmp,
+  cont = TRUE,
+  interactive_mode = TRUE,
+  add_nonzero_val_to_dat = FALSE,
+  nonzero_val = NULL,
+  detection_limit = NULL
+) {
+  with(ans.all.tmp, {
+    ans.all <- ans.all.tmp
+    if (cont) {
+      model.names <- f.expect.con(name = TRUE)
+      if (length(xans) > 1) {
+        model.names[46:47] <- ""
+      }
+      model.ans <- menu(
+        model.names,
+        title = "\nWhich model do you want to fit ?\n                       (type 0 if none\n"
+      )
+      if (model.ans == 0) {
+        ans.all$model.ans <- 0
         return(ans.all)
-    })
+      }
+      if (max(x, na.rm = TRUE) > 1000 && model.ans %in% c(2:5, 17:20)) {
+        cat(
+          "\n(Nonzero) doses range from ",
+          min(x[x != 0], na.rm = TRUE),
+          "to ",
+          max(x, na.rm = TRUE)
+        )
+        cat(
+          "\nit may be helpful to scale dose x to prevent numerical problems\n"
+        )
+        ans.all$sf.x <- eval(parse(
+          prompt = "\nQ10: Give scaling factor for dose (e.g. 1000) > "
+        ))
+      }
+      if (model.ans %in% c(58, 59)) {
+        if (y[1] == -1000) {
+          cat(
+            "\n\nATTENTION: you need to remove or adjust the first response which equals zero\n or is below LOQ\n\n"
+          )
+          print(cbind(x, y)[1:10, ])
+        }
+      }
+      ans.all$quick.ans <- 1
+      if (model.ans == 38) {
+        ans.all$quick.ans <- 5
+      }
+      if (model.ans == 39) {
+        ans.all$quick.ans <- 3
+      }
+      if (model.ans == 40) {
+        ans.all$quick.ans <- 4
+      }
+      if (yans == 0 && !(model.ans %in% 38:40)) {
+        cat("\nFirst choose response ... \n")
+        ans.all$change[2] <- TRUE
+        ans.all <- f.change.settings(
+          ans.all,
+          interactive_mode = interactive_mode,
+          add_nonzero_val_to_dat = add_nonzero_val_to_dat,
+          nonzero_val = nonzero_val,
+          detection_limit = detection_limit
+        )
+        ans.all <- f.execute(
+          ans.all,
+          interactive_mode = interactive_mode,
+          add_nonzero_val_to_dat = add_nonzero_val_to_dat,
+          nonzero_val = nonzero_val,
+          detection_limit = detection_limit
+        )
+      }
+      if (model.ans == 16) {
+        cat(
+          "\nATTENTION: this model can only be fitted after fitting model 10!\n"
+        )
+      }
+      if (model.ans %in% c(12:15, 22:25, 46, 50:54, 60, 61, 63)) {
+        CES <- eval(parse(
+          prompt = paste(
+            "give value for CES (negative for decreasing response) > "
+          )
+        ))
+      }
+      if (model.ans == 16) {
+        if (!pre.16) {
+          model.ans <- 10
+          cat("\nfirst model 10 will be fitted\n")
+        } else {
+          ans.all$par.start <- MLE[(max(fct3) + 1):length(MLE)]
+        }
+      }
+      if (incr.decr.no > 0) {
+        if (model.ans %in% c(0, 15, 25, 52, 54, 46)) {
+          cat("")
+          CES.tmp <- CES
+          CES <- rep(CES, length(x))
+          CES[fct4 == 1] <- -CES.tmp
+          ans.all$CES <- CES
+        } else {
+          cat(
+            "\n\nthe selected model is not applicable with both in- and decreasing DRs\n"
+          )
+          cat("\nselect model 15,25,52,54 or 46\n")
+          return(ans.all)
+        }
+      }
+      ans.all$modelname <- f.expect.con(name = TRUE)[model.ans]
+    }
+    if (!cont) {
+      if (length(unique(fct3)) > 1 || dtype == 3) {
+        model.type <- 2
+      } else {
+        model.type <- menu(
+          c("classical models", "latent variable models", "set of models"),
+          title = "\nChoose type of models"
+        )
+      }
+      switch(
+        model.type,
+        model.names <- f.expect.bin(name = TRUE),
+        {
+          model.names <- f.expect.con(name = TRUE)[c(
+            1:25,
+            31,
+            32,
+            33,
+            45,
+            38,
+            39,
+            40,
+            46,
+            48,
+            50,
+            52,
+            54
+          )]
+        },
+        {
+          ans.all$quick.ans <- 3
+          return(ans.all)
+        }
+      )
+      model.ans <- menu(
+        model.names,
+        title = "\nWhich model do you want to fit ?\n  (type 0 is you first want to change the settings\n"
+      )
+      if (model.type == 2) {
+        model.ans.tmp <- model.ans
+        if (model.ans.tmp == 26) {
+          model.ans <- 31
+        }
+        if (model.ans.tmp == 27) {
+          model.ans <- 32
+        }
+        if (model.ans.tmp == 28) {
+          model.ans <- 33
+        }
+        if (model.ans.tmp == 29) {
+          model.ans <- 45
+        }
+        if (model.ans.tmp == 30) {
+          model.ans <- 38
+        }
+        if (model.ans.tmp == 31) {
+          model.ans <- 39
+        }
+        if (model.ans.tmp == 32) {
+          model.ans <- 40
+        }
+        if (model.ans.tmp == 33) {
+          model.ans <- 46
+        }
+        if (model.ans == 38) {
+          ans.all$quick.ans <- 5
+        }
+        if (model.ans == 39) {
+          ans.all$quick.ans <- 3
+        }
+        if (model.ans == 40) {
+          ans.all$quick.ans <- 4
+        }
+        if (model.ans %in% 38:40) {
+          ans.all$displ.no <- 0
+        }
+        ans.all$modelname <- f.expect.con(name = TRUE)[model.ans]
+      }
+      if (model.type == 2 && model.ans == 11) {
+        cat(
+          "\nfull LVM model not allowed, model 14 from classical models will be chosen\n"
+        )
+        ans.all$model.ans <- 14
+        ans.all$model.type <- 1
+        model.names <- f.expect.bin(name = TRUE)
+        ans.all$modelname <- model.names[ans.all$model.ans]
+        return(ans.all)
+      }
+      if (model.type == 1) {
+        ans.all$modelname <- f.expect.bin(name = TRUE)[model.ans]
+      }
+      dum <- FALSE
+      if ((model.type == 1) & (model.ans %in% 15:26)) {
+        dum <- TRUE
+      }
+      if (
+        (model.type == 2) & (model.ans %in% c(12:15, 22:25, 46)) && dtype != 3
+      ) {
+        dum <- TRUE
+      }
+      if (dum) {
+        ans.all$ces.ans <- menu(
+          c(
+            "ED50",
+            "Additional risk, i.e. P[BMD] - P[0]",
+            "Extra risk, i.e. (P[BMD]-P[0])/(1-P[0])",
+            "CES for latent variable",
+            "Relative risk"
+          ),
+          title = "\nWhat type of Benchmark response do you want to consider?"
+        )
+        switch(
+          ans.all$ces.ans,
+          CES <- 0,
+          CES <- eval(parse(
+            prompt = "\nGive value for the BMR,\nin terms of additional risk > "
+          )),
+          CES <- eval(parse(
+            prompt = "\nGive value for the BMR,\nin terms of extra risk > "
+          )),
+          CES <- eval(parse(
+            prompt = "\nGive value for the CES,\ndefined for latent variable > "
+          )),
+          CES <- eval(parse(
+            prompt = "\nGive value for the percent change in risk > "
+          ))
+        )
+      }
+      if (dtype == 3) {
+        CES <- 0
+        ans.all$ces.ans <- 1
+      }
+      if (dtype == 3 && model.ans %in% c(12:15, 22:25, 46)) {
+        cat(
+          "\n number of (temporary) severity categories for this endpoint:",
+          nth,
+          "\n"
+        )
+        CES.cat <- eval(parse(
+          prompt = paste(
+            "\nGive severity category (in temporary terms) associated with CED > "
+          )
+        ))
+      }
+      if (length(unique(fct3)) > 1 && model.ans %in% c(12:15, 22:25, 46)) {
+        cat("\n the levels of the covariate are:\n")
+        print(th.par)
+      }
+      if (model.type == 1 & model.ans == 25 & ans.all$ces.ans > 1) {
+        ans.all$fct1 <- rep(1, length(x))
+        ans.all$fct2 <- rep(1, length(x))
+        ans.all$nr.aa <- 1
+        ans.all$nr.bb <- 1
+      }
+      ans.all$model.type <- model.type
+    }
+    if (model.ans == 46) {
+      fct2.no <- menu(
+        varnames[1:nvar],
+        title = "\n:Give number of factor for which RPFs need to be estimated\n  "
+      )
+      fct2.fact <- data.0[, fct2.no]
+      levels.all <- levels(factor(fct2.fact))
+      nr.lev <- length(levels.all)
+      cat("\n: Give number associated with the reference\n")
+      cat(" ")
+      cat(paste(1:nr.lev, ":", levels.all, "\n"))
+      ans.all$ref.lev <- eval(parse(prompt = paste(" -------- > ")))
+      ans.all$fct2.no <- fct2.no
+      ans.all <- f.execute(
+        ans.all,
+        interactive_mode = interactive_mode,
+        add_nonzero_val_to_dat = add_nonzero_val_to_dat,
+        nonzero_val = nonzero_val,
+        detection_limit = detection_limit
+      )
+    }
+    ans.all$CES <- CES
+    ans.all$model.ans <- model.ans
+    ans.all$model.names <- model.names
+    if (cont) {
+      ans.all$modelname <- model.names[model.ans]
+    }
+    if (!cont) {
+      ans.all$CES.cat <- CES.cat
+    }
+    dum1 <- !cont & (model.type == 1) & (model.ans %in% c(15:16, 18:26, 30, 33))
+    dum2 <- ((!cont & (model.type == 2)) | cont) &
+      (model.ans %in%
+        c(12:16, 22:25, 46:47, 51:54))
+    ans.all$CED.model <- dum1 | dum2
+    if (
+      !cont &&
+        model.type == 1 &&
+        nr.aa > 1 &&
+        nr.bb == 1 &&
+        ans.all$CED.model &&
+        ans.all$ces.ans != 3
+    ) {
+      cat("\nATTENTION:  this situation is not yet correctly implemented\n")
+      cat("the resulting BMDs may not be entirely correct\n\n")
+      if (quick.ans == 1) {
+        message("quick ans 1")
+      }
+    }
+    ans.all$model.fam <- 1
+    if (model.ans == 42) {
+      ans.all$opposing <- menu(
+        c("no", "yes"),
+        title = "\ndo the curves have opposing direction?"
+      ) -
+        1
+    }
+    return(ans.all)
+  })
 }
 
 

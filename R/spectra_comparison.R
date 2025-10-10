@@ -20,6 +20,8 @@
 #' Default is tab.
 #' @param mf_type The type of mutation frequency to use. Default is "min"
 #' (recommended).
+#' @param seed An integer to set the seed for reproducibility when
+#' using Monte Carlo simulations to compute the p-value. Default is 1234.
 #' @returns the log-likelihood statistic G2 for the specified comparisons with
 #' the p-value adjusted for multiple-comparisons.
 #' @export
@@ -62,29 +64,27 @@
 #' 50:bone_marrow	50:liver
 #'
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#'
+#' # using import_mut_data() and filtered with filter_mut. Filtered
+#' # mutation data is available in the MutSeqRData ExperimentHub package:
+#' # eh <- ExperimentHub::ExperimentHub()
+#' # Data was summarized per sample using:
+#' # calculate_mf(mutation_data = eh[["EH9861"]],
+#' #              cols_to_group = "dose_group",
+#' #              subtype_resolution = "base_6")
+#' 
 #' # Example: compare 6-base mutation spectra between dose groups
-#' # Calculate the mutation frequency data at the 6-base resolution
-#' mf_data <- calculate_mf(mutation_data = example_data,
-#'                         cols_to_group = "dose_group",
-#'                          subtype_resolution = "base_6")
+#' # Load the example data
+#' mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
+#'                                   package = "MutSeqR"))
 #' # Create the contrasts table
 #' contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
 #'                         col2 = rep("Control", 3))
 #' # Run the comparison
-#' spectra_comparison(mf_data = mf_data,
+#' spectra_comparison(mf_data = mf_example,
 #'                    exp_variable = "dose_group",
 #'                    mf_type = "min",
 #'                    contrasts = contrasts)
-#' }
 #' @importFrom dplyr select mutate
 #' @importFrom stats pchisq pf r2dtable
 
@@ -92,7 +92,8 @@ spectra_comparison <- function(mf_data,
                                exp_variable,
                                mf_type = "min",
                                contrasts,
-                               cont_sep = "\t") {
+                               cont_sep = "\t",
+                               seed = 1234) {
   # Prepare Data
   sum_col <- paste0("sum_", mf_type)
   # Find the subtype column
@@ -132,50 +133,26 @@ spectra_comparison <- function(mf_data,
 
   # G2 Statistic - Likelihood Ratio Statistic
   ## Piegorsch and Bailer 1994 doi: 10.1093/genetics/136.1.403.
-  G2 <- function(x, monte.carlo = FALSE, n.sim = 10000, seed = 1234) {
+  # Note: we are NOT using the Monte Carlo simulation approach to compute p.
+  G2 <- function(x) {
     N <- sum(x)
     r <- apply(x, 1, sum)
     c <- apply(x, 2, sum)
     e <- r %*% t(c) / N
     G2 <- 0
-    for (k in 1:ncol(x)){
+    for (k in seq_len(ncol(x))){
       flag <- x[, k] > 0
       G2 <- G2 + t(x[flag, k]) %*% log(x[flag, k] / e[flag, k])
     }
     G2 <- 2 * G2
     R <- nrow(x) - 1
     df <- R * (ncol(x) - 1)
-    if (monte.carlo == FALSE) {
-      if (N / R > 20) {
-        p.value <- 1 - pchisq(G2, df)
-        message("Using chi-squared distribution to compute p-value")
-      } else {
-        p.value <- 1 - pf(G2 / R, R, N - df)
-        message("Using F-distribution to compute p-value")
-      }
+    if (N / R > 20) {
+      p.value <- 1 - pchisq(G2, df)
+      message("Using chi-squared distribution to compute p-value")
     } else {
-      #Monte Carlo
-      #Generate random rxc tables
-      set.seed(seed)
-      r <- apply(x, 1, sum)
-      c <- apply(x, 2, sum)
-      rtbl <- r2dtable(1, r, c)
-      ref.dist <- rep(0, n.sim)
-      for (k in 1:length(ref.dist)){
-        x <- r2dtable(1, r, c)[[1]]
-        N <- sum(x)
-        r <- apply(x, 1, sum)
-        c <- apply(x, 2, sum)
-        e <- r %*% t(c) / N
-        G2.t <- 0
-        for (j in 1:ncol(x)){
-          flag <- x[, j] > 0
-          G2.t <- G2.t + t(x[flag, j]) %*% log(x[flag, j] / e[flag, j])
-        }
-        ref.dist[k] <- 2 * G2.t
-      }
-      flag <- ref.dist >= G2[1, 1]
-      p.value <- length(ref.dist[flag]) / 10000
+      p.value <- 1 - pf(G2 / R, R, N - df)
+      message("Using F-distribution to compute p-value")
     }
     data.frame(G2 = G2, p.value = p.value)
   }
@@ -187,7 +164,7 @@ spectra_comparison <- function(mf_data,
   if (is.data.frame(contrasts)) {
     contrast_table <- contrasts
   } else {
-    contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = F)
+    contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = FALSE)
     if (ncol(contrast_table) <= 1) {
       stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
     }

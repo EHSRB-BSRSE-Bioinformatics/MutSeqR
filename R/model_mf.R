@@ -142,40 +142,25 @@
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#'
-#' # Example 1: Model MFmin by dose
-#' mf_example <- calculate_mf(mutation_data = example_data,
-#'                            cols_to_group = "sample",
-#'                           retain_metadata_cols = "dose")
-#' # Create a contrasts table to define pairwise comparisons
+#' # using import_mut_data() and filtered with filter_mut.
+#' # Data was summarized per sample using calculate_mf() (see relevant
+#' # examples). We will run the model with model_mf then plot the results.
+#' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+#'                                package = "MutSeqR"))
 #' # We will compare all treated groups to the control group
 #' contrasts <- data.frame(col1 = c("12.5", "25", "50"),
 #'                         col2 = c("0", "0", "0"))
 #' # Fit the model
-#' model1 <- model_mf(mf_data = mf_example,
+#' model <- model_mf(mf_data = mf_example,
 #'                    fixed_effects = "dose",
 #'                    reference_level = "0",
 #'                    muts = "sum_min",
 #'                    total_count = "group_depth",
 #'                    contrasts = contrasts)
-#' # The residuals histogram and QQ plot will help you assess the normality
-#' # of the residuals.
-#' model1$summary # Model Summary
-#' model1$point_estimates # Point Estimates: Mean MFmin by dose
-#' model1$pairwise_comparisons # Pairwise Comparisons
-#' # All treated doses exhibited a significant increase in mutation frequency
-#' # compared to the control.
 #'
 #' # Plot the results using plot_model_mf()
-#' plot <- plot_model_mf(model1,
+#' plot <- plot_model_mf(model,
 #'                       plot_type = "bar",
 #'                       x_effect = "dose",
 #'                       plot_error_bars = TRUE,
@@ -184,68 +169,6 @@
 #'                       x_label = "Dose (mg/kg-bw/d)",
 #'                       y_label = "Estimated Mean MF (mutations/bp)",
 #'                       plot_title = "")
-#' 
-#' # Example 2: Model MFmin by dose and genomic target
-#' # We will compare the treated groups to the control group for each genomic
-#' # target
-#' 
-#' # Calculate MF
-#' mf_example2 <- calculate_mf(mutation_data = example_data,
-#'                             cols_to_group = c("sample", "label"),
-#'                             retain_metadata_cols = "dose")
-#' # Create a contrasts table to define pairwise comparisons
-#' combinations <- expand.grid(dose = unique(mf_example2$dose),
-#'                             label = unique(mf_example2$label))
-#' combinations <- combinations[combinations$dose != 0, ]
-#' combinations$col1 <- with(combinations, paste(dose, label, sep=":"))
-#' combinations$col2 <- with(combinations, paste("0", label, sep=":"))
-#' contrasts2 <- combinations[, c("col1", "col2")]
-#' # Fit the model
-#' # Fixed effects of dose and label
-#' # Random effect of sample
-#' # Control the optimizer for convergence issues
-#' model2 <- model_mf(mf_data = mf_example2,
-#'                    fixed_effects = c("dose", "label"),
-#'                    random_effects = "sample",
-#'                    reference_level = c("0", "chr1"),
-#'                    muts = "sum_min",
-#'                    total_count = "group_depth",
-#'                    contrasts = contrasts2,
-#'                    control = lme4::glmerControl(optimizer = "bobyqa",
-#'                                        optCtrl = list(maxfun = 2e5)))
-#' model2$summary # Fits a GLMM
-#' model2$point_estimates
-#' model2$pairwise_comparisons
-#'
-#' # Plot the results using plot_model_mf()
-#' # Define the order of the labels for the x-axis
-#' label_order <- model2$point_estimates %>%
-#'  dplyr::filter(dose == "50") %>%
-#'  dplyr::arrange(Estimate) %>%
-#'  dplyr::pull(label)
-#' # Define the order of the doses for the fill
-#' dose_order <- c("0", "12.5", "25", "50")
-#' plot <- plot_model_mf(model = model2,
-#'                       plot_type = "bar",
-#'                       x_effect = "label",
-#'                       plot_error_bars = TRUE,
-#'                       plot_signif = TRUE,
-#'                       ref_effect = "dose",
-#'                       x_order = label_order,
-#'                       fill_order = dose_order,
-#'                       x_label = "Target",
-#'                       y_label = "MF (mutations/bp)",
-#'                       fill_label = "Dose",
-#'                       plot_title = "",
-#'                       custom_palette = c("#ef476f",
-#'                                          "#ffd166",
-#'                                          "#06d6a0",
-#'                                          "#118ab2"))
-#' # The output is a ggplot object and can be modified using ggplot2
-#' # functions. For example, to rotate the x-axis labels by 90 degrees,
-#' # use the following code:
-#' p <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
-#' }
 #' @importFrom magrittr %>%
 #' @importFrom graphics abline boxplot hist par
 #' @importFrom stats as.formula model.matrix qqnorm relevel residuals
@@ -283,9 +206,11 @@ model_mf <- function(mf_data,
     reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
     invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
     if (length(invalid_levels) > 0) {
-      stop(paste("Invalid reference level(s) for factor", factor_name, ":", paste(invalid_levels, collapse = ", ")))
+      stop("Invalid reference level(s) for factor",
+        factor_name, ":", paste(invalid_levels, collapse = ", ")
+      )
     } else {
-    message(paste("Reference level for factor", factor_name, ":", reference_level_char))
+    message("Reference level for factor", factor_name, ":", reference_level_char)
   }
 }
   # Set the reference level for each factor in fixed_effects
@@ -312,7 +237,7 @@ model_mf <- function(mf_data,
     model_formula <- stats::as.formula(formula_str)
 
     # GLMM
-    message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)"))
+    message("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)")
 
     model <- lme4::glmer(model_formula,
       family = "binomial",
@@ -324,7 +249,7 @@ model_mf <- function(mf_data,
     model_formula <- stats::as.formula(formula_str)
 
     #GLM
-    message(paste0("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial"))
+    message("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial")
     model <- stats::glm(model_formula,
       family = "quasibinomial",
       data = mf_data,
@@ -350,10 +275,9 @@ model_mf <- function(mf_data,
   mf_data$residuals <- stats::residuals(model, type = "pearson")
 
   # Print the row with the maximum residual
+  max_residual <- max(mf_data$residuals)
   max_residual_index <- which.max(abs(mf_data$residuals))
-  max_residual_row <- mf_data[max_residual_index, ]
-  message("The row with the maximum residual in absolute value is:\n")
-  print(max_residual_row)
+  message("The highest residual in absolute value is:", max_residual, "in row:", max_residual_index)
 
   # Make Residuals Plots
   par(las = 1, xaxs = "i", yaxs = "i")
@@ -409,9 +333,13 @@ model_mf <- function(mf_data,
     assign(paste("var", i, sep = ""), chars[[i]])
   }
   # Extract rownames into a column for each contrast variable
-  for (i in 1:count) {
+  for (i in seq_len(count)) {
     var_i <- get(paste0("var", i))
-    model_estimates[[var_i]] <- sapply(strsplit(rownames(model_estimates), ":"), "[", i)
+    model_estimates[[var_i]] <- vapply(
+        strsplit(rownames(model_estimates), ":"),
+        function(x) x[i],
+        character(1)
+    )
   }
 
   # Pairwise Comparisons
@@ -487,12 +415,28 @@ model_mf <- function(mf_data,
                                              adj_p.value <= 0.01 ~ "**",
                                              adj_p.value <= 0.05 ~ "*",
                                              TRUE ~ ""))
-    pairwise_comparisons$contrast_group1 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 1)
-    pairwise_comparisons$contrast_group2 <- sapply(strsplit(rownames(pairwise_comparisons), " vs "), "[", 2)
-    for (i in 1:count) {
+    pairwise_comparisons$contrast_group1 <- vapply(
+      strsplit(rownames(pairwise_comparisons), " vs "),
+      function(x) x[1],
+      character(1)
+    )
+    pairwise_comparisons$contrast_group2 <- vapply(
+      strsplit(rownames(pairwise_comparisons), " vs "),
+      function(x) x[2],
+      character(1)
+    )
+    for (i in seq_len(count)) {
       var_i <- get(paste0("var", i))
-      pairwise_comparisons[[paste0(var_i, "_1")]] <- sapply(strsplit(pairwise_comparisons$contrast_group1, ":"), "[", i)
-      pairwise_comparisons[[paste0(var_i, "_2")]] <- sapply(strsplit(pairwise_comparisons$contrast_group2, ":"), "[", i)
+      pairwise_comparisons[[paste0(var_i, "_1")]] <- vapply(
+        strsplit(pairwise_comparisons$contrast_group1, ":"),
+        function(x) x[i],
+        character(1)
+      )
+      pairwise_comparisons[[paste0(var_i, "_2")]] <- vapply(
+        strsplit(pairwise_comparisons$contrast_group2, ":"),
+        function(x) x[i],
+        character(1)
+      )
     }
     pairwise_comparisons <- pairwise_comparisons %>%
       dplyr::select(-"contrast_group1", -"contrast_group2")

@@ -172,12 +172,13 @@ write_mutational_matrix <- function(mutation_data,
   if (!subtype_resolution %in% c("base_6", "base_96")) {
     stop("The subtype_resolution argument must be either 'base_6' or 'base_96'")
   }
-  mut_matrix <- suppressWarnings(calculate_mf(mutation_data,
-                                              cols_to_group = group,
-                                              subtype_resolution = subtype_resolution,
-                                              variant_types = "snv",
-                                              calculate_depth = FALSE,
-                                              precalc_depth_data = NULL))
+  mut_matrix <- calculate_mf(mutation_data,
+    cols_to_group = group,
+    subtype_resolution = subtype_resolution,
+    variant_types = "snv",
+    calculate_depth = FALSE,
+    precalc_depth_data = NULL
+  )
   mut_matrix <- mut_matrix %>%
     dplyr::rename(mut_count = paste0("sum_", mf_type),
       MutationType = MutSeqR::subtype_dict[[subtype_resolution]]
