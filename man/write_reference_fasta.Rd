@@ -29,7 +29,7 @@ including the reference sequences.
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-\dontrun{
+\donttest{
 # Write FASTA files for the 20 genomic target sequences
 # of TwinStrand's Mouse Mutagenesis Panel.
 rg <- get_seq("TSpanel_mouse")

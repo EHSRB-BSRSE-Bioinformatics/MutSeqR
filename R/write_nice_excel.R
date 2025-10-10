@@ -16,7 +16,7 @@
 #' @returns A saved Excel workbook.
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' \dontrun{
+#' \donttest{
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
