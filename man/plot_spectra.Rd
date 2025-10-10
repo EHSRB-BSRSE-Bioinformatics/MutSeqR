@@ -93,6 +93,9 @@ options. You may visualize the palettes at the ColorBrewer website:
 \item{rotate_xlabs}{A logical value indicating whether the x-axis labels
 should be rotated 90 degrees. Default is FALSE.}
 }
+\value{
+A ggplot object representing the mutation spectra plot.
+}
 \description{
 Given mf data, construct a plot displaying the
 mutation subtypes observed in a cohort.

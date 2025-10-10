@@ -104,6 +104,18 @@ removed/flagged in a seperate data frame. The two dataframes will be
 returned inside a list, with names \code{mutation_data} and
 \code{filtered_rows}. Default is FALSE.}
 }
+\value{
+A data frame or a list of two data frames, depending on the
+value of \code{return_filtered_rows}. If \code{return_filtered_rows} is
+FALSE (default), a data frame of the same structure as \code{mutation_data}
+is returned, with an additional column, \code{filter_mut}, indicating
+whether each record has been flagged for filtering (TRUE) or not (FALSE).
+If \code{return_filtered_rows} is TRUE, a list containing two data frames
+is returned. The first data frame, named \code{mutation_data}, is the
+filtered mutation data as described above. The second data frame,
+named \code{filtered_rows}, contains all records that were either
+removed from \code{mutation_data} or flagged with \code{filter_mut == TRUE}.
+}
 \description{
 This function creates a \verb{filter_mut`` column that will be read by the \code{calculate_mf} function and other downstream functions. Variants with }filter_mut == TRUE`` will be excluded from group mutation
 counts. This function may also remove records upon on user specification.
