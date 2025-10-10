@@ -113,8 +113,7 @@ signature_fitting <- function(mutation_data,
                                                  "pypdf==4.3.1"))
     } else {
       # User chose not to install the packages
-      cat("Installation aborted by the user.\n")
-      stop("Function terminated.")
+      stop("Installation aborted by the user. Function terminated.")
     }
   }
 
