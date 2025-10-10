@@ -176,13 +176,13 @@ filter_mut <- function(mutation_data,
   ## total depth ratio is >0.95 (5% of all reads were excluded as no calls)
 
   if (vaf_cutoff < 0 || vaf_cutoff > 1) {
-    stop("Error: The VAF cutoff must be between 0 and 1")
+    stop("The VAF cutoff must be between 0 and 1")
   }
 
   ######## VAF Filter #########################################################
   if (vaf_cutoff < 1) {
     if (!("vaf" %in% colnames(mutation_data))) {
-      stop("\nError: You have set a vaf_cutoff but there is no 'vaf' column in
+      stop("You have set a vaf_cutoff but there is no 'vaf' column in
       your mutation_data. vaf = alt_depth/total_depth or vaf = alt_depth/depth,
       if the total_depth column is not available.")
     }
@@ -256,7 +256,7 @@ filter_mut <- function(mutation_data,
   ######## rm_abnormal_vaf Filter #############################################
   if (rm_abnormal_vaf) {
     if (!("vaf" %in% colnames(mutation_data))) {
-      stop("\nError: You have set rm_abnormal_vaf to TRUE but there is no 'vaf'
+      stop("You have set rm_abnormal_vaf to TRUE but there is no 'vaf'
       column in your mutation_data. vaf = alt_depth/total_depth or vaf =
       alt_depth/depth, if the total_depth column is not available.")
     }
@@ -282,12 +282,12 @@ filter_mut <- function(mutation_data,
   if (!is.null(custom_filter_col)) {
     message("Applying custom filter...")
     if (is.null(custom_filter_val)) {
-      stop("Error: You provided a custom filter column but did not specify the
+      stop("You provided a custom filter column but did not specify the
       filter value(s). Please provide the value(s) within the custom filter
       column that should be used to apply the filter")
     }
     if (!(custom_filter_col) %in% colnames(mutation_data)) {
-      stop(paste("Error: could not find", custom_filter_col, "in mutation_data"))
+      stop("could not find", custom_filter_col, "in mutation_data")
     }
     pattern <- paste(custom_filter_val, collapse = "|")
     custom_filtered_rows <- grepl(pattern, mutation_data[[custom_filter_col]])

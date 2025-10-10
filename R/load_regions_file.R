@@ -68,21 +68,21 @@ load_regions_file <- function(regions,
       regions_file <- file.path(regions)
       # Check if the file exists
       if (!file.exists(regions_file)) {
-        stop("Error: could not load your regions file because the file path is invalid.")
+        stop("could not load your regions file because the file path is invalid.")
       }
       regions_df <- read.table(regions_file, header = TRUE, sep = rg_sep)
       if (nrow(regions_df) == 0) {
-        stop("Error: your imported regions file is empty.")
+        stop("your imported regions file is empty.")
       }
       if (ncol(regions_df) == 1) {
-        stop("Error: your imported regions file has only one column. Please check the delimiter in rg_sep.")
+        stop("your imported regions file has only one column. Please check the delimiter in rg_sep.")
       }
     }
   } else {
     stop("Invalid regions parameter.")
   }
   if (!all(c("contig", "start", "end") %in% colnames(regions_df))) {
-    stop("Error: your regions file is missing the required columns 'contig', 'start', and 'end'.")
+    stop("your regions file is missing the required columns 'contig', 'start', and 'end'.")
   }
   # Turn regions_df into a GRanges object
   regions_gr <- GenomicRanges::makeGRangesFromDataFrame(

@@ -68,8 +68,9 @@ plot_lollipop <- function(mutation_data,
   required_cols <- c("start", "variation_type", "normalized_subtype", group_col)
   missing_cols <- setdiff(required_cols, names(mutation_data))
   if (length(missing_cols) > 0) {
-     stop(paste("The `mutation_data` data.frame is missing required columns:",
-                paste(missing_cols, collapse = ", ")))
+     stop("The `mutation_data` data.frame is missing required columns:",
+      paste(missing_cols, collapse = ", ")
+    )
   }
 
   # --- 2. Data Preparation ---

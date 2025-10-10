@@ -206,7 +206,9 @@ model_mf <- function(mf_data,
     reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
     invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
     if (length(invalid_levels) > 0) {
-      stop(paste("Invalid reference level(s) for factor", factor_name, ":", paste(invalid_levels, collapse = ", ")))
+      stop("Invalid reference level(s) for factor",
+        factor_name, ":", paste(invalid_levels, collapse = ", ")
+      )
     } else {
     message("Reference level for factor", factor_name, ":", reference_level_char)
   }
@@ -235,7 +237,7 @@ model_mf <- function(mf_data,
     model_formula <- stats::as.formula(formula_str)
 
     # GLMM
-    message(paste0("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)"))
+    message("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)")
 
     model <- lme4::glmer(model_formula,
       family = "binomial",
@@ -247,7 +249,7 @@ model_mf <- function(mf_data,
     model_formula <- stats::as.formula(formula_str)
 
     #GLM
-    message(paste0("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial"))
+    message("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial")
     model <- stats::glm(model_formula,
       family = "quasibinomial",
       data = mf_data,
