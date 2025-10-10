@@ -17,6 +17,7 @@ setup_mutseqr_python <- function(force = FALSE) {
 }
 #' This function prints ASCII art when the package is loaded
 #' @export
+#' @returns None
 print_ascii_art <- function() {
   art_path <- system.file("extdata", "ASCII_art_MutSeqR.txt", package = "MutSeqR")
   art <- readLines(art_path)

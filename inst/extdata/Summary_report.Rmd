@@ -1605,7 +1605,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(total_mutations = sum(n)) %>%
 #   ungroup() %>%
 #   mutate(percent = 100*n/total_mutations) %>%
-#   filter(CpG_site == T) %>%
+#   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
 # 
 # cpg_base_6_pct <- as.data.frame(mutation_data_cpgs) %>%
@@ -1616,7 +1616,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(total_mutations = sum(n)) %>%
 #   ungroup() %>%
 #   mutate(percent = 100*n/total_mutations) %>%
-#   filter(CpG_site == T) %>%
+#   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
 # 
 # cpg_base_96_pct <- as.data.frame(mutation_data_cpgs) %>%
@@ -1627,7 +1627,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(total_mutations = sum(n)) %>%
 #   ungroup() %>%
 #   mutate(percent = 100*n/total_mutations) %>%
-#   filter(CpG_site == T) %>%
+#   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
 # 
 # cpg_tables <- list(CpGs_base_12_percentage = cpg_base_12_pct,

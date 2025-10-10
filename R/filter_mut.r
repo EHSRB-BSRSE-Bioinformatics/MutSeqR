@@ -126,6 +126,16 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame findOverlaps
 #' @importFrom S4Vectors queryHits mcols
 #' @importFrom plyranges join_overlap_left_directed join_overlap_left_within_directed
+#' @return A data frame or a list of two data frames, depending on the
+#' value of \code{return_filtered_rows}. If \code{return_filtered_rows} is
+#' FALSE (default), a data frame of the same structure as \code{mutation_data}
+#' is returned, with an additional column, \code{filter_mut}, indicating
+#' whether each record has been flagged for filtering (TRUE) or not (FALSE).
+#' If \code{return_filtered_rows} is TRUE, a list containing two data frames
+#' is returned. The first data frame, named \code{mutation_data}, is the
+#' filtered mutation data as described above. The second data frame,
+#' named \code{filtered_rows}, contains all records that were either
+#' removed from \code{mutation_data} or flagged with \code{filter_mut == TRUE}.
 #' @export
 filter_mut <- function(mutation_data,
                        vaf_cutoff = 1,

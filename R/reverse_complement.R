@@ -12,6 +12,7 @@
 #' http://www.R-project.org/Licenses/GPL-2.
 #' reverseComplement.R
 #' @export
+#' @return A character vector of the reverse complement sequences.
 #' @examples
 #' reverseComplement("A")
 #' reverseComplement("CA")
