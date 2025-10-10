@@ -38,7 +38,7 @@ reference:
   - title: Reference Genomes & Context
     desc: Reference sequence utilities.
     contents:
-      - install_ref_genome
+      - find_BS_genome
       - get_ref_of_mut
       - get_seq
       - get_cpg_regions
