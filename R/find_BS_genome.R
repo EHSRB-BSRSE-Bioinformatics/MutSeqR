@@ -16,47 +16,11 @@
 #' # Find all possible mouse BS genomesL
 #' mouse_all <- find_BS_genome("mouse")
 find_BS_genome <- function(organism, genome, masked = FALSE) {
-  # Common name mapping
-  name_map <- list(
-    "Alyrata" = "arabidopsis lyrata",
-    "Amellifera" = c("apis mellifera", "honey bee"),
-    "Aofficinalis" = c("asparagus officinalis", "asparagus"),
-    "Athaliana" = c("arabidopsis thaliana", "arabidopsis"),
-    "Btaurus" = c("bos Taurus", "cow"),
-    "Carietinum" = c("cicer arietinum", "chickpea"),
-    "Celegans" = c("caenorhabditis elegans", "roundworm", "nematode", "worm"),
-    "Cfamiliaris" = c("canis lupus familiaris", "dog"),
-    "Cjacchus" = c("callithrix jacchus", "marmoset"),
-    "CneoformansVarGrubiiKN99" = "cryptococcus neoformans var. grubii KN99",
-    "Creinhardtii" = "chlamydomonas reinhardtii",
-    "Dmelanogaster" = "drosophila melanogaster",
-    "Drerio" = c("danio rerio", "zebrafish"),
-    "Dvirilis" = c("drosophila virilis"),
-    "Ecoli" = "escherichia coli",
-    "Gaculeatus" = c("gasterosteus aculeatus", "stickleback", "three-spined stickleback"),
-    "Ggallus" = c("gallus gallus", "chicken"),
-    "Gmax" = c("glycine max", "soybean"),
-    "Hsapiens" = c("homo sapiens", "homo sapiens sapiens", "human"),
-    "Mdomestica" = c("monodelphis domestica", "opossum", "gray short-tailed opossum"),
-    "Mfascicularis" = c("macaca fascicularis", "long-tailed macaque", "crab-eating macaque"),
-    "Mfuro" = c("mustela putorius furo", "ferret"),
-    "Mmulatta" = c("macaca mulatta", "rhesus macaque"),
-    "Mmusculus" = c("mus musculus", "mouse", "house mouse"),
-    "Osativa" = c("oryza sativa", "rice"),
-    "Ppaniscus" = c("pan paniscus", "bonobo"),
-    "Ptroglodytes" = c("pan troglodytes", "chimp", "chimpanzee"),
-    "Rnorvegicus" = c("rattus norvegicus", "rat", "brown rat"),
-    "Scerevisiae" = c("saccharomyces cerevisiae", "yeast", "brewer's yeast"),
-    "Sscrofa" = c("sus scrofa", "pig", "wild boar"),
-    "Tgondii" = "toxoplasma gondii",
-    "Tguttata" = c("taeniopygia guttata", "zebra finch"),
-    "Vvinifera" = c("vitis vinifera", "grape")
-  )
   # Map the input name to the organism name in available.genomes
   organism <- gsub("\\.\\s", "", organism)
   convertToOrganismName <- function(name) {
-    for (org_name in names(name_map)) {
-      if (tolower(name) %in% c(tolower(org_name), tolower(name_map[[org_name]]))) {
+    for (org_name in names(MutSeqR::BS_org_map)) {
+      if (tolower(name) %in% c(tolower(org_name), tolower(MutSeqR::BS_org_map[[org_name]]))) {
         return(org_name)
       }
     }

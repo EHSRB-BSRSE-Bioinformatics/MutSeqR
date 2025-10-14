@@ -622,4 +622,3 @@ calculate_mf <- function(mutation_data,
     return(summary_table)
   }
 }
-

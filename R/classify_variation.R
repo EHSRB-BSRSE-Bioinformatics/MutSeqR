@@ -11,7 +11,6 @@
 #'  alt = c("R", "TGA", "G", "TC", "TAC", "C", "<DEL>", "G", "???"))
 #' df$variation_type <- mapply(classify_variation, df$ref, df$alt)
 #' df
-
 classify_variation <- function(ref, alt) {
   no_variant_indicators <- c(".", "", "<NON_REF>")
   structural_indicators <- c("<DEL>", "<INS>", "<DUP>", "<INV>", "<FUS>",
@@ -21,16 +20,11 @@ classify_variation <- function(ref, alt) {
 
   # Case: No variant site
   # GVCF files sometimes list no_variant sites as <NON_REF> (GATK)
-  # We will have to assume that anytime we see <NON_REF> alone, that
-  # there is no variant, and if <NON_REF> is followed by an alt allele,
-  # there is a variant.
   alt <- gsub("(^|,)<NON_REF>(,|$)", "", alt)
   alt <- gsub("^,|,$", "", alt)  # Trim leading/trailing commas
-
   if (alt %in% no_variant_indicators || alt == ref) {
     return("no_variant")
   }
-
   # Case: Structural variants
   if (alt %in% structural_indicators) {
     return("sv")
@@ -59,7 +53,6 @@ classify_variation <- function(ref, alt) {
   if (nchar(ref) != nchar(alt) && !grepl(paste0("^", ref), alt) && !grepl(paste0("^", alt), ref)) {
     return("complex")
   }
-
   # Otherwise, uncategorized
   return("uncategorized")
 }

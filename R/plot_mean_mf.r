@@ -129,7 +129,7 @@ plot_mean_mf <- function(mf_data,
   }
 
   if (mf_type == "stacked" && plot_error_bars && plot_type == "bar") {
-    stop("Error bars are currently not supported with mf_type 'stacked', plot_type 'bar'. Sorry!")
+    stop("The Error bars are currently not supported with mf_type 'stacked', plot_type 'bar'. Sorry!")
   }
   # Concat group_col (if applicable)
   mf_data$group_col <- do.call(paste, c(mf_data[group_col], sep = "_"))

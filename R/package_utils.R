@@ -6,7 +6,6 @@
 #' checks.
 #' @param force Logical. Whether to force reconfiguration even if an
 #' environment already exists.
-#' @export
 #' @returns None
 setup_mutseqr_python <- function(force = FALSE) {
   reticulate::configure_environment("MutSeqR", force = force)
@@ -16,7 +15,6 @@ setup_mutseqr_python <- function(force = FALSE) {
   print_ascii_art()
 }
 #' This function prints ASCII art when the package is loaded
-#' @export
 #' @returns None
 print_ascii_art <- function() {
   art_path <- system.file("extdata", "ASCII_art_MutSeqR.txt", package = "MutSeqR")
