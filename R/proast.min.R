@@ -1457,12 +1457,12 @@ f.execute <- function(
               Vdetlim <- data.0[, detlim.col]
               if (min(Vdetlim <= 0)) {
                 stop(
-                  "\nERROR: there are non-positive values in the detection limit column !\n"
+                  "\nThere are non-positive values in the detection limit column !\n"
                 )
               }
               if (any(is.na(Vdetlim))) {
                 stop(
-                  "\nERROR:  The detection limit column contains NAs; \n
+                  "\nThe detection limit column contains NAs; \n
                      replace NAs with (large) numbers\n\n"
                 )
               }
@@ -1483,11 +1483,11 @@ f.execute <- function(
           } else {
             if (is.null(nonzero_val)) {
               stop(
-                "\nERROR: nonzero_val must be specified when add_nonzero_val_to_dat is TRUE\n"
+                "\nnonzero_val must be specified when add_nonzero_val_to_dat is TRUE\n"
               )
             }
             if (nonzero_val <= 0) {
-              stop("\nERROR: nonzero_val must be a positive number\n")
+              stop("\nnonzero_val must be a positive number\n")
             }
             y.add <- nonzero_val
           }
