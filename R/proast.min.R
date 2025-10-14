@@ -4100,7 +4100,7 @@ f.qfit <- function(
         if (display_plots == TRUE) {
           title(main = paste(modelname))
         }
-        ans.all.fit$l.ty = 1
+        ans.all.fit$l.ty <- 1
         if (model.ans != 11) {
           f.lines.con(ans.all.fit, display_plots = display_plots)
         }
@@ -7395,7 +7395,7 @@ f.nes <- function(ans.all) {
         sd.0 <- log(1.05)
         pooled.sd <- sqrt(var.within.pooled)
         ES.0 <- 1.05
-        ES.new = exp(log(ES.0) * pooled.sd/sd.0)
+        ES.new <- exp(log(ES.0) * pooled.sd/sd.0)
         if (increase == 1) {
             CES <- ES.new - 1
             ans.all$lb[nr.var + nr.aa + nr.bb + 1] <- ES.new * 
@@ -7783,10 +7783,10 @@ f.cedes.plt.con <- function(ans.all) {
                 ES.y <- ES.y + xy.lim[6]
             }
         cedes.lst <- list()
-        cedes.lst$CED.x = CED.x
-        cedes.lst$CED.y = CED.y
-        cedes.lst$ES.x = ES.x
-        cedes.lst$ES.y = ES.y
+        cedes.lst$CED.x <- CED.x
+        cedes.lst$CED.y <- CED.y
+        cedes.lst$ES.x <- ES.x
+        cedes.lst$ES.y <- ES.y
         if (0) {
             print("f.cedes.plt.con")
             print(CED.x)
@@ -8325,7 +8325,7 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
         Vaic.adj <- Vaic - min.aic
         weight.denom <- sum(exp(-0.5 * Vaic.adj))
         Vweight <- exp(-0.5 * Vaic.adj)/weight.denom
-        Vweight.dfr = data.frame(model = model.list[1:nr.models], 
+        Vweight.dfr <- data.frame(model = model.list[1:nr.models], 
             weight = round(Vweight, 4))
         if (first.call) {
             xx.ma <- numeric()
@@ -9647,7 +9647,7 @@ f.quick.con <- function(ans.all,
         }
         else covar.txt <- character(1)
         CED.matr <- matrix(NA, ncol = (2 * length(covar.txt)))
-        dimn.col = character()
+        dimn.col <- character()
         for (ii in 1:length(covar.txt)) dimn.col <- c(dimn.col, 
             paste("BMDL", covar.txt[ii], sep = "-"), paste("BMDU", 
                 covar.txt[ii], sep = "-"))
@@ -10581,15 +10581,15 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
             lab.min <- regr.par[3]
             lab.plus <- regr.par[4]
             qk <- regr.par[5]
-            dum = (D/V)/(lab.min - lab.plus)
-            y.expect = dum * ((lab.min + qk) * exp(lab.plus * 
+            dum <- (D/V)/(lab.min - lab.plus)
+            y.expect <- dum * ((lab.min + qk) * exp(lab.plus * 
                 x) - (lab.plus + qk) * exp(lab.min * x))
         }, {
             cc <- aa0
             k1 <- bb0
             ke <- dd0
-            dum = cc * k1/(k1 - ke)
-            y.expect = dum * (exp(-ke * x) - exp(-k1 * x))
+            dum <- cc * k1/(k1 - ke)
+            y.expect <- dum * (exp(-ke * x) - exp(-k1 * x))
         })
     if (exists("track2")) 
         print("f.expect.con:  END")
@@ -13034,8 +13034,8 @@ f.profile.all <- function(ans.all, nolog = FALSE, debug = FALSE, display_plots =
                   y.upp <- max(spline.low$y, spline.upp$y)
                   y.lim <- c(min(y.low, loglik.max - crit), y.upp)
                   if (nolog) 
-                    x.lab = text.par[jj]
-                  else x.lab = paste("log10(", text.par[jj], 
+                    x.lab <- text.par[jj]
+                  else x.lab <- paste("log10(", text.par[jj], 
                     ")")
                   plot(CED.vec, loglik.vec, xlab = x.lab, ylim = y.lim, 
                     ylab = "log(likelihood)", col = 1, pch = 16)
