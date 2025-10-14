@@ -14,8 +14,10 @@
 #' @export
 #' @return A character vector of the reverse complement sequences.
 #' @examples
-#' reverseComplement("A")
-#' reverseComplement("CA")
+#' reverseComplement("A", content = "dna", case = "upper")
+#' # T
+#' reverseComplement("CA", content = "dna", case = "upper")
+#' # TG
 reverseComplement <- function(x, 
                               content=c("dna", "rna"), 
                               case=c("lower", "upper", "as is")) {
