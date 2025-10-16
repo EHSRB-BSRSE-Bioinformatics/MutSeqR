@@ -75,20 +75,26 @@
 #' # examples). We will plot the mean MF per dose group.
 #' # Load Example MF data
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-#'                                package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # Specify the order of the dose groups along the x-axis
 #' mf_example$dose_group <- factor(mf_example$dose_group,
-#'                                 levels = c("Control", "Low",
-#'                                            "Medium", "High"))
+#'   levels = c(
+#'     "Control", "Low",
+#'     "Medium", "High"
+#'   )
+#' )
 #' # Plot the mean min MF per dose group as a bar plot with error bars
-#' plot <- plot_mean_mf(mf_data = mf_example,
-#'                      group_col = "dose_group",
-#'                      mf_type = "min",
-#'                      plot_type = "line",
-#'                      fill_col = "dose_group",
-#'                      plot_error_bars = TRUE,
-#'                      plot_indiv_vals = TRUE,
-#'                      add_labels = "none")
+#' plot <- plot_mean_mf(
+#'   mf_data = mf_example,
+#'   group_col = "dose_group",
+#'   mf_type = "min",
+#'   plot_type = "line",
+#'   fill_col = "dose_group",
+#'   plot_error_bars = TRUE,
+#'   plot_indiv_vals = TRUE,
+#'   add_labels = "none"
+#' )
 #' @import ggplot2
 #' @importFrom dplyr across all_of arrange rename group_by summarize
 #' @importFrom stats sd setNames
@@ -114,7 +120,7 @@ plot_mean_mf <- function(mf_data,
                          label_size = 3) {
   # load required packages
   if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
-      stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
+    stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
   }
   if (add_labels %in% c("indiv_count", "indiv_MF") && !requireNamespace("ggrepel", quietly = TRUE)) {
     stop("Package ggrepel is required when using the 'indiv_count' or 'indiv_MF' add_labels options. Please install the package using 'install.packages('ggrepel')'")
@@ -125,7 +131,7 @@ plot_mean_mf <- function(mf_data,
   }
 
   if (!plot_indiv_vals && add_labels %in% c("indiv_count", "indiv_MF")) {
-  stop("plot_indiv_vals must be TRUE when add_labels is set to 'indiv_count' or 'indiv_MF'")
+    stop("plot_indiv_vals must be TRUE when add_labels is set to 'indiv_count' or 'indiv_MF'")
   }
 
   if (mf_type == "stacked" && plot_error_bars && plot_type == "bar") {
@@ -166,12 +172,13 @@ plot_mean_mf <- function(mf_data,
     mf_data$group_col <- factor(mf_data$group_col, levels = order)
   } else if (group_order == "arranged") {
     mf_data <- mf_data %>%
-      dplyr::arrange(dplyr::across(dplyr::all_of({{group_order_input}})))
+      dplyr::arrange(dplyr::across(dplyr::all_of({{ group_order_input }})))
     order <- as.vector(unique(mf_data$group_col))
     mf_data$group_col <- factor(mf_data$group_col, levels = order)
   } else if (group_order == "custom") {
     mf_data$group_col <- factor(mf_data$group_col,
-                                levels = group_order_input)
+      levels = group_order_input
+    )
   }
 
   # Plot Data
@@ -183,7 +190,8 @@ plot_mean_mf <- function(mf_data,
       indiv_data$fill_col <- indiv_data$group_col
     } else {
       indiv_data <- dplyr::rename(indiv_data,
-                                  fill_col = dplyr::all_of(fill_col))
+        fill_col = dplyr::all_of(fill_col)
+      )
     }
   } else {
     indiv_data$fill_col <- "f1ll_c0l"
@@ -212,21 +220,25 @@ plot_mean_mf <- function(mf_data,
   ## Rename the columns we want to plot to generic names
   if (mf_type == "min") {
     indiv_data <- dplyr::rename(indiv_data,
-                                mf_col = "mf_min",
-                                sum_col = "sum_min")
+      mf_col = "mf_min",
+      sum_col = "sum_min"
+    )
     mean_data <- dplyr::rename(mean_data,
-                               Mean = "min_Mean",
-                               SE = "min_SE",
-                               mean_sum = "min_sum_mean")
+      Mean = "min_Mean",
+      SE = "min_SE",
+      mean_sum = "min_sum_mean"
+    )
   }
   if (mf_type == "max") {
     indiv_data <- dplyr::rename(indiv_data,
-                                mf_col = "mf_max",
-                                sum_col = "sum_max")
+      mf_col = "mf_max",
+      sum_col = "sum_max"
+    )
     mean_data <- dplyr::rename(mean_data,
-                               Mean = "max_Mean",
-                               SE = "max_SE",
-                               mean_sum = "max_sum_mean")
+      Mean = "max_Mean",
+      SE = "max_SE",
+      mean_sum = "max_sum_mean"
+    )
   }
   ### Change MFmax value for stacked bar
   if (mf_type == "stacked" && plot_type == "bar") {
@@ -240,31 +252,40 @@ plot_mean_mf <- function(mf_data,
   ### Pivot the data to long format for both and stacked options
   if (mf_type %in% c("both", "stacked")) {
     indiv_data <- reshape(indiv_data,
-                          varying = list(c("sum_min", "sum_max"),
-                                         c("mf_min", "mf_max")),
-                          v.names = c("sum_col", "mf_col"),
-                          times = c("min", "max"),
-                          timevar = "mf_type",
-                          direction = "long")
+      varying = list(
+        c("sum_min", "sum_max"),
+        c("mf_min", "mf_max")
+      ),
+      v.names = c("sum_col", "mf_col"),
+      times = c("min", "max"),
+      timevar = "mf_type",
+      direction = "long"
+    )
     if (mf_type == "stacked" && plot_type == "bar") {
       mean_data <- reshape(mean_data,
-                           varying = list(c("min_Mean", "max_Mean"),
-                                          c("min_SE", "max_SE"),
-                                          c("min_sum_mean", "max_sum_mean"),
-                                          c("min_og", "max_og")),
-                           v.names = c("Mean", "SE", "mean_sum", "og_mf"),
-                           times = c("min", "max"),
-                           timevar = "mf_type",
-                           direction = "long")
+        varying = list(
+          c("min_Mean", "max_Mean"),
+          c("min_SE", "max_SE"),
+          c("min_sum_mean", "max_sum_mean"),
+          c("min_og", "max_og")
+        ),
+        v.names = c("Mean", "SE", "mean_sum", "og_mf"),
+        times = c("min", "max"),
+        timevar = "mf_type",
+        direction = "long"
+      )
     } else {
       mean_data <- reshape(mean_data,
-                           varying = list(c("min_Mean", "max_Mean"),
-                                          c("min_SE", "max_SE"),
-                                          c("min_sum_mean", "max_sum_mean")),
-                           v.names = c("Mean", "SE", "mean_sum"),
-                           times = c("min", "max"),
-                           timevar = "mf_type",
-                           direction = "long")
+        varying = list(
+          c("min_Mean", "max_Mean"),
+          c("min_SE", "max_SE"),
+          c("min_sum_mean", "max_sum_mean")
+        ),
+        v.names = c("Mean", "SE", "mean_sum"),
+        times = c("min", "max"),
+        timevar = "mf_type",
+        direction = "long"
+      )
     }
   } # end plot data
 
@@ -292,9 +313,11 @@ plot_mean_mf <- function(mf_data,
   mean_data$mean_fill_col <- sub(" f1ll_c0l$", "", mean_data$mean_fill_col)
   indiv_data$indiv_fill_col <- sub(" f1ll_c0l$", "", indiv_data$indiv_fill_col)
   mean_data$mean_fill_col <- stringr::str_trim(mean_data$mean_fill_col,
-                                               side = "both")
+    side = "both"
+  )
   indiv_data$indiv_fill_col <- stringr::str_trim(indiv_data$indiv_fill_col,
-                                                 side = "both")
+    side = "both"
+  )
   # end fill column
 
   # Palette
@@ -314,7 +337,7 @@ plot_mean_mf <- function(mf_data,
     # Generate shades for min/max
     if (mf_type == "both" || mf_type == "stacked") {
       palette <- lapply(palette, function(color) {
-        generate_shades(color)  # Lighter for min, darker for max
+        generate_shades(color) # Lighter for min, darker for max
       })
       palette <- unlist(lapply(names(palette), function(name) {
         setNames(palette[[name]], paste(c("max", "min"), name))
@@ -323,7 +346,7 @@ plot_mean_mf <- function(mf_data,
     # Generate shades for mean/indiv
     if (plot_indiv_vals) {
       palette <- lapply(palette, function(color) {
-        generate_shades(color)  # Lighter for min, darker for max
+        generate_shades(color) # Lighter for min, darker for max
       })
       palette <- unlist(lapply(names(palette), function(name) {
         setNames(palette[[name]], paste(c("Individual", "Mean"), name))
@@ -347,14 +370,16 @@ plot_mean_mf <- function(mf_data,
     indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
     sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("max", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
     mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
-                                      levels = sorted_levels)
+      levels = sorted_levels
+    )
   }
   if (mf_type == "stacked") { # 1. max, 2. min so that max is stacked on top of min
     sorted_levels <- unique(indiv_data$indiv_fill_col)[order(grepl("min", unique(indiv_data$indiv_fill_col)), unique(indiv_data$indiv_fill_col))]
     indiv_data$indiv_fill_col <- factor(indiv_data$indiv_fill_col, levels = sorted_levels)
     sorted_levels <- unique(mean_data$mean_fill_col)[order(grepl("min", unique(mean_data$mean_fill_col)), unique(mean_data$mean_fill_col))]
     mean_data$mean_fill_col <- factor(mean_data$mean_fill_col,
-                                      levels = sorted_levels)
+      levels = sorted_levels
+    )
   }
   # Position
   if (mf_type == "both") {
@@ -362,60 +387,80 @@ plot_mean_mf <- function(mf_data,
     line_position <- ggplot2::position_dodge(width = 0.5)
     if (plot_type == "line") {
       error_position <- ggplot2::position_dodge(width = 0.5)
-      indiv_position <- ggplot2::position_jitterdodge(dodge.width = 0.5,
-                                                      jitter.width = 0.1,
-                                                      jitter.height = 0,
-                                                      seed = 123)
-      indiv_label_position <- ggplot2::position_jitterdodge(dodge.width = 0.5,
-                                                            jitter.width = 0.1,
-                                                            jitter.height = 0,
-                                                            seed = 123)
+      indiv_position <- ggplot2::position_jitterdodge(
+        dodge.width = 0.5,
+        jitter.width = 0.1,
+        jitter.height = 0,
+        seed = 123
+      )
+      indiv_label_position <- ggplot2::position_jitterdodge(
+        dodge.width = 0.5,
+        jitter.width = 0.1,
+        jitter.height = 0,
+        seed = 123
+      )
       mean_label_position <- ggplot2::position_dodge(width = 0.5)
     } else {
       error_position <- ggplot2::position_dodge(width = 0.9)
-      indiv_position <- ggplot2::position_jitterdodge(dodge.width = 0.9,
-                                                      jitter.width = 0.1,
-                                                      jitter.height = 0,
-                                                      seed = 123)
-      indiv_label_position <- ggplot2::position_jitterdodge(dodge.width = 0.9,
-                                                            jitter.width = 0.1,
-                                                            jitter.height = 0,
-                                                            seed = 123)
+      indiv_position <- ggplot2::position_jitterdodge(
+        dodge.width = 0.9,
+        jitter.width = 0.1,
+        jitter.height = 0,
+        seed = 123
+      )
+      indiv_label_position <- ggplot2::position_jitterdodge(
+        dodge.width = 0.9,
+        jitter.width = 0.1,
+        jitter.height = 0,
+        seed = 123
+      )
       mean_label_position <- ggplot2::position_dodge(width = 0.9)
     }
   } else if (mf_type == "stacked") {
     bar_position <- "stack"
     line_position <- "identity"
     error_position <- "identity"
-    indiv_position <- ggplot2::position_jitter(width = 0.1,
-                                               height = 0,
-                                               seed = 123)
-    indiv_label_position <- ggplot2::position_jitter(width = 0.1,
-                                                     height = 0,
-                                                     seed = 123)
+    indiv_position <- ggplot2::position_jitter(
+      width = 0.1,
+      height = 0,
+      seed = 123
+    )
+    indiv_label_position <- ggplot2::position_jitter(
+      width = 0.1,
+      height = 0,
+      seed = 123
+    )
     mean_label_position <- ggplot2::position_stack(vjust = 0.5)
   } else {
     bar_position <- "identity"
     line_position <- "identity"
     error_position <- "identity"
-    indiv_position <- ggplot2::position_jitter(width = 0.1,
-                                               height = 0,
-                                               seed = 123)
-    indiv_label_position <- ggplot2::position_jitter(width = 0.1,
-                                                     height = 0,
-                                                     seed = 123)
+    indiv_position <- ggplot2::position_jitter(
+      width = 0.1,
+      height = 0,
+      seed = 123
+    )
+    indiv_label_position <- ggplot2::position_jitter(
+      width = 0.1,
+      height = 0,
+      seed = 123
+    )
     mean_label_position <- "identity"
   }
 
   # Plot type: mean value
   if (plot_type == "bar") {
-    mean_bar <- ggplot2::geom_bar(data = mean_data,
-                                  aes(x = mean_data$group_col,
-                                      y = mean_data$Mean,
-                                      fill = mean_data$mean_fill_col),
-                                  stat = "identity",
-                                  position = bar_position,
-                                  color = "black")
+    mean_bar <- ggplot2::geom_bar(
+      data = mean_data,
+      aes(
+        x = mean_data$group_col,
+        y = mean_data$Mean,
+        fill = mean_data$mean_fill_col
+      ),
+      stat = "identity",
+      position = bar_position,
+      color = "black"
+    )
     error_bar_size <- 0.2
   } else {
     mean_bar <- NULL
@@ -423,10 +468,12 @@ plot_mean_mf <- function(mf_data,
   if (plot_type == "line") {
     mean_line <- ggplot2::geom_point(
       data = mean_data,
-      aes(x = mean_data$group_col,
-          y = mean_data$Mean,
-          fill = "black",
-          color = mean_data$mean_fill_col),
+      aes(
+        x = mean_data$group_col,
+        y = mean_data$Mean,
+        fill = "black",
+        color = mean_data$mean_fill_col
+      ),
       shape = "\U2014",
       size = 11,
       position = line_position
@@ -436,7 +483,6 @@ plot_mean_mf <- function(mf_data,
     } else {
       error_bar_size <- 0.1
     }
-
   } else {
     mean_line <- NULL
   }
@@ -445,11 +491,15 @@ plot_mean_mf <- function(mf_data,
   if (plot_error_bars) {
     error_bars <- ggplot2::geom_errorbar(
       data = mean_data,
-      aes(x = mean_data$group_col,
-          ymin = mean_data$Mean - mean_data$SE,
-          ymax = mean_data$Mean + mean_data$SE,
-          group = interaction(mean_data$group_col,
-                              mean_data$mean_fill_col)),
+      aes(
+        x = mean_data$group_col,
+        ymin = mean_data$Mean - mean_data$SE,
+        ymax = mean_data$Mean + mean_data$SE,
+        group = interaction(
+          mean_data$group_col,
+          mean_data$mean_fill_col
+        )
+      ),
       position = error_position,
       width = error_bar_size,
       inherit.aes = FALSE,
@@ -461,15 +511,19 @@ plot_mean_mf <- function(mf_data,
 
   # Individual values
   if (plot_indiv_vals) {
-    indiv_vals <- ggplot2::geom_point(data = indiv_data,
-                                      aes(x = indiv_data$group_col,
-                                          y = indiv_data$mf_col,
-                                          fill = indiv_data$indiv_fill_col),
-                                      shape = 21,
-                                      size = 2,
-                                      color = "black",
-                                      position = indiv_position,
-                                      inherit.aes = FALSE)
+    indiv_vals <- ggplot2::geom_point(
+      data = indiv_data,
+      aes(
+        x = indiv_data$group_col,
+        y = indiv_data$mf_col,
+        fill = indiv_data$indiv_fill_col
+      ),
+      shape = 21,
+      size = 2,
+      color = "black",
+      position = indiv_position,
+      inherit.aes = FALSE
+    )
   } else {
     indiv_vals <- NULL
   }
@@ -500,10 +554,12 @@ plot_mean_mf <- function(mf_data,
     }
     labels <- ggrepel::geom_text_repel(
       data = indiv_data,
-      ggplot2::aes(x = indiv_data$group_col,
-                   y = indiv_data$mf_col,
-                   label = label,
-                   color = indiv_data$indiv_fill_col),
+      ggplot2::aes(
+        x = indiv_data$group_col,
+        y = indiv_data$mf_col,
+        label = label,
+        color = indiv_data$indiv_fill_col
+      ),
       size = label_size,
       angle = label_angle,
       position = indiv_label_position,
@@ -511,7 +567,6 @@ plot_mean_mf <- function(mf_data,
       inherit.aes = FALSE
     )
   } else if (add_labels %in% c("mean_count", "mean_MF")) {
-
     if (mf_type == "stacked" && plot_type == "bar") {
       mean_data$label_position <- mean_data$og_mf
     } else {
@@ -536,10 +591,12 @@ plot_mean_mf <- function(mf_data,
     }
     labels <- ggplot2::geom_text(
       data = mean_data,
-      ggplot2::aes(x = mean_data$group_col,
-                   y = mean_data$label_position,
-                   label = label,
-                   group = interaction(mean_data$group_col, mean_data$mean_fill_col)),
+      ggplot2::aes(
+        x = mean_data$group_col,
+        y = mean_data$label_position,
+        label = label,
+        group = interaction(mean_data$group_col, mean_data$mean_fill_col)
+      ),
       position = mean_label_position,
       vjust = vjust,
       hjust = hjust,
@@ -561,11 +618,15 @@ plot_mean_mf <- function(mf_data,
     ggplot2::xlab(x_lab) +
     ggplot2::ylab(y_lab) +
     ggplot2::ggtitle(title) +
-    ggplot2::theme(panel.background = ggplot2::element_blank(),
-                   axis.line = ggplot2::element_line()) +
+    ggplot2::theme(
+      panel.background = ggplot2::element_blank(),
+      axis.line = ggplot2::element_line()
+    ) +
     ggplot2::scale_fill_manual(values = palette) +
-    labs(fill = NULL,
-         color = NULL)
+    labs(
+      fill = NULL,
+      color = NULL
+    )
 
   if (plot_type == "line") {
     p <- p + ggplot2::scale_color_manual(values = palette)

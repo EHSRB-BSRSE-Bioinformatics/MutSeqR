@@ -12,9 +12,11 @@ cleveland_plot <- function(results,
                            output_path = NULL) {
   # Cleveland plot: all models w weights
   results_df <- results[[2]] %>%
-    dplyr::mutate(CED = as.numeric(.data$CED),
-                  CEDL = as.numeric(.data$CEDL),
-                  CEDU = as.numeric(.data$CEDU))
+    dplyr::mutate(
+      CED = as.numeric(.data$CED),
+      CEDL = as.numeric(.data$CEDL),
+      CEDU = as.numeric(.data$CEDU)
+    )
   plots <- list()
   for (i in unique(results_df$Response)) {
     c.plot.df <- results_df %>%
@@ -29,7 +31,8 @@ cleveland_plot <- function(results,
         dplyr::arrange(.data$Covariates, .data$weights) %>%
         dplyr::pull(.data$Selected.Model)
       c.plot.df$Selected.Model <- factor(c.plot.df$Selected.Model,
-                                         levels = model_order)
+        levels = model_order
+      )
     } else {
       c.plot.df$weights[c.plot.df$Selected.Model == "Model averaging"] <- 1
       model_order <- c.plot.df %>%
@@ -38,22 +41,27 @@ cleveland_plot <- function(results,
 
       c.plot.df <- c.plot.df %>%
         dplyr::mutate(Selected.Model = factor(.data$Selected.Model,
-                                              levels = model_order))
+          levels = model_order
+        ))
       c.plot.df$Model <- c.plot.df$Selected.Model
     }
 
     c <- ggplot(c.plot.df, aes(x = CED, y = Selected.Model)) +
       geom_errorbar(aes(xmin = CEDL, xmax = CEDU),
-                    color = "gray",
-                    width = 0.1) +
+        color = "gray",
+        width = 0.1
+      ) +
       geom_point(aes(size = weights),
-                 color = "red") +
+        color = "red"
+      ) +
       ggplot2::scale_size_continuous(guide = "none", range = c(0.5, 3)) +
-      ggplot2::theme(panel.background = ggplot2::element_blank(),
-                     axis.line = ggplot2::element_line(),
-                     panel.grid = ggplot2::element_blank(),
-                     axis.ticks.x = ggplot2::element_line(),
-                     axis.ticks.y = ggplot2::element_line()) +
+      ggplot2::theme(
+        panel.background = ggplot2::element_blank(),
+        axis.line = ggplot2::element_line(),
+        panel.grid = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_line(),
+        axis.ticks.y = ggplot2::element_line()
+      ) +
       ggplot2::xlab(paste("BMD Estimate for", i)) +
       ggplot2::ylab("Model") +
       ggtitle("BMD by Selected Model (Sorted by Weights)")

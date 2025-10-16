@@ -20,11 +20,14 @@
 #' # using calculate_mf().
 #' outputpath <- tempdir()
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-#'                       package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' mf_example2 <- readRDS(system.file("extdata/Example_files/mf_data_6.rds",
-#'                        package = "MutSeqR"))
-#'  mf_example3 <- readRDS(system.file("extdata/Example_files/mf_data_6_sample.rds",
-#'                         package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
+#' mf_example3 <- readRDS(system.file("extdata/Example_files/mf_data_6_sample.rds",
+#'   package = "MutSeqR"
+#' ))
 #' list <- list(mf_example, mf_example2, mf_example3)
 #' names(list) <- c("Global MF", "Base 6 Spectra", "Base 6 Sample Spectra")
 #'
@@ -107,16 +110,19 @@ write_excel <- function(data,
       openxlsx::addWorksheet(wb1, names(data[i]))
       openxlsx::freezePane(wb1, sheet = i, firstRow = TRUE, firstActiveCol = 1)
       openxlsx::writeDataTable(wb1,
-                               sheet = i,
-                               x = dataToWrite,
-                               colNames = TRUE,
-                               rowNames = FALSE,
-                               tableStyle = "none",
-                               headerStyle = hs1,
-                               keepNA = TRUE,
-                               na.string = "NA")
-      openxlsx::setColWidths(wb1, sheet = i, cols = seq_len(ncol(dataToWrite)),
-                             widths = "auto")
+        sheet = i,
+        x = dataToWrite,
+        colNames = TRUE,
+        rowNames = FALSE,
+        tableStyle = "none",
+        headerStyle = hs1,
+        keepNA = TRUE,
+        na.string = "NA"
+      )
+      openxlsx::setColWidths(wb1,
+        sheet = i, cols = seq_len(ncol(dataToWrite)),
+        widths = "auto"
+      )
     }
     fname <- file.path(output_dir, paste0(workbook_name, ".xlsx"))
     openxlsx::saveWorkbook(wb1, fname, overwrite = TRUE)

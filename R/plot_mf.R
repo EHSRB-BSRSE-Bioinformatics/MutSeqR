@@ -50,21 +50,27 @@
 #' # by dose group.
 #' # Load Example MF data
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-#'                                package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # Specify the order of the dose groups along the x-axis
 #' mf_example$dose_group <- factor(mf_example$dose_group,
-#'                                 levels = c("Control", "Low",
-#'                                            "Medium", "High"))
+#'   levels = c(
+#'     "Control", "Low",
+#'     "Medium", "High"
+#'   )
+#' )
 #' # Plot the min MF per sample as a bar plot with count labels
-#' plot <- plot_mf(mf_data = mf_example,
-#'                 group_col = "sample",
-#'                 plot_type = "bar",
-#'                 mf_type = "min",
-#'                 fill_col = "dose_group",
-#'                 group_order = "arranged",
-#'                 group_order_input = "dose_group",
-#'                 labels = "count",
-#'                 title = "Mutation Frequency per Sample")
+#' plot <- plot_mf(
+#'   mf_data = mf_example,
+#'   group_col = "sample",
+#'   plot_type = "bar",
+#'   mf_type = "min",
+#'   fill_col = "dose_group",
+#'   group_order = "arranged",
+#'   group_order_input = "dose_group",
+#'   labels = "count",
+#'   title = "Mutation Frequency per Sample"
+#' )
 #' @import ggplot2
 #' @importFrom dplyr arrange across all_of rename
 #' @export
@@ -83,12 +89,11 @@ plot_mf <- function(mf_data,
                     title = NULL,
                     rotate_labels = FALSE,
                     label_size = 3) {
-  
   if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
-      stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
+    stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
   }
   if (mf_type == "stacked" && plot_type == "point") {
-   stop("The 'stacked' mutation frequency type is not compatible with the 'point' plot type.")
+    stop("The 'stacked' mutation frequency type is not compatible with the 'point' plot type.")
   }
   # axis_labels
   if (!is.null(x_lab)) {
@@ -97,7 +102,7 @@ plot_mf <- function(mf_data,
     x_lab <- group_col
   }
   if (!is.null(y_lab)) {
-     y_lab <- y_lab
+    y_lab <- y_lab
   } else {
     y_lab <- "Mutation Frequency (mutations/bp)"
   }
@@ -111,12 +116,13 @@ plot_mf <- function(mf_data,
     mf_data[[group_col]] <- factor(mf_data[[group_col]], levels = order)
   } else if (group_order == "arranged") {
     mf_data <- mf_data %>%
-      dplyr::arrange(dplyr::across(dplyr::all_of({{group_order_input}})))
+      dplyr::arrange(dplyr::across(dplyr::all_of({{ group_order_input }})))
     order <- as.vector(unique(mf_data[[group_col]]))
     mf_data[[group_col]] <- factor(mf_data[[group_col]], levels = order)
   } else if (group_order == "custom") {
     mf_data[[group_col]] <- factor(mf_data[[group_col]],
-                                   levels = group_order_input)
+      levels = group_order_input
+    )
   }
 
   if (mf_type %in% c("min", "max")) {
@@ -143,12 +149,15 @@ plot_mf <- function(mf_data,
     }
     # pivot long
     plot_data <- reshape(plot_data,
-                         varying = list(c("sum_min", "sum_max"),
-                                        c("mf_min", "mf_max")),
-                         v.names = c("sum_col", "mf_col"),
-                         times = c("min", "max"),
-                         timevar = "mf_type",
-                         direction = "long")
+      varying = list(
+        c("sum_min", "sum_max"),
+        c("mf_min", "mf_max")
+      ),
+      v.names = c("sum_col", "mf_col"),
+      times = c("min", "max"),
+      timevar = "mf_type",
+      direction = "long"
+    )
     if (mf_type == "both") {
       plot_data$mf_type <- factor(plot_data$mf_type, levels = c("min", "max"))
     }
@@ -229,34 +238,38 @@ plot_mf <- function(mf_data,
     } else if (mf_type %in% c("min", "max")) {
       n_colors <- length(unique(plot_data$fill_col))
     }
-    gradient <- colorRampPalette(colors = c("#c5e5fc",
-                                            "#5ab2ee",
-                                            "#12587b",
-                                            "#263247",
-                                            "#ffedef",
-                                            "#ffb9c1",
-                                            "#ff5264",
-                                            "#b23946"))
+    gradient <- colorRampPalette(colors = c(
+      "#c5e5fc",
+      "#5ab2ee",
+      "#12587b",
+      "#263247",
+      "#ffedef",
+      "#ffb9c1",
+      "#ff5264",
+      "#b23946"
+    ))
     palette <- gradient(n_colors)
   } else {
     palette <- custom_palette
   }
 
- # define the plot type
+  # define the plot type
   if (plot_type == "bar") {
-    type <- ggplot2::geom_bar(stat = "identity",
-                              position = position,
-                              color = "black")
-  # Set label params
-  if (rotate_labels) {
-    label_angle <- 90
-    vjust <- 0.5
-    hjust <- -0.5
-  } else {
-    label_angle <- 0
-    vjust <- -0.5
-    hjust <- 0.5
-  }
+    type <- ggplot2::geom_bar(
+      stat = "identity",
+      position = position,
+      color = "black"
+    )
+    # Set label params
+    if (rotate_labels) {
+      label_angle <- 90
+      vjust <- 0.5
+      hjust <- -0.5
+    } else {
+      label_angle <- 0
+      vjust <- -0.5
+      hjust <- 0.5
+    }
     labels <- ggplot2::geom_text(
       ggplot2::aes(label = label),
       position = label_position,
@@ -267,13 +280,17 @@ plot_mf <- function(mf_data,
       angle = label_angle
     )
   } else if (plot_type == "point") {
-    pos <- ggplot2::position_jitter(width = 0.1,
-                                    height = 0,
-                                    seed = 123)
-    type <- ggplot2::geom_point(shape = 21,
-                                size = 3,
-                                color = "black",
-                                position = pos)
+    pos <- ggplot2::position_jitter(
+      width = 0.1,
+      height = 0,
+      seed = 123
+    )
+    type <- ggplot2::geom_point(
+      shape = 21,
+      size = 3,
+      color = "black",
+      position = pos
+    )
     # label parameters
     if (rotate_labels) {
       label_angle <- 90
@@ -287,26 +304,36 @@ plot_mf <- function(mf_data,
       color = "black",
       position = pos,
       max.overlaps = Inf
-                                       )
+    )
   }
 
   # Create the plot
-  plot <- ggplot2::ggplot(plot_data,
-                          ggplot2::aes(x = plot_data$group_col,
-                                       y = plot_data$mf_col,
-                                       fill = factor(fill))) +
+  plot <- ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(
+      x = plot_data$group_col,
+      y = plot_data$mf_col,
+      fill = factor(fill)
+    )
+  ) +
     type +
     labels +
     yscale +
-    ggplot2::labs(title = title,
-                  fill = fill_label) +
+    ggplot2::labs(
+      title = title,
+      fill = fill_label
+    ) +
     ggplot2::ylab(y_lab) +
     ggplot2::xlab(x_lab) +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
-                                                       hjust = 1,
-                                                       vjust = 0.5),
-                   panel.background = ggplot2::element_blank(),
-                   axis.line = ggplot2::element_line()) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(
+        angle = 90,
+        hjust = 1,
+        vjust = 0.5
+      ),
+      panel.background = ggplot2::element_blank(),
+      axis.line = ggplot2::element_line()
+    ) +
     ggplot2::scale_fill_manual(values = palette)
 
   return(plot)

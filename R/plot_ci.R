@@ -20,12 +20,14 @@
 #' @return a ggplot object
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Plot results from PROAST
-#' dat <- data.frame(Response = c("PROAST MF Min", "PROAST MF Max"),
-#'                   BMD = c(NA, NA),
-#'                   BMDL = c(7.38, 2.98),
-#'                   BMDU = c(10.9, 7.68))
-#' plot <- plot_ci(dat)
+#'   # Plot results from PROAST
+#'   dat <- data.frame(
+#'     Response = c("PROAST MF Min", "PROAST MF Max"),
+#'     BMD = c(NA, NA),
+#'     BMDL = c(7.38, 2.98),
+#'     BMDU = c(10.9, 7.68)
+#'   )
+#'   plot <- plot_ci(dat)
 #' }
 #' @export
 #' @importFrom dplyr arrange pull mutate group_by ungroup across where desc
@@ -41,7 +43,6 @@ plot_ci <- function(data,
                     x_lab = NULL,
                     y_lab = NULL,
                     title = NULL) {
-
   if (order == "asc") {
     response_order <- data %>%
       dplyr::arrange(.data$BMD) %>%
@@ -59,21 +60,27 @@ plot_ci <- function(data,
     data$Response <- factor(data$Response, levels = custom_order)
   }
   data <- data %>%
-    dplyr::mutate(BMD = as.numeric(.data$BMD),
-                  BMDL = as.numeric(.data$BMDL),
-                  BMDU = as.numeric(.data$BMDU))
+    dplyr::mutate(
+      BMD = as.numeric(.data$BMD),
+      BMDL = as.numeric(.data$BMDL),
+      BMDU = as.numeric(.data$BMDU)
+    )
   if (log_scale) {
     data <- data %>%
-      dplyr::mutate(BMD = log10(.data$BMD),
-                    BMDL = log10(.data$BMDL),
-                    BMDU = log10(.data$BMDU))
+      dplyr::mutate(
+        BMD = log10(.data$BMD),
+        BMDL = log10(.data$BMDL),
+        BMDU = log10(.data$BMDU)
+      )
     results_bmd_df_plot <- data %>%
       dplyr::group_by(.data$Response) %>%
       dplyr::mutate(max = .data$BMDU) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(dplyr::across(dplyr::where(is.numeric), function(x) round(x, 2))) %>%
       tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
-    if (is.null(x_lab)) {x_lab <- "log10(BMD)"}
+    if (is.null(x_lab)) {
+      x_lab <- "log10(BMD)"
+    }
   } else {
     results_bmd_df_plot <- data %>%
       dplyr::group_by(.data$Response) %>%
@@ -81,47 +88,76 @@ plot_ci <- function(data,
       dplyr::ungroup() %>%
       dplyr::mutate(dplyr::across(dplyr::where(is.numeric), function(x) round(x, 1))) %>%
       tidyr::pivot_longer(cols = c("BMD", "BMDL", "BMDU"))
-    if (is.null(x_lab)) {x_lab <- "BMD"}
+    if (is.null(x_lab)) {
+      x_lab <- "BMD"
+    }
   }
   nudge_value <- nudge
 
-  if (is.null(y_lab)) {y_lab <- "Response"}
-  if (is.null(title)) {title <- "BMD with 90% Confidence Intervals"}
+  if (is.null(y_lab)) {
+    y_lab <- "Response"
+  }
+  if (is.null(title)) {
+    title <- "BMD with 90% Confidence Intervals"
+  }
 
 
-  g <- ggplot2::ggplot(results_bmd_df_plot,
-              ggplot2::aes(x = results_bmd_df_plot$value,
-                           y = results_bmd_df_plot$Response,
-                           color = results_bmd_df_plot$name)) +
+  g <- ggplot2::ggplot(
+    results_bmd_df_plot,
+    ggplot2::aes(
+      x = results_bmd_df_plot$value,
+      y = results_bmd_df_plot$Response,
+      color = results_bmd_df_plot$name
+    )
+  ) +
     ggplot2::geom_line(ggplot2::aes(group = results_bmd_df_plot$Response),
-                       color = "#b8b8b8", linewidth = 3.5, na.rm = TRUE) +
+      color = "#b8b8b8", linewidth = 3.5, na.rm = TRUE
+    ) +
     ggplot2::geom_point(size = 3, na.rm = TRUE) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(legend.position = "bottom",
-                   axis.text.y = ggplot2::element_text(color = "black"),
-                   axis.text.x = ggplot2::element_text(color = "#000000"),
-                   panel.border = ggplot2::element_rect(colour = "black",
-                                                        fill = NA,
-                                                        size = 1),
-                   panel.grid = ggplot2::element_blank()) +
+    ggplot2::theme(
+      legend.position = "bottom",
+      axis.text.y = ggplot2::element_text(color = "black"),
+      axis.text.x = ggplot2::element_text(color = "#000000"),
+      panel.border = ggplot2::element_rect(
+        colour = "black",
+        fill = NA,
+        size = 1
+      ),
+      panel.grid = ggplot2::element_blank()
+    ) +
     ggplot2::scale_color_manual(values = c("black", "#BF2F24", "#436685")) +
     ggplot2::scale_x_continuous() +
-    ggplot2::geom_text(ggplot2::aes(label = results_bmd_df_plot$value,
-                                    color = results_bmd_df_plot$name),
-                       size = 3.25,
-                       nudge_x = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
-                                                nudge_value, -nudge_value),
-                       hjust = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
-                                              0, 1), na.rm = TRUE) +
-    ggplot2::labs(x = x_lab, y = y_lab,
-                  title = title,
-                  color = NULL) +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0,
-                                                       vjust = 0.5,
-                                                       hjust = 0.5),
-                   plot.title = ggplot2::element_text(hjust = 0.5)) +
-    ggplot2::theme(axis.ticks = ggplot2::element_line(color = "black",
-                                                      linewidth = 0.5))
+    ggplot2::geom_text(
+      ggplot2::aes(
+        label = results_bmd_df_plot$value,
+        color = results_bmd_df_plot$name
+      ),
+      size = 3.25,
+      nudge_x = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
+        nudge_value, -nudge_value
+      ),
+      hjust = dplyr::if_else(results_bmd_df_plot$value == results_bmd_df_plot$max,
+        0, 1
+      ), na.rm = TRUE
+    ) +
+    ggplot2::labs(
+      x = x_lab, y = y_lab,
+      title = title,
+      color = NULL
+    ) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(
+        angle = 0,
+        vjust = 0.5,
+        hjust = 0.5
+      ),
+      plot.title = ggplot2::element_text(hjust = 0.5)
+    ) +
+    ggplot2::theme(axis.ticks = ggplot2::element_line(
+      color = "black",
+      linewidth = 0.5
+    ))
 
   return(g)
 }

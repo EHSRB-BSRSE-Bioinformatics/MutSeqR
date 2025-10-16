@@ -37,10 +37,11 @@ human_rg
 # We will use the human TSpanel system file for this example,
 # but any file can be imported.
 file <- system.file("extdata",
-                    "inputs",
-                   "metadata",
-                  "human_mutagenesis_panel_hg38.txt",
-                 package = "MutSeqR")
+  "inputs",
+  "metadata",
+  "human_mutagenesis_panel_hg38.txt",
+  package = "MutSeqR"
+)
 custom_rg <- load_regions_file(regions = file, rg_sep = "\t", is_0_based_rg = TRUE)
 custom_rg
 }

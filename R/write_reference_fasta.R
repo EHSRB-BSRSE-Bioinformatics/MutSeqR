@@ -35,7 +35,8 @@ write_reference_fasta <- function(regions_gr,
   ref <- Biostrings::DNAStringSet(ref)
   names(ref) <- make.unique(as.vector(seqnames(regions_gr)))
   Biostrings::writeXStringSet(ref,
-                              output_dir,
-                              append = FALSE,
-                              format = "fasta")
+    output_dir,
+    append = FALSE,
+    format = "fasta"
+  )
 }

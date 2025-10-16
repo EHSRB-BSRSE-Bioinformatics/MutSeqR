@@ -43,7 +43,7 @@
 #' @details Mutation data will be filtered to only include SNVs. Variants
 #' flagged by the filter_mut column will be excluded.
 #' @examples
-#'  if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #'   # Example data consists of 24 mouse bone marrow DNA samples imported
 #'   # using import_mut_data() and filtered with filter_mut as in Example 4.
 #'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -52,16 +52,18 @@
 #'   eh <- ExperimentHub()
 #'   example_data <- eh[["EH9861"]]
 #'   output_path <- tempdir()
-#' 
-#'   signature_fitting(mutation_data = example_data,
-#'                     project_name = "Example",
-#'                     project_genome = "mm10",
-#'                     env_name = "MutSeqR",
-#'                     group = "dose",
-#'                     python_version = "3.11",
-#'                     output_path = output_path)
+#'
+#'   signature_fitting(
+#'     mutation_data = example_data,
+#'     project_name = "Example",
+#'     project_genome = "mm10",
+#'     env_name = "MutSeqR",
+#'     group = "dose",
+#'     python_version = "3.11",
+#'     output_path = output_path
+#'   )
 #' }
-#' 
+#'
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate
 #' @importFrom utils write.table
@@ -79,8 +81,8 @@ signature_fitting <- function(mutation_data,
   if (!requireNamespace("reticulate")) {
     stop("Reticulate not installed: you need this to run SigProfiler tools in R.")
   }
-  message("Note: This function requires python to be installed on the users 
-          computer. If you do not have python installed, you can do so using: 
+  message("Note: This function requires python to be installed on the users
+          computer. If you do not have python installed, you can do so using:
           reticulate::install_python().
           \n\nThis function will create a virtual environment using reticulate
           to run python. Note that it will also install several python
@@ -96,22 +98,24 @@ signature_fitting <- function(mutation_data,
     reticulate::use_virtualenv(env_name)
   } else {
     # Ask the user for confirmation
-    # user_input <- utils::menu("Do you want to create a virtual environment and 
-    #                           install the required Python packages? This may 
+    # user_input <- utils::menu("Do you want to create a virtual environment and
+    #                           install the required Python packages? This may
     #                           take several minutes",
     #                           title = "Confirmation", choices = c("Yes", "No"))
 
     # if (user_input == 1) {
-      # Create venv and install packages
-      reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
-      # Install required packages
-      # Patched version of pandas and scipy to avoid dependency errors: binom_test
-      reticulate::virtualenv_install(env_name, c("SigProfilerMatrixGenerator",
-                                                 "SigProfilerAssignment",
-                                                 "SigProfilerExtractor",
-                                                 "pandas==1.5.3",
-                                                 "scipy==1.11.4",
-                                                 "pypdf==4.3.1"))
+    # Create venv and install packages
+    reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
+    # Install required packages
+    # Patched version of pandas and scipy to avoid dependency errors: binom_test
+    reticulate::virtualenv_install(env_name, c(
+      "SigProfilerMatrixGenerator",
+      "SigProfilerAssignment",
+      "SigProfilerExtractor",
+      "pandas==1.5.3",
+      "scipy==1.11.4",
+      "pypdf==4.3.1"
+    ))
     # } else {
     #   # User chose not to install the packages
     #   stop("Installation aborted by the user. Function terminated.")
@@ -123,7 +127,8 @@ signature_fitting <- function(mutation_data,
 
   # SigProfilerMatrixGeneratorR::install(project_genome)
   signatures_python_code <- system.file("extdata", "signatures.py",
-                                        package = "MutSeqR")
+    package = "MutSeqR"
+  )
   sig_py <- new.env()
   reticulate::source_python(signatures_python_code, envir = sig_py)
 
@@ -132,7 +137,7 @@ signature_fitting <- function(mutation_data,
 
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...
-  #ID doesn't always exist. 
+  # ID doesn't always exist.
   signature_data <- as.data.frame(mutation_data)
 
   # Check if "id" column exists
@@ -167,12 +172,12 @@ signature_fitting <- function(mutation_data,
     dplyr::relocate(.data$Project) %>%
     dplyr::relocate(.data$Genome, .after = .data$ID) %>%
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
-  
-# Make sure Samples column is NOT numeric
-# Note that the values will be class character, but even if so,
+
+  # Make sure Samples column is NOT numeric
+  # Note that the values will be class character, but even if so,
   # number values will cause an issue
-signature_data <- signature_data %>%
-  dplyr::mutate(Samples = paste0(!!group, "_", Samples))
+  signature_data <- signature_data %>%
+    dplyr::mutate(Samples = paste0(!!group, "_", Samples))
 
   message("Generating output path string...")
   if (is.null(output_path)) {
@@ -229,15 +234,17 @@ signature_data <- signature_data %>%
   )
   message("Running COSMIC fitting...")
   sig_py$cosmic_fit_MutSeqR(
-    samples = file.path(output_path, "matrices", "output", "SBS",
-                        paste0(project_name, ".SBS96.all")),
+    samples = file.path(
+      output_path, "matrices", "output", "SBS",
+      paste0(project_name, ".SBS96.all")
+    ),
     output = file.path(output_path, "matrices", "output"),
     input_type = "matrix", # "vcf", "seg:TYPE", "matrix"
     context_type = "96", # Required for vcf input
     cosmic_version = 3.4,
     exome = FALSE,
     genome_build = project_genome,
-    signature_database = NULL, #tab delimited file of signatures
+    signature_database = NULL, # tab delimited file of signatures
     exclude_signature_subgroups = NULL,
     export_probabilities = TRUE,
     export_probabilities_per_mutation = FALSE, # Only for vcf input

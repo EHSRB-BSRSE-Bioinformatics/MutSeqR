@@ -46,20 +46,22 @@ across the groups specified in the \code{group} argument.
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
- library(ExperimentHub)
- eh <- ExperimentHub()
- example_data <- eh[["EH9861"]]
- temp_output <- tempdir()
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9861"]]
+  temp_output <- tempdir()
 
- write_mutational_matrix(mutation_data = example_data,
-                         group = "dose_group",
-                         subtype_resolution = "base_96",
-                         mf_type = "min",
-                         output_path = temp_output)
- list.files(temp_output)
- # The file is saved in the temporary directory
- # To view the file, use the following code:
- ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
- ## file.show(output_file)
+  write_mutational_matrix(
+    mutation_data = example_data,
+    group = "dose_group",
+    subtype_resolution = "base_96",
+    mf_type = "min",
+    output_path = temp_output
+  )
+  list.files(temp_output)
+  # The file is saved in the temporary directory
+  # To view the file, use the following code:
+  ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
+  ## file.show(output_file)
 }
 }

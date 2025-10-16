@@ -12,15 +12,15 @@
 #' @returns Writes a VCF file of mutations "mutation_output.vcf".
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#' 
-#' write_vcf_from_mut(mutation_data = example_data, output_path = tempdir())
+#'   # Example data consists of 24 mouse bone marrow DNA samples imported
+#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
+#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#'   # retrieved from MutSeqRData, an ExperimentHub data package.
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_data <- eh[["EH9861"]]
+#'
+#'   write_vcf_from_mut(mutation_data = example_data, output_path = tempdir())
 #' }
 #' @export
 
@@ -51,23 +51,26 @@ write_vcf_from_mut <- function(mutation_data,
   }
   if ("total_depth" %in% colnames(mutation_data)) {
     muts_for_vcf <-
-    VariantAnnotation::makeVRangesFromGRanges(mutation_data,
-                                              sampleNames.field = "sample",
-                                              ref.field = "ref",
-                                              alt.field = "alt",
-                                              altDepth.field = "alt_depth",
-                                              totalDepth.field = "total_depth",
-                                              refDepth.field = "ref_depth",
-                                              keep.extra.columns = TRUE)
+      VariantAnnotation::makeVRangesFromGRanges(mutation_data,
+        sampleNames.field = "sample",
+        ref.field = "ref",
+        alt.field = "alt",
+        altDepth.field = "alt_depth",
+        totalDepth.field = "total_depth",
+        refDepth.field = "ref_depth",
+        keep.extra.columns = TRUE
+      )
   } else {
     muts_for_vcf <-
       VariantAnnotation::makeVRangesFromGRanges(mutation_data,
-                                                sampleNames.field = "sample",
-                                                ref.field = "ref",
-                                                alt.field = "alt",
-                                                altDepth.field = "alt_depth",
-                                                keep.extra.columns = TRUE)
+        sampleNames.field = "sample",
+        ref.field = "ref",
+        alt.field = "alt",
+        altDepth.field = "alt_depth",
+        keep.extra.columns = TRUE
+      )
   }
   VariantAnnotation::writeVcf(VariantAnnotation::asVCF(muts_for_vcf),
-                              filename = output_dir)
+    filename = output_dir
+  )
 }

@@ -82,8 +82,10 @@ regions_seq <- get_seq(regions = "TSpanel_mouse")
 # We will load the TSpanel_human regions file as an example
 # and supply it to the function as a GRanges object.
 human <- load_regions_file("TSpanel_human")
-regions_seq <- get_seq(regions = human,
-                       is_0_based_rg = FALSE,
-                       BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
-                       padding = 0)
+regions_seq <- get_seq(
+  regions = human,
+  is_0_based_rg = FALSE,
+  BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
+  padding = 0
+)
 }

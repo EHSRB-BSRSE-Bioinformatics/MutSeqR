@@ -50,28 +50,34 @@
 #' # Data was summarized per sample using calculate_mf() (see relevant
 #' # examples). We will run the model with model_mf then plot the results.
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-#'                                package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # We will compare all treated groups to the control group
-#' contrasts <- data.frame(col1 = c("12.5", "25", "50"),
-#'                         col2 = c("0", "0", "0"))
+#' contrasts <- data.frame(
+#'   col1 = c("12.5", "25", "50"),
+#'   col2 = c("0", "0", "0")
+#' )
 #' # Fit the model
-#' model <- model_mf(mf_data = mf_example,
-#'                    fixed_effects = "dose",
-#'                    reference_level = "0",
-#'                    muts = "sum_min",
-#'                    total_count = "group_depth",
-#'                    contrasts = contrasts)
+#' model <- model_mf(
+#'   mf_data = mf_example,
+#'   fixed_effects = "dose",
+#'   reference_level = "0",
+#'   muts = "sum_min",
+#'   total_count = "group_depth",
+#'   contrasts = contrasts
+#' )
 #'
 #' # Plot the results using plot_model_mf()
 #' plot <- plot_model_mf(model,
-#'                       plot_type = "bar",
-#'                       x_effect = "dose",
-#'                       plot_error_bars = TRUE,
-#'                       plot_signif = TRUE,
-#'                       x_order = c("0", "12.5", "25", "50"),
-#'                       x_label = "Dose (mg/kg-bw/d)",
-#'                       y_label = "Estimated Mean MF (mutations/bp)",
-#'                       plot_title = "")
+#'   plot_type = "bar",
+#'   x_effect = "dose",
+#'   plot_error_bars = TRUE,
+#'   plot_signif = TRUE,
+#'   x_order = c("0", "12.5", "25", "50"),
+#'   x_label = "Dose (mg/kg-bw/d)",
+#'   y_label = "Estimated Mean MF (mutations/bp)",
+#'   plot_title = ""
+#' )
 plot_model_mf <- function(model,
                           plot_type = "point",
                           x_effect = NULL,
@@ -85,7 +91,6 @@ plot_model_mf <- function(model,
                           plot_title = NULL,
                           fill_label = NULL,
                           custom_palette = NULL) {
-
   # Check if point_estimates exist in the model_object
   if (!"point_estimates" %in% names(model)) {
     stop("The model object does not contain 'point_estimates'")
@@ -108,7 +113,7 @@ plot_model_mf <- function(model,
       stop("Multiple fixed effects found. Please specify the fixed effect to plot on the x-axis using x_effect.")
     }
     if (!x_effect %in% names(plot_data)) {
-    stop("The fixed effect", x_effect, "is not found in point_estimates dataframe.")
+      stop("The fixed effect", x_effect, "is not found in point_estimates dataframe.")
     }
     x_var <- x_effect
     other_effect <- setdiff(names(plot_data)[5:(4 + nfixef)], x_effect)
@@ -122,13 +127,18 @@ plot_model_mf <- function(model,
   # Fill order
   if (!is.null(other_effect) && !is.null(fill_order)) {
     plot_data[[other_effect]] <- factor(plot_data[[other_effect]],
-                                        levels = fill_order)
+      levels = fill_order
+    )
   }
 
   # Initialize the plot
-  p <- ggplot2::ggplot(plot_data,
-                       ggplot2::aes(x = !!sym(x_var),
-                                    y = plot_data$Estimate))
+  p <- ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(
+      x = !!sym(x_var),
+      y = plot_data$Estimate
+    )
+  )
 
   # Add fill for other_effect
   if (!is.null(other_effect)) {
@@ -143,19 +153,22 @@ plot_model_mf <- function(model,
   }
   # Palette
   if (is.null(custom_palette)) {
-    gradient <- grDevices::colorRampPalette(colors = c("#c5e5fc",
-                                                       "#5ab2ee",
-                                                       "#12587b",
-                                                       "#263247",
-                                                       "#ffedef",
-                                                       "#ffb9c1",
-                                                       "#ff5264",
-                                                       "#b23946"))
+    gradient <- grDevices::colorRampPalette(colors = c(
+      "#c5e5fc",
+      "#5ab2ee",
+      "#12587b",
+      "#263247",
+      "#ffedef",
+      "#ffb9c1",
+      "#ff5264",
+      "#b23946"
+    ))
     palette <- gradient(n_colors)
   } else {
     palette <- custom_palette
     if (length(palette) < n_colors) {
-      stop("The number of colors in the custom_palette is less than the number of levels in the fill aesthetic. ",
+      stop(
+        "The number of colors in the custom_palette is less than the number of levels in the fill aesthetic. ",
         n_colors, " needed but ", length(custom_palette), " provided."
       )
     }
@@ -163,8 +176,10 @@ plot_model_mf <- function(model,
   # Estimate: bars or points
   if (plot_type == "bar") {
     pos <- ggplot2::position_dodge(0.9)
-    bar <- ggplot2::geom_bar(stat = "identity",
-                             position = pos)
+    bar <- ggplot2::geom_bar(
+      stat = "identity",
+      position = pos
+    )
     point <- NULL
   } else {
     pos <- ggplot2::position_dodge(width = 0.5)
@@ -174,11 +189,15 @@ plot_model_mf <- function(model,
   # Error bars
   if (plot_error_bars) {
     plot_data$y_position_label <- plot_data$Estimate + plot_data$Std.Err
-    error <- ggplot2::geom_errorbar(ggplot2::aes(ymin = plot_data$Estimate - plot_data$Std.Err,
-                                                 ymax = plot_data$Estimate + plot_data$Std.Err),
-                                    color = "black",
-                                    width = 0.2,
-                                    position = pos)
+    error <- ggplot2::geom_errorbar(
+      ggplot2::aes(
+        ymin = plot_data$Estimate - plot_data$Std.Err,
+        ymax = plot_data$Estimate + plot_data$Std.Err
+      ),
+      color = "black",
+      width = 0.2,
+      position = pos
+    )
   } else {
     plot_data$y_position_label <- plot_data$Estimate
     error <- NULL
@@ -191,9 +210,11 @@ plot_model_mf <- function(model,
            model_mf() when creating your model object.")
     }
     signif_data <- model$pairwise_comparisons %>%
-      dplyr::select(dplyr::ends_with("1"),
-                    dplyr::ends_with("2"),
-                    "Significance") %>%
+      dplyr::select(
+        dplyr::ends_with("1"),
+        dplyr::ends_with("2"),
+        "Significance"
+      ) %>%
       dplyr::filter(Significance != "")
     names(signif_data) <- sub("_1$", "", names(signif_data))
 
@@ -203,7 +224,8 @@ plot_model_mf <- function(model,
       signif_data$ref_level <- vapply(split_names, function(x) x[2], character(1))
     } else {
       signif_data <- dplyr::rename(signif_data,
-                                   ref_level = paste0(ref_effect, "_2"))
+        ref_level = paste0(ref_effect, "_2")
+      )
     }
     # Assign a unique symbol based on the reference level
     unique_ref_levels <- unique(signif_data$ref_level)
@@ -224,36 +246,51 @@ plot_model_mf <- function(model,
     signif_data <- signif_data %>%
       dplyr::mutate(Symbol = random_symbols[ref_level]) %>%
       dplyr::group_by(dplyr::across(dplyr::all_of(c(x_var, other_effect)))) %>%
-      dplyr::summarize(Significance = paste(unique(Symbol),
-                                            collapse = ""),
-                       .groups = 'drop')
+      dplyr::summarize(
+        Significance = paste(unique(Symbol),
+          collapse = ""
+        ),
+        .groups = "drop"
+      )
 
     plot_data <- dplyr::left_join(plot_data, signif_data)
     plot_data$Significance <- ifelse(is.na(plot_data$Significance),
-                                     "",
-                                     plot_data$Significance)
+      "",
+      plot_data$Significance
+    )
 
     # plot the significance labels
-    signif <- ggplot2::geom_text(ggplot2::aes(y = plot_data$y_position_label,
-                                              label = plot_data$Significance),
-                                 position = pos,
-                                 vjust = -0.5,
-                                 size = 3,
-                                 color = "black")
+    signif <- ggplot2::geom_text(
+      ggplot2::aes(
+        y = plot_data$y_position_label,
+        label = plot_data$Significance
+      ),
+      position = pos,
+      vjust = -0.5,
+      size = 3,
+      color = "black"
+    )
 
     # Create a legend for the significance labels using dummy points
-    significance_labels <- paste(random_symbols,
-                                 "Significant differences from",
-                                 names(random_symbols))
+    significance_labels <- paste(
+      random_symbols,
+      "Significant differences from",
+      names(random_symbols)
+    )
     plot_data$significance_labels <- rep(significance_labels,
-                                         length.out = nrow(plot_data))
+      length.out = nrow(plot_data)
+    )
     plot_data$dummy_labels_y <- 0
     # Plot an invisible shape
-    dummy <- ggplot2::geom_point(aes(y = plot_data$dummy_labels_y,
-                                     shape = plot_data$significance_labels),
-                                 size = 0,
-                                 color = "white",
-                                 show.legend = TRUE)
+    dummy <- ggplot2::geom_point(
+      aes(
+        y = plot_data$dummy_labels_y,
+        shape = plot_data$significance_labels
+      ),
+      size = 0,
+      color = "white",
+      show.legend = TRUE
+    )
   } else {
     signif <- NULL
     dummy <- NULL
@@ -293,14 +330,18 @@ plot_model_mf <- function(model,
     error +
     point +
     signif +
-    ggplot2::labs(x = xlab,
-                  y = ylab,
-                  fill = flabel,
-                  color = flabel,
-                  title = title,
-                  shape = "Significance") +
-    ggplot2::theme(panel.background = ggplot2::element_blank(),
-                   axis.line = ggplot2::element_line()) +
+    ggplot2::labs(
+      x = xlab,
+      y = ylab,
+      fill = flabel,
+      color = flabel,
+      title = title,
+      shape = "Significance"
+    ) +
+    ggplot2::theme(
+      panel.background = ggplot2::element_blank(),
+      axis.line = ggplot2::element_line()
+    ) +
     ggplot2::scale_fill_manual(values = palette) +
     ggplot2::scale_color_manual(values = palette)
 

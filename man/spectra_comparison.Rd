@@ -98,13 +98,18 @@ the contrast table would look like:
 # Example: compare 6-base mutation spectra between dose groups
 # Load the example data
 mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
-                                  package = "MutSeqR"))
+  package = "MutSeqR"
+))
 # Create the contrasts table
-contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
-                        col2 = rep("Control", 3))
+contrasts <- data.frame(
+  col1 = c("Low", "Medium", "High"),
+  col2 = rep("Control", 3)
+)
 # Run the comparison
-spectra_comparison(mf_data = mf_example,
-                   exp_variable = "dose_group",
-                   mf_type = "min",
-                   contrasts = contrasts)
+spectra_comparison(
+  mf_data = mf_example,
+  exp_variable = "dose_group",
+  mf_type = "min",
+  contrasts = contrasts
+)
 }

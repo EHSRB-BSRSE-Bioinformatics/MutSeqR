@@ -31,31 +31,34 @@
 #' @export
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Plot the trinucleotide proportions per sample, facetted by dose group.
-#' 
-#' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#' 
-#' # define dose_group order
-#' example_data$dose_group <- factor(example_data$dose_group,
-#'                                   levels = c("Control", "Low",
-#'                                              "Medium", "High"))
-#' mf_96 <- calculate_mf(example_data,
-#'                       cols_to_group = "sample",
-#'                       variant_types = "snv",
-#'                       subtype_resolution = "base_96",
-#'                       retain_metadata_cols = "dose_group")
-#'plot <- plot_trinucleotide_heatmap(mf_96,
-#'                                   group_col = "sample",
-#'                                   facet_col = "dose_group")
+#'   # Plot the trinucleotide proportions per sample, facetted by dose group.
 #'
+#'   # Example data consists of 24 mouse bone marrow DNA samples imported
+#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
+#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#'   # retrieved from MutSeqRData, an ExperimentHub data package.
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_data <- eh[["EH9861"]]
+#'
+#'   # define dose_group order
+#'   example_data$dose_group <- factor(example_data$dose_group,
+#'     levels = c(
+#'       "Control", "Low",
+#'       "Medium", "High"
+#'     )
+#'   )
+#'   mf_96 <- calculate_mf(example_data,
+#'     cols_to_group = "sample",
+#'     variant_types = "snv",
+#'     subtype_resolution = "base_96",
+#'     retain_metadata_cols = "dose_group"
+#'   )
+#'   plot <- plot_trinucleotide_heatmap(mf_96,
+#'     group_col = "sample",
+#'     facet_col = "dose_group"
+#'   )
 #' }
-
 plot_trinucleotide_heatmap <- function(mf_data,
                                        group_col = "sample",
                                        facet_col = "dose",
@@ -79,19 +82,21 @@ plot_trinucleotide_heatmap <- function(mf_data,
 
   # Check for proportion column
   proportion_col <- c(paste0("proportion_", mf_type), "proportion", "prop")
-  found_prop_col <- proportion_col[proportion_col %in% tolower(colnames(mf_data))] 
-  if(length(found_prop_col) == 1) {
+  found_prop_col <- proportion_col[proportion_col %in% tolower(colnames(mf_data))]
+  if (length(found_prop_col) == 1) {
     mf_data <- dplyr::rename(mf_data, proportion = dplyr::all_of(found_prop_col))
   } else if (length(found_prop_col) > 1) {
-    stop("More than one possible proportion column name found in mf_data: ",
+    stop(
+      "More than one possible proportion column name found in mf_data: ",
       paste(found_prop_col, collapse = ", "),
       " Please remove columns that are not the proportion column to be plotted."
     )
   } else if (length(found_prop_col) == 0) {
-  stop("The dataframe does not contain a proportion column.",
-    "Please add a column that contains the mutation proportion",
-    "to be plotted or rename column to 'proportion'."
-  )
+    stop(
+      "The dataframe does not contain a proportion column.",
+      "Please add a column that contains the mutation proportion",
+      "to be plotted or rename column to 'proportion'."
+    )
   }
 
   # Check for mutation count column
@@ -99,22 +104,26 @@ plot_trinucleotide_heatmap <- function(mf_data,
   mf_data <- dplyr::rename(mf_data, sum_column = dplyr::all_of(sum_column))
 
   # Check for subtype column
-  subtype_column_names <- c("normalized_context_with_mutation",
-                            "context_with_mutation",
-                            "normalized_subtype",
-                            "subtype",
-                            "variation_type")
-  found_subtype_cols <- subtype_column_names[subtype_column_names %in% colnames(mf_data)] 
+  subtype_column_names <- c(
+    "normalized_context_with_mutation",
+    "context_with_mutation",
+    "normalized_subtype",
+    "subtype",
+    "variation_type"
+  )
+  found_subtype_cols <- subtype_column_names[subtype_column_names %in% colnames(mf_data)]
   if (length(found_subtype_cols) == 1) {
     # Rename the subtype column to "subtype"
     mf_data <- dplyr::rename(mf_data, subtype = dplyr::all_of(found_subtype_cols))
   } else if (length(found_subtype_cols) > 1) {
-    stop("More than one possible subtype column name found in mf_data: ",
+    stop(
+      "More than one possible subtype column name found in mf_data: ",
       paste(found_subtype_cols, collapse = ", "),
       " Please remove columns that are not the subtype column to be plotted."
     )
   } else if (length(found_subtype_cols) == 0) {
-    stop("No subtype column name found in mf_data from the following options: ",
+    stop(
+      "No subtype column name found in mf_data from the following options: ",
       paste(subtype_column_names, collapse = ", "),
       " Please add a column that contains the mutation subtype to be plotted",
       "or rename column to one of the listed options."
@@ -122,29 +131,35 @@ plot_trinucleotide_heatmap <- function(mf_data,
   }
 
   # Context Column synonyms
-  context_column_names <- c("normalized_ref",
-                            "short_ref",
-                            "normalized_context",
-                            "context")
+  context_column_names <- c(
+    "normalized_ref",
+    "short_ref",
+    "normalized_context",
+    "context"
+  )
   found_context_cols <- context_column_names[context_column_names %in% colnames(mf_data)]
   if (length(found_context_cols) == 1) {
     mf_data$x_variable <- mf_data[[found_context_cols]]
     mf_data <- mf_data %>%
       dplyr::mutate(x_variable = ifelse(subtype %in% MutSeqR::subtype_list$type,
-                                        subtype,
-                                        x_variable))
+        subtype,
+        x_variable
+      ))
     plot_context <- TRUE
   } else if (length(found_context_cols) == 0) {
     if (any(grep(".*\\[([A-Z]?>[A-Z])\\].*", mf_data$subtype))) {
       mf_data <- mf_data %>%
-        dplyr::mutate(context = paste0(substr(mf_data$subtype, 1, 1),
-                                       substr(mf_data$subtype, 3, 3),
-                                       substr(mf_data$subtype, 7, 7)))
+        dplyr::mutate(context = paste0(
+          substr(mf_data$subtype, 1, 1),
+          substr(mf_data$subtype, 3, 3),
+          substr(mf_data$subtype, 7, 7)
+        ))
       mf_data$x_variable <- mf_data$context
       mf_data <- mf_data %>%
-        dplyr::mutate(x_variable = ifelse(subtype %in% MutSeqR::subtype_list$type, 
-                                          subtype,
-                                          x_variable))
+        dplyr::mutate(x_variable = ifelse(subtype %in% MutSeqR::subtype_list$type,
+          subtype,
+          x_variable
+        ))
       plot_context <- TRUE
     } else {
       message("No context column found in mf_data, plotting by subtype.")
@@ -152,7 +167,8 @@ plot_trinucleotide_heatmap <- function(mf_data,
       plot_context <- FALSE
     }
   } else if (length(found_context_cols) > 1) {
-    stop("More than one possible context column name found in mf_data: ",
+    stop(
+      "More than one possible context column name found in mf_data: ",
       paste(found_context_cols, collapse = ", "),
       " Please remove columns that are not the context column to be plotted."
     )
@@ -177,21 +193,22 @@ plot_trinucleotide_heatmap <- function(mf_data,
   }
 
   # Facet x
-  if(plot_context) {
+  if (plot_context) {
     # Make facet labels for subtypes.
     pattern <- "[A-Z]?>[A-Z]"
     mf_data$subtype_labels <- stringr::str_extract(mf_data$subtype, pattern)
     mf_data <- mf_data %>%
       dplyr::mutate(subtype_labels = ifelse(mf_data$subtype %in% subtype_list$type,
-                                            "other",
-                                            subtype_labels))
+        "other",
+        subtype_labels
+      ))
     # Count number muts per subtype
     if ("sum_column" %in% colnames(mf_data)) {
       mut_counts <- mf_data %>%
         dplyr::group_by(subtype_labels) %>%
         dplyr::summarise(nrmuts = sum(sum_column), .groups = "drop_last")
-        facet_labs_x <- stringr::str_c(mut_counts$subtype_labels, " (n = ", mut_counts$nrmuts, ")")
-        names(facet_labs_x) <- mut_counts$subtype_labels  
+      facet_labs_x <- stringr::str_c(mut_counts$subtype_labels, " (n = ", mut_counts$nrmuts, ")")
+      names(facet_labs_x) <- mut_counts$subtype_labels
     } else {
       facet_labs_x <- unique(mf_data$subtype_labels)
       names(facet_labs_x) <- unique(mut_counts$subtype_labels)
@@ -219,7 +236,7 @@ plot_trinucleotide_heatmap <- function(mf_data,
     } else {
       facet_labs_y <- unique(mf_data[[facet_col]])
       names(facet_labs_y) <- unique(mf_data[[facet_col]])
-  }
+    }
     y_label <- paste(facet_col)
     mf_data <- mf_data %>%
       dplyr::rename(Facet = !!ensym(facet_col))
@@ -234,7 +251,7 @@ plot_trinucleotide_heatmap <- function(mf_data,
     df <- mf_data %>%
       dplyr::mutate(ProportionPlot = ifelse(proportion > max, max, proportion))
   } else if (max == 1 && rescale_data) {
-  # If user specifies scaling to max value (the default), rescale the values to 0-1
+    # If user specifies scaling to max value (the default), rescale the values to 0-1
     message("Rescaling bewteen 0 and 1")
     df <- mf_data %>%
       dplyr::mutate(ProportionPlot = scales::rescale(proportion, to = c(0, 1)))
@@ -251,46 +268,55 @@ plot_trinucleotide_heatmap <- function(mf_data,
   }
   df <- dplyr::rename(df, Group = dplyr::all_of(group_col))
   # General figure, no facetting
-  fig <- ggplot2::ggplot(df, aes(x = x_variable,
-                        y = Group,
-                        fill = ProportionPlot)) +
-                ggplot2::geom_raster() +
-                ggplot2::scale_fill_viridis_c(
-                  name = "Relative proportion", limits = c(0, max),
-                  option = mut_proportion_scale,
-                  na.value = "white") +
-                ggplot2::theme_minimal() +
-                ggplot2::labs(x = x_label, y = y_label) +
-                ggplot2::theme(axis.text.y = ggplot2::element_text(size = 6),
-                      axis.text.x = ggplot2::element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
-                      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                      panel.spacing.x = unit(spacing, "lines"),
-                      panel.spacing.y = unit(spacing, "lines")
-  )
+  fig <- ggplot2::ggplot(df, aes(
+    x = x_variable,
+    y = Group,
+    fill = ProportionPlot
+  )) +
+    ggplot2::geom_raster() +
+    ggplot2::scale_fill_viridis_c(
+      name = "Relative proportion", limits = c(0, max),
+      option = mut_proportion_scale,
+      na.value = "white"
+    ) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(x = x_label, y = y_label) +
+    ggplot2::theme(
+      axis.text.y = ggplot2::element_text(size = 6),
+      axis.text.x = ggplot2::element_text(angle = 90, hjust = 0, vjust = 0.5, size = axis_size, family = "mono"),
+      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+      panel.spacing.x = unit(spacing, "lines"),
+      panel.spacing.y = unit(spacing, "lines")
+    )
   # facet x : plot_context == TRUE
   # facet y : !is.null(facet_col)
   # facet x and y : plot_context == TRUE & !is.null(facet_col)
   # facet none : plot_context == FALSE & is.null(facet_col)
   if (plot_context && is.null(facet_col)) {
     figfx <- fig +
-      ggplot2::facet_grid(cols = vars(subtype_labels), scales = "free_x",
-                 labeller = labeller(subtype_labels = facet_labs_x)) +
+      ggplot2::facet_grid(
+        cols = vars(subtype_labels), scales = "free_x",
+        labeller = labeller(subtype_labels = facet_labs_x)
+      ) +
       ggplot2::theme(strip.text = ggplot2::element_text(size = 8))
     return(figfx)
   } else if (plot_context == FALSE & !is.null(facet_col)) {
     figfy <- fig +
-      ggplot2::facet_grid(rows = vars(Facet), scales = "free_y",
-                 labeller = labeller(Facet = facet_labs_y)) +
+      ggplot2::facet_grid(
+        rows = vars(Facet), scales = "free_y",
+        labeller = labeller(Facet = facet_labs_y)
+      ) +
       ggplot2::theme(strip.text = ggplot2::element_text(size = 8))
     return(figfy)
   } else if (plot_context & !is.null(facet_col)) {
     figfxy <- fig +
-      ggplot2::facet_grid(Facet ~ subtype_labels, scales = "free",
-                 labeller = labeller(Facet = facet_labs_y, subtype_labels = facet_labs_x)) +
+      ggplot2::facet_grid(Facet ~ subtype_labels,
+        scales = "free",
+        labeller = labeller(Facet = facet_labs_y, subtype_labels = facet_labs_x)
+      ) +
       ggplot2::theme(strip.text = ggplot2::element_text(size = 8))
     return(figfxy)
   } else {
     return(fig)
   }
-
 }

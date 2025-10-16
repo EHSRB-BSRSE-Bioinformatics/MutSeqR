@@ -40,19 +40,21 @@ Mutations will be be filtered for SNVs. Mutations flagged in
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9861"]]
 
-temp_output <- tempdir()
-write_mutation_calling_file(mutation_data = example_data,
-                            project_name = "Example",
-                            project_genome = "GRCm38",
-                            output_path = temp_output)
-list.files(temp_output)
-# The file is saved in the temporary directory
-# To view the file, use the following code:
-## output_file <- file.path(temp_output, "mutation_calling_file.txt")
-## file.show(output_file
+  temp_output <- tempdir()
+  write_mutation_calling_file(
+    mutation_data = example_data,
+    project_name = "Example",
+    project_genome = "GRCm38",
+    output_path = temp_output
+  )
+  list.files(temp_output)
+  # The file is saved in the temporary directory
+  # To view the file, use the following code:
+  ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
+  ## file.show(output_file
 }
 }

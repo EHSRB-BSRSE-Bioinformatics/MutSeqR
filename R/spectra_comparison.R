@@ -72,19 +72,24 @@
 #' # calculate_mf(mutation_data = eh[["EH9861"]],
 #' #              cols_to_group = "dose_group",
 #' #              subtype_resolution = "base_6")
-#' 
+#'
 #' # Example: compare 6-base mutation spectra between dose groups
 #' # Load the example data
 #' mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
-#'                                   package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # Create the contrasts table
-#' contrasts <- data.frame(col1 = c("Low", "Medium", "High"),
-#'                         col2 = rep("Control", 3))
+#' contrasts <- data.frame(
+#'   col1 = c("Low", "Medium", "High"),
+#'   col2 = rep("Control", 3)
+#' )
 #' # Run the comparison
-#' spectra_comparison(mf_data = mf_example,
-#'                    exp_variable = "dose_group",
-#'                    mf_type = "min",
-#'                    contrasts = contrasts)
+#' spectra_comparison(
+#'   mf_data = mf_example,
+#'   exp_variable = "dose_group",
+#'   mf_type = "min",
+#'   contrasts = contrasts
+#' )
 #' @importFrom dplyr select mutate
 #' @importFrom stats pchisq pf r2dtable
 
@@ -98,11 +103,13 @@ spectra_comparison <- function(mf_data,
   sum_col <- paste0("sum_", mf_type)
   # Find the subtype column
   subtype_col <- colnames(mf_data)[which(colnames(mf_data) %in%
-      c("variation_type",
-        "normalized_subtype",
-        "subtype",
-        "normalized_context_with_mutation",
-        "context_with_mutation"))]
+    c(
+      "variation_type",
+      "normalized_subtype",
+      "subtype",
+      "normalized_context_with_mutation",
+      "context_with_mutation"
+    ))]
   if (length(subtype_col) == 0) {
     stop("No subtype column found in the mf_data")
   }
@@ -111,14 +118,17 @@ spectra_comparison <- function(mf_data,
     dplyr::select(dplyr::all_of(c(exp_variable, subtype_col, sum_col)))
   # Create a single group column
   mut_spectra <- mut_spectra %>%
-    dplyr::mutate(group_col = do.call(paste,
+    dplyr::mutate(group_col = do.call(
+      paste,
       c(dplyr::select(mut_spectra, dplyr::all_of(exp_variable)), sep = ":")
     )) %>%
     dplyr::select(-dplyr::all_of(exp_variable))
   # Sum across groups, in case of higher level grouping
   mut_spectra <- mut_spectra %>%
-    dplyr::group_by(.data$group_col,
-                    dplyr::across(dplyr::all_of(subtype_col))) %>%
+    dplyr::group_by(
+      .data$group_col,
+      dplyr::across(dplyr::all_of(subtype_col))
+    ) %>%
     dplyr::summarize(sum = sum(dplyr::across(dplyr::all_of(sum_col))))
   # All groups
   groups <- unique(mut_spectra$group_col)
@@ -140,7 +150,7 @@ spectra_comparison <- function(mf_data,
     c <- apply(x, 2, sum)
     e <- r %*% t(c) / N
     G2 <- 0
-    for (k in seq_len(ncol(x))){
+    for (k in seq_len(ncol(x))) {
       flag <- x[, k] > 0
       G2 <- G2 + t(x[flag, k]) %*% log(x[flag, k] / e[flag, k])
     }
@@ -182,17 +192,21 @@ spectra_comparison <- function(mf_data,
   }
 
   # Run the G2 function for all contrasts
-  results <- data.frame(contrasts = character(),
-                        G2 = numeric(),
-                        p.value = numeric(),
-                        stringsAsFactors = FALSE)
+  results <- data.frame(
+    contrasts = character(),
+    G2 = numeric(),
+    p.value = numeric(),
+    stringsAsFactors = FALSE
+  )
   for (i in seq_len(length(contrast_data))) {
     result <- G2(contrast_data[[i]])
     contrast_str <- paste(contrast_table[i, 1], "vs", contrast_table[i, 2])
-    results <- rbind(results, data.frame(contrasts = contrast_str,
-                                         G2 = result$G2,
-                                         p.value = result$p.value,
-                                         stringsAsFactors = FALSE))
+    results <- rbind(results, data.frame(
+      contrasts = contrast_str,
+      G2 = result$G2,
+      p.value = result$p.value,
+      stringsAsFactors = FALSE
+    ))
   }
 
   # Apply the Holm-Sidak correction for multiple comparisons

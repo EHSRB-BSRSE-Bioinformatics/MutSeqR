@@ -1,5 +1,5 @@
 #' Plot spectra
-#' 
+#'
 #' @description Given mf data, construct a plot displaying the
 #' mutation subtypes observed in a cohort.
 #' @param mf_data A data frame containing the mutation frequency data at the
@@ -77,18 +77,21 @@
 #' #              subtype_resolution = "base_6")
 #' # Load the example data
 #' mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
-#'                                   package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # Convert dose_group to a factor with the desired order.
 #' mf_example$dose_group <- factor(mf_example$dose_group,
-#'  levels = c("Control", "Low", "Medium", "High")
+#'   levels = c("Control", "Low", "Medium", "High")
 #' )
 #' # Plot the mutation spectra
-#' plot <- plot_spectra(mf_data = mf_example,
-#'                      group_col = "dose_group",
-#'                      subtype_resolution = "base_6",
-#'                      response = "proportion",
-#'                      group_order = "arranged",
-#'                      group_order_input = "dose_group")
+#' plot <- plot_spectra(
+#'   mf_data = mf_example,
+#'   group_col = "dose_group",
+#'   subtype_resolution = "base_6",
+#'   response = "proportion",
+#'   group_order = "arranged",
+#'   group_order_input = "dose_group"
+#' )
 #'
 #' # Example 2: plot the proportion of 6-based mutation subtypes
 #' # for each sample, ordered by hierarchical clustering:
@@ -98,12 +101,15 @@
 #' #              subtype_resolution = "base_6")
 #' # Load the example data
 #' mf_example2 <- readRDS(system.file("extdata", "Example_files", "mf_data_6_sample.rds",
-#'                                   package = "MutSeqR"))
-#' plot <- plot_spectra(mf_data = mf_example2,
-#'                      group_col = "sample",
-#'                      subtype_resolution = "base_6",
-#'                      response = "proportion",
-#'                      group_order = "clustered")
+#'   package = "MutSeqR"
+#' ))
+#' plot <- plot_spectra(
+#'   mf_data = mf_example2,
+#'   group_col = "sample",
+#'   subtype_resolution = "base_6",
+#'   response = "proportion",
+#'   group_order = "clustered"
+#' )
 #' @return A ggplot object representing the mutation spectra plot.
 plot_spectra <- function(mf_data,
                          group_col = "sample",
@@ -118,17 +124,16 @@ plot_spectra <- function(mf_data,
                          x_lab = NULL,
                          y_lab = NULL,
                          rotate_xlabs = FALSE) {
-
   # check package dependencies
   if (!requireNamespace("patchwork", quietly = TRUE)) {
-      stop("Package patchwork is required. Please install the package using 'install.packages('patchwork')'")
+    stop("Package patchwork is required. Please install the package using 'install.packages('patchwork')'")
   }
   if (group_order == "clustered") {
-      if (!requireNamespace("ggdendro", quietly = TRUE)) {
-          stop("Package ggdendro is required for clustered ordering. Please install using 'install.packages('ggdendro')'")
-      }
+    if (!requireNamespace("ggdendro", quietly = TRUE)) {
+      stop("Package ggdendro is required for clustered ordering. Please install using 'install.packages('ggdendro')'")
+    }
   }
- if (group_order == "smart") {
+  if (group_order == "smart") {
     if (!requireNamespace("gtools", quietly = TRUE)) {
       stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
     }
@@ -154,9 +159,11 @@ plot_spectra <- function(mf_data,
   }
   # Select and rename required columns
   plot_data <- mf_data %>%
-    dplyr::select("group",
-                  dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
-                  dplyr::all_of(response_col)) %>%
+    dplyr::select(
+      "group",
+      dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
+      dplyr::all_of(response_col)
+    ) %>%
     dplyr::rename(
       subtype = dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
       response = dplyr::all_of(response_col)
@@ -177,45 +184,56 @@ plot_spectra <- function(mf_data,
     plot_data$group <- factor(plot_data$group, levels = order)
   } else if (group_order == "custom") {
     plot_data$group <- factor(plot_data$group,
-                              levels = group_order_input)
+      levels = group_order_input
+    )
   } else if (group_order == "clustered") {
     # Cluster the samples
-    hc <- cluster_spectra(mf_data = plot_data,
-                          group_col = "group",
-                          response_col = "response",
-                          subtype_col = "subtype",
-                          dist = dist,
-                          cluster_method = cluster_method)
+    hc <- cluster_spectra(
+      mf_data = plot_data,
+      group_col = "group",
+      response_col = "response",
+      subtype_col = "subtype",
+      dist = dist,
+      cluster_method = cluster_method
+    )
     # Reorder the samples based on hierarchical clustering
     order <- hc$labels[hc$order]
     # Reorder the levels of the sample variable in your data frame
     plot_data$group <- factor(plot_data$group,
-                              levels = order)
+      levels = order
+    )
   }
   if (subtype_resolution != "type") {
-  subtype_order <- c(MutSeqR::subtype_list$type, rev(MutSeqR::subtype_list[[subtype_resolution]]))
+    subtype_order <- c(MutSeqR::subtype_list$type, rev(MutSeqR::subtype_list[[subtype_resolution]]))
   } else {
     subtype_order <- c(MutSeqR::subtype_list$type)
   }
   plot_data$subtype <- factor(plot_data$subtype,
-                              levels = subtype_order)
+    levels = subtype_order
+  )
 
   if (is.null(custom_palette)) {
     palette_types <- RColorBrewer::brewer.pal(8, "BrBG")
-    names(palette_types) <- c("complex", "deletion", "insertion", "mnv", "snv",
-                              "sv", "ambiguous", "uncategorized")
+    names(palette_types) <- c(
+      "complex", "deletion", "insertion", "mnv", "snv",
+      "sv", "ambiguous", "uncategorized"
+    )
     if (subtype_resolution == "base_6") {
       palette_snv <- RColorBrewer::brewer.pal(6, "Spectral")
       names(palette_snv) <- c("T>G", "T>C", "T>A", "C>T", "C>G", "C>A")
       palette <- c(palette_snv, palette_types)
     } else if (subtype_resolution == "base_12") {
       # Sanger colours for 12 base spectra
-      palette_snv <- c(RColorBrewer::brewer.pal(3, "Reds"),
-                       RColorBrewer::brewer.pal(3, "Greys"),
-                       RColorBrewer::brewer.pal(3, "Blues"),
-                       RColorBrewer::brewer.pal(3, "Greens"))
-      names(palette_snv) <- c("T>G", "T>C", "T>A", "G>T", "G>C", "G>A",
-                              "C>T", "C>G", "C>A", "A>T", "A>G", "A>C")
+      palette_snv <- c(
+        RColorBrewer::brewer.pal(3, "Reds"),
+        RColorBrewer::brewer.pal(3, "Greys"),
+        RColorBrewer::brewer.pal(3, "Blues"),
+        RColorBrewer::brewer.pal(3, "Greens")
+      )
+      names(palette_snv) <- c(
+        "T>G", "T>C", "T>A", "G>T", "G>C", "G>A",
+        "C>T", "C>G", "C>A", "A>T", "A>G", "A>C"
+      )
       palette <- c(palette_snv, palette_types)
     } else if (subtype_resolution == "type") {
       palette <- palette_types
@@ -230,8 +248,10 @@ plot_spectra <- function(mf_data,
       if (num_colors > max_colors) {
         palette <- colorRampPalette(RColorBrewer::brewer.pal(n = max_colors, name = custom_palette))(num_colors)
       } else {
-        palette <- RColorBrewer::brewer.pal(n = num_colors,
-                                            name = custom_palette)
+        palette <- RColorBrewer::brewer.pal(
+          n = num_colors,
+          name = custom_palette
+        )
       }
     } else {
       palette <- custom_palette
@@ -272,8 +292,8 @@ plot_spectra <- function(mf_data,
         geom_bar(stat = "identity", width = 1) +
         scale_fill_manual(values = palette) +
         axis_labels +
-       # theme_minimal() + breaks the dendrogram
-       # TODO: this may not be true anymore now that we're using ggdendro - could simplify the code if we don't have to specify theme manually
+        # theme_minimal() + breaks the dendrogram
+        # TODO: this may not be true anymore now that we're using ggdendro - could simplify the code if we don't have to specify theme manually
         theme(
           panel.background = element_rect(fill = "white", colour = NA),
           plot.background = element_rect(fill = "white", colour = NA),
@@ -286,7 +306,6 @@ plot_spectra <- function(mf_data,
           axis.line.x.top = element_blank(),
           axis.ticks.y = element_line(color = "gray"),
           panel.grid = element_blank(),
-
         ) +
         scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
         labs(y = y_lab, fill = "Non-SNV Subtype")
@@ -300,7 +319,8 @@ plot_spectra <- function(mf_data,
   }
 
   # Plot main data
-  bar <- ggplot(plot_data,
+  bar <- ggplot(
+    plot_data,
     aes(x = .data$group, y = .data$response, fill = .data$subtype)
   ) +
     geom_bar(stat = "identity", width = 1) +
@@ -344,22 +364,22 @@ plot_spectra <- function(mf_data,
     # Use patchwork to stack the plots
     if (do_panels) {
       # Stack dendrogram, non-snv plot, and snv plot
-      p <- patchwork::wrap_plots(dendro_plot, bar_nonsnv, bar, 
-                                 ncol = 1,
-                                 heights = c(0.2, 1, 1)) + # Adjust heights
-      patchwork::plot_layout(guides = "collect")
-
+      p <- patchwork::wrap_plots(dendro_plot, bar_nonsnv, bar,
+        ncol = 1,
+        heights = c(0.2, 1, 1)
+      ) + # Adjust heights
+        patchwork::plot_layout(guides = "collect")
     } else {
       # Stack dendrogram on top of the single bar plot
       p <- patchwork::wrap_plots(dendro_plot, bar,
-                                 ncol = 1,
-                                 heights = c(0.2, 1)) # Adjust heights as needed
+        ncol = 1,
+        heights = c(0.2, 1)
+      ) # Adjust heights as needed
     }
     return(p)
-
   } else { # This is your original code for non-clustered plots
     if (do_panels) {
-     p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol = 1) +
+      p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol = 1) +
         patchwork::plot_layout(
           axis_titles = "collect",
           axes = "collect",
@@ -396,10 +416,10 @@ plot_spectra <- function(mf_data,
 #' @details The cosine distance measure represents the inverted cosine
 #' similarity between samples:
 #'
-#'\eqn{\text{Cosine Dissimilarity} = 1 - \frac{\mathbf{A} \cdot \mathbf{B}}{\| \mathbf{A} \| \cdot \| \mathbf{B} \|}}
+#' \eqn{\text{Cosine Dissimilarity} = 1 - \frac{\mathbf{A} \cdot \mathbf{B}}{\| \mathbf{A} \| \cdot \| \mathbf{B} \|}}
 #'
 #' This equation calculates the cosine dissimilarity between two vectors A and B.
-#' 
+#'
 #' Leaves are sorted using dendsort, if installed, otherwise leaves are unsorted.
 #' @return A dendrogram object representing the hierarchical clustering of the
 #' samples.
@@ -409,14 +429,15 @@ cluster_spectra <- function(mf_data = mf_data,
                             subtype_col = "normalized_subtype",
                             dist = "cosine",
                             cluster_method = "ward.D") {
-
   # Get unique samples and subtypes
   unique_samples <- unique(mf_data[[group_col]])
   unique_subtypes <- unique(mf_data[[subtype_col]])
   # Pivot Wide
-  mat <- matrix(0, nrow = length(unique_samples),
-                ncol = length(unique_subtypes),
-                dimnames = list(unique_samples, unique_subtypes))
+  mat <- matrix(0,
+    nrow = length(unique_samples),
+    ncol = length(unique_subtypes),
+    dimnames = list(unique_samples, unique_subtypes)
+  )
   mf_data$subtype <- as.character(mf_data$subtype)
   mf_data$group <- as.character(mf_data$group)
   for (i in seq_len(nrow(mf_data))) {
@@ -425,8 +446,10 @@ cluster_spectra <- function(mf_data = mf_data,
 
   if (dist == "cosine") {
     # Calculate the cosine similarity between samples
-    cos_sim <- matrix(0, nrow = length(unique_samples),
-                      ncol = length(unique_samples))
+    cos_sim <- matrix(0,
+      nrow = length(unique_samples),
+      ncol = length(unique_samples)
+    )
     rownames(cos_sim) <- colnames(cos_sim) <- unique_samples
     for (i in seq_along(unique_samples)) {
       for (j in seq_along(unique_samples)) {
@@ -441,11 +464,10 @@ cluster_spectra <- function(mf_data = mf_data,
   hc <- stats::hclust(d, method = cluster_method)
 
   if (!requireNamespace("dendsort", quietly = TRUE)) {
-  warning("Package dendsort not installed; hierarchical clustering will not be dendsorted for leaf optimization.")
-  return(hc)
+    warning("Package dendsort not installed; hierarchical clustering will not be dendsorted for leaf optimization.")
+    return(hc)
   }
   # Use dendsort
   hc_obj <- dendsort::dendsort(hc)
   return(hc_obj)
-
 }

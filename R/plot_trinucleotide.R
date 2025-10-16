@@ -1,5 +1,5 @@
 #' Plot the trinucleotide spectrum
-#' 
+#'
 #' @description Creates barplots of the trinucleotide spectrum for all levels of
 #' a given group.
 #' @param mf_96 A data frame containing the mutation frequency data at the
@@ -37,45 +37,46 @@
 #' subtype_resolution = "base_96".
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
+#'   # Example data consists of 24 mouse bone marrow DNA samples imported
+#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
+#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#'   # retrieved from MutSeqRData, an ExperimentHub data package.
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_data <- eh[["EH9861"]]
 #'
-#' # Calculate the mutation frequency data at the 96-base resolution
-#' mf_96 <- calculate_mf(
-#'  mutation_data = example_data,
-#'  cols_to_group = "dose_group",
-#'  subtype_resolution = "base_96",
-#'  variant_types = "snv"
-#' )
-#' # Plot the trinucleotide proportions for each dose group
-#' # Scale y-axis the same for all groups
-#' plots <- plot_trinucleotide(
-#'  mf_96 = mf_96,
-#'  response = "proportion",
-#'  mf_type = "min",
-#'  group_col = "dose_group",
-#'  indiv_y = FALSE,
-#'  output_path = NULL
-#' )
+#'   # Calculate the mutation frequency data at the 96-base resolution
+#'   mf_96 <- calculate_mf(
+#'     mutation_data = example_data,
+#'     cols_to_group = "dose_group",
+#'     subtype_resolution = "base_96",
+#'     variant_types = "snv"
+#'   )
+#'   # Plot the trinucleotide proportions for each dose group
+#'   # Scale y-axis the same for all groups
+#'   plots <- plot_trinucleotide(
+#'     mf_96 = mf_96,
+#'     response = "proportion",
+#'     mf_type = "min",
+#'     group_col = "dose_group",
+#'     indiv_y = FALSE,
+#'     output_path = NULL
+#'   )
 #' }
 #' @export
 plot_trinucleotide <- function(
-  mf_96,
-  response = "proportion",
-  mf_type = "min",
-  group_col = "dose",
-  indiv_y = FALSE,
-  sum_totals = TRUE,
-  output_path = NULL,
-  output_type = "svg"
-) {
-  mf_96 <- dplyr::filter(mf_96,
-    !.data$normalized_context_with_mutation %in% setdiff(MutSeqR::subtype_list$type, "snv"))
+    mf_96,
+    response = "proportion",
+    mf_type = "min",
+    group_col = "dose",
+    indiv_y = FALSE,
+    sum_totals = TRUE,
+    output_path = NULL,
+    output_type = "svg") {
+  mf_96 <- dplyr::filter(
+    mf_96,
+    !.data$normalized_context_with_mutation %in% setdiff(MutSeqR::subtype_list$type, "snv")
+  )
 
   if (response == "proportion") {
     response_col <- paste0("proportion_", mf_type)
@@ -114,7 +115,8 @@ plot_trinucleotide <- function(
     dplyr::mutate(
       subtype = factor(.data$subtype, levels = unique(.data$subtype)),
       mutation = factor(.data$mutation,
-                        levels = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"))
+        levels = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G")
+      )
     )
 
   if (response == "sum") {
@@ -208,7 +210,8 @@ plot_trinucleotide <- function(
       ggplot2::annotate("segment",
         x = 0.5, xend = 0.5,
         y = 0, yend = y_max,
-        color = "gray80", linewidth = 0.6) +
+        color = "gray80", linewidth = 0.6
+      ) +
       ggplot2::geom_rect(
         data = rects,
         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = mutation),
@@ -244,7 +247,8 @@ plot_trinucleotide <- function(
       ) +
       ggplot2::theme_minimal(base_size = 12) +
       ggplot2::theme(
-        axis.text.x = ggplot2::element_text(angle = 90,
+        axis.text.x = ggplot2::element_text(
+          angle = 90,
           vjust = 1,
           hjust = 1,
           family = "mono", size = rel(0.75),
@@ -261,10 +265,11 @@ plot_trinucleotide <- function(
         panel.border = element_blank(),
         plot.background = element_blank(),
         plot.caption = ggplot2::element_text(hjust = 0)
-      ) + ggplot2::ggtitle(as.character(group_levels[i])) +
+      ) +
+      ggplot2::ggtitle(as.character(group_levels[i])) +
       ggplot2::theme(
-        plot.title.position = "plot",  # ← moves it above the plot panel
-        plot.title = ggplot2::element_text(hjust = 0.5, margin = margin(b = 30))  # add bottom margin
+        plot.title.position = "plot", # ← moves it above the plot panel
+        plot.title = ggplot2::element_text(hjust = 0.5, margin = margin(b = 30)) # add bottom margin
       )
     plot_list[[i]] <- p
 
@@ -274,7 +279,8 @@ plot_trinucleotide <- function(
       output_filename <- paste0(
         "trinucleotide_plot_",
         group_col, "_", names(plot_list)[i],
-        ".", output_type)
+        ".", output_type
+      )
       ggplot2::ggsave(
         filename = output_filename,
         plot = p,
@@ -282,7 +288,8 @@ plot_trinucleotide <- function(
         path = output_path,
         create.dir = TRUE,
         width = 12,
-        height = 6)
+        height = 6
+      )
     }
   }
   return(plot_list)

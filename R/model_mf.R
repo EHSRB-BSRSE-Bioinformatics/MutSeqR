@@ -31,7 +31,7 @@
 #' provide the information necessary to make pairwise comparisons between
 #' groups. The table must consist of two columns. The first column will be a
 #' group within your fixed_effects and the second column must be the group that
-#' it will be compared to.  The values must correspond to entries in your 
+#' it will be compared to.  The values must correspond to entries in your
 #' mf_data column for each fixed effect. Put the group that you expect to have
 #' the higher mutation frequency in the 1st column and the group that you expect
 #' to have a lower mutation frequency in the second column. For multiple fixed
@@ -62,65 +62,65 @@
 #' tissue on mutation frequency. An interaction between dose and tissue would
 #' capture whether the dose response differs between tissues.
 #'
-#' `random_effects` account for the unmeasured sources of statistical variance that 
+#' `random_effects` account for the unmeasured sources of statistical variance that
 #' affect certain groups in the data. They help account for unobserved
 #' heterogeneity or correlation within groups. Ex. If your model uses repeated
 #' measures within a sample, `random_effects = "sample"`.
 #'
 #' Setting a `reference_level` for your fixed effects enhances the interpretability
-#' of the model. Ex. Consider a `fixed_effect` "dose" with levels 0, 25, 50, and 100 mg/kg. 
-#' Intuitively, the reference_level would refer to the  negative control dose, "0" 
+#' of the model. Ex. Consider a `fixed_effect` "dose" with levels 0, 25, 50, and 100 mg/kg.
+#' Intuitively, the reference_level would refer to the  negative control dose, "0"
 #' since we are interested in testing how the treatment might change mutation
 #' frequency relative to the control.
 #'
 #' Examples of `contrasts`:
 #'
-#' If you have a `fixed_effect` "dose" with dose groups 0, 25, 50, 100, 
-#' then the first column would contain the treated groups (25, 50, 100), while 
-#' the second column would be 0, thus comparing each treated group to the control group. 
-#' 
-#' 25 0 
-#' 
-#' 50 0 
-#' 
-#' 100 0 
-#' 
-#' 
+#' If you have a `fixed_effect` "dose" with dose groups 0, 25, 50, 100,
+#' then the first column would contain the treated groups (25, 50, 100), while
+#' the second column would be 0, thus comparing each treated group to the control group.
+#'
+#' 25 0
+#'
+#' 50 0
+#'
+#' 100 0
+#'
+#'
 #' Alternatively, if you would like to compare mutation frequency between treated
 #' dose groups, then the contrast table would look as follows, with the lower
-#' dose always in the second column, as we expect it to have a lower mutation 
+#' dose always in the second column, as we expect it to have a lower mutation
 #' frequency. Keeping this format aids in interpretability of the estimates for
-#' the pairwise comparisons. Should the columns be reversed, with the higher 
-#' group in the second column, then the model will compute the fold-decrease 
-#' instead of the fold-increase. 
-#' 
+#' the pairwise comparisons. Should the columns be reversed, with the higher
+#' group in the second column, then the model will compute the fold-decrease
+#' instead of the fold-increase.
+#'
 #' 100 25
-#' 
+#'
 #' 100 50
-#' 
+#'
 #' 50 25
-#' 
-#' 
+#'
+#'
 #' Ex. Consider the scenario where the `fixed_effects `
 #' are "dose" (0, 25, 50, 100) and "genomic_target" ("chr1", "chr2"). To compare
-#' the three treated dose groups to the control for each genomic target, the 
+#' the three treated dose groups to the control for each genomic target, the
 #' contrast table would look like:
-#' 
+#'
 #' 25:chr1	0:chr1
-#' 
+#'
 #' 50:chr1	0:chr1
-#' 
+#'
 #' 100:chr1	0:chr1
-#' 
+#'
 #' 25:chr2	0:chr2
-#' 
+#'
 #' 50:chr2	0:chr2
-#' 
+#'
 #' 100:chr2	0:chr2
-#' 
+#'
 #' Troubleshooting: If you are having issues with convergence for your generalized linear mixed-
 #' effects model, it may be advisable to increase the tolerance level for convergence
-#' checking during model fitting. This is done through the `control` argument for 
+#' checking during model fitting. This is done through the `control` argument for
 #' the `lme4::glmer` function. The default tolerance is tol = 0.002. Add this
 #' argument as an extra argument in the `model_mf` function.
 #' Ex. `control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
@@ -136,8 +136,8 @@
 #' bell-shaped histogram, evenly distributed around zero indicates that the
 #' normality assumption is likely to be true.
 #' - residuals_qq_plot: the Pearson's residuals plotted in a quantile-quantile plot.
-#'  For a normal distribution, we expect points to roughly follow the y=x line.  
-#' - point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects. 
+#'  For a normal distribution, we expect points to roughly follow the y=x line.
+#' - point_estimates_matrix: the contrast matrix used to generate point-estimates for the fixed effects.
 #' - point_estimates: the point estimates for the fixed effects.
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
@@ -147,43 +147,49 @@
 #' # Data was summarized per sample using calculate_mf() (see relevant
 #' # examples). We will run the model with model_mf then plot the results.
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-#'                                package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # We will compare all treated groups to the control group
-#' contrasts <- data.frame(col1 = c("12.5", "25", "50"),
-#'                         col2 = c("0", "0", "0"))
+#' contrasts <- data.frame(
+#'   col1 = c("12.5", "25", "50"),
+#'   col2 = c("0", "0", "0")
+#' )
 #' # Fit the model
-#' model <- model_mf(mf_data = mf_example,
-#'                    fixed_effects = "dose",
-#'                    reference_level = "0",
-#'                    muts = "sum_min",
-#'                    total_count = "group_depth",
-#'                    contrasts = contrasts)
+#' model <- model_mf(
+#'   mf_data = mf_example,
+#'   fixed_effects = "dose",
+#'   reference_level = "0",
+#'   muts = "sum_min",
+#'   total_count = "group_depth",
+#'   contrasts = contrasts
+#' )
 #'
 #' # Plot the results using plot_model_mf()
 #' plot <- plot_model_mf(model,
-#'                       plot_type = "bar",
-#'                       x_effect = "dose",
-#'                       plot_error_bars = TRUE,
-#'                       plot_signif = TRUE,
-#'                       x_order = c("0", "12.5", "25", "50"),
-#'                       x_label = "Dose (mg/kg-bw/d)",
-#'                       y_label = "Estimated Mean MF (mutations/bp)",
-#'                       plot_title = "")
+#'   plot_type = "bar",
+#'   x_effect = "dose",
+#'   plot_error_bars = TRUE,
+#'   plot_signif = TRUE,
+#'   x_order = c("0", "12.5", "25", "50"),
+#'   x_label = "Dose (mg/kg-bw/d)",
+#'   y_label = "Estimated Mean MF (mutations/bp)",
+#'   plot_title = ""
+#' )
 #' @importFrom magrittr %>%
 #' @importFrom graphics abline boxplot hist par
 #' @importFrom stats as.formula model.matrix qqnorm relevel residuals
 #' @export
-model_mf <- function(mf_data,
-  fixed_effects,
-  test_interaction = TRUE,
-  random_effects = NULL,
-  reference_level,
-  muts = "sum_min",
-  total_count = "group_depth",
-  contrasts = NULL,
-  cont_sep = "\t",
-  ...
-) {
+model_mf <- function(
+    mf_data,
+    fixed_effects,
+    test_interaction = TRUE,
+    random_effects = NULL,
+    reference_level,
+    muts = "sum_min",
+    total_count = "group_depth",
+    contrasts = NULL,
+    cont_sep = "\t",
+    ...) {
   if (!requireNamespace("doBy", quietly = TRUE)) {
     stop("Package doBy is required. Please install from CRAN.")
   }
@@ -206,22 +212,23 @@ model_mf <- function(mf_data,
     reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
     invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
     if (length(invalid_levels) > 0) {
-      stop("Invalid reference level(s) for factor",
+      stop(
+        "Invalid reference level(s) for factor",
         factor_name, ":", paste(invalid_levels, collapse = ", ")
       )
     } else {
-    message("Reference level for factor", factor_name, ":", reference_level_char)
+      message("Reference level for factor", factor_name, ":", reference_level_char)
+    }
   }
-}
   # Set the reference level for each factor in fixed_effects
   if (length(fixed_effects) == 1) {
     mf_data[[fixed_effects]] <- stats::relevel(mf_data[[fixed_effects]], ref = as.character(reference_level))
   } else {
     for (factor_name in as.list(fixed_effects)) {
-    reference_level_for_factor <- reference_level[match(factor_name, fixed_effects)]
-    mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = reference_level_for_factor)
+      reference_level_for_factor <- reference_level[match(factor_name, fixed_effects)]
+      mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = reference_level_for_factor)
+    }
   }
-}
   # Construct the model formula
   if (test_interaction) {
     formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "*"))
@@ -244,18 +251,17 @@ model_mf <- function(mf_data,
       data = mf_data,
       ...
     )
-
   } else {
     model_formula <- stats::as.formula(formula_str)
 
-    #GLM
+    # GLM
     message("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial")
     model <- stats::glm(model_formula,
       family = "quasibinomial",
       data = mf_data,
       ...
     )
-    if(summary(model)$dispersion < 1) {
+    if (summary(model)$dispersion < 1) {
       warning("The dispersion parameter is less than 1. Switching to a bionomial distribution.")
       model <- stats::glm(model_formula,
         family = "binomial",
@@ -284,9 +290,10 @@ model_mf <- function(mf_data,
   hist_data <- hist(mf_data$residuals, plot = FALSE)
   ylim_max <- max(hist_data$counts) + 1
   hist(mf_data$residuals,
-       main = "Residuals",
-       col = "yellow",
-       ylim = c(0, ylim_max))
+    main = "Residuals",
+    col = "yellow",
+    ylim = c(0, ylim_max)
+  )
 
   qqplot <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
   stats::qqline(mf_data$residuals, col = "red")
@@ -336,9 +343,9 @@ model_mf <- function(mf_data,
   for (i in seq_len(count)) {
     var_i <- get(paste0("var", i))
     model_estimates[[var_i]] <- vapply(
-        strsplit(rownames(model_estimates), ":"),
-        function(x) x[i],
-        character(1)
+      strsplit(rownames(model_estimates), ":"),
+      function(x) x[i],
+      character(1)
     )
   }
 
@@ -349,8 +356,9 @@ model_mf <- function(mf_data,
       contrast_table <- contrasts
     } else {
       contrast_table <- read.delim(file.path(contrasts),
-                                   sep = cont_sep,
-                                   header = FALSE)
+        sep = cont_sep,
+        header = FALSE
+      )
       if (ncol(contrast_table) <= 1) {
         stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
       }
@@ -358,33 +366,35 @@ model_mf <- function(mf_data,
         stop("Your contrast_table has more than two columns. See the documentation for proper formatting.")
       }
     }
-  model_matrix <- as.data.frame(model_matrix)
-  contrast_table <- as.data.frame(contrast_table)  # Convert to data frame if needed
+    model_matrix <- as.data.frame(model_matrix)
+    contrast_table <- as.data.frame(contrast_table) # Convert to data frame if needed
 
-  valid_contrasts <- function(contrasts_table, fixed_levels) {
-    split_values <- strsplit(as.character(unlist(contrasts_table)), ":")
-    all_values <- unlist(split_values)
-    unique_values <- unique(all_values)
-    l <- as.character(unlist(fixed_levels))
-    valid <- all(unique_values %in% l)
-    return(valid)
-  }
-  valid <- valid_contrasts(contrast_table, fixed_effects_levels)
-  if (!valid) {
-    stop("The contrast table contains values that are not present in the mf_data.\n",
-         "Please ensure that the contrast table values match the levels of the fixed effects.")
-  }
-  # Create an empty list to store the result of matrix subtractions
-  result_list <- list()
+    valid_contrasts <- function(contrasts_table, fixed_levels) {
+      split_values <- strsplit(as.character(unlist(contrasts_table)), ":")
+      all_values <- unlist(split_values)
+      unique_values <- unique(all_values)
+      l <- as.character(unlist(fixed_levels))
+      valid <- all(unique_values %in% l)
+      return(valid)
+    }
+    valid <- valid_contrasts(contrast_table, fixed_effects_levels)
+    if (!valid) {
+      stop(
+        "The contrast table contains values that are not present in the mf_data.\n",
+        "Please ensure that the contrast table values match the levels of the fixed effects."
+      )
+    }
+    # Create an empty list to store the result of matrix subtractions
+    result_list <- list()
 
-  # Loop through each row in contrast_table
-  for (i in seq_len(nrow(contrast_table))) {
-    # Get the model_row values
-    V1 <- as.character(contrast_table[i, 1])
-    V2 <- as.character(contrast_table[i, 2])
-    # Perform matrix subtraction and store the result in the list
-    result_list[[i]] <- model_matrix[V1, ] - model_matrix[V2, ]
-  }
+    # Loop through each row in contrast_table
+    for (i in seq_len(nrow(contrast_table))) {
+      # Get the model_row values
+      V1 <- as.character(contrast_table[i, 1])
+      V2 <- as.character(contrast_table[i, 2])
+      # Perform matrix subtraction and store the result in the list
+      result_list[[i]] <- model_matrix[V1, ] - model_matrix[V2, ]
+    }
     # Convert the list of matrices to a single matrix
     result_matrix <- as.matrix(do.call(rbind, result_list))
     # Set row names for result_matrix
@@ -401,20 +411,24 @@ model_mf <- function(mf_data,
     pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
     pairwise_comparisons$std.error <- sqrt(delta * pairwise_comparisons$std.error^2)
     pairwise_comparisons <- pairwise_comparisons[, -5]
-    colnames(pairwise_comparisons) <- c("Fold.Change",
-                                        "FC.Std.Err",
-                                        "Obs.T",
-                                        "p.value",
-                                        "df",
-                                        "FC.Lower",
-                                        "FC.Upper")
+    colnames(pairwise_comparisons) <- c(
+      "Fold.Change",
+      "FC.Std.Err",
+      "Obs.T",
+      "p.value",
+      "df",
+      "FC.Lower",
+      "FC.Upper"
+    )
 
     pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
     pairwise_comparisons <- pairwise_comparisons %>%
-      dplyr::mutate(Significance = case_when(adj_p.value <= 0.001 ~ "***",
-                                             adj_p.value <= 0.01 ~ "**",
-                                             adj_p.value <= 0.05 ~ "*",
-                                             TRUE ~ ""))
+      dplyr::mutate(Significance = case_when(
+        adj_p.value <= 0.001 ~ "***",
+        adj_p.value <= 0.01 ~ "**",
+        adj_p.value <= 0.05 ~ "*",
+        TRUE ~ ""
+      ))
     pairwise_comparisons$contrast_group1 <- vapply(
       strsplit(rownames(pairwise_comparisons), " vs "),
       function(x) x[1],
@@ -442,14 +456,16 @@ model_mf <- function(mf_data,
       dplyr::select(-"contrast_group1", -"contrast_group2")
   }
 
-  model_results <- list(model = model,
-                        model_data = mf_data,
-                        model_formula = model_formula,
-                        summary = model_summary,
-                        residuals_histogram = hist,
-                        residuals_qq_plot = qqplot,
-                        point_estimates_matrix = model_matrix,
-                        point_estimates = model_estimates)
+  model_results <- list(
+    model = model,
+    model_data = mf_data,
+    model_formula = model_formula,
+    summary = model_summary,
+    residuals_histogram = hist,
+    residuals_qq_plot = qqplot,
+    point_estimates_matrix = model_matrix,
+    point_estimates = model_estimates
+  )
   if (length(fixed_effects) > 1) {
     model_results$anova <- model_anova
   }
@@ -459,5 +475,4 @@ model_mf <- function(mf_data,
   }
 
   return(model_results)
-
 }

@@ -52,10 +52,12 @@
 #' # We will load the TSpanel_human regions file as an example
 #' # and supply it to the function as a GRanges object.
 #' human <- load_regions_file("TSpanel_human")
-#' regions_seq <- get_seq(regions = human,
-#'                        is_0_based_rg = FALSE,
-#'                        BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
-#'                        padding = 0)
+#' regions_seq <- get_seq(
+#'   regions = human,
+#'   is_0_based_rg = FALSE,
+#'   BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
+#'   padding = 0
+#' )
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom Biostrings getSeq
 #' @importFrom BiocGenerics start end
@@ -78,9 +80,11 @@ get_seq <- function(regions,
   if (ucsc && !requireNamespace("httr", quietly = TRUE)) {
     stop("The 'httr' package is required for UCSC API access.")
   }
-  regions_gr <- MutSeqR::load_regions_file(regions = regions,
-                                           rg_sep = rg_sep,
-                                           is_0_based_rg = is_0_based_rg)
+  regions_gr <- MutSeqR::load_regions_file(
+    regions = regions,
+    rg_sep = rg_sep,
+    is_0_based_rg = is_0_based_rg
+  )
   if (is.character(regions)) {
     if (regions == "TSpanel_human") {
       BS_genome <- "BSgenome.Hsapiens.UCSC.hg38"
@@ -112,15 +116,17 @@ get_seq <- function(regions,
       response <- httr::GET(url = base_url, query = params)
       parsed_xml <- xml2::read_xml(httr::content(response, "text"))
       sequence <- xml2::xml_text(xml2::xml_find_first(parsed_xml, "//DASDNA/SEQUENCE/DNA"))
-      cleaned_sequence <- gsub("\n", "", sequence)  # Remove newline characters
+      cleaned_sequence <- gsub("\n", "", sequence) # Remove newline characters
       return(toupper(cleaned_sequence))
     }
 
     # Apply the function to each row of the GR
-    seqs <- mapply(get_sequence_for_region,
-                   as.vector(Seqinfo::seqnames(regions_gr)),
-                   BiocGenerics::start(regions_gr),
-                   BiocGenerics::end(regions_gr))
+    seqs <- mapply(
+      get_sequence_for_region,
+      as.vector(Seqinfo::seqnames(regions_gr)),
+      BiocGenerics::start(regions_gr),
+      BiocGenerics::end(regions_gr)
+    )
     S4Vectors::mcols(regions_gr)$sequence <- seqs
   } else {
     if (is.null(BS_genome)) {

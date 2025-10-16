@@ -6,12 +6,12 @@
 #' @returns the mutation data with column names changed to match default.
 #' @examples
 #' df <- data.frame(
-#'  chromosome = c("chr1", "chr2", "chr3"),
-#'  pos = c(100, 200, 300),
-#'  end = c(100, 200, 300),
-#'  sample_id = c("S1", "S2", "S3"),
-#'  reference = c("G", "C", "T"),
-#'  alternate = c("A", "T", "G")
+#'   chromosome = c("chr1", "chr2", "chr3"),
+#'   pos = c(100, 200, 300),
+#'   end = c(100, 200, 300),
+#'   sample_id = c("S1", "S2", "S3"),
+#'   reference = c("G", "C", "T"),
+#'   alternate = c("A", "T", "G")
 #' )
 #' renamed_data <- rename_columns(df, column_map = op$column)
 #' @export
@@ -20,13 +20,18 @@ rename_columns <- function(data, column_map = op$column) {
   # store original names
   original_colnames <- colnames(data)
   # normalized column names for matching
-  normalized_colnames  <- tolower(gsub("\\.+", "_",
-                                 gsub("(\\.+)?$", "",
-                                      gsub("^((X\\.+)|(\\.+))?", "",
-                                           original_colnames)),
-                                 perl = TRUE))
+  normalized_colnames <- tolower(gsub("\\.+", "_",
+    gsub(
+      "(\\.+)?$", "",
+      gsub(
+        "^((X\\.+)|(\\.+))?", "",
+        original_colnames
+      )
+    ),
+    perl = TRUE
+  ))
   # Identify existing default column names in the data
-  existing_defaults <- unique(unlist(column_map))  # Extract all default names
+  existing_defaults <- unique(unlist(column_map)) # Extract all default names
   present_defaults <- existing_defaults[existing_defaults %in% normalized_colnames]
 
   # Create a mapping of normalized names to original names
@@ -44,13 +49,13 @@ rename_columns <- function(data, column_map = op$column) {
 
     # Only rename if the default name is NOT already in the data
     if (!(default_name %in% present_defaults) && synonym %in% normalized_colnames) {
-      original_name <- norm_to_orig[[synonym]]  # Get original column name
+      original_name <- norm_to_orig[[synonym]] # Get original column name
 
       # Only rename the first synonym encountered
       if (!assigned_defaults[[default_name]]) {
         message("Expected '", default_name, "' but found '", original_name, "', renaming it.\n")
         new_colnames[new_colnames == original_name] <- default_name
-        assigned_defaults[[default_name]] <- TRUE  # Mark this default as assigned
+        assigned_defaults[[default_name]] <- TRUE # Mark this default as assigned
       }
     }
   }
@@ -69,19 +74,19 @@ rename_columns <- function(data, column_map = op$column) {
 }
 
 #' Check that all required columns are present before proceeding with the function
-#' 
+#'
 #' A utility function that will check that all required columns are present.
 #' @param data mutation data
 #' @param required_columns a list of required column names.
 #' @returns an error
 #' @examples
 #' df <- data.frame(
-#'  contig = c("chr1", "chr2", "chr3"),
-#'  start = c(100, 200, 300),
-#'  end = c(100, 200, 300),
-#'  sample = c("S1", "S2", "S3"),
-#'  ref = c("G", "C", "T"),
-#'  alt = c("A", "T", "G")
+#'   contig = c("chr1", "chr2", "chr3"),
+#'   start = c(100, 200, 300),
+#'   end = c(100, 200, 300),
+#'   sample = c("S1", "S2", "S3"),
+#'   ref = c("G", "C", "T"),
+#'   alt = c("A", "T", "G")
 #' )
 #' check_required_columns(df, required_columns = op$base_required_mut_cols)
 #' @export
@@ -92,10 +97,11 @@ check_required_columns <- function(data,
 
   if (length(missing_columns) > 0) {
     missing_col_names <- paste(missing_columns, collapse = ", ")
-    stop("Some required columns are missing or their synonyms are not found: ",
+    stop(
+      "Some required columns are missing or their synonyms are not found: ",
       missing_col_names
     )
- } else {
-  return(data)
- }
+  } else {
+    return(data)
+  }
 }

@@ -79,47 +79,49 @@
 #' # using import_mut_data(). Sequenced on TS Mouse Mutagenesis Panel.
 #' # Example data is retrieved from MutSeqRData, an ExperimentHub data package
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9860"]]
-#' # In this example, we will apply the following filters:
-#' # 1) Filter out putative germline variants using a VAF cutoff of 0.01
-#' # 2) Remove rows whose position falls outside the intervals of the
-#' #    TwinStrand Mouse Mutagenesis Panel regions.
-#' # 3) Apply a custom filter to flag rows with "EndRepairFillInArtifact"
-#' #    in the column 'filter'. This is a filter step commonly applied to
-#' #    TwinStrand Duplex Sequencing data.
-#' # 4) Flag snv variants that overlap with germline mnv variants and
-#' # 5) Subtract the alt_depth of these variants from their total_depth
-#' #    (treat them as No-calls).
-#' # 6) Return all the flagged/removed rows in a seperate data frame.
-#' filter_example <- filter_mut(mutation_data = example_data,
-#'                              vaf_cutoff = 0.01,
-#'                              regions = "TSpanel_mouse",
-#'                              regions_filter = "keep_within",
-#'                              custom_filter_col = "filter",
-#'                              custom_filter_val = "EndRepairFillInArtifact",
-#'                              custom_filter_rm = FALSE, # Flagging, not removing
-#'                              snv_in_germ_mnv = TRUE,
-#'                              rm_filtered_mut_from_depth = TRUE,
-#'                              return_filtered_rows = TRUE)
-#' # Flagging germline mutations...
-#' # Found 612 germline mutations.
-#' # Flagging SNVs overlapping with germline MNVs...
-#' # Found 20 SNVs overlapping with germline MNVs.
-#' # Applying custom filter...
-#' # Flagged 2021 rows with values in <filter> column that matched EndRepairFillInArtifact
-#' # Applying region filter...
-#' # Removed 22 rows based on regions.
-#' # Correcting depth...
-#' # 909 rows had their total_depth corrected.
-#' # Removing filtered mutations from the total_depth...
-#' # Filtering complete.
-#' # Returning a list: mutation_data and filtered_rows.
-#' 
-#' # To separately access the filtered rows and the filtered mutation data:
-#' filtered_rows <- filter_example$filtered_rows
-#' filtered_example_mutation_data <- filter_example$mutation_data
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_data <- eh[["EH9860"]]
+#'   # In this example, we will apply the following filters:
+#'   # 1) Filter out putative germline variants using a VAF cutoff of 0.01
+#'   # 2) Remove rows whose position falls outside the intervals of the
+#'   #    TwinStrand Mouse Mutagenesis Panel regions.
+#'   # 3) Apply a custom filter to flag rows with "EndRepairFillInArtifact"
+#'   #    in the column 'filter'. This is a filter step commonly applied to
+#'   #    TwinStrand Duplex Sequencing data.
+#'   # 4) Flag snv variants that overlap with germline mnv variants and
+#'   # 5) Subtract the alt_depth of these variants from their total_depth
+#'   #    (treat them as No-calls).
+#'   # 6) Return all the flagged/removed rows in a seperate data frame.
+#'   filter_example <- filter_mut(
+#'     mutation_data = example_data,
+#'     vaf_cutoff = 0.01,
+#'     regions = "TSpanel_mouse",
+#'     regions_filter = "keep_within",
+#'     custom_filter_col = "filter",
+#'     custom_filter_val = "EndRepairFillInArtifact",
+#'     custom_filter_rm = FALSE, # Flagging, not removing
+#'     snv_in_germ_mnv = TRUE,
+#'     rm_filtered_mut_from_depth = TRUE,
+#'     return_filtered_rows = TRUE
+#'   )
+#'   # Flagging germline mutations...
+#'   # Found 612 germline mutations.
+#'   # Flagging SNVs overlapping with germline MNVs...
+#'   # Found 20 SNVs overlapping with germline MNVs.
+#'   # Applying custom filter...
+#'   # Flagged 2021 rows with values in <filter> column that matched EndRepairFillInArtifact
+#'   # Applying region filter...
+#'   # Removed 22 rows based on regions.
+#'   # Correcting depth...
+#'   # 909 rows had their total_depth corrected.
+#'   # Removing filtered mutations from the total_depth...
+#'   # Filtering complete.
+#'   # Returning a list: mutation_data and filtered_rows.
+#'
+#'   # To separately access the filtered rows and the filtered mutation data:
+#'   filtered_rows <- filter_example$filtered_rows
+#'   filtered_example_mutation_data <- filter_example$mutation_data
 #' }
 #' @importFrom dplyr group_by mutate ungroup select filter starts_with
 #' n_distinct first case_when if_else
@@ -152,11 +154,11 @@ filter_mut <- function(mutation_data,
                        is_0_based_rg = TRUE,
                        rm_filtered_mut_from_depth = FALSE,
                        return_filtered_rows = FALSE) {
-# clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
-# This value determines the fraction of reads that
-# is considered a constitutional variant. If a mutation is present at a
-# fraction higher than this value, the reference base will be swapped,
-# and the alt_depth recalculated. 0.3 (30%) would be a sane default?
+  # clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
+  # This value determines the fraction of reads that
+  # is considered a constitutional variant. If a mutation is present at a
+  # fraction higher than this value, the reference base will be swapped,
+  # and the alt_depth recalculated. 0.3 (30%) would be a sane default?
 
   if (return_filtered_rows) {
     rm_rows <- data.frame()
@@ -231,18 +233,20 @@ filter_mut <- function(mutation_data,
             next
           }
           snv_gr <- GenomicRanges::makeGRangesFromDataFrame(snv_subset,
-                                                            seqnames.field = "contig",
-                                                            keep.extra.columns = TRUE)
+            seqnames.field = "contig",
+            keep.extra.columns = TRUE
+          )
           germ_mnv_gr <- GenomicRanges::makeGRangesFromDataFrame(germ_mnv_subset,
-                                                                  seqnames.field = "contig",
-                                                                  keep.extra.columns = TRUE)
+            seqnames.field = "contig",
+            keep.extra.columns = TRUE
+          )
           overlaps <- GenomicRanges::findOverlaps(query = snv_gr, subject = germ_mnv_gr)
           hits <- S4Vectors::queryHits(overlaps)
 
           # Ensure 'hits' is not empty before using it as an index
           if (length(hits) > 0) {
-                original_indices <- which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")
-                hits_indices <- c(hits_indices, original_indices[hits])
+            original_indices <- which(mutation_data$sample == sample_name & mutation_data$variation_type == "snv")
+            hits_indices <- c(hits_indices, original_indices[hits])
           }
         }
       } # end of if(nrow(mnv_ranges) > 0)
@@ -253,12 +257,17 @@ filter_mut <- function(mutation_data,
       }
 
       mutation_data <- mutation_data %>%
-        dplyr::mutate(filter_mut = ifelse(.data$snv_in_germ_mnv == TRUE,
-                                          TRUE, .data$filter_mut),
-                      filter_reason = ifelse(.data$snv_in_germ_mnv == TRUE,
-                                             ifelse(.data$filter_reason == "", "snv_in_germ_mnv",
-                                                    paste0(.data$filter_reason, "|snv_in_germ_mnv")),
-                                            .data$filter_reason))
+        dplyr::mutate(
+          filter_mut = ifelse(.data$snv_in_germ_mnv == TRUE,
+            TRUE, .data$filter_mut
+          ),
+          filter_reason = ifelse(.data$snv_in_germ_mnv == TRUE,
+            ifelse(.data$filter_reason == "", "snv_in_germ_mnv",
+              paste0(.data$filter_reason, "|snv_in_germ_mnv")
+            ),
+            .data$filter_reason
+          )
+        )
       snv_in_germ_mnv_count <- sum(mutation_data$snv_in_germ_mnv == TRUE)
       message("Found ", snv_in_germ_mnv_count, " SNVs overlapping with germline MNVs.")
     }
@@ -277,8 +286,9 @@ filter_mut <- function(mutation_data,
       rm_abnormal_vaf <- mutation_data %>%
         dplyr::filter((.data$vaf > 0.05 & .data$vaf < 0.45) | (.data$vaf > 0.55 & .data$vaf < 0.95)) %>%
         dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "",
-                                             "abnormal_vaf",
-                                             paste0(filter_reason, "|abnormal_vaf")))
+          "abnormal_vaf",
+          paste0(filter_reason, "|abnormal_vaf")
+        ))
 
       rm_rows <- rbind(rm_rows, rm_abnormal_vaf)
     }
@@ -306,17 +316,20 @@ filter_mut <- function(mutation_data,
       if (return_filtered_rows) {
         rm_custom <- mutation_data[custom_filtered_rows, ]
         rm_custom <- rm_custom %>%
-          dplyr::mutate(filter_reason =
-            ifelse(.data$filter_reason == "",
-              .data[[custom_filter_col]],
-              paste0(.data$filter_reason, "|", .data[[custom_filter_col]])
-            )
+          dplyr::mutate(
+            filter_reason =
+              ifelse(.data$filter_reason == "",
+                .data[[custom_filter_col]],
+                paste0(.data$filter_reason, "|", .data[[custom_filter_col]])
+              )
           )
         rm_rows <- rbind(rm_rows, rm_custom)
       }
       mutation_data <- mutation_data[!custom_filtered_rows, ]
-      message("Removed ", custom_filtered_count, " rows with values in <", custom_filter_col, "> that contained ",
-             custom_filter_val, " from mutation_data")
+      message(
+        "Removed ", custom_filtered_count, " rows with values in <", custom_filter_col, "> that contained ",
+        custom_filter_val, " from mutation_data"
+      )
     } else {
       mutation_data$filter_mut[custom_filtered_rows] <- TRUE
 
@@ -348,8 +361,9 @@ filter_mut <- function(mutation_data,
     )
     if (allow_half_overlap) {
       ranges_joined <- plyranges::join_overlap_left_directed(mut_ranges,
-                                                             regions_gr,
-                                                             suffix = c("", "_regions"))
+        regions_gr,
+        suffix = c("", "_regions")
+      )
     } else {
       ranges_joined <- plyranges::join_overlap_left_within_directed(mut_ranges, regions_gr, suffix = c("", "_regions"))
     }
@@ -363,7 +377,8 @@ filter_mut <- function(mutation_data,
         rm_regions <- mutation_data %>%
           dplyr::filter(.data$TO_REMOVE_in_regions == TRUE) %>%
           dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "", "regions",
-                                               paste0(.data$filter_reason, "|regions"))) %>%
+            paste0(.data$filter_reason, "|regions")
+          )) %>%
           dplyr::select(-dplyr::starts_with("TO_REMOVE_"))
         rm_rows <- rbind(rm_rows, rm_regions)
       }
@@ -374,7 +389,8 @@ filter_mut <- function(mutation_data,
         rm_regions <- mutation_data %>%
           dplyr::filter(.data$TO_REMOVE_in_regions == FALSE) %>%
           dplyr::mutate(filter_reason = ifelse(.data$filter_reason == "", "regions",
-                                               paste0(.data$filter_reason, "|regions"))) %>%
+            paste0(.data$filter_reason, "|regions")
+          )) %>%
           dplyr::select(-dplyr::starts_with("TO_REMOVE_"))
         rm_rows <- rbind(rm_rows, rm_regions)
       }
@@ -393,12 +409,14 @@ filter_mut <- function(mutation_data,
   if (rm_filtered_mut_from_depth) {
     message("Removing filtered mutations from the total_depth...")
     mutation_data <- mutation_data %>%
-      dplyr::mutate(total_depth =
-        dplyr::if_else(.data$filter_mut &
-                       .data$filter_reason != "germline" &
-                       .data$total_depth != 0,
-                       .data$total_depth - .data$alt_depth,
-                       .data$total_depth)
+      dplyr::mutate(
+        total_depth =
+          dplyr::if_else(.data$filter_mut &
+            .data$filter_reason != "germline" &
+            .data$total_depth != 0,
+          .data$total_depth - .data$alt_depth,
+          .data$total_depth
+          )
       )
   }
   message("Filtering complete.")

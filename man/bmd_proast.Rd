@@ -187,15 +187,18 @@ interval based on MA (e.g. 200) \emph{num_bootstraps}
 # Data was summarized per sample using calculate_mf() (see relevant
 # examples).
 mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-                               package = "MutSeqR"))
+  package = "MutSeqR"
+))
 # We will calculate the BMD for a 50\% increase in mutation frequency from control
 # With Model averaging.
 # For the purpose of this example, num_bootstraps is set to 3 to reduce
 # run time. 200 bootstraps is recommended.
- bmd <- bmd_proast(mf_data = mf_example,
-                   dose_col = "dose",
-                   response_col = "mf_min",
-                   bmr = 0.5,
-                   model_averaging = TRUE,
-                   num_bootstraps = 3)
+bmd <- bmd_proast(
+  mf_data = mf_example,
+  dose_col = "dose",
+  response_col = "mf_min",
+  bmr = 0.5,
+  model_averaging = TRUE,
+  num_bootstraps = 3
+)
 }

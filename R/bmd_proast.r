@@ -148,34 +148,35 @@
 #' # Data was summarized per sample using calculate_mf() (see relevant
 #' # examples).
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-#'                                package = "MutSeqR"))
+#'   package = "MutSeqR"
+#' ))
 #' # We will calculate the BMD for a 50% increase in mutation frequency from control
 #' # With Model averaging.
 #' # For the purpose of this example, num_bootstraps is set to 3 to reduce
 #' # run time. 200 bootstraps is recommended.
-#'  bmd <- bmd_proast(mf_data = mf_example,
-#'                    dose_col = "dose",
-#'                    response_col = "mf_min",
-#'                    bmr = 0.5,
-#'                    model_averaging = TRUE,
-#'                    num_bootstraps = 3)
+#' bmd <- bmd_proast(
+#'   mf_data = mf_example,
+#'   dose_col = "dose",
+#'   response_col = "mf_min",
+#'   bmr = 0.5,
+#'   model_averaging = TRUE,
+#'   num_bootstraps = 3
+#' )
 #' @export
 #' @importFrom dplyr arrange filter mutate pull rename
 bmd_proast <- function(
-  mf_data,
-  dose_col = "dose",
-  response_col = "mf_min",
-  covariate_col = NULL,
-  bmr = 0.5,
-  adjust_bmr_to_group_sd = FALSE,
-  model_averaging = TRUE,
-  num_bootstraps = 200,
-  plot_results = FALSE,
-  output_path = NULL,
-  raw_results = FALSE,
-  seed = 125
-) {
-
+    mf_data,
+    dose_col = "dose",
+    response_col = "mf_min",
+    covariate_col = NULL,
+    bmr = 0.5,
+    adjust_bmr_to_group_sd = FALSE,
+    model_averaging = TRUE,
+    num_bootstraps = 200,
+    plot_results = FALSE,
+    output_path = NULL,
+    raw_results = FALSE,
+    seed = 125) {
   if (!dose_col %in% colnames(mf_data)) {
     stop("Dose column not found in mf_data")
   }
@@ -275,11 +276,13 @@ bmd_proast <- function(
   # Select the BMD with the lowest AIC for each response
   # If they have the same AIC, take the mean.
   summary <- results[[2]] %>%
-    dplyr::rename(BMD = "CED",
-                  BMDL = "CEDL",
-                  BMDU = "CEDU",
-                  Model = "Selected.Model",
-                  BMR = "CES") %>%
+    dplyr::rename(
+      BMD = "CED",
+      BMDL = "CEDL",
+      BMDU = "CEDU",
+      Model = "Selected.Model",
+      BMR = "CES"
+    ) %>%
     dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
   results_list <- list(summary = summary)
 

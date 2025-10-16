@@ -19,12 +19,12 @@ A utility function that will check that all required columns are present.
 }
 \examples{
 df <- data.frame(
- contig = c("chr1", "chr2", "chr3"),
- start = c(100, 200, 300),
- end = c(100, 200, 300),
- sample = c("S1", "S2", "S3"),
- ref = c("G", "C", "T"),
- alt = c("A", "T", "G")
+  contig = c("chr1", "chr2", "chr3"),
+  start = c(100, 200, 300),
+  end = c(100, 200, 300),
+  sample = c("S1", "S2", "S3"),
+  ref = c("G", "C", "T"),
+  alt = c("A", "T", "G")
 )
 check_required_columns(df, required_columns = op$base_required_mut_cols)
 }

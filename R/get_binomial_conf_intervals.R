@@ -18,18 +18,20 @@
 #' intervals.
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data() and filtered with filter_mut as in Example 4.
-#' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#' 
-#' mf <- calculate_mf(example_data)
-#' confint <- get_binom_ci(mf_data = mf,
-#'                         sum_col = "sum_min",
-#'                         depth_col = "group_depth")
+#'   # Example data consists of 24 mouse bone marrow DNA samples imported
+#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
+#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+#'   # retrieved from MutSeqRData, an ExperimentHub data package.
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_data <- eh[["EH9861"]]
+#'
+#'   mf <- calculate_mf(example_data)
+#'   confint <- get_binom_ci(
+#'     mf_data = mf,
+#'     sum_col = "sum_min",
+#'     depth_col = "group_depth"
+#'   )
 #' }
 #' @importFrom dplyr bind_rows rename select
 #' @export
@@ -47,12 +49,14 @@ get_binom_ci <- function(mf_data,
   mf_data <- as.data.frame(mf_data)
   not_included <- setdiff(c(sum_col, depth_col), colnames(mf_data))
   if (length(not_included) > 0) {
-    stop("Input dataframe does not include all required columns: ",
+    stop(
+      "Input dataframe does not include all required columns: ",
       paste(not_included, collapse = ", ")
     )
   }
   if (!is.numeric(mf_data[[sum_col]]) || !is.numeric(mf_data[[depth_col]])) {
-    stop("sum_col (", sum_col, ", ", class(mf_data[[sum_col]]),
+    stop(
+      "sum_col (", sum_col, ", ", class(mf_data[[sum_col]]),
       ") and depth_col (", depth_col, ", ", class(mf_data[[depth_col]]),
       ") must be numeric."
     )
@@ -60,7 +64,6 @@ get_binom_ci <- function(mf_data,
   if (nrow(mf_data) == 0) {
     mf_data_ci <- data.frame(numeric(0), numeric(0), numeric(0))
     colnames(mf_data_ci) <- c("mean", "lower_ci", "upper_ci")
-
   } else {
     mf_data_ci <- dplyr::bind_rows(mapply(function(x_val, n_val) {
       if (is.na(x_val) || is.na(n_val)) {
@@ -74,10 +77,10 @@ get_binom_ci <- function(mf_data,
         )
       } else {
         binom::binom.confint(x_val,
-                             n_val,
-                             conf.level = conf_level,
-                             method = method)
-
+          n_val,
+          conf.level = conf_level,
+          method = method
+        )
       }
     }, mf_data[, sum_col], mf_data[, depth_col], SIMPLIFY = FALSE))
 

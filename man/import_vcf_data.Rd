@@ -161,23 +161,26 @@ the \code{DP} field will be used as the \code{total_depth}.
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-# Example: Import a single bg-zipped vcf file. This library was sequenced
-# with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-# consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
-# from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_file <- eh[["EH9859"]]
+  # Example: Import a single bg-zipped vcf file. This library was sequenced
+  # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
+  # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
+  # from MutSeqRData, an ExperimentHub data package.
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_file <- eh[["EH9859"]]
 
-# We will create an example metadata table for this data.
-sample_meta <- data.frame(sample = "dna00996.1",
-                          dose = "50",
-                          dose_group = "High")
-# Import the data
-imported_example_data <- import_vcf_data(vcf_file = example_file,
-                                         sample_data = sample_meta,
-                                         regions = "TSpanel_mouse",
-                                         BS_genome = find_BS_genome("mouse", "mm10")
-)
+  # We will create an example metadata table for this data.
+  sample_meta <- data.frame(
+    sample = "dna00996.1",
+    dose = "50",
+    dose_group = "High"
+  )
+  # Import the data
+  imported_example_data <- import_vcf_data(
+    vcf_file = example_file,
+    sample_data = sample_meta,
+    regions = "TSpanel_mouse",
+    BS_genome = find_BS_genome("mouse", "mm10")
+  )
 }
 }

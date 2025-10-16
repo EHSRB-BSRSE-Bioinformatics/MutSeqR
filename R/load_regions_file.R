@@ -1,4 +1,4 @@
-#'Imports the regions file
+#' Imports the regions file
 #'
 #' @description A helper function to import the regions metadata file and
 #' return a GRanges object.
@@ -25,13 +25,13 @@
 #' # We will use the human TSpanel system file for this example,
 #' # but any file can be imported.
 #' file <- system.file("extdata",
-#'                     "inputs",
-#'                    "metadata",
-#'                   "human_mutagenesis_panel_hg38.txt",
-#'                  package = "MutSeqR")
+#'   "inputs",
+#'   "metadata",
+#'   "human_mutagenesis_panel_hg38.txt",
+#'   package = "MutSeqR"
+#' )
 #' custom_rg <- load_regions_file(regions = file, rg_sep = "\t", is_0_based_rg = TRUE)
 #' custom_rg
-
 load_regions_file <- function(regions,
                               rg_sep = "\t",
                               is_0_based_rg = TRUE) {
@@ -41,28 +41,37 @@ load_regions_file <- function(regions,
     regions_df <- regions
   } else if (is.character(regions)) {
     if (regions == "TSpanel_human") {
-      regions_df <- read.table(system.file("extdata",
-                                           "inputs",
-                                           "metadata",
-                                           "human_mutagenesis_panel_hg38.txt",
-                                           package = "MutSeqR"),
-                               header = TRUE)
+      regions_df <- read.table(
+        system.file("extdata",
+          "inputs",
+          "metadata",
+          "human_mutagenesis_panel_hg38.txt",
+          package = "MutSeqR"
+        ),
+        header = TRUE
+      )
       is_0_based_rg <- TRUE
     } else if (regions == "TSpanel_mouse") {
-      regions_df <- read.table(system.file("extdata",
-                                           "inputs",
-                                           "metadata",
-                                           "mouse_mutagenesis_panel_mm10.txt",
-                                           package = "MutSeqR"),
-                               header = TRUE)
+      regions_df <- read.table(
+        system.file("extdata",
+          "inputs",
+          "metadata",
+          "mouse_mutagenesis_panel_mm10.txt",
+          package = "MutSeqR"
+        ),
+        header = TRUE
+      )
       is_0_based_rg <- TRUE
     } else if (regions == "TSpanel_rat") {
-      regions_df <- read.table(system.file("extdata",
-                                           "inputs",
-                                           "metadata",
-                                           "rat_mutagenesis_panel_rn6.txt",
-                                           package = "MutSeqR"),
-                               header = TRUE)
+      regions_df <- read.table(
+        system.file("extdata",
+          "inputs",
+          "metadata",
+          "rat_mutagenesis_panel_rn6.txt",
+          package = "MutSeqR"
+        ),
+        header = TRUE
+      )
       is_0_based_rg <- TRUE
     } else {
       regions_file <- file.path(regions)
@@ -86,12 +95,12 @@ load_regions_file <- function(regions,
   }
   # Turn regions_df into a GRanges object
   regions_gr <- GenomicRanges::makeGRangesFromDataFrame(
-      df = regions_df,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = is_0_based_rg
+    df = regions_df,
+    keep.extra.columns = TRUE,
+    seqnames.field = "contig",
+    start.field = "start",
+    end.field = "end",
+    starts.in.df.are.0based = is_0_based_rg
   )
   return(regions_gr)
 }

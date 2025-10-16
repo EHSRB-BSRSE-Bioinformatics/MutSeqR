@@ -93,19 +93,25 @@ This function creates a plot of the mutation frequency.
 # by dose group.
 # Load Example MF data
 mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-                               package = "MutSeqR"))
+  package = "MutSeqR"
+))
 # Specify the order of the dose groups along the x-axis
 mf_example$dose_group <- factor(mf_example$dose_group,
-                                levels = c("Control", "Low",
-                                           "Medium", "High"))
+  levels = c(
+    "Control", "Low",
+    "Medium", "High"
+  )
+)
 # Plot the min MF per sample as a bar plot with count labels
-plot <- plot_mf(mf_data = mf_example,
-                group_col = "sample",
-                plot_type = "bar",
-                mf_type = "min",
-                fill_col = "dose_group",
-                group_order = "arranged",
-                group_order_input = "dose_group",
-                labels = "count",
-                title = "Mutation Frequency per Sample")
+plot <- plot_mf(
+  mf_data = mf_example,
+  group_col = "sample",
+  plot_type = "bar",
+  mf_type = "min",
+  fill_col = "dose_group",
+  group_order = "arranged",
+  group_order_input = "dose_group",
+  labels = "count",
+  title = "Mutation Frequency per Sample"
+)
 }

@@ -24,21 +24,24 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
         return(org_name)
       }
     }
-    stop("Unrecognized organism name: ", name,
-         ". Please consult BSgenome::available.genomes for valid names.")
+    stop(
+      "Unrecognized organism name: ", name,
+      ". Please consult BSgenome::available.genomes for valid names."
+    )
   }
   organism_name <- convertToOrganismName(organism)
   # Search available genomes
   available_genomes <- BSgenome::available.genomes(splitNameParts = TRUE)
-  
+
   possible_genomes <- available_genomes[
-    available_genomes$organism == organism_name & 
-      available_genomes$masked == masked, ]
+    available_genomes$organism == organism_name &
+      available_genomes$masked == masked,
+  ]
   if (nrow(possible_genomes) == 0) {
-      stop("No genomes found for specified organism.")
-  } 
+    stop("No genomes found for specified organism.")
+  }
   # If genome argument is missing, return possibilities
-  if (missing(genome) || is.null(genome) || nchar(genome)==0) {
+  if (missing(genome) || is.null(genome) || nchar(genome) == 0) {
     message(
       "Possible BS genomes for organism = '", organism,
       "', masked = ", masked, ": ", possible_genomes$pkgname,
@@ -50,11 +53,14 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
   }
   # If genome specified, filter further for genome assembly
   selected_genome <- possible_genomes[
-    possible_genomes$genome == genome, ]
+    possible_genomes$genome == genome,
+  ]
   if (nrow(selected_genome) == 0) {
-    stop("No BS genome found for the specified organism, assembly version and masked setting.\n",
+    stop(
+      "No BS genome found for the specified organism, assembly version and masked setting.\n",
       "Available assemblies for this organism (masked = ", masked, ") are:\n",
-      paste(unique(possible_genomes$genome), collapse=", "))
+      paste(unique(possible_genomes$genome), collapse = ", ")
+    )
   }
 
   ref_genome <- selected_genome$pkgname

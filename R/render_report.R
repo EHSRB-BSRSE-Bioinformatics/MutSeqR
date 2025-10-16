@@ -22,12 +22,11 @@
 #' ## render_report(config_filepath = "your/working/directory/summary_config.yaml",
 #' ##  output_file = "MutSeqR_Summary_Report.html",
 #' ##  output_format = "html_document")
-#' 
+#'
 render_report <- function(
-  config_filepath,
-  output_file = "./MutSeqR_Summary_Report.html",
-  output_format = "html_document"
-) {
+    config_filepath,
+    output_file = "./MutSeqR_Summary_Report.html",
+    output_format = "html_document") {
   # Check if yaml package is available, install if not
   if (!requireNamespace("yaml", quietly = TRUE)) {
     stop("This function requires the yaml library. Please install using install.packages('yaml')")
@@ -77,14 +76,19 @@ render_report <- function(
   )) {
     stop("Invalid profile configuration in the YAML file.")
   }
-  if (grepl("^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$",
-            params$config_profile)) {
+  if (grepl(
+    "^Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel$",
+    params$config_profile
+  )) {
     # Join the DS parameters with params list.
     params <- c(params, profile_config$Duplex_Sequencing)
     # Define the regions parameter for TS panels.
-    params$regions <- paste0("TSpanel_",
+    params$regions <- paste0(
+      "TSpanel_",
       tolower(sub("Duplex Sequencing (Human|Mouse|Rat) Mutagenesis Panel",
-      "\\1", params$config_profile, perl = TRUE))
+        "\\1", params$config_profile,
+        perl = TRUE
+      ))
     )
     message("Setting up parameters for Duplex Sequencing on ", params$regions)
     params$filtering_regions <- params$regions
@@ -97,7 +101,8 @@ render_report <- function(
   # Construct the path to the .Rmd file within the installed package directory
   rmd_file <- "Summary_report.Rmd"
   rmd_path <- system.file("extdata", rmd_file,
-                          package = "MutSeqR", mustWork = TRUE)
+    package = "MutSeqR", mustWork = TRUE
+  )
   message("project directory", params$projectdir)
   message("output directory:", params$outputdir)
 

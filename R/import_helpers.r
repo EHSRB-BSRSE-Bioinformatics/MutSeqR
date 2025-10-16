@@ -23,9 +23,11 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
     }
     sd <- read.delim(sample_file, sep = sd_sep, header = TRUE)
     if (ncol(sd) <= 1) {
-      stop("Your imported sample data only has one column. You may want to",
-           " set sd_sep to properly reflect the delimiter used for the data",
-           " you are importing.")
+      stop(
+        "Your imported sample data only has one column. You may want to",
+        " set sd_sep to properly reflect the delimiter used for the data",
+        " you are importing."
+      )
     }
   } else {
     stop("sample_data must be a character string or a data frame")
@@ -62,7 +64,8 @@ import_regions_metadata <- function(mutation_granges, regions, rg_sep,
 
   # Join mutation data and region data using overlap
   mutation_granges <- plyranges::join_overlap_left_within_directed(mutation_granges,
-    regions_gr, suffix = c("", "_regions")
+    regions_gr,
+    suffix = c("", "_regions")
   )
   message("Regions metadata successfully joined to mutation data\n")
   # Count the rows that did not overlap
@@ -92,16 +95,18 @@ import_regions_metadata <- function(mutation_granges, regions, rg_sep,
 #' @importFrom BiocGenerics start end strand
 populate_sequence_context <- function(mutation_granges, BS_genome, n = 1) {
   if (is.null(BS_genome)) {
-        stop("The trinuceotide context is populated from BS genomes.",
-          " Please install the appropriate BS genome and indicate the pkgname",
-          " with the BS_genome parameter. If you are not sure which BS genome",
-          " to use, please provide the species and reference genome to",
-          " find_BS_genome()."
-        )
+    stop(
+      "The trinuceotide context is populated from BS genomes.",
+      " Please install the appropriate BS genome and indicate the pkgname",
+      " with the BS_genome parameter. If you are not sure which BS genome",
+      " to use, please provide the species and reference genome to",
+      " find_BS_genome()."
+    )
   }
   installed_BS_genomes <- BSgenome::installed.genomes()
   if (!(BS_genome %in% installed_BS_genomes)) {
-    stop("The specified BS genome is not installed. Please install the",
+    stop(
+      "The specified BS genome is not installed. Please install the",
       " appropriate BS genome using BiocManager::install('pkgname') where",
       " pkgname is the name of the BSgenome package. If you are not sure",
       " which BS genome to use, please provide the species and reference",
@@ -112,16 +117,18 @@ populate_sequence_context <- function(mutation_granges, BS_genome, n = 1) {
   ref_genome <- BSgenome::getBSgenome(BS_genome)
   extract_context <- function(mut_gr, bsgenome) {
     # Resize the mutation_granges to include the context
-    expanded_ranges <- GenomicRanges::GRanges(seqnames = Seqinfo::seqnames(mut_gr),
-                                              ranges = IRanges::IRanges(
-                                                start = BiocGenerics::start(mut_gr) - n,
-                                                end = BiocGenerics::start(mut_gr) + n
-                                              ),
-                                              strand = BiocGenerics::strand(mut_gr))
+    expanded_ranges <- GenomicRanges::GRanges(
+      seqnames = Seqinfo::seqnames(mut_gr),
+      ranges = IRanges::IRanges(
+        start = BiocGenerics::start(mut_gr) - n,
+        end = BiocGenerics::start(mut_gr) + n
+      ),
+      strand = BiocGenerics::strand(mut_gr)
+    )
     # Extract the sequences from the BSgenome
     sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
     return(sequences)
-    }
+  }
   message("Retrieving context sequences from BSgenome")
   context <- extract_context(mutation_granges, ref_genome)
   mutation_granges$context <- context
@@ -136,7 +143,7 @@ populate_sequence_context <- function(mutation_granges, BS_genome, n = 1) {
 #' @importFrom dplyr mutate rename case_when
 #' @importFrom stringr str_sub str_count
 characterize_variants <- function(mutation_data) {
-  #RSIDS
+  # RSIDS
   if ("id" %in% colnames(mutation_data)) {
     mutation_data <- mutation_data %>% dplyr::mutate(
       is_known = ifelse(!.data$id == ".", "TRUE", "FALSE")
@@ -145,11 +152,14 @@ characterize_variants <- function(mutation_data) {
   # variation_type
   if ("variation_type" %in% colnames(mutation_data)) {
     mutation_data <- dplyr::rename(mutation_data,
-                                   original_variation_type = "variation_type")
+      original_variation_type = "variation_type"
+    )
   }
-  mutation_data$variation_type <- mapply(MutSeqR::classify_variation,
-                                         mutation_data$ref,
-                                         mutation_data$alt)
+  mutation_data$variation_type <- mapply(
+    MutSeqR::classify_variation,
+    mutation_data$ref,
+    mutation_data$alt
+  )
 
   # Define substitution dictionary to normalize to pyrimidine context
   sub_dict <- c(
@@ -163,11 +173,14 @@ characterize_variants <- function(mutation_data) {
   mutation_data <- mutation_data %>%
     dplyr::mutate(
       nchar_ref = nchar(ref),
-      nchar_alt = ifelse(!(.data$variation_type %in% c("no_variant",
-                                                       "sv",
-                                                       "ambiguous",
-                                                       "uncategorized")),
-                         nchar(alt), NA),
+      nchar_alt = ifelse(!(.data$variation_type %in% c(
+        "no_variant",
+        "sv",
+        "ambiguous",
+        "uncategorized"
+      )),
+      nchar(alt), NA
+      ),
       varlen =
         ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"),
           .data$nchar_alt - .data$nchar_ref,
@@ -188,27 +201,37 @@ characterize_variants <- function(mutation_data) {
           .data$variation_type
         ),
       normalized_subtype = ifelse(.data$subtype %in% names(sub_dict),
-                                  sub_dict[.data$subtype],
-                                  .data$subtype),
+        sub_dict[.data$subtype],
+        .data$subtype
+      ),
       normalized_context = ifelse(
         stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
-        mapply(function(x) MutSeqR::reverseComplement(x, case = "upper"),
-               .data$context),
-        .data$context),
+        mapply(
+          function(x) MutSeqR::reverseComplement(x, case = "upper"),
+          .data$context
+        ),
+        .data$context
+      ),
       context_with_mutation =
         ifelse(.data$variation_type == "snv",
-               paste0(stringr::str_sub(.data$context, 1, 1),
-                      "[", .data$subtype, "]",
-                      stringr::str_sub(.data$context, 3, 3)),
-               .data$variation_type),
+          paste0(
+            stringr::str_sub(.data$context, 1, 1),
+            "[", .data$subtype, "]",
+            stringr::str_sub(.data$context, 3, 3)
+          ),
+          .data$variation_type
+        ),
       normalized_context_with_mutation =
         ifelse(.data$variation_type == "snv",
-               paste0(stringr::str_sub(.data$normalized_context, 1, 1),
-                      "[", .data$normalized_subtype, "]",
-                      stringr::str_sub(.data$normalized_context, 3, 3)),
-               .data$variation_type),
+          paste0(
+            stringr::str_sub(.data$normalized_context, 1, 1),
+            "[", .data$normalized_subtype, "]",
+            stringr::str_sub(.data$normalized_context, 3, 3)
+          ),
+          .data$variation_type
+        ),
       gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
-                    stringr::str_count(string = .data$context, pattern = "C"))
+        stringr::str_count(string = .data$context, pattern = "C"))
       / stringr::str_count(.data$context),
       filter_mut = FALSE
     )

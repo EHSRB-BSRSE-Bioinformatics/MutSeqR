@@ -112,18 +112,21 @@ mutation subtypes observed in a cohort.
 #              subtype_resolution = "base_6")
 # Load the example data
 mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
-                                  package = "MutSeqR"))
+  package = "MutSeqR"
+))
 # Convert dose_group to a factor with the desired order.
 mf_example$dose_group <- factor(mf_example$dose_group,
- levels = c("Control", "Low", "Medium", "High")
+  levels = c("Control", "Low", "Medium", "High")
 )
 # Plot the mutation spectra
-plot <- plot_spectra(mf_data = mf_example,
-                     group_col = "dose_group",
-                     subtype_resolution = "base_6",
-                     response = "proportion",
-                     group_order = "arranged",
-                     group_order_input = "dose_group")
+plot <- plot_spectra(
+  mf_data = mf_example,
+  group_col = "dose_group",
+  subtype_resolution = "base_6",
+  response = "proportion",
+  group_order = "arranged",
+  group_order_input = "dose_group"
+)
 
 # Example 2: plot the proportion of 6-based mutation subtypes
 # for each sample, ordered by hierarchical clustering:
@@ -133,10 +136,13 @@ plot <- plot_spectra(mf_data = mf_example,
 #              subtype_resolution = "base_6")
 # Load the example data
 mf_example2 <- readRDS(system.file("extdata", "Example_files", "mf_data_6_sample.rds",
-                                  package = "MutSeqR"))
-plot <- plot_spectra(mf_data = mf_example2,
-                     group_col = "sample",
-                     subtype_resolution = "base_6",
-                     response = "proportion",
-                     group_order = "clustered")
+  package = "MutSeqR"
+))
+plot <- plot_spectra(
+  mf_data = mf_example2,
+  group_col = "sample",
+  subtype_resolution = "base_6",
+  response = "proportion",
+  group_order = "clustered"
+)
 }

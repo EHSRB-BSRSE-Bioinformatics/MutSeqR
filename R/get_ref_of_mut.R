@@ -11,9 +11,9 @@ get_ref_of_mut <- function(mut_string) {
   b <- str_replace_all(a, "[^a-zA-Z]", "")
   # Extract letter characters after square bracket
   c <- str_extract(mut_string, "\\](.*)") %>% str_replace_all("[^a-zA-Z]", "")
-  if(is.na(c)) {
+  if (is.na(c)) {
     return(b)
   } else {
-    return(paste0(b,c))
+    return(paste0(b, c))
   }
 }

@@ -46,7 +46,7 @@
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation
 #' data to output as a GRanges object. Default output is as a dataframe.
 #' @details The required fields are:
-#' 
+#'
 #' **FIXED FIELDS**
 #' \itemize{
 #' \item `CHROM`: The name of the reference sequence. Equivalent to `contig`.
@@ -129,24 +129,27 @@
 #' }
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Example: Import a single bg-zipped vcf file. This library was sequenced
-#' # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-#' # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
-#' # from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_file <- eh[["EH9859"]]
-#' 
-#' # We will create an example metadata table for this data.
-#' sample_meta <- data.frame(sample = "dna00996.1",
-#'                           dose = "50",
-#'                           dose_group = "High")
-#' # Import the data
-#' imported_example_data <- import_vcf_data(vcf_file = example_file,
-#'                                          sample_data = sample_meta,
-#'                                          regions = "TSpanel_mouse",
-#'                                          BS_genome = find_BS_genome("mouse", "mm10")
-#' )
+#'   # Example: Import a single bg-zipped vcf file. This library was sequenced
+#'   # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
+#'   # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
+#'   # from MutSeqRData, an ExperimentHub data package.
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_file <- eh[["EH9859"]]
+#'
+#'   # We will create an example metadata table for this data.
+#'   sample_meta <- data.frame(
+#'     sample = "dna00996.1",
+#'     dose = "50",
+#'     dose_group = "High"
+#'   )
+#'   # Import the data
+#'   imported_example_data <- import_vcf_data(
+#'     vcf_file = example_file,
+#'     sample_data = sample_meta,
+#'     regions = "TSpanel_mouse",
+#'     BS_genome = find_BS_genome("mouse", "mm10")
+#'   )
 #' }
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind
 #' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
@@ -181,7 +184,7 @@ import_vcf_data <- function(vcf_file,
     sample_info <- NULL
     # Search for variations of sample identifier names
     for (sample_name_var in possible_sample_names) {
-      sample_name_var <- tolower(sample_name_var)  # Make the comparison case-insensitive
+      sample_name_var <- tolower(sample_name_var) # Make the comparison case-insensitive
       if (sample_name_var %in% tolower(names(VariantAnnotation::info(vcf)))) {
         # If found, rename it to "sample" and break the loop
         names(VariantAnnotation::info(vcf))[tolower(names(VariantAnnotation::info(vcf))) == sample_name_var] <- "sample"
@@ -198,9 +201,11 @@ import_vcf_data <- function(vcf_file,
 
   # Read and bind vcfs from folder
   if (file.info(vcf_file)$isdir == TRUE) {
-    vcf_files <- list.files(path = vcf_file,
-                            pattern = "\\.g?vcf(\\.bgz|\\.gz)?$",
-                            full.names = TRUE)
+    vcf_files <- list.files(
+      path = vcf_file,
+      pattern = "\\.g?vcf(\\.bgz|\\.gz)?$",
+      full.names = TRUE
+    )
     # FIX: add check for empty file list.
     # Initialize an empty VCF object to store the combined data
     vcf <- NULL
@@ -227,7 +232,7 @@ import_vcf_data <- function(vcf_file,
   # Extract and Clean alt column
   ## May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
   alt <- VariantAnnotation::alt(vcf)
- # alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
+  # alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
   alt <- IRanges::CharacterList(alt)
 
   # Extract mutation data into a dataframe
@@ -287,10 +292,13 @@ import_vcf_data <- function(vcf_file,
   # Except for the alt column, which can have NA values.
   required_columns <- setdiff(op$base_required_mut_cols, "alt")
   columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(columns_with_na,
-                                   required_columns)
+  na_columns_required <- intersect(
+    columns_with_na,
+    required_columns
+  )
   if (length(na_columns_required) > 0) {
-    stop("NA values were found within the following required column(s): ",
+    stop(
+      "NA values were found within the following required column(s): ",
       paste(na_columns_required, collapse = ", "),
       ". Please confirm that your data is complete before proceeding."
     )
@@ -311,17 +319,20 @@ import_vcf_data <- function(vcf_file,
   )
   # Join Regions
   if (!is.null(regions)) {
-    mut_ranges <- import_regions_metadata(mutation_granges = mut_ranges,
+    mut_ranges <- import_regions_metadata(
+      mutation_granges = mut_ranges,
       regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
       padding = padding
     )
   }
   # Populate Context (if not present)
   if (!context_exists) {
-       mut_ranges <- populate_sequence_context(mutation_granges = mut_ranges,
-                                            BS_genome = BS_genome)
+    mut_ranges <- populate_sequence_context(
+      mutation_granges = mut_ranges,
+      BS_genome = BS_genome
+    )
   }
-   # Characterize variants
+  # Characterize variants
   dat <- as.data.frame(mut_ranges) %>%
     dplyr::rename(contig = "seqnames")
   dat <- characterize_variants(dat)
@@ -349,7 +360,8 @@ import_vcf_data <- function(vcf_file,
       if (depth_exists) {
         dat <- dat %>%
           dplyr::mutate(
-            total_depth = .data$depth)
+            total_depth = .data$depth
+          )
         warning("Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README")
       } else {
         warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
@@ -375,18 +387,21 @@ import_vcf_data <- function(vcf_file,
   # Make VAF and ref_depth columns, if depth exists
   if ("total_depth" %in% colnames(dat)) {
     dat <- dat %>%
-      dplyr::mutate(vaf = .data$alt_depth / .data$total_depth,
-                    ref_depth = .data$total_depth - .data$alt_depth)
+      dplyr::mutate(
+        vaf = .data$alt_depth / .data$total_depth,
+        ref_depth = .data$total_depth - .data$alt_depth
+      )
   }
 
   if (output_granges) {
-    gr <-  GenomicRanges::makeGRangesFromDataFrame(
+    gr <- GenomicRanges::makeGRangesFromDataFrame(
       df = dat,
       keep.extra.columns = TRUE,
       seqnames.field = "contig",
       start.field = "start",
       end.field = "end",
-      starts.in.df.are.0based =  FALSE)
+      starts.in.df.are.0based = FALSE
+    )
     return(gr)
   } else {
     return(dat)

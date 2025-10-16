@@ -83,26 +83,32 @@ See model_mf() for examples.
 # Data was summarized per sample using calculate_mf() (see relevant
 # examples). We will run the model with model_mf then plot the results.
 mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-                               package = "MutSeqR"))
+  package = "MutSeqR"
+))
 # We will compare all treated groups to the control group
-contrasts <- data.frame(col1 = c("12.5", "25", "50"),
-                        col2 = c("0", "0", "0"))
+contrasts <- data.frame(
+  col1 = c("12.5", "25", "50"),
+  col2 = c("0", "0", "0")
+)
 # Fit the model
-model <- model_mf(mf_data = mf_example,
-                   fixed_effects = "dose",
-                   reference_level = "0",
-                   muts = "sum_min",
-                   total_count = "group_depth",
-                   contrasts = contrasts)
+model <- model_mf(
+  mf_data = mf_example,
+  fixed_effects = "dose",
+  reference_level = "0",
+  muts = "sum_min",
+  total_count = "group_depth",
+  contrasts = contrasts
+)
 
 # Plot the results using plot_model_mf()
 plot <- plot_model_mf(model,
-                      plot_type = "bar",
-                      x_effect = "dose",
-                      plot_error_bars = TRUE,
-                      plot_signif = TRUE,
-                      x_order = c("0", "12.5", "25", "50"),
-                      x_label = "Dose (mg/kg-bw/d)",
-                      y_label = "Estimated Mean MF (mutations/bp)",
-                      plot_title = "")
+  plot_type = "bar",
+  x_effect = "dose",
+  plot_error_bars = TRUE,
+  plot_signif = TRUE,
+  x_order = c("0", "12.5", "25", "50"),
+  x_label = "Dose (mg/kg-bw/d)",
+  y_label = "Estimated Mean MF (mutations/bp)",
+  plot_title = ""
+)
 }

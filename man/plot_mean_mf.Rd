@@ -126,18 +126,24 @@ samples for given groups and plots the results.
 # examples). We will plot the mean MF per dose group.
 # Load Example MF data
 mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-                               package = "MutSeqR"))
+  package = "MutSeqR"
+))
 # Specify the order of the dose groups along the x-axis
 mf_example$dose_group <- factor(mf_example$dose_group,
-                                levels = c("Control", "Low",
-                                           "Medium", "High"))
+  levels = c(
+    "Control", "Low",
+    "Medium", "High"
+  )
+)
 # Plot the mean min MF per dose group as a bar plot with error bars
-plot <- plot_mean_mf(mf_data = mf_example,
-                     group_col = "dose_group",
-                     mf_type = "min",
-                     plot_type = "line",
-                     fill_col = "dose_group",
-                     plot_error_bars = TRUE,
-                     plot_indiv_vals = TRUE,
-                     add_labels = "none")
+plot <- plot_mean_mf(
+  mf_data = mf_example,
+  group_col = "dose_group",
+  mf_type = "min",
+  plot_type = "line",
+  fill_col = "dose_group",
+  plot_error_bars = TRUE,
+  plot_indiv_vals = TRUE,
+  add_labels = "none"
+)
 }

@@ -73,7 +73,7 @@ Mutation data will be filtered to only include SNVs. Variants
 flagged by the filter_mut column will be excluded.
 }
 \examples{
- if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
   # Example data consists of 24 mouse bone marrow DNA samples imported
   # using import_mut_data() and filtered with filter_mut as in Example 4.
   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
@@ -83,13 +83,15 @@ flagged by the filter_mut column will be excluded.
   example_data <- eh[["EH9861"]]
   output_path <- tempdir()
 
-  signature_fitting(mutation_data = example_data,
-                    project_name = "Example",
-                    project_genome = "mm10",
-                    env_name = "MutSeqR",
-                    group = "dose",
-                    python_version = "3.11",
-                    output_path = output_path)
+  signature_fitting(
+    mutation_data = example_data,
+    project_name = "Example",
+    project_genome = "mm10",
+    env_name = "MutSeqR",
+    group = "dose",
+    python_version = "3.11",
+    output_path = output_path
+  )
 }
 
 }

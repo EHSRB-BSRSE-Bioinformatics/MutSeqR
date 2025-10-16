@@ -126,23 +126,26 @@
 #' }
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' # Example: Import a single mutation file. This library was sequenced with
-#' # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-#' # consists of 20 2.4kb targets = 48kb of sequence. Example data is
-#' # retrieved from MutSeqRData, an ExperimentHub data package.
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9857"]]
-#' # We will create an example metadata table for this data.
-#' sample_meta <- data.frame(sample = "dna00996.1",
-#'                           dose = "50",
-#'                           dose_group = "High")
-#' # Import the data
-#' imported_example_data <- import_mut_data(mut_file = example_data,
-#'                                          sample_data = sample_meta,
-#'                                          regions = "TSpanel_mouse",
-#'                                          BS_genome = find_BS_genome("mouse", "mm10")
-#' )
+#'   # Example: Import a single mutation file. This library was sequenced with
+#'   # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
+#'   # consists of 20 2.4kb targets = 48kb of sequence. Example data is
+#'   # retrieved from MutSeqRData, an ExperimentHub data package.
+#'   library(ExperimentHub)
+#'   eh <- ExperimentHub()
+#'   example_data <- eh[["EH9857"]]
+#'   # We will create an example metadata table for this data.
+#'   sample_meta <- data.frame(
+#'     sample = "dna00996.1",
+#'     dose = "50",
+#'     dose_group = "High"
+#'   )
+#'   # Import the data
+#'   imported_example_data <- import_mut_data(
+#'     mut_file = example_data,
+#'     sample_data = sample_meta,
+#'     regions = "TSpanel_mouse",
+#'     BS_genome = find_BS_genome("mouse", "mm10")
+#'   )
 #' }
 #' @importFrom dplyr bind_rows mutate left_join case_when
 #' @importFrom magrittr %>%
@@ -158,12 +161,10 @@
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 import_mut_data <- function(
-  mut_file, mut_sep = "\t", is_0_based_mut = TRUE,
-  sample_data = NULL, sd_sep = "\t",
-  regions = NULL,  rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
-  BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE
-) {                             
-
+    mut_file, mut_sep = "\t", is_0_based_mut = TRUE,
+    sample_data = NULL, sd_sep = "\t",
+    regions = NULL, rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
+    BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE) {
   if (!is.numeric(padding) || padding < 0) {
     stop("The range buffer must be a non-negative number")
   }
@@ -260,10 +261,13 @@ import_mut_data <- function(
 
   # Check for NA values in required columns.
   columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(columns_with_na,
-                                   MutSeqR::op$base_required_mut_cols)
+  na_columns_required <- intersect(
+    columns_with_na,
+    MutSeqR::op$base_required_mut_cols
+  )
   if (length(na_columns_required) > 0) {
-    stop("NA values were found within the following required column(s): ",
+    stop(
+      "NA values were found within the following required column(s): ",
       paste(na_columns_required, collapse = ", "),
       ". Please confirm that your data is complete before proceeding."
     )
@@ -286,22 +290,25 @@ import_mut_data <- function(
   )
   # Join Regions Metadata
   if (!is.null(regions)) {
-    mut_ranges <- import_regions_metadata(mutation_granges = mut_ranges,
+    mut_ranges <- import_regions_metadata(
+      mutation_granges = mut_ranges,
       regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
       padding = padding
     )
   }
   # Populate Context (if not present)
   if (!context_exists) {
-    mut_ranges <- populate_sequence_context(mutation_granges = mut_ranges,
-                                            BS_genome = BS_genome)
+    mut_ranges <- populate_sequence_context(
+      mutation_granges = mut_ranges,
+      BS_genome = BS_genome
+    )
   }
 
   # Characterize variants
   dat <- as.data.frame(mut_ranges) %>%
     dplyr::rename(contig = "seqnames")
   dat <- characterize_variants(dat)
-  
+
   # Depth
   # Add alt_depth column, if it doesn't exist
   if (!"alt_depth" %in% colnames(dat)) {
@@ -343,8 +350,10 @@ import_mut_data <- function(
   # Make VAF and ref_depth columns, if depth exists
   if ("total_depth" %in% colnames(dat)) {
     dat <- dat %>%
-      dplyr::mutate(vaf = .data$alt_depth / .data$total_depth,
-                    ref_depth = .data$total_depth - .data$alt_depth)
+      dplyr::mutate(
+        vaf = .data$alt_depth / .data$total_depth,
+        ref_depth = .data$total_depth - .data$alt_depth
+      )
   }
 
   if (output_granges) {
