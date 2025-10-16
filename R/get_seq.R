@@ -74,72 +74,91 @@ get_seq <- function(regions,
                     ucsc = FALSE,
                     species = NULL,
                     genome = NULL) {
-  if (ucsc && !requireNamespace("xml2", quietly = TRUE)) {
-    stop("The 'xml2' package is required for UCSC API access.")
-  }
-  if (ucsc && !requireNamespace("httr", quietly = TRUE)) {
-    stop("The 'httr' package is required for UCSC API access.")
-  }
-  regions_gr <- MutSeqR::load_regions_file(
-    regions = regions,
-    rg_sep = rg_sep,
-    is_0_based_rg = is_0_based_rg
-  )
-  if (is.character(regions)) {
-    if (regions == "TSpanel_human") {
-      BS_genome <- "BSgenome.Hsapiens.UCSC.hg38"
-      species <- "human"
-      genome <- "hg38"
+    if (ucsc && !requireNamespace("xml2", quietly = TRUE)) {
+        stop("The 'xml2' package is required for UCSC API access.")
     }
-    if (regions == "TSpanel_mouse") {
-      BS_genome <- "BSgenome.Mmusculus.UCSC.mm10"
-      species <- "mouse"
-      genome <- "mm10"
+    if (ucsc && !requireNamespace("httr", quietly = TRUE)) {
+        stop("The 'httr' package is required for UCSC API access.")
     }
-    if (regions == "TSpanel_rat") {
-      BS_genome <- "BSgenome.Rnorvegicus.UCSC.rn6"
-      species <- "rat"
-      genome <- "rn6"
+    regions_gr <- MutSeqR::load_regions_file(
+        regions = regions,
+        rg_sep = rg_sep,
+        is_0_based_rg = is_0_based_rg
+    )
+    if (is.character(regions)) {
+        if (regions == "TSpanel_human") {
+            BS_genome <- "BSgenome.Hsapiens.UCSC.hg38"
+            species <- "human"
+            genome <- "hg38"
+        }
+        if (regions == "TSpanel_mouse") {
+            BS_genome <- "BSgenome.Mmusculus.UCSC.mm10"
+            species <- "mouse"
+            genome <- "mm10"
+        }
+        if (regions == "TSpanel_rat") {
+            BS_genome <- "BSgenome.Rnorvegicus.UCSC.rn6"
+            species <- "rat"
+            genome <- "rn6"
+        }
     }
-  }
 
-  # Add padding to the region
-  BiocGenerics::start(regions_gr) <- pmax(BiocGenerics::start(regions_gr) - padding, 1)
-  BiocGenerics::end(regions_gr) <- BiocGenerics::end(regions_gr) + padding
+    # Add padding to the region
+    BiocGenerics::start(regions_gr) <- pmax(
+        BiocGenerics::start(regions_gr) - padding, 1
+    )
+    BiocGenerics::end(regions_gr) <- BiocGenerics::end(regions_gr) + padding
 
-  if (ucsc) {
-    # Define the API base URL
-
-    get_sequence_for_region <- function(contig, start, end) {
-      base_url <- paste0("https://genome.ucsc.edu/cgi-bin/das/", genome, "/dna")
-      params <- list(segment = paste(contig, ":", start, ",", end, sep = ""))
-      response <- httr::GET(url = base_url, query = params)
-      parsed_xml <- xml2::read_xml(httr::content(response, "text"))
-      sequence <- xml2::xml_text(xml2::xml_find_first(parsed_xml, "//DASDNA/SEQUENCE/DNA"))
-      cleaned_sequence <- gsub("\n", "", sequence) # Remove newline characters
-      return(toupper(cleaned_sequence))
+    if (ucsc) {
+        # Define the API base URL
+        get_sequence_for_region <- function(contig, start, end) {
+            base_url <- paste0(
+                "https://genome.ucsc.edu/cgi-bin/das/",
+                genome, "/dna"
+            )
+            params <- list(
+                segment = paste(contig, ":", start, ",", end, sep = "")
+            )
+            response <- httr::GET(url = base_url, query = params)
+            parsed_xml <- xml2::read_xml(httr::content(response, "text"))
+            sequence <- xml2::xml_text(
+                xml2::xml_find_first(parsed_xml, "//DASDNA/SEQUENCE/DNA")
+            )
+        cleaned_sequence <- gsub("\n", "", sequence)
+        return(toupper(cleaned_sequence))
     }
 
     # Apply the function to each row of the GR
     seqs <- mapply(
-      get_sequence_for_region,
-      as.vector(Seqinfo::seqnames(regions_gr)),
-      BiocGenerics::start(regions_gr),
-      BiocGenerics::end(regions_gr)
+        get_sequence_for_region,
+        as.vector(Seqinfo::seqnames(regions_gr)),
+        BiocGenerics::start(regions_gr),
+        BiocGenerics::end(regions_gr)
     )
     S4Vectors::mcols(regions_gr)$sequence <- seqs
-  } else {
-    if (is.null(BS_genome)) {
-      stop("If not using the UCSC method, please indicate the appropriate BS genome (must be installed). If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
+    } else {
+        if (is.null(BS_genome)) {
+            stop(
+                "If not using the UCSC method, please indicate the",
+                " appropriate BS genome (must be installed). If you",
+                " are not sure which BS genome to use, please provide",
+                " the species and reference genome to find_BS_genome()."
+            )
+        }
+        installed_BS_genomes <- BSgenome::installed.genomes()
+        if (!(BS_genome %in% installed_BS_genomes)) {
+            stop(
+                "The specified BS genome is not installed. Please install the",
+                " appropriate BS genome using BiocManager::install('pkgname')",
+                " where pkgname is the name of the BSgenome package. If you",
+                " are not sure which BS genome to use, please provide the",
+                " species and reference genome to find_BS_genome()."
+            )
+        }
+        message("Loading reference genome: ", BS_genome, ".")
+        ref_genome <- BSgenome::getBSgenome(BS_genome)
+        seqs <- Biostrings::getSeq(ref_genome, names = regions_gr)
+        S4Vectors::mcols(regions_gr)$sequence <- seqs
     }
-    installed_BS_genomes <- BSgenome::installed.genomes()
-    if (!(BS_genome %in% installed_BS_genomes)) {
-      stop("The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
-    }
-    message("Loading reference genome: ", BS_genome, ".")
-    ref_genome <- BSgenome::getBSgenome(BS_genome)
-    seqs <- Biostrings::getSeq(ref_genome, names = regions_gr)
-    S4Vectors::mcols(regions_gr)$sequence <- seqs
-  }
-  return(regions_gr)
+    return(regions_gr)
 }

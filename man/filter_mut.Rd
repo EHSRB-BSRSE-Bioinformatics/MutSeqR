@@ -43,9 +43,9 @@ mutations, and homozygous germline mutations, respectively. Default is
 FALSE.}
 
 \item{custom_filter_col}{The name of the column in mutation_data to apply a
-custom filter to. This column will be checked for specific values, as defined
-by \code{custom_filter_val}. If any row in this column contains one of the
-specified values, that row will either be flagged in the
+custom filter to. This column will be checked for specific values, as
+defined by \code{custom_filter_val}. If any row in this column contains
+one of the specified values, that row will either be flagged in the
 \code{filter_mut column} or, if specified by \code{custom_filter_rm},
 removed from mutation_data.}
 
@@ -89,8 +89,8 @@ coordinates in \code{regions} are 0 based (TRUE) or 1 based (FALSE).
 If TRUE, positions will be converted to 1-based (start + 1).
 Need not be supplied for TSpanels. Default is TRUE.}
 
-\item{rm_filtered_mut_from_depth}{A logical value. If TRUE, the function will
-subtract the \code{alt_depth} of records that were flagged by the
+\item{rm_filtered_mut_from_depth}{A logical value. If TRUE, the function
+will subtract the \code{alt_depth} of records that were flagged by the
 \code{filter_mut} column from their \code{total_depth}. This will treat
 flagged variants as No-calls. This will not apply to variants flagged as
 germline by the \code{vaf_cutoff}. However, if the germline variant
@@ -159,7 +159,8 @@ if (requireNamespace("MutSeqRData", quietly = TRUE)) {
   # Flagging SNVs overlapping with germline MNVs...
   # Found 20 SNVs overlapping with germline MNVs.
   # Applying custom filter...
-  # Flagged 2021 rows with values in <filter> column that matched EndRepairFillInArtifact
+  # Flagged 2021 rows with values in <filter> column that matched
+  #  EndRepairFillInArtifact
   # Applying region filter...
   # Removed 22 rows based on regions.
   # Correcting depth...

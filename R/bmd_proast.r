@@ -150,8 +150,8 @@
 #' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
 #'   package = "MutSeqR"
 #' ))
-#' # We will calculate the BMD for a 50% increase in mutation frequency from control
-#' # With Model averaging.
+#' # We will calculate the BMD for a 50% increase in mutation frequency from
+#' # control with Model averaging.
 #' # For the purpose of this example, num_bootstraps is set to 3 to reduce
 #' # run time. 200 bootstraps is recommended.
 #' bmd <- bmd_proast(

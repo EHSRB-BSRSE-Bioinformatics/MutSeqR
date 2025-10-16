@@ -48,7 +48,7 @@ reverseComplement <- function(x,
     src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
     dest <- "ugcaayrmkswvhdbnxUGCAAyRMKSWVHDBNX-"
   } # if
-  if (max(nchar(x)) > 1) { # is x a vector of one or more non-single character strings?
+  if (max(nchar(x)) > 1) {
     return(chartr(src, dest, strreverse(x)))
   }
   # x is not a single string, so process it as a vector

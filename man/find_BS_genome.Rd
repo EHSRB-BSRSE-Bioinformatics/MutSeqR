@@ -7,12 +7,14 @@
 find_BS_genome(organism, genome, masked = FALSE)
 }
 \arguments{
-\item{organism}{the name of the organism for which to install the reference genome.
-This can be the scientific name or a common name. For example Homo Sapiens, H. sapiens, or human}
+\item{organism}{the name of the organism for which to install the reference
+genome. This can be the scientific name or a common name. For example Homo
+Sapiens, H. sapiens, or human}
 
 \item{genome}{The reference genome assembly version. Ex. hg18, mm10, rn6.}
 
-\item{masked}{Logical value. Whether to search for the 'masked' BSgenome. Default is FALSE.}
+\item{masked}{Logical value. Whether to search for the 'masked' BSgenome.
+Default is FALSE.}
 }
 \value{
 a BSgenome object
@@ -20,8 +22,8 @@ a BSgenome object
 \description{
 This function will browse available BSgenomes, indicating
 which one should be installed for the specified organism and genome assembly
-version. If you cannot specify both organism and genome, the function can return
-a list of available genomes for a specified species.
+version. If you cannot specify both organism and genome, the function can
+return a list of available genomes for a specified species.
 }
 \examples{
 # Find the reference genome for Mouse, mm10 assembly:

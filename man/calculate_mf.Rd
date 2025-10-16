@@ -66,9 +66,9 @@ For rows with the same sample, contig, and start values, the
 \code{total_depth} will be retained for only one row. All other rows in the
 group will have their \code{total_depth} set to 0. The default is TRUE.}
 
-\item{correct_depth_by_indel_priority}{A logical value. If TRUE, during depth
-correction, should there be different \code{total_depth} values within a
-group of rows with the same sample, contig, and start values, the
+\item{correct_depth_by_indel_priority}{A logical value. If TRUE, during
+depth correction, should there be different \code{total_depth} values within
+a group of rows with the same sample, contig, and start values, the
 \code{total_depth} value for the row with the highest priority
 \code{variation_type} will be retained, while the other rows will have their
 \code{total_depth} set to 0. \code{variation_type} priority order is:
@@ -98,8 +98,8 @@ returned). Setting this to false returns all columns in the original
 mutation_data, which might make plotting more difficult, but may provide
 additional flexibility to power users.}
 
-\item{retain_metadata_cols}{a character vector that contains the names of the
-metadata columns that you would like to retain in the summary table.
+\item{retain_metadata_cols}{a character vector that contains the names of
+the metadata columns that you would like to retain in the summary table.
 This may be useful for plotting your summary data. Ex. retain the "dose"
 column when summarising by "sample".}
 }

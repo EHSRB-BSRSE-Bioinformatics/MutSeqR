@@ -41,7 +41,10 @@ get_binom_ci <- function(mf_data,
                          conf_level = 0.95,
                          method = "wilson") {
   if (!requireNamespace("binom", quietly = TRUE)) {
-    stop("The binom package is required to calculate binomial confidence intervals.")
+    stop(
+        "The binom package is required to calculate binomial",
+        " confidence intervals."
+    )
   }
   if (length(method) != 1 || method == "all") {
     stop("Must select only one method.")

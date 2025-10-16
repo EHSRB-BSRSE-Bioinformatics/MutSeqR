@@ -13,13 +13,14 @@ populate_sequence_context(mutation_granges, BS_genome, n = 1)
 retrieving the reference genome sequence.}
 
 \item{n}{An integer value indicating the number of base pairs to include
-on either side of the mutation for context. Default is 1 (trinucleotide context
-including the mutation).}
+on either side of the mutation for context. Default is 1 (trinucleotide
+context including the mutation).}
 }
 \value{
-A GRanges object with an additional column for the trinucleotide context.
+A GRanges object with an additional column for the trinucleotide
+context.
 }
 \description{
-This function populates the trinucleotide context for each mutation
-in the mutation data.
+This function populates the trinucleotide context for each
+mutation in the mutation data.
 }

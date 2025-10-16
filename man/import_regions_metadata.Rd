@@ -18,7 +18,8 @@ import_regions_metadata(
 \item{regions}{The path to the file containing the regions metadata.
 Alternatively, a data frame can be provided directly.}
 
-\item{rg_sep}{The separator used in the regions metadata file. Default is tab (\verb{\\t}).}
+\item{rg_sep}{The separator used in the regions metadata file.
+Default is tab (\verb{\\t}).}
 
 \item{is_0_based_rg}{A logical value indicating whether the regions file is
 0-based (TRUE) or 1-based (FALSE). Default is FALSE.}
@@ -27,9 +28,10 @@ Alternatively, a data frame can be provided directly.}
 the regions on either side. Default is 0.}
 }
 \value{
-A GRanges object that combines the mutation data with the regions metadata.
+A GRanges object that combines the mutation data with the regions
+metadata.
 }
 \description{
-This function imports the regions metadata and joins it with the
-mutation data.
+This function imports the regions metadata and joins it with
+the mutation data.
 }

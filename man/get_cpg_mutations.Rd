@@ -46,7 +46,7 @@ A GRanges object where each range is a mutation at a CpG site
 (a subset of mutations from the larger object provided to the function).
 }
 \description{
-\emph{Needs to be reworked for variants >1bp}. Subset the mutation data and return only mutations that are found
-at positions with a specific motif. The default is CpG sites, but can be
-customizable.
+\emph{Needs to be reworked for variants >1bp}. Subset the mutation data and
+return only mutations that are found at positions with a specific motif.
+The default is CpG sites, but can be customizable.
 }

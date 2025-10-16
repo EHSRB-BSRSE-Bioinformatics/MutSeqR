@@ -1,12 +1,14 @@
 #' Find the appropriate BS genome for the specified organism and genome.
 #' @description This function will browse available BSgenomes, indicating
 #' which one should be installed for the specified organism and genome assembly
-#' version. If you cannot specify both organism and genome, the function can return
-#' a list of available genomes for a specified species.
-#' @param organism the name of the organism for which to install the reference genome.
-#' This can be the scientific name or a common name. For example Homo Sapiens, H. sapiens, or human
+#' version. If you cannot specify both organism and genome, the function can
+#' return a list of available genomes for a specified species.
+#' @param organism the name of the organism for which to install the reference
+#' genome. This can be the scientific name or a common name. For example Homo
+#' Sapiens, H. sapiens, or human
 #' @param genome The reference genome assembly version. Ex. hg18, mm10, rn6.
-#' @param masked Logical value. Whether to search for the 'masked' BSgenome. Default is FALSE.
+#' @param masked Logical value. Whether to search for the 'masked' BSgenome.
+#' Default is FALSE.
 #' @export
 #' @importFrom BSgenome available.genomes installed.genomes
 #' @return a BSgenome object
@@ -20,7 +22,10 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
   organism <- gsub("\\.\\s", "", organism)
   convertToOrganismName <- function(name) {
     for (org_name in names(MutSeqR::BS_org_map)) {
-      if (tolower(name) %in% c(tolower(org_name), tolower(MutSeqR::BS_org_map[[org_name]]))) {
+      if (tolower(name) %in% c(
+        tolower(org_name),
+        tolower(MutSeqR::BS_org_map[[org_name]])
+      )) {
         return(org_name)
       }
     }
@@ -57,8 +62,9 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
   ]
   if (nrow(selected_genome) == 0) {
     stop(
-      "No BS genome found for the specified organism, assembly version and masked setting.\n",
-      "Available assemblies for this organism (masked = ", masked, ") are:\n",
+      "No BS genome found for the specified organism, assembly version and",
+      " masked setting. Available assemblies for this organism (masked = ",
+      masked, ") are:\n",
       paste(unique(possible_genomes$genome), collapse = ", ")
     )
   }
@@ -70,8 +76,15 @@ find_BS_genome <- function(organism, genome, masked = FALSE) {
   if (ref_genome %in% installed_BS_genomes) {
     message("Reference genome is already installed.")
   } else {
-    message("Reference genome is not installed. Please install using BiocManager::install(", ref_genome, ")")
+    message(
+        "Reference genome is not installed.",
+        " Please install using BiocManager::install(",
+        ref_genome, ")"
+    )
   }
-  message("Once installed, supply: ", ref_genome, " as the BS_genome parameter in import_mut/vcf_data()")
+  message(
+    "Once installed, supply: ", ref_genome,
+    " as the BS_genome parameter in import_mut/vcf_data()"
+  )
   return(ref_genome)
 }

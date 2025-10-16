@@ -12,10 +12,12 @@ import_sample_data(mutation_data, sample_data, sd_sep = "\\t")
 \item{sample_data}{The path to the file containing the sample metadata.
 Alternatively, a data frame can be provided directly.}
 
-\item{sd_sep}{The separator used in the sample metadata file. Default is tab (\verb{\\t}).}
+\item{sd_sep}{The separator used in the sample metadata file.
+Default is tab (\verb{\\t}).}
 }
 \value{
-A data frame that combines the mutation data with the sample metadata.
+A data frame that combines the mutation data with the sample
+metadata.
 }
 \description{
 This function imports the sample metadata and joins it with the
