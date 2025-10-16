@@ -33,6 +33,8 @@ http://www.R-project.org/Licenses/GPL-2.
 reverseComplement.R
 }
 \examples{
-reverseComplement("A")
-reverseComplement("CA")
+reverseComplement("A", content = "dna", case = "upper")
+# T
+reverseComplement("CA", content = "dna", case = "upper")
+# TG
 }

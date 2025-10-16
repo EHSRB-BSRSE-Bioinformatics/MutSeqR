@@ -157,18 +157,12 @@
 #' @importFrom Seqinfo seqnames
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
-import_mut_data <- function(mut_file,
-                            mut_sep = "\t",
-                            is_0_based_mut = TRUE,
-                            sample_data = NULL,
-                            sd_sep = "\t",
-                            regions = NULL,
-                            rg_sep = "\t",
-                            is_0_based_rg = TRUE,
-                            padding = 0,
-                            BS_genome = NULL,
-                            custom_column_names = NULL,
-                            output_granges = FALSE) {                             
+import_mut_data <- function(
+  mut_file, mut_sep = "\t", is_0_based_mut = TRUE,
+  sample_data = NULL, sd_sep = "\t",
+  regions = NULL,  rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
+  BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE
+) {                             
 
   if (!is.numeric(padding) || padding < 0) {
     stop("The range buffer must be a non-negative number")
@@ -250,38 +244,10 @@ import_mut_data <- function(mut_file,
     stop("mut_file must be a character string or a data frame")
   }
   ## Sample Data File
-  # Validate and join sample data file if provided
   if (!is.null(sample_data)) {
-    if (is.data.frame(sample_data)) {
-      sampledata <- sample_data
-      if (nrow(sampledata) == 0) {
-        stop("The sample data frame you've provided is empty")
-      }
-    } else if (is.character(sample_data)) {
-      sample_file <- file.path(sample_data)
-      if (!file.exists(sample_file)) {
-        stop("The sample data file path you've specified is invalid")
-      }
-      if (file.info(sample_file)$size == 0) {
-        stop("You are trying to import an empty sample data file")
-      }
-      sampledata <- read.delim(file.path(sample_data),
-                               sep = sd_sep,
-                               header = TRUE)
-      if (ncol(sampledata) <= 1) {
-        stop("Your imported sample data only has one column.
-             You may want to set sd_sep to properly reflect
-             the delimiter used for the data you are importing.")
-      }
-    } else {
-      stop("sample_data must be a character string or a data frame")
-    }
-    # Join
-    dat <- dplyr::left_join(dat, sampledata, suffix = c("", ".sampledata"))
+    dat <- import_sample_data(dat, sample_data, sd_sep)
   }
-
-  # Rename columns to default.
-  # Add custom column names to default list
+  # Rename columns to default (including custom names)
   if (!is.null(custom_column_names)) {
     cols <- modifyList(MutSeqR::op$column, custom_column_names)
     dat <- rename_columns(dat, cols)
@@ -309,7 +275,6 @@ import_mut_data <- function(mut_file,
     }
   }
 
-  # Join Regions
   # Turn mutation data into GRanges
   mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
     df = as.data.frame(dat),
@@ -319,138 +284,24 @@ import_mut_data <- function(mut_file,
     end.field = "end",
     starts.in.df.are.0based = is_0_based_mut
   )
-
+  # Join Regions Metadata
   if (!is.null(regions)) {
-    # load regions file
-    regions_gr <- MutSeqR::load_regions_file(regions,
-                                             rg_sep,
-                                             is_0_based_rg)
-    regions_gr$in_regions <- TRUE
-
-    # Apply padding
-    BiocGenerics::start(regions_gr) <- pmax(BiocGenerics::start(regions_gr) - padding, 1)
-    BiocGenerics::end(regions_gr) <- BiocGenerics::end(regions_gr) + padding
-
-    # Join mutation data and region data using overlap
-    mut_ranges <- plyranges::join_overlap_left_within_directed(mut_ranges,
-                                                               regions_gr,
-                                                               suffix = c("",
-                                                                          "_regions"))
-
-    mut_ranges <- mut_ranges %>%
-      plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
-
-    false_count <- sum(mut_ranges$in_regions == FALSE)
-    if (false_count > 0) {
-      warning(false_count, " rows were outside of the specified regions. To remove these rows, use the filter_mut() function\n")
-    }
+    mut_ranges <- import_regions_metadata(mutation_granges = mut_ranges,
+      regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
+      padding = padding
+    )
   }
-  # Create a context column, if needed: BSGenome
+  # Populate Context (if not present)
   if (!context_exists) {
-    if (is.null(BS_genome)) {
-      stop("The trinuceotide context is populated from BS genomes. Please install the appropriate BS genome and indicate the pkgname with the BS_genome parameter. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
-    }
-    installed_BS_genomes <- BSgenome::installed.genomes()
-    if (!(BS_genome %in% installed_BS_genomes)) {
-      stop("The specified BS genome is not installed. Please install the appropriate BS genome using BiocManager::install('pkgname') where pkgname is the name of the BSgenome package. If you are not sure which BS genome to use, please provide the species and reference genome to find_BS_genome().")
-    }
-    message("Loading reference genome: ", BS_genome, ".")
-    ref_genome <- BSgenome::getBSgenome(BS_genome)
-    
-    extract_context <- function(mut_gr,
-                                bsgenome) {
-      # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = Seqinfo::seqnames(mut_gr),
-                                                ranges = IRanges::IRanges(
-                                                  start = BiocGenerics::start(mut_gr) - 1,
-                                                  end = BiocGenerics::start(mut_gr) + 1
-                                                ),
-                                                strand = BiocGenerics::strand(mut_gr))
-      # Extract the sequences from the BSgenome
-      sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
-      return(sequences)
-    }
-    message("Retrieving context sequences from BSgenome")
-    context <- extract_context(mut_ranges, ref_genome)
-    mut_ranges$context <- context
+    mut_ranges <- populate_sequence_context(mutation_granges = mut_ranges,
+                                            BS_genome = BS_genome)
   }
+
+  # Characterize variants
   dat <- as.data.frame(mut_ranges) %>%
     dplyr::rename(contig = "seqnames")
-
-  # Create is_known based on ID col, if present
-  if ("id" %in% colnames(dat)) {
-    dat <- dat %>% dplyr::mutate(is_known = ifelse(!.data$id == ".", "Y", "N"))
-  }
-  # Create variation_type
-  if (!"variation_type" %in% colnames(dat)) {
-    dat$variation_type <- mapply(MutSeqR::classify_variation, dat$ref, dat$alt)
-  } else {
-    dat <- dplyr::rename(dat, original_variation_type = "variation_type")
-    dat$variation_type <- mapply(MutSeqR::classify_variation, dat$ref, dat$alt)
-  }
-
-  # Define substitution dictionary to normalize to pyrimidine context
-  sub_dict <- c(
-    "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
-    "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
-  )
-  # Calculate columns:
-  # nchar_ref, nchar_alt, varlen, short_ref, normalized_ref, subtype,
-  # normalized_subtype, normalized_context, context_with_mutation,
-  # normalized_context_with_mutation, gc_content
-  dat <- dat %>%
-    dplyr::mutate(
-      nchar_ref = nchar(ref),
-      nchar_alt = ifelse(!(.data$variation_type %in% c("no_variant",
-                                                       "sv",
-                                                       "ambiguous",
-                                                       "uncategorized")),
-                         nchar(alt), NA),
-      varlen =
-        ifelse(.data$variation_type %in% c("insertion", "deletion", "complex"),
-          .data$nchar_alt - .data$nchar_ref,
-          ifelse(.data$variation_type %in% c("snv", "mnv"), .data$nchar_ref,
-            NA
-          )
-        ),
-      short_ref = substr(.data$ref, 1, 1),
-      normalized_ref = dplyr::case_when(
-        substr(.data$ref, 1, 1) == "A" ~ "T",
-        substr(.data$ref, 1, 1) == "G" ~ "C",
-        substr(.data$ref, 1, 1) == "C" ~ "C",
-        substr(.data$ref, 1, 1) == "T" ~ "T"
-      ),
-      subtype =
-        ifelse(.data$variation_type == "snv",
-          paste0(.data$ref, ">", .data$alt),
-          .data$variation_type
-        ),
-      normalized_subtype = ifelse(.data$subtype %in% names(sub_dict),
-                                  sub_dict[.data$subtype],
-                                  .data$subtype),
-      normalized_context = ifelse(
-        stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
-        mapply(function(x) MutSeqR::reverseComplement(x, case = "upper"),
-               .data$context),
-        .data$context),
-      context_with_mutation =
-        ifelse(.data$variation_type == "snv",
-               paste0(stringr::str_sub(.data$context, 1, 1),
-                      "[", .data$subtype, "]",
-                      stringr::str_sub(.data$context, 3, 3)),
-               .data$variation_type),
-      normalized_context_with_mutation =
-        ifelse(.data$variation_type == "snv",
-               paste0(stringr::str_sub(.data$normalized_context, 1, 1),
-                      "[", .data$normalized_subtype, "]",
-                      stringr::str_sub(.data$normalized_context, 3, 3)),
-               .data$variation_type),
-      gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
-                    stringr::str_count(string = .data$context, pattern = "C"))
-      / stringr::str_count(.data$context),
-      filter_mut = FALSE
-    )
-
+  dat <- characterize_variants(dat)
+  
   # Depth
   # Add alt_depth column, if it doesn't exist
   if (!"alt_depth" %in% colnames(dat)) {
