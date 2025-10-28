@@ -6,11 +6,22 @@ encoding: UTF-8
 # MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" style="float:right; height:200px;" alt="The MutSeqR logo."></a>
 
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml)
-  [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
   <!-- badges: end -->
 
+## Important Notice
+
+This branch is designed to be compatible with Bioconductor. For full package utility, please install the devel version of bioconductor packages:
+
+```{r}
+BiocManager::install(version='devel', force = TRUE)
+```
+
 ## Overview
+
 MutSeqR is an open-source R package to analyze error-corrected Next-Generation
 Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.
 
@@ -45,6 +56,7 @@ devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 ```
 
 Load the package
+
 ```r
 library(MutSeqR)
 ```
