@@ -15,7 +15,7 @@ encoding: UTF-8
 > [!IMPORTANT]
 > MutSeqR is currently under review for Bioconductor. The most recent changes can be found in the devel branch. To use this version of the package, please install the devel version of bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
 
-```{r}
+```{r, eval = FALSE}
 BiocManager::install(version='devel', force = TRUE)
 ```
 
