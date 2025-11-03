@@ -160,7 +160,7 @@
 #' @importFrom BiocGenerics strand start end
 #' @importFrom IRanges IRanges
 #' @importFrom Biostrings getSeq
-#' @importFrom Seqinfo seqnames
+#' @importFrom GenomeInfoDb seqnames
 #' @export
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
@@ -364,7 +364,7 @@ import_mut_data <- function(mut_file,
     extract_context <- function(mut_gr,
                                 bsgenome) {
       # Resize the mut_ranges to include the context
-      expanded_ranges <- GenomicRanges::GRanges(seqnames = Seqinfo::seqnames(mut_gr),
+      expanded_ranges <- GenomicRanges::GRanges(seqnames = GenomeInfoDb::seqnames(mut_gr),
                                                 ranges = IRanges::IRanges(
                                                   start = BiocGenerics::start(mut_gr) - 1,
                                                   end = BiocGenerics::start(mut_gr) + 1
