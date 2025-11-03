@@ -10,13 +10,12 @@ encoding: UTF-8
 [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-  <!-- badges: end -->
+<!-- badges: end -->
 
-## Important Notice
+> [!IMPORTANT]
+> MutSeqR is currently under review for Bioconductor. The most recent changes can be found in the devel branch. To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
 
-MutSeqR is currently under development for BioConductor submission. The most recent changes can be found in the devel branch. To use this version of the package, please install the devel version of bioconductor. We will maintain seperate branches until MutSeqR can be integrated with a released BioConductor version.
-
-```{r}
+```{r, eval = FALSE}
 BiocManager::install(version='devel', force = TRUE)
 ```
 
@@ -50,14 +49,14 @@ You can also view [GitHub releases](https://github.com/EHSRB-BSRSE-Bioinformatic
 
 Install the package from github:
 
-```r
+```{r, eval = FALSE}
 # install.packages("devtools")
 devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 ```
 
 Load the package
 
-```r
+```{r, eval = FALSE}
 library(MutSeqR)
 ```
 
