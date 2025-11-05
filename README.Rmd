@@ -65,7 +65,7 @@ library(MutSeqR)
 
 Example data is loaded through BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
 
-```{r}
+```{r, eval = FALSE}
 BiocManager::install(version='devel', force = TRUE)
 BiocManager::install("ExperimentHub")
 library(ExperimentHub)
@@ -75,7 +75,7 @@ query(eh, "MutSeqRData")
 
 Access example data through the index:
 
-```{r}
+```{r, eval = FALSE}
 example_data <- eh[["EH9857"]]
 ```
 
