@@ -2,37 +2,24 @@ on:
   push:
     paths:
       - README.Rmd
-  workflow_dispatch:
+  workflow_dispatch: # allows manual runs
 
-name: Render README
+name: Knit README
 
 jobs:
-  render:
-    name: Render README
+  knit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-pandoc@v2
-      
-      - name: Install dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            rmarkdown
-            BiocManager
-          #bioc-version: "devel" 
 
-      - name: Install local package (MutSeqR)
-        run: BiocManager::install()
-        shell: Rscript {0}
-
-      - name: Render README
-        run: Rscript -e 'rmarkdown::render("README.Rmd")'
+      - name: Knit README without running code
+        run: Rscript -e 'knitr::knit("README.Rmd", output = "README.md")'
 
       - name: Commit results
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git commit README.md -m 'Re-build README.Rmd' || echo "No changes to commit"
+          git commit README.md -m 'Re-knit README.Rmd' || echo "No changes to commit"
           git push origin || echo "No changes to commit"
