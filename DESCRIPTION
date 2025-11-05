@@ -78,7 +78,6 @@ Suggests:
     ExperimentHub,
     fmsb,
     fs,
-    GenVisR,
     ggrepel,
     gtools,
     htmltools,
