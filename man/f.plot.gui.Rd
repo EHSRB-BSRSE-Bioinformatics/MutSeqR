@@ -39,6 +39,9 @@ the plots or not.}
 
 \item{return_plots}{A logical variable indicating whether you want to return the plots as a list (TRUE) or not (FALSE, the default). If TRUE, the function will return a list of recorded plots.}
 }
+\value{
+Either the proast object (default) or a list of recorded plots if return_plots = TRUE.
+}
 \description{
 Runs through the plotting functions depending on data type
 and plot type.

@@ -31,7 +31,8 @@ f.proast(
   display_plots = TRUE,
   add_nonzero_val_to_dat = FALSE,
   nonzero_val = NULL,
-  detection_limit = NULL
+  detection_limit = NULL,
+  seed = 125
 )
 }
 \arguments{
@@ -89,6 +90,8 @@ Recommended: 'set of models'.}
 \item{nonzero_val}{Non-interactive mode parameter. The non-zero value to add to each observation when add_nonzero_val_to_dat = TRUE. Must be a positive number.}
 
 \item{detection_limit}{Non-interactive mode parameter. The detection limit to use when add_nonzero_val_to_dat = FALSE. If NULL, the minimum non-zero value in the data will be used. This paramater accepts a numeric value, which will be applied to all response values, or a column name in the data, which will be used to apply different detection limits to different observations.}
+
+\item{seed}{Integer. Random seed for reproducibility. Defaults to 125.}
 }
 \value{
 Results from PROAST.

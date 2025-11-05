@@ -50,8 +50,9 @@ You can also view [GitHub releases](https://github.com/EHSRB-BSRSE-Bioinformatic
 Install the package from github:
 
 ```{r, eval = FALSE}
-# install.packages("devtools")
-devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 ```
 
 Load the package
