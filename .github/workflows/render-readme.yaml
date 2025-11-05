@@ -19,11 +19,11 @@ jobs:
         with:
           extra-packages: |
             rmarkdown
-            devtools
+            BiocManager
           #bioc-version: "devel" 
 
       - name: Install local package (MutSeqR)
-        run: devtools::install()
+        run: BiocManager::install()
         shell: Rscript {0}
 
       - name: Render README
