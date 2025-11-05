@@ -142,7 +142,7 @@
 #' - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise comparisons specified in the `contrasts`.
 #' - pairwise_comparisons: the results of pairwise comparisons specified in the `contrasts`.
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+#' if (requireNamespace(c("car", "doBy", "lme4", "MutSeqRData"), quietly = TRUE)) {
 #' # Example data consists of 24 mouse bone marrow DNA samples imported
 #' # using import_mut_data() and filtered with filter_mut as in Example 4.
 #' # Sequenced on TS Mouse Mutagenesis Panel. Example data is
