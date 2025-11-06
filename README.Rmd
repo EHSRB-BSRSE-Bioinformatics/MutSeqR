@@ -87,7 +87,4 @@ If you encounter a clear bug, please file an issue with a minimal reproducible e
 
 To cite this package in publications use:
 
-```{r echo = FALSE, results='asis'}
-cit <- citation("MutSeqR")
-cat(format(cit, style = "text"), sep = "\n\n")
-```
+Dodge A, Williams A, LeBlanc D, Schuster D, Esina E, Valentine C, Salk J, Maslov A, Bradley C, Yauk C, Marchetti F, Meier M (2025). MutSeqR: Analysis of Error-Corrected Sequencing Data for Mutation Detection. R package version 0.99.2. <https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR>.
