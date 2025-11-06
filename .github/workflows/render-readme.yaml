@@ -2,7 +2,7 @@ on:
   push:
     paths:
       - README.Rmd
-  workflow_dispatch: # allows manual runs
+  workflow_dispatch:
 
 name: Knit README
 
@@ -13,6 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install knitr
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: knitr
 
       - name: Knit README without running code
         run: Rscript -e 'knitr::knit("README.Rmd", output = "README.md")'
