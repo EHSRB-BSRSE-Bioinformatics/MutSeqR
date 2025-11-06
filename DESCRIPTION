@@ -85,6 +85,7 @@ Suggests:
     knitr,
     lme4,
     magick,
+    MutSeqRData,
     openxlsx,
     packcircles,
     patchwork,
