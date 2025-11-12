@@ -133,13 +133,10 @@ spectra_comparison <- function(mf_data,
   # All groups
   groups <- unique(mut_spectra$group_col)
   # Extract data for each group
-  filtered_data <- list()
-  for (i in seq_along(groups)) {
-    group <- groups[i]
-    df_i <- mut_spectra %>%
+  filtered_data <- lapply(groups, function(group) {
+    mut_spectra %>%
       dplyr::filter(.data$group_col == group)
-    filtered_data[[i]] <- df_i
-  }
+  })
 
   # G2 Statistic - Likelihood Ratio Statistic
   ## Piegorsch and Bailer 1994 doi: 10.1093/genetics/136.1.403.
