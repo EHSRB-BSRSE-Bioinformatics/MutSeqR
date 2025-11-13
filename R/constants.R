@@ -1,4 +1,4 @@
-#' Column names for mut tables
+#' Dictionary of column name synonyms for required mutation data columns
 #'
 #' A list of column specifications
 #'
@@ -68,10 +68,10 @@ op$base_required_mut_cols <-
     )
 op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 
-#' Values accepted for mutation subtypes
+#' Subtype Resolution Dictionary
 #'
-#' These values are used to enable user input to translate to columns in a
-#' mut file
+#' Associates the subtype resolution names with their corresponding column
+#' names in the mutation data.
 #'
 #' @format A vector with corresponding values
 #' @examples
@@ -87,7 +87,7 @@ subtype_dict <- c(
     "base_192" = "context_with_mutation"
 )
 
-#' A list of mutation subtypes at different resolutions
+#' A comprehensive list of mutation subtypes at different resolutions
 #' @format A list with corresponding values
 #' @examples
 #' subtype_list[["type"]]
@@ -220,9 +220,9 @@ context_list <- list(
 #' corresponding BSgenome organism names.
 #' @format A list with organism names as keys and corresponding BSgenome
 #' organism names as values.
+#' @export
 #' @examples
 #' BS_org_map["Hsapiens"]
-#' @export
 BS_org_map <- list(
     "Alyrata" = "arabidopsis lyrata",
     "Amellifera" = c("apis mellifera", "honey bee"),

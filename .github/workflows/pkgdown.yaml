@@ -52,31 +52,6 @@ jobs:
           extra-packages: any::pkgdown, local::.
           dependencies: '"hard"'
           needs: website
-      
-      - name: Create articles directory
-        run: mkdir -p docs/articles
-
-      -name: Render Analyzing Mutation Spectra
-        run: |
-          Rscript -e '
-            rmarkdown::render(
-              "inst/extdata/Analyzing Mutation Spectra.Rmd",
-              output_file = "analyzing-mutation-spectra.html", # Output filename matching pkgdown convention
-              output_dir = "docs/articles" # Place directly in the expected articles directory
-            )
-          '
-        shell: Rscript {0}
-
-      - name: Render Modelling Mutation Frequencies
-        run: |
-          Rscript -e '
-            rmarkdown::render(
-              "inst/extdata/Modelling Mutation Frequencies.Rmd",
-              output_file = "modelling-mutation-frequencies.html", # Output filename matching pkgdown convention
-              output_dir = "docs/articles" # Place directly in the expected articles directory
-            )
-          '
-        shell: Rscript {0}
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

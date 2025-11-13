@@ -253,3 +253,140 @@ characterize_variants <- function(mutation_data) {
         )
     return(mutation_data)
 }
+
+#' A utility function that will return the reference context of a mutation
+#' @param mut_string the mutation. Ex. T>C, `A[G>T]C`
+#' @return the reference context of the mutation
+get_ref_of_mut <- function(mut_string) {
+  a <- str_extract(mut_string, ".*(?=\\s*>)")
+  # Remove non-letter characters
+  b <- str_replace_all(a, "[^a-zA-Z]", "")
+  # Extract letter characters after square bracket
+  c <- str_extract(mut_string, "\\](.*)") %>% str_replace_all("[^a-zA-Z]", "")
+  if (is.na(c)) {
+    return(b)
+  } else {
+    return(paste0(b, c))
+  }
+}
+
+#' Get the reverse complement of a DNA or RNA sequence.
+#'
+#' @param x A character vector of DNA or RNA sequences.
+#' @param content c("dna", "rna") The type of sequence to be reversed.
+#' @param case c("lower", "upper", "as is") The case of the output sequence.
+#' @details This file is part of the source code for
+#' SPGS: an R package for identifying statistical patterns in genomic sequences.
+#' Copyright (C) 2015  Universidad de Chile and INRIA-Chile
+#
+#' A copy of Version 2 of the GNU Public License is available in the
+#' share/licenses/gpl-2 file in the R installation directory or from
+#' http://www.R-project.org/Licenses/GPL-2.
+#' reverseComplement.R
+#' @return A character vector of the reverse complement sequences.
+
+reverseComplement <- function(x,
+                              content = c("dna", "rna"),
+                              case = c("lower", "upper", "as is")) {
+  # reverse character vector
+  strreverse <- function(x) {
+    if (!is.character(x)) {
+      stop("x must be a character vector")
+    }
+    vapply(
+      strsplit(x, ""),
+      function(y) paste(rev(y), collapse = ""),
+      character(1)
+    )
+  }
+  # Check arguments
+  if (!is.character(x)) x <- as.character(x) # coerse x to a character vector
+  content <- match.arg(content)
+  case <- match.arg(case)
+  if (length(x) == 0 || (length(x) == 1 && nchar(x) == 0)) {
+    return(x)
+  } # bail if input is empty
+  if (case == "lower") x <- tolower(x)
+  if (case == "upper") x <- toupper(x)
+  if (content == "dna") {
+    src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
+    dest <- "tgcaayrmkswvhdbnxTGCAAyRMKSWVHDBNX-"
+  } else {
+    src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
+    dest <- "ugcaayrmkswvhdbnxUGCAAyRMKSWVHDBNX-"
+  } # if
+  if (max(nchar(x)) > 1) {
+    return(chartr(src, dest, strreverse(x)))
+  }
+  # x is not a single string, so process it as a vector
+  chartr(src, dest, rev(x))
+} # function
+
+#' classify_variation
+#' @description Classify the variation type of a mutation based on its ref and
+#' alt values.
+#' @param ref The reference allele.
+#' @param alt The alternate allele.
+#' @return A character indicating the type of variation.
+#' @export
+#' @examples
+#' df <- data.frame(
+#'   ref = c("A", "CAGT", "GCC", "T", "ACG", "C", "G", "T", "A"),
+#'   alt = c("R", "TGA", "G", "TC", "TAC", "C", "<DEL>", "G", "???")
+#' )
+#' df$variation_type <- mapply(classify_variation, df$ref, df$alt)
+#' df
+classify_variation <- function(ref, alt) {
+    stopifnot(is.character(ref), is.character(alt))
+    no_variant_indicators <- c(".", "", "<NON_REF>")
+    structural_indicators <- c(
+        "<DEL>", "<INS>", "<DUP>", "<INV>", "<FUS>",
+        "<CNV>", "<CNV:TR>", "<DUP:TANDEM>", "<DEL:ME>",
+        "<INS:ME>"
+    )
+    iupac_indicators <- c(
+        "R", "K", "S", "Y", "M",
+        "W", "B", "H", "N", "D", "V"
+    )
+
+    # Case: No variant site
+    # GVCF files sometimes list no_variant sites as <NON_REF> (GATK)
+    alt <- gsub("(^|,)<NON_REF>(,|$)", "", alt)
+    alt <- gsub("^,|,$", "", alt) # Trim leading/trailing commas
+    if (alt %in% no_variant_indicators || alt == ref) {
+        return("no_variant")
+    }
+    # Case: Structural variants
+    if (alt %in% structural_indicators) {
+        return("sv")
+    }
+    # Case: IUPAC ambiguity codes
+    if (alt %in% iupac_indicators) {
+        return("ambiguous")
+    }
+    # Case: SNV (Single Nucleotide Variant)
+    if (nchar(ref) == 1 && nchar(alt) == 1 && ref != alt) {
+        return("snv")
+    }
+    # Case: MNV (Multi-Nucleotide Variant)
+    if (nchar(ref) > 1 && nchar(ref) == nchar(alt) && ref != alt) {
+        return("mnv")
+    }
+    # Case: Insertion
+    if (nchar(ref) < nchar(alt) && startsWith(alt, ref)) {
+        return("insertion")
+    }
+    # Case: Deletion
+    if (nchar(ref) > nchar(alt) && nchar(alt) == 1 && startsWith(ref, alt)) {
+        return("deletion")
+    }
+    # Case: Complex; ref and alt diff lengths & diff base compositions
+    if (nchar(ref) != nchar(alt) &&
+        !grepl(paste0("^", ref), alt) &&
+        !grepl(paste0("^", alt), ref)
+    ) {
+        return("complex")
+    }
+    # Otherwise, uncategorized
+    return("uncategorized")
+}
