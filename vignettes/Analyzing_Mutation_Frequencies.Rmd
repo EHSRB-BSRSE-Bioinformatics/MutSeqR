@@ -18,7 +18,6 @@ bibliography: Analyzing_Mutation_Frequencies.bib
 ---
 
 ```{r setup, include=FALSE}
-BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
 library(htmltools)

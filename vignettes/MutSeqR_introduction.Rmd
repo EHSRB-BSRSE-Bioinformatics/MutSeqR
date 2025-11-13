@@ -8,7 +8,7 @@ author:
     email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
 output:
-  BiocStyle::html_document:
+  rmarkdown::html_document:
     toc: true
     toc_float: yes
     code_folding: show
@@ -23,7 +23,6 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
 library(htmltools)
