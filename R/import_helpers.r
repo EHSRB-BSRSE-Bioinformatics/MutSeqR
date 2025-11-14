@@ -223,7 +223,7 @@ characterize_variants <- function(mutation_data) {
         normalized_context = ifelse(
             stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
             mapply(
-            function(x) MutSeqR::reverseComplement(x, case = "upper"),
+            function(x) reverseComplement(x, case = "upper"),
             .data$context
             ),
             .data$context

@@ -43,6 +43,23 @@ plot_ci <- function(data,
                     x_lab = NULL,
                     y_lab = NULL,
                     title = NULL) {
+  stopifnot(
+      "data is required" = !missing(data),
+      "data must be a data frame" = is.data.frame(data),
+      "order must be a character string" = is.character(order),
+      "nudge must be numeric" = is.numeric(nudge),
+      "log_scale must be logical" = is.logical(log_scale),
+      "x_lab must be a character string or NULL" =
+          is.character(x_lab) | is.null(x_lab),
+      "y_lab must be a character string or NULL" =
+          is.character(y_lab) | is.null(y_lab),
+      "title must be a character string or NULL" =
+          is.character(title) | is.null(title)
+  )
+  order <- match.arg(order,
+    choices = c("none", "asc", "desc", "custom"),
+    several.ok = FALSE
+  )
   if (order == "asc") {
     response_order <- data %>%
       dplyr::arrange(.data$BMD) %>%

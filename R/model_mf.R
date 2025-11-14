@@ -190,6 +190,18 @@ model_mf <- function(
     contrasts = NULL,
     cont_sep = "\t",
     ...) {
+
+    muts <- match.arg(
+        muts,
+        choices = colnames(mf_data),
+        several.ok = FALSE
+    )
+    total_count <- match.arg(
+        total_count,
+        choices = colnames(mf_data),
+        several.ok = FALSE
+    )
+
   if (!requireNamespace("doBy", quietly = TRUE)) {
     stop("Package doBy is required. Please install from CRAN.")
   }

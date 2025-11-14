@@ -39,14 +39,14 @@
 #' indels may start outside of the regions. Adjust the padding to
 #' include these variants in your region's ranges.
 #' @param BS_genome The pkgname of a BS genome. A BS genome must be installed
-#' prior to import to populate the context column (trinucleotide context for each position).
-#' Only required if data does not already include a context column. Please install the
-#' appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
-#' name of the BSgenome package. The pkgname can be found using the find_BS_genome()
-#' function, which requires the species and assembly version.
-#' Ex."BSgenome.Hsapiens.UCSC.hg38" | "BSgenome.Hsapiens.UCSC.hg19" |
-#' "BSgenome.Mmusculus.UCSC.mm10" | "BSgenome.Mmusculus.UCSC.mm39" |
-#' "BSgenome.Rnorvegicus.UCSC.rn6"
+#' prior to import to populate the context column (trinucleotide context for
+#' each position). Only required if data does not already include a context
+#' column. Please install the appropriate BS genome using
+#' BiocManager::install("pkgname") where pkgname is the name of the BSgenome
+#' package. The pkgname can be found using the find_BS_genome() function, which
+#' requires the species and assembly version. Ex."BSgenome.Hsapiens.UCSC.hg38"
+#' | "BSgenome.Hsapiens.UCSC.hg19" | "BSgenome.Mmusculus.UCSC.mm10" |
+#' "BSgenome.Mmusculus.UCSC.mm39" | "BSgenome.Rnorvegicus.UCSC.rn6".
 #' @param custom_column_names A list of names to specify the meaning of column
 #'  headers. Since column names can vary with data, this might be necessary to
 #'  digest the mutation data properly. Typical defaults are set, but can
@@ -136,7 +136,6 @@
 #'   # We will create an example metadata table for this data.
 #'   sample_meta <- data.frame(
 #'     sample = "dna00996.1",
-#'     dose = "50",
 #'     dose_group = "High"
 #'   )
 #'   # Import the data
@@ -165,21 +164,35 @@ import_mut_data <- function(
     sample_data = NULL, sd_sep = "\t",
     regions = NULL, rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
     BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE) {
-  if (!is.numeric(padding) || padding < 0) {
-    stop("The range buffer must be a non-negative number")
-  }
-  if (!is.logical(is_0_based_mut) || !is.logical(is_0_based_rg)) {
-    stop("is_0_based must be a logical variable")
-  }
 
-  if (!is.null(custom_column_names)) {
-    if (!is.list(custom_column_names)) {
-      stop("custom_column_names must be a list")
-    }
-  }
-  if (!is.logical(output_granges)) {
-    stop("output_granges must be a logical variable")
-  }
+  stopifnot(
+      "mut_file is required" = !missing(mut_file),
+      "mut_file must be a character indicating a filepath or a data frame" =
+          is.character(mut_file) || is.data.frame(mut_file),
+      "mut_sep must be a character string" = is.character(mut_sep),
+      "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
+      "sample_data must be NULL, a character indicating a filepath, or a data frame" =
+          is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
+      "sd_sep must be a character string" = is.character(sd_sep),
+      "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" =
+          is.null(regions) || is.character(regions) ||
+              is.data.frame(regions) || methods::is(regions, "GRanges"),
+      "rg_sep must be a character string" = is.character(rg_sep),
+      "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
+      "padding must be a non-negative integer" =
+          is.numeric(padding) && padding >= 0 && (padding %% 1 == 0),
+      "BS_genome must be NULL or a character string" =
+          is.null(BS_genome) || is.character(BS_genome),
+      "custom_column_names must be NULL or a list" =
+          is.null(custom_column_names) || is.list(custom_column_names),
+      "output_granges must be a logical variable" = is.logical(output_granges)
+  )
+    BS_genome <- match.arg(BS_genome,
+        choices = c(
+            NULL,
+            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+        )
+  )
 
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
@@ -241,8 +254,6 @@ import_mut_data <- function(
            You may want to set mut_sep to properly reflect
            the delimiter used for the data you are importing.")
     }
-  } else {
-    stop("mut_file must be a character string or a data frame")
   }
   ## Sample Data File
   if (!is.null(sample_data)) {

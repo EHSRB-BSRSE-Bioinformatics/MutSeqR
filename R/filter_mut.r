@@ -160,7 +160,42 @@ filter_mut <- function(mutation_data,
     # is considered a constitutional variant. If a mutation is present at a
     # fraction higher than this value, the reference base will be swapped,
     # and the alt_depth recalculated. 0.3 (30%) would be a sane default?
-
+    stopifnot(
+        "vaf_cutoff must be a single numeric value between 0 and 1" =
+            is.numeric(vaf_cutoff) && length(vaf_cutoff) == 1 &&
+                vaf_cutoff >= 0 && vaf_cutoff <= 1,
+        "snv_in_germ_mnv must be a logical value" =
+            is.logical(snv_in_germ_mnv),
+        "rm_abnormal_vaf must be a logical value" =
+            is.logical(rm_abnormal_vaf),
+        "custom_filter_rm must be a logical value" =
+            is.logical(custom_filter_rm),
+        "allow_half_overlap must be a logical value" =
+            is.logical(allow_half_overlap),
+        "is_0_based_rg must be a logical value" =
+            is.logical(is_0_based_rg),
+        "rm_filtered_mut_from_depth must be a logical value" =
+            is.logical(rm_filtered_mut_from_depth),
+        "return_filtered_rows must be a logical value" =
+            is.logical(return_filtered_rows)
+    )
+    if (!missing(regions_filter)) {
+        regions_filter <- match.arg(
+            regions_filter,
+            choices = c("remove_within", "keep_within")
+        )
+    }
+    if (!is.null(custom_filter_col)) {
+        custom_filter_col <- match.arg(
+            custom_filter_col,
+            choices = colnames(mutation_data)
+        )
+        custom_filter_val <- match.arg(
+            custom_filter_val,
+            choices = unique(mutation_data[[custom_filter_col]]),
+            several.ok = TRUE
+        )
+    }
     if (return_filtered_rows) {
         rm_rows <- data.frame()
     }
@@ -188,10 +223,6 @@ filter_mut <- function(mutation_data,
     ## content)
     ## total_depth is within 1.5 fold of local mean
     ## total depth ratio is >0.95 (5% of all reads were excluded as no calls)
-
-    if (vaf_cutoff < 0 || vaf_cutoff > 1) {
-        stop("The VAF cutoff must be between 0 and 1")
-    }
 
     ######## VAF Filter #######################################################
     if (vaf_cutoff < 1) {
@@ -340,9 +371,6 @@ filter_mut <- function(mutation_data,
                 " filter value(s). Please provide the value(s) within the",
                 " custom filter column that should be used to apply the filter"
             )
-        }
-        if (!(custom_filter_col) %in% colnames(mutation_data)) {
-            stop("could not find", custom_filter_col, "in mutation_data")
         }
         pattern <- paste(custom_filter_val, collapse = "|")
         custom_filtered_rows <- grepl(pattern, mutation_data[[custom_filter_col]])

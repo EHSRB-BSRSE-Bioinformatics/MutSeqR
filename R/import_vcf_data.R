@@ -174,6 +174,30 @@ import_vcf_data <- function(vcf_file,
                             padding = 0,
                             BS_genome = NULL,
                             output_granges = FALSE) {
+    stopifnot(
+        "vcf_file is requireg" = !missing(vcf_file),
+        "vcf_file must be a character string" = is.character(vcf_file),
+        "sample_data must be NULL, a character indicating a filepath, or a data frame" =
+            is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
+        "sd_sep must be a character string" = is.character(sd_sep),
+        "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" =
+            is.null(regions) || is.character(regions) ||
+                is.data.frame(regions) || methods::is(regions, "GRanges"),
+        "rg_sep must be a character string" = is.character(rg_sep),
+        "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
+        "padding must be a non-negative integer" =
+            is.numeric(padding) && padding >= 0 && (padding %% 1 == 0),
+        "BS_genome must be NULL or a character string" =
+            is.null(BS_genome) || is.character(BS_genome),
+        "output_granges must be a logical variable" = is.logical(output_granges)
+  )
+    BS_genome <- match.arg(BS_genome,
+        choices = c(
+            NULL,
+            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+        )
+  )
+
   vcf_file <- file.path(vcf_file)
 
   # Check if a sample identifier is already present in the INFO field

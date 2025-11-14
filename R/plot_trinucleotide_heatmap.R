@@ -67,6 +67,21 @@ plot_trinucleotide_heatmap <- function(mf_data,
                                        max = 0.2,
                                        rescale_data = FALSE,
                                        condensed = FALSE) {
+  
+  stopifnot(
+      "mf_data is required" = !missing(mf_data),
+      "rescale_data must be a logical value" = is.logical(rescale_data),
+      "condensed must be a logical value" = is.logical(condensed)
+  )
+  mf_type <- match.arg(mf_type, choices = c("min", "max"))
+  mut_proportion_scale <- match.arg(mut_proportion_scale,
+    choices = c(
+      "inferno", "magma", "plasma",
+      "viridis", "cividis", "turbo",
+      "mako", "rocket"
+    )
+  )
+  
   # Remove NA values from data
   mf_data <- mf_data %>%
     dplyr::filter(!is.na(.data[[group_col]]), !is.na(.data[[facet_col]]))

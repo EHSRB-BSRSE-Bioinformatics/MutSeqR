@@ -124,6 +124,37 @@ plot_spectra <- function(mf_data,
                          x_lab = NULL,
                          y_lab = NULL,
                          rotate_xlabs = FALSE) {
+  
+  stopifnot(
+      "mf_data is required" = !missing(mf_data),
+      "mf_data must be a data frame" = is.data.frame(mf_data),
+      "rotate_xlabs must be a logical value" = is.logical(rotate_xlabs)
+  )
+  subtype_resolution <- match.arg(subtype_resolution,
+      choices = c("base_6", "base_12", "base_96", "base_192", "type")
+  )
+    mf_type <- match.arg(mf_type,
+        choices = c("min", "max")
+    )
+    group_order <- match.arg(group_order,
+        choices = c("none", "smart", "arranged", "custom", "clustered")
+    )
+    response <- match.arg(response,
+        choices = c("proportion", "mf", "sum")
+    )
+    dist <- match.arg(dist,
+        choices = c(
+            "cosine", "euclidean", "maximum",
+            "manhattan", "canberra", "binary", "minkowski"
+        )
+    )
+    cluster_method <- match.arg(cluster_method,
+        choices = c(
+            "ward.D", "ward.D2", "single", "complete",
+            "average", "mcquitty", "median", "centroid"
+        )
+    )
+  
   # check package dependencies
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("Package patchwork is required. Please install the package using 'install.packages('patchwork')'")

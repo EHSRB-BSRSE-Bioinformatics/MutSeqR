@@ -74,6 +74,24 @@ get_seq <- function(regions,
                     ucsc = FALSE,
                     species = NULL,
                     genome = NULL) {
+    stopifnot(
+        "regions must be a file path, data frame, or GRanges object." =
+            is.character(regions) ||
+            is.data.frame(regions) ||
+            methods::is(regions, "GRanges"),
+        "rg_sep must be a character" = is.character(rg_sep),
+        "is_0_based_rg must be a logical" = is.logical(is_0_based_rg),
+        "padding must be a non-negative integer" =
+            is.numeric(padding) && padding >= 0 && padding == floor(padding),
+        "BS_genome must be a character or NULL" =
+            is.null(BS_genome) || is.character(BS_genome),
+        "ucsc must be a logical" = is.logical(ucsc),
+        "species must be a character or NULL" =
+            is.null(species) || is.character(species),
+        "genome must be a character or NULL" =
+            is.null(genome) || is.character(genome)
+    )
+
     if (ucsc && !requireNamespace("xml2", quietly = TRUE)) {
         stop("The 'xml2' package is required for UCSC API access.")
     }

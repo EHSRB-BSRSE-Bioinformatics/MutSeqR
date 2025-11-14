@@ -18,6 +18,7 @@
 #' # Find all possible mouse BS genomesL
 #' mouse_all <- find_BS_genome("mouse")
 find_BS_genome <- function(organism, genome, masked = FALSE) {
+    
   # Map the input name to the organism name in available.genomes
   organism <- gsub("\\.\\s", "", organism)
   convertToOrganismName <- function(name) {

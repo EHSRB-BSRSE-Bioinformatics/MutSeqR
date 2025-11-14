@@ -78,6 +78,11 @@ signature_fitting <- function(mutation_data,
                               group = "sample",
                               output_path = NULL,
                               python_version) {
+  stopifnot(
+      "mutation_data is required" = !missing(mutation_data),
+      "python_version is required" = !missing(python_version)
+  )
+
   if (!requireNamespace("reticulate")) {
     stop("Reticulate not installed: you need this to run SigProfiler tools in R.")
   }

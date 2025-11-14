@@ -66,6 +66,17 @@ plot_radar <- function(mf_data,
                        label_col,
                        facet_col,
                        indiv_y = TRUE) {
+  stopifnot(
+      "mf_data is required" = !missing(mf_data),
+      "mf_data must be a data frame" = is.data.frame(mf_data),
+      "response_col is required" = !missing(response_col),
+      "label_col is required" = !missing(label_col),
+      "facet_col is required" = !missing(facet_col)
+  )
+    response_col <- match.arg(response_col, colnames(mf_data))
+    label_col <- match.arg(label_col, colnames(mf_data))
+    facet_col <- match.arg(facet_col, colnames(mf_data))
+
   if (!requireNamespace("fmsb", quietly = TRUE)) {
     stop("You need the package fmsb to run this function.")
   }

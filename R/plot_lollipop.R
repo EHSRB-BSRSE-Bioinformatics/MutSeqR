@@ -47,17 +47,39 @@
 #'     )
 #'
 #'     # 2. Generate the plots
-#'     plot_list <- plot_lollipop(mutation_data = example_data, min_recurrence = 2)
+#'     plot_list <- plot_lollipop(
+#'      mutation_data = example_data,
+#'      min_recurrence = 2,
+#'      group_col = "dose_group"
+#'    )
+#'    # 3. Display the plots for each dose group
+#'    plot_list$Control
 #'
-#'     # 3. Display a plot for a specific chromosome
-#'     # print(plot_list$chr1)
-#'     # print(plot_list$chr2)
 #'   }
 #' }
 plot_lollipop <- function(mutation_data,
                           min_recurrence = 2,
-                          group_col = "dose_group",
+                          group_col,
                           custom_palette = NULL) {
+  stopifnot(
+      "mutation_data is required." = !missing(mutation_data),
+      "mutation_data must be a data.frame." = is.data.frame(mutation_data),
+      "min_recurrence must be a single positive integer." =
+          is.numeric(min_recurrence) &&
+              length(min_recurrence) == 1 &&
+              min_recurrence >= 1 &&
+              (min_recurrence %% 1 == 0),
+      "group_col is required." = !missing(group_col),
+      "group_col must be a character" = is.character(group_col),
+      "custom_palette must be NULL or a named character vector." =
+          is.null(custom_palette) ||
+              (is.character(custom_palette) && !is.null(names(custom_palette)))
+  )
+  group_col <- match.arg(
+    group_col,
+    choices = colnames(mutation_data),
+    several.ok = FALSE
+  )
   # --- 1. Input Validation ---
   if (!requireNamespace("ggplot2", quietly = TRUE) ||
     !requireNamespace("dplyr", quietly = TRUE)) {

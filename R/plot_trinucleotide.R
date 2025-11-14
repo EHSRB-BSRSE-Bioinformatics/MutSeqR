@@ -73,6 +73,30 @@ plot_trinucleotide <- function(
     sum_totals = TRUE,
     output_path = NULL,
     output_type = "svg") {
+  
+  stopifnot(
+      "mf_96 is required" = !missing(mf_96),
+      "mf_96 must be a data frame" = is.data.frame(mf_96),
+      "indiv_y must be a logical value" = is.logical(indiv_y),
+      "sum_totals must be a logical value" = is.logical(sum_totals)
+  )
+    response <- match.arg(
+        arg = response,
+        choices = c("proportion", "frequency", "sum")
+    )
+    mf_type <- match.arg(
+        arg = mf_type,
+        choices = c("min", "max")
+    )
+    output_type <- match.arg(
+        arg = output_type,
+        choices = c(
+            "eps", "ps", "tex", "pdf",
+            "jpeg", "tiff", "png", "bmp",
+            "svg", "wmf"
+        )
+    )
+  
   mf_96 <- dplyr::filter(
     mf_96,
     !.data$normalized_context_with_mutation %in% setdiff(MutSeqR::subtype_list$type, "snv")

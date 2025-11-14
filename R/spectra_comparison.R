@@ -75,9 +75,11 @@
 #'
 #' # Example: compare 6-base mutation spectra between dose groups
 #' # Load the example data
-#' mf_example <- readRDS(system.file("extdata", "Example_files", "mf_data_6.rds",
-#'   package = "MutSeqR"
-#' ))
+#' mf_example <- readRDS(
+#'      system.file("extdata", "Example_files", "mf_data_6.rds",
+#'          package = "MutSeqR"
+#'      )
+#' )
 #' # Create the contrasts table
 #' contrasts <- data.frame(
 #'   col1 = c("Low", "Medium", "High"),
@@ -99,6 +101,13 @@ spectra_comparison <- function(mf_data,
                                contrasts,
                                cont_sep = "\t",
                                seed = 1234) {
+  stopifnot(
+      "mf_data is required" = !missing(mf_data),
+      "mf_data must be a data.frame" = is.data.frame(mf_data),
+      "contrasts is required" = !missing(contrasts)
+  )
+  mf_type <- match.arg(mf_type, choices = c("min", "max"))
+
   # Prepare Data
   sum_col <- paste0("sum_", mf_type)
   # Find the subtype column

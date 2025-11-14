@@ -91,14 +91,16 @@ plot_model_mf <- function(model,
                           plot_title = NULL,
                           fill_label = NULL,
                           custom_palette = NULL) {
+  stopifnot(
+    "model is required" = !missing(model),
+    "model must be a list" = is.list(model),
+    "plot_error_bars must be logical" = is.logical(plot_error_bars),
+    "plot_signif must be logical" = is.logical(plot_signif)
+  )
+  plot_type <- match.arg(plot_type, choices = c("bar", "point"))
   # Check if point_estimates exist in the model_object
   if (!"point_estimates" %in% names(model)) {
     stop("The model object does not contain 'point_estimates'")
-  }
-
-  # Validate plot_type
-  if (plot_type != "bar" && plot_type != "point") {
-    stop("Invalid plot type. Choose either 'bar' or 'point'.")
   }
 
   plot_data <- model$point_estimates
