@@ -288,8 +288,9 @@ coordinates. Additional columns are added to describe features of the genomic
 regions (Ex. transcription status, GC content, etc.). Region metadata will be
 joined with mutation data by checking for overlap between the target region
 ranges and the position of the record.
-The `regions` parameter can be either a filepath, a data frame, or a GRanges
-object (see `r Biocpkg("GenomicRanges")`). Filepaths will be read using the
+The `regions` parameter can be either a filepath, a data frame, or a
+[GRanges](https://bioconductor.org/packages/devel/bioc/vignettes/GenomicRanges/inst/doc/GenomicRangesIntroduction.html)
+object. Filepaths will be read using the
 `rg_sep`. Users can also choose from the built-in TwinStrand DuplexSeq™
 Mutagenesis Panels by inputting "TSpanel_human", "TSpanel_mouse", or
 "TSpanel_rat". Required columns for the regions file are "contig", "start",
@@ -382,7 +383,7 @@ DT::datatable(head(imported_example_data_custom), options = list(scrollX = TRUE)
 ## Output
 
 Mutation data can be output as either a data frame or a _GRanges_ object
-(see `r Biocpkg("GenomicRanges")`) for downstream analysis. Use the `output_granges`
+for downstream analysis. Use the `output_granges`
 parameter to specify the output. _GRanges_ may faciliate use in other packages
 and makes doing genomic based analyses on the ranges significantly easier. Most
 downstream analyses provided by MutSeqR will use a data frame.

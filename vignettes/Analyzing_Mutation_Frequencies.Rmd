@@ -124,24 +124,33 @@ columns for experimental variables of interest using the
 You may specify factors and covariates for your model using the `fixed_effects`
 and `random_effects` parameters respectively. If more than one fixed_effect is
 supplied, then you may specify whether you wish to test the interaction between
-your fixed_effects using the `test_interaction` parameter.
+your fixed_effects using the `test_interaction` parameter. For each fixed effect,
+you must also include the reference level using the `reference_level` parameter.
+The level specified as the reference level will be used as the intercept when
+calculating model coefficients.
 
 You must specify the columns in your `mf_data` that contain the mutation counts
 and the total_depth per sample using the `muts` and `total_counts` parameters
-respectively.
+respectively. Default values should be sufficient if the mf_data was created
+using `calculate_mf()`.
 
 To perform pairwise comparisons between levels of your fixed effects, supply a
 constrast table using the `contrasts` parameter. This can either be a data
 frame or a filepath to a text file that will be loaded into R. The table must
 consist of two columns, each containing levels within the fixed_effects.
 The level in the first column will be compared to the level in the second
-column for each row. You should also provide the reference level for each
-fixed effect using the `reference_level` parameter. If you specify
-multiple pairwise comparisons, then the p-values will automatically be
-corrected for multiple comparisons using the Sidak method. For multiple
-fixed effects, the user must include levels for all fixed_effects in each
-value of the contrasts table. Within each value, the levels of the different
-fixed_effects should be seperated by a colon.
+column for each row.
+
+If the user supplies multiple fixed effects to the model, then each value in
+the contrasts table must include levels for all fixed_effects. Within each
+value, the levels of the different fixed_effects should be seperated by a
+colon. For example, if we have fixed effects dose and tissue, one comparison
+might be control:lung vs. control:heart. The function will calculate the
+fold-difference in MF of the first column relative to the second column.
+The function will also provide the p-value denoting the significance of
+the difference. If you specify multiple pairwise comparisons, then the
+p-values will automatically be corrected for multiple comparisons using the
+Sidak method.
 
 ## Output
 
@@ -239,6 +248,8 @@ plot <- hist(model_data$residuals,
 )
 ```
 
+The residuals form a bell-curve with a mean of 0 indicating that they follow a normal distribution.
+
 #### Residuals QQ-plot
 
 ```{r qq-caption1, include=FALSE}
@@ -256,11 +267,16 @@ qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
 stats::qqline(model_data$residuals, col = "red")
 ```
 
+The QQ-plot depicts points ollowing the y=x line, indicating that residuals follow a normal distribution.
+Our model assumptions have been validated.
+
 #### Model Summary
 
 ```{r model-dose-summary}
 model_by_dose$summary
 ```
+
+The model summary indicates that dose group has a significant effect on mutation frequency. Our model fit a quasibiniomal model with a low dispersion parameter (4.6) indicating a good fit.
 
 #### Model Estimates
 
@@ -282,6 +298,8 @@ DT::datatable(
   )
 )
 ```
+
+The point estimates returns the mean values estimated by the model for each level of the fixed effects. We can compare these values to the empirical mean that is calculated directly from our data to check that the model fit the data well.
 
 #### Pairwise Comparisons
 
@@ -306,6 +324,11 @@ DT::datatable(
 ) %>%
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
+
+We performed pairwise comparisons to determine which dose groups were significantly different from control.
+The pairwise comparisons were performed based on the contrasts table supplied to model_mf(). Our results show that the mutation frequency is signifincatly increased for all dose groups relative to the control group, ranging from a 2-fold increase in the Low dose group to a 5.5-fold increase in the High dose group.
+
+Due to the novelty of using ECS for mutagenicity assessmnent, there are no widely established thresholds for what constitutes a biologically meaningful change. However, previous guidelines for interpreting biological relevance, derived from traditional mutagenicity assays, recommend a minimum fold change of 1.5 (White et al., 2020).
 
 ### Example 2. Model by Dose and Target {.tabset}
 
@@ -398,17 +421,24 @@ qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
 stats::qqline(model_data$residuals, col = "red")
 ```
 
+The histogram and the QQ plot indicate normally distributed residuals.
+
 #### Model Summary
 
 ```{r model-rg-summary}
 model_by_target$summary
 ```
 
+We see that several fixed effects have significance.
+
 #### ANOVA
 
 ```{r model-rg-anova}
 model_by_target$anova
 ```
+
+Our anova shows that both fixed effects (dose and label) significantly affect
+MF. Their interaction is also significant.
 
 #### Model Estimates
 
@@ -454,6 +484,11 @@ DT::datatable(
 ) %>%
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
+
+Our pairwise comparisons indicate that all targets show a dose response. ie.
+we see a significant increase in MF compared to control for the BaP-dose groups
+within all targets. However, the fold-increase in MF from control to high dose
+varies depending on the target.
 
 ## Plot Model Results {.tabset}
 
@@ -547,6 +582,9 @@ plot <- plot_model_mf(
 plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
+
+These plots facilitate the interpretation of results. We can clearly see how MF varies
+based on the genomic target while increasing with dose.
 
 ## Exporting Model Results
 
@@ -688,6 +726,10 @@ DT::datatable(proast_results$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
 ```
 
+We are mostly interested in the model averaging results. For MFmin,
+we would report that BaP induces a 50% increase in MF relative to controls
+at a dose of 9.11 mg/kg-bw/d (90% CI 8.39 - 9.87).
+
 ### Exponential & Hill Models
 
 ```{r bmd-exphill-cap, include=FALSE}
@@ -817,6 +859,12 @@ plot <- plot_ci(
 )
 plot
 ```
+
+These plots are great for comparing BMDs between different groups. For our purposes,
+we see that PROAST and ToxicR generate BMD results that are pretty similar to each other.
+Since the confidence intervals are overlapping, we can say that the results
+from the two BMD software tools are not statistically different from each other. These
+plots would also be great for comparing the potency of different chemicals.
 
 # References
 

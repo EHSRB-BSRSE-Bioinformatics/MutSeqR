@@ -142,8 +142,6 @@ ex_spectra_comp <- spectra_comparison(
 )
 ```
 
-_Our results indicate the base-6 mutation spectra of all three BaP dose groups are significantly different from that of the control group_
-
 **Table 23.** Comparison of the 6-base subtype Proportions between Dose Groups.
 
 ```{r spectra-comp-table, echo=FALSE}
@@ -163,6 +161,8 @@ DT::datatable(
 ) %>%
   DT::formatRound(columns = "G2", digits = 2)
 ```
+
+Our results indicate the base-6 mutation spectra of all three BaP dose groups are significantly different from that of the control group.
 
 ## Mutational Signatures
 
@@ -593,8 +593,8 @@ and samples will be ordered accordingly.
 
 _Example 8. Plot the base_6 mutation spectra per sample, with hierarchical_
 _clustering. For this example we have created a new sample column with more_
-intuitive sample names: new_sample_id. These names correspond to their\*
-_associated dose groups. We will see that samples largly cluster within their_
+intuitive sample names: new*sample_id. These names correspond to their\*
+\_associated dose groups. We will see that samples largly cluster within their*
 _dose groups._
 
 ```{r plot-spectra-cap4,  include=FALSE}
