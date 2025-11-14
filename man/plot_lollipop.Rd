@@ -7,7 +7,7 @@
 plot_lollipop(
   mutation_data,
   min_recurrence = 2,
-  group_col = "dose_group",
+  group_col,
   custom_palette = NULL
 )
 }
@@ -57,11 +57,14 @@ if (requireNamespace("MutSeqRData", quietly = TRUE)) {
     )
 
     # 2. Generate the plots
-    plot_list <- plot_lollipop(mutation_data = example_data, min_recurrence = 2)
+    plot_list <- plot_lollipop(
+     mutation_data = example_data,
+     min_recurrence = 2,
+     group_col = "dose_group"
+   )
+   # 3. Display the plots for each dose group
+   plot_list$Control
 
-    # 3. Display a plot for a specific chromosome
-    # print(plot_list$chr1)
-    # print(plot_list$chr2)
   }
 }
 }
