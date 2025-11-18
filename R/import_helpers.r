@@ -54,8 +54,9 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
 #' the regions on either side. Default is 0.
 #' @return A GRanges object that combines the mutation data with the regions
 #' metadata.
-#' @importFrom plyranges join_overlap_left_within_directed mutate
+#' @importFrom plyranges join_overlap_left_within_directed
 #' @importFrom BiocGenerics start end
+#' @importFrom S4Vectors mcols
 import_regions_metadata <- function(mutation_granges,
                                     regions,
                                     rg_sep,
@@ -79,8 +80,7 @@ import_regions_metadata <- function(mutation_granges,
     )
     message("Regions metadata successfully joined to mutation data\n")
     # Count the rows that did not overlap
-    mutation_granges <- mutation_granges %>%
-        plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
+    S4Vectors::mcols(mutation_granges)$in_regions[is.na(S4Vectors::mcols(mutation_granges)$in_regions)] <- FALSE
     false_count <- sum(mutation_granges$in_regions == FALSE)
     if (false_count > 0) {
         warning(
