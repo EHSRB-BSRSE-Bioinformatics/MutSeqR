@@ -48,7 +48,10 @@ jobs:
           sudo apt-get install -y \
             libgsl-dev
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      - name: Install R package dependencies
+        env:
+          R_BIOC_VERSION: "devel"
+        uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: github::Bioconductor/BiocManager, any::pkgdown, local::.
           dependencies: '"all"'
