@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest, r: 'devel'}
-          - {os: windows-latest, r: 'devel'}
+          - { os: ubuntu-latest, r: "devel" }
+          - { os: windows-latest, r: "devel" }
           # Uncomment when in release
           #- {os: windows-latest, r: 'release'}
           #- {os: ubuntu-latest,   r: 'release'}
@@ -49,7 +49,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, knitr, rmarkdown, BiocStyle, bs4Dash, BSgenome, BSgenome.Mmusculus.UCSC.mm10, car, colorspace, dendsort, doBy, DT, ExperimentHub, fmsb, fs, ggdendro, ggrepel, gtools, htmltools, httr, lme4, magick, openxlsx, packcircles, patchwork, RColorBrewer, reticulate, scales, shiny, trackViewer, yaml, xml2, binom, testthat 
+          extra-packages: any::rcmdcheck, knitr, rmarkdown, BiocStyle, bs4Dash, BSgenome, BSgenome.Mmusculus.UCSC.mm10, car, colorspace, dendsort, doBy, DT, ExperimentHub, fmsb, fs, ggdendro, ggrepel, gtools, htmltools, httr, lme4, magick, openxlsx, packcircles, patchwork, RColorBrewer, reticulate, scales, shiny, trackViewer, yaml, xml2, binom, testthat, yulab.utils
           dependencies: '"hard"'
 
       - uses: r-lib/actions/check-r-package@v2
