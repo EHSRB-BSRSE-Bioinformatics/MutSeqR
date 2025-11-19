@@ -15,7 +15,7 @@ independent mutation counting methods."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,7 +26,10 @@ independent mutation counting methods."><meta property="og:image" content="https
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Overview of MutSeqR workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Intro to MutSeqR</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Frequencies.html">Analyzing Mutation Frequencies</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Spectra.html">Analyzing Mutation Spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/General_Visualizations.html">General Visualizations</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -40,7 +43,7 @@ independent mutation counting methods."><meta property="og:image" content="https
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Calculate mutation frequency</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/calculate_mf.R" class="external-link"><code>R/calculate_mf.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/calculate_mf.R" class="external-link"><code>R/calculate_mf.R</code></a></small>
       <div class="d-none name"><code>calculate_mf.Rd</code></div>
     </div>
 
@@ -133,9 +136,9 @@ group will have their <code>total_depth</code> set to 0. The default is TRUE.</p
 
 
 <dt id="arg-correct-depth-by-indel-priority">correct_depth_by_indel_priority<a class="anchor" aria-label="anchor" href="#arg-correct-depth-by-indel-priority"></a></dt>
-<dd><p>A logical value. If TRUE, during depth
-correction, should there be different <code>total_depth</code> values within a
-group of rows with the same sample, contig, and start values, the
+<dd><p>A logical value. If TRUE, during
+depth correction, should there be different <code>total_depth</code> values within
+a group of rows with the same sample, contig, and start values, the
 <code>total_depth</code> value for the row with the highest priority
 <code>variation_type</code> will be retained, while the other rows will have their
 <code>total_depth</code> set to 0. <code>variation_type</code> priority order is:
@@ -173,8 +176,8 @@ additional flexibility to power users.</p></dd>
 
 
 <dt id="arg-retain-metadata-cols">retain_metadata_cols<a class="anchor" aria-label="anchor" href="#arg-retain-metadata-cols"></a></dt>
-<dd><p>a character vector that contains the names of the
-metadata columns that you would like to retain in the summary table.
+<dd><p>a character vector that contains the names of
+the metadata columns that you would like to retain in the summary table.
 This may be useful for plotting your summary data. Ex. retain the "dose"
 column when summarising by "sample".</p></dd>
 
@@ -281,118 +284,24 @@ total_depth value for the no_variant is removed.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Load example data</span></span></span>
-<span class="r-in"><span><span class="va">example_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Example_files"</span>,</span></span>
-<span class="r-in"><span>                            <span class="st">"example_mutation_data_filtered.rds"</span>,</span></span>
-<span class="r-in"><span>                            package <span class="op">=</span> <span class="st">"MutSeqR"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">example_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">example_file</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MutSeqRData"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
+<span class="r-in"><span>  <span class="co"># using import_mut_data() and filtered with filter_mut as in Example 4.</span></span></span>
+<span class="r-in"><span>  <span class="co"># Sequenced on TS Mouse Mutagenesis Panel. Example data is</span></span></span>
+<span class="r-in"><span>  <span class="co"># retrieved from MutSeqRData, an ExperimentHub data package.</span></span></span>
+<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Bioconductor/ExperimentHub" class="external-link">ExperimentHub</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">eh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ExperimentHub/man/ExperimentHub-class.html" class="external-link">ExperimentHub</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">example_data</span> <span class="op">&lt;-</span> <span class="va">eh</span><span class="op">[[</span><span class="st">"EH9861"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example 1 Calculate mutation frequency by sample.</span></span></span>
-<span class="r-in"><span><span class="co"># Calculate depth from the mutation data (default)</span></span></span>
-<span class="r-in"><span><span class="co"># Correct the Depth (default) with indel priority (set)</span></span></span>
-<span class="r-in"><span><span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
-<span class="r-in"><span> mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span> cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
-<span class="r-in"><span> correct_depth_by_indel_priority <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Performing internal depth correction to prevent double-counting...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Internal depth correction complete.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample)`</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example 2: Calculate the trinucleotide mutation proportions for each dose</span></span></span>
-<span class="r-in"><span><span class="co"># Calculate and correct depth to indep priority.</span></span></span>
-<span class="r-in"><span><span class="va">mf_96_example</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
-<span class="r-in"><span> mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span> cols_to_group <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
-<span class="r-in"><span> subtype_resolution <span class="op">=</span> <span class="st">"base_96"</span>,</span></span>
-<span class="r-in"><span> variant_types  <span class="op">=</span> <span class="st">"snv"</span>,</span></span>
-<span class="r-in"><span> correct_depth_by_indel_priority <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Performing internal depth correction to prevent double-counting...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Internal depth correction complete.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dose, normalized_context)`</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example 3: Calculate the mean mutation frequency for each 6 base subtype</span></span></span>
-<span class="r-in"><span><span class="co"># per dose</span></span></span>
-<span class="r-in"><span><span class="co"># calculate_mf does not calculate mean mutation frequency for</span></span></span>
-<span class="r-in"><span><span class="co"># groups; this function only sums mutations across groups. Thus, if you are</span></span></span>
-<span class="r-in"><span><span class="co"># interested in calculating the mean of a group, this must be done</span></span></span>
-<span class="r-in"><span><span class="co"># separately.</span></span></span>
-<span class="r-in"><span><span class="co"># First, calculate 6 base MF per sample. Retain the dose column.</span></span></span>
-<span class="r-in"><span><span class="va">mf_6_example</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
-<span class="r-in"><span> mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span> cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
-<span class="r-in"><span> subtype_resolution <span class="op">=</span> <span class="st">"base_6"</span>,</span></span>
-<span class="r-in"><span> retain_metadata_cols <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
-<span class="r-in"><span> correct_depth_by_indel_priority <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Performing internal depth correction to prevent double-counting...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Internal depth correction complete.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(normalized_subtype, sample)`</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample, normalized_ref)`</span>
-<span class="r-in"><span><span class="co"># Note: our example_data does not contain any ambiguous</span></span></span>
-<span class="r-in"><span><span class="co"># or uncategorized mutations, so the dose column is NA for all those</span></span></span>
-<span class="r-in"><span><span class="co"># mutations in the summary table. This will not affect our mean calculation.</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Calculate the mean MF for each 6 base subtype per dose</span></span></span>
-<span class="r-in"><span><span class="va">mf_6_mean_example</span> <span class="op">&lt;-</span> <span class="va">mf_6_example</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dose</span>, <span class="va">normalized_subtype</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>mean_mf_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">mf_min</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  se_mf_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">mf_min</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  mean_mf_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">mf_max</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  se_mf_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">mf_max</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `summarise()` has grouped output by 'dose'. You can override using the</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `.groups` argument.</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example 4: Calculate MF using precalculated depth data</span></span></span>
-<span class="r-in"><span><span class="va">sample_depth_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span> sample <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span> <span class="st">"dna00973.1"</span>, <span class="st">"dna00974.1"</span>, <span class="st">"dna00975.1"</span>, <span class="st">"dna00976.1"</span>, <span class="st">"dna00977.1"</span>,</span></span>
-<span class="r-in"><span> <span class="st">"dna00978.1"</span>, <span class="st">"dna00979.1"</span>, <span class="st">"dna00980.1"</span>, <span class="st">"dna00981.1"</span>, <span class="st">"dna00982.1"</span>,</span></span>
-<span class="r-in"><span> <span class="st">"dna00983.1"</span>, <span class="st">"dna00984.1"</span>, <span class="st">"dna00985.1"</span>, <span class="st">"dna00986.1"</span>, <span class="st">"dna00987.1"</span>,</span></span>
-<span class="r-in"><span> <span class="st">"dna00988.1"</span>, <span class="st">"dna00989.1"</span>, <span class="st">"dna00990.1"</span>, <span class="st">"dna00991.1"</span>, <span class="st">"dna00992.1"</span>,</span></span>
-<span class="r-in"><span> <span class="st">"dna00993.1"</span>, <span class="st">"dna00994.1"</span>, <span class="st">"dna00995.1"</span>, <span class="st">"dna00996.1"</span></span></span>
-<span class="r-in"><span> <span class="op">)</span>,</span></span>
-<span class="r-in"><span> group_depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>   <span class="fl">565395266</span>, <span class="fl">755574283</span>, <span class="fl">639909215</span>, <span class="fl">675090988</span>, <span class="fl">598104021</span>,</span></span>
-<span class="r-in"><span>   <span class="fl">611295330</span>, <span class="fl">648531765</span>, <span class="fl">713240735</span>, <span class="fl">669734626</span>, <span class="fl">684951248</span>,</span></span>
-<span class="r-in"><span>   <span class="fl">716913381</span>, <span class="fl">692323218</span>, <span class="fl">297661400</span>, <span class="fl">172863681</span>, <span class="fl">672259724</span>,</span></span>
-<span class="r-in"><span>   <span class="fl">740901132</span>, <span class="fl">558051386</span>, <span class="fl">733727643</span>, <span class="fl">703349287</span>, <span class="fl">884821671</span>,</span></span>
-<span class="r-in"><span>   <span class="fl">743311822</span>, <span class="fl">799605045</span>, <span class="fl">677693752</span>, <span class="fl">701163532</span></span></span>
-<span class="r-in"><span> <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mf_example_precalc</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
-<span class="r-in"><span> mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span> cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
-<span class="r-in"><span> calculate_depth <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
-<span class="r-in"><span> precalc_depth_data <span class="op">=</span> <span class="va">sample_depth_example</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample)`</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example 5: Calculate MF using precalculated depth data for 6 base</span></span></span>
-<span class="r-in"><span><span class="co"># mutation subtypes per sample.</span></span></span>
-<span class="r-in"><span><span class="co"># The base_6 resolution uses reference context 'normalized_ref'; C or T.</span></span></span>
-<span class="r-in"><span><span class="co"># Our precalc_depth_data needs group_depth (depth per sample) and the</span></span></span>
-<span class="r-in"><span><span class="co"># subtype_depth (depth per sample AND per normalized_ref)</span></span></span>
-<span class="r-in"><span><span class="co"># We will create the example precalc_depth data for the base_6 resolution</span></span></span>
-<span class="r-in"><span><span class="co"># from Example 3 results for simplicity.</span></span></span>
-<span class="r-in"><span><span class="va">sample_subtype_depth_example</span> <span class="op">&lt;-</span> <span class="va">mf_6_example</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">sample</span>, <span class="va">normalized_ref</span>, <span class="va">group_depth</span>, <span class="va">subtype_depth</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">normalized_ref</span> <span class="op">!=</span> <span class="st">"N"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mf_6_example_precalc</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
-<span class="r-in"><span> mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span> cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
-<span class="r-in"><span> subtype_resolution <span class="op">=</span> <span class="st">"base_6"</span>,</span></span>
-<span class="r-in"><span> calculate_depth <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
-<span class="r-in"><span> precalc_depth_data <span class="op">=</span> <span class="va">sample_subtype_depth_example</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample, normalized_ref)`</span>
+<span class="r-in"><span>  <span class="co"># Calculate mutation frequency by sample.</span></span></span>
+<span class="r-in"><span>  <span class="co"># Calculate depth from the mutation data (default)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Correct the Depth (default) with indel priority (set)</span></span></span>
+<span class="r-in"><span>  <span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
+<span class="r-in"><span>    cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
+<span class="r-in"><span>    correct_depth_by_indel_priority <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -400,11 +309,11 @@ total_depth value for the no_variant is removed.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier, Health Canada’s Genomics Research and Development Initiative, Canada Research Chairs Program, Burroughs Wellcome Fund.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

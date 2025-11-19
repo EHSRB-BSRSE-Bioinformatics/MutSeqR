@@ -15,7 +15,7 @@ National Institute for Public Health and the Environment)."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,7 +26,10 @@ National Institute for Public Health and the Environment)."><meta property="og:i
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Overview of MutSeqR workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Intro to MutSeqR</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Frequencies.html">Analyzing Mutation Frequencies</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Spectra.html">Analyzing Mutation Spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/General_Visualizations.html">General Visualizations</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -40,7 +43,7 @@ National Institute for Public Health and the Environment)."><meta property="og:i
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>BMD modeling using PROAST</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/bmd_proast.r" class="external-link"><code>R/bmd_proast.r</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/bmd_proast.r" class="external-link"><code>R/bmd_proast.r</code></a></small>
       <div class="d-none name"><code>bmd_proast.Rd</code></div>
     </div>
 
@@ -65,7 +68,8 @@ National Institute for Public Health and the Environment).</p>
 <span>  num_bootstraps <span class="op">=</span> <span class="fl">200</span>,</span>
 <span>  plot_results <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  raw_results <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  raw_results <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">125</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -137,6 +141,11 @@ window and then returned as a list alongside the bmd results.</p></dd>
 results from the PROAST analysis. If FALSE, data is returned as a
 summary table.</p></dd>
 
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>An integer value to set the random seed for reproducibility
+when using model averaging. Default is 125.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -171,14 +180,20 @@ family (Exponential, Hill, Inverse Exponential, LogNormal): The fitted curve
 of the selected (3 or 5) model. Data is log-transformed. Individual data
 points are plotted using small triangles. The geometric mean (median) at
 each dose is plotted as a large triangle. The BMD is indicated by the
-dotted line. If applicable, the covariate subgroup is indicated by color.</p></li>
+dotted line. If applicable, the covariate subgroup is indicated by color.
+When output_path = NULL, plots are returned alongside results as recordedPlot
+objects. View plots with replayPlot().</p></li>
 <li><p>bootstrap_curves If <code>model_averaging = TRUE</code>, the bootstrap
 curves based on model averaging. The geometric mean (median) at each dose
-is plotted as a large triangle. Data is log-transformed.</p></li>
+is plotted as a large triangle. Data is log-transformed. When
+output_path = NULL, plots are returned alongside results as recordedPlot
+objects. View plots with replayPlot().</p></li>
 <li><p>cleveland plot if <code>model_averaging = TRUE</code> The BMD estimate
 for each model is plotted as a red point alongside the 90% confidence
 intervals. The size of the BMD point represents the model weight assigned
-during model averaging, based on the AIC.</p></li>
+during model averaging, based on the AIC. When output_path = NULL, plots
+are returned alongside results as ggplots. View plots by calling object
+name.</p></li>
 </ul><p>If <code>raw_results = TRUE</code>, the function will return the raw results of
 the PROAST analysis alongside the summary data frame. PROAST raw_results
 is a list of variables and data that is continuously modified as it is
@@ -231,26 +246,25 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Calculate the BMD for a 50% increase in mutation frequency from control</span></span></span>
-<span class="r-in"><span><span class="co"># With Model averaging.</span></span></span>
-<span class="r-in"><span><span class="co"># For the purpose of this example, num_bootstraps is set to 5 to reduce</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
+<span class="r-in"><span><span class="co"># using import_mut_data() and filtered with filter_mut().</span></span></span>
+<span class="r-in"><span><span class="co"># Data was summarized per sample using calculate_mf() (see relevant</span></span></span>
+<span class="r-in"><span><span class="co"># examples).</span></span></span>
+<span class="r-in"><span><span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/Example_files/mf_data_global.rds"</span>,</span></span>
+<span class="r-in"><span>  package <span class="op">=</span> <span class="st">"MutSeqR"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># We will calculate the BMD for a 50% increase in mutation frequency from</span></span></span>
+<span class="r-in"><span><span class="co"># control with Model averaging.</span></span></span>
+<span class="r-in"><span><span class="co"># For the purpose of this example, num_bootstraps is set to 3 to reduce</span></span></span>
 <span class="r-in"><span><span class="co"># run time. 200 bootstraps is recommended.</span></span></span>
-<span class="r-in"><span><span class="va">example_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Example_files"</span>,</span></span>
-<span class="r-in"><span>                            <span class="st">"example_mutation_data_filtered.rds"</span>,</span></span>
-<span class="r-in"><span>                            package <span class="op">=</span> <span class="st">"MutSeqR"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">example_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">example_file</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mf</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_mf.html">calculate_mf</a></span><span class="op">(</span><span class="va">example_data</span>, retain_metadata_cols <span class="op">=</span> <span class="st">"dose"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Performing internal depth correction to prevent double-counting...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Internal depth correction complete.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample)`</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample)`</span>
-<span class="r-in"><span><span class="va">bmd</span> <span class="op">&lt;-</span> <span class="fu">bmd_proast</span><span class="op">(</span>mf_data <span class="op">=</span> <span class="va">mf</span>,</span></span>
-<span class="r-in"><span>                  dose_col <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
-<span class="r-in"><span>                  response_col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mf_min"</span>, <span class="st">"mf_max"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  bmr <span class="op">=</span> <span class="fl">0.5</span>,</span></span>
-<span class="r-in"><span>                  model_averaging <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>                  num_bootstraps <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Model averaging is set to TRUE. This may take some time to run.</span>
+<span class="r-in"><span><span class="va">bmd</span> <span class="op">&lt;-</span> <span class="fu">bmd_proast</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  mf_data <span class="op">=</span> <span class="va">mf_example</span>,</span></span>
+<span class="r-in"><span>  dose_col <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
+<span class="r-in"><span>  response_col <span class="op">=</span> <span class="st">"mf_min"</span>,</span></span>
+<span class="r-in"><span>  bmr <span class="op">=</span> <span class="fl">0.5</span>,</span></span>
+<span class="r-in"><span>  model_averaging <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  num_bootstraps <span class="op">=</span> <span class="fl">3</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Independent variable: dose</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Running in batch/command line mode...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Independent variable: dose</span>
@@ -267,11 +281,12 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 sample </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  2 dose </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  3 sum_min </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  4 sum_max </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  5 mf_min </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  6 mf_max </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  7 group_depth </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3 dose_group </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4 sum_min </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5 sum_max </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6 mf_min </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7 mf_max </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8 group_depth </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Give number(s) of the response(s) you want to analyse</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Model averaging enabled.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ans.all$CES: 0.5</span>
@@ -314,7 +329,6 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  6.47 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  10.3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_min </span>
@@ -352,7 +366,6 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  7.02 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  10.7 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_min </span>
@@ -390,7 +403,6 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  2.9 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  6.96 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_min </span>
@@ -427,7 +439,6 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  7.27 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  10.7 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  -----------  CES =  0.5  --------------------------------- </span>
@@ -443,259 +454,47 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4   LOGN 0.3316</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Start of MA bootstrap runs ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> run   1  2  3  4  5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> run   1  2  3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> duration of bootstrap calculations:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Thu Jul 24 20:45:12 2025"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Thu Jul 24 20:45:15 2025"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Wed Nov 19 22:24:57 2025"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Wed Nov 19 22:24:57 2025"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> The model-average BMD confidence interval is:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   subgroup BMDlower.ma BMDupper.ma</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      all        8.53        9.93</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      all        8.94          10</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> end of analysis for response:  mf_min</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_max</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ANALYSIS WITH EXPONENTIAL MODELS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> model 	 converged 	 npar 	 loglik 	 aic</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  full model 	 1 	 5 	 6.39 	 -2.78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  null model 	 1 	 2 	 -32.52 	 69.04 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Expon. m3- 	 1 	 4 	 5.86 	 -3.72</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> warning: lower constraint on parameter cc has been increased to 1.515 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> due to value of CES</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> This might result in suboptimal fit of model 15 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Expon. m5- 	 1 	 5 	 6.39 	 -2.78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ------------------------------------------------------- </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> selected model: Expon. m3-  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  estimate for  var- :  0.03592 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  a- :  2.088e-07 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  CED- :  3.889 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  d- :  0.7269 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The Grubb outlier for this sample size is: 2.80155 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> No outliers detected </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  calculating confidence intervals ....</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> the CED (in orig. units) and the 90 % confidence interval is: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  3.889 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2.52 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  5.64 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_max </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ANALYSIS WITH HILL MODELS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> model 	 converged 	 npar 	 loglik 	 aic </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Hill m3- 	 1 	 4 	 5.9 	 -3.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> warning: lower constraint on parameter cc has been increased to 1.515 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> due to value of CES</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> This might result in suboptimal fit of model 25 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Hill m5- 	 1 	 5 	 6.39 	 -2.78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ------------------------------------------------------- </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> selected model: Hill m3-  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  estimate for  var- :  0.03581 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  a- :  2.088e-07 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  CED- :  3.964 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  d- :  0.7428 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The Grubb outlier for this sample size is: 2.80155 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> No outliers detected </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  calculating confidence intervals ....</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> the CED (in orig. units) and the 90 % confidence interval is: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  3.964 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2.59 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  5.72 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_max </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ANALYSIS WITH INVERSE EXPONENTIAL MODELS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> model 	 converged 	 npar 	 loglik 	 aic </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Inv.Expon. m3- 	 1 	 4 	 6.28 	 -4.56</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> warning: lower constraint on parameter cc has been increased to 1.515 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> due to value of CES</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> This might result in suboptimal fit of model 52 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Inv.Expon. m5- 	 1 	 5 	 6.39 	 -2.78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ------------------------------------------------------- </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> selected model: Inv.Expon. m3-  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  estimate for  var- :  0.0347 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  a- :  2.097e-07 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  CED- :  5.297 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  d- :  0.2234 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The Grubb outlier for this sample size is: 2.80155 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> No outliers detected </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  calculating confidence intervals ....</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> the CED (in orig. units) and the 90 % confidence interval is: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  5.297 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  3.79 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  7.09 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> response:  mf_max </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ANALYSIS WITH LOGNORMAL DR MODELS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> model 	 converged 	 npar 	 loglik 	 aic </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  LN m3- 	 1 	 4 	 6.13 	 -4.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> warning: lower constraint on parameter cc has been increased to 1.515 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> due to value of CES</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> This might result in suboptimal fit of model 54 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  LN m5- 	 1 	 5 	 6.39 	 -2.78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ------------------------------------------------------- </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> selected model: LN m3-  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  estimate for  var- :  0.03512 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  a- :  2.093e-07 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  CED- :  4.699 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate for  d- :  0.3327 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The Grubb outlier for this sample size is: 2.80155 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> No outliers detected </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  calculating confidence intervals ....</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> the CED (in orig. units) and the 90 % confidence interval is: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  4.699 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  3.23 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  6.49 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -----------  CES =  0.5  --------------------------------- </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Calculating confidence intervals by model averaging, this may make some time ....</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  The weights used in model averaging are:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    model weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    EXP 0.2052</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   HILL 0.2136</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 INVEXP 0.3123</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   LOGN 0.2688</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Start of MA bootstrap runs ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> run   1  2  3  4  5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> duration of bootstrap calculations:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Thu Jul 24 20:45:16 2025"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Thu Jul 24 20:45:18 2025"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The model-average BMD confidence interval is:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   subgroup BMDlower.ma BMDupper.ma</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      all        3.62        5.27</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Vyans is greater than 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> end of analysis for response:  mf_max</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> calculations started at: Thu Jul 24 20:45:15 2025</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> and ended at: Thu Jul 24 20:45:18 2025</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CED-CI plot created for subgroup 1 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_max Expon. m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_max Inv.Expon. m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Inv.Expon. m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_min model_averaging</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m5-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Handling model averaging case</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_max model_averaging</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Handling model averaging case</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_min LN m5-</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> LN m5-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> LN m5-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_min Hill m5-</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Hill m5-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Hill m5-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_min Expon. m5-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m5-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_min Inv.Expon. m3-</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Inv.Expon. m3-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Inv.Expon. m3-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_max Hill m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Hill m3-</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m5-</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m5-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> mf_max LN m3-</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> LN m3-</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> model_averaging</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Expon. m5-</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Covariate analysis is:FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Selected.Model Response CES   CED CEDL CEDU    AIC Log.Likelihood</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1       Expon. m3-   mf_max 0.5 3.889 2.52 5.64  -3.72           5.86</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2       Expon. m5-   mf_min 0.5  8.45 6.47 10.3 -18.46          14.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3         Hill m3-   mf_max 0.5 3.964 2.59 5.72   -3.8            5.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4         Hill m5-   mf_min 0.5  9.03 7.02 10.7 -18.46          14.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   Inv.Expon. m3-   mf_max 0.5 5.297 3.79 7.09  -4.56           6.28</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Inv.Expon. m3-   mf_min 0.5 4.714  2.9 6.96 -10.18           9.09</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7           LN m3-   mf_max 0.5 4.699 3.23 6.49  -4.26           6.13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8           LN m5-   mf_min 0.5 9.171 7.27 10.7 -18.46          14.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9  Model averaging   mf_max 0.5 4.132 3.62 5.27    N/A            N/A</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Model averaging   mf_min 0.5 9.065 8.53 9.93    N/A            N/A</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   Var                    a                 d weights</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  0.0359188170682989 2.08758674487124e-07  0.72685933019566  0.2052</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   0.017888312831692 1.71849444527397e-07  5.61135528663567  0.3316</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.0358107048621412 2.08801824385781e-07  0.74281951927805  0.2136</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.0178883278572467 1.71849441477975e-07  6.23608032503139  0.3316</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.0346988571383357 2.09684109313555e-07 0.223422878105871  0.3123</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.0274547356721535 1.70137658821088e-07 0.163165375364757  0.0053</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7  0.0351210340885015 2.09302236085566e-07 0.332670952338668  0.2688</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8  0.0178883115661859 1.71849497597811e-07  5.95609683921669  0.3316</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9                 N/A                  N/A               N/A      NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10                N/A                  N/A               N/A      NA</span>
-<span class="r-in"><span><span class="co"># Plot the Model Averaging 90% CI using plot_ci()</span></span></span>
-<span class="r-in"><span><span class="va">plot_df</span> <span class="op">&lt;-</span> <span class="va">bmd</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Model</span> <span class="op">==</span> <span class="st">"Model averaging"</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">Response</span>, <span class="va">BMD</span>, <span class="va">BMDL</span>, <span class="va">BMDU</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu"><a href="plot_ci.html">plot_ci</a></span><span class="op">(</span><span class="va">plot_df</span>, order <span class="op">=</span> <span class="st">"asc"</span>, log_scale <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Handling model averaging case</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Selected.Model Response CES   CED CEDL CEDU    AIC Log.Likelihood</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      Expon. m5-   mf_min 0.5  8.45 6.47 10.3 -18.46          14.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        Hill m5-   mf_min 0.5  9.03 7.02 10.7 -18.46          14.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  Inv.Expon. m3-   mf_min 0.5 4.714  2.9 6.96 -10.18           9.09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4          LN m5-   mf_min 0.5 9.171 7.27 10.7 -18.46          14.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Model averaging   mf_min 0.5 9.065 8.94   10    N/A            N/A</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  Var                    a                 d weights</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  0.017888312831692 1.71849444527397e-07  5.61135528663567  0.3316</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.0178883278572467 1.71849441477975e-07  6.23608032503139  0.3316</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 0.0274547356721535 1.70137658821088e-07 0.163165375364757  0.0053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 0.0178883115661859 1.71849497597811e-07  5.95609683921669  0.3316</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5                N/A                  N/A               N/A      NA</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -703,11 +502,11 @@ interval based on MA (e.g. 200) <em>num_bootstraps</em></p></li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier, Health Canada’s Genomics Research and Development Initiative, Canada Research Chairs Program, Burroughs Wellcome Fund.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

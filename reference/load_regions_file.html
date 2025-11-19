@@ -9,7 +9,7 @@ return a GRanges object."><meta property="og:image" content="https://ehsrb-bsrse
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,7 +20,10 @@ return a GRanges object."><meta property="og:image" content="https://ehsrb-bsrse
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Overview of MutSeqR workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Intro to MutSeqR</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Frequencies.html">Analyzing Mutation Frequencies</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Spectra.html">Analyzing Mutation Spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/General_Visualizations.html">General Visualizations</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -34,7 +37,7 @@ return a GRanges object."><meta property="og:image" content="https://ehsrb-bsrse
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Imports the regions file</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/load_regions_file.R" class="external-link"><code>R/load_regions_file.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/load_regions_file.R" class="external-link"><code>R/load_regions_file.R</code></a></small>
       <div class="d-none name"><code>load_regions_file.Rd</code></div>
     </div>
 
@@ -78,16 +81,92 @@ Need not be supplied for TSpanels. Default is TRUE.</p></dd>
     <p>a GRanges object of the imported regions metadata file.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">#' # Example 1: Load built-in TwinStrand's Human Mutagenesis</span></span></span>
+<span class="r-in"><span><span class="va">human_rg</span> <span class="op">&lt;-</span> <span class="fu">load_regions_file</span><span class="op">(</span>regions <span class="op">=</span> <span class="st">"TSpanel_human"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">human_rg</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 20 ranges and 6 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        seqnames              ranges strand | target_size description</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; |   &lt;integer&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]    chr11 108510788-108513187      * |        2400 region_1111</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]    chr13   75803913-75806312      * |        2400 region_1501</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]    chr14   74661756-74664155      * |        2400 region_1725</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]    chr18     5749265-5751664      * |        2400 region_2457</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]     chr2   40162768-40165167      * |        2400 region_2896</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    ...      ...                 ...    ... .         ...         ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [16]    chr15   46089738-46092137      * |        2400 region_1904</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [17]    chr17   70672727-70675126      * |        2400 region_2378</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [18]    chr21   23665977-23668376      * |        2400 region_3515</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [19]    chr22   48262371-48264770      * |        2400 region_3703</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [20]    chr10 128969038-128971437      * |        2400  region_784</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        genic_context        gene      genome       label</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]         genic       EXPH5        hg38       chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]         genic        LMO7        hg38       chr13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]         genic       AREL1        hg38       chr14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]         genic   MIR3976HG        hg38       chr18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]         genic  SLC8A1-AS1        hg38        chr2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    ...           ...         ...         ...         ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [16]    intergenic        &lt;NA&gt;        hg38       chr15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [17]    intergenic        &lt;NA&gt;        hg38       chr17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [18]    intergenic        &lt;NA&gt;        hg38       chr21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [19]    intergenic        &lt;NA&gt;        hg38       chr22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [20]    intergenic        &lt;NA&gt;        hg38       chr10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 20 sequences from an unspecified genome; no seqlengths</span>
+<span class="r-in"><span><span class="co"># Load a custom regions file from an interval list</span></span></span>
+<span class="r-in"><span><span class="co"># We will use the human TSpanel system file for this example,</span></span></span>
+<span class="r-in"><span><span class="co"># but any file can be imported.</span></span></span>
+<span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"inputs"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"metadata"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"human_mutagenesis_panel_hg38.txt"</span>,</span></span>
+<span class="r-in"><span>  package <span class="op">=</span> <span class="st">"MutSeqR"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">custom_rg</span> <span class="op">&lt;-</span> <span class="fu">load_regions_file</span><span class="op">(</span>regions <span class="op">=</span> <span class="va">file</span>, rg_sep <span class="op">=</span> <span class="st">"\t"</span>, is_0_based_rg <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">custom_rg</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 20 ranges and 6 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        seqnames              ranges strand | target_size description</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; |   &lt;integer&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]    chr11 108510788-108513187      * |        2400 region_1111</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]    chr13   75803913-75806312      * |        2400 region_1501</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]    chr14   74661756-74664155      * |        2400 region_1725</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]    chr18     5749265-5751664      * |        2400 region_2457</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]     chr2   40162768-40165167      * |        2400 region_2896</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    ...      ...                 ...    ... .         ...         ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [16]    chr15   46089738-46092137      * |        2400 region_1904</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [17]    chr17   70672727-70675126      * |        2400 region_2378</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [18]    chr21   23665977-23668376      * |        2400 region_3515</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [19]    chr22   48262371-48264770      * |        2400 region_3703</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [20]    chr10 128969038-128971437      * |        2400  region_784</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        genic_context        gene      genome       label</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;character&gt; &lt;character&gt; &lt;character&gt; &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]         genic       EXPH5        hg38       chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]         genic        LMO7        hg38       chr13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]         genic       AREL1        hg38       chr14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]         genic   MIR3976HG        hg38       chr18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]         genic  SLC8A1-AS1        hg38        chr2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    ...           ...         ...         ...         ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [16]    intergenic        &lt;NA&gt;        hg38       chr15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [17]    intergenic        &lt;NA&gt;        hg38       chr17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [18]    intergenic        &lt;NA&gt;        hg38       chr21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [19]    intergenic        &lt;NA&gt;        hg38       chr22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [20]    intergenic        &lt;NA&gt;        hg38       chr10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 20 sequences from an unspecified genome; no seqlengths</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier, Health Canada’s Genomics Research and Development Initiative, Canada Research Chairs Program, Burroughs Wellcome Fund.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

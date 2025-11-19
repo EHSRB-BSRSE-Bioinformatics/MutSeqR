@@ -1,0 +1,114 @@
+# Run COSMIC signatures comparison using SigProfilerAssignment
+
+Run COSMIC signatures comparison using SigProfilerAssignment
+
+## Usage
+
+``` r
+signature_fitting(
+  mutation_data,
+  project_name = "Default",
+  project_genome = "GRCh38",
+  env_name = "MutSeqR",
+  group = "sample",
+  output_path = NULL,
+  python_version
+)
+```
+
+## Arguments
+
+- mutation_data:
+
+  A data frame containing mutation data.
+
+- project_name:
+
+  The name of the project. This is used to format the data into required
+  .txt format for SigProfiler tools.
+
+- project_genome:
+
+  The reference genome to use. On first use, the function will install
+  the genome using SigProfilerMatrixGenerator::install. e.x. GRCh37,
+  GRCH38, mm10, mm9, rn6
+
+- env_name:
+
+  The name of the virtual environment. This will be created on first
+  use.
+
+- group:
+
+  The column in the mutation data used to aggregate groups. Signature
+  assignment will be performed on each group separately.
+
+- output_path:
+
+  The filepath to the directory in which the output folder will be
+  created to store results. Default is NULL. This will store results in
+  the current working directory.
+
+- python_version:
+
+  The version of python installed on the user's computer.
+
+## Value
+
+Creates a subfolder "SigProfiler" in the output directory with
+SigProfiler tools results. For a complete breakdown of the results, see
+the Readme file for MutSeqR. Most relevant results are stored in
+SigProfiler \> [group](https://rdrr.io/r/grDevices/plotmath.html) \>
+matrices \> output \> Assignment_Solution \> Activities \>
+SampleReconstruction \> WebPNGs. These plots show a summary of the
+signature assignment results for each group. In each plot, the top left
+panel represents the base_96 mutation count for the group. The bottom
+left panel represents the reconstructed profile. Below the
+reconstruction are the solution statistics that indicate the goodness of
+fit of the reconstructed profile to the observed profile. (Recommended
+cosine similarity \> 0.9). The panels on the right represent the SBS
+signatures that contribute to the reconstructed profile. The signature
+name and its contribution % are shown in the panel. A high contribution
+means a high association of the signature with the group's mutation
+spectra.
+
+## Details
+
+Assign COSMIC SBS signatures to mutation data using
+SigProfilerAssignment. Data is cleaned and formatted for input into
+SigProfiler tools. This function will create a virtual environment using
+reticulate to run python, as this is a requirement for the SigProfiler
+suite of tools. Note that it will also install several python
+dependencies using a conda virtual environment on first use. Please be
+aware of the implications of this. For advanced use, it is suggested to
+use the SigProfiler python tools directly in python as described in
+their respective documentation. Users must have python installed on
+their computer to use this function.
+
+Mutation data will be filtered to only include SNVs. Variants flagged by
+the filter_mut column will be excluded.
+
+## Examples
+
+``` r
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+  # Example data consists of 24 mouse bone marrow DNA samples imported
+  # using import_mut_data() and filtered with filter_mut as in Example 4.
+  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+  # retrieved from MutSeqRData, an ExperimentHub data package.
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9861"]]
+  output_path <- tempdir()
+
+  signature_fitting(
+    mutation_data = example_data,
+    project_name = "Example",
+    project_genome = "mm10",
+    env_name = "MutSeqR",
+    group = "dose",
+    python_version = "3.11",
+    output_path = output_path
+  )
+}
+```

@@ -1,0 +1,207 @@
+# Run dose-response modeling using PROAST.
+
+Run dose-response modeling using PROAST.
+
+## Usage
+
+``` r
+f.proast(
+  odt = list(),
+  ans.all = 0,
+  er = FALSE,
+  resize = FALSE,
+  scale.ans = FALSE,
+  const.var = FALSE,
+  show.warnings = FALSE,
+  interactive_mode = TRUE,
+  datatype = NULL,
+  model_choice = NULL,
+  setting_choice = NULL,
+  nested_model_choice = NULL,
+  indep_var_choice = NULL,
+  Vyans_input = NULL,
+  covariates = NULL,
+  custom_CES = 0.05,
+  model_selection = NULL,
+  lower_dd = NULL,
+  upper_dd = NULL,
+  selected_model = NULL,
+  adjust_CES_to_group_SD = NULL,
+  model_averaging = NULL,
+  num_bootstraps = NULL,
+  display_plots = TRUE,
+  add_nonzero_val_to_dat = FALSE,
+  nonzero_val = NULL,
+  detection_limit = NULL,
+  seed = 125
+)
+```
+
+## Arguments
+
+- odt:
+
+  List. Internal state object/list passed between PROAST functions.
+  Usually, users do not need to set this.
+
+- ans.all:
+
+  Output from a previous fit, or internal results object. Used to resume
+  or adjust analyses. Usually 0 (default) to start a new session.
+
+- er:
+
+  Logical. If TRUE, attempt to resume analysis from previously stored
+  state. Used internally/recoverably. Defaults to FALSE.
+
+- resize:
+
+  Logical. If TRUE, resize the graphics window during execution; passed
+  to graphics helper functions. Defaults to FALSE.
+
+- scale.ans:
+
+  Logical. If TRUE, applies scaling to the answers/results (advanced use
+  only). Defaults to FALSE.
+
+- const.var:
+
+  Logical. If TRUE, constrains variance during model fitting (advanced
+  option for troubleshooting). Defaults to FALSE.
+
+- show.warnings:
+
+  Logical. If TRUE, print extra warning messages during model fitting
+  (for debugging or detailed output). Defaults to FALSE.
+
+- interactive_mode:
+
+  A TRUE/FALSE value specifying whether you want to run interactively
+  (i.e., TRUE, the default) or using command-line mode (i.e., FALSE,
+  non-interactive). If FALSE, you must provide all other parameters.
+
+- datatype:
+
+  Non-interactive mode parameter. What type of response data do you want
+  to consider? Options are 'continuous, individual data'.
+
+- model_choice:
+
+  Non-interactive mode parameter. Do you want to fit a single model or
+  fit various nested families of models? Options are 'single model',
+  'select model 3 or 5 from various families of models', 'select model 3
+  from various nested families of models', 'select model 5 from various
+  nested families of models', 'select model 15 in terms of RPF'.
+  Recommended: 'select model 3 or 5 from various families of models'.
+
+- setting_choice:
+
+  Non-interactive mode parameter. Do you want to fit a set of models, or
+  choose a single model? Options are 'single model', 'set of models'.
+  Recommended: 'set of models'.
+
+- nested_model_choice:
+
+  Non-interactive mode parameter. Which subset of nested models to fit,
+  if changing model settings non-interactively. Options match those
+  provided in interactive menus. See details in documentation.
+
+- indep_var_choice:
+
+  Non-interactive mode parameter. The column name for the independent
+  variable to use.
+
+- Vyans_input:
+
+  Non-interactive mode parameter. The column name(s) for the response
+  variable(s) to use. If multiple, provide as a vector.
+
+- covariates:
+
+  Non-interactive mode parameter. The column name for the covariate to
+  use. If none, enter 0.
+
+- custom_CES:
+
+  Non-interactive mode parameter. The critical effect size (BMR) to use,
+  when adjust_CES_to_group_SD = 1 (FALSE).
+
+- model_selection:
+
+  Non-interactive mode parameter. The model selection to use. Options
+  are "Exponential model only", "Exponential and Hill model", "previous
+  option with inverse exponential model added" (run Expon, Hill, and
+  Inv-Expon), "previous option with lognormal DR model added" (run
+  Expon, Hill, Inv-Expon, and LN). Recommended: "previous option with
+  lognormal DR model added".
+
+- lower_dd:
+
+  Non-interactive mode parameter. The lower constraint on d parameter.
+  If NULL, existing defaults are used.
+
+- upper_dd:
+
+  Non-interactive mode parameter. The upper constraint on d parameter.
+  If NULL, existing defaults are used.
+
+- selected_model:
+
+  Non-interactive mode parameter. Which model do you want to continue
+  with? Options are "exponential", "Hill", "inverse exponential",
+  "lognormal DR". Thefunction will output results for all models
+  regardless of this choice. Really just to bypass the menu option.
+  Recommended: "exponential".
+
+- adjust_CES_to_group_SD:
+
+  Non-interactive mode parameter. Set the BMR to the group standard
+  deviation. Options are 1 (FALSE) or 2 (TRUE).
+
+- model_averaging:
+
+  Non-interactive mode parameter. Whether to perform model averaging to
+  calculate 90% confidence intervals. TRUE/FALSE.
+
+- num_bootstraps:
+
+  Non-interactive mode parameter. The number of bootstraps to perform
+  for model averaging. Recommended: 200.
+
+- display_plots:
+
+  Non-interactive mode parameter. Whether to display plots. TRUE/FALSE.
+
+- add_nonzero_val_to_dat:
+
+  Non-interactive mode parameter. When the response data contains 0s,
+  whether to add a non-zero value to each observation. TRUE/FALSE. If
+  TRUE, set the nonzero_val parameter with your desired (positive)
+  number. If FALSE, a detection limit will used. Provide the detection
+  limit in the detection_limit parameter. If no detection_limit is
+  given, the function will use the minimum non-zero value in the data.
+  Values below the detection limit will be plotted as half the detection
+  limit.
+
+- nonzero_val:
+
+  Non-interactive mode parameter. The non-zero value to add to each
+  observation when add_nonzero_val_to_dat = TRUE. Must be a positive
+  number.
+
+- detection_limit:
+
+  Non-interactive mode parameter. The detection limit to use when
+  add_nonzero_val_to_dat = FALSE. If NULL, the minimum non-zero value in
+  the data will be used. This paramater accepts a numeric value, which
+  will be applied to all response values, or a column name in the data,
+  which will be used to apply different detection limits to different
+  observations.
+
+- seed:
+
+  Integer. Random seed for reproducibility. Defaults to 125.
+
+## Value
+
+Results from PROAST.

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,7 +18,10 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Overview of MutSeqR workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Intro to MutSeqR</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Frequencies.html">Analyzing Mutation Frequencies</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Spectra.html">Analyzing Mutation Spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/General_Visualizations.html">General Visualizations</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -32,7 +35,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Run dose-response modeling using PROAST.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/proast.min.R" class="external-link"><code>R/proast.min.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/proast.min.R" class="external-link"><code>R/proast.min.R</code></a></small>
       <div class="d-none name"><code>f.proast.Rd</code></div>
     </div>
 
@@ -69,7 +72,8 @@
 <span>  display_plots <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  add_nonzero_val_to_dat <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  nonzero_val <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  detection_limit <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  detection_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">125</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -185,6 +189,10 @@ Recommended: 'set of models'.</p></dd>
 <dt id="arg-detection-limit">detection_limit<a class="anchor" aria-label="anchor" href="#arg-detection-limit"></a></dt>
 <dd><p>Non-interactive mode parameter. The detection limit to use when add_nonzero_val_to_dat = FALSE. If NULL, the minimum non-zero value in the data will be used. This paramater accepts a numeric value, which will be applied to all response values, or a column name in the data, which will be used to apply different detection limits to different observations.</p></dd>
 
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Integer. Random seed for reproducibility. Defaults to 125.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -196,11 +204,11 @@ Recommended: 'set of models'.</p></dd>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier, Health Canada’s Genomics Research and Development Initiative, Canada Research Chairs Program, Burroughs Wellcome Fund.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

@@ -11,7 +11,7 @@ coloured by a specified column."><meta property="og:image" content="https://ehsr
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,7 +22,10 @@ coloured by a specified column."><meta property="og:image" content="https://ehsr
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Overview of MutSeqR workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Intro to MutSeqR</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Frequencies.html">Analyzing Mutation Frequencies</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Spectra.html">Analyzing Mutation Spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/General_Visualizations.html">General Visualizations</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -36,7 +39,7 @@ coloured by a specified column."><meta property="og:image" content="https://ehsr
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Generate Bubble Plots</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/plot_bubbles.R" class="external-link"><code>R/plot_bubbles.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/plot_bubbles.R" class="external-link"><code>R/plot_bubbles.R</code></a></small>
       <div class="d-none name"><code>plot_bubbles.Rd</code></div>
     </div>
 
@@ -124,13 +127,19 @@ their data with large multiplets having a large circle.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">example_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Example_files"</span>,</span></span>
-<span class="r-in"><span>                            <span class="st">"example_mutation_data_filtered.rds"</span>,</span></span>
-<span class="r-in"><span>                            package <span class="op">=</span> <span class="st">"MutSeqR"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">example_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">example_file</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">plot_bubbles</span><span class="op">(</span>mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span>                     facet_col <span class="op">=</span> <span class="st">"dose_group"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required namespace: packcircles</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MutSeqRData"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
+<span class="r-in"><span>  <span class="co"># using import_mut_data() and filtered with filter_mut as in Example 4.</span></span></span>
+<span class="r-in"><span>  <span class="co"># Sequenced on TS Mouse Mutagenesis Panel. Example data is</span></span></span>
+<span class="r-in"><span>  <span class="co"># retrieved from MutSeqRData, an ExperimentHub data package.</span></span></span>
+<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Bioconductor/ExperimentHub" class="external-link">ExperimentHub</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">eh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ExperimentHub/man/ExperimentHub-class.html" class="external-link">ExperimentHub</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">example_data</span> <span class="op">&lt;-</span> <span class="va">eh</span><span class="op">[[</span><span class="st">"EH9861"</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span>  <span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">plot_bubbles</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
+<span class="r-in"><span>    facet_col <span class="op">=</span> <span class="st">"dose_group"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -138,11 +147,11 @@ their data with large multiplets having a large circle.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier, Health Canada’s Genomics Research and Development Initiative, Canada Research Chairs Program, Burroughs Wellcome Fund.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

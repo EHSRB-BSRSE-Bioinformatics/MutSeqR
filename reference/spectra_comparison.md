@@ -1,0 +1,138 @@
+# Compare the overall mutation spectra between groups
+
+spectra_comparison compares the mutation spectra of groups using a
+modified contingency table approach.
+
+## Usage
+
+``` r
+spectra_comparison(
+  mf_data,
+  exp_variable,
+  mf_type = "min",
+  contrasts,
+  cont_sep = "\t",
+  seed = 1234
+)
+```
+
+## Arguments
+
+- mf_data:
+
+  A data frame containing the MF data. This is the output from
+  calculate_mf(). MF data should be at the desired subtype resolution.
+  Required columns are the exp_variable column(s), the subtype column,
+  and sum_min or sum_max.
+
+- exp_variable:
+
+  The column names of the experimental variable(s) to be compared.
+
+- mf_type:
+
+  The type of mutation frequency to use. Default is "min" (recommended).
+
+- contrasts:
+
+  a filepath to a file OR a dataframe that specifies the comparisons to
+  be made between levels of the exp_variable(s) The table must consist
+  of two columns, each containing a level of the exp_variable. The level
+  in the first column will compared to the level in the second column
+  for each row in contrasts. When using more than one exp_variable,
+  separate the levels of each variable with a colon. Ensure that all
+  variables listed in exp_variable are represented in each entry for the
+  table. See details for examples.
+
+- cont_sep:
+
+  The delimiter used to import the contrasts table. Default is tab.
+
+- seed:
+
+  An integer to set the seed for reproducibility when using Monte Carlo
+  simulations to compute the p-value. Default is 1234.
+
+## Value
+
+the log-likelihood statistic G2 for the specified comparisons with the
+p-value adjusted for multiple-comparisons.
+
+## Details
+
+This function creates an R \* 2 contigency table of the subtype counts,
+where R is the number of subtypes for the 2 groups being compared. The
+G2 likelihood ratio statistic is used to evaluate whether the proportion
+(count/group total) of each mutation subtype equals that of the other
+group.
+
+The G2 statistic refers to a chi-squared distribution to compute the
+p-value for large sample sizes. When N / (R-1) \< 20, where N is the
+total mutation counts across both groups, the function will use a
+F-distribution to compute the p-value in order to reduce false positive
+rates.
+
+The comparison assumes independance among the observations, as such, it
+is highly recommended to use mf_type = "min".
+
+Examples of `contrasts`: For 'exp_variable = "dose"\` with dose groups
+0, 12.5, 25, 50, compare each treated dose to the control:
+
+12.5 0
+
+25 0
+
+50 0
+
+Ex. Consider two 'exp_variables = c("dose", "tissue")\`; with levels
+dose (0, 12.5, 25, 50) and tissue("bone_marrow", "liver"). To compare
+the mutation spectra between tissues for each dose group, the contrast
+table would look like:
+
+0:bone_marrow 0:liver
+
+12.5:bone_marrow 12.5:liver
+
+25:bone_marrow 25:liver
+
+50:bone_marrow 50:liver
+
+## Examples
+
+``` r
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data() and filtered with filter_mut. Filtered
+# mutation data is available in the MutSeqRData ExperimentHub package:
+# eh <- ExperimentHub::ExperimentHub()
+# Data was summarized per sample using:
+# calculate_mf(mutation_data = eh[["EH9861"]],
+#              cols_to_group = "dose_group",
+#              subtype_resolution = "base_6")
+
+# Example: compare 6-base mutation spectra between dose groups
+# Load the example data
+mf_example <- readRDS(
+     system.file("extdata", "Example_files", "mf_data_6.rds",
+         package = "MutSeqR"
+     )
+)
+# Create the contrasts table
+contrasts <- data.frame(
+  col1 = c("Low", "Medium", "High"),
+  col2 = rep("Control", 3)
+)
+# Run the comparison
+spectra_comparison(
+  mf_data = mf_example,
+  exp_variable = "dose_group",
+  mf_type = "min",
+  contrasts = contrasts
+)
+#> Using chi-squared distribution to compute p-value
+#> Using chi-squared distribution to compute p-value
+#> Using chi-squared distribution to compute p-value
+#>           contrasts       G2 p.value adj_p.value Significance
+#> 1    Low vs Control 195.6281       0           0          ***
+#> 2 Medium vs Control 503.3807       0           0          ***
+#> 3   High vs Control 714.0200       0           0          ***
+```

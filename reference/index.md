@@ -1,0 +1,154 @@
+# Package index
+
+## General Usage
+
+Functions for importing, filtering, and summarizing mutation data.
+
+- [`import_mut_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_mut_data.md)
+  : Import tabular mutation data
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  : Import a VCF file
+- [`filter_mut()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/filter_mut.md)
+  : Filter your mutation data
+- [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+  : Calculate mutation frequency
+- [`load_regions_file()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/load_regions_file.md)
+  : Imports the regions file
+- [`find_BS_genome()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/find_BS_genome.md)
+  : Find the appropriate BS genome for the specified organism and
+  genome.
+- [`classify_variation()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/classify_variation.md)
+  : classify_variation
+
+## Analyzing Mutation Frequencies
+
+Functions to model and visualize mutation frequency.
+
+- [`plot_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_mf.md)
+  : Plot the Mutation Frequency
+- [`plot_mean_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_mean_mf.md)
+  : Plot the Mean Mutatation Frequency
+- [`model_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/model_mf.md)
+  : Perform linear modelling on mutation frequency for given fixed and
+  random effects
+- [`plot_model_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_model_mf.md)
+  : Plot your mf model
+- [`sidak()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/sidak.md)
+  : Correct p-values for multiple comparisons
+- [`bmd_proast()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/bmd_proast.md)
+  : BMD modeling using PROAST
+- [`plot_ci()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_ci.md)
+  : plot_ci
+
+## Spectra and Subtypes
+
+Analysis and visualization of mutation spectra.
+
+- [`plot_spectra()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_spectra.md)
+  : Plot spectra
+- [`plot_trinucleotide()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_trinucleotide.md)
+  : Plot the trinucleotide spectrum
+- [`plot_trinucleotide_heatmap()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_trinucleotide_heatmap.md)
+  : Create a heatmap plot of mutation subtype proportions.
+- [`spectra_comparison()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/spectra_comparison.md)
+  : Compare the overall mutation spectra between groups
+- [`signature_fitting()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/signature_fitting.md)
+  : Run COSMIC signatures comparison using SigProfilerAssignment
+- [`cluster_spectra()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/cluster_spectra.md)
+  : Hierarchical Clustering
+
+## Visualization Utilities
+
+General plotting functions.
+
+- [`plot_bubbles()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_bubbles.md)
+  : Generate Bubble Plots
+- [`plot_lollipop()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_lollipop.md)
+  : Plot recurrent mutations in a lollipop plot using ggplot2
+- [`plot_radar()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_radar.md)
+  : Create a radar plot
+
+## Dictionaries and Indices
+
+Predefined dictionaries and utility functions.
+
+- [`BS_org_map`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/BS_org_map.md)
+  : BS genome organism dictionary
+- [`context_list`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/context_list.md)
+  : A list of reference contexts at different resolutions
+- [`subtype_dict`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_dict.md)
+  : Subtype Resolution Dictionary
+- [`subtype_list`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_list.md)
+  : A comprehensive list of mutation subtypes at different resolutions
+- [`denominator_dict`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/denominator_dict.md)
+  : Values used for denominators in frequency calculations
+- [`op`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/op.md)
+  : Dictionary of column name synonyms for required mutation data
+  columns
+
+## Mutation Output
+
+Data export functions.
+
+- [`write_mutation_calling_file()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutation_calling_file.md)
+  : Write the mutation calling file to input into the SigProfiler
+  Assignment web application.
+- [`write_mutational_matrix()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutational_matrix.md)
+  : Write a Mutational Matrix to input into the sigprofiler web
+  application
+- [`write_reference_fasta()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_reference_fasta.md)
+  : Write FASTA file of reference sequences.
+- [`write_vcf_from_mut()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_vcf_from_mut.md)
+  : Write mutation_data to a VCF file
+- [`write_excel()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_excel.md)
+  : Write Excel tables
+- [`render_report()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/render_report.md)
+  : Read configuration file and render R Markdown document
+
+## Miscellaneous
+
+- [`annotate_cpg_sites()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/annotate_cpg_sites.md)
+  : Annotate CpG sites
+- [`get_binom_ci()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_binom_ci.md)
+  : Add binomial confidence intervals to mutation frequencies.
+- [`get_cpg_mutations()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_cpg_mutations.md)
+  : Get mutations at CpG sites.
+- [`get_cpg_regions()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_cpg_regions.md)
+  : Get the coordinates of the CpG sites within your genomic regions
+- [`get_seq()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_seq.md)
+  : Get sequence of genomic target regions
+
+## Internal Functions
+
+- [`print_ascii_art()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/print_ascii_art.md)
+  : This function prints ASCII art when the package is loaded
+- [`import_regions_metadata()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_regions_metadata.md)
+  : Join Regions Metadata
+- [`import_sample_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_sample_data.md)
+  : Join Sample Metadata
+- [`populate_sequence_context()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/populate_sequence_context.md)
+  : Populate Sequence context
+- [`rename_columns()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/rename_columns.md)
+  : Map column names of mutation data to default column names. A utility
+  function that renames columns of mutation data to default columns
+  names.
+- [`check_required_columns()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/check_required_columns.md)
+  : Check that all required columns are present before proceeding with
+  the function
+- [`get_ref_of_mut()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_ref_of_mut.md)
+  : A utility function that will return the reference context of a
+  mutation
+- [`reverseComplement()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/reverseComplement.md)
+  : Get the reverse complement of a DNA or RNA sequence.
+- [`characterize_variants()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/characterize_variants.md)
+  : Characterize Variants
+- [`setup_mutseqr_python()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/setup_mutseqr_python.md)
+  : Set up Python environment for MutSeqR
+- [`f.proast()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.proast.md)
+  : Run dose-response modeling using PROAST.
+- [`f.plot.result()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.plot.result.md)
+  : Plot the PROAST results
+- [`f.plot.gui()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.plot.gui.md)
+  : Manages plotting for PROAST
+- [`cleveland_plot()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/cleveland_plot.md)
+  : Cleveland Plot

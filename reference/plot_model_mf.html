@@ -9,7 +9,7 @@ model_mf()"><meta property="og:image" content="https://ehsrb-bsrse-bioinformatic
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,7 +20,10 @@ model_mf()"><meta property="og:image" content="https://ehsrb-bsrse-bioinformatic
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Overview of MutSeqR workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/MutSeqR_introduction.html">Intro to MutSeqR</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Frequencies.html">Analyzing Mutation Frequencies</a></li>
+    <li><a class="dropdown-item" href="../articles/Analyzing_Mutation_Spectra.html">Analyzing Mutation Spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/General_Visualizations.html">General Visualizations</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -34,7 +37,7 @@ model_mf()"><meta property="og:image" content="https://ehsrb-bsrse-bioinformatic
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Plot your mf model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/plot_model_mf.r" class="external-link"><code>R/plot_model_mf.r</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/plot_model_mf.r" class="external-link"><code>R/plot_model_mf.r</code></a></small>
       <div class="d-none name"><code>plot_model_mf.Rd</code></div>
     </div>
 
@@ -147,16 +150,59 @@ effects, you can specify colors for the levels within your fill variable.</p></d
     <p>See model_mf() for examples.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
+<span class="r-in"><span><span class="co"># using import_mut_data() and filtered with filter_mut.</span></span></span>
+<span class="r-in"><span><span class="co"># Data was summarized per sample using calculate_mf() (see relevant</span></span></span>
+<span class="r-in"><span><span class="co"># examples). We will run the model with model_mf then plot the results.</span></span></span>
+<span class="r-in"><span><span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/Example_files/mf_data_global.rds"</span>,</span></span>
+<span class="r-in"><span>  package <span class="op">=</span> <span class="st">"MutSeqR"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># We will compare all treated groups to the control group</span></span></span>
+<span class="r-in"><span><span class="va">contrasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  col1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"12.5"</span>, <span class="st">"25"</span>, <span class="st">"50"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  col2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"0"</span>, <span class="st">"0"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Fit the model</span></span></span>
+<span class="r-in"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="model_mf.html">model_mf</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  mf_data <span class="op">=</span> <span class="va">mf_example</span>,</span></span>
+<span class="r-in"><span>  fixed_effects <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
+<span class="r-in"><span>  reference_level <span class="op">=</span> <span class="st">"0"</span>,</span></span>
+<span class="r-in"><span>  muts <span class="op">=</span> <span class="st">"sum_min"</span>,</span></span>
+<span class="r-in"><span>  total_count <span class="op">=</span> <span class="st">"group_depth"</span>,</span></span>
+<span class="r-in"><span>  contrasts <span class="op">=</span> <span class="va">contrasts</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Reference level for factordose:0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fitting generalized linear model. glm(cbind( sum_min , group_depth ) ~  dose, family = quasibinomial</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The highest residual in absolute value is:4.73969242941171in row:14</span>
+<span class="r-plt img"><img src="plot_model_mf-1.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_model_mf-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Plot the results using plot_model_mf()</span></span></span>
+<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">plot_model_mf</span><span class="op">(</span><span class="va">model</span>,</span></span>
+<span class="r-in"><span>  plot_type <span class="op">=</span> <span class="st">"bar"</span>,</span></span>
+<span class="r-in"><span>  x_effect <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
+<span class="r-in"><span>  plot_error_bars <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  plot_signif <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  x_order <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"12.5"</span>, <span class="st">"25"</span>, <span class="st">"50"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Dose (mg/kg-bw/d)"</span>,</span></span>
+<span class="r-in"><span>  y_label <span class="op">=</span> <span class="st">"Estimated Mean MF (mutations/bp)"</span>,</span></span>
+<span class="r-in"><span>  plot_title <span class="op">=</span> <span class="st">""</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dose)`</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier.</p>
+  <p>Developed by Annette E. Dodge, Andrew Williams, Danielle P.M. LeBlanc, David M. Schuster, Elena Esina, Clint C. Valentine, Jesse J. Salk, Alexander Y. Maslov, Christopher Bradley, Carole L. Yauk, Francesco Marchetti, Matthew J. Meier, Health Canada’s Genomics Research and Development Initiative, Canada Research Chairs Program, Burroughs Wellcome Fund.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

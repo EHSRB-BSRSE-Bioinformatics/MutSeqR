@@ -1,0 +1,202 @@
+# Filter your mutation data
+
+This function creates a
+``` filter_mut`` column that will be read by the \code{calculate_mf} function and other downstream functions. Variants with  ```filter_mut
+== TRUE“ will be excluded from group mutation counts. This function may
+also remove records upon on user specification. Running this function
+again on the same data will not overide the previous filters. To reset
+previous filters, set the filter_mut column values to FALSE.
+
+## Usage
+
+``` r
+filter_mut(
+  mutation_data,
+  vaf_cutoff = 1,
+  snv_in_germ_mnv = FALSE,
+  rm_abnormal_vaf = FALSE,
+  custom_filter_col = NULL,
+  custom_filter_val = NULL,
+  custom_filter_rm = FALSE,
+  regions = NULL,
+  regions_filter,
+  allow_half_overlap = FALSE,
+  rg_sep = "\t",
+  is_0_based_rg = TRUE,
+  rm_filtered_mut_from_depth = FALSE,
+  return_filtered_rows = FALSE
+)
+```
+
+## Arguments
+
+- mutation_data:
+
+  Your mutation data. This can be a data frame or a GRanges object.
+
+- vaf_cutoff:
+
+  Filter out ostensibly germline variants using a cutoff for variant
+  allele fraction (VAF). Any variant with a `vaf` larger than the cutoff
+  will be filtered. The default is 1 (no filtering). It is recommended
+  to use a value of 0.01 (i.e. 1%) as a conservative approach to retain
+  only somatic variants.
+
+- snv_in_germ_mnv:
+
+  Filter out snv variants that overlap with germline mnv variants within
+  the same samples. mnv variants will be considered germline if their
+  vaf \> vaf_cutoff. Default is FALSE.
+
+- rm_abnormal_vaf:
+
+  A logical value. If TRUE, rows in `mutation_data` with a variant
+  allele fraction (VAF) between 0.05 and 0.45 or between 0.55 and 0.95
+  will be removed. We expect variants to have a VAF ~0. 0.5, or 1,
+  reflecting rare somatic mutations, heterozygous germline mutations,
+  and homozygous germline mutations, respectively. Default is FALSE.
+
+- custom_filter_col:
+
+  The name of the column in mutation_data to apply a custom filter to.
+  This column will be checked for specific values, as defined by
+  `custom_filter_val`. If any row in this column contains one of the
+  specified values, that row will either be flagged in the
+  `filter_mut column` or, if specified by `custom_filter_rm`, removed
+  from mutation_data.
+
+- custom_filter_val:
+
+  A set of values used to filter rows in `mutation_data` based on
+  `custom_filter_col`. If a row in `custom_filter_col` matches any value
+  in `custom_filter_val`, it will either be set to TRUE in the
+  `filter_mut` column or removed, depending on `custom_filter_rm`.
+
+- custom_filter_rm:
+
+  A logical value. If TRUE, rows in custom_filter_col that match any
+  value in custom_filter_val will be removed from the mutation_data. If
+  FALSE, `filter_mut` will be set to TRUE for those rows.
+
+- regions:
+
+  Remove rows that are within/outside of specified regions. `regions`
+  can be either a file path, a data frame, or a GRanges object
+  containing the genomic ranges by which to filter. File paths will be
+  read using the rg_sep. Users can also choose from the built-in
+  TwinStrand's Mutagenesis Panels by inputting "TSpanel_human",
+  "TSpanel_mouse", or "TSpanel_rat". Required columns for the regions
+  file are "contig", "start", and "end". In a GRanges object, the
+  required columns are "seqnames", "start", and "end".
+
+- regions_filter:
+
+  Specifies how the provided `regions` should be applied to
+  `mutation_data`. Acceptable values are "remove_within" or
+  "keep_within". If set to "remove_within", records that fall within the
+  specified regions wil be removed from mutation_data. If set to
+  "keep_within", only records within the specified regions will be kept
+  in mutation_data, and all other records will be removed.
+
+- allow_half_overlap:
+
+  A logical value. If TRUE, records that start or end in your `regions`,
+  but extend outside of them in either direction will be included in the
+  filter. If FALSE, only records that start and end within the `regions`
+  will be included in the filter. Default is FALSE.
+
+- rg_sep:
+
+  The delimiter for importing the custom_regions. The default is
+  tab-delimited "\t".
+
+- is_0_based_rg:
+
+  A logical variable. Indicates whether the position coordinates in
+  `regions` are 0 based (TRUE) or 1 based (FALSE). If TRUE, positions
+  will be converted to 1-based (start + 1). Need not be supplied for
+  TSpanels. Default is TRUE.
+
+- rm_filtered_mut_from_depth:
+
+  A logical value. If TRUE, the function will subtract the `alt_depth`
+  of records that were flagged by the `filter_mut` column from their
+  `total_depth`. This will treat flagged variants as No-calls. This will
+  not apply to variants flagged as germline by the `vaf_cutoff`.
+  However, if the germline variant has additional filters applied, then
+  the subtraction will still occur. If FALSE, the `alt_depth` will be
+  retained in the `total_depth` for all variants. Default is FALSE.
+
+- return_filtered_rows:
+
+  A logical value. If TRUE, the function will return both the filtered
+  mutation data and the records that were removed/flagged in a seperate
+  data frame. The two dataframes will be returned inside a list, with
+  names `mutation_data` and `filtered_rows`. Default is FALSE.
+
+## Value
+
+A data frame or a list of two data frames, depending on the value of
+`return_filtered_rows`. If `return_filtered_rows` is FALSE (default), a
+data frame of the same structure as `mutation_data` is returned, with an
+additional column, `filter_mut`, indicating whether each record has been
+flagged for filtering (TRUE) or not (FALSE). If `return_filtered_rows`
+is TRUE, a list containing two data frames is returned. The first data
+frame, named `mutation_data`, is the filtered mutation data as described
+above. The second data frame, named `filtered_rows`, contains all
+records that were either removed from `mutation_data` or flagged with
+`filter_mut == TRUE`.
+
+## Examples
+
+``` r
+# Example data consists of 24 mouse bone marrow DNA samples imported
+# using import_mut_data(). Sequenced on TS Mouse Mutagenesis Panel.
+# Example data is retrieved from MutSeqRData, an ExperimentHub data package
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9860"]]
+  # In this example, we will apply the following filters:
+  # 1) Filter out putative germline variants using a VAF cutoff of 0.01
+  # 2) Remove rows whose position falls outside the intervals of the
+  #    TwinStrand Mouse Mutagenesis Panel regions.
+  # 3) Apply a custom filter to flag rows with "EndRepairFillInArtifact"
+  #    in the column 'filter'. This is a filter step commonly applied to
+  #    TwinStrand Duplex Sequencing data.
+  # 4) Flag snv variants that overlap with germline mnv variants and
+  # 5) Subtract the alt_depth of these variants from their total_depth
+  #    (treat them as No-calls).
+  # 6) Return all the flagged/removed rows in a seperate data frame.
+  filter_example <- filter_mut(
+    mutation_data = example_data,
+    vaf_cutoff = 0.01,
+    regions = "TSpanel_mouse",
+    regions_filter = "keep_within",
+    custom_filter_col = "filter",
+    custom_filter_val = "EndRepairFillInArtifact",
+    custom_filter_rm = FALSE, # Flagging, not removing
+    snv_in_germ_mnv = TRUE,
+    rm_filtered_mut_from_depth = TRUE,
+    return_filtered_rows = TRUE
+  )
+  # Flagging germline mutations...
+  # Found 612 germline mutations.
+  # Flagging SNVs overlapping with germline MNVs...
+  # Found 20 SNVs overlapping with germline MNVs.
+  # Applying custom filter...
+  # Flagged 2021 rows with values in <filter> column that matched
+  #  EndRepairFillInArtifact
+  # Applying region filter...
+  # Removed 22 rows based on regions.
+  # Correcting depth...
+  # 909 rows had their total_depth corrected.
+  # Removing filtered mutations from the total_depth...
+  # Filtering complete.
+  # Returning a list: mutation_data and filtered_rows.
+
+  # To separately access the filtered rows and the filtered mutation data:
+  filtered_rows <- filter_example$filtered_rows
+  filtered_example_mutation_data <- filter_example$mutation_data
+}
+```

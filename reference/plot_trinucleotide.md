@@ -1,0 +1,113 @@
+# Plot the trinucleotide spectrum
+
+Creates barplots of the trinucleotide spectrum for all levels of a given
+group.
+
+## Usage
+
+``` r
+plot_trinucleotide(
+  mf_96,
+  response = "proportion",
+  mf_type = "min",
+  group_col = "dose",
+  indiv_y = FALSE,
+  sum_totals = TRUE,
+  output_path = NULL,
+  output_type = "svg"
+)
+```
+
+## Arguments
+
+- mf_96:
+
+  A data frame containing the mutation frequency data at the 96-base
+  resolution. This should be obtained using the 'calculate_mf' with
+  subtype_resolution set to 'base_96'. Generally, cols_to_group should
+  be the same as 'group_col'.
+
+- response:
+
+  A character string specifying the type of response to plot. Must be
+  one of 'frequency', 'proportion', or 'sum'.
+
+- mf_type:
+
+  A character string specifying the mutation count method to plot. Must
+  be one of 'min' or 'max'. Default is 'min'.
+
+- group_col:
+
+  A character string specifying the column(s) in 'mf_96' to group the
+  data by. Default is 'sample'. The sum, proportion, or frequency will
+  be plotted for all unique levels of this group. You can specify more
+  than one column to group by. Generally the same as the 'cols_to_group'
+  parameter in 'calculate_mf' when generating mf_96.
+
+- indiv_y:
+
+  A logical value specifying whether the the max response value for the
+  y-axis should be scaled independently for each group (TRUE) or scaled
+  the same for all groups (FALSE). Default is FALSE.
+
+- sum_totals:
+
+  A logical value specifying whether to display the total sum of
+  mutations in the mutation labels. Default is TRUE.
+
+- output_path:
+
+  An optional file path to an output directory. If provided, the plots
+  will be automatically exported using the graphics device specified in
+  output_type. The function will create the output directory if it
+  doesn't already exist. If NULL, plots will not be exported. Default is
+  NULL.
+
+- output_type:
+
+  A character string specifying the type of output file. Options are
+  'eps', 'ps', 'tex', 'pdf', or 'jpeg', 'tiff', 'png', 'bmp', 'svg', or
+  'wmf' (windows only). Default is 'svg'.
+
+## Value
+
+A named list containing ggplots.
+
+## Details
+
+The function plots the trinucleotide spectrum for all levels of a given
+group from the provided mf_96 data; the output of calculate_mf with
+subtype_resolution = "base_96".
+
+## Examples
+
+``` r
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+  # Example data consists of 24 mouse bone marrow DNA samples imported
+  # using import_mut_data() and filtered with filter_mut as in Example 4.
+  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+  # retrieved from MutSeqRData, an ExperimentHub data package.
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9861"]]
+
+  # Calculate the mutation frequency data at the 96-base resolution
+  mf_96 <- calculate_mf(
+    mutation_data = example_data,
+    cols_to_group = "dose_group",
+    subtype_resolution = "base_96",
+    variant_types = "snv"
+  )
+  # Plot the trinucleotide proportions for each dose group
+  # Scale y-axis the same for all groups
+  plots <- plot_trinucleotide(
+    mf_96 = mf_96,
+    response = "proportion",
+    mf_type = "min",
+    group_col = "dose_group",
+    indiv_y = FALSE,
+    output_path = NULL
+  )
+}
+```

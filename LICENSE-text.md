@@ -1,0 +1,4 @@
+# License
+
+    YEAR: 2025
+    COPYRIGHT HOLDER: His Majesty the King in Right of Canada, as represented by the Minister of Health

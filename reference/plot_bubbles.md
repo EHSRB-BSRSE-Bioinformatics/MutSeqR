@@ -1,0 +1,95 @@
+# Generate Bubble Plots
+
+Produces a ggplot object of bubble plots from given mutation data.
+Optionally, bubble plots can be facetted and coloured by a specified
+column.
+
+## Usage
+
+``` r
+plot_bubbles(
+  mutation_data,
+  size_by = "alt_depth",
+  facet_col = NULL,
+  color_by = "normalized_subtype",
+  circle_spacing = 1,
+  circle_outline = "none",
+  circle_resolution = 50,
+  custom_palette = NULL
+)
+```
+
+## Arguments
+
+- mutation_data:
+
+  Data frame containing the mutation data.
+
+- size_by:
+
+  The column name by which to size the circles. Recommended values are
+  "alt_depth" or "vaf".
+
+- facet_col:
+
+  The column name by which to facet . If NULL, no facetting will be
+  done. Default is NULL.
+
+- color_by:
+
+  The column name by which to colour the mutations. Default is
+  "normalized_subtype".
+
+- circle_spacing:
+
+  Numerical value to adjust the spacing between circles. Default is 1.
+
+- circle_outline:
+
+  Colour for the circle outline. Default is "none", resulting in no
+  outline colour. Other accepted values are colours in the R language.
+
+- circle_resolution:
+
+  Number of points to use for the circle resolution. Default is 50.
+
+- custom_palette:
+
+  A named vector of colors to be used for the mutation subtypes. The
+  names of the vector should correspond to the levels in color_by.
+  Alternatively, you can specify a color palette from the RColorBrewer
+  package. See
+  [`brewer.pal`](https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html)
+  for palette options. You may visualize the palettes at the ColorBrewer
+  website: <https://colorbrewer2.org/>. Default is `NULL`.
+
+## Value
+
+A ggplot object with the bubble plot, facetted if specified.
+
+## Details
+
+The function will plot a circle for each mutation in `mutation_data`.
+Mutations flagged by the `filter_mut` column will be excluded from the
+plot. The size of the circle is determined by the `size_by` parameter.
+Sizing by the "alt_depth" or the "vaf" will give users the ability to
+visualize the the distribution of recurrent mutations within their data
+with large multiplets having a large circle.
+
+## Examples
+
+``` r
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+  # Example data consists of 24 mouse bone marrow DNA samples imported
+  # using import_mut_data() and filtered with filter_mut as in Example 4.
+  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+  # retrieved from MutSeqRData, an ExperimentHub data package.
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9861"]]
+  plot <- plot_bubbles(
+    mutation_data = example_data,
+    facet_col = "dose_group"
+  )
+}
+```

@@ -1,0 +1,104 @@
+# Create a heatmap plot of mutation subtype proportions.
+
+This function creates a heatmap plot of subtype proportions for a given
+grouping variable. The groups may be facetted by a second variable.
+Mutation sums for each facet group and normalized subtype are calculated
+and displayed.
+
+## Usage
+
+``` r
+plot_trinucleotide_heatmap(
+  mf_data,
+  group_col = "sample",
+  facet_col = "dose",
+  mf_type = "min",
+  mut_proportion_scale = "turbo",
+  max = 0.2,
+  rescale_data = FALSE,
+  condensed = FALSE
+)
+```
+
+## Arguments
+
+- mf_data:
+
+  A data frame containing the mutation frequency data at the desired
+  base resolution. This is obtained using the 'calculate_mf' with
+  subtype_resolution set to the desired resolution. cols_to_group should
+  be the same as 'group_col'.
+
+- group_col:
+
+  The variable to group by.
+
+- facet_col:
+
+  The variable to facet by.
+
+- mf_type:
+
+  The type of mutation frequency to plot. Options are "min" or "max".
+  (Default: "min")
+
+- mut_proportion_scale:
+
+  The scale option for the mutation proportion. Options are passed to
+  viridis::scale_fill_viridis_c. One of \# inferno, magma, plasma,
+  viridis, cividis, turbo, mako, or rocket. We highly reccomend the
+  default for its ability to disciminate hard to see patterns. (Default:
+  "turbo")
+
+- max:
+
+  Maximum value used for plotting the proportions. Proportions that are
+  higher will have the maximum colour. (Default: 0.2)
+
+- rescale_data:
+
+  Logical value indicating whether to rescale the mutation proportions
+  to increase the dynamic range of colors shown on the plot. (Default:
+  TRUE)
+
+- condensed:
+
+  More condensed plotting format. Default = FALSE.
+
+## Value
+
+A ggplot object representing the heatmap plot.
+
+## Examples
+
+``` r
+if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+  # Plot the trinucleotide proportions per sample, facetted by dose group.
+
+  # Example data consists of 24 mouse bone marrow DNA samples imported
+  # using import_mut_data() and filtered with filter_mut as in Example 4.
+  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
+  # retrieved from MutSeqRData, an ExperimentHub data package.
+  library(ExperimentHub)
+  eh <- ExperimentHub()
+  example_data <- eh[["EH9861"]]
+
+  # define dose_group order
+  example_data$dose_group <- factor(example_data$dose_group,
+    levels = c(
+      "Control", "Low",
+      "Medium", "High"
+    )
+  )
+  mf_96 <- calculate_mf(example_data,
+    cols_to_group = "sample",
+    variant_types = "snv",
+    subtype_resolution = "base_96",
+    retain_metadata_cols = "dose_group"
+  )
+  plot <- plot_trinucleotide_heatmap(mf_96,
+    group_col = "sample",
+    facet_col = "dose_group"
+  )
+}
+```
