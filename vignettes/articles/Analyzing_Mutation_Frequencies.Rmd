@@ -21,6 +21,7 @@ bibliography: Analyzing_Mutation_Frequencies.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
 library(htmltools)
+library(yulab.utils)
 ```
 
 # Load MutSeqR and Example Data

@@ -37,7 +37,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, knitr, rmarkdown, pkgdown, BiocStyle, bs4Dash, BSgenome, BSgenome.Mmusculus.UCSC.mm10, car, colorspace, dendsort, doBy, DT, ExperimentHub, fmsb, fs, ggdendro, ggrepel, gtools, htmltools, httr, lme4, magick, openxlsx, packcircles, patchwork, RColorBrewer, reticulate, scales, shiny, trackViewer, yaml, xml2, binom, testthat, yulab.utils
+          extra-packages: any::rcmdcheck, knitr, rmarkdown, pkgdown, BiocStyle, bs4Dash, BSgenome, BSgenome.Mmusculus.UCSC.mm10, BSgenome.Hsapiens.UCSC.hg38, car, colorspace, dendsort, doBy, DT, ExperimentHub, fmsb, fs, ggdendro, ggrepel, gtools, htmltools, httr, lme4, magick, openxlsx, packcircles, patchwork, RColorBrewer, reticulate, scales, shiny, trackViewer, yaml, xml2, binom, testthat, yulab.utils
           dependencies: '"hard"'
           needs: website
 
