@@ -15,7 +15,7 @@ cleveland_plot(results, covariate_col = NULL, output_path = NULL)
 exist, it will be created. If NULL, the plots will not be exported.}
 }
 \value{
-A list of ggplot objects for each response in results.
+A single ggplot object with facets for each response.
 }
 \description{
 Make a Cleveland plot for the PROAST results.

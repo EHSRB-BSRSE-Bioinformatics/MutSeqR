@@ -178,9 +178,6 @@ bmd_proast <- function(
     raw_results = FALSE,
     seed = 125) {
     stopifnot(
-        "mf_data must be a data frame" = is.data.frame(mf_data),
-        "dose_col must be a column name (character)" = is.character(dose_col),
-        "dose_col must be a single column name" = length(dose_col) == 1,
         "dose_col must be a column in mf_data" =
             dose_col %in% colnames(mf_data),
         "response_col must be a column name or vector of column names" =
@@ -278,7 +275,7 @@ bmd_proast <- function(
           output_path = output_path
         )
 
-        plots <- c(plots, ma_plots, c_plots)
+        plots <- c(plots, ma_plots, list(cleveland_plot = c_plots))
       }
     }
   }
