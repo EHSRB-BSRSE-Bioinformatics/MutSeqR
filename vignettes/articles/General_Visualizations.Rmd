@@ -125,27 +125,32 @@ This plot shows us that average mutation frequency increases with dose. Second, 
 
 # Lollipop Plots
 
-`plot_lollipop()`is used to visualize recurrent mutations. Mutations are grouped across a user-specifed variable (ex. chromosome). Mutations that occur above a specified recurrence threshold are plotted by genomic position. Mutations are colored by their mutation subtype. Fo each level in the specified group, a lollipop plot will be generated and stored in a list.
+`plot_lollipop()`is used to visualize recurrent mutations. Recurrent mutations
+may be analysed across the entire data sets or across user-specified
+variable(s) (ex. sample, contig, dose). Mutations may also be analysed at the
+various subtype resolutions. Mutations i a group that occur above a specified
+recurrence threshold are plotted by genomic position. If specified, mutations
+are colored by their mutation subtype. For each level in the specified group,
+a lollipop plot will be generated and stored in a list.
 
-\*Example 3. For this example, we will only analyze mutations at the High dose group for simplicity. We will plot mutations that reoccur a minimum of 2 times. Plots are grouped by the genomic target (label).
+_Example 3. We will visualize mutations that occur a minimum of 2 times in a group_
+_Mutations will be grouped by genomic target (label) and by dose group_
+_Recurring mutations will be resolved at the base_6 level_
 
 ```{r lolli-cap, include=FALSE}
-caption <- paste("Recurrent mutations found in High dose group plotted by",
-    "genomic position. Plots are separated by genomic target.")
+caption <- paste("Recurrent mutations in target chr 2 found in the High dose group plotted by",
+    "genomic position and coloured by normalized subtype. Plots are separated by genomic target.")
 ```
 
 ```{r plot-lollipop, fig.cap=caption, fig.wide=TRUE}
-example_data_h <- dplyr::filter(example_data, dose_group == "High")
-
 plot_list <- plot_lollipop(
-    mutation_data = example_data_h,
+    mutation_data = example_data,
     min_recurrence = 2,
-    group_col = "label",
+    group_col = c("label", "dose_group"),
+    subtype_resolution = "base_6"
 )
 
-names(plot_list)
-
-plot_list$chr11
+plot_list[50]
 
 ```
 

@@ -7,35 +7,37 @@
 plot_lollipop(
   mutation_data,
   min_recurrence = 2,
-  group_col,
+  group_col = "contig",
+  subtype_resolution = "base_6",
   custom_palette = NULL
 )
 }
 \arguments{
-\item{mutation_data}{A data frame containing mutation data. It must contain columns
-for genomic start position (\code{start}), \code{variation_type}, \code{normalized_subtype},
-and a column to group by (see \code{group_col}).}
+\item{mutation_data}{A data frame containing mutation data.}
 
 \item{min_recurrence}{An integer specifying the minimum number of times a
-mutation must be observed at the same position to be plotted. Defaults to 2.}
+mutation must be observed at the same position to be plotted.
+Default is 2.}
 
-\item{group_col}{A string specifying the column name to group mutation_data by,
-typically representing chromosomes or contigs (e.g., "seqnames", "chr").
-Defaults to "seqnames".}
+\item{group_col}{A character vector specifying the column name(s) to group
+mutation_data by. Default is "contig".}
 
-\item{custom_palette}{A named character vector for coloring the mutation
-subtypes. The names should match the levels in \code{normalized_subtype}. If NULL
-(default), a default palette is used.}
+\item{subtype_resolution}{The subtype resolution by which to group and
+colour the mutations. Options are "none", "type", "base_6", "base_12",
+"base_96", and "base_192".}
+
+\item{custom_palette}{A named vector of colors to be used for the mutation
+subtypes. The names of the vector should correspond to the mutation subtypes
+in the data. Alternatively, you can specify a color palette from the
+RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+options. You may visualize the palettes at the ColorBrewer website:
+\url{https://colorbrewer2.org/}. Default is \code{NULL}.}
 }
 \value{
-A list of ggplot objects. Each element of the list is a lollipop
-plot for a specific region (e.g., a chromosome) and is named accordingly.
+A list of ggplot objects.
 }
 \description{
-This function visualizes recurrent mutations from a data frame. It first
-calculates the frequency of each mutation at specific genomic positions and
-then generates a lollipop plot for each group (e.g., chromosome)
-displaying mutations that meet a minimum recurrence threshold.
+Plot recurrent mutations in a lollipop plot using ggplot2
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
