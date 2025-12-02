@@ -163,12 +163,16 @@ contrast table would look like:
 
 100:chr2	0:chr2
 
-Troubleshooting: If you are having issues with convergence for your generalized linear mixed-
-effects model, it may be advisable to increase the tolerance level for convergence
-checking during model fitting. This is done through the \code{control} argument for
-the \code{lme4::glmer} function. The default tolerance is tol = 0.002. Add this
-argument as an extra argument in the \code{model_mf} function.
+Troubleshooting: If you are having issues with convergence for your
+generalized linear mixed-effects model, it may be advisable to increase
+the tolerance level for convergence checking during model fitting. This
+is done through the \code{control} argument for the \code{lme4::glmer} function. The
+default tolerance is tol = 0.002. Add this argument as an extra argument
+in the \code{model_mf} function.
 Ex. \code{control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", tol = 3e-3, relTol = NULL))}
+Alternate approach:
+\code{control = lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))}
+Similar approaches may be taken for glm models.
 }
 \examples{
 # Example data consists of 24 mouse bone marrow DNA samples imported

@@ -43,8 +43,6 @@
 #' @param ... Extra arguments for \link[stats]{glm}  or \link[lme4]{glmer}. The
 #' `glmer` function is used when a `random_effect` is supplied, otherwise, the
 #' model uses the `glm` function.
-#' @export
-#'
 #' @details
 #' `fixed_effects` are variables that have a direct and constant effect on the
 #' dependent variable (ie mutation frequency).They are typically the
@@ -118,14 +116,18 @@
 #'
 #' 100:chr2	0:chr2
 #'
-#' Troubleshooting: If you are having issues with convergence for your generalized linear mixed-
-#' effects model, it may be advisable to increase the tolerance level for convergence
-#' checking during model fitting. This is done through the `control` argument for
-#' the `lme4::glmer` function. The default tolerance is tol = 0.002. Add this
-#' argument as an extra argument in the `model_mf` function.
+#' Troubleshooting: If you are having issues with convergence for your
+#' generalized linear mixed-effects model, it may be advisable to increase
+#' the tolerance level for convergence checking during model fitting. This
+#' is done through the `control` argument for the `lme4::glmer` function. The
+#' default tolerance is tol = 0.002. Add this argument as an extra argument
+#' in the `model_mf` function.
 #' Ex. `control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning",
 #'                                                              tol = 3e-3,
 #'                                                              relTol = NULL))`
+#' Alternate approach:
+#' `control = lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))`
+#' Similar approaches may be taken for glm models.
 #' @returns Model results are output as a list. Included are:
 #' - model_data: the supplied mf_data with added column for the Pearson's
 #' residuals of the model.
@@ -177,7 +179,9 @@
 #' )
 #' @importFrom magrittr %>%
 #' @importFrom graphics abline boxplot hist par
-#' @importFrom stats as.formula model.matrix qqnorm relevel residuals
+#' @importFrom stats as.formula model.matrix qqnorm relevel residuals qqline glm
+#' @importFrom dplyr mutate select case_when
+#' @importFrom utils read.delim
 #' @export
 model_mf <- function(
     mf_data,
@@ -191,300 +195,204 @@ model_mf <- function(
     cont_sep = "\t",
     ...) {
 
-    muts <- match.arg(
-        muts,
-        choices = colnames(mf_data),
-        several.ok = FALSE
-    )
-    total_count <- match.arg(
-        total_count,
-        choices = colnames(mf_data),
-        several.ok = FALSE
-    )
+  # --- 1. Input Validation & Setup ---
+  muts <- match.arg(muts, choices = colnames(mf_data))
+  total_count <- match.arg(total_count, choices = colnames(mf_data))
 
-  if (!requireNamespace("doBy", quietly = TRUE)) {
-    stop("Package doBy is required. Please install from CRAN.")
-  }
-  if (length(fixed_effects) > 1 && !requireNamespace("car", quietly = TRUE)) {
-    stop("Package car is required for models with multiple fixed effects. Please install from CRAN.")
-  }
-  if (!is.null(random_effects) && !requireNamespace("lme4", quietly = TRUE)) {
-    stop("Package lme4 is required for models with random effects. Please install from CRAN.")
-  }
-  # Convert muts and total_count to numeric to avoid integer overflow
-  mf_data[[muts]] <- as.numeric(mf_data[[muts]])
-  mf_data[[total_count]] <- as.numeric(mf_data[[total_count]])
+  if (!requireNamespace("doBy", quietly = TRUE)) stop("Package doBy is required.")
+  if (length(fixed_effects) > 1 && !requireNamespace("car", quietly = TRUE)) stop("Package car is required.")
+  if (!is.null(random_effects) && !requireNamespace("lme4", quietly = TRUE)) stop("Package lme4 is required.")
 
-  # Convert specified columns to factors
-  mf_data[, fixed_effects] <- lapply(mf_data[, fixed_effects, drop = FALSE], as.factor)
+  # numeric conversion to prevent integer overflow
+  mf_data[c(muts, total_count)] <- lapply(mf_data[c(muts, total_count)], as.numeric)
+  
+  # factor conversion
+  mf_data[fixed_effects] <- lapply(mf_data[fixed_effects], as.factor)
 
-  # Check that the reference levels are valid levels of the factors
-  for (factor_name in fixed_effects) {
-    factor_levels <- levels(mf_data[[factor_name]])
-    reference_level_char <- as.character(reference_level[fixed_effects == factor_name])
-    invalid_levels <- reference_level_char[!reference_level_char %in% factor_levels]
-    if (length(invalid_levels) > 0) {
-      stop(
-        "Invalid reference level(s) for factor",
-        factor_name, ":", paste(invalid_levels, collapse = ", ")
-      )
-    } else {
-      message("Reference level for factor", factor_name, ":", reference_level_char)
+  # --- 2. Reference Level Validation & Assignment ---
+  # Check validity of reference levels
+  for (i in seq_along(fixed_effects)) {
+    f_name <- fixed_effects[i]
+    ref <- reference_level[i]
+    if (!ref %in% levels(mf_data[[f_name]])) {
+      stop("Invalid reference level '", ref, "' for factor '", f_name, "'.")
     }
-  }
-  # Set the reference level for each factor in fixed_effects
-  if (length(fixed_effects) == 1) {
-    mf_data[[fixed_effects]] <- stats::relevel(mf_data[[fixed_effects]], ref = as.character(reference_level))
-  } else {
-    for (factor_name in as.list(fixed_effects)) {
-      reference_level_for_factor <- reference_level[match(factor_name, fixed_effects)]
-      mf_data[[factor_name]] <- relevel(mf_data[[factor_name]], ref = reference_level_for_factor)
-    }
-  }
-  # Construct the model formula
-  if (test_interaction) {
-    formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "*"))
-  } else {
-    formula_str <- paste("cbind(", muts, ",", total_count, ") ~ ", paste(fixed_effects, collapse = "+"))
+    message("Reference level for factor ", f_name, ": ", ref)
   }
 
-  # Add random effects to the formula
+  # Releveling
+  # Map applies relevel to each column in the list using the corresponding ref
+  # We force as.character() to ensure relevel matches by Name, not by Index
+  mf_data[fixed_effects] <- Map(stats::relevel,
+                                x = mf_data[fixed_effects],
+                                ref = as.list(as.character(reference_level)))
+
+  # --- 3. Model Fitting ---
+  # Construct formula
+  op <- if (test_interaction) "*" else "+"
+  rhs <- paste(fixed_effects, collapse = op)
+
   if (!is.null(random_effects)) {
-    # Add random effect to model formula
-    random_formula <- paste(paste("(1|", random_effects, ")", collapse = "+"))
-    formula_str <- paste(formula_str, "+", random_formula)
-    model_formula <- stats::as.formula(formula_str)
-
     # GLMM
-    message("Fitting generalized linear mixed-effects model. lme4::glmer(", formula_str, ", family = binomial)")
-
-    model <- lme4::glmer(model_formula,
-      family = "binomial",
-      data = mf_data,
-      ...
-    )
+    rhs <- paste(rhs, paste0("(1|", random_effects, ")"), sep = " + ")
+    formula_str <- paste0("cbind(", muts, ", ", total_count, ") ~ ", rhs)
+    message("Fitting GLMM: lme4::glmer(", formula_str, ", family = binomial)")
+    model <- lme4::glmer(stats::as.formula(formula_str), family = "binomial", data = mf_data, ...)
   } else {
-    model_formula <- stats::as.formula(formula_str)
-
     # GLM
-    message("Fitting generalized linear model. glm(", formula_str, ", family = quasibinomial")
-    model <- stats::glm(model_formula,
-      family = "quasibinomial",
-      data = mf_data,
-      ...
-    )
+    formula_str <- paste0("cbind(", muts, ", ", total_count, ") ~ ", rhs)
+    message("Fitting GLM: glm(", formula_str, ", family = quasibinomial)")
+
+    model_formula <- stats::as.formula(formula_str)
+    model <- stats::glm(model_formula, family = "quasibinomial", data = mf_data, ...)
+    # Check dispersion
     if (summary(model)$dispersion < 1) {
-      warning("The dispersion parameter is less than 1. Switching to a bionomial distribution.")
-      model <- stats::glm(model_formula,
-        family = "binomial",
-        data = mf_data,
-        ...
-      )
+      warning("Dispersion < 1. Switching to binomial distribution.")
+      model <- stats::glm(model_formula, family = "binomial", data = mf_data, ...)
     }
   }
-
 
   model_summary <- summary(model)
-  if (length(fixed_effects) > 1) {
-    model_anova <- car::Anova(model)
-  }
+  model_anova <- if (length(fixed_effects) > 1) car::Anova(model) else NULL
 
-  # Check residuals
+  # --- 4. Residuals ---
   mf_data$residuals <- stats::residuals(model, type = "pearson")
 
-  # Print the row with the maximum residual
-  max_residual <- max(mf_data$residuals)
-  max_residual_index <- which.max(abs(mf_data$residuals))
-  message("The highest residual in absolute value is:", max_residual, "in row:", max_residual_index)
+  max_resid_idx <- which.max(abs(mf_data$residuals))
+  message("Max absolute residual: ", mf_data$residuals[max_resid_idx], " (Row ", max_resid_idx, ")")
 
-  # Make Residuals Plots
-  par(las = 1, xaxs = "i", yaxs = "i")
-  hist_data <- hist(mf_data$residuals, plot = FALSE)
-  ylim_max <- max(hist_data$counts) + 1
-  hist(mf_data$residuals,
-    main = "Residuals",
-    col = "yellow",
-    ylim = c(0, ylim_max)
-  )
+  # Plots
+  graphics::par(las = 1, xaxs = "i", yaxs = "i")
+  hist_obj <- graphics::hist(mf_data$residuals, plot = FALSE) # Capture data
+  graphics::hist(mf_data$residuals, main = "Residuals", col = "yellow", ylim = c(0, max(hist_obj$counts) + 1))
 
-  qqplot <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
+  qq <- stats::qqnorm(mf_data$residuals, main = "QQ Plot of Residuals")
   stats::qqline(mf_data$residuals, col = "red")
 
-  # Point Estimates By Fixed Effects
-  # Define your levels for each factor
-  fixed_effects_levels <- lapply(fixed_effects, function(factor) levels(mf_data[[factor]]))
-
-  # Define all combinations of each factor
+  # --- 5. Point Estimates (Vectorized) ---
+  fixed_effects_levels <- lapply(mf_data[fixed_effects], levels)
   design_matrix <- do.call(expand.grid, fixed_effects_levels)
-  colnames(design_matrix) <- fixed_effects
 
-  # Create simplified model formula
-  if (test_interaction) {
-    fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "*")))
+  # Create simplified model formula for model.matrix
+  fixed_formula <- stats::as.formula(paste("~", paste(fixed_effects, collapse = op)))
+  model_matrix_est <- stats::model.matrix(fixed_formula, data = design_matrix)
+
+  # Create readable rownames (e.g., "LevelA:LevelB")
+  row_names <- do.call(paste, c(design_matrix, sep = ":"))
+  rownames(model_matrix_est) <- row_names
+
+  # Compute estimates
+  est_obj <- doBy::esticon(obj = model, L = model_matrix_est)
+
+  # Process results
+  model_estimates <- as.data.frame(est_obj)
+  model_estimates <- model_estimates %>%
+    dplyr::mutate(
+      estimate_raw = .data$estimate, # keep raw log-odds if needed
+      Estimate = exp(.data$estimate),
+      Lower = exp(.data$lwr),
+      Upper = exp(.data$upr),
+      # Delta method approx for SE back-transform: SE_p = p * SE_logit
+      Std.Err = .data$Estimate * .data$std.error 
+    ) %>%
+    dplyr::select("Estimate", "Std.Err", "Lower", "Upper")
+
+  # Add fixed effect levels as indiv columns to the p estimate table
+  if (length(fixed_effects) > 1) {
+    meta_cols <- do.call(rbind, strsplit(rownames(model_estimates), ":"))
   } else {
-    fixed_effect_formula <- stats::as.formula(paste(" ~ ", paste(fixed_effects, collapse = "+")))
+    meta_cols <- matrix(rownames(model_estimates), ncol = 1)
   }
+  colnames(meta_cols) <- fixed_effects
+  model_estimates <- cbind(model_estimates, as.data.frame(meta_cols))
 
-  # Create the model matrix using model.matrix
-  model_matrix <- stats::model.matrix(fixed_effect_formula, data = design_matrix)
-  row_names <- apply(design_matrix, 1, paste, collapse = ":")
-  rownames(model_matrix) <- row_names
 
-  # Computed estimates
-  model_estimates <- doBy::esticon(obj = model, L = model_matrix)
+  # --- 6. Pairwise Comparisons (Vectorized) ---
+  pairwise_results <- NULL
+  result_matrix <- NULL
 
-  model_estimates <- as.data.frame(model_estimates)
-  model_estimates$estimate <- exp(model_estimates$estimate)
-  delta <- model_estimates$estimate^2
-  model_estimates$lwr <- exp(model_estimates$lwr)
-  model_estimates$upr <- exp(model_estimates$upr)
-  model_estimates$std.error <- sqrt(delta * model_estimates$std.error^2)
-  # Clean data
-  model_estimates <- model_estimates[, -c(3, 4, 5, 6)]
-  colnames(model_estimates) <- c("Estimate", "Std.Err", "Lower", "Upper")
-
-  # Split the string into individual characters
-  chars <- strsplit(fixed_effects, " ")
-  # Count the characters
-  count <- length(unlist(chars))
-  for (i in seq_along(chars)) {
-    # Assign each element to a separate variable in the global environment
-    assign(paste("var", i, sep = ""), chars[[i]])
-  }
-  # Extract rownames into a column for each contrast variable
-  for (i in seq_len(count)) {
-    var_i <- get(paste0("var", i))
-    model_estimates[[var_i]] <- vapply(
-      strsplit(rownames(model_estimates), ":"),
-      function(x) x[i],
-      character(1)
-    )
-  }
-
-  # Pairwise Comparisons
-  # load contrast table file and do checks
   if (!is.null(contrasts)) {
+    # Load contrasts
     if (is.data.frame(contrasts)) {
       contrast_table <- contrasts
     } else {
-      contrast_table <- read.delim(file.path(contrasts),
-        sep = cont_sep,
-        header = FALSE
-      )
-      if (ncol(contrast_table) <= 1) {
-        stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
-      }
-      if (ncol(contrast_table) > 2) {
-        stop("Your contrast_table has more than two columns. See the documentation for proper formatting.")
-      }
+      contrast_table <- read.delim(contrasts, sep = cont_sep, header = FALSE)
     }
-    model_matrix <- as.data.frame(model_matrix)
-    contrast_table <- as.data.frame(contrast_table) # Convert to data frame if needed
+    
+    # Check dimensions
+    if (ncol(contrast_table) != 2) stop("Contrast table must have exactly 2 columns.")
+    
+    # Validate levels
+    all_contrast_levels <- unique(unlist(contrast_table))
+    # Note: row_names variable from above contains all valid combinations (e.g. "25:chr1")
+    if (!all(all_contrast_levels %in% row_names)) {
+      stop("Contrast table contains values not found in model fixed effects combinations.")
+    }
 
-    valid_contrasts <- function(contrasts_table, fixed_levels) {
-      split_values <- strsplit(as.character(unlist(contrasts_table)), ":")
-      all_values <- unlist(split_values)
-      unique_values <- unique(all_values)
-      l <- as.character(unlist(fixed_levels))
-      valid <- all(unique_values %in% l)
-      return(valid)
-    }
-    valid <- valid_contrasts(contrast_table, fixed_effects_levels)
-    if (!valid) {
-      stop(
-        "The contrast table contains values that are not present in the mf_data.\n",
-        "Please ensure that the contrast table values match the levels of the fixed effects."
-      )
-    }
-    # Create an empty list to store the result of matrix subtractions
-    result_list <- list()
+    # MATRIX SUBTRACTION (Vectorized)
+    V1 <- as.character(contrast_table[, 1])
+    V2 <- as.character(contrast_table[, 2])
 
-    # Loop through each row in contrast_table
-    for (i in seq_len(nrow(contrast_table))) {
-      # Get the model_row values
-      V1 <- as.character(contrast_table[i, 1])
-      V2 <- as.character(contrast_table[i, 2])
-      # Perform matrix subtraction and store the result in the list
-      result_list[[i]] <- model_matrix[V1, ] - model_matrix[V2, ]
-    }
-    # Convert the list of matrices to a single matrix
-    result_matrix <- as.matrix(do.call(rbind, result_list))
-    # Set row names for result_matrix
-    rownames(result_matrix) <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
+    # Direct matrix algebra instead of loop
+    result_matrix <- model_matrix_est[V1, , drop = FALSE] - model_matrix_est[V2, , drop = FALSE]
+    rownames(result_matrix) <- paste(V1, "vs", V2)
 
     # Perform comparisons
-    pairwise_comparisons <- doBy::esticon(obj = model, L = result_matrix)
+    pc_obj <- doBy::esticon(obj = model, L = result_matrix)
 
     # Clean results
-    pairwise_comparisons <- as.data.frame(pairwise_comparisons)
-    pairwise_comparisons$estimate <- exp(pairwise_comparisons$estimate)
-    delta <- pairwise_comparisons$estimate^2
-    pairwise_comparisons$lwr <- exp(pairwise_comparisons$lwr)
-    pairwise_comparisons$upr <- exp(pairwise_comparisons$upr)
-    pairwise_comparisons$std.error <- sqrt(delta * pairwise_comparisons$std.error^2)
-    pairwise_comparisons <- pairwise_comparisons[, -5]
-    colnames(pairwise_comparisons) <- c(
-      "Fold.Change",
-      "FC.Std.Err",
-      "Obs.T",
-      "p.value",
-      "df",
-      "FC.Lower",
-      "FC.Upper"
-    )
+    pairwise_results <- as.data.frame(pc_obj) %>%
+      dplyr::mutate(
+        Fold.Change = exp(.data$estimate),
+        FC.Lower = exp(.data$lwr),
+        FC.Upper = exp(.data$upr),
+        FC.Std.Err = .data$Fold.Change * .data$std.error, # Delta method
+        adj_p.value = MutSeqR::sidak(.data$p.value)$SidakP,
+        Significance = dplyr::case_when(
+          adj_p.value <= 0.001 ~ "***",
+          adj_p.value <= 0.01 ~ "**",
+          adj_p.value <= 0.05 ~ "*",
+          TRUE ~ ""
+        )
+      ) %>%
+      dplyr::select("Fold.Change", "FC.Std.Err", Obs.T = "statistic", "p.value", "df", "FC.Lower", "FC.Upper", "adj_p.value", "Significance")
 
-    pairwise_comparisons$adj_p.value <- MutSeqR::sidak(pairwise_comparisons$p.value)$SidakP
-    pairwise_comparisons <- pairwise_comparisons %>%
-      dplyr::mutate(Significance = case_when(
-        adj_p.value <= 0.001 ~ "***",
-        adj_p.value <= 0.01 ~ "**",
-        adj_p.value <= 0.05 ~ "*",
-        TRUE ~ ""
-      ))
-    pairwise_comparisons$contrast_group1 <- vapply(
-      strsplit(rownames(pairwise_comparisons), " vs "),
-      function(x) x[1],
-      character(1)
-    )
-    pairwise_comparisons$contrast_group2 <- vapply(
-      strsplit(rownames(pairwise_comparisons), " vs "),
-      function(x) x[2],
-      character(1)
-    )
-    for (i in seq_len(count)) {
-      var_i <- get(paste0("var", i))
-      pairwise_comparisons[[paste0(var_i, "_1")]] <- vapply(
-        strsplit(pairwise_comparisons$contrast_group1, ":"),
-        function(x) x[i],
-        character(1)
-      )
-      pairwise_comparisons[[paste0(var_i, "_2")]] <- vapply(
-        strsplit(pairwise_comparisons$contrast_group2, ":"),
-        function(x) x[i],
-        character(1)
-      )
+    # Parse Contrast Names back into indiv columns
+    # Split "A vs B"
+    groups <- do.call(rbind, strsplit(rownames(pairwise_results), " vs "))
+
+    # Split Group 1 parts (e.g., "25:chr1" -> "25", "chr1")
+    if (length(fixed_effects) > 1) {
+      g1_parts <- do.call(rbind, strsplit(groups[, 1], ":"))
+      g2_parts <- do.call(rbind, strsplit(groups[, 2], ":"))
+    } else {
+      g1_parts <- matrix(groups[, 1], ncol = 1)
+      g2_parts <- matrix(groups[, 2], ncol = 1)
     }
-    pairwise_comparisons <- pairwise_comparisons %>%
-      dplyr::select(-"contrast_group1", -"contrast_group2")
+
+    colnames(g1_parts) <- paste0(fixed_effects, "_1")
+    colnames(g2_parts) <- paste0(fixed_effects, "_2")
+
+    pairwise_results <- cbind(pairwise_results, as.data.frame(g1_parts), as.data.frame(g2_parts))
   }
 
-  model_results <- list(
+  # --- 7. Return ---
+  out <- list(
     model = model,
     model_data = mf_data,
-    model_formula = model_formula,
+    model_formula = formula_str,
     summary = model_summary,
-    residuals_histogram = hist,
-    residuals_qq_plot = qqplot,
-    point_estimates_matrix = model_matrix,
+    residuals_histogram = hist_obj,
+    residuals_qq_plot = qq,
+    point_estimates_matrix = model_matrix_est,
     point_estimates = model_estimates
   )
-  if (length(fixed_effects) > 1) {
-    model_results$anova <- model_anova
-  }
-  if (!is.null(contrasts)) {
-    model_results$pairwise_comparisons_matrix <- result_matrix
-    model_results$pairwise_comparisons <- pairwise_comparisons
+
+  if (!is.null(model_anova)) out$anova <- model_anova
+  if (!is.null(pairwise_results)) {
+    out$pairwise_comparisons_matrix <- result_matrix
+    out$pairwise_comparisons <- pairwise_results
   }
 
-  return(model_results)
+  return(out)
 }
