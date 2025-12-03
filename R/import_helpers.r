@@ -258,16 +258,16 @@ characterize_variants <- function(mutation_data) {
 #' @param mut_string the mutation. Ex. T>C, `A[G>T]C`
 #' @return the reference context of the mutation
 get_ref_of_mut <- function(mut_string) {
-  a <- str_extract(mut_string, ".*(?=\\s*>)")
-  # Remove non-letter characters
-  b <- str_replace_all(a, "[^a-zA-Z]", "")
-  # Extract letter characters after square bracket
-  c <- str_extract(mut_string, "\\](.*)") %>% str_replace_all("[^a-zA-Z]", "")
-  if (is.na(c)) {
-    return(b)
-  } else {
-    return(paste0(b, c))
-  }
+    a <- str_extract(mut_string, ".*(?=\\s*>)")
+    # Remove non-letter characters
+    b <- str_replace_all(a, "[^a-zA-Z]", "")
+    # Extract letter characters after square bracket
+    c <- str_extract(mut_string, "\\](.*)") %>% str_replace_all("[^a-zA-Z]", "")
+    if (is.na(c)) {
+        return(b)
+    } else {
+        return(paste0(b, c))
+    }
 }
 
 #' Get the reverse complement of a DNA or RNA sequence.
@@ -288,39 +288,39 @@ get_ref_of_mut <- function(mut_string) {
 reverseComplement <- function(x,
                               content = c("dna", "rna"),
                               case = c("lower", "upper", "as is")) {
-  # reverse character vector
-  strreverse <- function(x) {
-    if (!is.character(x)) {
-      stop("x must be a character vector")
+    # reverse character vector
+    strreverse <- function(x) {
+        if (!is.character(x)) {
+            stop("x must be a character vector")
+        }
+        vapply(
+            strsplit(x, ""),
+            function(y) paste(rev(y), collapse = ""),
+            character(1)
+        )
     }
-    vapply(
-      strsplit(x, ""),
-      function(y) paste(rev(y), collapse = ""),
-      character(1)
-    )
-  }
-  # Check arguments
-  if (!is.character(x)) x <- as.character(x) # coerse x to a character vector
-  content <- match.arg(content)
-  case <- match.arg(case)
-  if (length(x) == 0 || (length(x) == 1 && nchar(x) == 0)) {
-    return(x)
-  } # bail if input is empty
-  if (case == "lower") x <- tolower(x)
-  if (case == "upper") x <- toupper(x)
-  if (content == "dna") {
-    src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
-    dest <- "tgcaayrmkswvhdbnxTGCAAyRMKSWVHDBNX-"
-  } else {
-    src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
-    dest <- "ugcaayrmkswvhdbnxUGCAAyRMKSWVHDBNX-"
-  } # if
-  if (max(nchar(x)) > 1) {
-    return(chartr(src, dest, strreverse(x)))
-  }
-  # x is not a single string, so process it as a vector
-  chartr(src, dest, rev(x))
-} # function
+    # Check arguments
+    if (!is.character(x)) x <- as.character(x) # coerse x to a character vector
+    content <- match.arg(content)
+    case <- match.arg(case)
+    if (length(x) == 0 || (length(x) == 1 && nchar(x) == 0)) {
+        return(x)
+    } # bail if input is empty
+    if (case == "lower") x <- tolower(x)
+    if (case == "upper") x <- toupper(x)
+    if (content == "dna") {
+        src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
+        dest <- "tgcaayrmkswvhdbnxTGCAAyRMKSWVHDBNX-"
+    } else {
+        src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
+        dest <- "ugcaayrmkswvhdbnxUGCAAyRMKSWVHDBNX-"
+    }
+    if (max(nchar(x)) > 1) {
+        return(chartr(src, dest, strreverse(x)))
+    }
+    # x is not a single string, so process it as a vector
+    chartr(src, dest, rev(x))
+}
 
 #' classify_variation
 #' @description Classify the variation type of a mutation based on its ref and
@@ -389,4 +389,103 @@ classify_variation <- function(ref, alt) {
     }
     # Otherwise, uncategorized
     return("uncategorized")
+}
+
+#' Map column names of mutation data to default column names.
+
+#' A utility function that renames columns of mutation data to default columns
+#' names.
+#' @param data mutation data
+#' @param column_map a list that maps synonymous column names to their default.
+#' @returns the mutation data with column names changed to match default.
+#' @examples
+#' df <- data.frame(
+#'   chromosome = c("chr1", "chr2", "chr3"),
+#'   pos = c(100, 200, 300),
+#'   end = c(100, 200, 300),
+#'   sample_id = c("S1", "S2", "S3"),
+#'   reference = c("G", "C", "T"),
+#'   alternate = c("A", "T", "G")
+#' )
+#' renamed_data <- rename_columns(df, column_map = op$column)
+#' @export
+
+rename_columns <- function(data, column_map = op$column) {
+    original_colnames <- colnames(data)
+
+    # normalized names (clean regex)
+    # remove leading X or dots, trailing dots,
+    # and replace inner dots with underscores
+    norm_names <- tolower(original_colnames)
+    norm_names <- gsub("^((x\\.+)|(\\.+))?", "", norm_names) # Leading
+    norm_names <- gsub("(\\.+)?$", "", norm_names)           # Trailing
+    norm_names <- gsub("\\.+", "_", norm_names)              # Middle dots to _
+
+    map_synonyms <- names(column_map)
+    map_targets <- unlist(column_map)
+
+    # Handle existing defaults (casing)
+    is_target <- norm_names %in% map_targets
+    if (any(is_target)) {
+        target_indices <- match(norm_names[is_target], map_targets)
+        original_colnames[is_target] <- map_targets[target_indices]
+    }
+
+    # Identify targets that are still missing from the data
+    # Only rename synonyms if the target doesn't exist yet
+    present_targets <- original_colnames[original_colnames %in% map_targets]
+    targets_needed <- setdiff(unique(map_targets), present_targets)
+
+    # Find synonyms for needed targets
+    synonym <- map_synonyms %in% norm_names
+    target_is_needed <- map_targets %in% targets_needed
+    candidate_indices <- which(synonym & target_is_needed)
+
+    if (length(candidate_indices > 0)) {
+        selected_indices <- candidate_indices[!duplicated(map_targets[candidate_indices])]
+        final_synonyms <- map_synonyms[selected_indices]
+        final_targets  <- map_targets[selected_indices]
+        col_indices <- match(final_synonyms, norm_names)
+        invisible(Map(function(orig, new) {
+            message("Expected '", new, "' but found '", original_colnames[orig], "', renaming it.")
+        }, col_indices, final_targets))
+    
+        # Update names
+        original_colnames[col_indices] <- final_targets
+    }
+    colnames(data) <- original_colnames
+    return(data)
+}
+
+#' Check that all required columns are present before proceeding with the function
+#'
+#' A utility function that will check that all required columns are present.
+#' @param data mutation data
+#' @param required_columns a list of required column names.
+#' @returns an error
+#' @examples
+#' df <- data.frame(
+#'   contig = c("chr1", "chr2", "chr3"),
+#'   start = c(100, 200, 300),
+#'   end = c(100, 200, 300),
+#'   sample = c("S1", "S2", "S3"),
+#'   ref = c("G", "C", "T"),
+#'   alt = c("A", "T", "G")
+#' )
+#' check_required_columns(df, required_columns = op$base_required_mut_cols)
+#' @export
+
+check_required_columns <- function(data, required_columns) {
+    missing_columns <- setdiff(tolower(required_columns), tolower(names(data)))
+
+    if (length(missing_columns) > 0) {
+        missing_col_names <- paste(missing_columns, collapse = ", ")
+            stop(
+                "Some required columns are missing",
+                "or their synonyms are not found: ",
+                missing_col_names
+            )
+    } else {
+        return(data)
+    }
 }
