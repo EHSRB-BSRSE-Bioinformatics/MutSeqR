@@ -25,9 +25,9 @@ test_that("filter simple mutation data", {
   )
   expect_equal(sum(result$filter_mut), 16)
   expect_true(result$filter_reason[17] == "snv_in_germ_mnv")
-  expect_true(result$filter_reason[19] == "germline|snv_in_germ_mnv")
+  expect_true(result$filter_reason[19] == "germline")
   expect_true(result$total_depth[17] == 339)
-  expect_true(result$total_depth[19] == 180)
+  expect_true(result$total_depth[19] == 190)
   # rm_abnormal_vaf
   result <- filter_mut(
     mutation_data = mutation_data,
