@@ -166,6 +166,7 @@
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom BiocGenerics strand start end
 #' @importFrom GenomeInfoDb seqnames
+#' @importFrom S4Vectors mcols
 #' @export
 import_vcf_data <- function(vcf_file,
                             sample_data = NULL,
@@ -360,8 +361,7 @@ import_vcf_data <- function(vcf_file,
                                                                suffix = c("",
                                                                           "_regions"))
 
-    mut_ranges <- mut_ranges %>%
-      plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
+    S4Vectors::mcols(mut_ranges)$in_regions[is.na(S4Vectors::mcols(mut_ranges)$in_regions)] <- FALSE
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {

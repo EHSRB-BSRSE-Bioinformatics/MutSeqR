@@ -161,6 +161,7 @@
 #' @importFrom IRanges IRanges
 #' @importFrom Biostrings getSeq
 #' @importFrom GenomeInfoDb seqnames
+#' @importFrom S4Vectors mcols
 #' @export
 import_mut_data <- function(mut_file,
                             mut_sep = "\t",
@@ -344,8 +345,7 @@ import_mut_data <- function(mut_file,
                                                                suffix = c("",
                                                                           "_regions"))
 
-    mut_ranges <- mut_ranges %>%
-      plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
+    S4Vectors::mcols(mut_ranges)$in_regions[is.na(S4Vectors::mcols(mut_ranges)$in_regions)] <- FALSE
 
     false_count <- sum(mut_ranges$in_regions == FALSE)
     if (false_count > 0) {
