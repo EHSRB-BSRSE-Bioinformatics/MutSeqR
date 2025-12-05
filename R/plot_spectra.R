@@ -125,23 +125,18 @@ plot_spectra <- function(mf_data,
                          y_lab = NULL,
                          rotate_xlabs = FALSE) {
   
-  stopifnot(
-      "mf_data is required" = !missing(mf_data),
-      "mf_data must be a data frame" = is.data.frame(mf_data),
-      "rotate_xlabs must be a logical value" = is.logical(rotate_xlabs)
-  )
-  subtype_resolution <- match.arg(subtype_resolution,
-      choices = c("base_6", "base_12", "base_96", "base_192", "type")
-  )
-    mf_type <- match.arg(mf_type,
-        choices = c("min", "max")
+    stopifnot(
+        !missing(mf_data) && is.data.frame(mf_data),
+        is.logical(rotate_xlabs)
     )
+    subtype_resolution <- match.arg(subtype_resolution,
+        choices = c("base_6", "base_12", "base_96", "base_192", "type")
+    )
+        mf_type <- match.arg(mf_type, choices = c("min", "max"))
     group_order <- match.arg(group_order,
         choices = c("none", "smart", "arranged", "custom", "clustered")
     )
-    response <- match.arg(response,
-        choices = c("proportion", "mf", "sum")
-    )
+    response <- match.arg(response, choices = c("proportion", "mf", "sum"))
     dist <- match.arg(dist,
         choices = c(
             "cosine", "euclidean", "maximum",
@@ -154,273 +149,169 @@ plot_spectra <- function(mf_data,
             "average", "mcquitty", "median", "centroid"
         )
     )
+
+    # check package dependencies
+    if (!requireNamespace("patchwork", quietly = TRUE)) stop("Package patchwork is required.")
+    if (!requireNamespace("RColorBrewer", quietly = TRUE)) stop("Package RColorBrewer is required.")
+    if (group_order == "clustered" && !requireNamespace("ggdendro", quietly = TRUE)) {
+        stop("Package ggdendro is required for clustered ordering.")
+    }
+    if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
+        stop("Package gtools is required when using the group_order = 'smart'")
+    }
+
+    # Data Setup
+    response_col <- paste0(response, "_", mf_type)
+    if (length(group_col) > 1) { # concat +1 group cols
+        mf_data$group <- do.call(paste, c(mf_data[group_col], sep = "_"))
+    } else {
+        mf_data$group <- mf_data[[group_col]]
+    }
+    target_subtype_col <- MutSeqR::subtype_dict[[subtype_resolution]]
+    plot_data <- mf_data %>%
+        dplyr::select(
+            "group",
+            subtype = dplyr::all_of(target_subtype_col),
+            response = dplyr::all_of(response_col),
+            dplyr::any_of(group_order_input)
+        )
+
+    # Group Ordering
+    if (group_order == "none") {
+        plot_data$group <- factor(plot_data$group, levels = unique(plot_data$group))
+    } else if (group_order == "smart") {
+        ord <- gtools::mixedsort(unique(as.character(plot_data$group)))
+        plot_data$group <- factor(plot_data$group, levels = ord)
+    } else if (group_order == "arranged") {
+        ord_data <- plot_data %>%
+        dplyr::arrange(!!!rlang::syms(group_order_input))
+        plot_data$group <- factor(plot_data$group, levels = unique(ord_data$group))
+    } else if (group_order == "custom") {
+        plot_data$group <- factor(plot_data$group, levels = group_order_input)  
+    } else if (group_order == "clustered") {
+        hc <- cluster_spectra(
+            mf_data = plot_data,
+            group_col = "group",
+            response_col = "response",
+            subtype_col = "subtype",
+            dist = dist,
+            cluster_method = cluster_method
+        )
+        plot_data$group <- factor(plot_data$group, levels = hc$labels[hc$order])
+    }
+
+    # Subtype Factor Levels
+    if (subtype_resolution != "type") {
+        subtype_order <- c(
+            MutSeqR::subtype_list$type,
+            rev(MutSeqR::subtype_list[[subtype_resolution]])
+        )
+    } else {
+        subtype_order <- MutSeqR::subtype_list$type
+    }
+    plot_data$subtype <- factor(plot_data$subtype, levels = subtype_order)
+
+    # Palette
+    palette <- get_mutation_palette(
+        custom_palette = custom_palette,
+        subtype_resolution = subtype_resolution,
+        num_colours = length(unique(plot_data$subtype))
+    )
+
+    # Plot Construction
   
-  # check package dependencies
-  if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("Package patchwork is required. Please install the package using 'install.packages('patchwork')'")
-  }
-  if (group_order == "clustered") {
-    if (!requireNamespace("ggdendro", quietly = TRUE)) {
-      stop("Package ggdendro is required for clustered ordering. Please install using 'install.packages('ggdendro')'")
-    }
-  }
-  if (group_order == "smart") {
-    if (!requireNamespace("gtools", quietly = TRUE)) {
-      stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")
-    }
-  }
-  if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
-    stop("Package RColorBrewer is required. Please install the package using 'install.packages('RColorBrewer')'")
-  }
-  # Desginate the response column
-  if (response == "proportion") {
-    response_col <- paste0("proportion_", mf_type)
-  } else if (response == "mf") {
-    response_col <- paste0("mf_", mf_type)
-  } else if (response == "sum") {
-    response_col <- paste0("sum_", mf_type)
-  } else {
-    stop("response must be one of 'mf', 'proportion', or 'sum'")
-  }
-  # concatenate multiple group columns into one
-  if (length(group_col) > 1) {
-    mf_data$group <- apply(mf_data[group_col], 1, paste, collapse = "_")
-  } else {
-    mf_data$group <- mf_data[[group_col]]
-  }
-  # Select and rename required columns
-  plot_data <- mf_data %>%
-    dplyr::select(
-      "group",
-      dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
-      dplyr::all_of(response_col)
-    ) %>%
-    dplyr::rename(
-      subtype = dplyr::all_of(MutSeqR::subtype_dict[[subtype_resolution]]),
-      response = dplyr::all_of(response_col)
+    # Define Axis Labels
+    if (is.null(x_lab)) x_lab <- paste(group_col, collapse = "_")
+    if (is.null(y_lab)) y_lab <- response_col
+    axis_labels <- ggplot2::labs(x = x_lab, y = y_lab)
+    angle <- if (rotate_xlabs) 90 else 0
+
+    # Define Common Theme (Avoid code duplication)
+    common_theme <- theme(
+        legend.position = "right",
+        panel.background = element_rect(fill = "white", colour = NA),
+        plot.background = element_rect(fill = "white", colour = NA),
+        legend.background = element_rect(fill = "white", colour = NA),
+        strip.background = element_rect(fill = "white", colour = NA),
+        axis.text.x = element_text(angle = angle, hjust = if(angle==90) 1 else 0.5),
+        axis.line.y = element_line(color = "gray"),
+        axis.line.x.bottom = element_line(color = "black"),
+        axis.line.x.top = element_blank(),
+        axis.ticks.y = element_line(color = "gray"),
+        panel.grid = element_blank()
     )
 
-  if (group_order == "none") {
-    order <- as.vector(unique(plot_data$group))
-    plot_data$group <- factor(plot_data$group, levels = order)
-  } else if (group_order == "smart") {
-    order <- as.vector(unique(plot_data$group))
-    order <- gtools::mixedsort(order)
-    plot_data$group <- factor(plot_data$group, levels = order)
-  } else if (group_order == "arranged") {
-    plot_data <- cbind(plot_data, mf_data[group_order_input])
-    plot_data <- plot_data %>%
-      dplyr::arrange(!!!rlang::syms(group_order_input))
-    order <- as.vector(unique(plot_data$group))
-    plot_data$group <- factor(plot_data$group, levels = order)
-  } else if (group_order == "custom") {
-    plot_data$group <- factor(plot_data$group,
-      levels = group_order_input
-    )
-  } else if (group_order == "clustered") {
-    # Cluster the samples
-    hc <- cluster_spectra(
-      mf_data = plot_data,
-      group_col = "group",
-      response_col = "response",
-      subtype_col = "subtype",
-      dist = dist,
-      cluster_method = cluster_method
-    )
-    # Reorder the samples based on hierarchical clustering
-    order <- hc$labels[hc$order]
-    # Reorder the levels of the sample variable in your data frame
-    plot_data$group <- factor(plot_data$group,
-      levels = order
-    )
-  }
-  if (subtype_resolution != "type") {
-    subtype_order <- c(MutSeqR::subtype_list$type, rev(MutSeqR::subtype_list[[subtype_resolution]]))
-  } else {
-    subtype_order <- c(MutSeqR::subtype_list$type)
-  }
-  plot_data$subtype <- factor(plot_data$subtype,
-    levels = subtype_order
-  )
+    # Logic for splitting SNV vs Non-SNV panels
+    do_panels <- (subtype_resolution != "type") && any(MutSeqR::subtype_list$type %in% plot_data$subtype)
+    legend_title <- if (do_panels) "SNV Subtype" else "Variation Type"
 
-  if (is.null(custom_palette)) {
-    palette_types <- RColorBrewer::brewer.pal(8, "BrBG")
-    names(palette_types) <- c(
-      "complex", "deletion", "insertion", "mnv", "snv",
-      "sv", "ambiguous", "uncategorized"
-    )
-    if (subtype_resolution == "base_6") {
-      palette_snv <- RColorBrewer::brewer.pal(6, "Spectral")
-      names(palette_snv) <- c("T>G", "T>C", "T>A", "C>T", "C>G", "C>A")
-      palette <- c(palette_snv, palette_types)
-    } else if (subtype_resolution == "base_12") {
-      # Sanger colours for 12 base spectra
-      palette_snv <- c(
-        RColorBrewer::brewer.pal(3, "Reds"),
-        RColorBrewer::brewer.pal(3, "Greys"),
-        RColorBrewer::brewer.pal(3, "Blues"),
-        RColorBrewer::brewer.pal(3, "Greens")
-      )
-      names(palette_snv) <- c(
-        "T>G", "T>C", "T>A", "G>T", "G>C", "G>A",
-        "C>T", "C>G", "C>A", "A>T", "A>G", "A>C"
-      )
-      palette <- c(palette_snv, palette_types)
-    } else if (subtype_resolution == "type") {
-      palette <- palette_types
-    } else {
-      num_colors <- length(unique(plot_data$subtype))
-      palette <- colorRampPalette(RColorBrewer::brewer.pal(11, name = "Spectral"))(num_colors)
-    }
-  } else {
-    if (any(custom_palette %in% rownames(RColorBrewer::brewer.pal.info))) {
-      num_colors <- length(unique(plot_data$subtype))
-      max_colors <- RColorBrewer::brewer.pal.info[custom_palette, "maxcolors"]
-      if (num_colors > max_colors) {
-        palette <- colorRampPalette(RColorBrewer::brewer.pal(n = max_colors, name = custom_palette))(num_colors)
-      } else {
-        palette <- RColorBrewer::brewer.pal(
-          n = num_colors,
-          name = custom_palette
-        )
-      }
-    } else {
-      palette <- custom_palette
-    }
-  }
-  # Axis labels
-  if (is.null(x_lab)) {
-    x_lab <- group_col
-  }
-  if (is.null(y_lab)) {
-    y_lab <- response_col
-  }
-  axis_labels <- ggplot2::labs(x = x_lab, y = y_lab)
+    # Filter data if panels are needed, otherwise use full data
+    data_main <- if(do_panels) dplyr::filter(plot_data, !subtype %in% MutSeqR::subtype_list$type) else plot_data
 
-  if (rotate_xlabs) {
-    angle <- 90
-  } else {
-    angle <- 0
-  }
-
-  # Separate SNVs and NON-SNVs
-  if (subtype_resolution != "type") {
-    do_panels <- any(MutSeqR::subtype_list$type %in% plot_data$subtype)
-    if (do_panels) {
-      plot_data <- dplyr::mutate(
-        plot_data,
-        subtype_class = ifelse(subtype %in% MutSeqR::subtype_list$type,
-          "non-snv", "snv"
-        )
-      )
-      plot_data_nonsnv <- dplyr::filter(plot_data, subtype_class == "non-snv")
-      plot_data <- dplyr::filter(plot_data, subtype_class == "snv")
-      # Plot the non-snvs seperately.
-      bar_nonsnv <- ggplot(
-        plot_data_nonsnv,
-        aes(x = .data$group, y = .data$response, fill = .data$subtype)
-      ) +
+    # Main Plot
+    bar <- ggplot(data_main, aes(x = .data$group, y = .data$response, fill = .data$subtype)) +
         geom_bar(stat = "identity", width = 1) +
         scale_fill_manual(values = palette) +
         axis_labels +
-        # theme_minimal() + breaks the dendrogram
-        # TODO: this may not be true anymore now that we're using ggdendro - could simplify the code if we don't have to specify theme manually
-        theme(
-          panel.background = element_rect(fill = "white", colour = NA),
-          plot.background = element_rect(fill = "white", colour = NA),
-          legend.background = element_rect(fill = "white", colour = NA),
-          strip.background = element_rect(fill = "white", colour = NA),
-          legend.position = "right",
-          axis.text.x = element_text(angle = angle),
-          axis.line.y = element_line(color = "gray"),
-          axis.line.x.bottom = element_line(color = "black"),
-          axis.line.x.top = element_blank(),
-          axis.ticks.y = element_line(color = "gray"),
-          panel.grid = element_blank(),
-        ) +
+        common_theme +
         scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
-        labs(y = y_lab, fill = "Non-SNV Subtype")
-      legend_title <- "SNV Subtype"
-    } else {
-      legend_title <- "SNV Subtype"
-    }
-  } else {
-    do_panels <- FALSE
-    legend_title <- "Variation Type"
-  }
+        labs(fill = legend_title)
 
-  # Plot main data
-  bar <- ggplot(
-    plot_data,
-    aes(x = .data$group, y = .data$response, fill = .data$subtype)
-  ) +
-    geom_bar(stat = "identity", width = 1) +
-    scale_fill_manual(values = palette) +
-    axis_labels +
-    # theme_minimal() +
-    theme(
-      legend.position = "right",
-      panel.background = element_rect(fill = "white", colour = NA),
-      plot.background = element_rect(fill = "white", colour = NA),
-      legend.background = element_rect(fill = "white", colour = NA),
-      strip.background = element_rect(fill = "white", colour = NA),
-      axis.text.x = element_text(angle = angle),
-      axis.line.y = element_line(color = "gray"),
-      axis.line.x.bottom = element_line(color = "black"),
-      axis.line.x.top = element_blank(),
-      axis.ticks.y = element_line(color = "gray"),
-      panel.grid = element_blank()
-    ) +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
-    labs(fill = legend_title)
-
-  # Plot dendrogram
-  if (group_order == "clustered") {
-    # Create the dendrogram plot using ggdendro
-    dendro_plot <- ggdendro::ggdendrogram(hc, rotate = FALSE, labels = FALSE) +
-      theme_void() # Removes all axes, labels, etc.
-
-    # Modify the main bar plot(s) to align with the dendrogram
-    theme_for_bar <- theme(
-      axis.text.x = element_blank(),
-      axis.title.x = element_blank(),
-      axis.ticks.x = element_blank()
-    )
-
-    bar <- bar + theme_for_bar
+    # Non-SNV Panel (Optional)
+    bar_nonsnv <- NULL
     if (do_panels) {
-      bar_nonsnv <- bar_nonsnv + theme_for_bar
+        data_nonsnv <- dplyr::filter(plot_data, subtype %in% MutSeqR::subtype_list$type)
+        # Check if there is actual non-snv data to plot
+        if (nrow(data_nonsnv) > 0) {
+        bar_nonsnv <- ggplot(data_nonsnv, aes(x = .data$group, y = .data$response, fill = .data$subtype)) +
+            geom_bar(stat = "identity", width = 1) +
+            scale_fill_manual(values = palette) +
+            axis_labels +
+            common_theme +
+            scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
+            labs(y = y_lab, fill = "Non-SNV Subtype")
+        } else {
+            do_panels <- FALSE # Fallback if no non-snvs found despite logic
+        }
     }
 
-    # Use patchwork to stack the plots
-    if (do_panels) {
-      # Stack dendrogram, non-snv plot, and snv plot
-      p <- patchwork::wrap_plots(dendro_plot, bar_nonsnv, bar,
-        ncol = 1,
-        heights = c(0.2, 1, 1)
-      ) + # Adjust heights
-        patchwork::plot_layout(guides = "collect")
-    } else {
-      # Stack dendrogram on top of the single bar plot
-      p <- patchwork::wrap_plots(dendro_plot, bar,
-        ncol = 1,
-        heights = c(0.2, 1)
-      ) # Adjust heights as needed
-    }
-    return(p)
-  } else { # This is your original code for non-clustered plots
-    if (do_panels) {
-      p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol = 1) +
-        patchwork::plot_layout(
-          axis_titles = "collect",
-          axes = "collect",
-          guides = "keep"
+    # Final Layout
+  
+    if (group_order == "clustered") {
+        # Dendrogram
+        dendro_plot <- ggdendro::ggdendrogram(hc, rotate = FALSE, labels = FALSE) + theme_void()
+           # Theme to strip X axis from MIDDLE/TOP panels only
+        clean_theme <- theme(
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(t = 0, b = 0)
         )
+
+        # Apply clean_theme ONLY to the Non-SNV plot (if it exists)
+        if (!is.null(bar_nonsnv)) {
+            bar_nonsnv <- bar_nonsnv + clean_theme
+        }
+        bar <- bar + theme(plot.margin = margin(t = 0))
+        
+        if (do_panels) {
+            p <- patchwork::wrap_plots(dendro_plot, bar_nonsnv, bar, ncol = 1, heights = c(0.2, 1, 1)) +
+                patchwork::plot_layout(guides = "collect")
+        } else {
+            p <- patchwork::wrap_plots(dendro_plot, bar, ncol = 1, heights = c(0.2, 1))
+        }
+        
     } else {
-      p <- bar
+        # Standard Layout
+        if (do_panels) {
+            p <- patchwork::wrap_plots(bar_nonsnv, bar, ncol = 1) +
+                patchwork::plot_layout(axis_titles = "collect", axes = "collect", guides = "keep")
+        } else {
+            p <- bar
+        }
     }
-    return(p)
-  }
+
+  return(p)
 }
 
 
