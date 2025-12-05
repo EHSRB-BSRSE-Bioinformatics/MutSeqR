@@ -94,131 +94,123 @@
 #' )
 #' @importFrom dplyr select mutate
 #' @importFrom stats pchisq pf r2dtable
-
 spectra_comparison <- function(mf_data,
                                exp_variable,
                                mf_type = "min",
                                contrasts,
                                cont_sep = "\t",
                                seed = 1234) {
-  stopifnot(
-      "mf_data is required" = !missing(mf_data),
-      "mf_data must be a data.frame" = is.data.frame(mf_data),
-      "contrasts is required" = !missing(contrasts)
-  )
-  mf_type <- match.arg(mf_type, choices = c("min", "max"))
+  
+    # Validation & Setup
+    stopifnot(
+        !missing(mf_data) && is.data.frame(mf_data),
+        !missing(contrasts)
+    )
+    mf_type <- match.arg(mf_type, choices = c("min", "max"))
 
-  # Prepare Data
-  sum_col <- paste0("sum_", mf_type)
-  # Find the subtype column
-  subtype_col <- colnames(mf_data)[which(colnames(mf_data) %in%
-    c(
-      "variation_type",
-      "normalized_subtype",
-      "subtype",
-      "normalized_context_with_mutation",
-      "context_with_mutation"
-    ))]
-  if (length(subtype_col) == 0) {
-    stop("No subtype column found in the mf_data")
-  }
-  # Select the necessary columns
-  mut_spectra <- mf_data %>%
-    dplyr::select(dplyr::all_of(c(exp_variable, subtype_col, sum_col)))
-  # Create a single group column
-  mut_spectra <- mut_spectra %>%
-    dplyr::mutate(group_col = do.call(
-      paste,
-      c(dplyr::select(mut_spectra, dplyr::all_of(exp_variable)), sep = ":")
-    )) %>%
-    dplyr::select(-dplyr::all_of(exp_variable))
-  # Sum across groups, in case of higher level grouping
-  mut_spectra <- mut_spectra %>%
-    dplyr::group_by(
-      .data$group_col,
-      dplyr::across(dplyr::all_of(subtype_col))
-    ) %>%
-    dplyr::summarize(sum = sum(dplyr::across(dplyr::all_of(sum_col))))
-  # All groups
-  groups <- unique(mut_spectra$group_col)
-  # Extract data for each group
-  filtered_data <- lapply(groups, function(group) {
-    mut_spectra %>%
-      dplyr::filter(.data$group_col == group)
-  })
+    sum_col <- paste0("sum_", mf_type)
 
-  # G2 Statistic - Likelihood Ratio Statistic
-  ## Piegorsch and Bailer 1994 doi: 10.1093/genetics/136.1.403.
-  # Note: we are NOT using the Monte Carlo simulation approach to compute p.
-  G2 <- function(x) {
-    N <- sum(x)
-    r <- apply(x, 1, sum)
-    c <- apply(x, 2, sum)
-    e <- r %*% t(c) / N
-    G2 <- 0
-    for (k in seq_len(ncol(x))) {
-      flag <- x[, k] > 0
-      G2 <- G2 + t(x[flag, k]) %*% log(x[flag, k] / e[flag, k])
-    }
-    G2 <- 2 * G2
-    R <- nrow(x) - 1
-    df <- R * (ncol(x) - 1)
-    if (N / R > 20) {
-      p.value <- 1 - pchisq(G2, df)
-      message("Using chi-squared distribution to compute p-value")
+    # Identify Subtype Column dynamically
+    potential_cols <- c("variation_type", "normalized_subtype", "subtype",
+                        "normalized_context_with_mutation", "context_with_mutation")
+    subtype_col <- intersect(colnames(mf_data), potential_cols)[1] # Take first match
+
+    if (is.na(subtype_col)) stop("No valid subtype column found in mf_data.")
+
+    # Data Prep
+    # Concatenate group columns
+    if (length(exp_variable) > 1) {
+        mf_data$group_key <- do.call(paste, c(mf_data[exp_variable], sep = ":"))
     } else {
-      p.value <- 1 - pf(G2 / R, R, N - df)
-      message("Using F-distribution to compute p-value")
+        mf_data$group_key <- mf_data[[exp_variable]]
     }
-    data.frame(G2 = G2, p.value = p.value)
-  }
 
-  # Load in contrast table
-  if (is.null(contrasts)) {
-    stop("Please provide a contrasts table")
-  }
-  if (is.data.frame(contrasts)) {
-    contrast_table <- contrasts
-  } else {
-    contrast_table <- read.delim(file.path(contrasts), sep = cont_sep, header = FALSE)
-    if (ncol(contrast_table) <= 1) {
-      stop("Your contrast_table only has one column. Make sure to set the proper delimiter with cont_sep.")
+    # Summarize sums (in case multiple rows per group/subtype exist)
+    # Then Pivot Wider
+    wide_data <- mf_data %>%
+        dplyr::group_by(.data$group_key, dplyr::across(dplyr::all_of(subtype_col))) %>%
+        dplyr::summarize(count = sum(.data[[sum_col]]), .groups = "drop") %>%
+        tidyr::pivot_wider(names_from = "group_key", values_from = "count", values_fill = 0)
+
+    # Convert to matrix
+    count_matrix <- as.matrix(wide_data[, -1]) 
+    # Assign row names (subtypes)
+    rownames(count_matrix) <- as.character(wide_data[[1]]) 
+
+    # Process Contrasts
+    if (is.data.frame(contrasts)) {
+        contrast_table <- contrasts
+    } else {
+        contrast_table <- read.delim(contrasts, sep = cont_sep, header = FALSE)
     }
-  }
 
-  contrast_data <- list()
-  # Loop over the rows of the contrasts table and select
-  # the corresponding data frames from the 'filtered_data' list.
-  # Combine the mut counts of both dataframes into one.
-  for (i in seq_len(nrow(contrast_table))) {
-    indices <- match(contrast_table[i, ], groups)
-    dfs <- filtered_data[indices]
-    df_combined <- do.call(cbind, lapply(dfs, function(df) df[, 3])) # here column 3 is the sum data
-    contrast_data[[i]] <- df_combined
-  }
+    if (ncol(contrast_table) != 2) stop("Contrast table must have exactly 2 columns.")
 
-  # Run the G2 function for all contrasts
-  results <- data.frame(
-    contrasts = character(),
-    G2 = numeric(),
-    p.value = numeric(),
-    stringsAsFactors = FALSE
-  )
-  for (i in seq_len(length(contrast_data))) {
-    result <- G2(contrast_data[[i]])
-    contrast_str <- paste(contrast_table[i, 1], "vs", contrast_table[i, 2])
-    results <- rbind(results, data.frame(
-      contrasts = contrast_str,
-      G2 = result$G2,
-      p.value = result$p.value,
-      stringsAsFactors = FALSE
-    ))
-  }
+    # Validate groups exist
+    all_groups <- colnames(count_matrix)
+    requested_groups <- unique(unlist(contrast_table))
+    missing_groups <- setdiff(requested_groups, all_groups)
 
-  # Apply the Holm-Sidak correction for multiple comparisons
-  results$adj_p.value <- MutSeqR::sidak(results$p.value)$SidakP
-  results$Significance <- ""
-  results$Significance[results$adj_p.value < 0.05] <- "***"
+    if (length(missing_groups) > 0) {
+        stop("Groups in contrast table not found in data: ", paste(missing_groups, collapse=", "))
+    }
 
-  return(results)
+    # Define G2 Function
+    calculate_g2_pair <- function(g1_name, g2_name) {
+        # Extract columns for the two groups
+        obs <- count_matrix[, c(g1_name, g2_name), drop = FALSE]
+        obs <- obs[rowSums(obs) > 0, , drop = FALSE] # Remove subtypes with 0 counts in BOTH groups
+        N <- sum(obs)
+        R <- nrow(obs)
+        C <- ncol(obs) # Always 2 here
+
+        # Expected Counts: (RowSum * ColSum) / Total
+        row_sums <- rowSums(obs)
+        col_sums <- colSums(obs)
+        expected <- outer(row_sums, col_sums) / N
+
+        # G2 Statistic = 2 * sum(Obs * log(Obs/Exp))
+        valid <- obs > 0 # avoid log(0) or NaN
+        term <- obs[valid] * log(obs[valid] / expected[valid])
+        G2_stat <- 2 * sum(term)
+
+        # Degrees of Freedom
+        df <- (R - 1) * (C - 1)
+
+        # P-value calculation
+        if (N / (R - 1) > 20) {
+            p_val <- 1 - stats::pchisq(G2_stat, df)
+        } else {
+            # F-distribution approximation for small samples
+            p_val <- 1 - stats::pf(G2_stat / (R - 1), R - 1, N - df)
+        }
+        
+        return(c(G2 = G2_stat, p.value = p_val))
+    }
+
+    # Run Comparisons
+    results_matrix <- mapply(calculate_g2_pair, 
+                            as.character(contrast_table[, 1]), 
+                            as.character(contrast_table[, 2]))
+    
+    # Transpose results (mapply returns Cols=Contrasts, Rows=Stats)
+    results_df <- as.data.frame(t(results_matrix))
+    
+    # Final Formatting
+    results_df$contrasts <- paste(contrast_table[, 1], "vs", contrast_table[, 2])
+    
+    # Adjust P-values
+    results_df$adj_p.value <- MutSeqR::sidak(results_df$p.value)$SidakP
+    
+    results_df$Significance <- dplyr::case_when(
+        results_df$adj_p.value < 0.001 ~ "***",
+        results_df$adj_p.value < 0.01  ~ "**",
+        results_df$adj_p.value < 0.05  ~ "*",
+        TRUE ~ ""
+    )
+    
+    # Reorder columns
+    results_df <- results_df[, c("contrasts", "G2", "p.value", "adj_p.value", "Significance")]
+    
+    return(results_df)
 }
