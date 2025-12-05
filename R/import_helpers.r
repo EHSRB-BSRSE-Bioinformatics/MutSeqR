@@ -489,3 +489,32 @@ check_required_columns <- function(data, required_columns) {
         return(data)
     }
 }
+
+#' Retrieve the sample column from VCF files
+#' @description Checks to find the sample name of the vcf in the INFO field or
+#' in the FORMAT header. Can also handle sample name synonyms.
+#' @param vcf The imported VCF
+#' @importFrom VariantAnnotation info
+#' @importFroum SummarizedExperiment colData
+#' @returns The vcf with sample column name corrected
+vcf_sample_fix <- function(vcf) {
+        # Check INFO for Sample column (Incl synonyms)
+        original_names <- names(VariantAnnotation::info(vcf))
+        # Normalize names
+        norm_names <- tolower(original_names)
+        norm_names <- gsub("[ .]", "_", norm_names)
+        # check for synonyms
+        synonyms <- c("sample", "sample_name", "sample_id")
+        match_idx <- match(synonyms, norm_names)
+        found_idx <- match_idx[!is.na(match_idx)]
+        if (length(found_idx) > 0) {
+            # Rename the first match found
+            names(VariantAnnotation::info(vcf))[found_idx[1]] <- "sample"
+        } else if (!"sample" %in% norm_names) {
+            # Fallback to colData rownames (VCF header sample name)
+            # Must have 1 sample per file as per docs
+            sample_name <- rownames(SummarizedExperiment::colData(vcf))
+            VariantAnnotation::info(vcf)$sample <- sample_name
+        }
+        return(vcf)
+}
