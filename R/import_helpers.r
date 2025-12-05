@@ -495,7 +495,7 @@ check_required_columns <- function(data, required_columns) {
 #' in the FORMAT header. Can also handle sample name synonyms.
 #' @param vcf The imported VCF
 #' @importFrom VariantAnnotation info
-#' @importFroum SummarizedExperiment colData
+#' @importFrom SummarizedExperiment colData
 #' @returns The vcf with sample column name corrected
 vcf_sample_fix <- function(vcf) {
         # Check INFO for Sample column (Incl synonyms)

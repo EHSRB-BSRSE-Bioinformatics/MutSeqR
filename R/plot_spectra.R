@@ -444,6 +444,8 @@ plot_spectra <- function(mf_data,
 #' @param cluster_method The agglomeration method to be used. See
 #' \link[stats]{hclust} for details.
 #' @importFrom stats hclust dist as.dist
+#' @importFrom dplyr select
+#' @importFrom tidyr pivot_wider
 #' @details The cosine distance measure represents the inverted cosine
 #' similarity between samples:
 #'
@@ -454,51 +456,45 @@ plot_spectra <- function(mf_data,
 #' Leaves are sorted using dendsort, if installed, otherwise leaves are unsorted.
 #' @return A dendrogram object representing the hierarchical clustering of the
 #' samples.
-cluster_spectra <- function(mf_data = mf_data,
+cluster_spectra <- function(mf_data,
                             group_col = "sample",
                             response_col = "proportion_min",
                             subtype_col = "normalized_subtype",
                             dist = "cosine",
                             cluster_method = "ward.D") {
-  # Get unique samples and subtypes
-  unique_samples <- unique(mf_data[[group_col]])
-  unique_subtypes <- unique(mf_data[[subtype_col]])
-  # Pivot Wide
-  mat <- matrix(0,
-    nrow = length(unique_samples),
-    ncol = length(unique_subtypes),
-    dimnames = list(unique_samples, unique_subtypes)
-  )
-  mf_data$subtype <- as.character(mf_data$subtype)
-  mf_data$group <- as.character(mf_data$group)
-  for (i in seq_len(nrow(mf_data))) {
-    mat[mf_data[[group_col]][i], mf_data[[subtype_col]][i]] <- mf_data[[response_col]][i]
-  }
+    wide_df <- mf_data %>%
+        dplyr::select(dplyr::all_of(c(group_col, subtype_col, response_col))) %>%
+        tidyr::pivot_wider(
+            names_from = dplyr::all_of(subtype_col),
+            values_from = dplyr::all_of(response_col),
+            values_fill = 0
+        )
+    # Convert to matrix
+    mat <- as.matrix(wide_df[, -1])
+    rownames(mat) <- wide_df[[group_col]] # group col as rownames
 
-  if (dist == "cosine") {
-    # Calculate the cosine similarity between samples
-    cos_sim <- matrix(0,
-      nrow = length(unique_samples),
-      ncol = length(unique_samples)
-    )
-    rownames(cos_sim) <- colnames(cos_sim) <- unique_samples
-    for (i in seq_along(unique_samples)) {
-      for (j in seq_along(unique_samples)) {
-        cos_sim[i, j] <- sum(mat[i, ] * mat[j, ]) / (sqrt(sum(mat[i, ]^2)) * sqrt(sum(mat[j, ]^2)))
-      }
+    # Distance Calculation
+    if (dist == "cosine") {
+        # Sim(A,B) = (A . B) / (|A| * |B|)
+        # Matrix Algebra: (Mat %*% t(Mat)) / (Mag %o% Mag)
+        dot_products <- tcrossprod(mat) # Numerator
+        magnitudes <- sqrt(diag(dot_products)) # denominator
+        # Cosine Similarity Matrix
+        cos_sim <- dot_products / outer(magnitudes, magnitudes) # (|A|*|B|)
+        cos_sim[is.na(cos_sim)] <- 0 # Handle potential 0/0 NaNs
+        d <- stats::as.dist(1 - cos_sim) # Convert to Dissimilarity
+    } else {
+        d <- stats::dist(mat, method = dist)
     }
-    d <- stats::as.dist(1 - cos_sim)
-  } else {
-    d <- stats::dist(mat, method = dist)
-  }
-  # Perform hierarchical clustering
-  hc <- stats::hclust(d, method = cluster_method)
 
-  if (!requireNamespace("dendsort", quietly = TRUE)) {
-    warning("Package dendsort not installed; hierarchical clustering will not be dendsorted for leaf optimization.")
+    # Clustering
+    hc <- stats::hclust(d, method = cluster_method)
+
+    # Leaf Optimization (Optional)
+    if (requireNamespace("dendsort", quietly = TRUE)) {
+        hc <- dendsort::dendsort(hc)
+    } else {
+    warning("Package dendsort not installed; leaves not optimized.")
+    }
     return(hc)
-  }
-  # Use dendsort
-  hc_obj <- dendsort::dendsort(hc)
-  return(hc_obj)
-}
+    }
