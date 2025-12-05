@@ -74,7 +74,7 @@ plot_radar <- function(mf_data,
   cols_to_check <- c(response_col, label_col)
   # Only add facet_col to check if it's not NULL
   if (!is.null(facet_col)) cols_to_check <- c(cols_to_check, facet_col)
-  
+
   if (!all(cols_to_check %in% colnames(mf_data))) {
      stop("Columns not found: ", paste(setdiff(cols_to_check, colnames(mf_data)), collapse=", "))
   }
@@ -96,19 +96,19 @@ plot_radar <- function(mf_data,
   } else {
     label_levels <- sort(unique(mf_data[[label_col]]))
   }
-  
+
   # Pivot to Wide Format (Rows=Facets, Cols=Labels)
   plot_data <- mf_data %>%
     dplyr::select(dplyr::all_of(c(facet_col, label_col, response_col))) %>%
     tidyr::pivot_wider(names_from = dplyr::all_of(label_col), 
                        values_from = dplyr::all_of(response_col),
                        values_fill = 0)
-  
+
   # Reorder columns to match label levels
   # Check intersection to avoid errors if some levels are missing in data
   valid_levels <- intersect(label_levels, colnames(plot_data))
   plot_data <- plot_data[, c(facet_col, valid_levels)]
-  
+
   # Ensure facet is a factor
   if (!is.factor(plot_data[[facet_col]])) {
       plot_data[[facet_col]] <- factor(plot_data[[facet_col]])
@@ -117,8 +117,8 @@ plot_radar <- function(mf_data,
 
   # --- 3. Scale Calculation ---
   # Calculate max values (excluding the facet column)
-  data_matrix <- as.matrix(plot_data[, -1]) 
-  
+  data_matrix <- as.matrix(plot_data[, -1])
+
   if (!indiv_y) {
     global_max <- max(data_matrix, na.rm = TRUE) * 1.1
   } else {
@@ -128,7 +128,7 @@ plot_radar <- function(mf_data,
 
   # --- 4. Plot Layout ---
   n_plots <- length(facet_levels)
-  
+
   # Only set up grid layout if we have multiple plots
   if (n_plots > 1) {
     n_cols <- 2
@@ -139,13 +139,13 @@ plot_radar <- function(mf_data,
 
   # --- 5. Plotting Loop ---
   lapply(seq_along(facet_levels), function(i) {
-    
+
     facet_name <- facet_levels[i]
     current_vals <- data_matrix[i, ]
-    
+
     # Determine Max Scale
     current_max <- if (indiv_y) row_maxes[i] else global_max
-    
+
     # Prepare Dataframe for fmsb
     df_radar <- rbind(
       rep(current_max, length(current_vals)), # Max
