@@ -1,11 +1,11 @@
 ---
 title: "MutSeqR: Analyzing Mutation Spectra"
 author:
-- name: Annette E. Dodge
-  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-- name: Matthew J. Meier
-  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-  email: matthew.meier@hc-sc.gc.ca
+  - name: Annette E. Dodge
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  - name: Matthew J. Meier
+    affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+    email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
 output:
   rmarkdown::html_document:
@@ -16,9 +16,8 @@ output:
     css: custom.css
 bibliography: Analyzing_Mutation_Spectra.bib
 ---
-  
+
 ```{r setup, include=FALSE}
-BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
 library(htmltools)
@@ -46,13 +45,13 @@ eh <- ExperimentHub()
 The mutation spectra can be compared between experimental groups using the
 `spectra_comparison()` function. This function will compare the proportion
 of mutation subtypes at any resolution between user-defined groups using a
-modified contingency table approach [@piegorsch-1994]. 
+modified contingency table approach [@piegorsch-1994].
 
-This approach is applied to the mutation counts of each subtype in a given group. The contingency table is represented as $R * T$ where $R$ is the number of subtypes, and $T$ is the number of groups. `spectra_comparison()` performs comparisons between $T = 2$ specified groups. The statistical hypothesis of homogeneity is that the proportion (count/group total) of each mutation subtype equals that of the other group. To test the significance of the homogeneity hypothesis, the $G^{2}$ likelihood ratio statistic is used: 
+This approach is applied to the mutation counts of each subtype in a given group. The contingency table is represented as $R * T$ where $R$ is the number of subtypes, and $T$ is the number of groups. `spectra_comparison()` performs comparisons between $T = 2$ specified groups. The statistical hypothesis of homogeneity is that the proportion (count/group total) of each mutation subtype equals that of the other group. To test the significance of the homogeneity hypothesis, the $G^{2}$ likelihood ratio statistic is used:
 
 $$G^{2} = 2\  \sum_{i=1}^{R}\  \sum_{j=1}^{T}\  Y_{ij}\  log(\frac{Y_{ij}}{E_{ij}})$$
 
-$Y_{ij}$ represents the mutation counts and $E_{ij}$ are the *expected* counts
+$Y_{ij}$ represents the mutation counts and $E_{ij}$ are the _expected_ counts
 under the null hypothesis. The $G^{2}$ statistic possesses approximately a
 $\chi^{2}$ distribution in large sample sizes under the null hypothesis of
 no spectral differences. Thus, as the column totals become large, $G^{2}$ may
@@ -61,7 +60,7 @@ freedom. The $G^{2}$ statistic may exhibit high false positive rates in small
 sample sizes when referred to a $\chi^{2}$ distribution. In such cases, we
 instead switch to an F-distribution. This has the effect of reducing the rate
 at which $G^{2}$ rejects each null hypothesis, providing greater stability in
-terms of false positive error rates. Thus when $N/(R-1) < 20$, where $N$  is
+terms of false positive error rates. Thus when $N/(R-1) < 20$, where $N$ is
 the total mutation counts across both groups, the function will use a
 F-distribution, otherwise it will use a $\chi^{2}$-distribution.
 
@@ -81,13 +80,13 @@ is outside the scope of this package.
 The first step is to calculate the per-group mf data at the desired
 subtype_resolution using `calculate_mf()`. This mf_data is then supplied
 to `spectra_comparison()` along with a contrasts table to specify the
-comparisons. 
+comparisons.
 
 Specify the variable(s) by which you wish to make your comparisons with The
 `exp_variable` parameter. Variable(s) must be present in your mf_data.
 
 The `contrasts` parameter can be supplied with either a data
-frame  or a filepath to a text file that will be loaded into R. The table must
+frame or a filepath to a text file that will be loaded into R. The table must
 consist of two columns, each containing levels within the fixed_effects.
 The level in the first column will be compared to the level in the second
 column for each row. If you are comparing across more than one experiment
@@ -98,12 +97,12 @@ contrasts table.
 The function will output the $G^{2}$ statistic and p-value for each specified
 comparison listed in `constrasts`. P-values are adjusted for multiple comparison using the Sidak method (**adj_p.value**).
 
-*Example 1. In our example data, we are studying the mutagenic effect of*
-*BaP. Our samples were exposed to three doses of a BaP (Low, Medium, High),*
-*or to the vehicle control (Control). We will compare the base_6 snv subtypes,*
-*along with non-snv variants, of each of the three dose groups to the control.*
-*In this way we can investigate if exposure to BaP leads to significant spectral*
-*differences.*
+_Example 1. In our example data, we are studying the mutagenic effect of_
+_BaP. Our samples were exposed to three doses of a BaP (Low, Medium, High),_
+_or to the vehicle control (Control). We will compare the base_6 snv subtypes,_
+_along with non-snv variants, of each of the three dose groups to the control._
+_In this way we can investigate if exposure to BaP leads to significant spectral_
+_differences._
 
 First, we will calculate the per-dose MF at the 6-based subtype resolution.
 This function will use the mutation sums (sum_min) that are calculated for
@@ -143,8 +142,6 @@ ex_spectra_comp <- spectra_comparison(
 )
 ```
 
-*Our results indicate the base-6 mutation spectra of all three BaP dose groups are significantly different from that of the control group*
-
 **Table 23.** Comparison of the 6-base subtype Proportions between Dose Groups.
 
 ```{r spectra-comp-table, echo=FALSE}
@@ -164,6 +161,8 @@ DT::datatable(
 ) %>%
   DT::formatRound(columns = "G2", digits = 2)
 ```
+
+Our results indicate the base-6 mutation spectra of all three BaP dose groups are significantly different from that of the control group.
 
 ## Mutational Signatures
 
@@ -186,12 +185,12 @@ the COSMIC database to the 96-base SNV subtypes of a given group by creating
 a virtual environment to run python using `reticulate`. `signature_fitting()`
 facilitates interoperability between these tools for users less familiar with
 python and assists users by coercing the mutation data to the necessary
-structure for the SigProfiler tools. 
+structure for the SigProfiler tools.
 
-This function will  install several python dependencies using a conda virtual
+This function will install several python dependencies using a conda virtual
 environment on first use, as well as the FASTA files for all chromosomes for
 your specified reference genome. As a result ~3Gb of storage must be available
-for the downloads of each genome. 
+for the downloads of each genome.
 
 SNVs in their 96-base trinucleotide context are summed across groups to create
 a mutation count matrix by `SigProfilerMatrixGenerator()`
@@ -216,7 +215,7 @@ described in their respective [documentation](https://github.com/AlexandrovLab).
 
 ### General Usage: signature_fitting()
 
-*Examples include external dependencies*
+_Examples include external dependencies_
 
 `signature_fitting` requires the installation of reticulate
 as well as a version of python 3.8 or newer.
@@ -233,7 +232,7 @@ reticulate::install_python()
 `signature_fitting` will take the imported (and filtered, if applicable)
 `mutation_data` and create mutational matrices for the SNV mutations.
 Mutations are summed across levels of the `group` parameter. This can be set to
-individual samples or to an experimental group. Variants flagged in the 
+individual samples or to an experimental group. Variants flagged in the
 `filter_mut` column will not be included in the mutational matrices.
 
 The `project_genome` will be referenced for the creation of the mutational
@@ -245,8 +244,8 @@ such environmnent exists, then the function will create one in which to store
 the dependencies and run the signature refitting. Specify your version of python
 using the `python_version` parameter (must be 3.8 or higher).
 
-*Example 2. Determine the COSMIC SBS signatures associated with each BaP*
-*dose group.*
+_Example 2. Determine the COSMIC SBS signatures associated with each BaP_
+_dose group._
 
 ```{r sig-fit, eval=FALSE}
 # Run Analysis
@@ -265,10 +264,10 @@ signature_fitting(
 
 Results from the `signature_fitting` will be stored in an output folder.
 A filepath to a specific output directory can be designated using the
-`output_path` parameter.  If null, the output will be stored within your
+`output_path` parameter. If null, the output will be stored within your
 working directory. Results will be organized into subfolders based on the
 `group` parameter. The output structure is divided into three folders: input,
-output, and logs. 
+output, and logs.
 
 **Input** folder: "mutations.txt", a text file with the mutation_data
 coerced into the required format for SigProfilerMatrixGenerator. It consists
@@ -278,7 +277,7 @@ positions. This data serves as input for matrix generation.
 **Log** folder: the error and the log files for SigProfilerMatrixGeneration.
 
 The output folder contains the results from matrix generation and
-signature refitting desribed in detail below. 
+signature refitting desribed in detail below.
 
 #### Matrix Generation Output
 
@@ -289,31 +288,31 @@ created for single-base substitutions (SBS) and doublet-base substitutions
 (DBS), including matrices with extended sequence context and transcriptional
 strand bias. SBS and DBS matrices are stored in their respective folders in
 the output directory. **Only the SBS96 matrix is used for refitting**.
-*Matrices are stored as `.all` files which can be viewed in a text-editor.*
+_Matrices are stored as `.all` files which can be viewed in a text-editor._
 
 Table: (\#tab:mat-files) Output Files from SigProfilerMatrixGeneration by Folder.
 
-| Folder | File | Definition | Plot file |
-|--------|------|------------|-----------|
-| SBS | *project.SBS6.all* | The 6 pyrimidine single-nucleotide variants. *C>A, C>G, C>T, T>A, T>C, or T>G* |  *plots/SBS_6_plots_project.pdf* |
-| SBS | *project.SBS18.all*| The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N). |  |
-| SBS | *project.SBS24.all*| The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N). | *plots/SBS_24_plots_project.pdf* |
-| SBS | **project.SBS96.all**| The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A[C>G]T* |  *plots/SBS_96_plots_project.pdf* |
-| SBS | *project.SBS288.all*| The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N). | *plots/SBS_288_plots_project.pdf* |
-| SBS | *project.SBS384.all* | The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B). | *plots/SBS_384_plots_project.pdf* |
-| SBS | *project.SBS1536.all* | The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations). *Ex. AA[C>G]TT* | *plots/SBS_1536_plots_project.pdf* |
-| SBS | *project.SBS4608.all* | The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N). |  |
-| SBS | *project.SBS6144.all* | The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B). |  |
-| DBS | *project.DBS78.all* | The 78 pyrimidine double-nucleotide variants. |  *plots/DBS_78_plots_project.pdf* |
-| DBS | *project.DBS150.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 3 transcriptionla bias categories (U, T, N). |  |
-| DBS | *project.DBS186.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 4 transcriptional bias categories (U, T, N, B). |  *plots/DBS_186_plots_project.pdf* |
-| DBS | *project.DBS1248.all* | The 78 pyrimidine double-nucleotide variants alongside their flanking nucleotides (Possible starting nucleotides (4) x 78 x possible ending nucleotides (4) = 1248 combinations) |  |
-| DBS | *project.DBS2400.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within  transcriptional bias categories (U, T, N). |  |
-| DBS | *project.DBS2676.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within 4 transcriptional bias categories (U, T, N, B). |  |
-| TSB | *strandBiasTes_24.txt*| Transcription Strand Bias Test stats of the SBS6 variants|  |
-| TSB | *strandBiasTes_384.txt*| Transcription Strand Bias Test stats of the SBS96 variants|  |
-| TSB | *strandBiasTes_6144.txt*| Transcription Strand Bias Test stats of the SBS1536 variants|  |
-| TSB | *significantResults_strandBiasTest.txt*| Returns significant results from the three files above.|  |
+| Folder | File                                    | Definition                                                                                                                                                                       | Plot file                          |
+| ------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| SBS    | _project.SBS6.all_                      | The 6 pyrimidine single-nucleotide variants. _C>A, C>G, C>T, T>A, T>C, or T>G_                                                                                                   | _plots/SBS_6_plots_project.pdf_    |
+| SBS    | _project.SBS18.all_                     | The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).                            |                                    |
+| SBS    | _project.SBS24.all_                     | The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N).         | _plots/SBS_24_plots_project.pdf_   |
+| SBS    | **project.SBS96.all**                   | The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). _Ex. A[C>G]T_                                                        | _plots/SBS_96_plots_project.pdf_   |
+| SBS    | _project.SBS288.all_                    | The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).                                                                                       | _plots/SBS_288_plots_project.pdf_  |
+| SBS    | _project.SBS384.all_                    | The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).                                                                                    | _plots/SBS_384_plots_project.pdf_  |
+| SBS    | _project.SBS1536.all_                   | The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations). _Ex. AA[C>G]TT_                                                 | _plots/SBS_1536_plots_project.pdf_ |
+| SBS    | _project.SBS4608.all_                   | The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).                                                                                     |                                    |
+| SBS    | _project.SBS6144.all_                   | The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).                                                                                  |                                    |
+| DBS    | _project.DBS78.all_                     | The 78 pyrimidine double-nucleotide variants.                                                                                                                                    | _plots/DBS_78_plots_project.pdf_   |
+| DBS    | _project.DBS150.all_                    | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 3 transcriptionla bias categories (U, T, N).                                                    |                                    |
+| DBS    | _project.DBS186.all_                    | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 4 transcriptional bias categories (U, T, N, B).                                                 | _plots/DBS_186_plots_project.pdf_  |
+| DBS    | _project.DBS1248.all_                   | The 78 pyrimidine double-nucleotide variants alongside their flanking nucleotides (Possible starting nucleotides (4) x 78 x possible ending nucleotides (4) = 1248 combinations) |                                    |
+| DBS    | _project.DBS2400.all_                   | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within transcriptional bias categories (U, T, N).            |                                    |
+| DBS    | _project.DBS2676.all_                   | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within 4 transcriptional bias categories (U, T, N, B).       |                                    |
+| TSB    | _strandBiasTes_24.txt_                  | Transcription Strand Bias Test stats of the SBS6 variants                                                                                                                        |                                    |
+| TSB    | _strandBiasTes_384.txt_                 | Transcription Strand Bias Test stats of the SBS96 variants                                                                                                                       |                                    |
+| TSB    | _strandBiasTes_6144.txt_                | Transcription Strand Bias Test stats of the SBS1536 variants                                                                                                                     |                                    |
+| TSB    | _significantResults_strandBiasTest.txt_ | Returns significant results from the three files above.                                                                                                                          |                                    |
 
 **Doublet-base Matrices (DBS)**: DBS are somatic mutations in which a set of two
 adjacent DNA base-pairs are simultaneously substituted with another set of two
@@ -356,19 +355,19 @@ categories:
 
 Table: (\#tab:transcript-cat) SigProfiler Transcriptional Bias Categories.
 
-|Category        | Description                                           |
-|----------------|-------------------------------------------------------|
-|Transcribed (T) |The variant is on the transcribed (template) strand.   |
-|Untranscribed (U)|The variant is on the untranscribed (coding) strand.  |
-|Bidirectional (B) |The variant is on both strands and is transcribed either way. |
-|Nontranscribed (N) |The variant is in a non-coding region and is untranslated. |
+| Category           | Description                                                   |
+| ------------------ | ------------------------------------------------------------- |
+| Transcribed (T)    | The variant is on the transcribed (template) strand.          |
+| Untranscribed (U)  | The variant is on the untranscribed (coding) strand.          |
+| Bidirectional (B)  | The variant is on both strands and is transcribed either way. |
+| Nontranscribed (N) | The variant is in a non-coding region and is untranslated.    |
 
 The tool will then perform a transcription strand bias test which compares the
 number of transcribed and untranscribed mutations for each mutation type.
-*For example, it will compare the number of transcribed T>C to untranscribed*
-*T>C mutations. Should there be a significant difference, it would indicate that*
-*T:A>C:G mutations are occuring at a higher rate on one of the strands compared*
-*to the other.* The output files contain the following headers:
+_For example, it will compare the number of transcribed T>C to untranscribed_
+_T>C mutations. Should there be a significant difference, it would indicate that_
+_T:A>C:G mutations are occuring at a higher rate on one of the strands compared_
+_to the other._ The output files contain the following headers:
 
 1. the `group`
 2. the mutation type
@@ -381,38 +380,35 @@ number of transcribed and untranscribed mutations for each mutation type.
 Results from the signature refitting perfomed by
 [SigProfilerAssignment](https://osf.io/mz79v/wiki/home/) will be stored within
 the "Assignment_Solution" folder. "Assignment_Solution" consists of 3
-subdirectories;  "Activities", "Signatures", and "Solution_Stats". 
+subdirectories; "Activities", "Signatures", and "Solution_Stats".
 
 **Activities**
 
-| File | Description |
-|------|-------------|
-|*Assignment_Solution_Activities.txt* | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process. |
-|*Assignment_Solution_Activity_Plots.pdf* | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.|
-| *Assignment_Solution_TMB_plot.pdf* | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase. |
-| *Decomposed_Mutation_Probabilities.txt* | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each  mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures. |
-| *SampleReconstruction* | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure.|
-
+| File                                     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| _Assignment_Solution_Activities.txt_     | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample's original mutation matrix caused by a particular mutational process.                                                                                                                                                                        |
+| _Assignment_Solution_Activity_Plots.pdf_ | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| _Assignment_Solution_TMB_plot.pdf_       | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase.                                                                                                                                                                                                                      |
+| _Decomposed_Mutation_Probabilities.txt_  | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures.                                                                                                                                                       |
+| _SampleReconstruction_                   | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure. |
 
 **Signatures**
 
-| Files | Description |
-|-------|-------------|
-| *Assignment_Solution_Signatures.txt* | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures. |
-| *SBS_96_plots_Assignment_Solution.pdf* | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
-
+| Files                                  | Description                                                                                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| _Assignment_Solution_Signatures.txt_   | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures.                                                                                  |
+| _SBS_96_plots_Assignment_Solution.pdf_ | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
 
 **Solution_Stats**
 
-| Files | Description |
-|-------|-------------|
-| *Assignment_Solution_Samples_Stats.txt* | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
-| *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps. |
-
+| Files                                              | Description                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _Assignment_Solution_Samples_Stats.txt_            | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
+| _Assignment_Solution_Signature_Assignment_log.txt_ | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps.                                                                                                                                                         |
 
 **Other Files**
 
-*JOB_METADATA_SPA.txt*: This file contains the metadata about system and runtime.
+_JOB_METADATA_SPA.txt_: This file contains the metadata about system and runtime.
 
 ### Use SigProfiler Webtool
 
@@ -429,9 +425,9 @@ Assignment web application as a "mutation calling file". Signature analyses
 are done at the sample level when using mutation calling files. The file will
 be saved to your output directory, specified in `output_path`.
 
-*Example 3. Analyze the COSMIC SBS signatures contributing to each of the*
-*24 samples using the SigProfiler Web Tool. Output a mutation calling file that*
-*can be uploaded to the webtool.*
+_Example 3. Analyze the COSMIC SBS signatures contributing to each of the_
+_24 samples using the SigProfiler Web Tool. Output a mutation calling file that_
+_can be uploaded to the webtool._
 
 ```{r mut-calling-file, eval=FALSE}
 write_mutation_calling_file(
@@ -444,14 +440,14 @@ write_mutation_calling_file(
 
 #### Mutational Matrix
 
- `write_mutational_matrix()` will sum mutations across user-defined groups
- before coercing the data into the proper format for input as a "mutational
- matrix". SNV subtypes can be resolved to either the base_6 or base_96
- resolution. The file is saved to the specified output directory.
+`write_mutational_matrix()` will sum mutations across user-defined groups
+before coercing the data into the proper format for input as a "mutational
+matrix". SNV subtypes can be resolved to either the base_6 or base_96
+resolution. The file is saved to the specified output directory.
 
- *Example 4.  Analyze the COSMIC SBS signatures contributing to each dose*
- *group using the SigProfiler Web Tool. Output a mutational matrix that can be*
- *uploaded to the webtool.*
+_Example 4. Analyze the COSMIC SBS signatures contributing to each dose_
+_group using the SigProfiler Web Tool. Output a mutational matrix that can be_
+_uploaded to the webtool._
 
 ```{r write-mut-matrix, eval=FALSE}
 write_mutational_matrix(
@@ -467,10 +463,10 @@ write_mutational_matrix(
 
 ## plot_spectra {.tabset}
 
-The mutation spectra can be visualized with  `plot_spectra` which will create a
+The mutation spectra can be visualized with `plot_spectra` which will create a
 stacked bar plot for user-defined groups at the desired subtype resolution.
 Mutation subtypes are represented by colour. The value can represent subtype
-`proportion`, frequency (`mf`), or count (`sum`). 
+`proportion`, frequency (`mf`), or count (`sum`).
 
 We will first calculate the mf data at the 6-base resolution for each dose.
 We will exclude ambiguous or uncategorized variants since we don't
@@ -500,7 +496,7 @@ mf_data_6_dose$dose_group <- factor(
 
 ### Proportion
 
-*Example 5. Plot the base_6 proportions for each dose group.*
+_Example 5. Plot the base_6 proportions for each dose group._
 
 ```{r plot-spectra-cap1,  include=FALSE}
 caption <- paste(
@@ -529,7 +525,7 @@ plot
 
 ### Frequency
 
-*Example 6. Plot the base_6 frequences for each dose group.*
+_Example 6. Plot the base_6 frequences for each dose group._
 
 ```{r plot-spectra-cap2, include=FALSE}
 caption <- paste(
@@ -557,7 +553,7 @@ plot
 
 ### Sum
 
-*Example 7. Plot the base_6 mutation sums for each dose group.*
+_Example 7. Plot the base_6 mutation sums for each dose group._
 
 ```{r plot-spectra-cap3,  include=FALSE}
 caption <- paste(
@@ -595,11 +591,11 @@ output a dendrogram visually representing the clusters' relationships and
 hierarchy. The dendrogram will be overlaid on the `plot_spectra()` bar plot
 and samples will be ordered accordingly.
 
-*Example 8. Plot the base_6 mutation spectra per sample, with hierarchical*
-*clustering. For this example we have created a new sample column with more*
-intuitive sample names: new_sample_id. These names correspond to their*
-*associated dose groups. We will see that samples largly cluster within their*
-*dose groups.*
+_Example 8. Plot the base_6 mutation spectra per sample, with hierarchical_
+_clustering. For this example we have created a new sample column with more_
+intuitive sample names: new*sample_id. These names correspond to their\*
+\_associated dose groups. We will see that samples largly cluster within their*
+_dose groups._
 
 ```{r plot-spectra-cap4,  include=FALSE}
 caption <- paste(
@@ -631,7 +627,7 @@ plot <- plot_spectra(
   y_lab = "Subtype Proportion"
 )
 plot
-```                        
+```
 
 ### Trinucleotide Plots {.tabset}
 
@@ -641,7 +637,7 @@ user-defined group. Data can represent subtype mutation count (`sum`), frequency
 (`mf`), or `proportion`. Aesthetics are consistent with COSMIC trinucleotide
 plots. Plots can be automatically saved to a specified output directory.
 
-*Example 9. plot the base_96 mutation spectra proportions for each dose group.*
+_Example 9. plot the base_96 mutation spectra proportions for each dose group._
 
 We will first calculate the mf at the 96-based resolution per dose group.
 For this example, we will focus only on SNV mutations.
@@ -710,8 +706,8 @@ variables. Heatmaps are useful for making comparisons between experimental
 variables when information density becomes too high to represent using
 traditional plots.
 
-*Example 10. Plot the 96-base SNV spectrum for each sample, facetted*
-*by dose group.*
+_Example 10. Plot the 96-base SNV spectrum for each sample, facetted_
+_by dose group._
 
 ```{r heatmap-cap, include=FALSE}
 caption <- paste(

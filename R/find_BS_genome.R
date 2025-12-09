@@ -11,80 +11,74 @@
 #' Default is FALSE.
 #' @export
 #' @importFrom BSgenome available.genomes installed.genomes
-#' @return a BSgenome object
+#' @return a BSgenome package name or a dataframe of possibilities
 #' @examples
 #' # Find the reference genome for Mouse, mm10 assembly:
 #' mouse_mm10 <- find_BS_genome("mouse", "mm10")
-#' # Find all possible mouse BS genomesL
+#' # Find all possible mouse BS genomes:
 #' mouse_all <- find_BS_genome("mouse")
 find_BS_genome <- function(organism, genome, masked = FALSE) {
-  # Map the input name to the organism name in available.genomes
-  organism <- gsub("\\.\\s", "", organism)
-  convertToOrganismName <- function(name) {
-    for (org_name in names(MutSeqR::BS_org_map)) {
-      if (tolower(name) %in% c(
-        tolower(org_name),
-        tolower(MutSeqR::BS_org_map[[org_name]])
-      )) {
-        return(org_name)
-      }
+
+    # Map
+    map_keys <- names(MutSeqR::BS_org_map)
+    map_vals <- MutSeqR::BS_org_map
+    all_canonicals <- rep(map_keys, times = lengths(map_vals))
+    all_synonyms <- unlist(map_vals)
+    all_canonicals <- c(all_canonicals, map_keys)
+    all_synonyms   <- c(all_synonyms, map_keys)
+    org_lookup <- setNames(all_canonicals, tolower(all_synonyms))
+    input_clean <- gsub("\\.\\s", "", tolower(organism))
+    # Perform Lookup
+    # We check both the direct input and the cleaned input
+    organism_name <- org_lookup[tolower(organism)]
+    if (is.na(organism_name)) organism_name <- org_lookup[input_clean] # try clean
+
+    if (is.na(organism_name)) {
+        stop("Unrecognized organism name: '", organism, 
+            "'. Please consult BSgenome::available.genomes for valid names.")
     }
-    stop(
-      "Unrecognized organism name: ", name,
-      ". Please consult BSgenome::available.genomes for valid names."
-    )
-  }
-  organism_name <- convertToOrganismName(organism)
-  # Search available genomes
-  available_genomes <- BSgenome::available.genomes(splitNameParts = TRUE)
 
-  possible_genomes <- available_genomes[
-    available_genomes$organism == organism_name &
-      available_genomes$masked == masked,
-  ]
-  if (nrow(possible_genomes) == 0) {
-    stop("No genomes found for specified organism.")
-  }
-  # If genome argument is missing, return possibilities
-  if (missing(genome) || is.null(genome) || nchar(genome) == 0) {
-    message(
-      "Possible BS genomes for organism = '", organism,
-      "', masked = ", masked, ": ", possible_genomes$pkgname,
-      ". Please install one of the possible BS genomes using",
-      " BiocManager::install('pkgname') and provide the pkgname to",
-      " import_mut/vcf_data()."
-    )
-    return(possible_genomes[, c("pkgname", "organism", "genome", "masked")])
-  }
-  # If genome specified, filter further for genome assembly
-  selected_genome <- possible_genomes[
-    possible_genomes$genome == genome,
-  ]
-  if (nrow(selected_genome) == 0) {
-    stop(
-      "No BS genome found for the specified organism, assembly version and",
-      " masked setting. Available assemblies for this organism (masked = ",
-      masked, ") are:\n",
-      paste(unique(possible_genomes$genome), collapse = ", ")
-    )
-  }
+    # Search Available Genomes
+    available <- BSgenome::available.genomes(splitNameParts = TRUE)
+    # Filter by Organism and Masked status
+    possible_genomes <- available[
+        available$organism == organism_name & available$masked == masked, 
+    ]
 
-  ref_genome <- selected_genome$pkgname
-  message("Selected reference genome: ", ref_genome)
-  # Install the reference genome
-  installed_BS_genomes <- BSgenome::installed.genomes()
-  if (ref_genome %in% installed_BS_genomes) {
-    message("Reference genome is already installed.")
-  } else {
-    message(
-        "Reference genome is not installed.",
-        " Please install using BiocManager::install(",
-        ref_genome, ")"
-    )
-  }
-  message(
-    "Once installed, supply: ", ref_genome,
-    " as the BS_genome parameter in import_mut/vcf_data()"
-  )
-  return(ref_genome)
+    if (nrow(possible_genomes) == 0) {
+        stop("No genomes found for organism '", organism_name, "' with masked = ", masked, ".")
+    }
+
+    # Handle Null Genome Argument
+    if (missing(genome) || is.null(genome) || nchar(genome) == 0) {
+        message(
+        "Possible BS genomes for '", organism_name, "' (masked=", masked, "):\n",
+        paste(possible_genomes$pkgname, collapse = "\n"),
+        "\n\nPlease install one using BiocManager::install('pkgname')."
+        )
+        # Return the dataframe of possibilities
+        return(possible_genomes[, c("pkgname", "organism", "genome", "masked")])
+    }
+
+    # Filter by genome
+    selected_genome <- possible_genomes[possible_genomes$genome == genome, ]
+
+    if (nrow(selected_genome) == 0) {
+        stop(
+            "No BS genome found for '", organism_name, "' assembly '", genome,
+            "' (masked=", masked, ").\n", "Available assemblies: ",
+            paste(unique(possible_genomes$genome), collapse = ", ")
+        )
+    }
+    ref_genome_pkg <- selected_genome$pkgname[1] # first match if duplicated
+  
+    message("Selected reference genome: ", ref_genome_pkg)
+    if (ref_genome_pkg %in% BSgenome::installed.genomes()) {
+        message("Reference genome is already installed.")
+    } else {
+        message("Reference genome is NOT installed. Install using:\n",
+            "  BiocManager::install('", ref_genome_pkg, "')")
+    }
+    message("Once installed, supply '", ref_genome_pkg, "' as the BS_genome parameter.")  
+    return(ref_genome_pkg)
 }

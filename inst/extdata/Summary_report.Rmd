@@ -24,13 +24,9 @@ library(bs4Dash)
 
 ```{r check-for-suggests, include=FALSE}
 check_pkgs <- function(pkgs) {
-  missing_packages <- c()
-  for (pkg in pkgs) {
-    if (!requireNamespace(pkg, quietly = TRUE)) {
-      missing_packages <- c(missing_packages, pkg)
-    }
-  }
-  if (length(missing_packages) > 0) {
+     installed_status <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
+     missing_packages <- pkgs[!installed_status]
+     if (length(missing_packages) > 0) {
     stop("Rendering halted: The following required packages are not installed:\n  ",
       paste(missing_packages, collapse = ", "), call. = FALSE)
   } else {
@@ -39,7 +35,7 @@ check_pkgs <- function(pkgs) {
 }
 plotting <- c(
   "colorspace", # plot_mean_mf
-  "dendsort", # plot_spectra 
+  "dendsort", # plot_spectra
   "ggh4x", # plot_spectra
   "ggrepel", # plot_mf plot_mean_mf
   "gtools", # plot_mf plot_mean_mf plot_spectra
@@ -77,7 +73,7 @@ Sequencing technology: `r params$ecs_technology`
 
 Output saved to : `r params$outputdir`
 
-***
+---
 
 # Import the Mutation Data
 
@@ -158,10 +154,10 @@ Mutation data has `r sample_no` samples.
 
 The mutation data is filtered using the parameters defined below. Rows are
 either flagged or removed from the mutation data. Variants that are flagged
-as TRUE within the *filter_mut* column are excluded from mutation counts in all
-downstream analyses. However, total_depth of flagged variants is retained for
+as TRUE within the _filter_mut_ column are excluded from mutation counts in all
+downstream analyses. However, total*depth of flagged variants is retained for
 frequency calculations^1^. All records flagged or removed during the filtering
-process are returned in *filtered_variants.xlsx.*
+process are returned in \_filtered_variants.xlsx.*
 
 **Flagging variants with a VAF > than `r params$vaf_cutoff` as germline.**
 VAF (variant allele fraction) is calculated as alt_depth/total_depth.
@@ -179,7 +175,7 @@ Removes rows with 0.05 > VAF < 0.45 or 0.55 > VAF < 0.95.
 cat("Applying Custom Filter to column: '", params$custom_filter_col, "'. ",
     "Records are ", ifelse(params$custom_filter_rm, " removed", "flagged"),
     " when the value matches '", params$custom_filter_val, "'", sep = "")
-``` 
+```
 
 **Removing records based on a regions file: `r !is.null(params$filtering_regions)`.**
 
@@ -195,7 +191,7 @@ cat ("Records must start and end within the filtering regions to be included: ",
 **Flagged variants (except those identified as germline) have their alt_depth subtracted from their total_depth: `r params$rm_filtered_mut_from_depth`.**
 If TRUE, flagged variants are treated as N-calls within the data.
 
-^1^ *Only applicable for mutation data that contains an appropriate total_depth column.*
+^1^ _Only applicable for mutation data that contains an appropriate total_depth column._
 
 ```{r filter-mutation-data, message=TRUE, results='asis'}
 if (no_depth) {
@@ -251,7 +247,7 @@ their total_depth set to 0 to prevent double-counting. This parameter is set
 to TRUE automatically when overlapping positions are detected within
 the mutation data.
 
-``` {r no-depth-msg-global, eval=no_depth, results='asis'}
+```{r no-depth-msg-global, eval=no_depth, results='asis'}
 if (is.null(params$precalc_depth_data_global)) {
   cat("No appropriate total_depth column within the mutation data.
       Cannot calculate the sample group depth.
@@ -303,7 +299,7 @@ Results <- list("Global MF per Sample" = mf_data)
 
 ## Plot Mutation Frequency per Sample
 
-``` {r set-plot-size3.2, include=FALSE}
+```{r set-plot-size3.2, include=FALSE}
 fig_width <- 8
 fig_height <- 6
 labels <- "count"
@@ -363,7 +359,7 @@ plot3.2
 
 ## Plot Mean Mutation Frequency
 
-``` {r set-plot-size3.3, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
+```{r set-plot-size3.3, eval=!is.null(params$exp_variable) & !no_mf, include=FALSE}
 fig_width <- 8
 fig_height <- 6
 n_expv <- length(unique(plot_data[params$exp_variable]))
@@ -488,7 +484,7 @@ DT::datatable(
     columnDefs = list(
       list(targets = 1:4,
            render = JS("function(data, type, row, meta) {
-            return data.toExponential(2); 
+            return data.toExponential(2);
           }"))
     ),
     rowCallback = JS("function(row, data, dataIndex) {
@@ -1155,7 +1151,7 @@ if ("mf_min" %in% colnames(mf_rg)) {
   DT::datatable(
     mf_rg,
     caption = "Mutation counts per sample for each genomic target"
-  ) 
+  )
 }
 Results[["MF per Target Region"]] <- mf_rg
 ```
@@ -1175,15 +1171,15 @@ if (!is.null(params$contrasts)) {
                              col2 = character(),
                              stringsAsFactors = FALSE)
 
-  for (i in 1:length(rg_levels$label)) {
-    contrasts_rg <- rbind(
-      contrasts_rg,
-      data.frame(col1 = paste(contrasts$V1, rg_levels$label[i], sep=":"),
-        col2 = paste(contrasts$V2, rg_levels$label[i], sep=":")
-      )
+    num_rg <- length(rg_levels)
+    num_contrasts_rows <- nrow(contrasts)
+    expanded_V1 <- rep(contrasts[,1], each = num_rg)
+    expanded_V2 <- rep(contrasts[,2], each = num_rg)
+    expanded_rg <- rep(rg_levels, times = num_contrasts_rows)
+    contrasts_rg <- data.frame(
+        col1 = paste(expanded_V1, expanded_rg, sep = ":"),
+        col2 = paste(expanded_V2, expanded_rg, sep = ":")
     )
-  }
-
 } else {
   contrasts_rg <- NULL
 }
@@ -1263,7 +1259,7 @@ stats::qqline(model_rg_data$residuals, col = "red")
 
 ## Model Estimates
 
-``` {r glmm-point-estimates, eval=params$do_regions_analysis & !no_mf}
+```{r glmm-point-estimates, eval=params$do_regions_analysis & !no_mf}
 DT::datatable(
   model_rg$point_estimates,
   caption = "Estimated Mean Mutation Frequency",
@@ -1271,7 +1267,7 @@ DT::datatable(
     columnDefs = list(
       list(targets = 1:4,
            render = JS("function(data, type, row, meta) {
-            return data.toExponential(2); 
+            return data.toExponential(2);
           }"))
     ),
     rowCallback = JS("function(row, data, dataIndex) {
@@ -1405,7 +1401,7 @@ for (p in plot_list) {
   cat("### ", p, "\n\n")
   print(plot[p])
   cat("\n")
-}                            
+}
 ```
 
 ```{r, recur-per-sample, eval=FALSE}
@@ -1577,7 +1573,7 @@ cpg_summary_subtype <- calculate_mf(mutation_data = cpg_mutations,
                                     subtype_resolution = "base_6",
                                     cols_to_group = "sample",
                                     calculate_depth = FALSE)
-                                    
+
 # Mutations at CpG sites...
 cpg_summary_subtype <- as.data.frame(cpg_mutations) %>%
   dplyr::add_count(dose, alt_depth, name = "total_muts_per_group") %>%
@@ -1599,7 +1595,7 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 
 # cpg_base_12_pct <- as.data.frame(mutation_data_cpgs) %>%
 #   group_by(CpG_site, subtype, !!ensym(params$group_var)) %>%
-#   tally() %>% 
+#   tally() %>%
 #   ungroup() %>%
 #   group_by(subtype, !!ensym(params$group_var)) %>%
 #   mutate(total_mutations = sum(n)) %>%
@@ -1607,10 +1603,10 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(percent = 100*n/total_mutations) %>%
 #   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
-# 
+#
 # cpg_base_6_pct <- as.data.frame(mutation_data_cpgs) %>%
 #   group_by(CpG_site, normalized_subtype, !!ensym(params$group_var)) %>%
-#   tally() %>% 
+#   tally() %>%
 #   ungroup() %>%
 #   group_by(normalized_subtype, !!ensym(params$group_var)) %>%
 #   mutate(total_mutations = sum(n)) %>%
@@ -1618,10 +1614,10 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(percent = 100*n/total_mutations) %>%
 #   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
-# 
+#
 # cpg_base_96_pct <- as.data.frame(mutation_data_cpgs) %>%
 #   group_by(CpG_site, context_with_mutation, !!ensym(params$group_var)) %>%
-#   tally() %>% 
+#   tally() %>%
 #   ungroup() %>%
 #   group_by(context_with_mutation, !!ensym(params$group_var)) %>%
 #   mutate(total_mutations = sum(n)) %>%
@@ -1629,13 +1625,13 @@ cpg_summary_context <- as.data.frame(cpg_mutations) %>%
 #   mutate(percent = 100*n/total_mutations) %>%
 #   filter(CpG_site == TRUE) %>%
 #   dplyr::select(-1)
-# 
+#
 # cpg_tables <- list(CpGs_base_12_percentage = cpg_base_12_pct,
 #                    CpGs_base_6_percentage = cpg_base_6_pct,
 #                    #CpGs_trinucleotide_percentage = cpg_base_96_pct, # Data too sparse.
 #                    CpGs_by_subtype = cpg_summary_subtype,
 #                    CpGs_by_trinucleotide = cpg_summary_context)
-# 
+#
 # write_excel_from_list(list_of_tables = cpg_tables,
 #                       output_path = output_dir,
 #                       workbook_name = "cpg_tables")

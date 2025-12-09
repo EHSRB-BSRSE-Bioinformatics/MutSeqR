@@ -17,7 +17,7 @@ Sapiens, H. sapiens, or human}
 Default is FALSE.}
 }
 \value{
-a BSgenome object
+a BSgenome package name or a dataframe of possibilities
 }
 \description{
 This function will browse available BSgenomes, indicating
@@ -28,6 +28,6 @@ return a list of available genomes for a specified species.
 \examples{
 # Find the reference genome for Mouse, mm10 assembly:
 mouse_mm10 <- find_BS_genome("mouse", "mm10")
-# Find all possible mouse BS genomesL
+# Find all possible mouse BS genomes:
 mouse_all <- find_BS_genome("mouse")
 }

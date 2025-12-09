@@ -67,14 +67,14 @@ indels may start outside of the regions. Adjust the padding to
 include these variants in your region's ranges.}
 
 \item{BS_genome}{The pkgname of a BS genome. A BS genome must be installed
-prior to import to populate the context column (trinucleotide context for each position).
-Only required if data does not already include a context column. Please install the
-appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
-name of the BSgenome package. The pkgname can be found using the find_BS_genome()
-function, which requires the species and assembly version.
-Ex."BSgenome.Hsapiens.UCSC.hg38" | "BSgenome.Hsapiens.UCSC.hg19" |
-"BSgenome.Mmusculus.UCSC.mm10" | "BSgenome.Mmusculus.UCSC.mm39" |
-"BSgenome.Rnorvegicus.UCSC.rn6"}
+prior to import to populate the context column (trinucleotide context for
+each position). Only required if data does not already include a context
+column. Please install the appropriate BS genome using
+BiocManager::install("pkgname") where pkgname is the name of the BSgenome
+package. The pkgname can be found using the find_BS_genome() function, which
+requires the species and assembly version. Ex."BSgenome.Hsapiens.UCSC.hg38"
+| "BSgenome.Hsapiens.UCSC.hg19" | "BSgenome.Mmusculus.UCSC.mm10" |
+"BSgenome.Mmusculus.UCSC.mm39" | "BSgenome.Rnorvegicus.UCSC.rn6".}
 
 \item{custom_column_names}{A list of names to specify the meaning of column
 headers. Since column names can vary with data, this might be necessary to
@@ -173,7 +173,6 @@ if (requireNamespace("MutSeqRData", quietly = TRUE)) {
   # We will create an example metadata table for this data.
   sample_meta <- data.frame(
     sample = "dna00996.1",
-    dose = "50",
     dose_group = "High"
   )
   # Import the data

@@ -234,6 +234,51 @@ calculate_mf <- function(mutation_data,
     summary = TRUE,
     retain_metadata_cols = NULL
 ) {
+    stopifnot(
+        "mutation_data must be a data frame or GRanges object." =
+            inherits(mutation_data, "data.frame") ||
+                inherits(mutation_data, "GRanges"),
+        "cols_to_group must be a character." = is.character(cols_to_group),
+        "cols_to_group must be a column name(s) in mutation_data." =
+            all(cols_to_group %in% colnames(mutation_data)),
+        "subtype_resolution must be a character." =
+            is.character(subtype_resolution),
+        "subtype_resolution must only have one value." =
+            length(subtype_resolution) == 1,
+        "variant_types must be a character or a character vector." =
+            is.character(variant_types),
+        "calculate_depth must be a logical variable." =
+            is.logical(calculate_depth),
+        "correct_depth must be a logical variable." =
+            is.logical(correct_depth),
+        "correct_depth_by_indel_priority must be a logical variable." =
+            is.logical(correct_depth_by_indel_priority),
+        "precalc_depth_data must be NULL, a data frame, or a file path." =
+            is.null(precalc_depth_data) ||
+            is.data.frame(precalc_depth_data) ||
+            is.character(precalc_depth_data),
+        "d_sep must be a character." = is.character(d_sep),
+        "d_sep must only have one value." = length(d_sep) == 1,
+        "summary must be a logical variable." = is.logical(summary),
+        "retain_metadata_cols must be NULL or a character" =
+            is.null(retain_metadata_cols) ||
+            is.character(retain_metadata_cols),
+        "retain_metadata_cols must be column names in mutation_data." =
+            is.null(retain_metadata_cols) ||
+            all(retain_metadata_cols %in% colnames(mutation_data))
+    )
+    subtype_resolution <- match.arg(
+        subtype_resolution,
+        choices = names(MutSeqR::subtype_dict)
+    )
+    # validate variant_types one at a time
+    variant_types <- unique(vapply(variant_types, function(vt) {
+        match.arg(vt, choices = c(
+            MutSeqR::subtype_list$type,
+            paste0("-", MutSeqR::subtype_list$type)
+        ))
+    }, FUN.VALUE = character(1)))
+
     # Variant list
     all_variant_types <- setdiff(MutSeqR::subtype_list$type, "no_variant")
     filter_variants <- function(selected_types, all_variant_types) {
@@ -256,34 +301,10 @@ calculate_mf <- function(mutation_data,
 
     variant_types <- filter_variants(variant_types, all_variant_types)
 
-    # Validate Parameters
     # Check if data is provided as GRanges: if so, convert to data frame.
     if (inherits(mutation_data, "GRanges")) {
         mutation_data <- as.data.frame(mutation_data)
         mutation_data <- dplyr::rename(contig = seqnames)
-    }
-    if (!inherits(mutation_data, "data.frame")) {
-        warning("You should use a data frame as input here.")
-    }
-    if (!subtype_resolution %in% names(MutSeqR::subtype_dict)) {
-        stop(
-            "You need to set subtype_resolution to one of:
-            none, type, base_6, base_12, base_96, base_192"
-        )
-    }
-    if (any(!variant_types %in% MutSeqR::subtype_list$type)) {
-        stop(
-            "You need to set variant_types to one or more of: ",
-            paste(MutSeqR::subtype_list$type, collapse = ", "),
-            ". Variation_types outside of this list will not be included in",
-            " the mutation frequency calculation."
-        )
-    }
-    if (!is.logical(summary)) {
-        stop("summary must be a logical variable.")
-    }
-    if (!is.null(retain_metadata_cols) && !is.character(retain_metadata_cols)) {
-        stop("retain_metadata_cols must be a character vector.")
     }
 
     if (calculate_depth && correct_depth) {
@@ -440,11 +461,6 @@ calculate_mf <- function(mutation_data,
                         You may want to set d_sep to properly reflect
                         the delimiter used for the data you are importing.")
                 }
-            } else {
-                stop(
-                    "precalc_depth_data must be NULL, a data frame,",
-                    " or a file path."
-                )
             }
             # check for required columns in depth_df
             # If they are just using snvs, maybe don't require group_depth

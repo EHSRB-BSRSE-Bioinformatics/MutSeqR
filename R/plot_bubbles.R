@@ -57,6 +57,36 @@ plot_bubbles <- function(mutation_data,
                          circle_outline = "none",
                          circle_resolution = 50,
                          custom_palette = NULL) {
+  stopifnot(
+      "mutation_data is required" = !missing(mutation_data),
+      "mutation_data must be a data frame" =
+          is.data.frame(mutation_data),
+      "size_by must be a character string" = is.character(size_by),
+      "color_by must be a character string" = is.character(color_by),
+      "facet_col must be NULL or a character string" =
+          is.null(facet_col) | is.character(facet_col),
+      "circle_spacing must a be numeric" = is.numeric(circle_spacing),
+      "circle_resolution must be numeric" = is.numeric(circle_resolution),
+      "circle_outline must be a character string" =
+          is.character(circle_outline),
+      "custom_palette must be NULL or a vector" =
+          is.null(custom_palette) | is.vector(custom_palette)
+  )
+  size_by <- match.arg(size_by,
+      choices = colnames(mutation_data),
+      several.ok = FALSE
+  )
+    color_by <- match.arg(color_by,
+        choices = colnames(mutation_data),
+        several.ok = FALSE
+    )
+    if (!is.null(facet_col)) {
+        facet_col <- match.arg(facet_col,
+            choices = colnames(mutation_data),
+            several.ok = FALSE
+        )
+    }
+    
   if (!requireNamespace("RColorBrewer")) {
     stop("You need the package RColorBrewer to run this function.")
   }

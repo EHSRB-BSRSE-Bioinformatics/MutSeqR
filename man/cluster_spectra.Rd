@@ -5,7 +5,7 @@
 \title{Hierarchical Clustering}
 \usage{
 cluster_spectra(
-  mf_data = mf_data,
+  mf_data,
   group_col = "sample",
   response_col = "proportion_min",
   subtype_col = "normalized_subtype",

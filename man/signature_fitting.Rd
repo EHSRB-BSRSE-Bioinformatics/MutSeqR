@@ -41,7 +41,7 @@ computer.}
 Creates a subfolder "SigProfiler" in the output directory with
 SigProfiler tools results. For a complete breakdown of the results, see the
 Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
-\link{group} > matrices > output > Assignment_Solution > Activities >
+\link[ggplot2:aes_group_order]{ggplot2::group} > matrices > output > Assignment_Solution > Activities >
 SampleReconstruction > WebPNGs.
 These plots show a summary of the signature assignment results for each
 group. In each plot, the top left panel represents the base_96 mutation

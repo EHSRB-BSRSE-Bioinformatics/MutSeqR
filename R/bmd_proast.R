@@ -177,22 +177,28 @@ bmd_proast <- function(
     output_path = NULL,
     raw_results = FALSE,
     seed = 125) {
-  if (!dose_col %in% colnames(mf_data)) {
-    stop("Dose column not found in mf_data")
-  }
-  if (!any(response_col %in% colnames(mf_data))) {
-    stop("Response column not found in mf_data")
-  }
-  if (!is.null(covariate_col) && !covariate_col %in% colnames(mf_data)) {
-    stop("Covariate column not found in mf_data")
-  }
-  if (model_averaging == TRUE) {
-    message("Model averaging is set to TRUE. This may take some time to run.")
-  }
-  # ensure that dose is numeric
-  if (!is.numeric(mf_data[[dose_col]])) {
-    stop("Dose column must be numeric")
-  }
+    stopifnot(
+        "dose_col must be a column in mf_data" =
+            dose_col %in% colnames(mf_data),
+        "response_col must be a column name or vector of column names" =
+            is.character(response_col) || is.vector(response_col),
+        "response_col must be a column or columns in mf_data" =
+            any(response_col %in% colnames(mf_data)),
+        "covariate_col must be NULL or a column name (character)" =
+            is.null(covariate_col) || is.character(covariate_col),
+        "bmr must be a positive numeric value" = is.numeric(bmr) && bmr > 0,
+        "adjust_bmr_to_group_sd must be a logical value" =
+            is.logical(adjust_bmr_to_group_sd),
+        "model_averaging must be a logical value" =
+            is.logical(model_averaging),
+        "num_bootstraps must be a positive integer" =
+            is.numeric(num_bootstraps) && num_bootstraps > 0,
+        "plot_results must be a logical value" = is.logical(plot_results),
+        "output_path must be either NULL or a filepath (character)" =
+            is.null(output_path) || is.character(output_path),
+        "raw_results must be a logical value" = is.logical(raw_results),
+        "seed must be a number" = is.numeric(seed)
+    )
 
   bmr_sd <- as.numeric(adjust_bmr_to_group_sd) + 1
 
@@ -269,7 +275,7 @@ bmd_proast <- function(
           output_path = output_path
         )
 
-        plots <- c(plots, ma_plots, c_plots)
+        plots <- c(plots, ma_plots, list(cleveland_plot = c_plots))
       }
     }
   }

@@ -35,6 +35,16 @@
 load_regions_file <- function(regions,
                               rg_sep = "\t",
                               is_0_based_rg = TRUE) {
+    stopifnot(
+        "regions is required." = !missing(regions),
+        "regions must be a file path, data frame, or GRanges object." =
+            is(regions, "GRanges") ||
+            is(regions, "data.frame") ||
+            is.character(regions),
+        "rg_sep must be a character string." = is.character(rg_sep),
+        "is_0_based_rg must be a logical value." = is.logical(is_0_based_rg)
+    )
+
   if (is(regions, "GRanges")) {
     return(regions)
   } else if (is.data.frame(regions)) {
@@ -87,8 +97,6 @@ load_regions_file <- function(regions,
         stop("your imported regions file has only one column. Please check the delimiter in rg_sep.")
       }
     }
-  } else {
-    stop("Invalid regions parameter.")
   }
   if (!all(c("contig", "start", "end") %in% colnames(regions_df))) {
     stop("your regions file is missing the required columns 'contig', 'start', and 'end'.")

@@ -1,14 +1,14 @@
 ---
 title: "MutSeqR: Error-Corrected Sequencing (ECS) Analysis For Mutagenicity Assessment"
 author:
-- name: Annette E. Dodge
-  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-- name: Matthew J. Meier
-  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-  email: matthew.meier@hc-sc.gc.ca
+  - name: Annette E. Dodge
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  - name: Matthew J. Meier
+    affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+    email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
 output:
-  BiocStyle::html_document:
+  rmarkdown::html_document:
     toc: true
     toc_float: yes
     code_folding: show
@@ -21,9 +21,8 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-  
+
 ```{r setup, include=FALSE}
-BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
 library(htmltools)
@@ -69,17 +68,8 @@ package is designed to be flexible and enable users to perform common
 statistical analyses and visualisations.
 
 # Installation
-Install the package from github:
 
-```{r install-git, eval = FALSE}
-install.packages("devtools")
-
-devtools::install_github(
-  "EHSRB-BSRSE-Bioinformatics/MutSeqR"
-)
-```
-
-Install the package from Bioconductor (currently not implemented):
+Install the package from Bioconductor:
 
 ```{r install-bioc, eval=FALSE}
 if (!require("BiocManager", quietly = TRUE)) {
@@ -105,23 +95,23 @@ can be imported as either VCF files or as tabular data using the functions
 files include a record for every sequenced position, regardless of whether a
 variant was called or not, along with the `total_depth` for each record. This
 enables site-specific depth calculations that are required for the calculation
-of mutation subtype frequencies ad other site-specific frequemcies. The data
+of mutation subtype frequencies and other site-specific frequencies. The data
 set can be pared down later to include only mutations of interest (SNVs,
-indels, SVs, or any combination). 
+indels, SVs, or any combination).
 
 Table: (\#tab:required-columns) Required columns for mutation data import.
 
-| **Column** | **VCF Specification** | **Definition** |
-|------------|-----------------------|----------------|
-| contig | CHROM | The name of the reference sequence. |
-| start | POS | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import. |
-| end | INFO(END) | The half-open end position of the feature in contig. |
-| ref | REF | The reference allele at this position. |
-| alt | ALT | The left-aligned, normalized, alternate allele at this position. |
-| sample | INFO(sample) or Genotype Header | A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field. |
-| *SUGGESTED FIELDS* | | |
-| alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
-| total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
+| **Column**           | **VCF Specification**           | **Definition**                                                                                                                                                                                                                                                     |
+| -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| contig               | CHROM                           | The name of the reference sequence.                                                                                                                                                                                                                                |
+| start                | POS                             | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import.                                                                                                                                                  |
+| end                  | INFO(END)                       | The half-open end position of the feature in contig.                                                                                                                                                                                                               |
+| ref                  | REF                             | The reference allele at this position.                                                                                                                                                                                                                             |
+| alt                  | ALT                             | The left-aligned, normalized, alternate allele at this position.                                                                                                                                                                                                   |
+| sample               | INFO(sample) or Genotype Header | A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field.                                                                                                            |
+| _SUGGESTED FIELDS_   |                                 |                                                                                                                                                                                                                                                                    |
+| alt_depth            | VD                              | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites.                                                                                                                                      |
+| total_depth or depth | AD or DP                        | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to "depth". |
 
 VCF files should follow the VCF specification (version 4.5; @danecek-2011).
 VCF files may be bg/g-zipped. Each individual VCF file should contain the
@@ -134,41 +124,41 @@ on their REF and ALT. Categories are listed below.
 
 Table: (\#tab:variation-types) Definitions of Variation types.
 
-| variation_type | Definition |
-|------------------|------------|
-| no_variant | No variation, the null-case. |
-| snv | Single nucleotide variant. |
-| mnv | Multiple nucleotide variant. |
-| insertion | Insertion. |
-| deletion | Deletion. |
-| complex | REF and ALT are of different lengths and nucleotide compositions. |
-| symbolic | Structural variant |
-| ambiguous | ALT contains IUPAC ambiguity codes. |
-| uncategorized | The record does not fall into any of the preceding categories. |
+| variation_type | Definition                                                        |
+| -------------- | ----------------------------------------------------------------- |
+| no_variant     | No variation, the null-case.                                      |
+| snv            | Single nucleotide variant.                                        |
+| mnv            | Multiple nucleotide variant.                                      |
+| insertion      | Insertion.                                                        |
+| deletion       | Deletion.                                                         |
+| complex        | REF and ALT are of different lengths and nucleotide compositions. |
+| symbolic       | Structural variant                                                |
+| ambiguous      | ALT contains IUPAC ambiguity codes.                               |
+| uncategorized  | The record does not fall into any of the preceding categories.    |
 
 Additional columns are created to further characterise variants.
 
 Table: (\#tab:mut-columns) Definitions of Mutation data columns.
 
-| Column Name        | Definition                                        |
-|--------------------|---------------------------------------------------|
-|  short_ref | The reference base at the start position. |
-| normalized_ref | The short_ref in C/T (pyrimidine) notation for this position. Ex. `A` -> `T`, `G` -> `C` |
-| context | The trinucleotide context at this position. Consists of the reference base and the two flanking bases. Sequences are retrieved from the appropriate BS genome. Ex. `TAC` |
-| normalized_context | The trinucleotide context in C/T (pyrimidine) notation for this position (Ex. `TAG` -> `CTA`) |
-| variation_type | The type of variant (no_variant, snv, mnv, insertion, deletion, complex, sv, ambiguous, uncategorized) |
-| subtype | The substitution type of the snv variant (12-base spectrum; Ex. `A>C`) |
-| normalized_subtype | The snv subtype in C/T (pyrimidine) notation (6-base spectrum; Ex. `A>C` -> `T>G`) |
-| context_with_mutation | The snv subtype including the two flanking nucleotides (192-base spectrum; Ex. `T[A>C]G`) |
-| normalized_context_with_mutation | The snv subtype in C/T (pyrimidine) notation including the two flanking nucleotides (96-base spectrum; Ex. `T[A>C]G` -> `C[T>G]A`) |
-| nchar_ref | The length (in bp) of the reference allele. |
-| nchar_alt | The length (in bp) of the alternate allele. |
-| varlen | The length (in bp) of the variant. |
-| ref_depth | The depth of the reference allele. Calculated as `total_depth` - `alt_depth`, if applicable. |
-| vaf | The variant allele fraction. Calculated as `alt_depth`/`total_depth` |
-| gc_content | % GC of the trinucleotide context at this position. |
-| is_known | A logical value indicating if the record is a known variant; i.e. ID field is not NULL. |
-| row_has_duplicate | A logical value that  flags rows whose position is the same as that of at least one other row for the same sample. |
+| Column Name                      | Definition                                                                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| short_ref                        | The reference base at the start position.                                                                                                                                |
+| normalized_ref                   | The short_ref in C/T (pyrimidine) notation for this position. Ex. `A` -> `T`, `G` -> `C`                                                                                 |
+| context                          | The trinucleotide context at this position. Consists of the reference base and the two flanking bases. Sequences are retrieved from the appropriate BS genome. Ex. `TAC` |
+| normalized_context               | The trinucleotide context in C/T (pyrimidine) notation for this position (Ex. `TAG` -> `CTA`)                                                                            |
+| variation_type                   | The type of variant (no_variant, snv, mnv, insertion, deletion, complex, sv, ambiguous, uncategorized)                                                                   |
+| subtype                          | The substitution type of the snv variant (12-base spectrum; Ex. `A>C`)                                                                                                   |
+| normalized_subtype               | The snv subtype in C/T (pyrimidine) notation (6-base spectrum; Ex. `A>C` -> `T>G`)                                                                                       |
+| context_with_mutation            | The snv subtype including the two flanking nucleotides (192-base spectrum; Ex. `T[A>C]G`)                                                                                |
+| normalized_context_with_mutation | The snv subtype in C/T (pyrimidine) notation including the two flanking nucleotides (96-base spectrum; Ex. `T[A>C]G` -> `C[T>G]A`)                                       |
+| nchar_ref                        | The length (in bp) of the reference allele.                                                                                                                              |
+| nchar_alt                        | The length (in bp) of the alternate allele.                                                                                                                              |
+| varlen                           | The length (in bp) of the variant.                                                                                                                                       |
+| ref_depth                        | The depth of the reference allele. Calculated as `total_depth` - `alt_depth`, if applicable.                                                                             |
+| vaf                              | The variant allele fraction. Calculated as `alt_depth`/`total_depth`                                                                                                     |
+| gc_content                       | % GC of the trinucleotide context at this position.                                                                                                                      |
+| is_known                         | A logical value indicating if the record is a known variant; i.e. ID field is not NULL.                                                                                  |
+| row_has_duplicate                | A logical value that flags rows whose position is the same as that of at least one other row for the same sample.                                                        |
 
 ## General Usage
 
@@ -217,22 +207,24 @@ query(eh, "MutSeqRData")
 ```
 
 Identify the BS genome: Sequencing data was aligned to the mm10 mouse genome.
+
 ```{r find_BS_genome}
 mouse_BS_genome <- find_BS_genome(organism = "mouse", genome = "mm10")
 print(mouse_BS_genome)
 ```
 
 Install the appropriate BS genome:
+
 ```{r install_BS_genome, eval=FALSE}
 BiocManager("BSgenome.Mmusculus.UCSC.mm10")
 ```
 
 ### VCF
 
-*Example 1.1. Import the example .vcf.bgz file "Example import_vcf_data".*
-*Provided is the genomic vcf.gz file for sample dna00996.1. It is comprised*
-*of a record for all 48K positions sequenced for the Mouse Mutagenesis Panel*
-*with the alt_depth and the tota_depth values for each record.*
+_Example 1.1. Import the example .vcf.bgz file "Example import_vcf_data"._
+_Provided is the genomic vcf.gz file for sample dna00996.1. It is comprised_
+_of a record for all 48K positions sequenced for the Mouse Mutagenesis Panel_
+_with the alt_depth and the tota_depth values for each record._
 
 ```{r import-vcf}
 example_file <- eh[["EH9859"]]
@@ -258,10 +250,10 @@ DT::datatable(head(imported_example_data), options = list(scrollX = TRUE))
 
 ### Tabular
 
-*Example 1.2. Import example tabular data "Example import_mut_data". This is*
-*the equivalent file to the example vcf file. It is stored as an .rds file.*
-*We will load the dataframe and supply it to `import_mut_data`. The mut_file*
-*parameter can accept file paths or data frames as input.*
+_Example 1.2. Import example tabular data "Example import_mut_data". This is_
+_the equivalent file to the example vcf file. It is stored as an .rds file._
+_We will load the dataframe and supply it to `import_mut_data`. The mut_file_
+_parameter can accept file paths or data frames as input._
 
 ```{r import-mut}
 example_data <- eh[["EH9857"]]
@@ -296,10 +288,11 @@ coordinates. Additional columns are added to describe features of the genomic
 regions (Ex. transcription status, GC content, etc.). Region metadata will be
 joined with mutation data by checking for overlap between the target region
 ranges and the position of the record.
-The `regions` parameter can be either a filepath, a data frame, or a GRanges
-object (see `r Biocpkg("GenomicRanges")`). Filepaths will be read using the
-`rg_sep`.  Users can also choose from the built-in TwinStrand DuplexSeq™
-Mutagenesis Panels by inputting "TSpanel_human",  "TSpanel_mouse", or
+The `regions` parameter can be either a filepath, a data frame, or a
+[GRanges](https://bioconductor.org/packages/devel/bioc/vignettes/GenomicRanges/inst/doc/GenomicRangesIntroduction.html)
+object. Filepaths will be read using the
+`rg_sep`. Users can also choose from the built-in TwinStrand DuplexSeq™
+Mutagenesis Panels by inputting "TSpanel_human", "TSpanel_mouse", or
 "TSpanel_rat". Required columns for the regions file are "contig", "start",
 and "end". In a GRanges object, the required columns are "seqnames", "start",
 and "end". Users must indicate whether the region coordinates are 0-based or
@@ -307,8 +300,8 @@ and "end". Users must indicate whether the region coordinates are 0-based or
 converted to 1-based. If you do not wish to specify regions, then set the
 `regions` parameter to NULL (default).
 
-*Example 1.3. Add the metadata for TwinStrand's Mouse Mutagenesis panel to our*
-*example tabular file.*
+_Example 1.3. Add the metadata for TwinStrand's Mouse Mutagenesis panel to our_
+_example tabular file._
 
 ```{r import-mut-rg}
 imported_example_data <- import_mut_data(
@@ -318,7 +311,7 @@ imported_example_data <- import_mut_data(
   is_0_based_mut = TRUE,
   regions = "TSpanel_mouse"
 )
-```                                         
+```
 
 **Data Table 3.** Mutation data imported from a data.frame object for sample
 dna00996.1 with added metadata for the Mouse Mutagenesis Panels sequencing
@@ -350,19 +343,19 @@ case-insensitive. A list of column name synonyms are listed below.
 
 Table: (\#tab:name-sym) Predefined column name synonyms. Synonyms will be automatically changed to the default Column value upon import.
 
-| Column | Synonyms |
-|--------|----------|
-| alt | alternate |
-| alt_depth | alt_read_depth, var_depth, variant_depth, vd |
-| context | sequence_context, trinucleotide_context, flanking_sequence |
-| contig | chr, chromosome, seqnames |
-| depth | dp |
-| end | end_position |
-| no_calls | n_calls, n_depth, no_depth |
-| ref | reference, ref_value |
-| sample | sample_name, sample_id |
-| start | pos, position |
-| total_depth | informative_somatic_depth |
+| Column      | Synonyms                                                   |
+| ----------- | ---------------------------------------------------------- |
+| alt         | alternate                                                  |
+| alt_depth   | alt_read_depth, var_depth, variant_depth, vd               |
+| context     | sequence_context, trinucleotide_context, flanking_sequence |
+| contig      | chr, chromosome, seqnames                                  |
+| depth       | dp                                                         |
+| end         | end_position                                               |
+| no_calls    | n_calls, n_depth, no_depth                                 |
+| ref         | reference, ref_value                                       |
+| sample      | sample_name, sample_id                                     |
+| start       | pos, position                                              |
+| total_depth | informative_somatic_depth                                  |
 
 If your data contains a column that is synonymous to one of the required
 columns, but the name is not included in our synonyms list, your column
@@ -389,9 +382,9 @@ DT::datatable(head(imported_example_data_custom), options = list(scrollX = TRUE)
 
 ## Output
 
-Mutation data can be output as either a data frame or a *GRanges* object
-(see `r Biocpkg("GenomicRanges")`) for downstream analysis. Use the `output_granges`
-parameter to specify the output. *GRanges* may faciliate use in other packages
+Mutation data can be output as either a data frame or a _GRanges_ object
+for downstream analysis. Use the `output_granges`
+parameter to specify the output. _GRanges_ may faciliate use in other packages
 and makes doing genomic based analyses on the ranges significantly easier. Most
 downstream analyses provided by MutSeqR will use a data frame.
 
@@ -437,7 +430,7 @@ vaf germline filtering is only applicable to users whose data was sequenced to
 a sufficient depth. High coverage/low depth sequencing cannot be used to
 calculate the vaf, thus it is recommended to filter germline mutations by
 contrasting against a database of known polymorphisms, or by using conventional
-whole-genome sequencing to identify germline variants for each sample. 
+whole-genome sequencing to identify germline variants for each sample.
 
 ## Quality Assurance
 
@@ -476,17 +469,18 @@ parameter, removed from the mutation data.
 Users may remove rows that are either within or outside of specified genomic
 regions. Provide the region ranges to the `regions` parameter. This may be
 provided as either a filepath, data frame, or a GRanges object. `regions` must
-contain `contig` (or `seqnames` for GRanges), `start`, and `end`.  The function
+contain `contig` (or `seqnames` for GRanges), `start`, and `end`. The function
 will check whether each record falls within the given regions. Users can define
 how this filter should be used with `regions_filter`.
 `region_filter = "remove_within"` will remove all rows whose positions overlap
 with the provided regions. `region_filter = "keep_within"` will remove all rows
 whose positions are outside of the provided regions. By default, records that are
+
 > 1bp must start and end within the regions to count as being within the region.
-`allow_half_overlap = TRUE` allow records that only start or end within the regions
-but extend outside of them to be counted as being within the region. Twinstrand
-Mutagenesis Panels may be used by setting `regions` to one of "TSpanel_human",
-"TSpanel_mouse", or "TSpanel_rat".
+> `allow_half_overlap = TRUE` allow records that only start or end within the regions
+> but extend outside of them to be counted as being within the region. Twinstrand
+> Mutagenesis Panels may be used by setting `regions` to one of "TSpanel_human",
+> "TSpanel_mouse", or "TSpanel_rat".
 
 ## Output
 
@@ -502,17 +496,17 @@ according to each parameter.
 
 ## Example
 
-*Example 2. The example file "Example mutation data" is the output of*
-*import_mut_data() run on all 24 mouse libraries from @leblanc-2022.*
+_Example 2. The example file "Example mutation data" is the output of_
+_import_mut_data() run on all 24 mouse libraries from @leblanc-2022._
 
-*Filters used:*
+_Filters used:_
 
 - Filter germline variants: vaf < 0.01
 - Filter snvs overlapping with germline variants and have their `alt_depth`
-removed from their `total_depth`.
+  removed from their `total_depth`.
 - Remove records outside of the TwinStrand Mouse Mutagenesis Panel.
 - Filter variants that contain "EndRepairFillInArtifact" in the "filter"
-column. Their `alt_depth` will be removed from their `total_depth`.
+  column. Their `alt_depth` will be removed from their `total_depth`.
 
 ```{r filter-mut, message=TRUE}
 # load the example data
@@ -550,8 +544,8 @@ sum of the `total_depth` for a given group (units mutations/bp). The function
 groupings within the mutation data to calculate the MF. Mutations can be
 summarised across samples, experimental groups, and mutation subtypes for
 later statistical analyses. Variants flagged as `TRUE` in the `filter_mut`
-column will be excluded from the mutation sums; however, the *total_depth*
-of these variants will be counted in the *total_depth* sum.
+column will be excluded from the mutation sums; however, the _total_depth_
+of these variants will be counted in the _total_depth_ sum.
 
 If the total_depth is not available, the function will sum the mutations across
 groups, without calculating the mutation frequencies.
@@ -562,17 +556,17 @@ Mutations are counted based on two opposing assumptions [@dodge-2023]:
 
 The **Minimum Independent Mutation Counting Method** (min) Each mutation is
 counted once, regardless of the number of reads that contain the non-reference
-allele. This method assumes that multiple instances of the same  mutation
+allele. This method assumes that multiple instances of the same mutation
 within a sample are the result of clonal expansion of a single mutational
 event. When summing mutations across groups using the Min method (`sum_min`),
-the `alt_depth` of each variant is set to 1. *Ex. For 3 variants with*
-*`alt_depth` values of 1, 2, and 10, the `sum_min `= 3.*
+the `alt_depth` of each variant is set to 1. _Ex. For 3 variants with_
+_`alt_depth` values of 1, 2, and 10, the `sum_min `= 3._
 
 The **Maximum Independent Mutation Counting Method** (max) Multiple identical
 mutations at the same position within a sample are counted as independent
 mutation events. When summing mutations across groups using the Max method
-(`sum_max`), the `alt_depth` of each variant is summed unchanged. *Ex. for 3*
-*variants with `alt_depth` values of 1, 2, and 10, the `sum_max` = 13.*
+(`sum_max`), the `alt_depth` of each variant is summed unchanged. _Ex. for 3_
+_variants with `alt_depth` values of 1, 2, and 10, the `sum_max` = 13._
 
 The Min and Max mutation counting methods undercount and overcount the
 mutations, respectively. We expect some recurrent mutations to be a result of
@@ -582,18 +576,18 @@ mutations to be somewhere in the middle of the two counting methods, we
 calculate frequencies for both methods. However, the Min mutation counting
 method is generally recommended for statistical analyses to ensure
 independance of values and because the Max method tends to increase the
-sample variance by a significant degree. 
+sample variance by a significant degree.
 
 ## Grouping Mutations
 
 Mutation counts and `total_depth` are summed across groups that can be
 designated using the `cols_to_group` parameter. This parameter can be set to
 one or more columns in the mutation data that represent experimental variables
-of interest. 
+of interest.
 
-*Example 3.1. Calculate mutation sums and frequencies per sample.*
-*The file "Example mutation data filtered" is the output of filter_mut()*
-*from Example 2*
+_Example 3.1. Calculate mutation sums and frequencies per sample._
+_The file "Example mutation data filtered" is the output of filter_mut()_
+_from Example 2_
 
 ```{r mf-global}
 # load example data:
@@ -630,7 +624,7 @@ Alternatively, you can sum mutations by experimental groups such as `label`
 (the genomic target). Counts and frequencies will be returned for every level
 of the designated groups.
 
-*Example 3.2. Calculate mutation sums and frequencies per sample and genomic target.*
+_Example 3.2. Calculate mutation sums and frequencies per sample and genomic target._
 
 ```{r mf-rg}
 mf_data_rg <- calculate_mf(
@@ -662,9 +656,9 @@ DT::datatable(mf_data_rg,
 **calculate_mf() does not calculate the mean MF for any given group** If you
 want to calculate the mean MF for a given experimental variable, you may group
 by "sample" and retain the experimental variable in the summary table for
-averaging using the `retain_metadata_cols` parameter. 
+averaging using the `retain_metadata_cols` parameter.
 
-*Example 3.3. Calculate the mean MF per dose* 
+_Example 3.3. Calculate the mean MF per dose_
 
 ```{r mean-mf}
 mf_data_global <- calculate_mf(
@@ -700,17 +694,17 @@ DT::datatable(mean_mf,
 ## Mutation Subtypes
 
 Mutations can also be grouped by mutation subtype at varying degrees of
-resolution using the `subtype_resolution` parameter. 
+resolution using the `subtype_resolution` parameter.
 
 Table: (\#tab:subtypes) Definitions of mutation subtype resolutions.
 
-|Subtype resolutions| Definition | Example |
-|-------------------|------------|---------|
-| `type` | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
-| `base_6` | The simple spectrum; snv subtypes in their pyrimidine context | C>A, C>G, C>T, T>A, T>C, T>G |
-| `base_12` | The snv subtypes | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G |
-| `base_96` | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A |
-| `base_192` | The snv subtypes reported alongside their two flanking nucleotides | A[G>A]A |
+| Subtype resolutions | Definition                                                                                                        | Example                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `type`              | The variation type                                                                                                | snv, mnv, insertion, deletion, complex, and symbolic variants |
+| `base_6`            | The simple spectrum; snv subtypes in their pyrimidine context                                                     | C>A, C>G, C>T, T>A, T>C, T>G                                  |
+| `base_12`           | The snv subtypes                                                                                                  | A>C, A>G, A>T, C>A, C>G, C>T, G>A, G>C, G>T, T>A, T>C, T>G    |
+| `base_96`           | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A[C>T]A                                                       |
+| `base_192`          | The snv subtypes reported alongside their two flanking nucleotides                                                | A[G>A]A                                                       |
 
 Mutations and `total_depth` will be summed across groups for each mutation
 subtype to calculate frequencies. For SNV subtypes, the `total_depth` is
@@ -730,13 +724,13 @@ defined:
 
 Table: (\#tab:subtypes-cols) Subtype Resolutions and their associated subtype/context columns.
 
-|Subtype resolution | Subtype Column | Context Column |
-|-------------------|----------------|----------------|
-| `type` | `variation_type`| NA |
-| `base_6` | `normalized_subtype` | `normalized_ref` |
-| `base_12` | `subtype` | `short_ref` |
-| `base_96` | `normalized_context_with_mutation` | `normalized_context` |
-| `base_192` | `context_with_mutation` | `context` |
+| Subtype resolution | Subtype Column                     | Context Column       |
+| ------------------ | ---------------------------------- | -------------------- |
+| `type`             | `variation_type`                   | NA                   |
+| `base_6`           | `normalized_subtype`               | `normalized_ref`     |
+| `base_12`          | `subtype`                          | `short_ref`          |
+| `base_96`          | `normalized_context_with_mutation` | `normalized_context` |
+| `base_192`         | `context_with_mutation`            | `context`            |
 
 The function will also calculate the proportion of mutations for each subtype,
 normalized to the `total_depth`:  
@@ -744,16 +738,16 @@ $$P_s = \frac{\left(\frac{M_s}{D_s}\right)}{\sum_s \left(\frac{M_s}{D_s}\right)}
 Where $P_s$ is the normalized mutation proportion for subtype $s$. $M_s$ is
 the group mutation sum for subtype $s$. $D_s$ is the group sum of the
 `subtype_depth` for subtype $s$.  
-If total_depth is not available for the mutation data, `calculate_mf()`
+If total*depth is not available for the mutation data, `calculate_mf()`
 will return the subtype mutation counts per group. It will also calculate
 subtype proportions, without normalizing to the total_depth:  
-$$P'_s = \frac{M_s}{M_{total}}$$  
+$$P'\_s = \frac{M_s}{M*{total}}$$  
 Where, $P'_s$ is the non-normalized mutation proportion of subtype $s$. $M_s$
 is the group mutation sum for subtype $s$. $M_{total}$ is the total mutation
 sum for the group.
 
-*Example 3.4. The following code will return the base_6 mutation spectra for*
-*all samples with mutation proportions normalized to depth.*
+_Example 3.4. The following code will return the base_6 mutation spectra for_
+_all samples with mutation proportions normalized to depth._
 
 ```{r mf-6}
 mf_data_6 <- calculate_mf(
@@ -795,8 +789,8 @@ When calculating group mutation sums, only variants of the specified
 By default the function will calculate summary values based on all mutation
 types.
 
-*Example 3.5. Calculate global mutation frequencies per sample including only*
-*insertion and deletion mutations in the count.*
+_Example 3.5. Calculate global mutation frequencies per sample including only_
+_insertion and deletion mutations in the count._
 
 ```{r mf-indels}
 mf_data_global_indels <- calculate_mf(
@@ -828,8 +822,8 @@ DT::datatable(mf_data_global_indels,
 Users may also supply a list of variation_types to exclude to the
 `variant_types` parameter, so long as the value is preceeded by a "-".
 
-*Example 3.6. Calculate mutation frequencies at the "type" subtype resolution,*
-*excluding ambiguous and uncategorized mutations.*
+_Example 3.6. Calculate mutation frequencies at the "type" subtype resolution,_
+_excluding ambiguous and uncategorized mutations._
 
 ```{r mf-types}
 mf_data_types <- calculate_mf(
@@ -859,7 +853,7 @@ DT::datatable(mf_data_types,
 )
 ```
 
-*Example 3.7. Include only snv mutations at the base_96 resolution*
+_Example 3.7. Include only snv mutations at the base_96 resolution_
 
 ```{r mf-96}
 mf_data_96 <- calculate_mf(
@@ -907,17 +901,17 @@ return a warning advising to correct the depth should it find any in the mutatio
 data. This is recommended for all users whose data contain `total_depth` values.
 By default, correct_depth is set to TRUE.
 
-*NOTE: The case of deletions and no_variants: When identifying a deletion,*
-*some variant callers will re-align the sequences. As such a second*
-*total_depth value will be calculated, specifically for the deletion. The*
-*variant caller will then provide both the no_variant and the deletion call,*
-*the former with the initial depth, and the latter with the re-aligned depth*
-*value. Generally, when correcting the depth, the function will retain the*
-*total_depth of the first row in the group, and set the rest to 0. However, in*
-*the case of deletions, the function may prioritize retaining the re-aligned*
-*total_depth over the total_depth assigned to the no_variant. This*
-*prioritization can be activated with the `correct_depth_by_indel_priority`*
-*parameter.*
+_NOTE: The case of deletions and no_variants: When identifying a deletion,_
+_some variant callers will re-align the sequences. As such a second_
+_total_depth value will be calculated, specifically for the deletion. The_
+_variant caller will then provide both the no_variant and the deletion call,_
+_the former with the initial depth, and the latter with the re-aligned depth_
+_value. Generally, when correcting the depth, the function will retain the_
+_total_depth of the first row in the group, and set the rest to 0. However, in_
+_the case of deletions, the function may prioritize retaining the re-aligned_
+_total_depth over the total_depth assigned to the no_variant. This_
+_prioritization can be activated with the `correct_depth_by_indel_priority`_
+_parameter._
 
 ## Precalculated Depth
 
@@ -931,12 +925,12 @@ or a filepath to import the depth data. Required columns are:
 1. The user-defined cols_to_group variable(s)
 2. `group_depth`: the `total_depth` summed across the cols_to_group.
 3. The context column for the specified `subtype_resolution`. Only applicable
-if using the SNV resolutions (base_6, base_12, base_96, base_192). Column names
-are listed in the table above.
+   if using the SNV resolutions (base_6, base_12, base_96, base_192). Column names
+   are listed in the table above.
 4. `subtype_depth`: the `total_depth` summed across the cols_to_group for each
-context. Only applicable if using the SNV resolutions.
+   context. Only applicable if using the SNV resolutions.
 
-*Example 3.8. Use precalculated depth values to calculate the global per sample MF.*
+_Example 3.8. Use precalculated depth values to calculate the global per sample MF._
 
 **Table 13. ** 'sample_depth' - Precalculated Depth Data per sample.
 
@@ -981,7 +975,7 @@ DT::datatable(mf_data_global_precalc,
 )
 ```
 
-*Example 3.9. Use precalculated depth values to calculate the base_6 per sample MF.*
+_Example 3.9. Use precalculated depth values to calculate the base_6 per sample MF._
 
 ```{r mf-precalc-6}
 mf_data_6_precalc <- calculate_mf(
@@ -1021,6 +1015,7 @@ DT::datatable(mf_data_6_precalc,
 ```
 
 View examples for base_12, base_96, and base_192 below:
+
 ```{r pre-calc-other-ex}
 base_12 <- eh[["EH9863"]]
 base_96 <- eh[["EH9864"]]
@@ -1043,15 +1038,15 @@ The summary table will include:
 - `sum_min` & `sum_max`: the min/max mutation counts for the group(s)/subtypes.
 - `group_depth`: the total_depth summed across the group(s).
 - `subtype_depth`: the total_depth summed across the group(s), for the given
-context, if applicable.
+  context, if applicable.
 - `MF_min` & `MF_max`: the min/max MF for the group(s)/subtype.
 - `proportion_min` & `proportion_max`: the min/max subtype proportion, if
-applicable.
+  applicable.
 
 Additional columns from the orginal mutation data can be retained using the
 `retain_metadata_cols` parameter. Retaining higher-order experimental groups
 may be useful for later statistical analyses or plotting. See above for example
-*calculating mean MF per dose*.
+_calculating mean MF per dose_.
 
 **NOTE** The summary table uses a pre-defined list of possible subtypes for each
 resolution. If a particular subtype within a given group is not recorded in the
@@ -1068,8 +1063,8 @@ ggplot2.
 
 ### plot_mf
 
-*Example 3.10. Plot the Min and Max MF per sample, coloured and ordered by*
-*dose group. See example 3.1 for calculating mf_data_global*
+_Example 3.10. Plot the Min and Max MF per sample, coloured and ordered by_
+_dose group. See example 3.1 for calculating mf_data_global_
 
 ```{r plot-mf-caption, include=FALSE}
 caption <- paste(
@@ -1103,9 +1098,9 @@ plot
 Calculate and plot the mean MF for a user-defined group using
 `plot_mean_mf()`.
 
-*Example 3.11. Plot the mean MF min per dose, including SEM*
-*and individual values coloured by dose. See example 3.1 for calculating*
-*mf_data_global*
+_Example 3.11. Plot the mean MF min per dose, including SEM_
+_and individual values coloured by dose. See example 3.1 for calculating_
+_mf_data_global_
 
 ```{r plot-mean-mf-caption, include=FALSE}
 caption <- paste(
@@ -1141,7 +1136,8 @@ an excel workbook. Set `model_results` to TRUE if supplying the function with
 the output to model_mf(). See Modelling Mutation Frequencies for more information
 on using `model_mf()`.
 
-*Example 4.1. Write MF data to excel workbook.*
+_Example 4.1. Write MF data to excel workbook._
+
 ```{r write-excel, eval=FALSE}
 # save a single data frame to an Excel file
 write_excel(mf_data_global, workbook_name = "example_mf_data")
@@ -1155,11 +1151,10 @@ write_excel(list, workbook_name = "example_mf_data_list")
 
 ```
 
-
 Mutation data can be written to a VCF file for downstream applications with
 `write_vcf_from_mut()`.
 
-*Examples 4.2: export our example data as a vcf file.*
+_Examples 4.2: export our example data as a vcf file._
 
 ```{r write-vcf, eval=FALSE}
 write_vcf_from_mut(example_data)
@@ -1180,21 +1175,21 @@ includes:
 - Mutation data Filtering
 - Calculation of Global Mutation Frequencies per Sample
 - Visualization of mutation frequencies per Sample and Mean mutation
-frequencies per experimental group.
+  frequencies per experimental group.
 - Generalized Linear Modeling of Mutation Frequency (min) as an effect of
-the experimental variable.
+  the experimental variable.
 - Optional Benchmark Dose Modeling of mutation frequency across a dose or
-concentration variable.
+  concentration variable.
 - Calculation of Mutation Subtype Frequencies and Proportions at the base-6
-and base-96 resolutions.
+  and base-96 resolutions.
 - Comparison of base-6 mutation spectra between experimental groups.
 - Visualization of base-6 subtype proportions per sample with hierarchical
-clustering
+  clustering
 - Visualization of base-6 subtype proportions per experimental group.
 - Visualization of base-96 subtype proportions per experimental group.
 - Mutation signature analysis per experimental group.
 - Generalized Linear Mixed Modeling of mutation frequency as an effect of
-specified genomic regions and the experimental group.
+  specified genomic regions and the experimental group.
 - Visualization of multiplet mutations per experimental group.
 
 All figures will be included in the report. Data frames included in the report
@@ -1230,28 +1225,28 @@ Parameters are catagerised by their function.
 
 System Set Up
 
-- *projectdir*: The working directory for the project. All filepaths will be
-imported from the projectdir. If NULL, the current working directory will be
-used.
-- *outputdir*: The output directory where output files will be saved. If NULL,
-the projectdir will be used.
+- _projectdir_: The working directory for the project. All filepaths will be
+  imported from the projectdir. If NULL, the current working directory will be
+  used.
+- _outputdir_: The output directory where output files will be saved. If NULL,
+  the projectdir will be used.
 
 Project Details
 
-- *project_title*: The project title.
-- *research_name*: The name of the principle investigator for the project.
-- *user_name*: The name of the one running the analysis.
-- *project_description*: Optional description of the project.
+- _project_title_: The project title.
+- _research_name_: The name of the principle investigator for the project.
+- _user_name_: The name of the one running the analysis.
+- _project_description_: Optional description of the project.
 
 Workflow Profile
 
-- *config_profile* : Choose a workflow profile to load pre-defined parameters.
-Current options are "Duplex Sequencing Mouse Mutagenesis Panel",
-"Duplex Sequencing Human Mutagenesis Panel", 
-"Duplex Sequencing Rat Mutagenesis Panel", "CODEC"^1, and "None". Pre-defined
-parameters are set to handle data import and filtering. More profiles coming
-soon. If not using a pre-defined profile ("None"), users must fill out the
-Custom_Profile_Params (see below).
+- _config_profile_ : Choose a workflow profile to load pre-defined parameters.
+  Current options are "Duplex Sequencing Mouse Mutagenesis Panel",
+  "Duplex Sequencing Human Mutagenesis Panel",
+  "Duplex Sequencing Rat Mutagenesis Panel", "CODEC"^1, and "None". Pre-defined
+  parameters are set to handle data import and filtering. More profiles coming
+  soon. If not using a pre-defined profile ("None"), users must fill out the
+  Custom_Profile_Params (see below).
 
 ^1 CODEC .maf files output from the CODECsuite analysis pipeline may be
 imported provided the user 1. Adds a "sample" column, 2. Adds an "end" column
@@ -1261,22 +1256,22 @@ genome. Ex. GRCh38 requires users to remove "chr" from the Chromosome value.
 
 Data Import
 
-- *BS_genome*: The BS genome to use to populate the sequence context. The given
-BS genome must be installed prior to running the render_report() function.
-To identify an appropriate BS genome based on species and genome assembly,
-use find_BS_genome(). Ex. "BSgenome.Mmusculus.UCSC.mm10"
-- *file_type*: The format of the mutation data to be imported. Options are table
-or vcf.
-- *mutation_file*: The file path to the mutation data file(s). This can be an
-individual file or a directory containing multiple files. The file path will be
-read as projectdir/mutation_file.
-- *mut_sep*: The delimiter for importing tabular mutation data. Ex. "\t" is
-tab-delimited.
-- *sample_data*: An optional file path to the sample metadata that will be joined
-with the mutation data. Set to NULL if not importing metadata. The file path will
-be read as projectdir/sample_data.
-- *sd_sep*: The delimiter for importing the sample_data file. Ex. "\t" is
-tab-delimited.
+- _BS_genome_: The BS genome to use to populate the sequence context. The given
+  BS genome must be installed prior to running the render_report() function.
+  To identify an appropriate BS genome based on species and genome assembly,
+  use find_BS_genome(). Ex. "BSgenome.Mmusculus.UCSC.mm10"
+- _file_type_: The format of the mutation data to be imported. Options are table
+  or vcf.
+- _mutation_file_: The file path to the mutation data file(s). This can be an
+  individual file or a directory containing multiple files. The file path will be
+  read as projectdir/mutation_file.
+- _mut_sep_: The delimiter for importing tabular mutation data. Ex. "\t" is
+  tab-delimited.
+- _sample_data_: An optional file path to the sample metadata that will be joined
+  with the mutation data. Set to NULL if not importing metadata. The file path will
+  be read as projectdir/sample_data.
+- _sd_sep_: The delimiter for importing the sample_data file. Ex. "\t" is
+  tab-delimited.
 
 Calculating MF
 
@@ -1287,73 +1282,72 @@ provided for any subtype resolution to calculate mutation frequencies. If an
 exp_variable is provided, the Summary_Report will automatically sum the
 per-sample depths to obtain the depth per experimental group as needed.
 
-*In order for MutSeqR to calculate the depth from the mutation data, the*
-*data must have the depth-value for **every sequenced site**. It is not*
-*sufficient to calculate the depth from a list of variants. No-variant sites*
-*must be included. The Summary Report will check for a total_depth column, but it will*
-*not check whether no_variant sites are included. If it finds a total_depth*
-*column, it will proceed to calculate the depth from the mutation data*.
+_In order for MutSeqR to calculate the depth from the mutation data, the_
+_data must have the depth-value for **every sequenced site**. It is not_
+_sufficient to calculate the depth from a list of variants. No-variant sites_
+_must be included. The Summary Report will check for a total_depth column, but it will_
+_not check whether no_variant sites are included. If it finds a total_depth_
+_column, it will proceed to calculate the depth from the mutation data_.
 
-
-- *precalc_depth_data_global*: Optional file path to the precalculated per-sample
-total_depth data. This is the total number of bases sequenced per sample, used
-for calculating mutation frequencies. Columns are "sample" and "group_depth".
-If using an exp_variable (see below), please also include it in this table.
-The file path will be read as projectdir/precalc_depth_data_global.
-- *precalc_depth_data_base6*: Optional file path to the precalculated per-sample
-total_depth data in the base_6 context. This is the total number of C and T
-bases sequenced for each sample. Columns are "sample", "normalized_ref", and
-"subtype_depth". If using an exp_variable (see below), please also include it
-in this table. The file path will be read as
-projectdir/precalc_depth_data_base6.
-- *precalc_depth_data_base96*: Optional file path to the precalculated
-per-sample total_depth data in the base_96 context. This is the total
-number bases sequenced per sample for each of the 32 possible trinucleotide
-contexts in their pyrimidine notation. Columns are "sample",
-"normalized_context", and "subtype_depth". If using an exp_variable,
-please also include it in this table. The file path will be read as
-projectdir/precalc_depth_data_base96. 
-- *precalc_depth_data_rg*: Optional file path to the precalculated
-per-sample total_depth data for each target region. This is the total
-number of bases sequenced per sample for each region. Columns are "sample",
-'region_col', "group_depth". Only applicable if performing  regions analysis.
-The file path will be read as projectdir/precalc_depth_data_rg.
-- *d_sep*: The delimiter for importing the precalc_depth_data files.
+- _precalc_depth_data_global_: Optional file path to the precalculated per-sample
+  total_depth data. This is the total number of bases sequenced per sample, used
+  for calculating mutation frequencies. Columns are "sample" and "group_depth".
+  If using an exp_variable (see below), please also include it in this table.
+  The file path will be read as projectdir/precalc_depth_data_global.
+- _precalc_depth_data_base6_: Optional file path to the precalculated per-sample
+  total_depth data in the base_6 context. This is the total number of C and T
+  bases sequenced for each sample. Columns are "sample", "normalized_ref", and
+  "subtype_depth". If using an exp_variable (see below), please also include it
+  in this table. The file path will be read as
+  projectdir/precalc_depth_data_base6.
+- _precalc_depth_data_base96_: Optional file path to the precalculated
+  per-sample total_depth data in the base_96 context. This is the total
+  number bases sequenced per sample for each of the 32 possible trinucleotide
+  contexts in their pyrimidine notation. Columns are "sample",
+  "normalized_context", and "subtype_depth". If using an exp_variable,
+  please also include it in this table. The file path will be read as
+  projectdir/precalc_depth_data_base96.
+- _precalc_depth_data_rg_: Optional file path to the precalculated
+  per-sample total_depth data for each target region. This is the total
+  number of bases sequenced per sample for each region. Columns are "sample",
+  'region_col', "group_depth". Only applicable if performing regions analysis.
+  The file path will be read as projectdir/precalc_depth_data_rg.
+- _d_sep_: The delimiter for importing the precalc_depth_data files.
 
 Statistical Analysis
 
 The Summary Report will run several analyses to investigate the effect
 of a specified experimental variable on mutation frequency and spectra.
 
-- *exp_variable*: Optional. The experimental variable of interest. This
-argument should refer to a column in your mutation data or sample_data.
-The Summary Report does not support the analysis of multiple exp_variables;
-supply only one column name. Ex. "dose". If NULL, statistical analyses will
-be skipped.
-- *exp_variable_order*: A vector specifying the unique levels of the
-exp_variable in the order desired for plotting.
-- *reference_level*: The reference level of the exp_variable. Ex. the vehicle
-control group for a chemical dose. This value must match one of the levels
-within the exp_variable column. If your experimental variable does not have a
-reference level, then any level of the variable is fine.
-- *contrasts*: An optional file path to the contrasts table specifying
-pairwise comparisons between levels of the experimental variable.
-Required 2 columns, no header. The level in the first column will be compared
-to the level in the second column for each row. P-values will be adjusted for 
-multiple comparisons if more than one comparison is specified. This contrasts
-table will be used for Generalized Linear Modeling of MFmin by the exp_variable
-(model_mf), Generalized Linear Mixed Modeling of MFmin by the exp_variable and
-target regions, if using a targeted panel (model_mf), and comparing the base_6
-mutation spectra between exp_variable levels (spectra_comparison). The file
-path will be read as projectdir/contrasts. If NULL, spectra_comparison will be
-skipped, and the GLM/GLMM will return only the model estimates per exp_variable.
-- *cont_sep*: the delimiter for importing the contrasts file.
-- *bmd*: A logical variable indicating whether to run a BMD analysis on
-the MF data. If TRUE, the exp_variable must refer to numeric dose or
-concentration values.
-- *bmr*: A numeric value indicating the benchmark response for the bmd analysis.
-The Summary Report defines the bmr as a bmr-% increase in MF from the reference
-level. Default is 0.5.
+- _exp_variable_: Optional. The experimental variable of interest. This
+  argument should refer to a column in your mutation data or sample_data.
+  The Summary Report does not support the analysis of multiple exp_variables;
+  supply only one column name. Ex. "dose". If NULL, statistical analyses will
+  be skipped.
+- _exp_variable_order_: A vector specifying the unique levels of the
+  exp_variable in the order desired for plotting.
+- _reference_level_: The reference level of the exp_variable. Ex. the vehicle
+  control group for a chemical dose. This value must match one of the levels
+  within the exp_variable column. If your experimental variable does not have a
+  reference level, then any level of the variable is fine.
+- _contrasts_: An optional file path to the contrasts table specifying
+  pairwise comparisons between levels of the experimental variable.
+  Required 2 columns, no header. The level in the first column will be compared
+  to the level in the second column for each row. P-values will be adjusted for
+  multiple comparisons if more than one comparison is specified. This contrasts
+  table will be used for Generalized Linear Modeling of MFmin by the exp_variable
+  (model_mf), Generalized Linear Mixed Modeling of MFmin by the exp_variable and
+  target regions, if using a targeted panel (model_mf), and comparing the base_6
+  mutation spectra between exp_variable levels (spectra_comparison). The file
+  path will be read as projectdir/contrasts. If NULL, spectra_comparison will be
+  skipped, and the GLM/GLMM will return only the model estimates per exp_variable.
+- _cont_sep_: the delimiter for importing the contrasts file.
+- _bmd_: A logical variable indicating whether to run a BMD analysis on
+  the MF data. If TRUE, the exp_variable must refer to numeric dose or
+  concentration values.
+- _bmr_: A numeric value indicating the benchmark response for the bmd analysis.
+  The Summary Report defines the bmr as a bmr-% increase in MF from the reference
+  level. Default is 0.5.
 
 Custom Profile Parameters
 
@@ -1361,51 +1355,51 @@ Users who do not wish to use one of the pre-defined parameter profiles may
 still run the Summary Report by filling out the Custom_Profile_Params.
 If using one of the config_profiles, users should skip this section.
 
-- *ecs_technology*: The technology used to generate the data.
-- *is_0_based_mut*: A logical variable indicating whether the genomic
-coordinates of the tabular mutation data are 0-based (TRUE), or 1-based (FALSE).
-- *regions*: An optional file path to the regions metadata file. The file must
-contain columns "contig", "start", "end" in addition to the metadata.
-- *is_0_based_rg*: A logical variable indicating whether the genomic
-coordinates of the regions file are 0-based (TRUE), or 1-based (FALSE).
-- *rg_sep*: The delimiter for importing the regions file.
-- *vaf_cutoff*: A numeric value from 0-1. Will flag variants with a VAF >
-vaf_cutoff as germline variants and filter them from mutation counts.
-- *snv_in_germ_mnv*: A logical variable indicating whether filter_mut should
-flag SNVs that overlap with germline MNVs for filtering.
-- *rm_abnormal_vaf*: A logical variable indicaring whether filter_mut should
-remove records where the VAF is between 0.05-0.45 or between 0.55-0.95.
-- *custom_filter_col*: A column name used by filter_mut to apply a custom filter
-to the specified column.
-- *custom_filter_val*: The value in custom_filter_col by which to filter.
-- *custom_filter_rm*: A logical variable indicating whether records that
-contain the custom_filter_val within the custom_filter_col should be removed
-(TRUE) or flagged (FALSE).
-- *filtering_regions*:  Optional file path to regions file by which to filter
-variants. Must contain the contig, start, and end of each region. The file
-path will be read as projectdir/filtering_regions.
-- *filtering_rg_sep*: The delimiter for importing the filtering_regions file.
-- *regions_filter*: "keep_within" will remove any records that fall outside of
-the filtering_regions. "remove_within" will remove records that fall inside of
-the filtering_regions.
-- *allow_half_overlap*: A logical variable indicating whether to include records
-that half overlap with the regions. If FALSE, the start and end position of the
-record must fall within the region interval to be counted as "falling in the
-region". If TRUE, records that start/end within the region interval, but extend
-outside of it will be counted as "falling inside the region".
-- *filtering_is_0_based_rg*: A logical variable indicating whether the genomic
-coordinates of the filtering_regions are 0-based (TRUE) or 1-based (FALSE).
-- *rm_filtered_mut_from_depth*: A logical variable indicating whether the
-alt_depth of variants flagged during the filtering process should be removed
-from their total_depth values. This does not apply to records flagged as
-germline variants.
-- *do_regions_analysis*: A logical variable indicating whether to perform
-Generalized Linear Mixed Modeling of the data by sequencing target. This is
-applicable to data sets that used a targeted panel or has specific regions
-of interest.
-- *region_col*: The column name that uniquely identifies each target region
-for the regions_analysis. This column must be present in the mutation_data
-or in the regions metadata file.
+- _ecs_technology_: The technology used to generate the data.
+- _is_0_based_mut_: A logical variable indicating whether the genomic
+  coordinates of the tabular mutation data are 0-based (TRUE), or 1-based (FALSE).
+- _regions_: An optional file path to the regions metadata file. The file must
+  contain columns "contig", "start", "end" in addition to the metadata.
+- _is_0_based_rg_: A logical variable indicating whether the genomic
+  coordinates of the regions file are 0-based (TRUE), or 1-based (FALSE).
+- _rg_sep_: The delimiter for importing the regions file.
+- _vaf_cutoff_: A numeric value from 0-1. Will flag variants with a VAF >
+  vaf_cutoff as germline variants and filter them from mutation counts.
+- _snv_in_germ_mnv_: A logical variable indicating whether filter_mut should
+  flag SNVs that overlap with germline MNVs for filtering.
+- _rm_abnormal_vaf_: A logical variable indicaring whether filter_mut should
+  remove records where the VAF is between 0.05-0.45 or between 0.55-0.95.
+- _custom_filter_col_: A column name used by filter_mut to apply a custom filter
+  to the specified column.
+- _custom_filter_val_: The value in custom_filter_col by which to filter.
+- _custom_filter_rm_: A logical variable indicating whether records that
+  contain the custom_filter_val within the custom_filter_col should be removed
+  (TRUE) or flagged (FALSE).
+- _filtering_regions_: Optional file path to regions file by which to filter
+  variants. Must contain the contig, start, and end of each region. The file
+  path will be read as projectdir/filtering_regions.
+- _filtering_rg_sep_: The delimiter for importing the filtering_regions file.
+- _regions_filter_: "keep_within" will remove any records that fall outside of
+  the filtering_regions. "remove_within" will remove records that fall inside of
+  the filtering_regions.
+- _allow_half_overlap_: A logical variable indicating whether to include records
+  that half overlap with the regions. If FALSE, the start and end position of the
+  record must fall within the region interval to be counted as "falling in the
+  region". If TRUE, records that start/end within the region interval, but extend
+  outside of it will be counted as "falling inside the region".
+- _filtering_is_0_based_rg_: A logical variable indicating whether the genomic
+  coordinates of the filtering_regions are 0-based (TRUE) or 1-based (FALSE).
+- _rm_filtered_mut_from_depth_: A logical variable indicating whether the
+  alt_depth of variants flagged during the filtering process should be removed
+  from their total_depth values. This does not apply to records flagged as
+  germline variants.
+- _do_regions_analysis_: A logical variable indicating whether to perform
+  Generalized Linear Mixed Modeling of the data by sequencing target. This is
+  applicable to data sets that used a targeted panel or has specific regions
+  of interest.
+- _region_col_: The column name that uniquely identifies each target region
+  for the regions_analysis. This column must be present in the mutation_data
+  or in the regions metadata file.
 
 ## Output
 
@@ -1417,43 +1411,42 @@ All output will be saved to the output_directory specified in the summary_config
 The Summary Report consists of the following sections.
 
 1. **Import the Mutation Data:** Statement of number of imported rows and the
-total number of samples detected.
+   total number of samples detected.
 2. **Filter the Mutation Data**: Summary of applied filters with total counts
-for the number of records that were flagged/removed.
+   for the number of records that were flagged/removed.
 3. **Calculate Per-Sample Mutation Frequency**: Mutation frequency calculated
-per sample. Includes plot of mutation frequency per sample and plot of mean
-mutation frequency per experimental group (given experimental variable was
-provided).
+   per sample. Includes plot of mutation frequency per sample and plot of mean
+   mutation frequency per experimental group (given experimental variable was
+   provided).
 4. **Generalized Linear Modelling**: Model results of mutation frequency as an
-effect of the experimental variable. Includes model summary, residual plots,
-model estimates, pairwise comparisons as specified in "contrasts", and a plot
-of the model estimates and significant results.
+   effect of the experimental variable. Includes model summary, residual plots,
+   model estimates, pairwise comparisons as specified in "contrasts", and a plot
+   of the model estimates and significant results.
 5. **Benchmark Dose Analysis**: BMD results for the experimental variable on
-mutation frequency. BMD estimates per individual model and model-averaged
-result. Includes model plots, cleveland plots, and confidence interval plots.
+   mutation frequency. BMD estimates per individual model and model-averaged
+   result. Includes model plots, cleveland plots, and confidence interval plots.
 6. **6-Base Spectrum**: Mutation frequency calculated at the base_6 resolution
-per-sample and averaged across the experimental variable. Includes hierarchical
-clustering of samples by subtype proportion, spectra comparison between experimental
-groups, and plot of subtype proportions per experimental group.
+   per-sample and averaged across the experimental variable. Includes hierarchical
+   clustering of samples by subtype proportion, spectra comparison between experimental
+   groups, and plot of subtype proportions per experimental group.
 7. **96-Base Trinucleotide Spectrum**: Mutation frequency calculated at the base_96
-resolution per-sample and averaged across the experimental variable. Includes
-trinucleotide proportion plots for all experimental groups or by sample if no
-experimental variable is provided.
+   resolution per-sample and averaged across the experimental variable. Includes
+   trinucleotide proportion plots for all experimental groups or by sample if no
+   experimental variable is provided.
 8. **Regions Analysis**: Mutation frequency calculated per sample for genomic
-regions of interest. Includes model results of mutation frequency as an effect
-of the experimental variable and genomic target. Pairwise comparisons specified
-in contrasts are conducted for each genomic target individually. If no
-experimental variable is provided, model results reflect mutation frequency as
-an effect of genomic target. 
+   regions of interest. Includes model results of mutation frequency as an effect
+   of the experimental variable and genomic target. Pairwise comparisons specified
+   in contrasts are conducted for each genomic target individually. If no
+   experimental variable is provided, model results reflect mutation frequency as
+   an effect of genomic target.
 9. **Mutation HotSpots**: Statement # of mutations that occur in more than one sample.
-Also includes recurrent mutations within experimental groups.
+   Also includes recurrent mutations within experimental groups.
 10. **Lollipop Plots**: Given genomic regions of interest, plots recurrent mutations
-across genomic position.
+    across genomic position.
 11. **Bubble Plot: Multiple Mutations**: Bubble plot depicting multiplet mutations per
-experimental group.
+    experimental group.
 
 If an experimental variable is not provided, statistical analysis will be skipped.
-
 
 # References
 

@@ -73,224 +73,182 @@ plot_trinucleotide <- function(
     sum_totals = TRUE,
     output_path = NULL,
     output_type = "svg") {
-  mf_96 <- dplyr::filter(
-    mf_96,
-    !.data$normalized_context_with_mutation %in% setdiff(MutSeqR::subtype_list$type, "snv")
+
+  # Validation
+  stopifnot(
+    !missing(mf_96) && is.data.frame(mf_96),
+    is.logical(indiv_y),
+    is.logical(sum_totals)
   )
+  response <- match.arg(response, choices = c("proportion", "frequency", "sum"))
+  mf_type <- match.arg(mf_type, choices = c("min", "max"))
+  output_type <- match.arg(output_type, choices = c("eps", "ps", "tex", "pdf", "jpeg", "tiff", "png", "bmp", "svg", "wmf"))
 
-  if (response == "proportion") {
-    response_col <- paste0("proportion_", mf_type)
-  } else if (response == "frequency") {
-    response_col <- paste0("mf_", mf_type)
-  } else if (response == "sum") {
-    response_col <- paste0("sum_", mf_type)
-  } else {
-    stop("response must be one of 'frequency', 'proportion', or 'sum'")
-  }
+  # Data Prep
 
+  # Filter Non-SNVs
+  valid_subtypes <- MutSeqR::subtype_list$type[MutSeqR::subtype_list$type != "snv"]
+  mf_96 <- dplyr::filter(mf_96, !.data$normalized_context_with_mutation %in% valid_subtypes)
+
+  # Define columns
+  response_col <- switch(response,
+                         "proportion" = paste0("proportion_", mf_type),
+                         "frequency" = paste0("mf_", mf_type),
+                         "sum" = paste0("sum_", mf_type))
+
+  sum_col <- paste0("sum_", mf_type)
+
+  # Create Group Column
   if (length(group_col) > 1) {
-    mf_96$group <- apply(mf_96[group_col], 1, paste, collapse = "_")
+    mf_96$group <- do.call(paste, c(mf_96[group_col], sep = "_"))
   } else {
     mf_96$group <- mf_96[[group_col]]
   }
 
+  # Clean Data
   data <- mf_96 %>%
     dplyr::select(
       "group",
-      "normalized_context_with_mutation",
-      "normalized_context",
-      all_of(paste0("sum_", mf_type)),
-      all_of(response_col)
-    ) %>%
-    dplyr::rename(
-      context = "normalized_context",
       subtype = "normalized_context_with_mutation",
-      response = !!response_col,
-      sum = paste0("sum_", mf_type)
+      context = "normalized_context",
+      sum = dplyr::all_of(sum_col),
+      response_val = dplyr::all_of(response_col)
     ) %>%
     dplyr::mutate(
-      mutation = str_extract(.data$subtype, "(?<=\\[)[^\\]]+(?=\\])")
+      # Vectorized Regex
+      mutation = stringr::str_extract(.data$subtype, "(?<=\\[)[^\\]]+(?=\\])")
     ) %>%
+    # Factorize globally
+    dplyr::mutate(
+      mutation = factor(.data$mutation, levels = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"))
+    ) %>%
+    # Global Arrange ensures consistent factor levels across all plots
     dplyr::arrange(.data$mutation, .data$context) %>%
     dplyr::mutate(
-      subtype = factor(.data$subtype, levels = unique(.data$subtype)),
-      mutation = factor(.data$mutation,
-        levels = c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G")
-      )
+      subtype = factor(.data$subtype, levels = unique(.data$subtype))
     )
 
-  if (response == "sum") {
-    data$response <- data$sum
-  }
-  group_levels <- unique(data$group)
-  plot_list <- setNames(vector("list", length(group_levels)), group_levels)
+  # Override response for 'sum' mode
+  if (response == "sum") data$response_val <- data$sum
 
-  # Predefine mutation colors
+  # -Determine Global Y-Axis Max (If not indiv_y)
+  if (!indiv_y) {
+    global_y_max <- max(data$response_val, na.rm = TRUE)
+  }
+
+  # Define Constants
   plotcolours <- c(
-    "C>A" = "#4DB6E9",
-    "C>G" = "#000000",
-    "C>T" = "#E74C43",
-    "T>A" = "#CCCCCC",
-    "T>C" = "#AAC96F",
-    "T>G" = "#F7B6B5"
+    "C>A" = "#4DB6E9", "C>G" = "#000000", "C>T" = "#E74C43",
+    "T>A" = "#CCCCCC", "T>C" = "#AAC96F", "T>G" = "#F7B6B5"
   )
 
   n_mut <- 6
   block_len <- 16
+  mut_levels <- levels(data$mutation) # Should be the standard 6
 
-  for (i in seq_along(group_levels)) {
-    # Subset the data into the group to be plotted
-    plot_data <- dplyr::filter(data, .data$group == group_levels[i])
+  # Split data by group for mapping
+  # Splitting is efficient here as we need distinct plots
+  data_list <- split(data, data$group)
 
-    # Sum totals and modify the labels as needed.
-    mut_levels <- levels(plot_data$mutation)
-    if (sum_totals) {
-      mut_counts <- plot_data %>%
-        dplyr::group_by(.data$mutation) %>%
-        dplyr::summarise(nrmuts = sum(sum), .groups = "drop_last")
-      # Create a character vector with the label for each mutation block
-      labels_vec <- stringr::str_c(mut_counts$mutation, "\n(n = ", mut_counts$nrmuts, ")")
-      labels <- setNames(labels_vec, mut_counts$mutation)
-    } else {
-      labels <- setNames(mut_levels, mut_levels)
-    }
+  # Plotting Function (Applied via Map)
+  create_plot <- function(group_name, plot_data) {
 
-    # y-axis scaling
-    if (indiv_y) {
-      y_max <- max(plot_data$response, na.rm = TRUE)
-    } else {
-      y_max <- max(data$response, na.rm = TRUE)
-    }
+    # A. Calculate Y-Max locally
+    local_max <- max(plot_data$response_val, na.rm = TRUE)
+    target_max <- if (indiv_y) local_max else global_y_max
+
+    # Y-Axis Formatting Logic
     if (response == "proportion") {
       y_lab <- "Proportion of Mutations"
-      y_max <- ceiling(y_max * 10) / 10
+      y_limit <- ceiling(target_max * 10) / 10
     } else if (response == "frequency") {
-      y_max_string <- format(y_max, scientific = TRUE)
-      split_frequency <- strsplit(y_max_string, "e", fixed = TRUE)[[1]]
-      coefficient <- as.numeric(split_frequency[1])
-      rounded_coefficient <- ceiling(coefficient)
-      round_str <- paste(rounded_coefficient, "e", split_frequency[2], sep = "")
-      y_max <- as.numeric(round_str)
       y_lab <- "Frequency of Mutations"
+      # Scientific notation rounding logic
+      sci <- format(target_max, scientific = TRUE)
+      parts <- strsplit(sci, "e")[[1]]
+      y_limit <- as.numeric(paste0(ceiling(as.numeric(parts[1])), "e", parts[2]))
     } else {
       y_lab <- "Sum of Mutations"
-      y_max <- ceiling(y_max / 5) * 5
+      y_limit <- ceiling(target_max / 5) * 5
     }
 
-    # assign x position to each subtype (for annotation)
-    plot_data <- plot_data %>%
-      dplyr::arrange(.data$mutation, .data$subtype) %>%
-      dplyr::mutate(x_pos = as.numeric(subtype))
-    # Change the x-labels to the Context for legibility.
-    subtype_levels <- levels(plot_data$subtype)
-    subtype_to_context <- setNames(plot_data$context, plot_data$subtype)[subtype_levels]
+    # B. Labels
+    if (sum_totals) {
+      # Vectorized summary
+      mut_counts <- plot_data %>%
+        dplyr::group_by(.data$mutation) %>%
+        dplyr::summarise(n = sum(.data$sum), .groups = "drop")
+      lbls <- setNames(paste0(mut_counts$mutation, "\n(n = ", mut_counts$n, ")"), mut_counts$mutation)
+    } else {
+      lbls <- setNames(mut_levels, mut_levels)
+    }
 
-    # build rectangle/label dataframe
-    gap <- 0.5 # gap between rectangles
-    box_gap <- 0.01 * y_max
-    box_height <- 0.02 * y_max
-    rect_ymin <- y_max + box_gap
+    # C. Rectangles (Header Strip)
+    # Calculate dimensions based on dynamic Y-limit
+    gap <- 0.5
+    box_gap <- 0.01 * y_limit
+    box_height <- 0.02 * y_limit
+    rect_ymin <- y_limit + box_gap
     rect_ymax <- rect_ymin + box_height
     text_y <- rect_ymax + 2 * box_gap
+
     rects <- data.frame(
       xmin = seq(0.5 + gap / 2, by = block_len, length.out = n_mut),
       xmax = seq(block_len + 0.5 - gap / 2, by = block_len, length.out = n_mut),
       mutation = mut_levels,
-      label = labels[mut_levels],
       ymin = rect_ymin,
       ymax = rect_ymax
     )
-    rects$fill <- plotcolours[rects$mutation]
+    rects$label <- lbls[as.character(rects$mutation)]
     rects$xcenter <- (rects$xmin + rects$xmax) / 2
 
-    n_bars <- length(levels(plot_data$subtype))
+    # D. Labels Map
+    # Extract Context labels from the factors we set up globally
+    # Just need one row per subtype to get the map
+    subtype_map <- plot_data[match(levels(plot_data$subtype), plot_data$subtype), ]
+    x_labels_vec <- setNames(subtype_map$context, subtype_map$subtype)
 
-    # Make the ggplot
-    p <- ggplot2::ggplot(plot_data, aes(x = subtype, y = response, fill = mutation)) +
-      ggplot2::annotate("segment",
-        x = 0.5, xend = 0.5,
-        y = 0, yend = y_max,
-        color = "gray80", linewidth = 0.6
-      ) +
-      ggplot2::geom_rect(
-        data = rects,
-        aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = mutation),
-        inherit.aes = FALSE,
-        show.legend = FALSE
-      ) +
-      ggplot2::annotate(
-        "text",
-        x = rects$xcenter, y = text_y,
-        label = rects$label,
-        color = "black",
-        size = 4.5, fontface = 2,
-        vjust = 0
-      ) +
-      ggplot2::coord_cartesian(ylim = c(0, y_max), clip = "off") +
-      ggplot2::geom_col(width = 0.5, color = NA, show.legend = FALSE) +
-      ggplot2::annotate("segment",
-        x = 0.5, xend = n_bars + 0.5,
-        y = 0, yend = 0,
-        color = "gray80", linewidth = 0.6
-      ) +
-      ggplot2::scale_fill_manual(values = plotcolours) +
-      ggplot2::scale_x_discrete(
-        breaks = subtype_levels,
-        labels = subtype_to_context,
-        drop = FALSE,
-        expand = c(0.002, 0.002)
-      ) +
-      ggplot2::labs(
-        x = "Trinucleotide Context",
-        y = y_lab,
-        title = as.character(group_levels[i])
-      ) +
-      ggplot2::theme_minimal(base_size = 12) +
-      ggplot2::theme(
-        axis.text.x = ggplot2::element_text(
-          angle = 90,
-          vjust = 1,
-          hjust = 1,
-          family = "mono", size = rel(0.75),
-          margin = margin(t = -14) # decreases the gab between x-axis and the labels.
-        ),
-        axis.title.x = ggplot2::element_text(margin = margin(t = 5, b = 0)),
+    # E. GGPlot
+    p <- ggplot(plot_data, aes(x = .data$subtype, y = .data$response_val, fill = .data$mutation)) +
+      # Vertical guide lines
+      annotate("segment", x = 0.5, xend = 0.5, y = 0, yend = y_limit, color = "gray80", linewidth = 0.6) +
+      annotate("segment", x = 0.5, xend = length(levels(plot_data$subtype)) + 0.5, y = 0, yend = 0, color = "gray80", linewidth = 0.6) +
+      # Data Bars
+      geom_col(width = 0.5, color = NA, show.legend = FALSE) +
+      # Header Rectangles
+      geom_rect(data = rects, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = mutation), inherit.aes = FALSE, show.legend = FALSE) +
+      # Header Text
+      annotate("text", x = rects$xcenter, y = text_y, label = rects$label, color = "black", size = 4.5, fontface = 2, vjust = 0) +
+      # Scales
+      scale_fill_manual(values = plotcolours) +
+      scale_x_discrete(labels = x_labels_vec, drop = FALSE, expand = c(0.002, 0.002)) +
+      coord_cartesian(ylim = c(0, y_limit), clip = "off") +
+      # Labels & Theme
+      labs(x = "Trinucleotide Context", y = y_lab, title = group_name) +
+      theme_minimal(base_size = 12) +
+      theme(
+        axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1, family = "mono", size = rel(0.75), margin = margin(t = -14)),
+        axis.title.x = element_text(margin = margin(t = 5, b = 0)),
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_line("gray80"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.title = ggplot2::element_text(hjust = 0.5),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, margin = margin(b = 30)),
+        plot.title.position = "plot",
         plot.margin = margin(72, 24, 24, 48),
-        legend.position = "none",
-        panel.border = element_blank(),
-        plot.background = element_blank(),
-        plot.caption = ggplot2::element_text(hjust = 0)
-      ) +
-      ggplot2::ggtitle(as.character(group_levels[i])) +
-      ggplot2::theme(
-        plot.title.position = "plot", # ← moves it above the plot panel
-        plot.title = ggplot2::element_text(hjust = 0.5, margin = margin(b = 30)) # add bottom margin
+        panel.border = element_blank()
       )
-    plot_list[[i]] <- p
 
-    # save the plots
+    # Output Saving
     if (!is.null(output_path)) {
-      output_dir <- file.path(output_path)
-      output_filename <- paste0(
-        "trinucleotide_plot_",
-        group_col, "_", names(plot_list)[i],
-        ".", output_type
-      )
-      ggplot2::ggsave(
-        filename = output_filename,
-        plot = p,
-        device = output_type,
-        path = output_path,
-        create.dir = TRUE,
-        width = 12,
-        height = 6
-      )
+      fname <- file.path(output_path, paste0("trinucleotide_plot_", paste(group_col, collapse="_"), "_", group_name, ".", output_type))
+      ggsave(filename = fname, plot = p, device = output_type, width = 12, height = 6)
     }
+
+    return(p)
   }
+
+  # Execution 
+  plot_list <- Map(create_plot, names(data_list), data_list)
+
   return(plot_list)
 }

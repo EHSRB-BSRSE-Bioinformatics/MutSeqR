@@ -3,7 +3,7 @@
 \docType{data}
 \name{op}
 \alias{op}
-\title{Column names for mut tables}
+\title{Dictionary of column name synonyms for required mutation data columns}
 \format{
 A list with potential variable column names
 }

@@ -1,32 +1,21 @@
 #' Plot recurrent mutations in a lollipop plot using ggplot2
 #'
-#' This function visualizes recurrent mutations from a data frame. It first
-#' calculates the frequency of each mutation at specific genomic positions and
-#' then generates a lollipop plot for each group (e.g., chromosome)
-#' displaying mutations that meet a minimum recurrence threshold.
-#'
-#' @param mutation_data A data frame containing mutation data. It must contain columns
-#'   for genomic start position (`start`), `variation_type`, `normalized_subtype`,
-#'   and a column to group by (see `group_col`).
+#' @param mutation_data A data frame containing mutation data.
 #' @param min_recurrence An integer specifying the minimum number of times a
-#'   mutation must be observed at the same position to be plotted. Defaults to 2.
-#' @param group_col A string specifying the column name to group mutation_data by,
-#'   typically representing chromosomes or contigs (e.g., "seqnames", "chr").
-#'   Defaults to "seqnames".
-#' @param custom_palette A named character vector for coloring the mutation
-#'   subtypes. The names should match the levels in `normalized_subtype`. If NULL
-#'   (default), a default palette is used.
-#'
-#' @return A list of ggplot objects. Each element of the list is a lollipop
-#'   plot for a specific region (e.g., a chromosome) and is named accordingly.
-#'
-#' @importFrom dplyr %>% group_by tally filter arrange
-#' @importFrom ggplot2 ggplot aes geom_segment geom_point scale_fill_manual
-#' @importFrom ggplot2 scale_x_continuous labs theme_minimal theme element_blank
-#' @importFrom ggplot2 element_line element_text
-#' @importFrom rlang .data
-#' @export
-#'
+#'   mutation must be observed at the same position to be plotted.
+#' Default is 2.
+#' @param group_col A character vector specifying the column name(s) to group
+#'   mutation_data by. Default is "contig".
+#' @param subtype_resolution The subtype resolution by which to group and
+#'   colour the mutations. Options are "none", "type", "base_6", "base_12",
+#'   "base_96", and "base_192".
+#' @param custom_palette A named vector of colors to be used for the mutation
+#' subtypes. The names of the vector should correspond to the mutation subtypes
+#' in the data. Alternatively, you can specify a color palette from the
+#' RColorBrewer package. See \code{\link[RColorBrewer]{brewer.pal}} for palette
+#' options. You may visualize the palettes at the ColorBrewer website:
+#' \url{https://colorbrewer2.org/}. Default is `NULL`.
+#' @return A list of ggplot objects.
 #' @examples
 #' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
 #'   # Example data consists of 24 mouse bone marrow DNA samples imported
@@ -47,44 +36,63 @@
 #'     )
 #'
 #'     # 2. Generate the plots
-#'     plot_list <- plot_lollipop(mutation_data = example_data, min_recurrence = 2)
+#'     plot_list <- plot_lollipop(
+#'      mutation_data = example_data,
+#'      min_recurrence = 2,
+#'      group_col = "dose_group"
+#'    )
+#'    # 3. Display the plots for each dose group
+#'    plot_list$Control
 #'
-#'     # 3. Display a plot for a specific chromosome
-#'     # print(plot_list$chr1)
-#'     # print(plot_list$chr2)
 #'   }
 #' }
+#' @importFrom dplyr %>% group_by tally filter arrange ungroup mutate select across all_of rename
+#' @importFrom ggplot2 ggplot aes geom_segment geom_point scale_fill_manual
+#' @importFrom ggplot2 scale_x_continuous labs theme_minimal theme element_blank
+#' @importFrom ggplot2 element_line element_text
+#' @importFrom rlang .data
+#' @export
 plot_lollipop <- function(mutation_data,
                           min_recurrence = 2,
-                          group_col = "dose_group",
+                          group_col = "contig",
+                          subtype_resolution = "base_6",
                           custom_palette = NULL) {
-  # --- 1. Input Validation ---
-  if (!requireNamespace("ggplot2", quietly = TRUE) ||
-    !requireNamespace("dplyr", quietly = TRUE)) {
-    stop("This function requires `ggplot2` and `dplyr`. Please install them.")
+  stopifnot(
+      "mutation_data is required." = !missing(mutation_data),
+      "mutation_data must be a data.frame." = is.data.frame(mutation_data),
+      "min_recurrence must be a single positive integer." =
+          is.numeric(min_recurrence) && length(min_recurrence) == 1 &&
+              min_recurrence >= 1 && (min_recurrence %% 1 == 0)
+  )
+  if ("filter_mut" %in% colnames(mutation_data)) {
+    dplyr::filter(mutation_data, filter_mut==FALSE)
   }
-  if (!is.data.frame(mutation_data)) {
-    stop("Input `mutation_data` must be a data.frame.")
-  }
-  # Check for all required columns
-  required_cols <- c("start", "variation_type", "normalized_subtype", group_col)
-  missing_cols <- setdiff(required_cols, names(mutation_data))
-  if (length(missing_cols) > 0) {
-    stop(
-      "The `mutation_data` data.frame is missing required columns:",
-      paste(missing_cols, collapse = ", ")
-    )
+  subtype_resolution <- match.arg(
+      subtype_resolution,
+      choices = names(MutSeqR::subtype_dict)
+  )
+  if (subtype_resolution == "none") {
+    subtype_col <- NULL
+  } else {
+    subtype_col <- MutSeqR::subtype_dict[[subtype_resolution]]
   }
 
-  # --- 2. Data Preparation ---
-  # No conversion needed; we use the input data frame directly.
+  required_cols <- c("contig", "start", "variation_type")
+  if (!is.null(group_col)) required_cols <- c(required_cols, group_col)
+  if (!is.null(subtype_col)) required_cols <- c(required_cols, subtype_col)
+
+  missing_cols <- setdiff(required_cols, names(mutation_data))
+  if (length(missing_cols) > 0) {
+    stop("Missing required columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  tally_groups <- c(group_col, "contig", "start", subtype_col)
+
   plot_data <- mutation_data %>%
-    # Filter out non-variants if that column exists and is used
     dplyr::filter(.data$variation_type != "no_variant") %>%
-    # Count occurrences by region, position, and subtype
-    dplyr::group_by(.data[[group_col]], .data$start, .data$normalized_subtype) %>%
+    # Group by dynamic columns
+    dplyr::group_by(dplyr::across(dplyr::all_of(tally_groups))) %>%
     dplyr::tally(name = "n") %>%
-    # Keep only mutations meeting the recurrence threshold
     dplyr::filter(.data$n >= min_recurrence) %>%
     dplyr::ungroup() %>%
     dplyr::arrange(-.data$n)
@@ -94,67 +102,74 @@ plot_lollipop <- function(mutation_data,
     return(list())
   }
 
-  # --- 3. Palette and Factor Setup ---
-  if (is.null(custom_palette)) {
-    # Define the default palette from your colleague's code
-    palette <- c(
-      RColorBrewer::brewer.pal(5, "BrBG"),
-      RColorBrewer::brewer.pal(6, "Spectral")
-    )
-    names(palette) <- c(
-      "complex", "deletion", "insertion", "mnv", "sv",
-      "T>G", "T>C", "T>A", "C>T", "C>G", "C>A"
-    )
+  if (subtype_resolution == "none") {
+    plot_data$plotting_subtype <- "Recurrent Mutation" # Generic Label
+    palette <- c("Recurrent Mutation" = "black") # Simple single color
   } else {
-    palette <- custom_palette
+    plot_data <- dplyr::rename(plot_data, plotting_subtype = !!subtype_col)
+    palette <- get_mutation_palette(
+      custom_palette = custom_palette,
+      subtype_resolution = subtype_resolution,
+      num_colours = length(unique(plot_data$plotting_subtype))
+    )
   }
+  all_levels <- unique(c(names(palette), unique(as.character(plot_data$plotting_subtype))))
 
-  # Ensure the subtype column is a factor to control legend order and colors
-  all_lvls <- unique(c(names(palette), unique(plot_data$normalized_subtype)))
-  plot_data$normalized_subtype <- factor(
-    plot_data$normalized_subtype,
-    levels = all_lvls
+  plot_data$plotting_subtype <- factor(
+    plot_data$plotting_subtype,
+    levels = all_levels
   )
 
-  # --- 4. Plotting Loop ---
-  plot_list <- list()
-  unique_regions <- unique(as.character(plot_data[[group_col]]))
+  if (is.null(group_col)) {
+    plot_data$split_var <- "All Samples"
+    plot_title_prefix <- "Recurrent Mutations"
+  } else {
+    if (length(group_col) > 1) {
+      vals <- plot_data[, group_col, drop = FALSE]
+      plot_data$split_var <- do.call(paste, c(vals, sep = " | "))
+    } else {
+      plot_data$split_var <- as.character(plot_data[[group_col]])
+    }
+    plot_title_prefix <- "Recurrent Mutations in"
+  }
+  data_list <- split(plot_data, plot_data$split_var)
+  create_single_lollipop <- function(df, region_name) {
+    final_title <- if (plot_title_prefix == "Recurrent Mutations") {
+      plot_title_prefix
+    } else {
+      paste(plot_title_prefix, region_name)
+    }
 
-  for (region_name in unique_regions) {
-    # Subset data for the current region
-    df_region <- dplyr::filter(plot_data, .data[[group_col]] == region_name)
-
-    # Create the ggplot object
-    p <- ggplot(df_region, aes(x = .data$start, y = .data$n)) +
-      geom_segment(
-        aes(x = .data$start, xend = .data$start, y = 0, yend = .data$n),
+    ggplot2::ggplot(df, ggplot2::aes(x = .data$start, y = .data$n)) +
+      ggplot2::geom_segment(
+        ggplot2::aes(x = .data$start, xend = .data$start, y = 0, yend = .data$n),
         linewidth = 0.5,
         color = "grey50"
       ) +
-      geom_point(
-        aes(fill = .data$normalized_subtype),
+      ggplot2::geom_point(
+        ggplot2::aes(fill = .data$plotting_subtype),
         shape = 21,
         size = 3.5,
         stroke = 0.5
       ) +
-      scale_fill_manual(values = palette, name = "Mutation Subtype", drop = FALSE) +
-      scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
-      labs(
-        title = paste("Recurrent Mutations on", region_name),
+      ggplot2::scale_fill_manual(values = palette, name = "Mutation Subtype", drop = FALSE) +
+      ggplot2::scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+      ggplot2::labs(
+        title = final_title,
         x = "Genomic Position",
         y = paste0("Recurrence (n >= ", min_recurrence, ")")
       ) +
-      theme_minimal(base_size = 14) +
-      theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(color = "black"),
-        axis.ticks = element_line(color = "black"),
-        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+      ggplot2::theme_minimal(base_size = 14) +
+      ggplot2::theme(
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank(),
+        axis.line = ggplot2::element_line(color = "black"),
+        axis.ticks = ggplot2::element_line(color = "black"),
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1)
       )
-
-    plot_list[[region_name]] <- p
   }
+
+  plot_list <- Map(create_single_lollipop, data_list, names(data_list))
 
   return(plot_list)
 }

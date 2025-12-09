@@ -54,8 +54,9 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
 #' the regions on either side. Default is 0.
 #' @return A GRanges object that combines the mutation data with the regions
 #' metadata.
-#' @importFrom plyranges join_overlap_left_within_directed mutate
+#' @importFrom plyranges join_overlap_left_within_directed
 #' @importFrom BiocGenerics start end
+#' @importFrom S4Vectors mcols
 import_regions_metadata <- function(mutation_granges,
                                     regions,
                                     rg_sep,
@@ -79,8 +80,7 @@ import_regions_metadata <- function(mutation_granges,
     )
     message("Regions metadata successfully joined to mutation data\n")
     # Count the rows that did not overlap
-    mutation_granges <- mutation_granges %>%
-        plyranges::mutate(in_regions = ifelse(is.na(in_regions), FALSE, TRUE))
+    S4Vectors::mcols(mutation_granges)$in_regions[is.na(S4Vectors::mcols(mutation_granges)$in_regions)] <- FALSE
     false_count <- sum(mutation_granges$in_regions == FALSE)
     if (false_count > 0) {
         warning(
@@ -223,7 +223,7 @@ characterize_variants <- function(mutation_data) {
         normalized_context = ifelse(
             stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
             mapply(
-            function(x) MutSeqR::reverseComplement(x, case = "upper"),
+            function(x) reverseComplement(x, case = "upper"),
             .data$context
             ),
             .data$context
@@ -252,4 +252,269 @@ characterize_variants <- function(mutation_data) {
         filter_mut = FALSE
         )
     return(mutation_data)
+}
+
+#' A utility function that will return the reference context of a mutation
+#' @param mut_string the mutation. Ex. T>C, `A[G>T]C`
+#' @return the reference context of the mutation
+get_ref_of_mut <- function(mut_string) {
+    a <- str_extract(mut_string, ".*(?=\\s*>)")
+    # Remove non-letter characters
+    b <- str_replace_all(a, "[^a-zA-Z]", "")
+    # Extract letter characters after square bracket
+    c <- str_extract(mut_string, "\\](.*)") %>% str_replace_all("[^a-zA-Z]", "")
+    if (is.na(c)) {
+        return(b)
+    } else {
+        return(paste0(b, c))
+    }
+}
+
+#' Get the reverse complement of a DNA or RNA sequence.
+#'
+#' @param x A character vector of DNA or RNA sequences.
+#' @param content c("dna", "rna") The type of sequence to be reversed.
+#' @param case c("lower", "upper", "as is") The case of the output sequence.
+#' @details This file is part of the source code for
+#' SPGS: an R package for identifying statistical patterns in genomic sequences.
+#' Copyright (C) 2015  Universidad de Chile and INRIA-Chile
+#
+#' A copy of Version 2 of the GNU Public License is available in the
+#' share/licenses/gpl-2 file in the R installation directory or from
+#' http://www.R-project.org/Licenses/GPL-2.
+#' reverseComplement.R
+#' @return A character vector of the reverse complement sequences.
+
+reverseComplement <- function(x,
+                              content = c("dna", "rna"),
+                              case = c("lower", "upper", "as is")) {
+    # reverse character vector
+    strreverse <- function(x) {
+        if (!is.character(x)) {
+            stop("x must be a character vector")
+        }
+        vapply(
+            strsplit(x, ""),
+            function(y) paste(rev(y), collapse = ""),
+            character(1)
+        )
+    }
+    # Check arguments
+    if (!is.character(x)) x <- as.character(x) # coerse x to a character vector
+    content <- match.arg(content)
+    case <- match.arg(case)
+    if (length(x) == 0 || (length(x) == 1 && nchar(x) == 0)) {
+        return(x)
+    } # bail if input is empty
+    if (case == "lower") x <- tolower(x)
+    if (case == "upper") x <- toupper(x)
+    if (content == "dna") {
+        src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
+        dest <- "tgcaayrmkswvhdbnxTGCAAyRMKSWVHDBNX-"
+    } else {
+        src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
+        dest <- "ugcaayrmkswvhdbnxUGCAAyRMKSWVHDBNX-"
+    }
+    if (max(nchar(x)) > 1) {
+        return(chartr(src, dest, strreverse(x)))
+    }
+    # x is not a single string, so process it as a vector
+    chartr(src, dest, rev(x))
+}
+
+#' classify_variation
+#' @description Classify the variation type of a mutation based on its ref and
+#' alt values.
+#' @param ref The reference allele.
+#' @param alt The alternate allele.
+#' @return A character indicating the type of variation.
+#' @export
+#' @examples
+#' df <- data.frame(
+#'   ref = c("A", "CAGT", "GCC", "T", "ACG", "C", "G", "T", "A"),
+#'   alt = c("R", "TGA", "G", "TC", "TAC", "C", "<DEL>", "G", "???")
+#' )
+#' df$variation_type <- mapply(classify_variation, df$ref, df$alt)
+#' df
+classify_variation <- function(ref, alt) {
+    stopifnot(is.character(ref), is.character(alt))
+    no_variant_indicators <- c(".", "", "<NON_REF>")
+    structural_indicators <- c(
+        "<DEL>", "<INS>", "<DUP>", "<INV>", "<FUS>",
+        "<CNV>", "<CNV:TR>", "<DUP:TANDEM>", "<DEL:ME>",
+        "<INS:ME>"
+    )
+    iupac_indicators <- c(
+        "R", "K", "S", "Y", "M",
+        "W", "B", "H", "N", "D", "V"
+    )
+
+    # Case: No variant site
+    # GVCF files sometimes list no_variant sites as <NON_REF> (GATK)
+    alt <- gsub("(^|,)<NON_REF>(,|$)", "", alt)
+    alt <- gsub("^,|,$", "", alt) # Trim leading/trailing commas
+    if (alt %in% no_variant_indicators || alt == ref) {
+        return("no_variant")
+    }
+    # Case: Structural variants
+    if (alt %in% structural_indicators) {
+        return("sv")
+    }
+    # Case: IUPAC ambiguity codes
+    if (alt %in% iupac_indicators) {
+        return("ambiguous")
+    }
+    # Case: SNV (Single Nucleotide Variant)
+    if (nchar(ref) == 1 && nchar(alt) == 1 && ref != alt) {
+        return("snv")
+    }
+    # Case: MNV (Multi-Nucleotide Variant)
+    if (nchar(ref) > 1 && nchar(ref) == nchar(alt) && ref != alt) {
+        return("mnv")
+    }
+    # Case: Insertion
+    if (nchar(ref) < nchar(alt) && startsWith(alt, ref)) {
+        return("insertion")
+    }
+    # Case: Deletion
+    if (nchar(ref) > nchar(alt) && nchar(alt) == 1 && startsWith(ref, alt)) {
+        return("deletion")
+    }
+    # Case: Complex; ref and alt diff lengths & diff base compositions
+    if (nchar(ref) != nchar(alt) &&
+        !grepl(paste0("^", ref), alt) &&
+        !grepl(paste0("^", alt), ref)
+    ) {
+        return("complex")
+    }
+    # Otherwise, uncategorized
+    return("uncategorized")
+}
+
+#' Map column names of mutation data to default column names.
+
+#' A utility function that renames columns of mutation data to default columns
+#' names.
+#' @param data mutation data
+#' @param column_map a list that maps synonymous column names to their default.
+#' @returns the mutation data with column names changed to match default.
+#' @examples
+#' df <- data.frame(
+#'   chromosome = c("chr1", "chr2", "chr3"),
+#'   pos = c(100, 200, 300),
+#'   end = c(100, 200, 300),
+#'   sample_id = c("S1", "S2", "S3"),
+#'   reference = c("G", "C", "T"),
+#'   alternate = c("A", "T", "G")
+#' )
+#' renamed_data <- rename_columns(df, column_map = op$column)
+#' @export
+
+rename_columns <- function(data, column_map = op$column) {
+    original_colnames <- colnames(data)
+
+    # normalized names (clean regex)
+    # remove leading X or dots, trailing dots,
+    # and replace inner dots with underscores
+    norm_names <- tolower(original_colnames)
+    norm_names <- gsub("^((x\\.+)|(\\.+))?", "", norm_names) # Leading
+    norm_names <- gsub("(\\.+)?$", "", norm_names)           # Trailing
+    norm_names <- gsub("\\.+", "_", norm_names)              # Middle dots to _
+
+    map_synonyms <- names(column_map)
+    map_targets <- unlist(column_map)
+
+    # Handle existing defaults (casing)
+    is_target <- norm_names %in% map_targets
+    if (any(is_target)) {
+        target_indices <- match(norm_names[is_target], map_targets)
+        original_colnames[is_target] <- map_targets[target_indices]
+    }
+
+    # Identify targets that are still missing from the data
+    # Only rename synonyms if the target doesn't exist yet
+    present_targets <- original_colnames[original_colnames %in% map_targets]
+    targets_needed <- setdiff(unique(map_targets), present_targets)
+
+    # Find synonyms for needed targets
+    synonym <- map_synonyms %in% norm_names
+    target_is_needed <- map_targets %in% targets_needed
+    candidate_indices <- which(synonym & target_is_needed)
+
+    if (length(candidate_indices > 0)) {
+        selected_indices <- candidate_indices[!duplicated(map_targets[candidate_indices])]
+        final_synonyms <- map_synonyms[selected_indices]
+        final_targets  <- map_targets[selected_indices]
+        col_indices <- match(final_synonyms, norm_names)
+        invisible(Map(function(orig, new) {
+            message("Expected '", new, "' but found '", original_colnames[orig], "', renaming it.")
+        }, col_indices, final_targets))
+    
+        # Update names
+        original_colnames[col_indices] <- final_targets
+    }
+    colnames(data) <- original_colnames
+    return(data)
+}
+
+#' Check that all required columns are present before proceeding with the function
+#'
+#' A utility function that will check that all required columns are present.
+#' @param data mutation data
+#' @param required_columns a list of required column names.
+#' @returns an error
+#' @examples
+#' df <- data.frame(
+#'   contig = c("chr1", "chr2", "chr3"),
+#'   start = c(100, 200, 300),
+#'   end = c(100, 200, 300),
+#'   sample = c("S1", "S2", "S3"),
+#'   ref = c("G", "C", "T"),
+#'   alt = c("A", "T", "G")
+#' )
+#' check_required_columns(df, required_columns = op$base_required_mut_cols)
+#' @export
+
+check_required_columns <- function(data, required_columns) {
+    missing_columns <- setdiff(tolower(required_columns), tolower(names(data)))
+
+    if (length(missing_columns) > 0) {
+        missing_col_names <- paste(missing_columns, collapse = ", ")
+            stop(
+                "Some required columns are missing",
+                "or their synonyms are not found: ",
+                missing_col_names
+            )
+    } else {
+        return(data)
+    }
+}
+
+#' Retrieve the sample column from VCF files
+#' @description Checks to find the sample name of the vcf in the INFO field or
+#' in the FORMAT header. Can also handle sample name synonyms.
+#' @param vcf The imported VCF
+#' @importFrom VariantAnnotation info
+#' @importFrom SummarizedExperiment colData
+#' @returns The vcf with sample column name corrected
+vcf_sample_fix <- function(vcf) {
+        # Check INFO for Sample column (Incl synonyms)
+        original_names <- names(VariantAnnotation::info(vcf))
+        # Normalize names
+        norm_names <- tolower(original_names)
+        norm_names <- gsub("[ .]", "_", norm_names)
+        # check for synonyms
+        synonyms <- c("sample", "sample_name", "sample_id")
+        match_idx <- match(synonyms, norm_names)
+        found_idx <- match_idx[!is.na(match_idx)]
+        if (length(found_idx) > 0) {
+            # Rename the first match found
+            names(VariantAnnotation::info(vcf))[found_idx[1]] <- "sample"
+        } else if (!"sample" %in% norm_names) {
+            # Fallback to colData rownames (VCF header sample name)
+            # Must have 1 sample per file as per docs
+            sample_name <- rownames(SummarizedExperiment::colData(vcf))
+            VariantAnnotation::info(vcf)$sample <- sample_name
+        }
+        return(vcf)
 }

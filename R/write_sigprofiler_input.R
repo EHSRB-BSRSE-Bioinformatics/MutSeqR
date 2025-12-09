@@ -176,6 +176,9 @@ write_mutational_matrix <- function(mutation_data,
                                     subtype_resolution = "base_96",
                                     mf_type = "min",
                                     output_path = NULL) {
+                                        
+    mf_type <- match.arg(mf_type, choices = c("min", "max"))
+
   if (!subtype_resolution %in% c("base_6", "base_96")) {
     stop("The subtype_resolution argument must be either 'base_6' or 'base_96'")
   }

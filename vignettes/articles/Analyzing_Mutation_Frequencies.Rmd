@@ -1,11 +1,11 @@
 ---
-title: "MutSeqR: Modelling Mutation Frequencies"
+title: "MutSeqR: Analyzing Mutation Frequencies"
 author:
-- name: Annette E. Dodge
-  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-- name: Matthew J. Meier
-  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-  email: matthew.meier@hc-sc.gc.ca
+  - name: Annette E. Dodge
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  - name: Matthew J. Meier
+    affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+    email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
 output:
   rmarkdown::html_document:
@@ -14,14 +14,14 @@ output:
     code_folding: show
     code_download: yes
     css: custom.css
-bibliography: Modelling_Mutation_Frequencies.bib
+bibliography: Analyzing_Mutation_Frequencies.bib
 ---
-  
+
 ```{r setup, include=FALSE}
-BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(DT)
 library(htmltools)
+library(yulab.utils)
 ```
 
 # Load MutSeqR and Example Data
@@ -51,14 +51,15 @@ function from the `r CRANpkg("stats")` library or a generalized linear mixed mod
 (GLMM) using the `glmer()` function from the `r CRANpkg("lme4")` library.
 
 ## Model Formula
+
 - **Fixed effects**: The experimental variable(s)/factor(s) of interest.
 - **Random effects**: Variable used to account for variability within a larger
-group. Covariate.
+  group. Covariate.
 - **Interaction**: The product of two or more interacting fixed_effects. An
-interaction implies that the effect of one fixed effect changes depending on
-the levels of another fixed effect, indicating a non-additive reationship.
+  interaction implies that the effect of one fixed effect changes depending on
+  the levels of another fixed effect, indicating a non-additive reationship.
 - **Response**: the function will model the MF, taking the mutation count
-(`sum`) and the `group_depth` as input.
+  (`sum`) and the `group_depth` as input.
 
 The model formula is built as:
 
@@ -70,29 +71,30 @@ the fixed_effects:
 `cbind(sum, group_depth) ~ fixed_effect1 * fixed_effect2 * ... + (1|random_effect)`
 
 ## Family
+
 The occurence of mutations is assumed to follow a binomial distribution as:
 
 1. There is a finite number of sequenced bases.
-2. A mutation at any given base is equally probable*.
+2. A mutation at any given base is equally probable\*.
 3. Mutations occur independently of other mutations.
 
-* We acknowledge that this does not reflect biological reality.
+- We acknowledge that this does not reflect biological reality.
 
 To account for over-dispersion, the function will fit a GLM with a
-quasibinomial distribution.  If the dispersion parameter of the model
+quasibinomial distribution. If the dispersion parameter of the model
 is less than 1, the model will be refit using a binomial distribution.
 The GLMM will always use a binomial distribution.
 
 The `model_mf` function will fit a generalized linear model to analyse
 the effect(s) of given fixed_effects(s) on MF and perform specified
-pairwise comparisons between levels of your factors. 
+pairwise comparisons between levels of your factors.
 
 Additional arguments can be passed to the model to further customize it to
 your needs. Details on the arguments for the generalized linear model can be
 found at
 [stats::glm](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm)
 and for the general linear mixed model at
-[lme4::glmer](https://www.rdocumentation.org/packages/lme4/versions/1.1-35.3/topics/glmer). 
+[lme4::glmer](https://www.rdocumentation.org/packages/lme4/versions/1.1-35.3/topics/glmer).
 
 ## Estimates & Comparisons
 
@@ -101,7 +103,7 @@ effects. Furthermore, pairwise comparisons can be performed based on a
 user-supplied table. Mean estimates and comparisons are conducted using the
 doBy R library [@doBy]. Estimates of the back-transformed
 standard errors are approximated using the delta method. The p-values are
-adjusted for multiple comparisons using the Sidak method. 
+adjusted for multiple comparisons using the Sidak method.
 
 ## Goodness of Fit
 
@@ -123,24 +125,33 @@ columns for experimental variables of interest using the
 You may specify factors and covariates for your model using the `fixed_effects`
 and `random_effects` parameters respectively. If more than one fixed_effect is
 supplied, then you may specify whether you wish to test the interaction between
-your fixed_effects using the `test_interaction` parameter. 
+your fixed_effects using the `test_interaction` parameter. For each fixed effect,
+you must also include the reference level using the `reference_level` parameter.
+The level specified as the reference level will be used as the intercept when
+calculating model coefficients.
 
 You must specify the columns in your `mf_data` that contain the mutation counts
 and the total_depth per sample using the `muts` and `total_counts` parameters
-respectively. 
+respectively. Default values should be sufficient if the mf_data was created
+using `calculate_mf()`.
 
 To perform pairwise comparisons between levels of your fixed effects, supply a
 constrast table using the `contrasts` parameter. This can either be a data
-frame  or a filepath to a text file that will be loaded into R. The table must
+frame or a filepath to a text file that will be loaded into R. The table must
 consist of two columns, each containing levels within the fixed_effects.
 The level in the first column will be compared to the level in the second
-column for each row. You should also provide the reference level for each
-fixed effect using the `reference_level` parameter. If you specify
-multiple pairwise comparisons, then the p-values will automatically be
-corrected for multiple comparisons using the Sidak method. For multiple
-fixed effects, the user must include levels for all fixed_effects in each
-value of the contrasts table. Within each value, the levels of the different
-fixed_effects should be seperated by a colon.
+column for each row.
+
+If the user supplies multiple fixed effects to the model, then each value in
+the contrasts table must include levels for all fixed_effects. Within each
+value, the levels of the different fixed_effects should be seperated by a
+colon. For example, if we have fixed effects dose and tissue, one comparison
+might be control:lung vs. control:heart. The function will calculate the
+fold-difference in MF of the first column relative to the second column.
+The function will also provide the p-value denoting the significance of
+the difference. If you specify multiple pairwise comparisons, then the
+p-values will automatically be corrected for multiple comparisons using the
+Sidak method.
 
 ## Output
 
@@ -151,32 +162,32 @@ The function will output a list of results.
 - model_data: the supplied `mf_data` with added column for Pearson residuals.
 - summary: the summary of the model.
 - anova: the analysis of variance for models with two or more fixed_effects.
-See
-[car::Anova.](https://www.rdocumentation.org/packages/car/versions/1.0-9/topics/Anova).
+  See
+  [car::Anova.](https://www.rdocumentation.org/packages/car/versions/1.0-9/topics/Anova).
 - residuals_histogram: the Pearson residuals plotted as a histogram. This is
-used to check whether the variance is normally distributed. A symmetric
-bell-shaped histogram, evenly distributed around zero indicates that the
-normality assumption is likely to be true.
+  used to check whether the variance is normally distributed. A symmetric
+  bell-shaped histogram, evenly distributed around zero indicates that the
+  normality assumption is likely to be true.
 - residuals_qq_plot: the Pearson residuals plotted in a quantile-quantile plot.
-For a normal distribution, we expect points to roughly follow the y=x line.  
+  For a normal distribution, we expect points to roughly follow the y=x line.
 - point_estimates_matrix: the contrast matrix used to generate point-estimates
-for the fixed effects. 
+  for the fixed effects.
 - point_estimates: the point estimates for the fixed effects.
 - pairwise_comparisons_matrix: the contrast matrix used to conduct the pairwise
-comparisons specified in the `contrasts`.
+  comparisons specified in the `contrasts`.
 - pairwise_comparisons: the results of pairwise comparisons specified in the
-`contrasts`.
+  `contrasts`.
 
 ## Examples
 
 ### Example 1. Model by Dose {.tabset}
 
-*Example 1. Model the effect of dose on MF. Our example data consists of 24*
-*mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups*
-*are : Control, Low, Medium, and High. We will determine if the MFmin of each*
-*BaP dose group is significantly increased from that of the Control group.*
-*Example data is the same as that used in the vignette. See the vignette*
-*for information on importing and filtering the data.*
+_Example 1. Model the effect of dose on MF. Our example data consists of 24_
+_mouse samples, exposed to 3 doses of BaP or a vehicle control. Dose Groups_
+_are : Control, Low, Medium, and High. We will determine if the MFmin of each_
+_BaP dose group is significantly increased from that of the Control group._
+_Example data is the same as that used in the vignette. See the vignette_
+_for information on importing and filtering the data._
 
 First, we will calculate MF per sample while retaining the dose column.
 
@@ -238,6 +249,8 @@ plot <- hist(model_data$residuals,
 )
 ```
 
+The residuals form a bell-curve with a mean of 0 indicating that they follow a normal distribution.
+
 #### Residuals QQ-plot
 
 ```{r qq-caption1, include=FALSE}
@@ -255,10 +268,16 @@ qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
 stats::qqline(model_data$residuals, col = "red")
 ```
 
+The QQ-plot depicts points ollowing the y=x line, indicating that residuals follow a normal distribution.
+Our model assumptions have been validated.
+
 #### Model Summary
+
 ```{r model-dose-summary}
 model_by_dose$summary
 ```
+
+The model summary indicates that dose group has a significant effect on mutation frequency. Our model fit a quasibiniomal model with a low dispersion parameter (4.6) indicating a good fit.
 
 #### Model Estimates
 
@@ -271,7 +290,7 @@ DT::datatable(
     columnDefs = list(
       list(targets = 1:4,
            render = DT::JS("function(data, type, row, meta) {
-            return data.toExponential(2); 
+            return data.toExponential(2);
           }"))
     ),
     rowCallback = DT::JS("function(row, data, dataIndex) {
@@ -280,6 +299,8 @@ DT::datatable(
   )
 )
 ```
+
+The point estimates returns the mean values estimated by the model for each level of the fixed effects. We can compare these values to the empirical mean that is calculated directly from our data to check that the model fit the data well.
 
 #### Pairwise Comparisons
 
@@ -305,16 +326,21 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
+We performed pairwise comparisons to determine which dose groups were significantly different from control.
+The pairwise comparisons were performed based on the contrasts table supplied to model_mf(). Our results show that the mutation frequency is signifincatly increased for all dose groups relative to the control group, ranging from a 2-fold increase in the Low dose group to a 5.5-fold increase in the High dose group.
+
+Due to the novelty of using ECS for mutagenicity assessmnent, there are no widely established thresholds for what constitutes a biologically meaningful change. However, previous guidelines for interpreting biological relevance, derived from traditional mutagenicity assays, recommend a minimum fold change of 1.5 (White et al., 2020).
+
 ### Example 2. Model by Dose and Target {.tabset}
 
-*Example 2. Model the effects of dose and genomic locus on MF. Sequencing for*
-*the example data was done on a panel of 20 genomic targets. We will determine*
-*if the MF of each BaP dose group is significantly different from the Control*
-*individually for all 20 targets. In this model, dose group and target label*
-*will be our fixed effects. We include the interaction between the two fixed*
-*effects. Because sample will be a repeated measure, we will use it as a random*
-*effect. See the vignette for more information on how we imported and filtered*
-*this dataset.*
+_Example 2. Model the effects of dose and genomic locus on MF. Sequencing for_
+_the example data was done on a panel of 20 genomic targets. We will determine_
+_if the MF of each BaP dose group is significantly different from the Control_
+_individually for all 20 targets. In this model, dose group and target label_
+_will be our fixed effects. We include the interaction between the two fixed_
+_effects. Because sample will be a repeated measure, we will use it as a random_
+_effect. See the vignette for more information on how we imported and filtered_
+_this dataset._
 
 First, calculate MF for each sample and genomic locus, while retaining the dose
 column.
@@ -344,7 +370,7 @@ Finally, run the model. As this model is more complex, we will improve
 covergence by supplying the control argument, which is passed directly to
 `lme4::glmer()`.
 
-``` {r model-mf-rg, fig.show='hide'}
+```{r model-mf-rg, fig.show='hide'}
 model_by_target <- model_mf(mf_data = mf_data_rg,
   fixed_effects = c("dose_group", "label"),
   test_interaction = TRUE,
@@ -396,16 +422,24 @@ qqplot <- stats::qqnorm(model_data$residuals, main = "QQ Plot of Residuals")
 stats::qqline(model_data$residuals, col = "red")
 ```
 
+The histogram and the QQ plot indicate normally distributed residuals.
+
 #### Model Summary
+
 ```{r model-rg-summary}
 model_by_target$summary
 ```
+
+We see that several fixed effects have significance.
 
 #### ANOVA
 
 ```{r model-rg-anova}
 model_by_target$anova
 ```
+
+Our anova shows that both fixed effects (dose and label) significantly affect
+MF. Their interaction is also significant.
 
 #### Model Estimates
 
@@ -418,7 +452,7 @@ DT::datatable(
     columnDefs = list(
       list(targets = 1:4,
            render = DT::JS("function(data, type, row, meta) {
-            return data.toExponential(2); 
+            return data.toExponential(2);
           }"))
     ),
     rowCallback = DT::JS("function(row, data, dataIndex) {
@@ -452,6 +486,11 @@ DT::datatable(
   DT::formatRound(columns = c(1:3, 6:7), digits = 2)
 ```
 
+Our pairwise comparisons indicate that all targets show a dose response. ie.
+we see a significant increase in MF compared to control for the BaP-dose groups
+within all targets. However, the fold-increase in MF from control to high dose
+varies depending on the target.
+
 ## Plot Model Results {.tabset}
 
 Plot the results of `model_mf()` using `plot_model_mf()`. This function will
@@ -470,7 +509,6 @@ with the fixed effect that is being contrasted to reduce the number of unique
 symbols generated.
 
 The output is a ggplot object that can be modified with ggplot2.
-
 
 ### Plot Model by Dose
 
@@ -546,6 +584,9 @@ plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
 ```
 
+These plots facilitate the interpretation of results. We can clearly see how MF varies
+based on the genomic target while increasing with dose.
+
 ## Exporting Model Results
 
 `write_excel()` will extract the mf_data, point_estimates, and
@@ -553,7 +594,8 @@ pairwise_comparisons from `model_mf()` output to write to an excel workbook.
 To export model results, provide `write_excel` with the output of `model_mf`
 and set the `model_results` parameter to TRUE.
 
-*Example 3. Export model results*
+_Example 3. Export model results_
+
 ```{r write-excel-model, eval=FALSE}
 write_excel(
   model_by_dose,
@@ -641,9 +683,9 @@ Users may access the raw, unparsed PROAST results by setting
 
 ## Example
 
-*Example 2.1. Calculate the BMD with model averaging for a 50% relative*
-*increase in MF from control. This will be calculated for both MFmin and MFmax.*
-*See the vignette to see information on how we imported and filtered the data.*
+_Example 2.1. Calculate the BMD with model averaging for a 50% relative_
+_increase in MF from control. This will be calculated for both MFmin and MFmax._
+_See the vignette to see information on how we imported and filtered the data._
 
 Fist, calculate MF per sample while retaining the numeric dose column:
 
@@ -685,6 +727,10 @@ DT::datatable(proast_results$summary) %>%
   DT::formatRound(columns = 3:8, digits = 2)
 ```
 
+We are mostly interested in the model averaging results. For MFmin,
+we would report that BaP induces a 50% increase in MF relative to controls
+at a dose of 9.11 mg/kg-bw/d (90% CI 8.39 - 9.87).
+
 ### Exponential & Hill Models
 
 ```{r bmd-exphill-cap, include=FALSE}
@@ -712,7 +758,7 @@ replayPlot(proast_results$mf_min_Expon_HILL)
 replayPlot(proast_results$mf_max_Expon_HILL)
 ```
 
-###  Inverse Exponential & Log-Normal Models
+### Inverse Exponential & Log-Normal Models
 
 ```{r bmd-invln-cap, include=FALSE}
 caption1 <- paste(
@@ -741,7 +787,7 @@ replayPlot(proast_results$mf_min_InvExp_LN)
 replayPlot(proast_results$mf_max_InvExp_LN)
 ```
 
-###  Bootstrap Curves
+### Bootstrap Curves
 
 ```{r bmd-boot-cap, include=FALSE}
 caption1 <- paste(
@@ -785,9 +831,10 @@ comparison of BMDs between response variables.
 
 The BMD values can be plotted on the log scale, if required.
 
-*Example 2.2. Compare the estimated BMD for MFmin (50% relative increase)*
-*by PROAST versus ToxicR (another BMD software available on Github,*
-* calculated independently)*
+_Example 2.2. Compare the estimated BMD for MFmin (50% relative increase)_
+_by PROAST versus ToxicR (another BMD software available on Github,_
+
+- calculated independently)\*
 
 ```{r ci-plot-caption, include=FALSE}
 caption <- paste(
@@ -813,6 +860,12 @@ plot <- plot_ci(
 )
 plot
 ```
+
+These plots are great for comparing BMDs between different groups. For our purposes,
+we see that PROAST and ToxicR generate BMD results that are pretty similar to each other.
+Since the confidence intervals are overlapping, we can say that the results
+from the two BMD software tools are not statistically different from each other. These
+plots would also be great for comparing the potency of different chemicals.
 
 # References
 

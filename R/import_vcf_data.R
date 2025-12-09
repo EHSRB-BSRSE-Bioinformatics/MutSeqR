@@ -174,79 +174,60 @@ import_vcf_data <- function(vcf_file,
                             padding = 0,
                             BS_genome = NULL,
                             output_granges = FALSE) {
-  vcf_file <- file.path(vcf_file)
-
-  # Check if a sample identifier is already present in the INFO field
-  check_and_rename_sample <- function(vcf) {
-    # Define possible variations of sample identifier names
-    possible_sample_names <- c("sample", "sample_name", "sample_id")
-    # Initialize the sample_info column
-    sample_info <- NULL
-    # Search for variations of sample identifier names
-    for (sample_name_var in possible_sample_names) {
-      sample_name_var <- tolower(sample_name_var) # Make the comparison case-insensitive
-      if (sample_name_var %in% tolower(names(VariantAnnotation::info(vcf)))) {
-        # If found, rename it to "sample" and break the loop
-        names(VariantAnnotation::info(vcf))[tolower(names(VariantAnnotation::info(vcf))) == sample_name_var] <- "sample"
-        break
-      }
-    }
-    # If "sample" still doesn't exist, create it using colData
-    if (!"sample" %in% colnames(VariantAnnotation::info(vcf))) {
-      sample_info <- rownames(SummarizedExperiment::colData(vcf))
-      VariantAnnotation::info(vcf)$sample <- sample_info
-    }
-    return(vcf)
-  }
-
-  # Read and bind vcfs from folder
-  if (file.info(vcf_file)$isdir == TRUE) {
-    vcf_files <- list.files(
-      path = vcf_file,
-      pattern = "\\.g?vcf(\\.bgz|\\.gz)?$",
-      full.names = TRUE
+    stopifnot(
+        !missing(vcf_file) && is.character(vcf_file),
+        is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
+        is.character(sd_sep),
+        is.null(regions) || is.character(regions) || is.data.frame(regions) || methods::is(regions, "GRanges"),
+        is.character(rg_sep),
+        is.logical(is_0_based_rg),
+        is.numeric(padding) && padding >= 0,
+        is.logical(output_granges)
     )
-    # FIX: add check for empty file list.
-    # Initialize an empty VCF object to store the combined data
-    vcf <- NULL
-    # Read and combine VCF files
-    for (file in vcf_files) {
-      vcf_list <- VariantAnnotation::readVcf(file)
-      # Rename or create the "sample" column in the INFO field
-      vcf_list <- check_and_rename_sample(vcf_list)
-      # Ensure consistent column names
-      rownames(SummarizedExperiment::colData(vcf_list)) <- "sample_info"
-      # Combine the VCF data
-      if (is.null(vcf)) {
-        vcf <- vcf_list
-      } else {
-        vcf <- VariantAnnotation::rbind(vcf, vcf_list)
-      }
-    }
-  } else {
-    # Read a single vcf file
-    vcf <- VariantAnnotation::readVcf(vcf_file)
-    # Rename or create the "sample" column in the INFO field
-    vcf <- check_and_rename_sample(vcf)
-  }
-  # Extract and Clean alt column
-  ## May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
-  alt <- VariantAnnotation::alt(vcf)
-  # alt_values_clean <- lapply(alt, function(x) x[x != "<NON_REF>"])
-  alt <- IRanges::CharacterList(alt)
+    BS_genome <- match.arg(BS_genome,
+        choices = c(
+            NULL,
+            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+        )
+    )
 
-  # Extract mutation data into a dataframe
-  dat <- data.frame(
-    contig = SummarizedExperiment::seqnames(vcf),
-    start = SummarizedExperiment::start(vcf),
-    ref = VariantAnnotation::ref(vcf),
-    alt = alt
-  )
-  # Retain all INFO fields
-  info <- as.data.frame(VariantAnnotation::info(vcf))
-  # Extract GENO fields depending on the type of data
-  geno <- VariantAnnotation::geno(vcf)
-  geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
+    vcf_file <- file.path(vcf_file)
+
+    # Read and bind vcfs from folder
+    if (file.info(vcf_file)$isdir == TRUE) {
+        vcf_files <- list.files(vcf_file, pattern = "\\.g?vcf(\\.bgz|\\.gz)?$", full.names = TRUE)
+        if (length(vcf_files) == 0) stop("No VCF files found in directory: ", vcf_file)
+        # Read and combine VCF files
+        vcf_list <- lapply(vcf_files, function(file) {
+            vcf <- VariantAnnotation::readVcf(file)
+            vcf <- vcf_sample_fix(vcf) # fix sample column
+            # Ensure consistent colData rownames so rbind doesn't complain
+            rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
+            return(vcf)
+        })
+        vcf <- do.call(VariantAnnotation::rbind, vcf_list)
+    } else {
+        # Read a single vcf file
+        vcf <- VariantAnnotation::readVcf(vcf_file)
+        # Rename or create the "sample" column in the INFO field
+        vcf <- vcf_sample_fix(vcf)
+    }
+    # Extract FIXED Fields
+    ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
+    alt <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
+    # Extract mutation data into a dataframe
+    dat <- data.frame(
+        contig = SummarizedExperiment::seqnames(vcf),
+        start = SummarizedExperiment::start(vcf),
+        ref = VariantAnnotation::ref(vcf),
+        alt = alt
+    )
+    # Extract INFO fields
+    info <- as.data.frame(VariantAnnotation::info(vcf))
+
+    # Extract GENO fields depending on the type of data
+    geno <- VariantAnnotation::geno(vcf)
+    geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
   for (field_name in names(geno)) {
     field <- geno[[field_name]]
     if (is.list(field)) { # Ex. AD

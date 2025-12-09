@@ -118,6 +118,56 @@ plot_mean_mf <- function(mf_data,
                          plot_legend = TRUE,
                          rotate_labels = FALSE,
                          label_size = 3) {
+  stopifnot(
+      "mf_data is required." = !missing(mf_data),
+      "mf_data must be a data frame." = is.data.frame(mf_data),
+      "plot_error_bars must be a logical value." =
+          is.logical(plot_error_bars),
+      "plot_indiv_vals must be a logical value." = is.logical(plot_indiv_vals),
+      "plot_legend must be a logical value." = is.logical(plot_legend),
+      "rotate_labels must be a logical value." = is.logical(rotate_labels)
+  )
+  group_col <- match.arg(
+      arg = group_col,
+      choices = colnames(mf_data),
+      several.ok = TRUE
+  )
+  if (!is.null(fill_col)) {
+      fill_col <- match.arg(
+          arg = fill_col,
+          choices = colnames(mf_data),
+          several.ok = FALSE
+      )
+  }
+  mf_type <- match.arg(
+      arg = mf_type,
+      choices = c("min", "max", "both", "stacked"),
+      several.ok = FALSE
+  )
+    plot_type <- match.arg(
+        arg = plot_type,
+        choices = c("bar", "line"),
+        several.ok = FALSE
+    )
+    group_order <- match.arg(
+        arg = group_order,
+        choices = c("none", "smart", "arranged", "custom"),
+        several.ok = FALSE
+    )
+    add_labels <- match.arg(
+        arg = add_labels,
+        choices = c(
+            "indiv_count", "indiv_MF",
+            "mean_count", "mean_MF", "none"
+        ),
+        several.ok = FALSE
+    )
+    scale_y_axis <- match.arg(
+        arg = scale_y_axis,
+        choices = c("linear", "log"),
+        several.ok = FALSE
+    )
+
   # load required packages
   if (group_order == "smart" && !requireNamespace("gtools", quietly = TRUE)) {
     stop("Package gtools is required when using the 'smart' group_order option. Please install the package using 'install.packages('gtools')'")

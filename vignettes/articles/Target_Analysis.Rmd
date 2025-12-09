@@ -1,11 +1,11 @@
 ---
-title: "MutSeqR: Target Analysis"
+title: "MutSeqR: Analysing Genomic Targets"
 author:
-- name: Annette E. Dodge
-  affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-- name: Matthew J. Meier
-  affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
-  email: matthew.meier@hc-sc.gc.ca
+  - name: Annette E. Dodge
+    affiliation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+  - name: Matthew J. Meier
+    affilitation: Environmental Health Science and Research Bureau, Health Canada, Ottawa, ON, Canada.
+    email: matthew.meier@hc-sc.gc.ca
 package: MutSeqR
 output:
   BiocStyle::html_document:
@@ -15,7 +15,7 @@ output:
     code_download: yes
     css: custom.css
 ---
-  
+
 ```{r setup, include=FALSE}
 BiocStyle::markdown()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -33,7 +33,6 @@ marrow. Example data is retrieved from MutSeqRData, an ExperimentHub data
 package available via Bioconductor. Example data is retrieved from the
 ExperimentHub index (eh) through specific accessors.
 
-
 # Load MutSeqR and Example Data
 
 ```{r load-lib}
@@ -48,7 +47,7 @@ eh <- ExperimentHub()
 
 ## Model by Target {.tabset}
 
-We will measure the effect of genomic target and BaP dose on mutation frequency (MF) using a generalized linear mixed model using `model_mf()`. We will determine whether the MF of each BaP dose group is significantly different from the Control individually for all 20 genomic targets. In this model, dose group and target label will be our fixed effects. We include the interaction between the two fixed effects. Sample will be used as a random effect to control for  repeated measurements.
+We will measure the effect of genomic target and BaP dose on mutation frequency (MF) using a generalized linear mixed model using `model_mf()`. We will determine whether the MF of each BaP dose group is significantly different from the Control individually for all 20 genomic targets. In this model, dose group and target label will be our fixed effects. We include the interaction between the two fixed effects. Sample will be used as a random effect to control for repeated measurements.
 
 First, load the example data. This mutation data has already undergone necessary filtering with `filter_mut` (demonstrated in the vignette; MutSeqR Introduction). We will then calculate MF for each sample and genomic locus, while retaining the dose column. The "label" column refers to the label of the genomic target.
 
@@ -79,7 +78,7 @@ Finally, run the model. As this model is more complex, we will improve
 covergence by supplying the control argument, which is passed directly to
 `lme4::glmer()`.
 
-``` {r model-mf-rg, fig.show='hide'}
+```{r model-mf-rg, fig.show='hide'}
 model_by_target <- model_mf(mf_data = mf_data_rg,
   fixed_effects = c("dose_group", "label"),
   test_interaction = TRUE,
@@ -132,6 +131,7 @@ stats::qqline(model_data$residuals, col = "red")
 ```
 
 ### Model Summary
+
 ```{r model-rg-summary}
 model_by_target$summary
 ```
@@ -153,7 +153,7 @@ DT::datatable(
     columnDefs = list(
       list(targets = 1:4,
            render = DT::JS("function(data, type, row, meta) {
-            return data.toExponential(2); 
+            return data.toExponential(2);
           }"))
     ),
     rowCallback = DT::JS("function(row, data, dataIndex) {
@@ -230,6 +230,79 @@ plot <- plot_model_mf(
 # Rotate the x-axis labels for clarity using ggplot2 functions.
 plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
 plot
+```
+
+# Visualizae Mutations along Target Regions
+
+`plot_lollipop()`
+
+# Retrieve Sequences of Target regions
+
+`get_seq()` will retrive raw nucleotide sequences for specified genomic
+intervals. The function can retrieve sequences in one of two ways. Either
+specify an installed BSgenome from which to retrieve sequences or retrieve
+sequences through API request to the UCSC database based on supplied species
+and genome assembly.
+
+Supply regions with a filepath, data frame or GRanges object containing the
+specified genomic intervals. TwinStrand's Mutagenesis Panels are stored in
+package files and can easily be retrieved.
+
+Supply the function with the appropriate BS_genome from which to retrieve
+sequences. You can use the find_BS_genome() function to identify a BS genome
+to use based on species and genome assembly. Be sure to install the BS genome
+prior to running get_seq() with BiocManager().
+
+To retrieve sequences from the UCSC data base, please input the species and
+assembly genome to the species and genome parameters.
+
+\*_BS_genome, species, or genome_
+_do not need to be specified for the Mutagenesis Panels as this information_
+_is stored_.
+
+Sequences are returned within a _GRanges_ object.
+
+_Example 2.1. Retrieve the sequences for our example's target panel,_
+_TwinStrand's Mouse Mutagenesis Panel_
+
+```{r get-seq}
+regions_seq <- get_seq(regions = "TSpanel_mouse")
+regions_seq
+```
+
+_Example 2.2. Retrieve sequences for a custom interval of regions. We will use_
+_the Human Mutagenesis Panel as an example._
+
+```{r get-seq-custom}
+# We will load the TSpanel_human regions file to obtain
+# an example list of regions.
+human <- load_regions_file("TSpanel_human")
+regions_seq <- get_seq(regions = human,
+                       is_0_based_rg = FALSE,
+                       BS_genome = find_BS_genome("human", "hg38"),
+                       padding = 0)
+regions_seq
+```
+
+_Example 2.3. Retrieve sequences using UCSC database._
+
+```{r get-seq-ucsc}
+regions_seq <- get_seq(regions = human,
+                       is_0_based_rg = FALSE,
+                       padding = 0,
+                       species = "human",
+                       genome = "hg38",
+                       ucsc = TRUE)
+```
+
+Sequences can be exported as FASTA files with `write_reference_fasta()`.
+Supply this function with the GRanges object containing the sequences of the
+regions. Each one will be written to a single FASTA file. The FASTA file will
+be saved to the `output_path`. If NULL, the file will be saved to the working
+directory.
+
+```{r write-ref-fasta, eval=FALSE}
+write_reference_fasta(regions_seq, output_path = NULL)
 ```
 
 # References
