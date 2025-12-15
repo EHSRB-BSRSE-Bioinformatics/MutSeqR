@@ -20,8 +20,6 @@
 #' Default is tab.
 #' @param mf_type The type of mutation frequency to use. Default is "min"
 #' (recommended).
-#' @param seed An integer to set the seed for reproducibility when
-#' using Monte Carlo simulations to compute the p-value. Default is 1234.
 #' @returns the log-likelihood statistic G2 for the specified comparisons with
 #' the p-value adjusted for multiple-comparisons.
 #' @export
@@ -98,8 +96,7 @@ spectra_comparison <- function(mf_data,
                                exp_variable,
                                mf_type = "min",
                                contrasts,
-                               cont_sep = "\t",
-                               seed = 1234) {
+                               cont_sep = "\t") {
   
     # Validation & Setup
     stopifnot(
