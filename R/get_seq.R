@@ -45,10 +45,7 @@
 #' the sequences from the UCSC genome browser using the DAS API. See the
 #' UCSC website for available genomes: \url{https://genome.ucsc.edu}.
 #' @examples
-#' # Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
-#' regions_seq <- get_seq(regions = "TSpanel_mouse")
-#'
-#' # Example 2: Retrieve the sequences for custom regions
+#' #  Retrieve the sequences for custom regions
 #' # We will load the TSpanel_human regions file as an example
 #' # and supply it to the function as a GRanges object.
 #' human <- load_regions_file("TSpanel_human")

@@ -16,7 +16,5 @@ A list of column specifications
 \examples{
 # examples of "alt" synonyms
 op$column$alternate
-op$column$alt_value
-op$column$tumor_seq_allele2
 }
 \keyword{datasets}

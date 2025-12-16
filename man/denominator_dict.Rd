@@ -18,7 +18,6 @@ column which would contain only T or C (i.e., the pyrimidine context for
 base substitutions).
 }
 \examples{
-denominator_dict["base_96"]
 denominator_dict["type"]
 }
 \keyword{datasets}

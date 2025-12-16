@@ -6,8 +6,6 @@
 #' @examples
 #' # examples of "alt" synonyms
 #' op$column$alternate
-#' op$column$alt_value
-#' op$column$tumor_seq_allele2
 #' @export
 op <- list()
 op$column <- list()
@@ -91,7 +89,6 @@ subtype_dict <- c(
 #' @format A list with corresponding values
 #' @examples
 #' subtype_list[["type"]]
-#' subtype_list[["base_6"]]
 #' @export
 subtype_list <- list(
     type = c(
@@ -167,7 +164,6 @@ subtype_list <- list(
 #' base substitutions).
 #' @format A vector with corresponding values
 #' @examples
-#' denominator_dict["base_96"]
 #' denominator_dict["type"]
 #' @export
 denominator_dict <- c(

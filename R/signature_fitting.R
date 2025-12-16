@@ -51,6 +51,7 @@
 #'   library(ExperimentHub)
 #'   eh <- ExperimentHub()
 #'   example_data <- eh[["EH9861"]]
+#'   example_data <- dplyr::filter(example_data, dose %in% c(0, 50))
 #'   output_path <- tempdir()
 #'
 #'   signature_fitting(

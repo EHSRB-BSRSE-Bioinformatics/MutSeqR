@@ -15,6 +15,5 @@ A comprehensive list of mutation subtypes at different resolutions
 }
 \examples{
 subtype_list[["type"]]
-subtype_list[["base_6"]]
 }
 \keyword{datasets}

@@ -9,8 +9,7 @@ spectra_comparison(
   exp_variable,
   mf_type = "min",
   contrasts,
-  cont_sep = "\\t",
-  seed = 1234
+  cont_sep = "\\t"
 )
 }
 \arguments{
@@ -36,9 +35,6 @@ examples.}
 
 \item{cont_sep}{The delimiter used to import the contrasts table.
 Default is tab.}
-
-\item{seed}{An integer to set the seed for reproducibility when
-using Monte Carlo simulations to compute the p-value. Default is 1234.}
 }
 \value{
 the log-likelihood statistic G2 for the specified comparisons with

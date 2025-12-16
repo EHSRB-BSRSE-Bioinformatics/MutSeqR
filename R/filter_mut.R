@@ -79,55 +79,28 @@
 #' returned inside a list, with names \code{mutation_data} and
 #' \code{filtered_rows}. Default is FALSE.
 #' @examples
-#' # Example data consists of 24 mouse bone marrow DNA samples imported
-#' # using import_mut_data(). Sequenced on TS Mouse Mutagenesis Panel.
-#' # Example data is retrieved from MutSeqRData, an ExperimentHub data package
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'   library(ExperimentHub)
-#'   eh <- ExperimentHub()
-#'   example_data <- eh[["EH9860"]]
+#' # Mutation data is just for example purposes. It does not reflect real data.
+#' file <- system.file("extdata/Example_files/simple_mutation_data.rds",
+#'      package = "MutSeqR")
+#' mutation_data <- readRDS(file)
 #'   # In this example, we will apply the following filters:
 #'   # 1) Filter out putative germline variants using a VAF cutoff of 0.01
-#'   # 2) Remove rows whose position falls outside the intervals of the
-#'   #    TwinStrand Mouse Mutagenesis Panel regions.
-#'   # 3) Apply a custom filter to flag rows with "EndRepairFillInArtifact"
-#'   #    in the column 'filter'. This is a filter step commonly applied to
-#'   #    TwinStrand Duplex Sequencing data.
-#'   # 4) Flag snv variants that overlap with germline mnv variants and
-#'   # 5) Subtract the alt_depth of these variants from their total_depth
+#'   # 2) Flag snv variants that overlap with germline mnv variants and
+#'   # 3) Subtract the alt_depth of these variants from their total_depth
 #'   #    (treat them as No-calls).
-#'   # 6) Return all the flagged/removed rows in a seperate data frame.
 #'   filter_example <- filter_mut(
-#'     mutation_data = example_data,
+#'     mutation_data = mutation_data,
 #'     vaf_cutoff = 0.01,
-#'     regions = "TSpanel_mouse",
-#'     regions_filter = "keep_within",
-#'     custom_filter_col = "filter",
-#'     custom_filter_val = "EndRepairFillInArtifact",
-#'     custom_filter_rm = FALSE, # Flagging, not removing
 #'     snv_in_germ_mnv = TRUE,
 #'     rm_filtered_mut_from_depth = TRUE,
-#'     return_filtered_rows = TRUE
+#'     return_filtered_rows = FALSE
 #'   )
-#'   # Flagging germline mutations...
-#'   # Found 612 germline mutations.
-#'   # Flagging SNVs overlapping with germline MNVs...
-#'   # Found 20 SNVs overlapping with germline MNVs.
-#'   # Applying custom filter...
-#'   # Flagged 2021 rows with values in <filter> column that matched
-#'   #  EndRepairFillInArtifact
-#'   # Applying region filter...
-#'   # Removed 22 rows based on regions.
-#'   # Correcting depth...
-#'   # 909 rows had their total_depth corrected.
-#'   # Removing filtered mutations from the total_depth...
-#'   # Filtering complete.
-#'   # Returning a list: mutation_data and filtered_rows.
-#'
-#'   # To separately access the filtered rows and the filtered mutation data:
-#'   filtered_rows <- filter_example$filtered_rows
-#'   filtered_example_mutation_data <- filter_example$mutation_data
-#' }
+#'  # Flagging germline mutations...
+#'  # Found 15 germline mutations.
+#'  # Flagging SNVs overlapping with germline MNVs...
+#'  # Found 1 SNVs overlapping with germline MNVs.
+#'  # Removing filtered mutations from the total_depth...
+#'  # Filtering complete.
 #' @importFrom dplyr group_by mutate ungroup select filter starts_with
 #' n_distinct first case_when if_else
 #' @importFrom GenomicRanges makeGRangesFromDataFrame findOverlaps

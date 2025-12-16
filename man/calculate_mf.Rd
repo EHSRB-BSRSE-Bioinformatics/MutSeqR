@@ -222,22 +222,15 @@ ensure that the total_depth value for the deletion is retained, while the
 total_depth value for the no_variant is removed.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
-
-  # Calculate mutation frequency by sample.
-  # Calculate depth from the mutation data (default)
-  # Correct the Depth (default) with indel priority (set)
-  mf_example <- calculate_mf(
-    mutation_data = example_data,
-    cols_to_group = "sample",
-    correct_depth_by_indel_priority = TRUE
-  )
-}
+file <- system.file("extdata/Example_files/filtered_simple_mutation_data.rds",
+     package = "MutSeqR")
+mutation_data <- readRDS(file)
+# Calculate mutation frequency by sample.
+# Calculate depth from the mutation data (default)
+# Correct the Depth (default) with indel priority (set)
+mf_example <- calculate_mf(
+  mutation_data = mutation_data,
+  cols_to_group = "sample",
+  correct_depth_by_indel_priority = TRUE
+)
 }

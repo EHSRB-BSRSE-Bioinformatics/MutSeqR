@@ -196,16 +196,4 @@ model <- model_mf(
   total_count = "group_depth",
   contrasts = contrasts
 )
-
-# Plot the results using plot_model_mf()
-plot <- plot_model_mf(model,
-  plot_type = "bar",
-  x_effect = "dose",
-  plot_error_bars = TRUE,
-  plot_signif = TRUE,
-  x_order = c("0", "12.5", "25", "50"),
-  x_label = "Dose (mg/kg-bw/d)",
-  y_label = "Estimated Mean MF (mutations/bp)",
-  plot_title = ""
-)
 }
