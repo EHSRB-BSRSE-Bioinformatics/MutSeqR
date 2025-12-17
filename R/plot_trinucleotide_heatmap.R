@@ -30,35 +30,16 @@
 #' @return A ggplot object representing the heatmap plot.
 #' @export
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'   # Plot the trinucleotide proportions per sample, facetted by dose group.
-#'
-#'   # Example data consists of 24 mouse bone marrow DNA samples imported
-#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
-#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#'   # retrieved from MutSeqRData, an ExperimentHub data package.
-#'   library(ExperimentHub)
-#'   eh <- ExperimentHub()
-#'   example_data <- eh[["EH9861"]]
-#'
-#'   # define dose_group order
-#'   example_data$dose_group <- factor(example_data$dose_group,
-#'     levels = c(
-#'       "Control", "Low",
-#'       "Medium", "High"
-#'     )
-#'   )
-#'   mf_96 <- calculate_mf(example_data,
-#'     cols_to_group = "sample",
-#'     variant_types = "snv",
-#'     subtype_resolution = "base_96",
-#'     retain_metadata_cols = "dose_group"
-#'   )
-#'   plot <- plot_trinucleotide_heatmap(mf_96,
-#'     group_col = "sample",
-#'     facet_col = "dose_group"
-#'   )
-#' }
+#' mf_96 <- readRDS(system.file("extdata/Example_files/mf_data_96_sample.rds",
+#' package = "MutSeqR"))
+#' # define dose_group order
+#' mf_96$dose_group <- factor(mf_96$dose_group,
+#'      levels = c("Control", "Low","Medium", "High")
+#' )
+#' plot <- plot_trinucleotide_heatmap(mf_96,
+#'   group_col = "sample",
+#'   facet_col = "dose_group"
+#' )
 plot_trinucleotide_heatmap <- function(mf_data,
                                        group_col = "sample",
                                        facet_col = "dose",

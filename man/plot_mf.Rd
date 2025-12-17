@@ -86,11 +86,19 @@ A ggplot object
 This function creates a plot of the mutation frequency.
 }
 \examples{
-# Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut.
-# Data was summarized per sample using calculate_mf() (see relevant
-# examples). We will plot the MF per sample, organized and coloured
-# by dose group.
+# Example data  consists of 24 mouse bone marrow
+# samples exposed to three doses of BaP alongside vehicle controls.
+# Libraries were sequenced with Duplex Sequencing using
+# the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+# targets = 48kb of sequence. Example data can be retrieved from
+# MutSeqRData, an ExperimentHub data package:
+## library(ExperimentHub)
+## eh <- ExperimentHub()
+## query(eh, "MutSeqRData")
+# Mutation frequency data was precalculated using
+## mf_data_global <- calculate_mf(mutation_data = eh[["EH9861"]],
+##   cols_to_group = "sample",
+##   retain_metadata_cols = c("dose_group", "dose"))
 # Load Example MF data
 mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
   package = "MutSeqR"

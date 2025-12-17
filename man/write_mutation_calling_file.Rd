@@ -39,22 +39,30 @@ Mutations will be be filtered for SNVs. Mutations flagged in
 \code{filter_mut} will be excluded from the output.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
-
-  temp_output <- tempdir()
-  write_mutation_calling_file(
+# Example data  consists of 24 mouse bone marrow
+# samples exposed to three doses of BaP alongside vehicle controls.
+# Libraries were sequenced with Duplex Sequencing using
+# the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+# targets = 48kb of sequence. Example data can be retrieved from
+# MutSeqRData, an ExperimentHub data package:
+## library(ExperimentHub)
+## eh <- ExperimentHub()
+## query(eh, "MutSeqRData")
+# The data is a subset of variants from the target chr1
+# from samples of the high dose group (50mg).
+example_data <- readRDS(system.file("extdata", "Example_files",
+                                    "variants_subset_d50_chr1.rds",
+                                     package = "MutSeqR")
+)
+ write_mutation_calling_file(
     mutation_data = example_data,
     project_name = "Example",
     project_genome = "GRCm38",
-    output_path = temp_output
+    output_path = tempdir()
   )
-  list.files(temp_output)
+  list.files(tempdir())
   # The file is saved in the temporary directory
   # To view the file, use the following code:
-  ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
-  ## file.show(output_file
-}
+  ## output_file <- file.path(tempdir(), "mutation_calling_file.txt")
+  ## file.show(output_file)
 }

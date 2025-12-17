@@ -81,7 +81,7 @@ See model_mf() for examples.
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut.
 # Data was summarized per sample using calculate_mf() and modeled using
-# model_mf() (see relevant examples).
+# model_mf() (see example).
 file <- system.file("extdata/Example_files/mf_model_global.rds",
      package = "MutSeqR")
 model <- readRDS(file)

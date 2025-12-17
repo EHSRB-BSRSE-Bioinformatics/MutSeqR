@@ -19,24 +19,32 @@
 #' `filter_mut` will be excluded from the output.
 #' @importFrom dplyr rename filter select mutate relocate
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'   library(ExperimentHub)
-#'   eh <- ExperimentHub()
-#'   example_data <- eh[["EH9861"]]
-#'
-#'   temp_output <- tempdir()
-#'   write_mutation_calling_file(
+#' # Example data  consists of 24 mouse bone marrow
+#' # samples exposed to three doses of BaP alongside vehicle controls.
+#' # Libraries were sequenced with Duplex Sequencing using
+#' # the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+#' # targets = 48kb of sequence. Example data can be retrieved from
+#' # MutSeqRData, an ExperimentHub data package:
+#' ## library(ExperimentHub)
+#' ## eh <- ExperimentHub()
+#' ## query(eh, "MutSeqRData")
+#' # The data is a subset of variants from the target chr1
+#' # from samples of the high dose group (50mg).
+#' example_data <- readRDS(system.file("extdata", "Example_files",
+#'                                     "variants_subset_d50_chr1.rds",
+#'                                      package = "MutSeqR")
+#' )
+#'  write_mutation_calling_file(
 #'     mutation_data = example_data,
 #'     project_name = "Example",
 #'     project_genome = "GRCm38",
-#'     output_path = temp_output
+#'     output_path = tempdir()
 #'   )
-#'   list.files(temp_output)
+#'   list.files(tempdir())
 #'   # The file is saved in the temporary directory
 #'   # To view the file, use the following code:
-#'   ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
-#'   ## file.show(output_file
-#' }
+#'   ## output_file <- file.path(tempdir(), "mutation_calling_file.txt")
+#'   ## file.show(output_file)
 #' @importFrom dplyr rename filter select mutate relocate
 #' @importFrom here here
 #' @importFrom utils write.table
@@ -148,25 +156,35 @@ write_mutation_calling_file <- function(mutation_data,
 #' `filter_mut` will be excluded from the output. Mutations will be summed
 #' across the groups specified in the `group` argument.
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'   library(ExperimentHub)
-#'   eh <- ExperimentHub()
-#'   example_data <- eh[["EH9861"]]
-#'   temp_output <- tempdir()
+
+#' # Example data  consists of 24 mouse bone marrow
+#' # samples exposed to three doses of BaP alongside vehicle controls.
+#' # Libraries were sequenced with Duplex Sequencing using
+#' # the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+#' # targets = 48kb of sequence. Example data can be retrieved from
+#' # MutSeqRData, an ExperimentHub data package:
+#' ## library(ExperimentHub)
+#' ## eh <- ExperimentHub()
+#' ## query(eh, "MutSeqRData")
+#' # The data is a subset of variants from the target chr1
+#' # from samples of the high dose group (50mg).
+#' example_data <- readRDS(system.file("extdata", "Example_files",
+#'                                     "variants_subset_d50_chr1.rds",
+#'                                      package = "MutSeqR")
+#' )
 #'
 #'   write_mutational_matrix(
 #'     mutation_data = example_data,
-#'     group = "dose_group",
+#'     group = "sample",
 #'     subtype_resolution = "base_96",
 #'     mf_type = "min",
-#'     output_path = temp_output
+#'     output_path = tempdir()
 #'   )
-#'   list.files(temp_output)
+#'   list.files(tempdir())
 #'   # The file is saved in the temporary directory
 #'   # To view the file, use the following code:
-#'   ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
+#'   ## output_file <- file.path(tempdir(), "sample_base_96_mutational_matrix.txt")
 #'   ## file.show(output_file)
-#' }
 #' @importFrom stats reshape
 #' @importFrom dplyr rename filter group_by mutate ungroup select distinct
 #' @importFrom here here

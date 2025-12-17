@@ -32,19 +32,16 @@
 #' their data with large multiplets having a large circle.
 #' @return A ggplot object with the bubble plot, facetted if specified.
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'   # Example data consists of 24 mouse bone marrow DNA samples imported
-#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
-#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#'   # retrieved from MutSeqRData, an ExperimentHub data package.
-#'   library(ExperimentHub)
-#'   eh <- ExperimentHub()
-#'   example_data <- eh[["EH9861"]]
-#'   plot <- plot_bubbles(
-#'     mutation_data = example_data,
-#'     facet_col = "dose_group"
+#' # The example data is a subset of variants from the target chr1
+#' # from samples of the high dose group (50mg).
+#' example_data <- readRDS(system.file("extdata", "Example_files",
+#'                                     "variants_subset_d50_chr1.rds",
+#'                                      package = "MutSeqR")
+#' )
+#'  plot <- plot_bubbles(
+#'     mutation_data = example_data
 #'   )
-#' }
+#'
 #' @importFrom dplyr arrange filter left_join
 #' @import ggplot2
 #' @export

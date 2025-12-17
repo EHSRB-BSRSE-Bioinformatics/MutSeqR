@@ -40,33 +40,17 @@ A list of ggplot objects.
 Plot recurrent mutations in a lollipop plot using ggplot2
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  if (requireNamespace("dplyr", quietly = TRUE) &&
-    requireNamespace("ggplot2", quietly = TRUE)) {
-    library(ExperimentHub)
-    eh <- ExperimentHub()
-    example_data <- eh[["EH9861"]]
-
-    example_data$dose_group <- factor(example_data$dose_group,
-      levels = c(
-        "Control", "Low",
-        "Medium", "High"
-      )
-    )
-
-    # 2. Generate the plots
-    plot_list <- plot_lollipop(
+# For this example, we will use a subset of the example mutation data.
+# The subset contains mutations from target chr1 in samples from the high
+# dose group (50mg).
+ example_data <- readRDS(system.file("extdata", "Example_files",
+     "variants_subset_d50_chr1.rds", package = "MutSeqR"))
+ # We will plot mutations that recoccur in at least two samples, grouped
+ # by the "label" column, which signifies the target region (chr1).
+ # Mutations will be grouped and coloured by their base 6 subtype (default) 
+ plot <- plot_lollipop(
      mutation_data = example_data,
      min_recurrence = 2,
-     group_col = "dose_group"
-   )
-   # 3. Display the plots for each dose group
-   plot_list$Control
-
-  }
-}
+     group_col = "label"
+ )
 }

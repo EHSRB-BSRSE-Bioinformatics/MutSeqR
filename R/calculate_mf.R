@@ -186,9 +186,10 @@
 #' ensure that the total_depth value for the deletion is retained, while the
 #' total_depth value for the no_variant is removed.
 #' @examples
-#' file <- system.file("extdata/Example_files/filtered_simple_mutation_data.rds",
-#'      package = "MutSeqR")
-#' mutation_data <- readRDS(file)
+#' # Mutation data is just for example purposes. It does not reflect real data
+#' mutation_data <- readRDS(system.file("extdata", "Example_files",
+#'                                      "filtered_simple_mutation_data.rds",
+#'                                      package = "MutSeqR"))
 #' # Calculate mutation frequency by sample.
 #' # Calculate depth from the mutation data (default)
 #' # Correct the Depth (default) with indel priority (set)

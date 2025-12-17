@@ -38,20 +38,26 @@ not part of MutSeqR's recommended workflow, but is provided here for
 users who wish to use it.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
+# Example data  consists of 24 mouse bone marrow
+# samples exposed to three doses of BaP alongside vehicle controls.
+# Libraries were sequenced with Duplex Sequencing using
+# the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+# targets = 48kb of sequence. Example data can be retrieved from
+# MutSeqRData, an ExperimentHub data package:
+## library(ExperimentHub)
+## eh <- ExperimentHub()
+## query(eh, "MutSeqRData")
+# Mutation frequency data was precalculated using
+## mf_data_global <- calculate_mf(mutation_data = eh[["EH9861"]],
+##   cols_to_group = "sample",
+##   retain_metadata_cols = c("dose_group", "dose"))
 
-  mf <- calculate_mf(example_data)
-  confint <- get_binom_ci(
-    mf_data = mf,
+ mf <- readRDS(system.file("extdata", "Example_files",
+                           "mf_data_global.rds",
+                           package = "MutSeqR"))
+ confint <- get_binom_ci(
+   mf_data = mf,
     sum_col = "sum_min",
     depth_col = "group_depth"
   )
-}
 }

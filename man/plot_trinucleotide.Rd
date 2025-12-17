@@ -62,24 +62,13 @@ given group from the provided mf_96 data; the output of calculate_mf with
 subtype_resolution = "base_96".
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
+ # Calculate the mutation frequency data at the 96-base resolution
+ mf_96 <- readRDS(system.file("extdata", "Example_files", "mf_data_96.rds",
+    package = "MutSeqR"))
+# Plot the trinucleotide proportions for the control and high dose groups
+mf_96 <- dplyr::filter(mf_96, dose_group \%in\% c("Control", "High"))
 
-  # Calculate the mutation frequency data at the 96-base resolution
-  mf_96 <- calculate_mf(
-    mutation_data = example_data,
-    cols_to_group = "dose_group",
-    subtype_resolution = "base_96",
-    variant_types = "snv"
-  )
-  # Plot the trinucleotide proportions for each dose group
-  # Scale y-axis the same for all groups
+# Scale y-axis the same for all groups
   plots <- plot_trinucleotide(
     mf_96 = mf_96,
     response = "proportion",
@@ -88,5 +77,4 @@ if (requireNamespace("MutSeqRData", quietly = TRUE)) {
     indiv_y = FALSE,
     output_path = NULL
   )
-}
 }

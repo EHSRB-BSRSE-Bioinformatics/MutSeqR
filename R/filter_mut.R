@@ -80,9 +80,9 @@
 #' \code{filtered_rows}. Default is FALSE.
 #' @examples
 #' # Mutation data is just for example purposes. It does not reflect real data.
-#' file <- system.file("extdata/Example_files/simple_mutation_data.rds",
-#'      package = "MutSeqR")
-#' mutation_data <- readRDS(file)
+#' mutation_data <- readRDS(system.file("extdata", "Example_files",
+#'                                      "simple_mutation_data.rds",
+#'                                      package = "MutSeqR"))
 #'   # In this example, we will apply the following filters:
 #'   # 1) Filter out putative germline variants using a VAF cutoff of 0.01
 #'   # 2) Flag snv variants that overlap with germline mnv variants and

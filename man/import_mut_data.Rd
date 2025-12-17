@@ -162,25 +162,9 @@ position, regardless of whether a variant was called, along with the
 required for some downstream analyses.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example: Import a single mutation file. This library was sequenced with
-  # Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-  # consists of 20 2.4kb targets = 48kb of sequence. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9857"]]
-  # We will create an example metadata table for this data.
-  sample_meta <- data.frame(
-    sample = "dna00996.1",
-    dose_group = "High"
-  )
-  # Import the data
-  imported_example_data <- import_mut_data(
-    mut_file = example_data,
-    sample_data = sample_meta,
-    regions = "TSpanel_mouse",
-    BS_genome = find_BS_genome("mouse", "mm10")
-  )
-}
+# Mutation data is just for example purposes. It does not reflect real data
+file <- system.file("extdata", "Example_files",
+                   "simple_mut_import.txt", package = "MutSeqR")
+# Import the data
+imported_example_data <- import_mut_data(mut_file = file)
 }
