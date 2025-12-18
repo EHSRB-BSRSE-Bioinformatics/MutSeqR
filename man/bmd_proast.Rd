@@ -64,7 +64,8 @@ results from the PROAST analysis. If FALSE, data is returned as a
 summary table.}
 
 \item{seed}{An integer value to set the random seed for reproducibility
-when using model averaging. Default is 125.}
+when using model averaging. Default is 125. Use 0 for a random seed each
+time.}
 }
 \value{
 A summmary data frame of final results. If plots or raw results

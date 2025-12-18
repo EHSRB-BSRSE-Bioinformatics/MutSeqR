@@ -14,7 +14,6 @@ output:
 ---
 
 ```{r load_libraries, warning=FALSE, include=FALSE}
-set.seed(3135)
 library(MutSeqR)
 library(here)
 library(knitr)
@@ -43,7 +42,7 @@ plotting <- c(
   "patchwork", # plot_spectra
   "RColorBrewer" # plot_mf plot_mean_mf plot_spectra plot_bubbles plot_lollipop
 )
-stats <- c("doBy", "car", "lme4") # model_mf
+stats <- c("doBy", "car", "lme4", "withr") # model_mf & proast
 general <- c("openxlsx", "BSgenome")
 pkg_ls <- c(plotting, general)
 if (!is.null(params$exp_variable)) {

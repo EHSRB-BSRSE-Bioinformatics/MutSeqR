@@ -36,7 +36,7 @@
 #' @param resize Logical. If TRUE, resize the graphics window during execution; passed to graphics helper functions. Defaults to FALSE.
 #' @param scale.ans Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.
 #' @param const.var Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.
-#' @param seed Integer. Random seed for reproducibility. Defaults to 125.
+#' @param seed Integer. Random seed for reproducibility. Defaults to 125. Use 0 to get a random seed each time.
 #' @importFrom utils menu
 #' @importFrom stats setNames
 #' @return Results from PROAST.
@@ -1457,12 +1457,12 @@ f.execute <- function(
               Vdetlim <- data.0[, detlim.col]
               if (min(Vdetlim <= 0)) {
                 stop(
-                  "\nERROR: there are non-positive values in the detection limit column !\n"
+                  "\nThere are non-positive values in the detection limit column !\n"
                 )
               }
               if (any(is.na(Vdetlim))) {
                 stop(
-                  "\nERROR:  The detection limit column contains NAs; \n
+                  "\nThe detection limit column contains NAs; \n
                      replace NAs with (large) numbers\n\n"
                 )
               }
@@ -1483,11 +1483,11 @@ f.execute <- function(
           } else {
             if (is.null(nonzero_val)) {
               stop(
-                "\nERROR: nonzero_val must be specified when add_nonzero_val_to_dat is TRUE\n"
+                "\nnonzero_val must be specified when add_nonzero_val_to_dat is TRUE\n"
               )
             }
             if (nonzero_val <= 0) {
-              stop("\nERROR: nonzero_val must be a positive number\n")
+              stop("\nnonzero_val must be a positive number\n")
             }
             y.add <- nonzero_val
           }
@@ -4100,7 +4100,7 @@ f.qfit <- function(
         if (display_plots == TRUE) {
           title(main = paste(modelname))
         }
-        ans.all.fit$l.ty = 1
+        ans.all.fit$l.ty <- 1
         if (model.ans != 11) {
           f.lines.con(ans.all.fit, display_plots = display_plots)
         }
@@ -7395,7 +7395,7 @@ f.nes <- function(ans.all) {
         sd.0 <- log(1.05)
         pooled.sd <- sqrt(var.within.pooled)
         ES.0 <- 1.05
-        ES.new = exp(log(ES.0) * pooled.sd/sd.0)
+        ES.new <- exp(log(ES.0) * pooled.sd/sd.0)
         if (increase == 1) {
             CES <- ES.new - 1
             ans.all$lb[nr.var + nr.aa + nr.bb + 1] <- ES.new * 
@@ -7783,10 +7783,10 @@ f.cedes.plt.con <- function(ans.all) {
                 ES.y <- ES.y + xy.lim[6]
             }
         cedes.lst <- list()
-        cedes.lst$CED.x = CED.x
-        cedes.lst$CED.y = CED.y
-        cedes.lst$ES.x = ES.x
-        cedes.lst$ES.y = ES.y
+        cedes.lst$CED.x <- CED.x
+        cedes.lst$CED.y <- CED.y
+        cedes.lst$ES.x <- ES.x
+        cedes.lst$ES.y <- ES.y
         if (0) {
             print("f.cedes.plt.con")
             print(CED.x)
@@ -8325,7 +8325,7 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
         Vaic.adj <- Vaic - min.aic
         weight.denom <- sum(exp(-0.5 * Vaic.adj))
         Vweight <- exp(-0.5 * Vaic.adj)/weight.denom
-        Vweight.dfr = data.frame(model = model.list[1:nr.models], 
+        Vweight.dfr <- data.frame(model = model.list[1:nr.models], 
             weight = round(Vweight, 4))
         if (first.call) {
             xx.ma <- numeric()
@@ -8820,170 +8820,324 @@ f.boot.ma <- function(
   display_plots = TRUE,
   filename = NULL,
   output_type = NULL,
-  knitting = FALSE
-) {
-  if (ans.all$seed.bt != 0) {
-    set.seed(ans.all$seed.bt)
-  }
+  knitting = FALSE) {
   date.0 <- date()
-  with(ans.all, {
-    nr.gr <- max(ans.all$covariate)
-    if (dtype != 2) {
-      dum.contr <- xy.lim[1] / 10
-      xline <- exp(seq(
-        from = logb(2 * dum.contr),
-        to = logb(xy.lim[3]), length = 1000
-      ))
-      name.wapp <- paste("c", yans, "ma.plot", sep = "")
-      if (display_plots && !knitting) {
-        f.graph.window(
-          1,
-          WAPP = WAPP,
-          title = "bootstrap curves based on model averaging",
-          name.wapp = name.wapp,
-          plotprefix = ans.all$plotprefix,
-          svg.plots = svg.plots,
-          output = output, filename = filename,
-          output_type = output_type)
-      }
-      # if (knitting) { # adjust plot dimensions when knitting?
-      #   old_par <- par(no.readonly = TRUE)
-      #   on.exit(par(old_par))
-      #   par(mar = c(0,0,0,0))
-      # }
-      if (!cont)
-          ans.all$xy.lim[4:5] <- c(0, 1)
-      ans.all$xy.lim[1] <- dum.contr
-      ans.all$heading <- ""
-      if (covar.no == 0) 
-          ans.all$color <- ans.all$color[-1]
-      if (!cont) 
-          f.plot.frq(ans.all)
-      if (cont) {
-          ans.all$fct2 <- covariate
-          ans.all$plt.mns <- 3
-          ans.all$heading <- ""
-          ans.all$y.min <- f.plot.con(ans.all, display_plots = display_plots)$y.lim.plt[1]
-      }
-      if (display_plots) {
-          title(main = "bootstrap curves \nbased on model averaging", 
-          cex.main = 1)
-      }
-    } else {
-      xline <- NA
-    }
-    ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE, display_plots = display_plots)
-    cat("\n The weights used in model averaging are:\n")
-    print(ans.all$MA$Vweight)
-    date.0 <- date()
-    cat("\nStart of MA bootstrap runs ...\n")
-    ans.all.bt <- ans.all
-    ans.all.bt$output <- FALSE
-    if (dtype %in% c(2, 4, 6)) {
-        yy.true <- ans.all$MA$yy.ma
-        ans.all.bt$x <- ans.all$MA$xx.ma
-        ans.all.bt$nn <- ans.all$MA$nn.ma
-        ans.all.bt$covariate <- ans.all$MA$covar.ma
-    }
-    if (cont) {
-        ans.all.bt$xx.ma <- ans.all$MA$xx.ma
-        ans.all.bt$yy.ma <- ans.all$MA$yy.ma
-        ans.all.bt$nn.ma <- as.numeric(ans.all$MA$nn.ma)
-        ans.all.bt$covar.ma <- ans.all$MA$covar.ma
-        if (dtype %in% c(1, 10, 25, 26, 250, 260)) 
-            ans.all.bt$sigma.ma <- ans.all$MA$sigma.ma
-        if (dtype %in% c(5, 15)) {
-            ans.all.bt$inter.sigma.ma <- ans.all$MA$inter.sigma.ma
-            ans.all.bt$intra.sigma.ma <- ans.all$MA$intra.sigma.ma
+  
+  if (ans.all$seed.bt != 0) {
+    # set.seed(ans.all$seed.bt) # Replace with_seed
+    withr::with_seed(
+        ans.all$seed.bt, {
+          with(ans.all, {
+            nr.gr <- max(ans.all$covariate)
+                if (dtype != 2) {
+                    dum.contr <- xy.lim[1] / 10
+                    xline <- exp(seq(
+                        from = logb(2 * dum.contr),
+                        to = logb(xy.lim[3]), length = 1000
+                    ))
+                    name.wapp <- paste("c", yans, "ma.plot", sep = "")
+                    if (display_plots && !knitting) {
+                        f.graph.window(
+                            1,
+                            WAPP = WAPP,
+                            title = "bootstrap curves based on model averaging",
+                            name.wapp = name.wapp,
+                            plotprefix = ans.all$plotprefix,
+                            svg.plots = svg.plots,
+                            output = output, filename = filename,
+                            output_type = output_type)
+                    }
+                    if (!cont)
+                        ans.all$xy.lim[4:5] <- c(0, 1)
+                    ans.all$xy.lim[1] <- dum.contr
+                    ans.all$heading <- ""
+                    if (covar.no == 0) 
+                        ans.all$color <- ans.all$color[-1]
+                    if (!cont) 
+                        f.plot.frq(ans.all)
+                    if (cont) {
+                        ans.all$fct2 <- covariate
+                        ans.all$plt.mns <- 3
+                        ans.all$heading <- ""
+                        ans.all$y.min <- f.plot.con(ans.all, display_plots = display_plots)$y.lim.plt[1]
+                    }
+                    if (display_plots) {
+                        title(main = "bootstrap curves \nbased on model averaging", 
+                        cex.main = 1)
+                    }
+                } else {
+                    xline <- NA
+                }
+                ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE, display_plots = display_plots)
+                cat("\n The weights used in model averaging are:\n")
+                print(ans.all$MA$Vweight)
+                date.0 <- date()
+                cat("\nStart of MA bootstrap runs ...\n")
+                ans.all.bt <- ans.all
+                ans.all.bt$output <- FALSE
+                if (dtype %in% c(2, 4, 6)) {
+                    yy.true <- ans.all$MA$yy.ma
+                    ans.all.bt$x <- ans.all$MA$xx.ma
+                    ans.all.bt$nn <- ans.all$MA$nn.ma
+                    ans.all.bt$covariate <- ans.all$MA$covar.ma
+                }
+                if (cont) {
+                    ans.all.bt$xx.ma <- ans.all$MA$xx.ma
+                    ans.all.bt$yy.ma <- ans.all$MA$yy.ma
+                    ans.all.bt$nn.ma <- as.numeric(ans.all$MA$nn.ma)
+                    ans.all.bt$covar.ma <- ans.all$MA$covar.ma
+                    if (dtype %in% c(1, 10, 25, 26, 250, 260)) 
+                        ans.all.bt$sigma.ma <- ans.all$MA$sigma.ma
+                    if (dtype %in% c(5, 15)) {
+                        ans.all.bt$inter.sigma.ma <- ans.all$MA$inter.sigma.ma
+                        ans.all.bt$intra.sigma.ma <- ans.all$MA$intra.sigma.ma
+                    }
+                    ans.all.bt <- f.prepare.boot(ans.all.bt)
+                }
+                ans.all.bt$gui <- TRUE
+                ans.all.bt$no.CI <- TRUE
+                ans.all.bt$full.ans <- 2
+                Vced.ma <- numeric()
+                ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
+                if (!WAPP && output) 
+                    cat("run ")
+                for (ii in (1:nr.boot.ma)) {
+                    if (!WAPP && output) 
+                        cat(" ", ii)
+                    else cat("run", ii, "\n")
+                    if (efsa.tool)
+                        shiny::incProgress(1/nr.boot.ma, detail = paste("bootstrap", 
+                        ii, "out of", nr.boot.ma))
+                    ans.all.bt$dtype <- ans.all$dtype
+                    if (!cont) {
+                        yy.true.tmp <- yy.true
+                        if (dtype == 6) {
+                        beta <- (alfa.mle * (1 - yy.true))/yy.true
+                        yy.true.tmp <- rbeta(length(x), alfa.mle, beta)
+                        }
+                        ans.all.bt$kk <- rbinom(length(x), ans.all$MA$nn, 
+                        yy.true.tmp)
+                        ans.all.bt$y <- ans.all.bt$kk/ans.all$MA$nn
+                    }
+                    if (cont) {
+                        ans.all.bt$y <- f.gener.con(ans.all.bt)
+                        ans.all.bt$yy <- ans.all.bt$y
+                    }
+                    if (dtype == 2)
+                        ans.all.bt$y <- ans.all.bt$kk
+                    if (cont)
+                        if (any(c(!ans.all$EXP$trend, !ans.all$HILL$trend, 
+                        !ans.all$INVEXP$trend, !ans.all$LOG$trend))) 
+                        ans.all.bt$quick.ans <- 4
+                    if (!cont)
+                        ans.all.bt <- f.select.cat(ans.all.bt, output = FALSE, interactive_mode = interactive_mode)
+                    if (cont) {
+                        ans.all.bt$fct4 <- rep(1, length(ans.all.bt$x))
+                        ans.all.bt$dtype <- 1
+                        ans.all.bt$dtype.0 <- 1
+                        ans.all.bt$output <- FALSE
+                        ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
+                    }
+                    Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
+                    ced.ma.matr[ii, ] <- Vced.ma
+                }
+                Vlower.ma <- numeric()
+                Vupper.ma <- numeric()
+                for (jj in 1:nr.gr) {
+                    Vlower.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
+                        (1 - conf.lev)/2, na.rm = TRUE), 3)
+                    Vupper.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
+                        (1 + conf.lev)/2, na.rm = TRUE), 3)
+                }
+                ans.all$MA$nr.boot.ma <- nr.boot.ma
+                ans.all$MA$Vlower.ma <- Vlower.ma
+                ans.all$MA$Vupper.ma <- Vupper.ma
+                ans.all$MA$conf.lev <- conf.lev
+                ans.all$MA$conf.int.ma <- data.frame(
+                    subgroup = covar.txt, 
+                    BMDlower.ma = Vlower.ma,
+                    BMDupper.ma = Vupper.ma
+                )
+                if (nr.gr == 1) 
+                    ans.all$MA$conf.int.ma <- data.frame(
+                        subgroup = "all", 
+                        BMDlower.ma = Vlower.ma,
+                        BMDupper.ma = Vupper.ma
+                    )
+                ans.all$MA$ced.ma.matr <- ced.ma.matr
+                CI.row.ma <- numeric()
+                for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], Vupper.ma[ii])
+                ans.all$MA$CI.row.ma <- CI.row.ma
+                if (dtype != 2) {
+                    ans.all$show <- f.show.ma(ans.all)
+                    ans.all$output <- FALSE
+                    f.mtext(ans.all, display_plots = display_plots)
+                    ans.all$output <- TRUE
+                }
+                if (!ans.all$gui) {
+                    cat("\n\nduration of bootstrap calculations:\n")
+                    print(date.0)
+                    print(date())
+                }
+                if (any(is.na(ced.ma.matr))) 
+                    cat("\n\nATTENTION: \n There are NAs in the vector of bootstrap CEDs, this indicates a problem in interpolation\n\n")
+                if (WAPP) 
+                    dev.off()
+                return(ans.all)
+          })
         }
-        ans.all.bt <- f.prepare.boot(ans.all.bt)
-    }
-    ans.all.bt$gui <- TRUE
-    ans.all.bt$no.CI <- TRUE
-    ans.all.bt$full.ans <- 2
-    Vced.ma <- numeric()
-    ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
-    if (!WAPP && output) 
-        cat("run ")
-    for (ii in (1:nr.boot.ma)) {
-        if (!WAPP && output) 
-            cat(" ", ii)
-        else cat("run", ii, "\n")
-        if (efsa.tool) 
-            shiny::incProgress(1/nr.boot.ma, detail = paste("bootstrap", 
-              ii, "out of", nr.boot.ma))
-        ans.all.bt$dtype <- ans.all$dtype
-        if (!cont) {
-            yy.true.tmp <- yy.true
-            if (dtype == 6) {
-              beta <- (alfa.mle * (1 - yy.true))/yy.true
-              yy.true.tmp <- rbeta(length(x), alfa.mle, beta)
+    )
+  } else {  
+    with(ans.all, {
+        nr.gr <- max(ans.all$covariate)
+        if (dtype != 2) {
+            dum.contr <- xy.lim[1] / 10
+            xline <- exp(seq(
+                from = logb(2 * dum.contr),
+                to = logb(xy.lim[3]), length = 1000
+            ))
+            name.wapp <- paste("c", yans, "ma.plot", sep = "")
+            if (display_plots && !knitting) {
+                f.graph.window(
+                    1,
+                    WAPP = WAPP,
+                    title = "bootstrap curves based on model averaging",
+                    name.wapp = name.wapp,
+                    plotprefix = ans.all$plotprefix,
+                    svg.plots = svg.plots,
+                    output = output, filename = filename,
+                    output_type = output_type)
             }
-            ans.all.bt$kk <- rbinom(length(x), ans.all$MA$nn, 
-              yy.true.tmp)
-            ans.all.bt$y <- ans.all.bt$kk/ans.all$MA$nn
+            if (!cont)
+                ans.all$xy.lim[4:5] <- c(0, 1)
+            ans.all$xy.lim[1] <- dum.contr
+            ans.all$heading <- ""
+            if (covar.no == 0) 
+                ans.all$color <- ans.all$color[-1]
+            if (!cont) 
+                f.plot.frq(ans.all)
+            if (cont) {
+                ans.all$fct2 <- covariate
+                ans.all$plt.mns <- 3
+                ans.all$heading <- ""
+                ans.all$y.min <- f.plot.con(ans.all, display_plots = display_plots)$y.lim.plt[1]
+            }
+            if (display_plots) {
+                title(main = "bootstrap curves \nbased on model averaging", 
+                      cex.main = 1)
+            }
+        } else {
+           xline <- NA
+        }
+        ans.all$MA <- f.ced.ma(ans.all, xline = xline, first.call = TRUE, display_plots = display_plots)
+        cat("\n The weights used in model averaging are:\n")
+        print(ans.all$MA$Vweight)
+        date.0 <- date()
+        cat("\nStart of MA bootstrap runs ...\n")
+        ans.all.bt <- ans.all
+        ans.all.bt$output <- FALSE
+        if (dtype %in% c(2, 4, 6)) {
+            yy.true <- ans.all$MA$yy.ma
+            ans.all.bt$x <- ans.all$MA$xx.ma
+            ans.all.bt$nn <- ans.all$MA$nn.ma
+            ans.all.bt$covariate <- ans.all$MA$covar.ma
         }
         if (cont) {
-            ans.all.bt$y <- f.gener.con(ans.all.bt)
-            ans.all.bt$yy <- ans.all.bt$y
+            ans.all.bt$xx.ma <- ans.all$MA$xx.ma
+            ans.all.bt$yy.ma <- ans.all$MA$yy.ma
+            ans.all.bt$nn.ma <- as.numeric(ans.all$MA$nn.ma)
+            ans.all.bt$covar.ma <- ans.all$MA$covar.ma
+            if (dtype %in% c(1, 10, 25, 26, 250, 260)) 
+                ans.all.bt$sigma.ma <- ans.all$MA$sigma.ma
+            if (dtype %in% c(5, 15)) {
+                ans.all.bt$inter.sigma.ma <- ans.all$MA$inter.sigma.ma
+                ans.all.bt$intra.sigma.ma <- ans.all$MA$intra.sigma.ma
+            }
+            ans.all.bt <- f.prepare.boot(ans.all.bt)
         }
-        if (dtype == 2) 
-            ans.all.bt$y <- ans.all.bt$kk
-        if (cont) 
-            if (any(c(!ans.all$EXP$trend, !ans.all$HILL$trend, 
-              !ans.all$INVEXP$trend, !ans.all$LOG$trend))) 
-              ans.all.bt$quick.ans <- 4
-        if (!cont) 
-            ans.all.bt <- f.select.cat(ans.all.bt, output = FALSE, interactive_mode = interactive_mode)
-        if (cont) {
-            ans.all.bt$fct4 <- rep(1, length(ans.all.bt$x))
-            ans.all.bt$dtype <- 1
-            ans.all.bt$dtype.0 <- 1
-            ans.all.bt$output <- FALSE
-            ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
+        ans.all.bt$gui <- TRUE
+        ans.all.bt$no.CI <- TRUE
+        ans.all.bt$full.ans <- 2
+        Vced.ma <- numeric()
+        ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
+        if (!WAPP && output) 
+            cat("run ")
+        for (ii in (1:nr.boot.ma)) {
+            if (!WAPP && output) 
+                cat(" ", ii)
+            else cat("run", ii, "\n")
+            if (efsa.tool) 
+                shiny::incProgress(1/nr.boot.ma, detail = paste("bootstrap", 
+                ii, "out of", nr.boot.ma))
+            ans.all.bt$dtype <- ans.all$dtype
+            if (!cont) {
+                yy.true.tmp <- yy.true
+                if (dtype == 6) {
+                    beta <- (alfa.mle * (1 - yy.true))/yy.true
+                    yy.true.tmp <- rbeta(length(x), alfa.mle, beta)
+                }
+                ans.all.bt$kk <- rbinom(length(x), ans.all$MA$nn, 
+                yy.true.tmp)
+                ans.all.bt$y <- ans.all.bt$kk/ans.all$MA$nn
+            }
+            if (cont) {
+                ans.all.bt$y <- f.gener.con(ans.all.bt)
+                ans.all.bt$yy <- ans.all.bt$y
+            }
+            if (dtype == 2) 
+                ans.all.bt$y <- ans.all.bt$kk
+            if (cont) 
+                if (any(c(!ans.all$EXP$trend, !ans.all$HILL$trend,!ans.all$INVEXP$trend, !ans.all$LOG$trend))) 
+                    ans.all.bt$quick.ans <- 4
+            if (!cont) 
+                ans.all.bt <- f.select.cat(ans.all.bt, output = FALSE, interactive_mode = interactive_mode)
+            if (cont) {
+                ans.all.bt$fct4 <- rep(1, length(ans.all.bt$x))
+                ans.all.bt$dtype <- 1
+                ans.all.bt$dtype.0 <- 1
+                ans.all.bt$output <- FALSE
+                ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
+            }
+            Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
+            ced.ma.matr[ii, ] <- Vced.ma
         }
-        Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
-        ced.ma.matr[ii, ] <- Vced.ma
-    }
-    Vlower.ma <- numeric()
-    Vupper.ma <- numeric()
-    for (jj in 1:nr.gr) {
-        Vlower.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
-            (1 - conf.lev)/2, na.rm = TRUE), 3)
-        Vupper.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
-            (1 + conf.lev)/2, na.rm = TRUE), 3)
-    }
-    ans.all$MA$nr.boot.ma <- nr.boot.ma
-    ans.all$MA$Vlower.ma <- Vlower.ma
-    ans.all$MA$Vupper.ma <- Vupper.ma
-    ans.all$MA$conf.lev <- conf.lev
-    ans.all$MA$conf.int.ma <- data.frame(subgroup = covar.txt, 
-        BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
-    if (nr.gr == 1) 
-        ans.all$MA$conf.int.ma <- data.frame(subgroup = "all", 
-            BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
-    ans.all$MA$ced.ma.matr <- ced.ma.matr
-    CI.row.ma <- numeric()
-    for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], 
-        Vupper.ma[ii])
-    ans.all$MA$CI.row.ma <- CI.row.ma
-    if (dtype != 2) {
-        ans.all$show <- f.show.ma(ans.all)
-        ans.all$output <- FALSE
-        f.mtext(ans.all, display_plots = display_plots)
-        ans.all$output <- TRUE
-    }
-    if (!ans.all$gui) {
-        cat("\n\nduration of bootstrap calculations:\n")
-        print(date.0)
-        print(date())
-    }
-    if (any(is.na(ced.ma.matr))) 
-        cat("\n\nATTENTION: \n        There are NAs in the vector of bootstrap CEDs, this indicates a problem in interpolation\n\n")
-    if (WAPP) 
-        dev.off()
-    return(ans.all)
-  })
+        Vlower.ma <- numeric()
+        Vupper.ma <- numeric()
+        for (jj in 1:nr.gr) {
+            Vlower.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
+                (1 - conf.lev)/2, na.rm = TRUE), 3)
+            Vupper.ma[jj] <- signif(quantile(ced.ma.matr[, jj], 
+                (1 + conf.lev)/2, na.rm = TRUE), 3)
+        }
+        ans.all$MA$nr.boot.ma <- nr.boot.ma
+        ans.all$MA$Vlower.ma <- Vlower.ma
+        ans.all$MA$Vupper.ma <- Vupper.ma
+        ans.all$MA$conf.lev <- conf.lev
+        ans.all$MA$conf.int.ma <- data.frame(subgroup = covar.txt, BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
+        if (nr.gr == 1) 
+            ans.all$MA$conf.int.ma <- data.frame(subgroup = "all", BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
+        ans.all$MA$ced.ma.matr <- ced.ma.matr
+        CI.row.ma <- numeric()
+        for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], Vupper.ma[ii])
+        ans.all$MA$CI.row.ma <- CI.row.ma
+        if (dtype != 2) {
+            ans.all$show <- f.show.ma(ans.all)
+            ans.all$output <- FALSE
+            f.mtext(ans.all, display_plots = display_plots)
+            ans.all$output <- TRUE
+        }
+        if (!ans.all$gui) {
+            cat("\n\nduration of bootstrap calculations:\n")
+            print(date.0)
+            print(date())
+        }
+        if (any(is.na(ced.ma.matr))) 
+            cat("\n\nATTENTION: \n There are NAs in the vector of bootstrap CEDs, this indicates a problem in interpolation\n\n")
+        if (WAPP) 
+            dev.off()
+        return(ans.all)
+    })
+  }
 }
 
 
@@ -9647,7 +9801,7 @@ f.quick.con <- function(ans.all,
         }
         else covar.txt <- character(1)
         CED.matr <- matrix(NA, ncol = (2 * length(covar.txt)))
-        dimn.col = character()
+        dimn.col <- character()
         for (ii in 1:length(covar.txt)) dimn.col <- c(dimn.col, 
             paste("BMDL", covar.txt[ii], sep = "-"), paste("BMDU", 
                 covar.txt[ii], sep = "-"))
@@ -10581,15 +10735,15 @@ f.expect.con <- function(model.ans, x, regr.par = 0, fct1 = 1, fct2 = 1, fct3 = 
             lab.min <- regr.par[3]
             lab.plus <- regr.par[4]
             qk <- regr.par[5]
-            dum = (D/V)/(lab.min - lab.plus)
-            y.expect = dum * ((lab.min + qk) * exp(lab.plus * 
+            dum <- (D/V)/(lab.min - lab.plus)
+            y.expect <- dum * ((lab.min + qk) * exp(lab.plus * 
                 x) - (lab.plus + qk) * exp(lab.min * x))
         }, {
             cc <- aa0
             k1 <- bb0
             ke <- dd0
-            dum = cc * k1/(k1 - ke)
-            y.expect = dum * (exp(-ke * x) - exp(-k1 * x))
+            dum <- cc * k1/(k1 - ke)
+            y.expect <- dum * (exp(-ke * x) - exp(-k1 * x))
         })
     if (exists("track2")) 
         print("f.expect.con:  END")
@@ -13034,8 +13188,8 @@ f.profile.all <- function(ans.all, nolog = FALSE, debug = FALSE, display_plots =
                   y.upp <- max(spline.low$y, spline.upp$y)
                   y.lim <- c(min(y.low, loglik.max - crit), y.upp)
                   if (nolog) 
-                    x.lab = text.par[jj]
-                  else x.lab = paste("log10(", text.par[jj], 
+                    x.lab <- text.par[jj]
+                  else x.lab <- paste("log10(", text.par[jj], 
                     ")")
                   plot(CED.vec, loglik.vec, xlab = x.lab, ylim = y.lim, 
                     ylab = "log(likelihood)", col = 1, pch = 16)
@@ -14998,5 +15152,4 @@ f.choose.model <- function(
     return(ans.all)
   })
 }
-
 

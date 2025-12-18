@@ -91,7 +91,7 @@ Recommended: 'set of models'.}
 
 \item{detection_limit}{Non-interactive mode parameter. The detection limit to use when add_nonzero_val_to_dat = FALSE. If NULL, the minimum non-zero value in the data will be used. This paramater accepts a numeric value, which will be applied to all response values, or a column name in the data, which will be used to apply different detection limits to different observations.}
 
-\item{seed}{Integer. Random seed for reproducibility. Defaults to 125.}
+\item{seed}{Integer. Random seed for reproducibility. Defaults to 125. Use 0 to get a random seed each time.}
 }
 \value{
 Results from PROAST.

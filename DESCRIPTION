@@ -1,6 +1,6 @@
 Package: MutSeqR
 Title: Analysis of Error-Corrected Sequencing Data for Mutation Detection
-Version: 0.99.7
+Version: 0.99.8
 Date: 2025-12-09
 Authors@R: c(
     person("Annette E.", "Dodge",
@@ -43,7 +43,7 @@ Description: Standard methods for analysis of mutation data following error-
     signatures; etc.
 License: MIT + file LICENSE
 Depends:
-    R (>= 4.6.0)
+    R (>= 4.5.0)
 biocViews: Sequencing, SomaticMutation, Visualization, GenomicVariation, DriverMutation, StatisticalMethod, GeneTarget
 Imports:
     BiocGenerics,
@@ -99,6 +99,7 @@ Suggests:
     shiny,
     testthat (>= 3.0.0),
     trackViewer,
+    withr,
     yaml,
     xml2
 VignetteBuilder: knitr

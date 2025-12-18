@@ -37,7 +37,8 @@
 #' If NULL, the plots will automatically be displayed to the graphics
 #' window and then returned as a list alongside the bmd results.
 #' @param seed An integer value to set the random seed for reproducibility
-#' when using model averaging. Default is 125.
+#' when using model averaging. Default is 125. Use 0 for a random seed each
+#' time.
 #' @return A summmary data frame of final results. If plots or raw results
 #' are selected, all data will be returned within a list.
 #'
@@ -186,6 +187,12 @@ bmd_proast <- function(
     output_path = NULL,
     raw_results = FALSE,
     seed = 125) {
+
+    if(seed != 0 && !requireNamespace("withr", quietly = TRUE)) {
+      stop("Package \"withr\" needed for this function to use a seed.",
+           call. = FALSE)
+    }
+
     stopifnot(
         "dose_col must be a column in mf_data" =
             dose_col %in% colnames(mf_data),
