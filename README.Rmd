@@ -14,15 +14,7 @@ encoding: UTF-8
 
 > [!IMPORTANT]
 
-> This version of MutSeqR is built for Bioconductor version Development (v3.23) and R v4.6.0. This is the first Bioconductor release. For older versions of R, please refer to the [working_version](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version) on GitHub.
-
-## Important Notice
-
-This branch is designed to be compatible with Bioconductor. For full package utility, please install the devel version of bioconductor packages:
-
-```{r}
-BiocManager::install(version='devel', force = TRUE)
-```
+> This version of MutSeqR is built for Bioconductor version Development (v3.23) and R v4.6.0. This is the first Bioconductor release. If you cannot install the Development version, or are using an older version of R, please use the [working_version](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version) branch on GitHub.
 
 ## Overview
 
