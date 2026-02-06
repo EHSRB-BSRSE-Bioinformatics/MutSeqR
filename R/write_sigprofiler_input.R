@@ -19,22 +19,32 @@
 #' `filter_mut` will be excluded from the output.
 #' @importFrom dplyr rename filter select mutate relocate
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#' library(ExperimentHub)
-#' eh <- ExperimentHub()
-#' example_data <- eh[["EH9861"]]
-#'
-#' temp_output <- tempdir()
-#' write_mutation_calling_file(mutation_data = example_data,
-#'                             project_name = "Example",
-#'                             project_genome = "GRCm38",
-#'                             output_path = temp_output)
-#' list.files(temp_output)
-#' # The file is saved in the temporary directory
-#' # To view the file, use the following code:
-#' ## output_file <- file.path(temp_output, "mutation_calling_file.txt")
-#' ## file.show(output_file
-#' }
+#' # Example data  consists of 24 mouse bone marrow
+#' # samples exposed to three doses of BaP alongside vehicle controls.
+#' # Libraries were sequenced with Duplex Sequencing using
+#' # the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+#' # targets = 48kb of sequence. Example data can be retrieved from
+#' # MutSeqRData, an ExperimentHub data package:
+#' ## library(ExperimentHub)
+#' ## eh <- ExperimentHub()
+#' ## query(eh, "MutSeqRData")
+#' # The data is a subset of variants from the target chr1
+#' # from samples of the high dose group (50mg).
+#' example_data <- readRDS(system.file("extdata", "Example_files",
+#'                                     "variants_subset_d50_chr1.rds",
+#'                                      package = "MutSeqR")
+#' )
+#'  write_mutation_calling_file(
+#'     mutation_data = example_data,
+#'     project_name = "Example",
+#'     project_genome = "GRCm38",
+#'     output_path = tempdir()
+#'   )
+#'   list.files(tempdir())
+#'   # The file is saved in the temporary directory
+#'   # To view the file, use the following code:
+#'   ## output_file <- file.path(tempdir(), "mutation_calling_file.txt")
+#'   ## file.show(output_file)
 #' @importFrom dplyr rename filter select mutate relocate
 #' @importFrom here here
 #' @importFrom utils write.table
@@ -44,7 +54,6 @@ write_mutation_calling_file <- function(mutation_data,
                                         project_name = "Example",
                                         project_genome = "GRCm38",
                                         output_path = NULL) {
-
   # Check if data is provided as GRanges: if so, convert to data frame.
   if (inherits(mutation_data, "GRanges")) {
     mutation_data <- as.data.frame(mutation_data)
@@ -61,11 +70,14 @@ write_mutation_calling_file <- function(mutation_data,
 
   if ("id" %in% colnames(signature_data)) {
     signature_data <- signature_data %>%
-      dplyr::select("sample", "id",
-                    "variation_type",
-                    "contig", "start",
-                    "end", "ref", "alt") %>%
-      dplyr::rename("Sample" = "sample",
+      dplyr::select(
+        "sample", "id",
+        "variation_type",
+        "contig", "start",
+        "end", "ref", "alt"
+      ) %>%
+      dplyr::rename(
+        "Sample" = "sample",
         "ID" = "id",
         "mut_type" = "variation_type",
         "chrom" = "contig",
@@ -81,8 +93,10 @@ write_mutation_calling_file <- function(mutation_data,
       dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
   } else {
     signature_data <- signature_data %>%
-      dplyr::select("sample", "variation_type", "contig",
-                    "start", "end", "ref", "alt") %>%
+      dplyr::select(
+        "sample", "variation_type", "contig",
+        "start", "end", "ref", "alt"
+      ) %>%
       dplyr::rename(
         "Sample" = "sample",
         "mut_type" = "variation_type",
@@ -142,23 +156,35 @@ write_mutation_calling_file <- function(mutation_data,
 #' `filter_mut` will be excluded from the output. Mutations will be summed
 #' across the groups specified in the `group` argument.
 #' @examples
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'  library(ExperimentHub)
-#'  eh <- ExperimentHub()
-#'  example_data <- eh[["EH9861"]]
-#'  temp_output <- tempdir()
-#' 
-#'  write_mutational_matrix(mutation_data = example_data,
-#'                          group = "dose_group",
-#'                          subtype_resolution = "base_96",
-#'                          mf_type = "min",
-#'                          output_path = temp_output)
-#'  list.files(temp_output)
-#'  # The file is saved in the temporary directory
-#'  # To view the file, use the following code:
-#'  ## output_file <- file.path(temp_output, "dose_group_base_96_mutational_matrix.txt")
-#'  ## file.show(output_file)
-#' }
+
+#' # Example data  consists of 24 mouse bone marrow
+#' # samples exposed to three doses of BaP alongside vehicle controls.
+#' # Libraries were sequenced with Duplex Sequencing using
+#' # the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+#' # targets = 48kb of sequence. Example data can be retrieved from
+#' # MutSeqRData, an ExperimentHub data package:
+#' ## library(ExperimentHub)
+#' ## eh <- ExperimentHub()
+#' ## query(eh, "MutSeqRData")
+#' # The data is a subset of variants from the target chr1
+#' # from samples of the high dose group (50mg).
+#' example_data <- readRDS(system.file("extdata", "Example_files",
+#'                                     "variants_subset_d50_chr1.rds",
+#'                                      package = "MutSeqR")
+#' )
+#'
+#'   write_mutational_matrix(
+#'     mutation_data = example_data,
+#'     group = "sample",
+#'     subtype_resolution = "base_96",
+#'     mf_type = "min",
+#'     output_path = tempdir()
+#'   )
+#'   list.files(tempdir())
+#'   # The file is saved in the temporary directory
+#'   # To view the file, use the following code:
+#'   ## output_file <- file.path(tempdir(), "sample_base_96_mutational_matrix.txt")
+#'   ## file.show(output_file)
 #' @importFrom stats reshape
 #' @importFrom dplyr rename filter group_by mutate ungroup select distinct
 #' @importFrom here here
@@ -168,18 +194,22 @@ write_mutational_matrix <- function(mutation_data,
                                     subtype_resolution = "base_96",
                                     mf_type = "min",
                                     output_path = NULL) {
+                                        
+    mf_type <- match.arg(mf_type, choices = c("min", "max"))
 
   if (!subtype_resolution %in% c("base_6", "base_96")) {
     stop("The subtype_resolution argument must be either 'base_6' or 'base_96'")
   }
-  mut_matrix <- suppressWarnings(calculate_mf(mutation_data,
-                                              cols_to_group = group,
-                                              subtype_resolution = subtype_resolution,
-                                              variant_types = "snv",
-                                              calculate_depth = FALSE,
-                                              precalc_depth_data = NULL))
+  mut_matrix <- calculate_mf(mutation_data,
+    cols_to_group = group,
+    subtype_resolution = subtype_resolution,
+    variant_types = "snv",
+    calculate_depth = FALSE,
+    precalc_depth_data = NULL
+  )
   mut_matrix <- mut_matrix %>%
-    dplyr::rename(mut_count = paste0("sum_", mf_type),
+    dplyr::rename(
+      mut_count = paste0("sum_", mf_type),
       MutationType = MutSeqR::subtype_dict[[subtype_resolution]]
     ) %>%
     dplyr::rowwise() %>%
@@ -188,12 +218,14 @@ write_mutational_matrix <- function(mutation_data,
     dplyr::select("MutationType", "Group", "mut_count")
 
   mut_matrix_wide <- tidyr::pivot_wider(mut_matrix,
-                                        names_from = .data$Group,
-                                        values_from = .data$mut_count)
-  
+    names_from = .data$Group,
+    values_from = .data$mut_count
+  )
+
   colnames(mut_matrix_wide) <- ifelse(colnames(mut_matrix_wide) == "MutationType",
-                                      "MutationType",
-                                      paste0("Group_", colnames(mut_matrix_wide)))
+    "MutationType",
+    paste0("Group_", colnames(mut_matrix_wide))
+  )
   if (is.null(output_path)) {
     output_path <- file.path(
       here::here(),

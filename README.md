@@ -1,3 +1,8 @@
+---
+output: github_document
+encoding: UTF-8
+---
+
 # MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" style="float:right; height:200px;" alt="The MutSeqR logo."></a>
 
 <!-- badges: start -->
@@ -8,11 +13,25 @@
 <!-- badges: end -->
 
 > [!IMPORTANT]
-> MutSeqR is currently under review for Bioconductor. The most recent changes can be found in the devel branch. To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
+> To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
+> See "working_version" branch if you cannot install the devel verison of Bioconductor
 
 
 ``` r
 BiocManager::install(version='devel', force = TRUE)
+```
+
+## Important Notice
+
+This branch is designed to be compatible with Bioconductor. For full package utility, please install the devel version of bioconductor packages:
+
+
+``` r
+BiocManager::install(version='devel', force = TRUE)
+```
+
+```
+## Error in loadNamespace(x): there is no package called 'BiocManager'
 ```
 
 ## Overview
@@ -54,8 +73,7 @@ BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 
 Load the package
 
-
-``` r
+```r
 library(MutSeqR)
 ```
 
@@ -87,4 +105,11 @@ If you encounter a clear bug, please file an issue with a minimal reproducible e
 
 To cite this package in publications use:
 
-Dodge A, Williams A, LeBlanc D, Schuster D, Esina E, Valentine C, Salk J, Maslov A, Bradley C, Yauk C, Marchetti F, Meier M (2025). MutSeqR: Analysis of Error-Corrected Sequencing Data for Mutation Detection. R package version 0.99.2. <https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR>.
+
+```
+## Error in citation("MutSeqR"): there is no package called 'MutSeqR'
+```
+
+```
+## Error: object 'cit' not found
+```

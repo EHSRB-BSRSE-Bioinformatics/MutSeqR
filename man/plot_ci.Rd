@@ -49,11 +49,13 @@ Plot confidence intervals
 }
 \examples{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-# Plot results from PROAST
-dat <- data.frame(Response = c("PROAST MF Min", "PROAST MF Max"),
-                  BMD = c(NA, NA),
-                  BMDL = c(7.38, 2.98),
-                  BMDU = c(10.9, 7.68))
-plot <- plot_ci(dat)
+  # Plot results from PROAST
+  dat <- data.frame(
+    Response = c("PROAST MF Min", "PROAST MF Max"),
+    BMD = c(NA, NA),
+    BMDL = c(7.38, 2.98),
+    BMDU = c(10.9, 7.68)
+  )
+  plot <- plot_ci(dat)
 }
 }

@@ -2,26 +2,19 @@
 % Please edit documentation in R/write_nice_excel.R
 \name{write_excel}
 \alias{write_excel}
-\title{Write Excel tables}
+\title{Write results to Excel tables}
 \usage{
 write_excel(data, output_path = NULL, workbook_name, model_results = FALSE)
 }
 \arguments{
-\item{data}{A data frame or a list of data frames. If a data frame,
-it will be written to a single sheet in the Excel workbook. If a list, each
-data frame will be written to a separate sheet in the Excel workbook.
-Data may also be the output to model_mf, in which case set
-\code{model_results = TRUE}.}
+\item{data}{A data frame, a list of data frames, or model_mf output.}
 
-\item{output_path}{The directory where the Excel file should be written.
-Default is NULL, which will write the file to the current working directory.}
+\item{output_path}{Directory to write to. Defaults to current working
+directory.}
 
-\item{workbook_name}{The file name for the Excel file.}
+\item{workbook_name}{Filename (without extension).}
 
-\item{model_results}{A logical value indicating whether the data is the
-output of model_mf. Default is FALSE. If TRUE, the function will grab the
-model_data, point_estimates, and pairwise_comparisons data frames from the
-model_mf output and write them to separate sheets in the Excel workbook.}
+\item{model_results}{Logical. Set to TRUE if data is output from model_mf.}
 }
 \value{
 A saved Excel workbook.
@@ -30,44 +23,31 @@ A saved Excel workbook.
 Writes data to an Excel file.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-\dontrun{
 # Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut as in Example 4.
-# Sequenced on TS Mouse Mutagenesis Panel. Example data is
-# retrieved from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
-
-mf1 <- calculate_mf(example_data,
-                    cols_to_group = "sample",
-                    subtype_resolution = "none",
-                    retain_metadata_cols = "dose")
-mf2 <- calculate_mf(example_data,
-                    cols_to_group = c("sample", "label"),
-                    subtype_resolution = "none")
-mf3 <- calculate_mf(example_data,
-                    cols_to_group = "dose",
-                    subtype_resolution = "base_6",
-                    variant_types = c("-ambiguous", "-uncategorized"))
-list <- list(mf1, mf2, mf3)
-names(list) <- c("mf1", "mf2", "mf3")
+# using import_mut_data(), filtered with filter_mut, and summarized
+# using calculate_mf().
+outputpath <- tempdir()
+mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+  package = "MutSeqR"
+))
+mf_example2 <- readRDS(system.file("extdata/Example_files/mf_data_6.rds",
+  package = "MutSeqR"
+))
+mf_example3 <- readRDS(
+ system.file("extdata/Example_files/mf_data_6_sample.rds",
+     package = "MutSeqR"
+ )
+)
+list <- list(mf_example, mf_example2, mf_example3)
+names(list) <- c("Global MF", "Base 6 Spectra", "Base 6 Sample Spectra")
 
 # save a single data frame to an Excel file
-write_excel(mf1, output_path, workbook_name = "test_single")
-#save a list of data frames to an Excel file
-write_excel(list, output_path, workbook_name = "test_list")
+write_excel(
+ mf_example,
+ output_path = outputpath,
+ workbook_name = "test_single"
+)
 
-# save model results to an Excel file
-model  <- model_mf(mf1,
-                   fixed_effects = "dose",
-                   reference_level = 0,
-                   contrasts = data.frame(col1 = c(12.5, 25, 50),
-                                          col2 = rep(0,3)))
-write_excel(model,
-            workbook_name = "test_model",
-            model_results = TRUE)
-}
-}
+# save a list of data frames to an Excel file
+write_excel(list, output_path = outputpath, workbook_name = "test_list")
 }

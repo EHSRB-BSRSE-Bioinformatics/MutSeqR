@@ -3,7 +3,7 @@
 \docType{data}
 \name{subtype_dict}
 \alias{subtype_dict}
-\title{Values accepted for mutation subtypes}
+\title{Subtype Resolution Dictionary}
 \format{
 A vector with corresponding values
 }
@@ -11,7 +11,11 @@ A vector with corresponding values
 subtype_dict
 }
 \description{
-These values are used to enable user input to translate to columns in a
-mut file
+Associates the subtype resolution names with their corresponding column
+names in the mutation data.
+}
+\examples{
+subtype_dict["base_96"]
+subtype_dict["type"]
 }
 \keyword{datasets}

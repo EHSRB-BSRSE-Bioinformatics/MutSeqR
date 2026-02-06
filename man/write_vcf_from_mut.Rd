@@ -23,17 +23,21 @@ Writes a VCF file of mutations "mutation_output.vcf".
 Export your mutation_data to a VCF file for downstream applications.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-\dontrun{
-# Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut as in Example 4.
-# Sequenced on TS Mouse Mutagenesis Panel. Example data is
-# retrieved from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
-
-write_vcf_from_mut(example_data)
-}
-}
+# Example data  consists of 24 mouse bone marrow
+# samples exposed to three doses of BaP alongside vehicle controls.
+# Libraries were sequenced with Duplex Sequencing using
+# the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+# targets = 48kb of sequence. Example data can be retrieved from
+# MutSeqRData, an ExperimentHub data package:
+## library(ExperimentHub)
+## eh <- ExperimentHub()
+## query(eh, "MutSeqRData")
+# The data is a subset of variants from the target chr1
+# from samples of the high dose group (50mg).
+example_data <- readRDS(system.file("extdata", "Example_files",
+                                    "variants_subset_d50_chr1.rds",
+                                     package = "MutSeqR")
+)
+# Export mutation data of the four samples to a multi-sample VCF file.
+write_vcf_from_mut(mutation_data = example_data, output_path = tempdir())
 }

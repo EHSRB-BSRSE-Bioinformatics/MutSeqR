@@ -15,55 +15,39 @@ navbar:
     articles:
       text: Articles
       menu:
-        - text: Overview of MutSeqR workflow
+        - text: Intro to MutSeqR
           href: articles/MutSeqR_introduction.html
+        - text: Analyzing Mutation Frequencies
+          href: articles/Analyzing_Mutation_Frequencies.html
+        - text: Analyzing Mutation Spectra
+          href: articles/Analyzing_Mutation_Spectra.html
+        - text: General Visualizations
+          href: articles/General_Visualizations.html
 
 news:
   one_page: true
 
 reference:
-  - title: Data Import
-    desc: Functions for importing and preparing mutation and region data.
+  - title: General Usage
+    desc: Functions for importing, filtering, and summarizing mutation data.
     contents:
       - import_mut_data
       - import_vcf_data
-      - load_regions_file
-      - rename_columns
-      - check_required_columns
-
-  - title: Reference Genomes & Context
-    desc: Reference sequence utilities.
-    contents:
-      - install_ref_genome
-      - get_ref_of_mut
-      - get_seq
-      - get_cpg_regions
-      - annotate_cpg_sites
-      - context_list
-      - subtype_dict
-      - subtype_list
-      - denominator_dict
-      - op
-      - reverseComplement
-
-  - title: Mutation Data Handling
-    desc: Wrangling and filtering mutation tables.
-    contents:
-      - classify_variation
       - filter_mut
-      - get_cpg_mutations
-      - setup_mutseqr_python
-
-  - title: Mutation Frequency Analysis
-    desc: Functions to calculate, model, and visualize mutation frequency.
-    contents:
       - calculate_mf
-      - get_binom_ci
-      - model_mf
-      - sidak
+      - load_regions_file
+      - find_BS_genome
+      - classify_variation
+
+  - title: Analyzing Mutation Frequencies
+    desc: Functions to model and visualize mutation frequency.
+    contents:
       - plot_mf
       - plot_mean_mf
+      - model_mf
       - plot_model_mf
+      - sidak
+      - bmd_proast
       - plot_ci
 
   - title: Spectra and Subtypes
@@ -75,19 +59,26 @@ reference:
       - spectra_comparison
       - signature_fitting
       - cluster_spectra
+
+  - title: Visualization Utilities
+    desc: General plotting functions.
+    contents:
+      - plot_bubbles
+      - plot_lollipop
       - plot_radar
 
-  - title: Dose-Response / BMD Modeling
-    desc: Functions for BMD modeling using PROAST.
+  - title: Dictionaries and Indices
+    desc: Predefined dictionaries and utility functions.
     contents:
-      - bmd_proast
-      - f.proast
-      - f.plot.result
-      - f.plot.gui
-      - cleveland_plot
+      - BS_org_map
+      - context_list
+      - subtype_dict
+      - subtype_list
+      - denominator_dict
+      - op
 
   - title: Mutation Output
-    desc: Export functions.
+    desc: Data export functions.
     contents:
       - write_mutation_calling_file
       - write_mutational_matrix
@@ -96,11 +87,27 @@ reference:
       - write_excel
       - render_report
 
-  - title: Visualization Utilities
+  - title: Miscellaneous
     contents:
-      - plot_bubbles
-      - plot_lollipop
+      - annotate_cpg_sites
+      - get_binom_ci
+      - get_cpg_mutations
+      - get_cpg_regions
+      - get_seq
 
-  - title: Internal or Miscellaneous
+  - title: Internal Functions
     contents:
       - print_ascii_art
+      - import_regions_metadata
+      - import_sample_data
+      - populate_sequence_context
+      - rename_columns
+      - check_required_columns
+      - get_ref_of_mut
+      - reverseComplement
+      - characterize_variants
+      - setup_mutseqr_python
+      - f.proast
+      - f.plot.result
+      - f.plot.gui
+      - cleveland_plot

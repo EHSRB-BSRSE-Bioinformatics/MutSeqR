@@ -8,9 +8,10 @@ test_that("model_mf works as expected ", {
   )
 
   # Call the model_mf function on the sample data
-  model_results <- suppressWarnings(model_mf(mf_data = mf_data,
-                                             fixed_effects = "dose",
-                                             reference_level = 25))
+  model_results <- model_mf(mf_data = mf_data,
+    fixed_effects = "dose",
+    reference_level = 25
+  )
 
   # Check if the specified columns are converted to factors
   expect_equal(class(model_results$model_data$dose), "factor",

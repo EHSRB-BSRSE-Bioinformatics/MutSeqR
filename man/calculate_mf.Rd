@@ -66,9 +66,9 @@ For rows with the same sample, contig, and start values, the
 \code{total_depth} will be retained for only one row. All other rows in the
 group will have their \code{total_depth} set to 0. The default is TRUE.}
 
-\item{correct_depth_by_indel_priority}{A logical value. If TRUE, during depth
-correction, should there be different \code{total_depth} values within a
-group of rows with the same sample, contig, and start values, the
+\item{correct_depth_by_indel_priority}{A logical value. If TRUE, during
+depth correction, should there be different \code{total_depth} values within
+a group of rows with the same sample, contig, and start values, the
 \code{total_depth} value for the row with the highest priority
 \code{variation_type} will be retained, while the other rows will have their
 \code{total_depth} set to 0. \code{variation_type} priority order is:
@@ -98,8 +98,8 @@ returned). Setting this to false returns all columns in the original
 mutation_data, which might make plotting more difficult, but may provide
 additional flexibility to power users.}
 
-\item{retain_metadata_cols}{a character vector that contains the names of the
-metadata columns that you would like to retain in the summary table.
+\item{retain_metadata_cols}{a character vector that contains the names of
+the metadata columns that you would like to retain in the summary table.
 This may be useful for plotting your summary data. Ex. retain the "dose"
 column when summarising by "sample".}
 }
@@ -222,107 +222,16 @@ ensure that the total_depth value for the deletion is retained, while the
 total_depth value for the no_variant is removed.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-# Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut as in Example 4.
-# Sequenced on TS Mouse Mutagenesis Panel. Example data is
-# retrieved from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_data <- eh[["EH9861"]]
-
-# Example 1 Calculate mutation frequency by sample.
+# Mutation data is just for example purposes. It does not reflect real data
+mutation_data <- readRDS(system.file("extdata", "Example_files",
+                                     "filtered_simple_mutation_data.rds",
+                                     package = "MutSeqR"))
+# Calculate mutation frequency by sample.
 # Calculate depth from the mutation data (default)
 # Correct the Depth (default) with indel priority (set)
 mf_example <- calculate_mf(
- mutation_data = example_data,
- cols_to_group = "sample",
- correct_depth_by_indel_priority = TRUE
+  mutation_data = mutation_data,
+  cols_to_group = "sample",
+  correct_depth_by_indel_priority = TRUE
 )
-
-
-# Example 2: Calculate the trinucleotide mutation proportions for each dose
-# Calculate and correct depth to indel priority.
-mf_96_example <- calculate_mf(
- mutation_data = example_data,
- cols_to_group = "dose",
- subtype_resolution = "base_96",
- variant_types  = "snv",
- correct_depth_by_indel_priority = TRUE
-)
-
-
-# Example 3: Calculate the mean mutation frequency for each 6 base subtype
-# per dose
-# calculate_mf does not calculate mean mutation frequency for
-# groups; this function only sums mutations across groups. Thus, if you are
-# interested in calculating the mean of a group, this must be done
-# separately.
-# First, calculate 6 base MF per sample. Retain the dose column.
-mf_6_example <- calculate_mf(
- mutation_data = example_data,
- cols_to_group = "sample",
- subtype_resolution = "base_6",
- retain_metadata_cols = "dose",
- correct_depth_by_indel_priority = TRUE
-)
-# Note: our example_data does not contain any ambiguous
-# or uncategorized mutations, so the dose column is NA for all those
-# mutations in the summary table. This will not affect our mean calculation.
-
-# Calculate the mean MF for each 6 base subtype per dose
-mf_6_mean_example <- mf_6_example \%>\%
- dplyr::group_by(dose, normalized_subtype) \%>\%
- dplyr::summarise(mean_mf_min = mean(mf_min),
-                  se_mf_min = sd(mf_min) / sqrt(dplyr::n()),
-                  mean_mf_max = mean(mf_max),
-                  se_mf_max = sd(mf_max) / sqrt(dplyr::n()))
-
-
-# Example 4: Calculate MF using precalculated depth data
-sample_depth_example <- data.frame(
- sample = c(
- "dna00973.1", "dna00974.1", "dna00975.1", "dna00976.1", "dna00977.1",
- "dna00978.1", "dna00979.1", "dna00980.1", "dna00981.1", "dna00982.1",
- "dna00983.1", "dna00984.1", "dna00985.1", "dna00986.1", "dna00987.1",
- "dna00988.1", "dna00989.1", "dna00990.1", "dna00991.1", "dna00992.1",
- "dna00993.1", "dna00994.1", "dna00995.1", "dna00996.1"
- ),
- group_depth = c(
-   565395266, 755574283, 639909215, 675090988, 598104021,
-   611295330, 648531765, 713240735, 669734626, 684951248,
-   716913381, 692323218, 297661400, 172863681, 672259724,
-   740901132, 558051386, 733727643, 703349287, 884821671,
-   743311822, 799605045, 677693752, 701163532
- )
-)
-mf_example_precalc <- calculate_mf(
- mutation_data = example_data,
- cols_to_group = "sample",
- calculate_depth = FALSE,
- precalc_depth_data = sample_depth_example
-)
-
-
-# Example 5: Calculate MF using precalculated depth data for 6 base
-# mutation subtypes per sample.
-# The base_6 resolution uses reference context 'normalized_ref'; C or T.
-# Our precalc_depth_data needs group_depth (depth per sample) and the
-# subtype_depth (depth per sample AND per normalized_ref)
-base_6_precalc_depth <- eh[["EH9862"]]
-
-mf_6_example_precalc <- calculate_mf(
- mutation_data = example_data,
- cols_to_group = "sample",
- subtype_resolution = "base_6",
- calculate_depth = FALSE,
- precalc_depth_data = base_6_precalc_depth
-)
-#' sample_subtype_depth_example <- eh[["EH9862"]]
-# Examples of the precalculated depth files for base_12, base_96, and
-# base_192 can be retrieved with:
- base_12_precalc_depth <- eh[["EH9863"]]
- base_96_precalc_depth <- eh[["EH9864"]]
- base_192_precalc_depth <- eh[["EH9865"]]
-}
 }

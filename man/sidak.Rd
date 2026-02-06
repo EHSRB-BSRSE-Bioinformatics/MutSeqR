@@ -27,3 +27,8 @@ Wright, S. P. 1992. Adjusted P-values for simultaneous inference.
 Biometrics 48: 1005-1013.
 Pierre Legendre, May 2007
 }
+\examples{
+p_values <- c(0.01, 0.04, 0.03, 0.08, 0.05)
+adjusted_p <- sidak(p_values)
+adjusted_p$SidakP
+}

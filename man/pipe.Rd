@@ -17,4 +17,9 @@ The result of calling \code{rhs(lhs)}.
 \description{
 See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.
 }
+\examples{
+df <- data.frame(x = 1:5, y = rnorm(5))
+df \%>\% dplyr::mutate(z = x + y)
+df \%>\% head(3) \%>\% summary()
+}
 \keyword{internal}

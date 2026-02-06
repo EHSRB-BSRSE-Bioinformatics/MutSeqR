@@ -36,6 +36,9 @@
 #' @param output_path The file path indicating where to save the plots.
 #' If NULL, the plots will automatically be displayed to the graphics
 #' window and then returned as a list alongside the bmd results.
+#' @param seed An integer value to set the random seed for reproducibility
+#' when using model averaging. Default is 125. Use 0 for a random seed each
+#' time.
 #' @return A summmary data frame of final results. If plots or raw results
 #' are selected, all data will be returned within a list.
 #'
@@ -141,60 +144,77 @@
 #' \emph{4 : previous option with lognormal DR model added}
 #' }
 #' @examples
-#' # Calculate the BMD for a 50% increase in mutation frequency from control
-#' # With Model averaging.
-#' # For the purpose of this example, num_bootstraps is set to 5 to reduce
+#' # Example data  consists of 24 mouse bone marrow
+#' # samples exposed to three doses of BaP alongside vehicle controls.
+#' # Libraries were sequenced with Duplex Sequencing using
+#' # the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+#' # targets = 48kb of sequence. Example data can be retrieved from
+#' # MutSeqRData, an ExperimentHub data package:
+#' ## library(ExperimentHub)
+#' ## eh <- ExperimentHub()
+#' ## query(eh, "MutSeqRData")
+#' # Mutation frequency data was precalculated using
+#' ## mf_data_global <- calculate_mf(mutation_data = eh[["EH9861"]],
+#' ##   cols_to_group = "sample",
+#' ##   retain_metadata_cols = c("dose_group", "dose"))
+#' mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
+#'   package = "MutSeqR"
+#' ))
+#' # We will calculate the BMD for a 50% increase in mutation frequency from
+#' # control with Model averaging.
+#' # For the purpose of this example, num_bootstraps is set to 3 to reduce
 #' # run time. 200 bootstraps is recommended.
-#' if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-#'  library(ExperimentHub)
-#'  eh <- ExperimentHub()
-#'  example_data <- eh[["EH9861"]]
-#' 
-#'  mf <- calculate_mf(example_data, retain_metadata_cols = "dose")
-#'  bmd <- bmd_proast(mf_data = mf,
-#'                    dose_col = "dose",
-#'                    response_col = c("mf_min", "mf_max"),
-#'                    bmr = 0.5,
-#'                    model_averaging = TRUE,
-#'                    num_bootstraps = 5)
-#'  # Plot the Model Averaging 90% CI using plot_ci()
-#'  plot_df <- bmd %>%
-#'   dplyr::filter(Model == "Model averaging") %>%
-#'   dplyr::select(Response, BMD, BMDL, BMDU)
-#'  plot <- plot_ci(plot_df, order = "asc", log_scale = FALSE)
-#' }
+#' bmd <- bmd_proast(
+#'   mf_data = mf_example,
+#'   dose_col = "dose",
+#'   response_col = "mf_min",
+#'   bmr = 0.5,
+#'   model_averaging = TRUE,
+#'   num_bootstraps = 3
+#' )
 #' @export
 #' @importFrom dplyr arrange filter mutate pull rename
 bmd_proast <- function(
-  mf_data,
-  dose_col = "dose",
-  response_col = "mf_min",
-  covariate_col = NULL,
-  bmr = 0.5,
-  adjust_bmr_to_group_sd = FALSE,
-  model_averaging = TRUE,
-  num_bootstraps = 200,
-  plot_results = FALSE,
-  output_path = NULL,
-  raw_results = FALSE
-) {
+    mf_data,
+    dose_col = "dose",
+    response_col = "mf_min",
+    covariate_col = NULL,
+    bmr = 0.5,
+    adjust_bmr_to_group_sd = FALSE,
+    model_averaging = TRUE,
+    num_bootstraps = 200,
+    plot_results = FALSE,
+    output_path = NULL,
+    raw_results = FALSE,
+    seed = 125) {
 
-  if (!dose_col %in% colnames(mf_data)) {
-    stop("Dose column not found in mf_data")
-  }
-  if (!any(response_col %in% colnames(mf_data))) {
-    stop("Response column not found in mf_data")
-  }
-  if (!is.null(covariate_col) && !covariate_col %in% colnames(mf_data)) {
-    stop("Covariate column not found in mf_data")
-  }
-  if (model_averaging == TRUE) {
-    message("Model averaging is set to TRUE. This may take some time to run.")
-  }
-  # ensure that dose is numeric
-  if (!is.numeric(mf_data[[dose_col]])) {
-    stop("Dose column must be numeric")
-  }
+    if(seed != 0 && !requireNamespace("withr", quietly = TRUE)) {
+      stop("Package \"withr\" needed for this function to use a seed.",
+           call. = FALSE)
+    }
+
+    stopifnot(
+        "dose_col must be a column in mf_data" =
+            dose_col %in% colnames(mf_data),
+        "response_col must be a column name or vector of column names" =
+            is.character(response_col) || is.vector(response_col),
+        "response_col must be a column or columns in mf_data" =
+            any(response_col %in% colnames(mf_data)),
+        "covariate_col must be NULL or a column name (character)" =
+            is.null(covariate_col) || is.character(covariate_col),
+        "bmr must be a positive numeric value" = is.numeric(bmr) && bmr > 0,
+        "adjust_bmr_to_group_sd must be a logical value" =
+            is.logical(adjust_bmr_to_group_sd),
+        "model_averaging must be a logical value" =
+            is.logical(model_averaging),
+        "num_bootstraps must be a positive integer" =
+            is.numeric(num_bootstraps) && num_bootstraps > 0,
+        "plot_results must be a logical value" = is.logical(plot_results),
+        "output_path must be either NULL or a filepath (character)" =
+            is.null(output_path) || is.character(output_path),
+        "raw_results must be a logical value" = is.logical(raw_results),
+        "seed must be a number" = is.numeric(seed)
+    )
 
   bmr_sd <- as.numeric(adjust_bmr_to_group_sd) + 1
 
@@ -221,7 +241,8 @@ bmd_proast <- function(
     selected_model = "exponential",
     model_averaging = model_averaging,
     num_bootstraps = num_bootstraps,
-    display_plots = FALSE
+    display_plots = FALSE,
+    seed = seed
   )
 
   if (plot_results == TRUE) {
@@ -270,18 +291,20 @@ bmd_proast <- function(
           output_path = output_path
         )
 
-        plots <- c(plots, ma_plots, c_plots)
+        plots <- c(plots, ma_plots, list(cleveland_plot = c_plots))
       }
     }
   }
   # Select the BMD with the lowest AIC for each response
   # If they have the same AIC, take the mean.
   summary <- results[[2]] %>%
-    dplyr::rename(BMD = "CED",
-                  BMDL = "CEDL",
-                  BMDU = "CEDU",
-                  Model = "Selected.Model",
-                  BMR = "CES") %>%
+    dplyr::rename(
+      BMD = "CED",
+      BMDL = "CEDL",
+      BMDU = "CEDU",
+      Model = "Selected.Model",
+      BMR = "CES"
+    ) %>%
     dplyr::select(-"Log.Likelihood", -"Var", -"a", -"d")
   results_list <- list(summary = summary)
 
@@ -298,70 +321,3 @@ bmd_proast <- function(
     return(summary)
   }
 }
-
-#' BMD modeling using ToxicR
-#' @description  This function is deprecated. Please use bmd_proast instead.
-#' @param mf_data A data frame containing the dose-response data. Data may
-#' be individual for each sample or averaged over dose groups.
-#' Required columns for individual data are the column containing the dose
-#' `dose_col` and the column(s) containing the mutation frequency data
-#' `response_col`(s). Summary data must include the `dose_col`, the
-#' `response_col`(s) containing the mean response for each dose group,
-#' the `sd_col` containing the standard deviation of the response data,
-#' and the `n_col` containing the sample size for each dose group.
-#' @param data_type A string specifying the type of response data.
-#' Data may be response per individual or summarised across dose groups.
-#' Options are ("individual", "summary"). Default is "individual".
-#' @param dose_col The column in `mf_data` containing the dose data. Values
-#' must be numeric. Default is "dose".
-#' @param response_col The column(s) in mf_data containing the mutation
-#' frequency data. For summarised data types, this should be the mean response
-#' for each dose group. Multiple `response_col`s can be provided.
-#' @param sd_col The column in mf_data containing the standard deviation of
-#' the summarised response data. This is only required for
-#' `data_type = "summary"`. If multiple response columns are provided,
-#' multiple `sd_col`s should be provided in the same order. Default is NULL.
-#' @param n_col The column in mf_data containing the sample size of each dose
-#' group. This is only required for `data_type = "summary"`. If multiple
-#' response columns are provided, multiple `n_col`s should be provided in the
-#' same order. Default is NULL.
-#' @param bmr_type The type of benchmark response. Options are: "rel", "sd",
-#' "hybrid", "abs". Default is "rel". See details for more information.
-#' @param bmr A numeric value specifying the benchmark response. The bmr is
-#' defined in relation to the calculation requested in bmr_type. Default is 0.5.
-#' @param model The model type to use. Options are "all" or
-#' a vector of model types. Default is "exp-aerts", the Exponential model.
-#' See details for available models. Note that model averaging will use
-#' a pre-defined model set. See details for more information.
-#' @param model_averaging A logical value indicating whether to use model
-#' averaging. Default is TRUE (recommended).
-#' @param alpha The specified nominal coverage rate for computation of
-#' the lower and upper confidence intervals for the benchmark dose
-#' (BMDL, BMDU). The confidence level is calculated as
-#' \eqn{100\times(1-2\alpha)\% }. The default is 0.05 (90% CI).
-#' @param plot_results A logical value indicating whether to plot the BMD models
-#' and/or the Cleveland plots. Default is FALSE. If TRUE, the function will
-#' save plots to the `output_path` or return them as a list alongside the
-#' summary of the results.
-#' @param ma_summary A logical value indicating whether to return the summary
-#' of the model averaging results. Default is FALSE.
-#' @param output_path The file path indicating where to save the plots.
-#' If NULL, the plots will automatically be returned as a list alongside
-#' the bmd results.
-#' @export 
-bmd_toxicr <- function(mf_data,
-                       data_type = "individual",
-                       dose_col = "dose",
-                       response_col = c("mf_min", "mf_max"),
-                       sd_col = NULL,
-                       n_col = NULL,
-                       bmr_type = "rel",
-                       bmr = 0.5,
-                       model = "exp-aerts",
-                       alpha = 0.05,
-                       model_averaging = TRUE,
-                       plot_results = FALSE,
-                       ma_summary = FALSE,
-                       output_path = NULL) {
-  .Deprecated("bmd_proast", package = "MutSeqR")                      
-} 

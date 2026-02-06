@@ -12,9 +12,7 @@ import_vcf_data(
   rg_sep = "\\t",
   is_0_based_rg = FALSE,
   padding = 0,
-  genome = NULL,
-  species = NULL,
-  masked_BS_genome = FALSE,
+  BS_genome = NULL,
   output_granges = FALSE
 )
 }
@@ -58,22 +56,15 @@ in both directions by the given amount. Ex. Structural variants and
 indels may start outside of the regions. Adjust the \code{padding} to
 include these variants in your region's ranges.}
 
-\item{genome}{The genome assembly version of the reference genome. This is
-required if your data does not include a context column. The
-function will install a BS genome for the given species/genome/masked
-arguments to populate the context column.
-Ex.Human GRCh38 = hg38 | Human GRCh37 = hg19 | Mouse GRCm38 = mm10 |
-Mouse GRCm39 = mm39 | Rat RGSC 6.0 = rn6 | Rat mRatBN7.2 = rn7}
-
-\item{species}{The species. Required if your data does not include a
-context column. The function will install a BS genome for the given
-species/genome/masked to populate the context column. The species can
-be the common name of the species or the scientific name.
-Ex. "human" or "Homo sapiens".}
-
-\item{masked_BS_genome}{A logical value. Required when using a BS genome
-to poulate the context column. Whether to use the masked version of the
-BS genome (TRUE) or not (FALSE). Default is FALSE.}
+\item{BS_genome}{The pkgname of a BS genome. A BS genome must be installed
+prior to import to populate the context column (trinucleotide context for each position).
+Only required if data does not already include a context column. Please install the
+appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
+name of the BSgenome package. The pkgname can be found using the find_BS_genome()
+function, which requires the species and assembly version.
+Ex. "BSgenome.Hsapiens.UCSC.hg38" | "BSgenome.Hsapiens.UCSC.hg19" |
+"BSgenome.Mmusculus.UCSC.mm10" | "BSgenome.Mmusculus.UCSC.mm39" |
+"BSgenome.Rnorvegicus.UCSC.rn6"}
 
 \item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation
 data to output as a GRanges object. Default output is as a dataframe.}
@@ -169,25 +160,11 @@ required for some downstream analyses. AD is used to calculate the
 the \code{DP} field will be used as the \code{total_depth}.
 }
 \examples{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-# Example: Import a single bg-zipped vcf file. This library was sequenced
-# with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-# consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
-# from MutSeqRData, an ExperimentHub data package.
-library(ExperimentHub)
-eh <- ExperimentHub()
-example_file <- eh[["EH9859"]]
-
-# We will create an example metadata table for this data.
-sample_meta <- data.frame(sample = "dna00996.1",
-                          dose = "50",
-                          dose_group = "High")
+# Mutation data is just for example purposes. It does not reflect real data
+file <- system.file("extdata", "Example_files", 
+                   "simple_vcf_data.vcf", package = "MutSeqR")
 # Import the data
-imported_example_data <- import_vcf_data(vcf_file = example_file,
-                                         sample_data = sample_meta,
-                                         regions = "TSpanel_mouse",
-                                         genome = "mm10",
-                                         species = "mouse",
-                                         masked_BS_genome = FALSE)
-}
+imported_example_data <- import_vcf_data(
+ vcf_file = file,
+BS_genome = find_BS_genome("mouse", "mm10"))
 }

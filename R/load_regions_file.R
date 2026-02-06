@@ -1,4 +1,4 @@
-#'Imports the regions file
+#' Imports the regions file
 #'
 #' @description A helper function to import the regions metadata file and
 #' return a GRanges object.
@@ -17,67 +17,98 @@
 #' @returns a GRanges object of the imported regions metadata file.
 #' @importFrom methods is
 #' @export
-
+#' @examples
+#' #' # Example 1: Load built-in TwinStrand's Human Mutagenesis
+#' human_rg <- load_regions_file(regions = "TSpanel_human")
+#' human_rg
+#' # Load a custom regions file from an interval list
+#' # We will use the human TSpanel system file for this example,
+#' # but any file can be imported.
+#' file <- system.file("extdata",
+#'   "inputs",
+#'   "metadata",
+#'   "human_mutagenesis_panel_hg38.txt",
+#'   package = "MutSeqR"
+#' )
+#' custom_rg <- load_regions_file(regions = file, rg_sep = "\t", is_0_based_rg = TRUE)
+#' custom_rg
 load_regions_file <- function(regions,
                               rg_sep = "\t",
                               is_0_based_rg = TRUE) {
+    stopifnot(
+        "regions is required." = !missing(regions),
+        "regions must be a file path, data frame, or GRanges object." =
+            is(regions, "GRanges") ||
+            is(regions, "data.frame") ||
+            is.character(regions),
+        "rg_sep must be a character string." = is.character(rg_sep),
+        "is_0_based_rg must be a logical value." = is.logical(is_0_based_rg)
+    )
+
   if (is(regions, "GRanges")) {
     return(regions)
   } else if (is.data.frame(regions)) {
     regions_df <- regions
   } else if (is.character(regions)) {
     if (regions == "TSpanel_human") {
-      regions_df <- read.table(system.file("extdata",
-                                           "inputs",
-                                           "metadata",
-                                           "human_mutagenesis_panel_hg38.txt",
-                                           package = "MutSeqR"),
-                               header = TRUE)
+      regions_df <- read.table(
+        system.file("extdata",
+          "inputs",
+          "metadata",
+          "human_mutagenesis_panel_hg38.txt",
+          package = "MutSeqR"
+        ),
+        header = TRUE
+      )
       is_0_based_rg <- TRUE
     } else if (regions == "TSpanel_mouse") {
-      regions_df <- read.table(system.file("extdata",
-                                           "inputs",
-                                           "metadata",
-                                           "mouse_mutagenesis_panel_mm10.txt",
-                                           package = "MutSeqR"),
-                               header = TRUE)
+      regions_df <- read.table(
+        system.file("extdata",
+          "inputs",
+          "metadata",
+          "mouse_mutagenesis_panel_mm10.txt",
+          package = "MutSeqR"
+        ),
+        header = TRUE
+      )
       is_0_based_rg <- TRUE
     } else if (regions == "TSpanel_rat") {
-      regions_df <- read.table(system.file("extdata",
-                                           "inputs",
-                                           "metadata",
-                                           "rat_mutagenesis_panel_rn6.txt",
-                                           package = "MutSeqR"),
-                               header = TRUE)
+      regions_df <- read.table(
+        system.file("extdata",
+          "inputs",
+          "metadata",
+          "rat_mutagenesis_panel_rn6.txt",
+          package = "MutSeqR"
+        ),
+        header = TRUE
+      )
       is_0_based_rg <- TRUE
     } else {
       regions_file <- file.path(regions)
       # Check if the file exists
       if (!file.exists(regions_file)) {
-        stop("Error: could not load your regions file because the file path is invalid.")
+        stop("could not load your regions file because the file path is invalid.")
       }
       regions_df <- read.table(regions_file, header = TRUE, sep = rg_sep)
       if (nrow(regions_df) == 0) {
-        stop("Error: your imported regions file is empty.")
+        stop("your imported regions file is empty.")
       }
       if (ncol(regions_df) == 1) {
-        stop("Error: your imported regions file has only one column. Please check the delimiter in rg_sep.")
+        stop("your imported regions file has only one column. Please check the delimiter in rg_sep.")
       }
     }
-  } else {
-    stop("Invalid regions parameter.")
   }
   if (!all(c("contig", "start", "end") %in% colnames(regions_df))) {
-    stop("Error: your regions file is missing the required columns 'contig', 'start', and 'end'.")
+    stop("your regions file is missing the required columns 'contig', 'start', and 'end'.")
   }
   # Turn regions_df into a GRanges object
   regions_gr <- GenomicRanges::makeGRangesFromDataFrame(
-      df = regions_df,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = is_0_based_rg
+    df = regions_df,
+    keep.extra.columns = TRUE,
+    seqnames.field = "contig",
+    start.field = "start",
+    end.field = "end",
+    starts.in.df.are.0based = is_0_based_rg
   )
   return(regions_gr)
 }

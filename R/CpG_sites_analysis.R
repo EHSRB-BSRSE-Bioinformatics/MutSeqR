@@ -1,8 +1,8 @@
 #' Get mutations at CpG sites.
 #'
-#' *Needs to be reworked for variants >1bp*. Subset the mutation data and return only mutations that are found
-#' at positions with a specific motif. The default is CpG sites, but can be
-#' customizable.
+#' *Needs to be reworked for variants >1bp*. Subset the mutation data and
+#' return only mutations that are found at positions with a specific motif.
+#' The default is CpG sites, but can be customizable.
 #' @param mutation_data A dataframe or GRanges object containing the mutation
 #' data to be interrogated. If supplying a data frame, the genomic coordinates
 #' must be 1-based (true for mutation data imported using import_mut_data or
@@ -34,55 +34,54 @@
 #' @importFrom dplyr filter mutate
 #' @importFrom plyranges find_overlaps
 #' @importFrom rlang .data
-#' @importFrom GenomeInfoDb seqnames
-#' @export
+#' @importFrom Seqinfo seqnames
 get_cpg_mutations <- function(mutation_data,
                               regions,
                               variant_types = c("-no_variant"),
                               motif = "CG",
                               filter_mut = TRUE) {
-  # Set the list of variation_types to return
-  all_variant_types <- MutSeqR::subtype_list$type
-  filter_variants <- function(selected_types, all_variant_types) {
-    if (is.character(selected_types) && length(selected_types) == 1) {
-      selected_types <- unlist(strsplit(selected_types, ","))
+    # Set the list of variation_types to return
+    all_variant_types <- MutSeqR::subtype_list$type
+    filter_variants <- function(selected_types, all_variant_types) {
+        if (is.character(selected_types) && length(selected_types) == 1) {
+        selected_types <- unlist(strsplit(selected_types, ","))
+        }
+        exclusions <- grepl("^-", selected_types)
+        if (any(exclusions)) {
+        excluded_variants <- sub("^-", "", selected_types[exclusions])
+        selected_variants <- setdiff(all_variant_types, excluded_variants)
+        } else {
+        selected_variants <- intersect(all_variant_types, selected_types)
+        }
+        return(selected_variants)
     }
-    exclusions <- grepl("^-", selected_types)
-    if (any(exclusions)) {
-      excluded_variants <- sub("^-", "", selected_types[exclusions])
-      selected_variants <- setdiff(all_variant_types, excluded_variants)
-    } else {
-      selected_variants <- intersect(all_variant_types, selected_types)
+    variant_types <- filter_variants(variant_types, all_variant_types)
+
+    # Find all the CpG sites in specified regions
+    CpGs_rg_sites <- get_cpg_regions(regions = regions, motif = motif)
+
+    # Join mutation data with CpG sites
+    if (inherits(mutation_data, "data.frame")) {
+        mutation_data <- GenomicRanges::makeGRangesFromDataFrame(
+        df = mutation_data,
+        keep.extra.columns = TRUE,
+        seqnames.field = "contig",
+        start.field = "start",
+        end.field = "end"
+        )
     }
-    return(selected_variants)
-  }
-  variant_types <- filter_variants(variant_types, all_variant_types)
+    # variants > 1bp overlap w multiple cpg sites are added multiple times.
+    CpGs_in_data <- plyranges::find_overlaps(mutation_data, CpGs_rg_sites) %>%
+        as.data.frame %>%
+        unique() %>%
+        dplyr::filter(.data$variation_type %in% variant_types)
 
-  # Find all the CpG sites in specified regions
-  CpGs_rg_sites <- get_cpg_regions(regions = regions, motif = motif)
-
-  # Join mutation data with CpG sites
-  if (inherits(mutation_data, "data.frame")) {
-    mutation_data <- GenomicRanges::makeGRangesFromDataFrame(
-      df = mutation_data,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end"
-    )
-  }
-  # variants > 1bp that overlap with multiple cpg sites are added multiple times.
-  CpGs_in_data <- plyranges::find_overlaps(mutation_data, CpGs_rg_sites) %>%
-    as.data.frame %>%
-    unique() %>%
-    dplyr::filter(.data$variation_type %in% variant_types)
-
-## Fix Overlaps for > 1bp: only consider start position
-## need to also consider the end position (for the other strand)
-  if (filter_mut) {
-    CpGs_in_data <- dplyr::filter(CpGs_in_data, filter_mut == FALSE)
-  }
-  return(CpGs_in_data)
+    ## Fix Overlaps for > 1bp: only consider start position
+    ## need to also consider the end position (for the other strand)
+    if (filter_mut) {
+        CpGs_in_data <- dplyr::filter(CpGs_in_data, filter_mut == FALSE)
+    }
+    return(CpGs_in_data)
 }
 
 #' Get the coordinates of the CpG sites within your genomic regions
@@ -100,27 +99,27 @@ get_cpg_mutations <- function(mutation_data,
 #' @importFrom Biostrings matchPattern
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges ranges
-#' @importFrom GenomeInfoDb seqnames
-#' @export
+#' @importFrom Seqinfo seqnames
 get_cpg_regions <- function(regions, motif = "CG") {
-
-  all_CpGs_rg <- list()
-  for (i in seq_along(regions)) {
-    CpG_sites_rg <- Biostrings::matchPattern(
-      pattern = motif,
-      subject = regions[i]$sequence[[1]]
-    )
-    CpG_sites_rg <- GenomicRanges::GRanges(
-      seqnames = GenomeInfoDb::seqnames(regions[i]),
-      ranges = IRanges::IRanges(
-        start = GenomicRanges::start(IRanges::ranges(CpG_sites_rg)) + GenomicRanges::start(regions[i]) - 1,
-        end = GenomicRanges::end(IRanges::ranges(CpG_sites_rg)) + GenomicRanges::start(regions[i]) - 1
-      )
-    )
-    all_CpGs_rg[[i]] <- CpG_sites_rg
-  }
-  CpGs_combined <- do.call("c", all_CpGs_rg)
-  return(CpGs_combined)
+    all_CpGs_rg <- list()
+    for (i in seq_along(regions)) {
+        CpG_sites_rg <- Biostrings::matchPattern(
+        pattern = motif,
+        subject = regions[i]$sequence[[1]]
+        )
+        CpG_sites_rg <- GenomicRanges::GRanges(
+        seqnames = Seqinfo::seqnames(regions[i]),
+        ranges = IRanges::IRanges(
+            start = GenomicRanges::start(IRanges::ranges(CpG_sites_rg)) +
+                GenomicRanges::start(regions[i]) - 1,
+            end = GenomicRanges::end(IRanges::ranges(CpG_sites_rg)) +
+                GenomicRanges::start(regions[i]) - 1
+        )
+        )
+        all_CpGs_rg[[i]] <- CpG_sites_rg
+    }
+    CpGs_combined <- do.call("c", all_CpGs_rg)
+    return(CpGs_combined)
 }
 
 #' Annotate CpG sites
@@ -140,19 +139,18 @@ get_cpg_regions <- function(regions, motif = "CG") {
 #' the target sequence of the mutation.
 #' @importFrom Biostrings vcountPattern
 #' @importFrom rlang .data
-#' @export
 annotate_cpg_sites <- function(mutation_data,
                                motif = "CG",
                                column_query = "context",
                                ...) {
-  annotated_data <- as.data.frame(mutation_data) %>%
-    dplyr::mutate(
-      CpG_site = Biostrings::vcountPattern(
-        pattern = motif,
-        subject = .data[[column_query]],
-        ...
-      )
-    ) %>%
-    dplyr::mutate(CpG_site = ifelse(.data$CpG_site == 0, FALSE, TRUE))
-  return(annotated_data)
+    annotated_data <- as.data.frame(mutation_data) %>%
+        dplyr::mutate(
+        CpG_site = Biostrings::vcountPattern(
+            pattern = motif,
+            subject = .data[[column_query]],
+            ...
+        )
+        ) %>%
+        dplyr::mutate(CpG_site = ifelse(.data$CpG_site == 0, FALSE, TRUE))
+    return(annotated_data)
 }

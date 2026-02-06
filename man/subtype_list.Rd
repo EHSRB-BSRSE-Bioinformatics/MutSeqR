@@ -3,7 +3,7 @@
 \docType{data}
 \name{subtype_list}
 \alias{subtype_list}
-\title{A list of mutation subtypes at different resolutions}
+\title{A comprehensive list of mutation subtypes at different resolutions}
 \format{
 A list with corresponding values
 }
@@ -11,6 +11,9 @@ A list with corresponding values
 subtype_list
 }
 \description{
-A list of mutation subtypes at different resolutions
+A comprehensive list of mutation subtypes at different resolutions
+}
+\examples{
+subtype_list[["type"]]
 }
 \keyword{datasets}
