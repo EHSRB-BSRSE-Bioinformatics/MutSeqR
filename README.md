@@ -1,97 +1,99 @@
----
-output: github_document
-encoding: UTF-8
----
 
 # MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" style="float:right; height:200px;" alt="The MutSeqR logo."></a>
 
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License:
+MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 <!-- badges: end -->
 
-> [!IMPORTANT]
-> To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
-> See "working_version" branch if you cannot install the devel verison of Bioconductor
+# **IMPORTANT**
 
-
-``` r
-BiocManager::install(version='devel', force = TRUE)
-```
-
-## Important Notice
-
-This branch is designed to be compatible with Bioconductor. For full package utility, please install the devel version of bioconductor packages:
-
-
-``` r
-BiocManager::install(version='devel', force = TRUE)
-```
-
-```
-## Error in loadNamespace(x): there is no package called 'BiocManager'
-```
+This version of MutSeqR is built for Bioconductor version Development
+(v3.23) and R v4.6.0. This is the first Bioconductor release. If you
+cannot install the Development version, or are using an older version of
+R, please use the
+[working_version](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version)
+branch on GitHub.
 
 ## Overview
 
-MutSeqR is an open-source R package to analyze error-corrected Next-Generation
-Sequencing (ECS) data, empowering users with flexibility during exploratory analyses while ensuring compatibility across technologies.
+MutSeqR is an open-source R package to analyze error-corrected
+Next-Generation Sequencing (ECS) data, empowering users with flexibility
+during exploratory analyses while ensuring compatibility across
+technologies.
 
 <img src="man/figures/MutSeqR_overview.png" style="display:block; margin:auto; max-width:100%;" alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
 
 <details>
-<summary><strong>
-Figure transcript
-</strong></summary>
-<em>1. Data Import: Imports mutation data into the R environment. Binds data from multiple libraries into a single object. Joins sample and target region metadata to the mutation data. Retrieves trinucleotide context. 2. Data Processing: Calculates mutation frequencies for groups of interest. Calculates frequencies and proportions of mutation subtypes. Optional Variant filtering: eliminates putative germline variants, removes variants outside of specified regions, quality assurance filtering. 3. Statistical Analyses: Generalized linear modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra comparison between groups. Unsupervised clustering based on mutation spectra. 4. Visualization: Create figures to display mutation frequencies and the proportions of mutation subtypes. Visualise statistical results. Visualise mutation distribution across genomic loci. View clonal expansion of mutations. 5. Output: Summary report RMarkdown file will faciliatte the generation of results. Output mutation data as VCF. Output sequences in FASTA format. Output spectra data in SigProfiler format. Export results to  Excel workbook.
-</em>
+<summary>
+<strong> Figure transcript </strong>
+</summary>
+<em>1. Data Import: Imports mutation data into the R environment. Binds
+data from multiple libraries into a single object. Joins sample and
+target region metadata to the mutation data. Retrieves trinucleotide
+context. 2. Data Processing: Calculates mutation frequencies for groups
+of interest. Calculates frequencies and proportions of mutation
+subtypes. Optional Variant filtering: eliminates putative germline
+variants, removes variants outside of specified regions, quality
+assurance filtering. 3. Statistical Analyses: Generalized linear
+modeling. Benchmark Dose Modeling. COSMIC signature analysis. Spectra
+comparison between groups. Unsupervised clustering based on mutation
+spectra. 4. Visualization: Create figures to display mutation
+frequencies and the proportions of mutation subtypes. Visualise
+statistical results. Visualise mutation distribution across genomic
+loci. View clonal expansion of mutations. 5. Output: Summary report
+RMarkdown file will faciliatte the generation of results. Output
+mutation data as VCF. Output sequences in FASTA format. Output spectra
+data in SigProfiler format. Export results to Excel workbook. </em>
 </details>
 
 ## Vignette
 
-See the [vignette](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles/MutSeqR_introduction.html#introduction) for details on function utility.
+See the
+[vignette](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles/MutSeqR_introduction.html#introduction)
+for details on function utility.
 
 ## Changelog
 
-See the [release notes on the pkgdown site](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/news/index.html)
+See the [release notes on the pkgdown
+site](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/news/index.html)
 for version history.
 
-You can also view [GitHub releases](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/releases).
+You can also view [GitHub
+releases](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/releases).
 
 ## Installation
 
-Install the package from github:
-
+To install this package, start R (version “4.6”) and enter:
 
 ``` r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
-```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
-Load the package
+# The following initializes usage of Bioc devel
+BiocManager::install(version='devel')
 
-```r
-library(MutSeqR)
+BiocManager::install("MutSeqR")
 ```
 
 ## Examples
 
-Example data is loaded through BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
-
+Example data is loaded through BioConductor ExperimentHub data package.
 
 ``` r
-BiocManager::install(version='devel', force = TRUE)
 BiocManager::install("ExperimentHub")
+
 library(ExperimentHub)
+
+# Create an index
 eh <- ExperimentHub()
 query(eh, "MutSeqRData")
 ```
 
 Access example data through the index:
-
 
 ``` r
 example_data <- eh[["EH9857"]]
@@ -99,17 +101,18 @@ example_data <- eh[["EH9857"]]
 
 ## Getting Help
 
-If you encounter a clear bug, please file an issue with a minimal reproducible example on [Github](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues).
+If you encounter a clear bug, please file an issue with a minimal
+reproducible example on
+[Github](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues).
 
 ## Citation
 
 To cite this package in publications use:
 
-
-```
-## Error in citation("MutSeqR"): there is no package called 'MutSeqR'
-```
-
-```
-## Error: object 'cit' not found
-```
+Annette E Dodge, Andrew Williams, Danielle P M LeBlanc, David M
+Schuster, Elena Esina, Charles C Valentine, Jesse J Salk, Alex Y Maslov,
+Chris Bradley, Carole L Yauk, Francesco Marchetti, Matthew J Meier,
+MutSeqR: an open source R package for standardized analysis of
+error-corrected next-generation sequencing data in genetic toxicology,
+Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf265,
+<https://doi.org/10.1093/bioadv/vbaf265>
