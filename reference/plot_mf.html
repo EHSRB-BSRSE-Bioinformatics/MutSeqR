@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,7 +35,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Plot the Mutation Frequency</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/plot_mf.R" class="external-link"><code>R/plot_mf.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/plot_mf.R" class="external-link"><code>R/plot_mf.R</code></a></small>
       <div class="d-none name"><code>plot_mf.Rd</code></div>
     </div>
 
@@ -159,11 +159,19 @@ Default is 3.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
-<span class="r-in"><span><span class="co"># using import_mut_data() and filtered with filter_mut.</span></span></span>
-<span class="r-in"><span><span class="co"># Data was summarized per sample using calculate_mf() (see relevant</span></span></span>
-<span class="r-in"><span><span class="co"># examples). We will plot the MF per sample, organized and coloured</span></span></span>
-<span class="r-in"><span><span class="co"># by dose group.</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data  consists of 24 mouse bone marrow</span></span></span>
+<span class="r-in"><span><span class="co"># samples exposed to three doses of BaP alongside vehicle controls.</span></span></span>
+<span class="r-in"><span><span class="co"># Libraries were sequenced with Duplex Sequencing using</span></span></span>
+<span class="r-in"><span><span class="co"># the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb</span></span></span>
+<span class="r-in"><span><span class="co"># targets = 48kb of sequence. Example data can be retrieved from</span></span></span>
+<span class="r-in"><span><span class="co"># MutSeqRData, an ExperimentHub data package:</span></span></span>
+<span class="r-in"><span><span class="co">## library(ExperimentHub)</span></span></span>
+<span class="r-in"><span><span class="co">## eh &lt;- ExperimentHub()</span></span></span>
+<span class="r-in"><span><span class="co">## query(eh, "MutSeqRData")</span></span></span>
+<span class="r-in"><span><span class="co"># Mutation frequency data was precalculated using</span></span></span>
+<span class="r-in"><span><span class="co">## mf_data_global &lt;- calculate_mf(mutation_data = eh[["EH9861"]],</span></span></span>
+<span class="r-in"><span><span class="co">##   cols_to_group = "sample",</span></span></span>
+<span class="r-in"><span><span class="co">##   retain_metadata_cols = c("dose_group", "dose"))</span></span></span>
 <span class="r-in"><span><span class="co"># Load Example MF data</span></span></span>
 <span class="r-in"><span><span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/Example_files/mf_data_global.rds"</span>,</span></span>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"MutSeqR"</span></span></span>

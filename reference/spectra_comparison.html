@@ -9,7 +9,7 @@ modified contingency table approach."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,7 @@ modified contingency table approach."><meta property="og:image" content="https:/
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Compare the overall mutation spectra between groups</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/spectra_comparison.R" class="external-link"><code>R/spectra_comparison.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/spectra_comparison.R" class="external-link"><code>R/spectra_comparison.R</code></a></small>
       <div class="d-none name"><code>spectra_comparison.Rd</code></div>
     </div>
 
@@ -53,8 +53,7 @@ modified contingency table approach.</p>
 <span>  <span class="va">exp_variable</span>,</span>
 <span>  mf_type <span class="op">=</span> <span class="st">"min"</span>,</span>
 <span>  <span class="va">contrasts</span>,</span>
-<span>  cont_sep <span class="op">=</span> <span class="st">"\t"</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">1234</span></span>
+<span>  cont_sep <span class="op">=</span> <span class="st">"\t"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -93,11 +92,6 @@ examples.</p></dd>
 <dt id="arg-cont-sep">cont_sep<a class="anchor" aria-label="anchor" href="#arg-cont-sep"></a></dt>
 <dd><p>The delimiter used to import the contrasts table.
 Default is tab.</p></dd>
-
-
-<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>An integer to set the seed for reproducibility when
-using Monte Carlo simulations to compute the p-value. Default is 1234.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -163,13 +157,10 @@ the contrast table would look like:</p>
 <span class="r-in"><span>  mf_type <span class="op">=</span> <span class="st">"min"</span>,</span></span>
 <span class="r-in"><span>  contrasts <span class="op">=</span> <span class="va">contrasts</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Using chi-squared distribution to compute p-value</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Using chi-squared distribution to compute p-value</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Using chi-squared distribution to compute p-value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           contrasts       G2 p.value adj_p.value Significance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    Low vs Control 195.6281       0           0          ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Medium vs Control 503.3807       0           0          ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   High vs Control 714.0200       0           0          ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                contrasts       G2 p.value adj_p.value Significance</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Low       Low vs Control 195.6281       0           0          ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Medium Medium vs Control 503.3807       0           0          ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> High     High vs Control 714.0200       0           0          ***</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

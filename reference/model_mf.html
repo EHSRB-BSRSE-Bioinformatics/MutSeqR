@@ -23,7 +23,7 @@ multiple comparisons."><meta property="og:image" content="https://ehsrb-bsrse-bi
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ multiple comparisons."><meta property="og:image" content="https://ehsrb-bsrse-bi
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Perform linear modelling on mutation frequency for given fixed and random effects</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/model_mf.R" class="external-link"><code>R/model_mf.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/model_mf.R" class="external-link"><code>R/model_mf.R</code></a></small>
       <div class="d-none name"><code>model_mf.Rd</code></div>
     </div>
 
@@ -219,24 +219,40 @@ contrast table would look like:</p>
 <p>25:chr2	0:chr2</p>
 <p>50:chr2	0:chr2</p>
 <p>100:chr2	0:chr2</p>
-<p>Troubleshooting: If you are having issues with convergence for your generalized linear mixed-
-effects model, it may be advisable to increase the tolerance level for convergence
-checking during model fitting. This is done through the <code>control</code> argument for
-the <code><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">lme4::glmer</a></code> function. The default tolerance is tol = 0.002. Add this
-argument as an extra argument in the <code>model_mf</code> function.
-Ex. <code>control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", tol = 3e-3, relTol = NULL))</code></p>
+<p>Troubleshooting: If you are having issues with convergence for your
+generalized linear mixed-effects model, it may be advisable to increase
+the tolerance level for convergence checking during model fitting. This
+is done through the <code>control</code> argument for the <code><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">lme4::glmer</a></code> function. The
+default tolerance is tol = 0.002. Add this argument as an extra argument
+in the <code>model_mf</code> function.
+Ex. <code>control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", tol = 3e-3, relTol = NULL))</code>
+Alternate approach:
+<code>control = lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))</code>
+Similar approaches may be taken for glm models.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
-<span class="r-in"><span><span class="co"># using import_mut_data() and filtered with filter_mut.</span></span></span>
-<span class="r-in"><span><span class="co"># Data was summarized per sample using calculate_mf() (see relevant</span></span></span>
-<span class="r-in"><span><span class="co"># examples). We will run the model with model_mf then plot the results.</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data  consists of 24 mouse bone marrow</span></span></span>
+<span class="r-in"><span><span class="co"># samples exposed to three doses of BaP alongside vehicle controls.</span></span></span>
+<span class="r-in"><span><span class="co"># Libraries were sequenced with Duplex Sequencing using</span></span></span>
+<span class="r-in"><span><span class="co"># the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb</span></span></span>
+<span class="r-in"><span><span class="co"># targets = 48kb of sequence. Example data can be retrieved from</span></span></span>
+<span class="r-in"><span><span class="co"># MutSeqRData, an ExperimentHub data package:</span></span></span>
+<span class="r-in"><span><span class="co">## library(ExperimentHub)</span></span></span>
+<span class="r-in"><span><span class="co">## eh &lt;- ExperimentHub()</span></span></span>
+<span class="r-in"><span><span class="co">## query(eh, "MutSeqRData")</span></span></span>
+<span class="r-in"><span><span class="co"># Mutation frequency data was precalculated using</span></span></span>
+<span class="r-in"><span><span class="co">## mf_data_global &lt;- calculate_mf(mutation_data = eh[["EH9861"]],</span></span></span>
+<span class="r-in"><span><span class="co">##   cols_to_group = "sample",</span></span></span>
+<span class="r-in"><span><span class="co">##   retain_metadata_cols = c("dose_group", "dose"))</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># We will model the effect of dose on mutation frequency min.</span></span></span>
 <span class="r-in"><span><span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/Example_files/mf_data_global.rds"</span>,</span></span>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"MutSeqR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># We will compare all treated groups to the control group</span></span></span>
+<span class="r-in"><span><span class="co"># We will compare all BaP dose groups to the control group</span></span></span>
+<span class="r-in"><span><span class="co"># using pairwise comparisons.</span></span></span>
 <span class="r-in"><span><span class="va">contrasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  col1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"12.5"</span>, <span class="st">"25"</span>, <span class="st">"50"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  col2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"0"</span>, <span class="st">"0"</span><span class="op">)</span></span></span>
@@ -250,24 +266,11 @@ Ex. <code>control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning"
 <span class="r-in"><span>  total_count <span class="op">=</span> <span class="st">"group_depth"</span>,</span></span>
 <span class="r-in"><span>  contrasts <span class="op">=</span> <span class="va">contrasts</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Reference level for factordose:0</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Fitting generalized linear model. glm(cbind( sum_min , group_depth ) ~  dose, family = quasibinomial</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The highest residual in absolute value is:4.73969242941171in row:14</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Reference level for factor dose: 0</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fitting GLM: glm(cbind(sum_min, group_depth) ~ dose, family = quasibinomial)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Max absolute residual: 4.73969242941171 (Row 14)</span>
 <span class="r-plt img"><img src="model_mf-1.png" alt="" width="700" height="433"></span>
 <span class="r-plt img"><img src="model_mf-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Plot the results using plot_model_mf()</span></span></span>
-<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu"><a href="plot_model_mf.html">plot_model_mf</a></span><span class="op">(</span><span class="va">model</span>,</span></span>
-<span class="r-in"><span>  plot_type <span class="op">=</span> <span class="st">"bar"</span>,</span></span>
-<span class="r-in"><span>  x_effect <span class="op">=</span> <span class="st">"dose"</span>,</span></span>
-<span class="r-in"><span>  plot_error_bars <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  plot_signif <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  x_order <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"12.5"</span>, <span class="st">"25"</span>, <span class="st">"50"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Dose (mg/kg-bw/d)"</span>,</span></span>
-<span class="r-in"><span>  y_label <span class="op">=</span> <span class="st">"Estimated Mean MF (mutations/bp)"</span>,</span></span>
-<span class="r-in"><span>  plot_title <span class="op">=</span> <span class="st">""</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dose)`</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

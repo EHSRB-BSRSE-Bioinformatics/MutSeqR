@@ -446,7 +446,7 @@ write_reference_fasta(regions_seq, output_path = NULL)
 
 ### Session Info
 
-    ## R Under development (unstable) (2025-11-18 r89035)
+    ## R Under development (unstable) (2026-02-04 r89376)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -468,75 +468,82 @@ write_reference_fasta(regions_seq, output_path = NULL)
     ## [8] base     
     ## 
     ## other attached packages:
-    ##  [1] BSgenome.Hsapiens.UCSC.hg38_1.4.5  GenomeInfoDb_1.47.0               
+    ##  [1] BSgenome.Hsapiens.UCSC.hg38_1.4.5  GenomeInfoDb_1.47.2               
     ##  [3] BSgenome.Mmusculus.UCSC.mm10_1.4.3 BSgenome_1.79.1                   
-    ##  [5] rtracklayer_1.71.0                 BiocIO_1.21.0                     
-    ##  [7] Biostrings_2.79.2                  XVector_0.51.0                    
-    ##  [9] GenomicRanges_1.63.0               Seqinfo_1.1.0                     
+    ##  [5] rtracklayer_1.71.3                 BiocIO_1.21.0                     
+    ##  [7] Biostrings_2.79.4                  XVector_0.51.0                    
+    ##  [9] GenomicRanges_1.63.1               Seqinfo_1.1.0                     
     ## [11] IRanges_2.45.0                     S4Vectors_0.49.0                  
     ## [13] ExperimentHub_3.1.0                AnnotationHub_4.1.0               
     ## [15] BiocFileCache_3.1.0                dbplyr_2.5.1                      
     ## [17] BiocGenerics_0.57.0                generics_0.1.4                    
-    ## [19] MutSeqR_0.99.3                     htmltools_0.5.8.1                 
+    ## [19] MutSeqR_0.99.9                     htmltools_0.5.9                   
     ## [21] DT_0.34.0                          BiocStyle_2.39.0                  
     ## 
     ## loaded via a namespace (and not attached):
     ##   [1] RColorBrewer_1.1-3          ggdendro_0.2.0             
     ##   [3] jsonlite_2.0.0              magrittr_2.0.4             
-    ##   [5] GenomicFeatures_1.63.1      farver_2.1.2               
-    ##   [7] nloptr_2.2.1                rmarkdown_2.30             
+    ##   [5] GenomicFeatures_1.63.1      nloptr_2.2.1               
+    ##   [7] farver_2.1.2                rmarkdown_2.30             
     ##   [9] fs_1.6.6                    ragg_1.5.0                 
-    ##  [11] vctrs_0.6.5                 memoise_2.0.1              
-    ##  [13] minqa_1.2.8                 Rsamtools_2.27.0           
-    ##  [15] RCurl_1.98-1.17             S4Arrays_1.11.0            
-    ##  [17] curl_7.0.0                  broom_1.0.10               
-    ##  [19] SparseArray_1.11.2          Formula_1.2-5              
-    ##  [21] sass_0.4.10                 bslib_0.9.0                
-    ##  [23] htmlwidgets_1.6.4           desc_1.4.3                 
-    ##  [25] httr2_1.2.1                 cachem_1.1.0               
-    ##  [27] GenomicAlignments_1.47.0    lifecycle_1.0.4            
-    ##  [29] pkgconfig_2.0.3             Matrix_1.7-4               
-    ##  [31] R6_2.6.1                    fastmap_1.2.0              
-    ##  [33] rbibutils_2.4               MatrixGenerics_1.23.0      
-    ##  [35] digest_0.6.39               AnnotationDbi_1.73.0       
-    ##  [37] rprojroot_2.1.1             textshaping_1.0.4          
-    ##  [39] crosstalk_1.2.2             RSQLite_2.4.4              
-    ##  [41] filelock_1.0.3              labeling_0.4.3             
-    ##  [43] httr_1.4.7                  abind_1.4-8                
-    ##  [45] compiler_4.6.0              microbenchmark_1.5.0       
-    ##  [47] here_1.0.2                  bit64_4.6.0-1              
-    ##  [49] withr_3.0.2                 S7_0.2.1                   
-    ##  [51] backports_1.5.0             BiocParallel_1.45.0        
-    ##  [53] carData_3.0-5               DBI_1.2.3                  
-    ##  [55] MASS_7.3-65                 rappdirs_0.3.3             
-    ##  [57] DelayedArray_0.37.0         rjson_0.2.23               
-    ##  [59] tools_4.6.0                 glue_1.8.0                 
-    ##  [61] restfulr_0.0.16             nlme_3.1-168               
-    ##  [63] grid_4.6.0                  gtable_0.3.6               
-    ##  [65] tidyr_1.3.1                 data.table_1.17.8          
-    ##  [67] doBy_4.7.0                  xml2_1.5.0                 
-    ##  [69] car_3.1-3                   Deriv_4.2.0                
-    ##  [71] BiocVersion_3.23.1          pillar_1.11.1              
-    ##  [73] stringr_1.6.0               splines_4.6.0              
-    ##  [75] dplyr_1.1.4                 lattice_0.22-7             
-    ##  [77] bit_4.6.0                   tidyselect_1.2.1           
-    ##  [79] knitr_1.50                  reformulas_0.4.2           
-    ##  [81] bookdown_0.45               SummarizedExperiment_1.41.0
-    ##  [83] xfun_0.54                   Biobase_2.71.0             
-    ##  [85] matrixStats_1.5.0           UCSC.utils_1.7.0           
-    ##  [87] stringi_1.8.7               yaml_2.3.10                
-    ##  [89] boot_1.3-32                 evaluate_1.0.5             
-    ##  [91] codetools_0.2-20            cigarillo_1.1.0            
-    ##  [93] tibble_3.3.0                BiocManager_1.30.27        
-    ##  [95] cli_3.6.5                   systemfonts_1.3.1          
-    ##  [97] Rdpack_2.6.4                jquerylib_0.1.4            
-    ##  [99] dichromat_2.0-0.1           modelr_0.1.11              
-    ## [101] Rcpp_1.1.0                  png_0.1-8                  
-    ## [103] XML_3.99-0.20               parallel_4.6.0             
-    ## [105] pkgdown_2.2.0               ggplot2_4.0.1              
-    ## [107] blob_1.2.4                  plyranges_1.31.1           
-    ## [109] bitops_1.0-9                lme4_1.1-37                
-    ## [111] VariantAnnotation_1.57.0    scales_1.4.0               
-    ## [113] purrr_1.2.0                 crayon_1.5.3               
-    ## [115] rlang_1.1.6                 cowplot_1.2.0              
-    ## [117] KEGGREST_1.51.1
+    ##  [11] vctrs_0.7.1                 minqa_1.2.8                
+    ##  [13] memoise_2.0.1               Rsamtools_2.27.0           
+    ##  [15] RCurl_1.98-1.17             S4Arrays_1.11.1            
+    ##  [17] curl_7.0.0                  broom_1.0.12               
+    ##  [19] Formula_1.2-5               SparseArray_1.11.10        
+    ##  [21] TTR_0.24.4                  sass_0.4.10                
+    ##  [23] bslib_0.10.0                htmlwidgets_1.6.4          
+    ##  [25] desc_1.4.3                  httr2_1.2.2                
+    ##  [27] zoo_1.8-15                  cachem_1.1.0               
+    ##  [29] GenomicAlignments_1.47.0    lifecycle_1.0.5            
+    ##  [31] pkgconfig_2.0.3             Matrix_1.7-4               
+    ##  [33] R6_2.6.1                    fastmap_1.2.0              
+    ##  [35] rbibutils_2.4.1             MatrixGenerics_1.23.0      
+    ##  [37] digest_0.6.39               colorspace_2.1-2           
+    ##  [39] AnnotationDbi_1.73.0        rprojroot_2.1.1            
+    ##  [41] crosstalk_1.2.2             textshaping_1.0.4          
+    ##  [43] RSQLite_2.4.6               labeling_0.4.3             
+    ##  [45] filelock_1.0.3              httr_1.4.7                 
+    ##  [47] abind_1.4-8                 compiler_4.6.0             
+    ##  [49] microbenchmark_1.5.0        here_1.0.2                 
+    ##  [51] bit64_4.6.0-1               withr_3.0.2                
+    ##  [53] S7_0.2.1                    backports_1.5.0            
+    ##  [55] tseries_0.10-59             BiocParallel_1.45.0        
+    ##  [57] carData_3.0-6               DBI_1.2.3                  
+    ##  [59] MASS_7.3-65                 rappdirs_0.3.4             
+    ##  [61] DelayedArray_0.37.0         rjson_0.2.23               
+    ##  [63] tools_4.6.0                 lmtest_0.9-40              
+    ##  [65] otel_0.2.0                  quantmod_0.4.28            
+    ##  [67] nnet_7.3-20                 glue_1.8.0                 
+    ##  [69] quadprog_1.5-8              restfulr_0.0.16            
+    ##  [71] nlme_3.1-168                grid_4.6.0                 
+    ##  [73] gtable_0.3.6                tidyr_1.3.2                
+    ##  [75] data.table_1.18.2.1         doBy_4.7.1                 
+    ##  [77] xml2_1.5.2                  car_3.1-5                  
+    ##  [79] Deriv_4.2.0                 BiocVersion_3.23.1         
+    ##  [81] pillar_1.11.1               stringr_1.6.0              
+    ##  [83] splines_4.6.0               dplyr_1.2.0                
+    ##  [85] lattice_0.22-7              bit_4.6.0                  
+    ##  [87] tidyselect_1.2.1            knitr_1.51                 
+    ##  [89] reformulas_0.4.4            bookdown_0.46              
+    ##  [91] urca_1.3-4                  SummarizedExperiment_1.41.0
+    ##  [93] forecast_9.0.0              xfun_0.56                  
+    ##  [95] Biobase_2.71.0              timeDate_4052.112          
+    ##  [97] matrixStats_1.5.0           UCSC.utils_1.7.1           
+    ##  [99] stringi_1.8.7               yaml_2.3.12                
+    ## [101] boot_1.3-32                 evaluate_1.0.5             
+    ## [103] codetools_0.2-20            cigarillo_1.1.0            
+    ## [105] tibble_3.3.1                BiocManager_1.30.27        
+    ## [107] cli_3.6.5                   Rdpack_2.6.5               
+    ## [109] systemfonts_1.3.1           jquerylib_0.1.4            
+    ## [111] modelr_0.1.11               dichromat_2.0-0.1          
+    ## [113] Rcpp_1.1.1                  png_0.1-8                  
+    ## [115] XML_3.99-0.20               parallel_4.6.0             
+    ## [117] pkgdown_2.2.0               fracdiff_1.5-3             
+    ## [119] ggplot2_4.0.2               blob_1.3.0                 
+    ## [121] plyranges_1.31.1            bitops_1.0-9               
+    ## [123] lme4_1.1-38                 VariantAnnotation_1.57.1   
+    ## [125] xts_0.14.1                  scales_1.4.0               
+    ## [127] purrr_1.2.1                 crayon_1.5.3               
+    ## [129] rlang_1.1.7                 cowplot_1.2.0              
+    ## [131] KEGGREST_1.51.1

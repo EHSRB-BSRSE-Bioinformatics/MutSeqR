@@ -30,7 +30,7 @@ find_BS_genome(organism, genome, masked = FALSE)
 
 ## Value
 
-a BSgenome object
+a BSgenome package name or a dataframe of possibilities
 
 ## Examples
 
@@ -43,12 +43,5 @@ mouse_mm10 <- find_BS_genome("mouse", "mm10")
 #>     CRAN: https://cran.rstudio.com
 #> Selected reference genome: BSgenome.Mmusculus.UCSC.mm10
 #> Reference genome is already installed.
-#> Once installed, supply: BSgenome.Mmusculus.UCSC.mm10 as the BS_genome parameter in import_mut/vcf_data()
-# Find all possible mouse BS genomesL
-mouse_all <- find_BS_genome("mouse")
-#> 'getOption("repos")' replaces Bioconductor standard repositories, see
-#> 'help("repositories", package = "BiocManager")' for details.
-#> Replacement repositories:
-#>     CRAN: https://cran.rstudio.com
-#> Possible BS genomes for organism = 'mouse', masked = FALSE: BSgenome.Mmusculus.UCSC.mm10BSgenome.Mmusculus.UCSC.mm39BSgenome.Mmusculus.UCSC.mm8BSgenome.Mmusculus.UCSC.mm9. Please install one of the possible BS genomes using BiocManager::install('pkgname') and provide the pkgname to import_mut/vcf_data().
+#> Once installed, supply 'BSgenome.Mmusculus.UCSC.mm10' as the BS_genome parameter.
 ```

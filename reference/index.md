@@ -101,7 +101,7 @@ Data export functions.
 - [`write_vcf_from_mut()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_vcf_from_mut.md)
   : Write mutation_data to a VCF file
 - [`write_excel()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_excel.md)
-  : Write Excel tables
+  : Write results to Excel tables
 - [`render_report()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/render_report.md)
   : Read configuration file and render R Markdown document
 
@@ -152,3 +152,5 @@ Data export functions.
   : Manages plotting for PROAST
 - [`cleveland_plot()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/cleveland_plot.md)
   : Cleveland Plot
+- [`vcf_sample_fix()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_sample_fix.md)
+  : Retrieve the sample column from VCF files

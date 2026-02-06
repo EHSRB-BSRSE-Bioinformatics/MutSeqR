@@ -204,25 +204,40 @@ table would look like:
 100:chr2 0:chr2
 
 Troubleshooting: If you are having issues with convergence for your
-generalized linear mixed- effects model, it may be advisable to increase
+generalized linear mixed-effects model, it may be advisable to increase
 the tolerance level for convergence checking during model fitting. This
 is done through the `control` argument for the
 [`lme4::glmer`](https://rdrr.io/pkg/lme4/man/glmer.html) function. The
 default tolerance is tol = 0.002. Add this argument as an extra argument
 in the `model_mf` function. Ex.
 `control = lme4::glmerControl(check.conv.grad = lme4::.makeCC("warning", tol = 3e-3, relTol = NULL))`
+Alternate approach:
+`control = lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))`
+Similar approaches may be taken for glm models.
 
 ## Examples
 
 ``` r
-# Example data consists of 24 mouse bone marrow DNA samples imported
-# using import_mut_data() and filtered with filter_mut.
-# Data was summarized per sample using calculate_mf() (see relevant
-# examples). We will run the model with model_mf then plot the results.
+# Example data  consists of 24 mouse bone marrow
+# samples exposed to three doses of BaP alongside vehicle controls.
+# Libraries were sequenced with Duplex Sequencing using
+# the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb
+# targets = 48kb of sequence. Example data can be retrieved from
+# MutSeqRData, an ExperimentHub data package:
+## library(ExperimentHub)
+## eh <- ExperimentHub()
+## query(eh, "MutSeqRData")
+# Mutation frequency data was precalculated using
+## mf_data_global <- calculate_mf(mutation_data = eh[["EH9861"]],
+##   cols_to_group = "sample",
+##   retain_metadata_cols = c("dose_group", "dose"))
+
+# We will model the effect of dose on mutation frequency min.
 mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
   package = "MutSeqR"
 ))
-# We will compare all treated groups to the control group
+# We will compare all BaP dose groups to the control group
+# using pairwise comparisons.
 contrasts <- data.frame(
   col1 = c("12.5", "25", "50"),
   col2 = c("0", "0", "0")
@@ -236,22 +251,8 @@ model <- model_mf(
   total_count = "group_depth",
   contrasts = contrasts
 )
-#> Reference level for factordose:0
-#> Fitting generalized linear model. glm(cbind( sum_min , group_depth ) ~  dose, family = quasibinomial
-#> The highest residual in absolute value is:4.73969242941171in row:14
+#> Reference level for factor dose: 0
+#> Fitting GLM: glm(cbind(sum_min, group_depth) ~ dose, family = quasibinomial)
+#> Max absolute residual: 4.73969242941171 (Row 14)
 
-
-
-# Plot the results using plot_model_mf()
-plot <- plot_model_mf(model,
-  plot_type = "bar",
-  x_effect = "dose",
-  plot_error_bars = TRUE,
-  plot_signif = TRUE,
-  x_order = c("0", "12.5", "25", "50"),
-  x_label = "Dose (mg/kg-bw/d)",
-  y_label = "Estimated Mean MF (mutations/bp)",
-  plot_title = ""
-)
-#> Joining with `by = join_by(dose)`
 ```

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@
 
 
 
-<link href="Analyzing_Mutation_Spectra_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<link href="Analyzing_Mutation_Spectra_files/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
 <script src="Analyzing_Mutation_Spectra_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="Analyzing_Mutation_Spectra_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
 <script src="Analyzing_Mutation_Spectra_files/datatables-binding-0.34.0/datatables.js"></script><link href="Analyzing_Mutation_Spectra_files/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
 <link href="Analyzing_Mutation_Spectra_files/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
@@ -80,7 +80,7 @@ J. Meier</h4>
       </address>
                   
       
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/vignettes/articles/Analyzing_Mutation_Spectra.Rmd" class="external-link"><code>vignettes/articles/Analyzing_Mutation_Spectra.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/vignettes/articles/Analyzing_Mutation_Spectra.Rmd" class="external-link"><code>vignettes/articles/Analyzing_Mutation_Spectra.Rmd</code></a></small>
       <div class="d-none name"><code>Analyzing_Mutation_Spectra.Rmd</code></div>
     </div>
 
@@ -228,7 +228,7 @@ the control group.</p>
 <p><strong>Table 23.</strong> Comparison of the 6-base subtype
 Proportions between Dose Groups.</p>
 <div class="datatables html-widget html-fill-item" id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"filter":"none","vertical":false,"data":[["1","2","3"],["Low vs Control","Medium vs Control","High vs Control"],[195.6280978952381,503.3807421047178,714.0200084754551],[0,0,0],[0,0,0],["***","***","***"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>contrasts<\/th>\n      <th>G2<\/th>\n      <th>p.value<\/th>\n      <th>adj_p.value<\/th>\n      <th>Significance<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 2, 3, \",\", \".\", null);\n  }"},{"targets":[3,4],"render":"function(data, type, row, meta) { return data.toExponential(2); }"},{"className":"dt-right","targets":[2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"contrasts","targets":1},{"name":"G2","targets":2},{"name":"p.value","targets":3},{"name":"adj_p.value","targets":4},{"name":"Significance","targets":5}],"rowCallback":"function(row, data, dataIndex) {\n        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right\n      }","order":[],"autoWidth":false,"orderClasses":false}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.rowCallback"],"jsHooks":[]}</script><p>Our results indicate the base-6 mutation spectra of all three BaP
+<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"filter":"none","vertical":false,"data":[["Low","Medium","High"],["Low vs Control","Medium vs Control","High vs Control"],[195.6280978952381,503.3807421047177,714.0200084754551],[0,0,0],[0,0,0],["***","***","***"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>contrasts<\/th>\n      <th>G2<\/th>\n      <th>p.value<\/th>\n      <th>adj_p.value<\/th>\n      <th>Significance<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 2, 3, \",\", \".\", null);\n  }"},{"targets":[3,4],"render":"function(data, type, row, meta) { return data.toExponential(2); }"},{"className":"dt-right","targets":[2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"contrasts","targets":1},{"name":"G2","targets":2},{"name":"p.value","targets":3},{"name":"adj_p.value","targets":4},{"name":"Significance","targets":5}],"rowCallback":"function(row, data, dataIndex) {\n        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right\n      }","order":[],"autoWidth":false,"orderClasses":false}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.rowCallback"],"jsHooks":[]}</script><p>Our results indicate the base-6 mutation spectra of all three BaP
 dose groups are significantly different from that of the control
 group.</p>
 </div>
@@ -872,7 +872,7 @@ group.</em></p>
 <span>  y_lab <span class="op">=</span> <span class="st">"Subtype Mutation Count"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">plot</span></span></code></pre></div>
-<p><img src="Analyzing_Mutation_Spectra_files/figure-html/plot-spectra-dose-s-1.png" class="r-plt" width="700"></p>
+<p><img src="Analyzing_Mutation_Spectra_files/figure-html/plot-spectra-dose-s-1.png" class="r-plt" alt="" width="700"></p>
 <div class="section level5">
 <h5 id="hierarchical-clustering">Hierarchical Clustering<a class="anchor" aria-label="anchor" href="#hierarchical-clustering"></a>
 </h5>
@@ -970,7 +970,7 @@ labels indicate the total number of mutations for each SNV subtype.
 <div class="section level5">
 <h5 id="low-dose">Low Dose<a class="anchor" aria-label="anchor" href="#low-dose"></a>
 </h5>
-<pre><code><span><span class="co">## $Low</span></span></code></pre>
+<pre><code><span><span class="co">## $High</span></span></code></pre>
 <div class="figure">
 <img src="Analyzing_Mutation_Spectra_files/figure-html/trinuc-L-1.png" class="r-plt" alt="96-base trinucleotide spectra (minimum) per Dose. Bars are the proportion of SNV subtypes within their trinucleotide context normalized to the sequencing depth.  Bars are coloured based on SNV subtype. Data labels indicate the total number of mutations for each SNV subtype." width="700"><p class="caption">
 96-base trinucleotide spectra (minimum) per Dose. Bars are the
@@ -983,7 +983,7 @@ labels indicate the total number of mutations for each SNV subtype.
 <div class="section level5">
 <h5 id="medium-dose">Medium Dose<a class="anchor" aria-label="anchor" href="#medium-dose"></a>
 </h5>
-<pre><code><span><span class="co">## $Medium</span></span></code></pre>
+<pre><code><span><span class="co">## $Low</span></span></code></pre>
 <div class="figure">
 <img src="Analyzing_Mutation_Spectra_files/figure-html/trinuc-M-1.png" class="r-plt" alt="96-base trinucleotide spectra (minimum) per Dose. Bars are the proportion of SNV subtypes within their trinucleotide context normalized to the sequencing depth.  Bars are coloured based on SNV subtype. Data labels indicate the total number of mutations for each SNV subtype." width="700"><p class="caption">
 96-base trinucleotide spectra (minimum) per Dose. Bars are the
@@ -996,7 +996,7 @@ labels indicate the total number of mutations for each SNV subtype.
 <div class="section level5">
 <h5 id="high-dose">High Dose<a class="anchor" aria-label="anchor" href="#high-dose"></a>
 </h5>
-<pre><code><span><span class="co">## $High</span></span></code></pre>
+<pre><code><span><span class="co">## $Medium</span></span></code></pre>
 <div class="figure">
 <img src="Analyzing_Mutation_Spectra_files/figure-html/trinuc-H-1.png" class="r-plt" alt="96-base trinucleotide spectra (minimum) per Dose. Bars are the proportion of SNV subtypes within their trinucleotide context normalized to the sequencing depth.  Bars are coloured based on SNV subtype. Data labels indicate the total number of mutations for each SNV subtype." width="700"><p class="caption">
 96-base trinucleotide spectra (minimum) per Dose. Bars are the
@@ -1058,7 +1058,7 @@ trinucleotide context normalized to the sequencing depth.
 <div class="section level3">
 <h3 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
-<pre><code><span><span class="co">## R Under development (unstable) (2025-11-18 r89035)</span></span>
+<pre><code><span><span class="co">## R Under development (unstable) (2026-02-04 r89376)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">## Running under: Ubuntu 24.04.3 LTS</span></span>
 <span><span class="co">## </span></span>
@@ -1081,63 +1081,63 @@ trinucleotide context normalized to the sequencing depth.
 <span><span class="co">## other attached packages:</span></span>
 <span><span class="co">## [1] ExperimentHub_3.1.0 AnnotationHub_4.1.0 BiocFileCache_3.1.0</span></span>
 <span><span class="co">## [4] dbplyr_2.5.1        BiocGenerics_0.57.0 generics_0.1.4     </span></span>
-<span><span class="co">## [7] MutSeqR_0.99.3      htmltools_0.5.8.1   DT_0.34.0          </span></span>
+<span><span class="co">## [7] MutSeqR_0.99.9      htmltools_0.5.9     DT_0.34.0          </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
 <span><span class="co">##   [1] DBI_1.2.3                   bitops_1.0-9               </span></span>
-<span><span class="co">##   [3] httr2_1.2.1                 rlang_1.1.6                </span></span>
-<span><span class="co">##   [5] magrittr_2.0.4              matrixStats_1.5.0          </span></span>
-<span><span class="co">##   [7] compiler_4.6.0              RSQLite_2.4.4              </span></span>
-<span><span class="co">##   [9] GenomicFeatures_1.63.1      png_0.1-8                  </span></span>
-<span><span class="co">##  [11] systemfonts_1.3.1           vctrs_0.6.5                </span></span>
-<span><span class="co">##  [13] stringr_1.6.0               pkgconfig_2.0.3            </span></span>
-<span><span class="co">##  [15] crayon_1.5.3                fastmap_1.2.0              </span></span>
-<span><span class="co">##  [17] XVector_0.51.0              labeling_0.4.3             </span></span>
-<span><span class="co">##  [19] Rsamtools_2.27.0            rmarkdown_2.30             </span></span>
-<span><span class="co">##  [21] ragg_1.5.0                  purrr_1.2.0                </span></span>
-<span><span class="co">##  [23] bit_4.6.0                   xfun_0.54                  </span></span>
-<span><span class="co">##  [25] cachem_1.1.0                cigarillo_1.1.0            </span></span>
-<span><span class="co">##  [27] jsonlite_2.0.0              blob_1.2.4                 </span></span>
-<span><span class="co">##  [29] DelayedArray_0.37.0         BiocParallel_1.45.0        </span></span>
-<span><span class="co">##  [31] parallel_4.6.0              R6_2.6.1                   </span></span>
-<span><span class="co">##  [33] plyranges_1.31.1            VariantAnnotation_1.57.0   </span></span>
-<span><span class="co">##  [35] bslib_0.9.0                 stringi_1.8.7              </span></span>
-<span><span class="co">##  [37] RColorBrewer_1.1-3          rtracklayer_1.71.0         </span></span>
-<span><span class="co">##  [39] GenomicRanges_1.63.0        jquerylib_0.1.4            </span></span>
-<span><span class="co">##  [41] Seqinfo_1.1.0               SummarizedExperiment_1.41.0</span></span>
-<span><span class="co">##  [43] knitr_1.50                  IRanges_2.45.0             </span></span>
-<span><span class="co">##  [45] Matrix_1.7-4                tidyselect_1.2.1           </span></span>
-<span><span class="co">##  [47] dichromat_2.0-0.1           abind_1.4-8                </span></span>
-<span><span class="co">##  [49] yaml_2.3.10                 codetools_0.2-20           </span></span>
-<span><span class="co">##  [51] curl_7.0.0                  lattice_0.22-7             </span></span>
-<span><span class="co">##  [53] tibble_3.3.0                Biobase_2.71.0             </span></span>
-<span><span class="co">##  [55] withr_3.0.2                 KEGGREST_1.51.1            </span></span>
-<span><span class="co">##  [57] S7_0.2.1                    evaluate_1.0.5             </span></span>
-<span><span class="co">##  [59] desc_1.4.3                  Biostrings_2.79.2          </span></span>
-<span><span class="co">##  [61] pillar_1.11.1               BiocManager_1.30.27        </span></span>
-<span><span class="co">##  [63] filelock_1.0.3              MatrixGenerics_1.23.0      </span></span>
-<span><span class="co">##  [65] stats4_4.6.0                rprojroot_2.1.1            </span></span>
-<span><span class="co">##  [67] RCurl_1.98-1.17             BiocVersion_3.23.1         </span></span>
-<span><span class="co">##  [69] S4Vectors_0.49.0            ggplot2_4.0.1              </span></span>
-<span><span class="co">##  [71] scales_1.4.0                dendsort_0.3.4             </span></span>
-<span><span class="co">##  [73] glue_1.8.0                  tools_4.6.0                </span></span>
-<span><span class="co">##  [75] BiocIO_1.21.0               data.table_1.17.8          </span></span>
-<span><span class="co">##  [77] BSgenome_1.79.1             GenomicAlignments_1.47.0   </span></span>
-<span><span class="co">##  [79] fs_1.6.6                    XML_3.99-0.20              </span></span>
-<span><span class="co">##  [81] grid_4.6.0                  tidyr_1.3.1                </span></span>
-<span><span class="co">##  [83] crosstalk_1.2.2             AnnotationDbi_1.73.0       </span></span>
-<span><span class="co">##  [85] patchwork_1.3.2             restfulr_0.0.16            </span></span>
-<span><span class="co">##  [87] cli_3.6.5                   rappdirs_0.3.3             </span></span>
-<span><span class="co">##  [89] textshaping_1.0.4           viridisLite_0.4.2          </span></span>
-<span><span class="co">##  [91] S4Arrays_1.11.0             ggdendro_0.2.0             </span></span>
-<span><span class="co">##  [93] dplyr_1.1.4                 gtable_0.3.6               </span></span>
-<span><span class="co">##  [95] sass_0.4.10                 digest_0.6.39              </span></span>
-<span><span class="co">##  [97] SparseArray_1.11.2          rjson_0.2.23               </span></span>
-<span><span class="co">##  [99] htmlwidgets_1.6.4           farver_2.1.2               </span></span>
-<span><span class="co">## [101] memoise_2.0.1               pkgdown_2.2.0              </span></span>
-<span><span class="co">## [103] lifecycle_1.0.4             httr_1.4.7                 </span></span>
-<span><span class="co">## [105] here_1.0.2                  bit64_4.6.0-1              </span></span>
-<span><span class="co">## [107] MASS_7.3-65</span></span></code></pre>
+<span><span class="co">##   [3] httr2_1.2.2                 rlang_1.1.7                </span></span>
+<span><span class="co">##   [5] magrittr_2.0.4              otel_0.2.0                 </span></span>
+<span><span class="co">##   [7] matrixStats_1.5.0           compiler_4.6.0             </span></span>
+<span><span class="co">##   [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     </span></span>
+<span><span class="co">##  [11] png_0.1-8                   systemfonts_1.3.1          </span></span>
+<span><span class="co">##  [13] vctrs_0.7.1                 stringr_1.6.0              </span></span>
+<span><span class="co">##  [15] pkgconfig_2.0.3             crayon_1.5.3               </span></span>
+<span><span class="co">##  [17] fastmap_1.2.0               XVector_0.51.0             </span></span>
+<span><span class="co">##  [19] labeling_0.4.3              Rsamtools_2.27.0           </span></span>
+<span><span class="co">##  [21] rmarkdown_2.30              ragg_1.5.0                 </span></span>
+<span><span class="co">##  [23] purrr_1.2.1                 bit_4.6.0                  </span></span>
+<span><span class="co">##  [25] xfun_0.56                   cachem_1.1.0               </span></span>
+<span><span class="co">##  [27] cigarillo_1.1.0             jsonlite_2.0.0             </span></span>
+<span><span class="co">##  [29] blob_1.3.0                  DelayedArray_0.37.0        </span></span>
+<span><span class="co">##  [31] BiocParallel_1.45.0         parallel_4.6.0             </span></span>
+<span><span class="co">##  [33] R6_2.6.1                    plyranges_1.31.1           </span></span>
+<span><span class="co">##  [35] VariantAnnotation_1.57.1    bslib_0.10.0               </span></span>
+<span><span class="co">##  [37] stringi_1.8.7               RColorBrewer_1.1-3         </span></span>
+<span><span class="co">##  [39] rtracklayer_1.71.3          GenomicRanges_1.63.1       </span></span>
+<span><span class="co">##  [41] jquerylib_0.1.4             Seqinfo_1.1.0              </span></span>
+<span><span class="co">##  [43] SummarizedExperiment_1.41.0 knitr_1.51                 </span></span>
+<span><span class="co">##  [45] IRanges_2.45.0              Matrix_1.7-4               </span></span>
+<span><span class="co">##  [47] tidyselect_1.2.1            dichromat_2.0-0.1          </span></span>
+<span><span class="co">##  [49] abind_1.4-8                 yaml_2.3.12                </span></span>
+<span><span class="co">##  [51] codetools_0.2-20            curl_7.0.0                 </span></span>
+<span><span class="co">##  [53] lattice_0.22-7              tibble_3.3.1               </span></span>
+<span><span class="co">##  [55] withr_3.0.2                 Biobase_2.71.0             </span></span>
+<span><span class="co">##  [57] KEGGREST_1.51.1             S7_0.2.1                   </span></span>
+<span><span class="co">##  [59] evaluate_1.0.5              desc_1.4.3                 </span></span>
+<span><span class="co">##  [61] Biostrings_2.79.4           pillar_1.11.1              </span></span>
+<span><span class="co">##  [63] BiocManager_1.30.27         filelock_1.0.3             </span></span>
+<span><span class="co">##  [65] MatrixGenerics_1.23.0       stats4_4.6.0               </span></span>
+<span><span class="co">##  [67] rprojroot_2.1.1             RCurl_1.98-1.17            </span></span>
+<span><span class="co">##  [69] BiocVersion_3.23.1          S4Vectors_0.49.0           </span></span>
+<span><span class="co">##  [71] ggplot2_4.0.2               scales_1.4.0               </span></span>
+<span><span class="co">##  [73] dendsort_0.3.4              glue_1.8.0                 </span></span>
+<span><span class="co">##  [75] tools_4.6.0                 BiocIO_1.21.0              </span></span>
+<span><span class="co">##  [77] data.table_1.18.2.1         BSgenome_1.79.1            </span></span>
+<span><span class="co">##  [79] GenomicAlignments_1.47.0    fs_1.6.6                   </span></span>
+<span><span class="co">##  [81] XML_3.99-0.20               grid_4.6.0                 </span></span>
+<span><span class="co">##  [83] tidyr_1.3.2                 crosstalk_1.2.2            </span></span>
+<span><span class="co">##  [85] AnnotationDbi_1.73.0        patchwork_1.3.2            </span></span>
+<span><span class="co">##  [87] restfulr_0.0.16             cli_3.6.5                  </span></span>
+<span><span class="co">##  [89] rappdirs_0.3.4              textshaping_1.0.4          </span></span>
+<span><span class="co">##  [91] viridisLite_0.4.3           S4Arrays_1.11.1            </span></span>
+<span><span class="co">##  [93] ggdendro_0.2.0              dplyr_1.2.0                </span></span>
+<span><span class="co">##  [95] gtable_0.3.6                sass_0.4.10                </span></span>
+<span><span class="co">##  [97] digest_0.6.39               SparseArray_1.11.10        </span></span>
+<span><span class="co">##  [99] rjson_0.2.23                htmlwidgets_1.6.4          </span></span>
+<span><span class="co">## [101] farver_2.1.2                memoise_2.0.1              </span></span>
+<span><span class="co">## [103] pkgdown_2.2.0               lifecycle_1.0.5            </span></span>
+<span><span class="co">## [105] httr_1.4.7                  here_1.0.2                 </span></span>
+<span><span class="co">## [107] bit64_4.6.0-1               MASS_7.3-65</span></span></code></pre>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-bergstrom-2019" class="csl-entry">
 Bergstrom, Erik N., Mi Ni Huang, Uma Mahto, Mark Barnes, Michael R.

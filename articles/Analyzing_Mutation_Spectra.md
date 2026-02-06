@@ -690,7 +690,7 @@ labels indicate the total number of mutations for each SNV subtype.
 
 ##### Low Dose
 
-    ## $Low
+    ## $High
 
 ![96-base trinucleotide spectra (minimum) per Dose. Bars are the
 proportion of SNV subtypes within their trinucleotide context normalized
@@ -705,7 +705,7 @@ labels indicate the total number of mutations for each SNV subtype.
 
 ##### Medium Dose
 
-    ## $Medium
+    ## $Low
 
 ![96-base trinucleotide spectra (minimum) per Dose. Bars are the
 proportion of SNV subtypes within their trinucleotide context normalized
@@ -720,7 +720,7 @@ labels indicate the total number of mutations for each SNV subtype.
 
 ##### High Dose
 
-    ## $High
+    ## $Medium
 
 ![96-base trinucleotide spectra (minimum) per Dose. Bars are the
 proportion of SNV subtypes within their trinucleotide context normalized
@@ -782,7 +782,7 @@ trinucleotide context normalized to the sequencing depth.
 
 ### Session Info
 
-    ## R Under development (unstable) (2025-11-18 r89035)
+    ## R Under development (unstable) (2026-02-04 r89376)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -805,63 +805,63 @@ trinucleotide context normalized to the sequencing depth.
     ## other attached packages:
     ## [1] ExperimentHub_3.1.0 AnnotationHub_4.1.0 BiocFileCache_3.1.0
     ## [4] dbplyr_2.5.1        BiocGenerics_0.57.0 generics_0.1.4     
-    ## [7] MutSeqR_0.99.3      htmltools_0.5.8.1   DT_0.34.0          
+    ## [7] MutSeqR_0.99.9      htmltools_0.5.9     DT_0.34.0          
     ## 
     ## loaded via a namespace (and not attached):
     ##   [1] DBI_1.2.3                   bitops_1.0-9               
-    ##   [3] httr2_1.2.1                 rlang_1.1.6                
-    ##   [5] magrittr_2.0.4              matrixStats_1.5.0          
-    ##   [7] compiler_4.6.0              RSQLite_2.4.4              
-    ##   [9] GenomicFeatures_1.63.1      png_0.1-8                  
-    ##  [11] systemfonts_1.3.1           vctrs_0.6.5                
-    ##  [13] stringr_1.6.0               pkgconfig_2.0.3            
-    ##  [15] crayon_1.5.3                fastmap_1.2.0              
-    ##  [17] XVector_0.51.0              labeling_0.4.3             
-    ##  [19] Rsamtools_2.27.0            rmarkdown_2.30             
-    ##  [21] ragg_1.5.0                  purrr_1.2.0                
-    ##  [23] bit_4.6.0                   xfun_0.54                  
-    ##  [25] cachem_1.1.0                cigarillo_1.1.0            
-    ##  [27] jsonlite_2.0.0              blob_1.2.4                 
-    ##  [29] DelayedArray_0.37.0         BiocParallel_1.45.0        
-    ##  [31] parallel_4.6.0              R6_2.6.1                   
-    ##  [33] plyranges_1.31.1            VariantAnnotation_1.57.0   
-    ##  [35] bslib_0.9.0                 stringi_1.8.7              
-    ##  [37] RColorBrewer_1.1-3          rtracklayer_1.71.0         
-    ##  [39] GenomicRanges_1.63.0        jquerylib_0.1.4            
-    ##  [41] Seqinfo_1.1.0               SummarizedExperiment_1.41.0
-    ##  [43] knitr_1.50                  IRanges_2.45.0             
-    ##  [45] Matrix_1.7-4                tidyselect_1.2.1           
-    ##  [47] dichromat_2.0-0.1           abind_1.4-8                
-    ##  [49] yaml_2.3.10                 codetools_0.2-20           
-    ##  [51] curl_7.0.0                  lattice_0.22-7             
-    ##  [53] tibble_3.3.0                Biobase_2.71.0             
-    ##  [55] withr_3.0.2                 KEGGREST_1.51.1            
-    ##  [57] S7_0.2.1                    evaluate_1.0.5             
-    ##  [59] desc_1.4.3                  Biostrings_2.79.2          
-    ##  [61] pillar_1.11.1               BiocManager_1.30.27        
-    ##  [63] filelock_1.0.3              MatrixGenerics_1.23.0      
-    ##  [65] stats4_4.6.0                rprojroot_2.1.1            
-    ##  [67] RCurl_1.98-1.17             BiocVersion_3.23.1         
-    ##  [69] S4Vectors_0.49.0            ggplot2_4.0.1              
-    ##  [71] scales_1.4.0                dendsort_0.3.4             
-    ##  [73] glue_1.8.0                  tools_4.6.0                
-    ##  [75] BiocIO_1.21.0               data.table_1.17.8          
-    ##  [77] BSgenome_1.79.1             GenomicAlignments_1.47.0   
-    ##  [79] fs_1.6.6                    XML_3.99-0.20              
-    ##  [81] grid_4.6.0                  tidyr_1.3.1                
-    ##  [83] crosstalk_1.2.2             AnnotationDbi_1.73.0       
-    ##  [85] patchwork_1.3.2             restfulr_0.0.16            
-    ##  [87] cli_3.6.5                   rappdirs_0.3.3             
-    ##  [89] textshaping_1.0.4           viridisLite_0.4.2          
-    ##  [91] S4Arrays_1.11.0             ggdendro_0.2.0             
-    ##  [93] dplyr_1.1.4                 gtable_0.3.6               
-    ##  [95] sass_0.4.10                 digest_0.6.39              
-    ##  [97] SparseArray_1.11.2          rjson_0.2.23               
-    ##  [99] htmlwidgets_1.6.4           farver_2.1.2               
-    ## [101] memoise_2.0.1               pkgdown_2.2.0              
-    ## [103] lifecycle_1.0.4             httr_1.4.7                 
-    ## [105] here_1.0.2                  bit64_4.6.0-1              
-    ## [107] MASS_7.3-65
+    ##   [3] httr2_1.2.2                 rlang_1.1.7                
+    ##   [5] magrittr_2.0.4              otel_0.2.0                 
+    ##   [7] matrixStats_1.5.0           compiler_4.6.0             
+    ##   [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     
+    ##  [11] png_0.1-8                   systemfonts_1.3.1          
+    ##  [13] vctrs_0.7.1                 stringr_1.6.0              
+    ##  [15] pkgconfig_2.0.3             crayon_1.5.3               
+    ##  [17] fastmap_1.2.0               XVector_0.51.0             
+    ##  [19] labeling_0.4.3              Rsamtools_2.27.0           
+    ##  [21] rmarkdown_2.30              ragg_1.5.0                 
+    ##  [23] purrr_1.2.1                 bit_4.6.0                  
+    ##  [25] xfun_0.56                   cachem_1.1.0               
+    ##  [27] cigarillo_1.1.0             jsonlite_2.0.0             
+    ##  [29] blob_1.3.0                  DelayedArray_0.37.0        
+    ##  [31] BiocParallel_1.45.0         parallel_4.6.0             
+    ##  [33] R6_2.6.1                    plyranges_1.31.1           
+    ##  [35] VariantAnnotation_1.57.1    bslib_0.10.0               
+    ##  [37] stringi_1.8.7               RColorBrewer_1.1-3         
+    ##  [39] rtracklayer_1.71.3          GenomicRanges_1.63.1       
+    ##  [41] jquerylib_0.1.4             Seqinfo_1.1.0              
+    ##  [43] SummarizedExperiment_1.41.0 knitr_1.51                 
+    ##  [45] IRanges_2.45.0              Matrix_1.7-4               
+    ##  [47] tidyselect_1.2.1            dichromat_2.0-0.1          
+    ##  [49] abind_1.4-8                 yaml_2.3.12                
+    ##  [51] codetools_0.2-20            curl_7.0.0                 
+    ##  [53] lattice_0.22-7              tibble_3.3.1               
+    ##  [55] withr_3.0.2                 Biobase_2.71.0             
+    ##  [57] KEGGREST_1.51.1             S7_0.2.1                   
+    ##  [59] evaluate_1.0.5              desc_1.4.3                 
+    ##  [61] Biostrings_2.79.4           pillar_1.11.1              
+    ##  [63] BiocManager_1.30.27         filelock_1.0.3             
+    ##  [65] MatrixGenerics_1.23.0       stats4_4.6.0               
+    ##  [67] rprojroot_2.1.1             RCurl_1.98-1.17            
+    ##  [69] BiocVersion_3.23.1          S4Vectors_0.49.0           
+    ##  [71] ggplot2_4.0.2               scales_1.4.0               
+    ##  [73] dendsort_0.3.4              glue_1.8.0                 
+    ##  [75] tools_4.6.0                 BiocIO_1.21.0              
+    ##  [77] data.table_1.18.2.1         BSgenome_1.79.1            
+    ##  [79] GenomicAlignments_1.47.0    fs_1.6.6                   
+    ##  [81] XML_3.99-0.20               grid_4.6.0                 
+    ##  [83] tidyr_1.3.2                 crosstalk_1.2.2            
+    ##  [85] AnnotationDbi_1.73.0        patchwork_1.3.2            
+    ##  [87] restfulr_0.0.16             cli_3.6.5                  
+    ##  [89] rappdirs_0.3.4              textshaping_1.0.4          
+    ##  [91] viridisLite_0.4.3           S4Arrays_1.11.1            
+    ##  [93] ggdendro_0.2.0              dplyr_1.2.0                
+    ##  [95] gtable_0.3.6                sass_0.4.10                
+    ##  [97] digest_0.6.39               SparseArray_1.11.10        
+    ##  [99] rjson_0.2.23                htmlwidgets_1.6.4          
+    ## [101] farver_2.1.2                memoise_2.0.1              
+    ## [103] pkgdown_2.2.0               lifecycle_1.0.5            
+    ## [105] httr_1.4.7                  here_1.0.2                 
+    ## [107] bit64_4.6.0-1               MASS_7.3-65
 
 Bergstrom, Erik N., Mi Ni Huang, Uma Mahto, Mark Barnes, Michael R.
 Stratton, Steven G. Rozen, and Ludmil B. Alexandrov. 2019.

@@ -263,22 +263,19 @@ no_variant is removed.
 ## Examples
 
 ``` r
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
-
-  # Calculate mutation frequency by sample.
-  # Calculate depth from the mutation data (default)
-  # Correct the Depth (default) with indel priority (set)
-  mf_example <- calculate_mf(
-    mutation_data = example_data,
-    cols_to_group = "sample",
-    correct_depth_by_indel_priority = TRUE
-  )
-}
+# Mutation data is just for example purposes. It does not reflect real data
+mutation_data <- readRDS(system.file("extdata", "Example_files",
+                                     "filtered_simple_mutation_data.rds",
+                                     package = "MutSeqR"))
+# Calculate mutation frequency by sample.
+# Calculate depth from the mutation data (default)
+# Correct the Depth (default) with indel priority (set)
+mf_example <- calculate_mf(
+  mutation_data = mutation_data,
+  cols_to_group = "sample",
+  correct_depth_by_indel_priority = TRUE
+)
+#> Performing internal depth correction to prevent double-counting
+#> Internal depth correction complete.
+#> Joining with `by = join_by(sample)`
 ```

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@
 
 
 
-<link href="MutSeqR_introduction_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<link href="MutSeqR_introduction_files/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
 <script src="MutSeqR_introduction_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="MutSeqR_introduction_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
 <script src="MutSeqR_introduction_files/datatables-binding-0.34.0/datatables.js"></script><link href="MutSeqR_introduction_files/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
 <link href="MutSeqR_introduction_files/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
@@ -80,7 +80,7 @@ J. Meier</h4>
       </address>
                   
       
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/vignettes/MutSeqR_introduction.Rmd" class="external-link"><code>vignettes/MutSeqR_introduction.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/vignettes/MutSeqR_introduction.Rmd" class="external-link"><code>vignettes/MutSeqR_introduction.Rmd</code></a></small>
       <div class="d-none name"><code>MutSeqR_introduction.Rmd</code></div>
     </div>
 
@@ -444,7 +444,7 @@ accessors.</p>
 <span><span class="co"># Query the index for MutSeqRData records and their associated accessors.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/AnnotationHub/man/AnnotationHub-class.html" class="external-link">query</a></span><span class="op">(</span><span class="va">eh</span>, <span class="st">"MutSeqRData"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## ExperimentHub with 9 records</span></span>
-<span><span class="co">## # snapshotDate(): 2025-11-14</span></span>
+<span><span class="co">## # snapshotDate(): 2026-01-30</span></span>
 <span><span class="co">## # $dataprovider: Health Canada, TwinStrand Biosciences</span></span>
 <span><span class="co">## # $species: Mus musculus</span></span>
 <span><span class="co">## # $rdataclass: data.frame</span></span>
@@ -817,15 +817,12 @@ used with <code>regions_filter</code>.
 positions overlap with the provided regions.
 <code>region_filter = "keep_within"</code> will remove all rows whose
 positions are outside of the provided regions. By default, records that
-are</p>
-<blockquote>
-<p>1bp must start and end within the regions to count as being within
+are 1bp+ must start and end within the regions to count as being within
 the region. <code>allow_half_overlap = TRUE</code> allow records that
 only start or end within the regions but extend outside of them to be
 counted as being within the region. Twinstrand Mutagenesis Panels may be
 used by setting <code>regions</code> to one of “TSpanel_human”,
 “TSpanel_mouse”, or “TSpanel_rat”.</p>
-</blockquote>
 </div>
 <div class="section level3">
 <h3 id="output-1">Output<a class="anchor" aria-label="anchor" href="#output-1"></a>
@@ -1845,7 +1842,7 @@ will be skipped.</p>
 <div class="section level3">
 <h3 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
-<pre><code><span><span class="co">## R Under development (unstable) (2025-11-18 r89035)</span></span>
+<pre><code><span><span class="co">## R Under development (unstable) (2026-02-04 r89376)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">## Running under: Ubuntu 24.04.3 LTS</span></span>
 <span><span class="co">## </span></span>
@@ -1868,65 +1865,65 @@ will be skipped.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
 <span><span class="co">##  [1] BSgenome.Mmusculus.UCSC.mm10_1.4.3 BSgenome_1.79.1                   </span></span>
-<span><span class="co">##  [3] rtracklayer_1.71.0                 BiocIO_1.21.0                     </span></span>
-<span><span class="co">##  [5] Biostrings_2.79.2                  XVector_0.51.0                    </span></span>
-<span><span class="co">##  [7] GenomicRanges_1.63.0               Seqinfo_1.1.0                     </span></span>
+<span><span class="co">##  [3] rtracklayer_1.71.3                 BiocIO_1.21.0                     </span></span>
+<span><span class="co">##  [5] Biostrings_2.79.4                  XVector_0.51.0                    </span></span>
+<span><span class="co">##  [7] GenomicRanges_1.63.1               Seqinfo_1.1.0                     </span></span>
 <span><span class="co">##  [9] IRanges_2.45.0                     S4Vectors_0.49.0                  </span></span>
 <span><span class="co">## [11] ExperimentHub_3.1.0                AnnotationHub_4.1.0               </span></span>
 <span><span class="co">## [13] BiocFileCache_3.1.0                dbplyr_2.5.1                      </span></span>
 <span><span class="co">## [15] BiocGenerics_0.57.0                generics_0.1.4                    </span></span>
-<span><span class="co">## [17] MutSeqR_0.99.3                     htmltools_0.5.8.1                 </span></span>
+<span><span class="co">## [17] MutSeqR_0.99.9                     htmltools_0.5.9                   </span></span>
 <span><span class="co">## [19] DT_0.34.0                         </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
 <span><span class="co">##  [1] DBI_1.2.3                   bitops_1.0-9               </span></span>
-<span><span class="co">##  [3] httr2_1.2.1                 rlang_1.1.6                </span></span>
-<span><span class="co">##  [5] magrittr_2.0.4              matrixStats_1.5.0          </span></span>
-<span><span class="co">##  [7] compiler_4.6.0              RSQLite_2.4.4              </span></span>
-<span><span class="co">##  [9] GenomicFeatures_1.63.1      png_0.1-8                  </span></span>
-<span><span class="co">## [11] systemfonts_1.3.1           vctrs_0.6.5                </span></span>
-<span><span class="co">## [13] stringr_1.6.0               pkgconfig_2.0.3            </span></span>
-<span><span class="co">## [15] crayon_1.5.3                fastmap_1.2.0              </span></span>
-<span><span class="co">## [17] labeling_0.4.3              Rsamtools_2.27.0           </span></span>
-<span><span class="co">## [19] rmarkdown_2.30              ragg_1.5.0                 </span></span>
-<span><span class="co">## [21] purrr_1.2.0                 bit_4.6.0                  </span></span>
-<span><span class="co">## [23] xfun_0.54                   cachem_1.1.0               </span></span>
-<span><span class="co">## [25] cigarillo_1.1.0             jsonlite_2.0.0             </span></span>
-<span><span class="co">## [27] blob_1.2.4                  DelayedArray_0.37.0        </span></span>
-<span><span class="co">## [29] BiocParallel_1.45.0         parallel_4.6.0             </span></span>
-<span><span class="co">## [31] R6_2.6.1                    plyranges_1.31.1           </span></span>
-<span><span class="co">## [33] VariantAnnotation_1.57.0    bslib_0.9.0                </span></span>
-<span><span class="co">## [35] stringi_1.8.7               RColorBrewer_1.1-3         </span></span>
-<span><span class="co">## [37] jquerylib_0.1.4             SummarizedExperiment_1.41.0</span></span>
-<span><span class="co">## [39] knitr_1.50                  Matrix_1.7-4               </span></span>
-<span><span class="co">## [41] tidyselect_1.2.1            dichromat_2.0-0.1          </span></span>
-<span><span class="co">## [43] abind_1.4-8                 yaml_2.3.10                </span></span>
-<span><span class="co">## [45] codetools_0.2-20            curl_7.0.0                 </span></span>
-<span><span class="co">## [47] lattice_0.22-7              tibble_3.3.0               </span></span>
-<span><span class="co">## [49] Biobase_2.71.0              withr_3.0.2                </span></span>
-<span><span class="co">## [51] KEGGREST_1.51.1             S7_0.2.1                   </span></span>
-<span><span class="co">## [53] evaluate_1.0.5              desc_1.4.3                 </span></span>
-<span><span class="co">## [55] pillar_1.11.1               BiocManager_1.30.27        </span></span>
-<span><span class="co">## [57] filelock_1.0.3              MatrixGenerics_1.23.0      </span></span>
-<span><span class="co">## [59] rprojroot_2.1.1             RCurl_1.98-1.17            </span></span>
-<span><span class="co">## [61] BiocVersion_3.23.1          ggplot2_4.0.1              </span></span>
-<span><span class="co">## [63] scales_1.4.0                glue_1.8.0                 </span></span>
-<span><span class="co">## [65] tools_4.6.0                 data.table_1.17.8          </span></span>
-<span><span class="co">## [67] GenomicAlignments_1.47.0    fs_1.6.6                   </span></span>
-<span><span class="co">## [69] XML_3.99-0.20               grid_4.6.0                 </span></span>
-<span><span class="co">## [71] tidyr_1.3.1                 crosstalk_1.2.2            </span></span>
-<span><span class="co">## [73] colorspace_2.1-2            AnnotationDbi_1.73.0       </span></span>
-<span><span class="co">## [75] restfulr_0.0.16             cli_3.6.5                  </span></span>
-<span><span class="co">## [77] rappdirs_0.3.3              textshaping_1.0.4          </span></span>
-<span><span class="co">## [79] S4Arrays_1.11.0             ggdendro_0.2.0             </span></span>
-<span><span class="co">## [81] dplyr_1.1.4                 gtable_0.3.6               </span></span>
-<span><span class="co">## [83] sass_0.4.10                 digest_0.6.39              </span></span>
-<span><span class="co">## [85] SparseArray_1.11.2          rjson_0.2.23               </span></span>
-<span><span class="co">## [87] htmlwidgets_1.6.4           farver_2.1.2               </span></span>
-<span><span class="co">## [89] memoise_2.0.1               pkgdown_2.2.0              </span></span>
-<span><span class="co">## [91] lifecycle_1.0.4             httr_1.4.7                 </span></span>
-<span><span class="co">## [93] here_1.0.2                  bit64_4.6.0-1              </span></span>
-<span><span class="co">## [95] MASS_7.3-65</span></span></code></pre>
+<span><span class="co">##  [3] httr2_1.2.2                 rlang_1.1.7                </span></span>
+<span><span class="co">##  [5] magrittr_2.0.4              otel_0.2.0                 </span></span>
+<span><span class="co">##  [7] matrixStats_1.5.0           compiler_4.6.0             </span></span>
+<span><span class="co">##  [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     </span></span>
+<span><span class="co">## [11] png_0.1-8                   systemfonts_1.3.1          </span></span>
+<span><span class="co">## [13] vctrs_0.7.1                 stringr_1.6.0              </span></span>
+<span><span class="co">## [15] pkgconfig_2.0.3             crayon_1.5.3               </span></span>
+<span><span class="co">## [17] fastmap_1.2.0               labeling_0.4.3             </span></span>
+<span><span class="co">## [19] Rsamtools_2.27.0            rmarkdown_2.30             </span></span>
+<span><span class="co">## [21] ragg_1.5.0                  purrr_1.2.1                </span></span>
+<span><span class="co">## [23] bit_4.6.0                   xfun_0.56                  </span></span>
+<span><span class="co">## [25] cachem_1.1.0                cigarillo_1.1.0            </span></span>
+<span><span class="co">## [27] jsonlite_2.0.0              blob_1.3.0                 </span></span>
+<span><span class="co">## [29] DelayedArray_0.37.0         BiocParallel_1.45.0        </span></span>
+<span><span class="co">## [31] parallel_4.6.0              R6_2.6.1                   </span></span>
+<span><span class="co">## [33] plyranges_1.31.1            VariantAnnotation_1.57.1   </span></span>
+<span><span class="co">## [35] bslib_0.10.0                stringi_1.8.7              </span></span>
+<span><span class="co">## [37] RColorBrewer_1.1-3          jquerylib_0.1.4            </span></span>
+<span><span class="co">## [39] SummarizedExperiment_1.41.0 knitr_1.51                 </span></span>
+<span><span class="co">## [41] Matrix_1.7-4                tidyselect_1.2.1           </span></span>
+<span><span class="co">## [43] dichromat_2.0-0.1           abind_1.4-8                </span></span>
+<span><span class="co">## [45] yaml_2.3.12                 codetools_0.2-20           </span></span>
+<span><span class="co">## [47] curl_7.0.0                  lattice_0.22-7             </span></span>
+<span><span class="co">## [49] tibble_3.3.1                withr_3.0.2                </span></span>
+<span><span class="co">## [51] Biobase_2.71.0              KEGGREST_1.51.1            </span></span>
+<span><span class="co">## [53] S7_0.2.1                    evaluate_1.0.5             </span></span>
+<span><span class="co">## [55] desc_1.4.3                  pillar_1.11.1              </span></span>
+<span><span class="co">## [57] BiocManager_1.30.27         filelock_1.0.3             </span></span>
+<span><span class="co">## [59] MatrixGenerics_1.23.0       rprojroot_2.1.1            </span></span>
+<span><span class="co">## [61] RCurl_1.98-1.17             BiocVersion_3.23.1         </span></span>
+<span><span class="co">## [63] ggplot2_4.0.2               scales_1.4.0               </span></span>
+<span><span class="co">## [65] glue_1.8.0                  tools_4.6.0                </span></span>
+<span><span class="co">## [67] data.table_1.18.2.1         GenomicAlignments_1.47.0   </span></span>
+<span><span class="co">## [69] fs_1.6.6                    XML_3.99-0.20              </span></span>
+<span><span class="co">## [71] grid_4.6.0                  tidyr_1.3.2                </span></span>
+<span><span class="co">## [73] crosstalk_1.2.2             colorspace_2.1-2           </span></span>
+<span><span class="co">## [75] AnnotationDbi_1.73.0        restfulr_0.0.16            </span></span>
+<span><span class="co">## [77] cli_3.6.5                   rappdirs_0.3.4             </span></span>
+<span><span class="co">## [79] textshaping_1.0.4           S4Arrays_1.11.1            </span></span>
+<span><span class="co">## [81] ggdendro_0.2.0              dplyr_1.2.0                </span></span>
+<span><span class="co">## [83] gtable_0.3.6                sass_0.4.10                </span></span>
+<span><span class="co">## [85] digest_0.6.39               SparseArray_1.11.10        </span></span>
+<span><span class="co">## [87] rjson_0.2.23                htmlwidgets_1.6.4          </span></span>
+<span><span class="co">## [89] farver_2.1.2                memoise_2.0.1              </span></span>
+<span><span class="co">## [91] pkgdown_2.2.0               lifecycle_1.0.5            </span></span>
+<span><span class="co">## [93] httr_1.4.7                  here_1.0.2                 </span></span>
+<span><span class="co">## [95] bit64_4.6.0-1               MASS_7.3-65</span></span></code></pre>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-danecek-2011" class="csl-entry">
 Danecek, Petr, Adam Auton, Goncalo Abecasis, Cornelis A. Albers, Eric

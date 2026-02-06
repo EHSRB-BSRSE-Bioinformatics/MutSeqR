@@ -46,18 +46,21 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/DESCRIPTION)
+[`inst/CITATION`](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/inst/CITATION)
 
 Dodge A, Williams A, LeBlanc D, Schuster D, Esina E, Valentine C, Salk
-J, Maslov A, Bradley C, Yauk C, Marchetti F, Meier M (2025). *MutSeqR:
-Analysis of Error-Corrected Sequencing Data for Mutation Detection*. R
-package version 0.99.3,
-<https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/>.
+J, Maslov A, Bradley C, Yauk C, Marchetti F, Meier M. (2025) MutSeqR: an
+open source R package for standardized analysis of error-corrected
+next-generation sequencing data in genetic toxicology. Bioinformatics
+Advances, Volume 5, Issue 1, vbaf265,
+https://doi.org/10.1093/bioadv/vbaf265
 
-    @Manual{,
-      title = {MutSeqR: Analysis of Error-Corrected Sequencing Data for Mutation Detection},
-      author = {Annette E. Dodge and Andrew Williams and Danielle P.M. LeBlanc and David M. Schuster and Elena Esina and Clint C. Valentine and Jesse J. Salk and Alexander Y. Maslov and Christopher Bradley and Carole L. Yauk and Francesco Marchetti and Matthew J. Meier},
+    @Article{,
+      title = {MutSeqR: an open source R package for standardized analysis of error-corrected next-generation sequencing data in genetic toxicology},
+      author = {Annette E. Dodge and Andrew Williams and Danielle P.M. LeBlanc and David M. Schuster and Elena Esina and Clint C. Valentine and Jesse J. Salk and Alexander Y. Maslov and Carole L. Yauk and Francesco Marchetti and Matthew J. Meier},
+      journal = {Bioinformatic Advances},
       year = {2025},
-      note = {R package version 0.99.3},
-      url = {https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/},
+      volume = {5},
+      number = {1},
+      doi = {10.1093/bioadv/vbaf265},
     }

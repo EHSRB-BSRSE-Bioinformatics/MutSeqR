@@ -94,9 +94,17 @@ UCSC website for available genomes: <https://genome.ucsc.edu>.
 ## Examples
 
 ``` r
-# Example 1: Retrieve the sequences for TwinStrand Mouse Mutagenesis Panel
-regions_seq <- get_seq(regions = "TSpanel_mouse")
-#> Loading reference genome: BSgenome.Mmusculus.UCSC.mm10.
+#  Retrieve the sequences for custom regions
+# We will load the TSpanel_human regions file as an example
+# and supply it to the function as a GRanges object.
+human <- load_regions_file("TSpanel_human")
+regions_seq <- get_seq(
+  regions = human,
+  is_0_based_rg = FALSE,
+  BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
+  padding = 0
+)
+#> Loading reference genome: BSgenome.Hsapiens.UCSC.hg38.
 #> 
 #> Attaching package: ‘generics’
 #> The following objects are masked from ‘package:base’:
@@ -129,16 +137,4 @@ regions_seq <- get_seq(regions = "TSpanel_mouse")
 #> The following object is masked from ‘package:base’:
 #> 
 #>     strsplit
-
-# Example 2: Retrieve the sequences for custom regions
-# We will load the TSpanel_human regions file as an example
-# and supply it to the function as a GRanges object.
-human <- load_regions_file("TSpanel_human")
-regions_seq <- get_seq(
-  regions = human,
-  is_0_based_rg = FALSE,
-  BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
-  padding = 0
-)
-#> Loading reference genome: BSgenome.Hsapiens.UCSC.hg38.
 ```

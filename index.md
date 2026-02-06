@@ -1,5 +1,14 @@
 # MutSeqR
 
+# **IMPORTANT**
+
+This version of MutSeqR is built for Bioconductor version Development
+(v3.23) and R v4.6.0. This is the first Bioconductor release. If you
+cannot install the Development version, or are using an older version of
+R, please use the
+[working_version](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version)
+branch on GitHub.
+
 ## Overview
 
 MutSeqR is an open-source R package to analyze error-corrected
@@ -49,17 +58,36 @@ releases](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/releases).
 
 ## Installation
 
-Install the package from github:
+To install this package, start R (version “4.6”) and enter:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# The following initializes usage of Bioc devel
+BiocManager::install(version='devel')
+
+BiocManager::install("MutSeqR")
 ```
 
-Load the package
+## Examples
+
+Example data is loaded through BioConductor ExperimentHub data package.
 
 ``` r
-library(MutSeqR)
+BiocManager::install("ExperimentHub")
+
+library(ExperimentHub)
+
+# Create an index
+eh <- ExperimentHub()
+query(eh, "MutSeqRData")
+```
+
+Access example data through the index:
+
+``` r
+example_data <- eh[["EH9857"]]
 ```
 
 ## Getting Help
@@ -72,8 +100,10 @@ reproducible example on
 
 To cite this package in publications use:
 
-Dodge A, Williams A, LeBlanc D, Schuster D, Esina E, Valentine C, Salk
-J, Maslov A, Bradley C, Yauk C, Marchetti F, Meier M (2025). *MutSeqR:
-Analysis of Error-Corrected Sequencing Data for Mutation Detection*. R
-package version 0.99.0,
-<https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/>.
+Annette E Dodge, Andrew Williams, Danielle P M LeBlanc, David M
+Schuster, Elena Esina, Charles C Valentine, Jesse J Salk, Alex Y Maslov,
+Chris Bradley, Carole L Yauk, Francesco Marchetti, Matthew J Meier,
+MutSeqR: an open source R package for standardized analysis of
+error-corrected next-generation sequencing data in genetic toxicology,
+Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf265,
+<https://doi.org/10.1093/bioadv/vbaf265>

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,13 @@
 </div>
 <!-- badges: start -->
 
+<!-- badges: end -->
+</div>
+<div class="section level1">
+<h1 id="important">
+<strong>IMPORTANT</strong><a class="anchor" aria-label="anchor" href="#important"></a>
+</h1>
+<p>This version of MutSeqR is built for Bioconductor version Development (v3.23) and R v4.6.0. This is the first Bioconductor release. If you cannot install the Development version, or are using an older version of R, please use the <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version" class="external-link">working_version</a> branch on GitHub.</p>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
@@ -93,13 +100,31 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install the package from github:</p>
+<p>To install this package, start R (version “4.6”) and enter:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"EHSRB-BSRSE-Bioinformatics/MutSeqR"</span><span class="op">)</span></span></code></pre></div>
-<p>Load the package</p>
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://bioconductor.github.io/BiocManager/" class="external-link">"BiocManager"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The following initializes usage of Bioc devel</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span>version<span class="op">=</span><span class="st">'devel'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"MutSeqR"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+</h2>
+<p>Example data is loaded through BioConductor ExperimentHub data package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/">MutSeqR</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"ExperimentHub"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Bioconductor/ExperimentHub" class="external-link">ExperimentHub</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create an index</span></span>
+<span><span class="va">eh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ExperimentHub/man/ExperimentHub-class.html" class="external-link">ExperimentHub</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/AnnotationHub/man/AnnotationHub-class.html" class="external-link">query</a></span><span class="op">(</span><span class="va">eh</span>, <span class="st">"MutSeqRData"</span><span class="op">)</span></span></code></pre></div>
+<p>Access example data through the index:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">example_data</span> <span class="op">&lt;-</span> <span class="va">eh</span><span class="op">[[</span><span class="st">"EH9857"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="getting-help">Getting Help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
@@ -110,12 +135,14 @@
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>To cite this package in publications use:</p>
-<p>Dodge A, Williams A, LeBlanc D, Schuster D, Esina E, Valentine C, Salk J, Maslov A, Bradley C, Yauk C, Marchetti F, Meier M (2025). <em>MutSeqR: Analysis of Error-Corrected Sequencing Data for Mutation Detection</em>. R package version 0.99.0, <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/" class="uri">https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/</a>.</p>
+<p>Annette E Dodge, Andrew Williams, Danielle P M LeBlanc, David M Schuster, Elena Esina, Charles C Valentine, Jesse J Salk, Alex Y Maslov, Chris Bradley, Carole L Yauk, Francesco Marchetti, Matthew J Meier, MutSeqR: an open source R package for standardized analysis of error-corrected next-generation sequencing data in genetic toxicology, Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf265, <a href="https://doi.org/10.1093/bioadv/vbaf265" class="external-link uri">https://doi.org/10.1093/bioadv/vbaf265</a></p>
 </div>
 </div>
+
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
+<li><a href="https://www.bioconductor.org/packages/MutSeqR" class="external-link">View on Bioconductor</a></li>
 <li><a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues" class="external-link">Report a bug</a></li>
 </ul>

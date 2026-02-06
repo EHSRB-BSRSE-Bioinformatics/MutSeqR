@@ -11,8 +11,7 @@ spectra_comparison(
   exp_variable,
   mf_type = "min",
   contrasts,
-  cont_sep = "\t",
-  seed = 1234
+  cont_sep = "\t"
 )
 ```
 
@@ -47,11 +46,6 @@ spectra_comparison(
 - cont_sep:
 
   The delimiter used to import the contrasts table. Default is tab.
-
-- seed:
-
-  An integer to set the seed for reproducibility when using Monte Carlo
-  simulations to compute the p-value. Default is 1234.
 
 ## Value
 
@@ -128,11 +122,8 @@ spectra_comparison(
   mf_type = "min",
   contrasts = contrasts
 )
-#> Using chi-squared distribution to compute p-value
-#> Using chi-squared distribution to compute p-value
-#> Using chi-squared distribution to compute p-value
-#>           contrasts       G2 p.value adj_p.value Significance
-#> 1    Low vs Control 195.6281       0           0          ***
-#> 2 Medium vs Control 503.3807       0           0          ***
-#> 3   High vs Control 714.0200       0           0          ***
+#>                contrasts       G2 p.value adj_p.value Significance
+#> Low       Low vs Control 195.6281       0           0          ***
+#> Medium Medium vs Control 503.3807       0           0          ***
+#> High     High vs Control 714.0200       0           0          ***
 ```

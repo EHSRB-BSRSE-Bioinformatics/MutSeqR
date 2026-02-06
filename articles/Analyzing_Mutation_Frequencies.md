@@ -882,27 +882,13 @@ the recommended value is 200).
 proast_results$mf_min_cleveland
 ```
 
-![MFmin. The BMD estimate for each model plotted as a red point
-alongside the 90% confidence intervals. The size of the BMD point
-represents the model weight assigned during model averaging based on
-AIC.](Analyzing_Mutation_Frequencies_files/figure-html/bmd-cvd-plot1-1.png)
-
-MFmin. The BMD estimate for each model plotted as a red point alongside
-the 90% confidence intervals. The size of the BMD point represents the
-model weight assigned during model averaging based on AIC.
+    ## NULL
 
 ``` r
 proast_results$mf_max_cleveland
 ```
 
-![MFmax. The BMD estimate for each model plotted as a red point
-alongside the 90% confidence intervals. The size of the BMD point
-represents the model weight assigned during model averaging based on
-AIC.](Analyzing_Mutation_Frequencies_files/figure-html/bmd-cvd-plot2-1.png)
-
-MFmax. The BMD estimate for each model plotted as a red point alongside
-the 90% confidence intervals. The size of the BMD point represents the
-model weight assigned during model averaging based on AIC.
+    ## NULL
 
 ### Plot BMD CIs
 
@@ -958,7 +944,7 @@ be great for comparing the potency of different chemicals.
 
 ### Session Info
 
-    ## R Under development (unstable) (2025-11-18 r89035)
+    ## R Under development (unstable) (2026-02-04 r89376)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -981,72 +967,79 @@ be great for comparing the potency of different chemicals.
     ## other attached packages:
     ##  [1] ExperimentHub_3.1.0 AnnotationHub_4.1.0 BiocFileCache_3.1.0
     ##  [4] dbplyr_2.5.1        BiocGenerics_0.57.0 generics_0.1.4     
-    ##  [7] MutSeqR_0.99.3      yulab.utils_0.2.1   htmltools_0.5.8.1  
+    ##  [7] MutSeqR_0.99.9      yulab.utils_0.2.4   htmltools_0.5.9    
     ## [10] DT_0.34.0          
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] Rdpack_2.6.4                DBI_1.2.3                  
-    ##   [3] bitops_1.0-9                httr2_1.2.1                
-    ##   [5] rlang_1.1.6                 magrittr_2.0.4             
-    ##   [7] matrixStats_1.5.0           compiler_4.6.0             
-    ##   [9] RSQLite_2.4.4               GenomicFeatures_1.63.1     
-    ##  [11] png_0.1-8                   systemfonts_1.3.1          
-    ##  [13] vctrs_0.6.5                 stringr_1.6.0              
-    ##  [15] pkgconfig_2.0.3             crayon_1.5.3               
-    ##  [17] fastmap_1.2.0               backports_1.5.0            
-    ##  [19] XVector_0.51.0              labeling_0.4.3             
-    ##  [21] Rsamtools_2.27.0            rmarkdown_2.30             
-    ##  [23] nloptr_2.2.1                ragg_1.5.0                 
-    ##  [25] purrr_1.2.0                 bit_4.6.0                  
-    ##  [27] xfun_0.54                   cachem_1.1.0               
-    ##  [29] cigarillo_1.1.0             jsonlite_2.0.0             
-    ##  [31] blob_1.2.4                  DelayedArray_0.37.0        
-    ##  [33] BiocParallel_1.45.0         Deriv_4.2.0                
-    ##  [35] broom_1.0.10                parallel_4.6.0             
-    ##  [37] R6_2.6.1                    plyranges_1.31.1           
-    ##  [39] VariantAnnotation_1.57.0    bslib_0.9.0                
-    ##  [41] stringi_1.8.7               RColorBrewer_1.1-3         
-    ##  [43] rtracklayer_1.71.0          car_3.1-3                  
-    ##  [45] boot_1.3-32                 GenomicRanges_1.63.0       
-    ##  [47] jquerylib_0.1.4             Rcpp_1.1.0                 
-    ##  [49] Seqinfo_1.1.0               SummarizedExperiment_1.41.0
-    ##  [51] knitr_1.50                  modelr_0.1.11              
-    ##  [53] IRanges_2.45.0              splines_4.6.0              
-    ##  [55] Matrix_1.7-4                tidyselect_1.2.1           
-    ##  [57] dichromat_2.0-0.1           abind_1.4-8                
-    ##  [59] yaml_2.3.10                 codetools_0.2-20           
-    ##  [61] curl_7.0.0                  lattice_0.22-7             
-    ##  [63] tibble_3.3.0                Biobase_2.71.0             
-    ##  [65] withr_3.0.2                 KEGGREST_1.51.1            
-    ##  [67] S7_0.2.1                    evaluate_1.0.5             
-    ##  [69] desc_1.4.3                  Biostrings_2.79.2          
-    ##  [71] pillar_1.11.1               BiocManager_1.30.27        
-    ##  [73] filelock_1.0.3              carData_3.0-5              
-    ##  [75] MatrixGenerics_1.23.0       stats4_4.6.0               
-    ##  [77] reformulas_0.4.2            rprojroot_2.1.1            
-    ##  [79] RCurl_1.98-1.17             BiocVersion_3.23.1         
-    ##  [81] S4Vectors_0.49.0            ggplot2_4.0.1              
-    ##  [83] scales_1.4.0                minqa_1.2.8                
-    ##  [85] glue_1.8.0                  tools_4.6.0                
-    ##  [87] doBy_4.7.0                  BiocIO_1.21.0              
-    ##  [89] data.table_1.17.8           lme4_1.1-37                
-    ##  [91] BSgenome_1.79.1             GenomicAlignments_1.47.0   
-    ##  [93] fs_1.6.6                    XML_3.99-0.20              
-    ##  [95] cowplot_1.2.0               grid_4.6.0                 
-    ##  [97] tidyr_1.3.1                 rbibutils_2.4              
-    ##  [99] crosstalk_1.2.2             AnnotationDbi_1.73.0       
-    ## [101] nlme_3.1-168                restfulr_0.0.16            
-    ## [103] Formula_1.2-5               cli_3.6.5                  
-    ## [105] rappdirs_0.3.3              textshaping_1.0.4          
-    ## [107] S4Arrays_1.11.0             ggdendro_0.2.0             
-    ## [109] dplyr_1.1.4                 gtable_0.3.6               
-    ## [111] sass_0.4.10                 digest_0.6.39              
-    ## [113] SparseArray_1.11.2          rjson_0.2.23               
-    ## [115] htmlwidgets_1.6.4           farver_2.1.2               
-    ## [117] memoise_2.0.1               pkgdown_2.2.0              
-    ## [119] lifecycle_1.0.4             httr_1.4.7                 
-    ## [121] here_1.0.2                  microbenchmark_1.5.0       
-    ## [123] bit64_4.6.0-1               MASS_7.3-65
+    ##   [1] RColorBrewer_1.1-3          ggdendro_0.2.0             
+    ##   [3] jsonlite_2.0.0              magrittr_2.0.4             
+    ##   [5] GenomicFeatures_1.63.1      nloptr_2.2.1               
+    ##   [7] farver_2.1.2                rmarkdown_2.30             
+    ##   [9] fs_1.6.6                    BiocIO_1.21.0              
+    ##  [11] ragg_1.5.0                  vctrs_0.7.1                
+    ##  [13] minqa_1.2.8                 memoise_2.0.1              
+    ##  [15] Rsamtools_2.27.0            RCurl_1.98-1.17            
+    ##  [17] S4Arrays_1.11.1             curl_7.0.0                 
+    ##  [19] broom_1.0.12                Formula_1.2-5              
+    ##  [21] SparseArray_1.11.10         TTR_0.24.4                 
+    ##  [23] sass_0.4.10                 bslib_0.10.0               
+    ##  [25] htmlwidgets_1.6.4           desc_1.4.3                 
+    ##  [27] httr2_1.2.2                 zoo_1.8-15                 
+    ##  [29] cachem_1.1.0                GenomicAlignments_1.47.0   
+    ##  [31] lifecycle_1.0.5             pkgconfig_2.0.3            
+    ##  [33] Matrix_1.7-4                R6_2.6.1                   
+    ##  [35] fastmap_1.2.0               rbibutils_2.4.1            
+    ##  [37] MatrixGenerics_1.23.0       digest_0.6.39              
+    ##  [39] colorspace_2.1-2            AnnotationDbi_1.73.0       
+    ##  [41] S4Vectors_0.49.0            rprojroot_2.1.1            
+    ##  [43] crosstalk_1.2.2             textshaping_1.0.4          
+    ##  [45] GenomicRanges_1.63.1        RSQLite_2.4.6              
+    ##  [47] labeling_0.4.3              filelock_1.0.3             
+    ##  [49] httr_1.4.7                  abind_1.4-8                
+    ##  [51] compiler_4.6.0              microbenchmark_1.5.0       
+    ##  [53] here_1.0.2                  bit64_4.6.0-1              
+    ##  [55] withr_3.0.2                 S7_0.2.1                   
+    ##  [57] backports_1.5.0             tseries_0.10-59            
+    ##  [59] BiocParallel_1.45.0         carData_3.0-6              
+    ##  [61] DBI_1.2.3                   MASS_7.3-65                
+    ##  [63] rappdirs_0.3.4              DelayedArray_0.37.0        
+    ##  [65] rjson_0.2.23                tools_4.6.0                
+    ##  [67] lmtest_0.9-40               otel_0.2.0                 
+    ##  [69] quantmod_0.4.28             nnet_7.3-20                
+    ##  [71] glue_1.8.0                  quadprog_1.5-8             
+    ##  [73] restfulr_0.0.16             nlme_3.1-168               
+    ##  [75] grid_4.6.0                  gtable_0.3.6               
+    ##  [77] BSgenome_1.79.1             tidyr_1.3.2                
+    ##  [79] data.table_1.18.2.1         doBy_4.7.1                 
+    ##  [81] car_3.1-5                   Deriv_4.2.0                
+    ##  [83] XVector_0.51.0              BiocVersion_3.23.1         
+    ##  [85] pillar_1.11.1               stringr_1.6.0              
+    ##  [87] splines_4.6.0               dplyr_1.2.0                
+    ##  [89] lattice_0.22-7              rtracklayer_1.71.3         
+    ##  [91] bit_4.6.0                   tidyselect_1.2.1           
+    ##  [93] Biostrings_2.79.4           knitr_1.51                 
+    ##  [95] reformulas_0.4.4            urca_1.3-4                 
+    ##  [97] IRanges_2.45.0              Seqinfo_1.1.0              
+    ##  [99] SummarizedExperiment_1.41.0 forecast_9.0.0             
+    ## [101] stats4_4.6.0                xfun_0.56                  
+    ## [103] Biobase_2.71.0              timeDate_4052.112          
+    ## [105] matrixStats_1.5.0           stringi_1.8.7              
+    ## [107] yaml_2.3.12                 boot_1.3-32                
+    ## [109] evaluate_1.0.5              codetools_0.2-20           
+    ## [111] cigarillo_1.1.0             tibble_3.3.1               
+    ## [113] BiocManager_1.30.27         cli_3.6.5                  
+    ## [115] Rdpack_2.6.5                systemfonts_1.3.1          
+    ## [117] jquerylib_0.1.4             modelr_0.1.11              
+    ## [119] dichromat_2.0-0.1           Rcpp_1.1.1                 
+    ## [121] png_0.1-8                   XML_3.99-0.20              
+    ## [123] parallel_4.6.0              pkgdown_2.2.0              
+    ## [125] fracdiff_1.5-3              ggplot2_4.0.2              
+    ## [127] blob_1.3.0                  plyranges_1.31.1           
+    ## [129] bitops_1.0-9                lme4_1.1-38                
+    ## [131] VariantAnnotation_1.57.1    scales_1.4.0               
+    ## [133] xts_0.14.1                  purrr_1.2.1                
+    ## [135] crayon_1.5.3                rlang_1.1.7                
+    ## [137] cowplot_1.2.0               KEGGREST_1.51.1
 
 Committee, EFSA Scientific, Simon John More, Vasileios Bampidis, Diane
 Benford, Claude Bragard, Thorhallur Ingi Halldorsson, Antonio F

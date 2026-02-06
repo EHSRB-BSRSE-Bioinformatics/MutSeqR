@@ -58,8 +58,9 @@ signature_fitting(
 Creates a subfolder "SigProfiler" in the output directory with
 SigProfiler tools results. For a complete breakdown of the results, see
 the Readme file for MutSeqR. Most relevant results are stored in
-SigProfiler \> [group](https://rdrr.io/r/grDevices/plotmath.html) \>
-matrices \> output \> Assignment_Solution \> Activities \>
+SigProfiler \>
+[ggplot2::group](https://ggplot2.tidyverse.org/reference/aes_group_order.html)
+\> matrices \> output \> Assignment_Solution \> Activities \>
 SampleReconstruction \> WebPNGs. These plots show a summary of the
 signature assignment results for each group. In each plot, the top left
 panel represents the base_96 mutation count for the group. The bottom
@@ -91,6 +92,7 @@ the filter_mut column will be excluded.
 ## Examples
 
 ``` r
+# \donttest{
 if (requireNamespace("MutSeqRData", quietly = TRUE)) {
   # Example data consists of 24 mouse bone marrow DNA samples imported
   # using import_mut_data() and filtered with filter_mut as in Example 4.
@@ -110,5 +112,6 @@ if (requireNamespace("MutSeqRData", quietly = TRUE)) {
     python_version = "3.11",
     output_path = output_path
   )
-}
+} 
+# }
 ```

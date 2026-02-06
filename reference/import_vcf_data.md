@@ -202,27 +202,27 @@ be used as the `total_depth`.
 ## Examples
 
 ``` r
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example: Import a single bg-zipped vcf file. This library was sequenced
-  # with Duplex Sequencing using the TwinStrand Mouse Mutagenesis Panel which
-  # consists of 20 2.4kb targets = 48kb of sequence. Example data is retrieved
-  # from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_file <- eh[["EH9859"]]
-
-  # We will create an example metadata table for this data.
-  sample_meta <- data.frame(
-    sample = "dna00996.1",
-    dose = "50",
-    dose_group = "High"
-  )
-  # Import the data
-  imported_example_data <- import_vcf_data(
-    vcf_file = example_file,
-    sample_data = sample_meta,
-    regions = "TSpanel_mouse",
-    BS_genome = find_BS_genome("mouse", "mm10")
-  )
-}
+# Mutation data is just for example purposes. It does not reflect real data
+file <- system.file("extdata", "Example_files", 
+                   "simple_vcf_data.vcf", package = "MutSeqR")
+# Import the data
+imported_example_data <- import_vcf_data(
+ vcf_file = file,
+BS_genome = find_BS_genome("mouse", "mm10"))
+#> 'getOption("repos")' replaces Bioconductor standard repositories, see
+#> 'help("repositories", package = "BiocManager")' for details.
+#> Replacement repositories:
+#>     CRAN: https://cran.rstudio.com
+#> Selected reference genome: BSgenome.Mmusculus.UCSC.mm10
+#> Reference genome is already installed.
+#> Once installed, supply 'BSgenome.Mmusculus.UCSC.mm10' as the BS_genome parameter.
+#> 'getOption("repos")' replaces Bioconductor standard repositories, see
+#> 'help("repositories", package = "BiocManager")' for details.
+#> Replacement repositories:
+#>     CRAN: https://cran.rstudio.com
+#> Warning: info fields with no header: sample
+#> Expected 'alt' but found 'alt.value', renaming it.
+#> Expected 'alt_depth' but found 'VD', renaming it.
+#> Loading reference genome: BSgenome.Mmusculus.UCSC.mm10.
+#> Retrieving context sequences from BSgenome
 ```

@@ -13,7 +13,7 @@ return a list of available genomes for a specified species."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ return a list of available genomes for a specified species."><meta property="og:
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Find the appropriate BS genome for the specified organism and genome.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/find_BS_genome.R" class="external-link"><code>R/find_BS_genome.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/find_BS_genome.R" class="external-link"><code>R/find_BS_genome.R</code></a></small>
       <div class="d-none name"><code>find_BS_genome.Rd</code></div>
     </div>
 
@@ -78,7 +78,7 @@ Default is FALSE.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>a BSgenome object</p>
+    <p>a BSgenome package name or a dataframe of possibilities</p>
     </div>
 
     <div class="section level2">
@@ -91,14 +91,7 @@ Default is FALSE.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     CRAN: https://cran.rstudio.com</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Selected reference genome: BSgenome.Mmusculus.UCSC.mm10</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Reference genome is already installed.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Once installed, supply: BSgenome.Mmusculus.UCSC.mm10 as the BS_genome parameter in import_mut/vcf_data()</span>
-<span class="r-in"><span><span class="co"># Find all possible mouse BS genomesL</span></span></span>
-<span class="r-in"><span><span class="va">mouse_all</span> <span class="op">&lt;-</span> <span class="fu">find_BS_genome</span><span class="op">(</span><span class="st">"mouse"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 'getOption("repos")' replaces Bioconductor standard repositories, see</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 'help("repositories", package = "BiocManager")' for details.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Replacement repositories:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     CRAN: https://cran.rstudio.com</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Possible BS genomes for organism = 'mouse', masked = FALSE: BSgenome.Mmusculus.UCSC.mm10BSgenome.Mmusculus.UCSC.mm39BSgenome.Mmusculus.UCSC.mm8BSgenome.Mmusculus.UCSC.mm9. Please install one of the possible BS genomes using BiocManager::install('pkgname') and provide the pkgname to import_mut/vcf_data().</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Once installed, supply 'BSgenome.Mmusculus.UCSC.mm10' as the BS_genome parameter.</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

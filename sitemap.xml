@@ -30,6 +30,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_binom_ci.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_cpg_mutations.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_cpg_regions.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_mutation_palette.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_ref_of_mut.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_seq.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_mut_data.html</loc></url>
@@ -62,6 +63,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/spectra_comparison.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_dict.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_list.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_sample_fix.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_excel.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutation_calling_file.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutational_matrix.html</loc></url>

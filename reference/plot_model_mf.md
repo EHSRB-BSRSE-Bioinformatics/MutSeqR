@@ -111,31 +111,11 @@ See model_mf() for examples.
 ``` r
 # Example data consists of 24 mouse bone marrow DNA samples imported
 # using import_mut_data() and filtered with filter_mut.
-# Data was summarized per sample using calculate_mf() (see relevant
-# examples). We will run the model with model_mf then plot the results.
-mf_example <- readRDS(system.file("extdata/Example_files/mf_data_global.rds",
-  package = "MutSeqR"
-))
-# We will compare all treated groups to the control group
-contrasts <- data.frame(
-  col1 = c("12.5", "25", "50"),
-  col2 = c("0", "0", "0")
-)
-# Fit the model
-model <- model_mf(
-  mf_data = mf_example,
-  fixed_effects = "dose",
-  reference_level = "0",
-  muts = "sum_min",
-  total_count = "group_depth",
-  contrasts = contrasts
-)
-#> Reference level for factordose:0
-#> Fitting generalized linear model. glm(cbind( sum_min , group_depth ) ~  dose, family = quasibinomial
-#> The highest residual in absolute value is:4.73969242941171in row:14
-
-
-
+# Data was summarized per sample using calculate_mf() and modeled using
+# model_mf() (see example).
+file <- system.file("extdata/Example_files/mf_model_global.rds",
+     package = "MutSeqR")
+model <- readRDS(file)
 # Plot the results using plot_model_mf()
 plot <- plot_model_mf(model,
   plot_type = "bar",

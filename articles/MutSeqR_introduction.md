@@ -190,7 +190,7 @@ query(eh, "MutSeqRData")
 ```
 
     ## ExperimentHub with 9 records
-    ## # snapshotDate(): 2025-11-14
+    ## # snapshotDate(): 2026-01-30
     ## # $dataprovider: Health Canada, TwinStrand Biosciences
     ## # $species: Mus musculus
     ## # $rdataclass: data.frame
@@ -541,14 +541,12 @@ within the given regions. Users can define how this filter should be
 used with `regions_filter`. `region_filter = "remove_within"` will
 remove all rows whose positions overlap with the provided regions.
 `region_filter = "keep_within"` will remove all rows whose positions are
-outside of the provided regions. By default, records that are
-
-> 1bp must start and end within the regions to count as being within the
-> region. `allow_half_overlap = TRUE` allow records that only start or
-> end within the regions but extend outside of them to be counted as
-> being within the region. Twinstrand Mutagenesis Panels may be used by
-> setting `regions` to one of “TSpanel_human”, “TSpanel_mouse”, or
-> “TSpanel_rat”.
+outside of the provided regions. By default, records that are 1bp+ must
+start and end within the regions to count as being within the region.
+`allow_half_overlap = TRUE` allow records that only start or end within
+the regions but extend outside of them to be counted as being within the
+region. Twinstrand Mutagenesis Panels may be used by setting `regions`
+to one of “TSpanel_human”, “TSpanel_mouse”, or “TSpanel_rat”.
 
 ### Output
 
@@ -1461,7 +1459,7 @@ be skipped.
 
 ### Session Info
 
-    ## R Under development (unstable) (2025-11-18 r89035)
+    ## R Under development (unstable) (2026-02-04 r89376)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -1484,65 +1482,65 @@ be skipped.
     ## 
     ## other attached packages:
     ##  [1] BSgenome.Mmusculus.UCSC.mm10_1.4.3 BSgenome_1.79.1                   
-    ##  [3] rtracklayer_1.71.0                 BiocIO_1.21.0                     
-    ##  [5] Biostrings_2.79.2                  XVector_0.51.0                    
-    ##  [7] GenomicRanges_1.63.0               Seqinfo_1.1.0                     
+    ##  [3] rtracklayer_1.71.3                 BiocIO_1.21.0                     
+    ##  [5] Biostrings_2.79.4                  XVector_0.51.0                    
+    ##  [7] GenomicRanges_1.63.1               Seqinfo_1.1.0                     
     ##  [9] IRanges_2.45.0                     S4Vectors_0.49.0                  
     ## [11] ExperimentHub_3.1.0                AnnotationHub_4.1.0               
     ## [13] BiocFileCache_3.1.0                dbplyr_2.5.1                      
     ## [15] BiocGenerics_0.57.0                generics_0.1.4                    
-    ## [17] MutSeqR_0.99.3                     htmltools_0.5.8.1                 
+    ## [17] MutSeqR_0.99.9                     htmltools_0.5.9                   
     ## [19] DT_0.34.0                         
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] DBI_1.2.3                   bitops_1.0-9               
-    ##  [3] httr2_1.2.1                 rlang_1.1.6                
-    ##  [5] magrittr_2.0.4              matrixStats_1.5.0          
-    ##  [7] compiler_4.6.0              RSQLite_2.4.4              
-    ##  [9] GenomicFeatures_1.63.1      png_0.1-8                  
-    ## [11] systemfonts_1.3.1           vctrs_0.6.5                
-    ## [13] stringr_1.6.0               pkgconfig_2.0.3            
-    ## [15] crayon_1.5.3                fastmap_1.2.0              
-    ## [17] labeling_0.4.3              Rsamtools_2.27.0           
-    ## [19] rmarkdown_2.30              ragg_1.5.0                 
-    ## [21] purrr_1.2.0                 bit_4.6.0                  
-    ## [23] xfun_0.54                   cachem_1.1.0               
-    ## [25] cigarillo_1.1.0             jsonlite_2.0.0             
-    ## [27] blob_1.2.4                  DelayedArray_0.37.0        
-    ## [29] BiocParallel_1.45.0         parallel_4.6.0             
-    ## [31] R6_2.6.1                    plyranges_1.31.1           
-    ## [33] VariantAnnotation_1.57.0    bslib_0.9.0                
-    ## [35] stringi_1.8.7               RColorBrewer_1.1-3         
-    ## [37] jquerylib_0.1.4             SummarizedExperiment_1.41.0
-    ## [39] knitr_1.50                  Matrix_1.7-4               
-    ## [41] tidyselect_1.2.1            dichromat_2.0-0.1          
-    ## [43] abind_1.4-8                 yaml_2.3.10                
-    ## [45] codetools_0.2-20            curl_7.0.0                 
-    ## [47] lattice_0.22-7              tibble_3.3.0               
-    ## [49] Biobase_2.71.0              withr_3.0.2                
-    ## [51] KEGGREST_1.51.1             S7_0.2.1                   
-    ## [53] evaluate_1.0.5              desc_1.4.3                 
-    ## [55] pillar_1.11.1               BiocManager_1.30.27        
-    ## [57] filelock_1.0.3              MatrixGenerics_1.23.0      
-    ## [59] rprojroot_2.1.1             RCurl_1.98-1.17            
-    ## [61] BiocVersion_3.23.1          ggplot2_4.0.1              
-    ## [63] scales_1.4.0                glue_1.8.0                 
-    ## [65] tools_4.6.0                 data.table_1.17.8          
-    ## [67] GenomicAlignments_1.47.0    fs_1.6.6                   
-    ## [69] XML_3.99-0.20               grid_4.6.0                 
-    ## [71] tidyr_1.3.1                 crosstalk_1.2.2            
-    ## [73] colorspace_2.1-2            AnnotationDbi_1.73.0       
-    ## [75] restfulr_0.0.16             cli_3.6.5                  
-    ## [77] rappdirs_0.3.3              textshaping_1.0.4          
-    ## [79] S4Arrays_1.11.0             ggdendro_0.2.0             
-    ## [81] dplyr_1.1.4                 gtable_0.3.6               
-    ## [83] sass_0.4.10                 digest_0.6.39              
-    ## [85] SparseArray_1.11.2          rjson_0.2.23               
-    ## [87] htmlwidgets_1.6.4           farver_2.1.2               
-    ## [89] memoise_2.0.1               pkgdown_2.2.0              
-    ## [91] lifecycle_1.0.4             httr_1.4.7                 
-    ## [93] here_1.0.2                  bit64_4.6.0-1              
-    ## [95] MASS_7.3-65
+    ##  [3] httr2_1.2.2                 rlang_1.1.7                
+    ##  [5] magrittr_2.0.4              otel_0.2.0                 
+    ##  [7] matrixStats_1.5.0           compiler_4.6.0             
+    ##  [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     
+    ## [11] png_0.1-8                   systemfonts_1.3.1          
+    ## [13] vctrs_0.7.1                 stringr_1.6.0              
+    ## [15] pkgconfig_2.0.3             crayon_1.5.3               
+    ## [17] fastmap_1.2.0               labeling_0.4.3             
+    ## [19] Rsamtools_2.27.0            rmarkdown_2.30             
+    ## [21] ragg_1.5.0                  purrr_1.2.1                
+    ## [23] bit_4.6.0                   xfun_0.56                  
+    ## [25] cachem_1.1.0                cigarillo_1.1.0            
+    ## [27] jsonlite_2.0.0              blob_1.3.0                 
+    ## [29] DelayedArray_0.37.0         BiocParallel_1.45.0        
+    ## [31] parallel_4.6.0              R6_2.6.1                   
+    ## [33] plyranges_1.31.1            VariantAnnotation_1.57.1   
+    ## [35] bslib_0.10.0                stringi_1.8.7              
+    ## [37] RColorBrewer_1.1-3          jquerylib_0.1.4            
+    ## [39] SummarizedExperiment_1.41.0 knitr_1.51                 
+    ## [41] Matrix_1.7-4                tidyselect_1.2.1           
+    ## [43] dichromat_2.0-0.1           abind_1.4-8                
+    ## [45] yaml_2.3.12                 codetools_0.2-20           
+    ## [47] curl_7.0.0                  lattice_0.22-7             
+    ## [49] tibble_3.3.1                withr_3.0.2                
+    ## [51] Biobase_2.71.0              KEGGREST_1.51.1            
+    ## [53] S7_0.2.1                    evaluate_1.0.5             
+    ## [55] desc_1.4.3                  pillar_1.11.1              
+    ## [57] BiocManager_1.30.27         filelock_1.0.3             
+    ## [59] MatrixGenerics_1.23.0       rprojroot_2.1.1            
+    ## [61] RCurl_1.98-1.17             BiocVersion_3.23.1         
+    ## [63] ggplot2_4.0.2               scales_1.4.0               
+    ## [65] glue_1.8.0                  tools_4.6.0                
+    ## [67] data.table_1.18.2.1         GenomicAlignments_1.47.0   
+    ## [69] fs_1.6.6                    XML_3.99-0.20              
+    ## [71] grid_4.6.0                  tidyr_1.3.2                
+    ## [73] crosstalk_1.2.2             colorspace_2.1-2           
+    ## [75] AnnotationDbi_1.73.0        restfulr_0.0.16            
+    ## [77] cli_3.6.5                   rappdirs_0.3.4             
+    ## [79] textshaping_1.0.4           S4Arrays_1.11.1            
+    ## [81] ggdendro_0.2.0              dplyr_1.2.0                
+    ## [83] gtable_0.3.6                sass_0.4.10                
+    ## [85] digest_0.6.39               SparseArray_1.11.10        
+    ## [87] rjson_0.2.23                htmlwidgets_1.6.4          
+    ## [89] farver_2.1.2                memoise_2.0.1              
+    ## [91] pkgdown_2.2.0               lifecycle_1.0.5            
+    ## [93] httr_1.4.7                  here_1.0.2                 
+    ## [95] bit64_4.6.0-1               MASS_7.3-65
 
 Danecek, Petr, Adam Auton, Goncalo Abecasis, Cornelis A. Albers, Eric
 Banks, Mark A. DePristo, Robert E. Handsaker, et al. 2011. “The Variant

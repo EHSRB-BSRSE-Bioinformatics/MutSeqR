@@ -200,7 +200,8 @@ f.proast(
 
 - seed:
 
-  Integer. Random seed for reproducibility. Defaults to 125.
+  Integer. Random seed for reproducibility. Defaults to 125. Use 0 to
+  get a random seed each time.
 
 ## Value
 

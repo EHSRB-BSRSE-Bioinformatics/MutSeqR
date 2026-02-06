@@ -11,7 +11,7 @@ Currently only supports SBS analysis i.e. snvs."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@ Currently only supports SBS analysis i.e. snvs."><meta property="og:image" conte
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Write the mutation calling file to input into the SigProfiler Assignment web application.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/write_sigprofiler_input.R" class="external-link"><code>R/write_sigprofiler_input.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/write_sigprofiler_input.R" class="external-link"><code>R/write_sigprofiler_input.R</code></a></small>
       <div class="d-none name"><code>write_mutation_calling_file.Rd</code></div>
     </div>
 
@@ -96,24 +96,47 @@ application (https://cancer.sanger.ac.uk/signatures/assignment/) as a
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MutSeqRData"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Bioconductor/ExperimentHub" class="external-link">ExperimentHub</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">eh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ExperimentHub/man/ExperimentHub-class.html" class="external-link">ExperimentHub</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">example_data</span> <span class="op">&lt;-</span> <span class="va">eh</span><span class="op">[[</span><span class="st">"EH9861"</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="va">temp_output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu">write_mutation_calling_file</span><span class="op">(</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example data  consists of 24 mouse bone marrow</span></span></span>
+<span class="r-in"><span><span class="co"># samples exposed to three doses of BaP alongside vehicle controls.</span></span></span>
+<span class="r-in"><span><span class="co"># Libraries were sequenced with Duplex Sequencing using</span></span></span>
+<span class="r-in"><span><span class="co"># the TwinStrand Mouse Mutagenesis Panel which consists of 20 2.4kb</span></span></span>
+<span class="r-in"><span><span class="co"># targets = 48kb of sequence. Example data can be retrieved from</span></span></span>
+<span class="r-in"><span><span class="co"># MutSeqRData, an ExperimentHub data package:</span></span></span>
+<span class="r-in"><span><span class="co">## library(ExperimentHub)</span></span></span>
+<span class="r-in"><span><span class="co">## eh &lt;- ExperimentHub()</span></span></span>
+<span class="r-in"><span><span class="co">## query(eh, "MutSeqRData")</span></span></span>
+<span class="r-in"><span><span class="co"># The data is a subset of variants from the target chr1</span></span></span>
+<span class="r-in"><span><span class="co"># from samples of the high dose group (50mg).</span></span></span>
+<span class="r-in"><span><span class="va">example_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Example_files"</span>,</span></span>
+<span class="r-in"><span>                                    <span class="st">"variants_subset_d50_chr1.rds"</span>,</span></span>
+<span class="r-in"><span>                                     package <span class="op">=</span> <span class="st">"MutSeqR"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span> <span class="fu">write_mutation_calling_file</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
 <span class="r-in"><span>    project_name <span class="op">=</span> <span class="st">"Example"</span>,</span></span>
 <span class="r-in"><span>    project_genome <span class="op">=</span> <span class="st">"GRCm38"</span>,</span></span>
-<span class="r-in"><span>    output_path <span class="op">=</span> <span class="va">temp_output</span></span></span>
+<span class="r-in"><span>    output_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">temp_output</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "bslib-e392982257a0a7e1a4ae522df2f1f23b"                                                        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2] "downlit"                                                                                       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3] "file255744d7c73a"                                                                              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "file255749206024"                                                                              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5] "file255763f87a68"                                                                              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] "file2557e240741"                                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "libloc_177_2cc935f9605fe05a.rds"                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8] "libloc_182_8ba9a5ce909cb448.rds"                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] "libloc_182_d3198563f59e5c50.rds"                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "libloc_191_2359b704beb3739.rds"                                                                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "mutation_calling_file.txt"                                                                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12] "repos_https%3A%2F%2Fbioconductor.org%2Fpackages%2F3.23%2Fdata%2Fannotation%2Fsrc%2Fcontrib.rds"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "temp_libpath2557288a0290"                                                                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [14] "test_list.xlsx"                                                                                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [15] "test_single.xlsx"                                                                              </span>
 <span class="r-in"><span>  <span class="co"># The file is saved in the temporary directory</span></span></span>
 <span class="r-in"><span>  <span class="co"># To view the file, use the following code:</span></span></span>
-<span class="r-in"><span>  <span class="co">## output_file &lt;- file.path(temp_output, "mutation_calling_file.txt")</span></span></span>
-<span class="r-in"><span>  <span class="co">## file.show(output_file</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span>  <span class="co">## output_file &lt;- file.path(tempdir(), "mutation_calling_file.txt")</span></span></span>
+<span class="r-in"><span>  <span class="co">## file.show(output_file)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

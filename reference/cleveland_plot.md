@@ -25,4 +25,4 @@ cleveland_plot(results, covariate_col = NULL, output_path = NULL)
 
 ## Value
 
-A list of ggplot objects for each response in results.
+A single ggplot object with facets for each response.

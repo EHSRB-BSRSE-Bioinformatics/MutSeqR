@@ -19,9 +19,6 @@ A vector with corresponding values
 ## Examples
 
 ``` r
-denominator_dict["base_96"]
-#>              base_96 
-#> "normalized_context" 
 denominator_dict["type"]
 #> type 
 #>   NA 

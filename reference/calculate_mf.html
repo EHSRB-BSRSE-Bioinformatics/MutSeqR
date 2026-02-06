@@ -15,7 +15,7 @@ independent mutation counting methods."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,7 @@ independent mutation counting methods."><meta property="og:image" content="https
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Calculate mutation frequency</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/calculate_mf.R" class="external-link"><code>R/calculate_mf.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/calculate_mf.R" class="external-link"><code>R/calculate_mf.R</code></a></small>
       <div class="d-none name"><code>calculate_mf.Rd</code></div>
     </div>
 
@@ -284,24 +284,21 @@ total_depth value for the no_variant is removed.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MutSeqRData"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
-<span class="r-in"><span>  <span class="co"># using import_mut_data() and filtered with filter_mut as in Example 4.</span></span></span>
-<span class="r-in"><span>  <span class="co"># Sequenced on TS Mouse Mutagenesis Panel. Example data is</span></span></span>
-<span class="r-in"><span>  <span class="co"># retrieved from MutSeqRData, an ExperimentHub data package.</span></span></span>
-<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Bioconductor/ExperimentHub" class="external-link">ExperimentHub</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">eh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ExperimentHub/man/ExperimentHub-class.html" class="external-link">ExperimentHub</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">example_data</span> <span class="op">&lt;-</span> <span class="va">eh</span><span class="op">[[</span><span class="st">"EH9861"</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># Calculate mutation frequency by sample.</span></span></span>
-<span class="r-in"><span>  <span class="co"># Calculate depth from the mutation data (default)</span></span></span>
-<span class="r-in"><span>  <span class="co"># Correct the Depth (default) with indel priority (set)</span></span></span>
-<span class="r-in"><span>  <span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span>    cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
-<span class="r-in"><span>    correct_depth_by_indel_priority <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Mutation data is just for example purposes. It does not reflect real data</span></span></span>
+<span class="r-in"><span><span class="va">mutation_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Example_files"</span>,</span></span>
+<span class="r-in"><span>                                     <span class="st">"filtered_simple_mutation_data.rds"</span>,</span></span>
+<span class="r-in"><span>                                     package <span class="op">=</span> <span class="st">"MutSeqR"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Calculate mutation frequency by sample.</span></span></span>
+<span class="r-in"><span><span class="co"># Calculate depth from the mutation data (default)</span></span></span>
+<span class="r-in"><span><span class="co"># Correct the Depth (default) with indel priority (set)</span></span></span>
+<span class="r-in"><span><span class="va">mf_example</span> <span class="op">&lt;-</span> <span class="fu">calculate_mf</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  mutation_data <span class="op">=</span> <span class="va">mutation_data</span>,</span></span>
+<span class="r-in"><span>  cols_to_group <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
+<span class="r-in"><span>  correct_depth_by_indel_priority <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Performing internal depth correction to prevent double-counting</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Internal depth correction complete.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(sample)`</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

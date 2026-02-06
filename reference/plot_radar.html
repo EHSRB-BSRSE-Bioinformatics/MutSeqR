@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,7 +35,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Create a radar plot</h1>
-      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/bioc_review_fix/R/plot_radar.R" class="external-link"><code>R/plot_radar.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/blob/main/R/plot_radar.R" class="external-link"><code>R/plot_radar.R</code></a></small>
       <div class="d-none name"><code>plot_radar.Rd</code></div>
     </div>
 
@@ -80,53 +80,19 @@ for each plot.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MutSeqRData"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="co"># Plot the mean MFmin of each genomic target per dose group</span></span></span>
-<span class="r-in"><span>  <span class="co"># Order the genomic targets by their genic context.</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># Example data consists of 24 mouse bone marrow DNA samples imported</span></span></span>
-<span class="r-in"><span>  <span class="co"># using import_mut_data() and filtered with filter_mut as in Example 4.</span></span></span>
-<span class="r-in"><span>  <span class="co"># Sequenced on TS Mouse Mutagenesis Panel. Example data is</span></span></span>
-<span class="r-in"><span>  <span class="co"># retrieved from MutSeqRData, an ExperimentHub data package.</span></span></span>
-<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Bioconductor/ExperimentHub" class="external-link">ExperimentHub</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">eh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ExperimentHub/man/ExperimentHub-class.html" class="external-link">ExperimentHub</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">example_data</span> <span class="op">&lt;-</span> <span class="va">eh</span><span class="op">[[</span><span class="st">"EH9861"</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="va">mf</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_mf.html">calculate_mf</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    mutation_data <span class="op">=</span> <span class="va">example_data</span>,</span></span>
-<span class="r-in"><span>    cols_to_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sample"</span>, <span class="st">"label"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    retain_metadata_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dose_group"</span>, <span class="st">"genic_context"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="co"># Define the order of the genomic targets</span></span></span>
-<span class="r-in"><span>  <span class="va">label_order</span> <span class="op">&lt;-</span> <span class="va">mf</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="va">genic_context</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">label</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="co"># Calculate the mean MF per dose_group for each target.</span></span></span>
-<span class="r-in"><span>  <span class="va">mean</span> <span class="op">&lt;-</span> <span class="va">mf</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dose_group</span>, <span class="va">label</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">mf_min</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="co"># Set the order of each column</span></span></span>
-<span class="r-in"><span>  <span class="va">mean</span><span class="op">$</span><span class="va">dose_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">mean</span><span class="op">$</span><span class="va">dose_group</span>,</span></span>
-<span class="r-in"><span>    levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>      <span class="st">"Control"</span>,</span></span>
-<span class="r-in"><span>      <span class="st">"Low"</span>,</span></span>
-<span class="r-in"><span>      <span class="st">"Medium"</span>,</span></span>
-<span class="r-in"><span>      <span class="st">"High"</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">mean</span><span class="op">$</span><span class="va">label</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">mean</span><span class="op">$</span><span class="va">label</span>,</span></span>
-<span class="r-in"><span>    levels <span class="op">=</span> <span class="va">label_order</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="co"># Plot</span></span></span>
-<span class="r-in"><span>  <span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">plot_radar</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    mf_data <span class="op">=</span> <span class="va">mean</span>,</span></span>
-<span class="r-in"><span>    response_col <span class="op">=</span> <span class="st">"mean"</span>,</span></span>
-<span class="r-in"><span>    label_col <span class="op">=</span> <span class="st">"label"</span>,</span></span>
-<span class="r-in"><span>    facet_col <span class="op">=</span> <span class="st">"dose_group"</span>,</span></span>
-<span class="r-in"><span>    indiv_y <span class="op">=</span> <span class="cn">FALSE</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Plot the MFmin for each variation type, including the 6 SNV subtypes</span></span></span>
+<span class="r-in"><span><span class="co"># Facet the plots by dose group</span></span></span>
+<span class="r-in"><span><span class="va">mf_ex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Example_files"</span>, <span class="st">"mf_data_6.rds"</span>,</span></span>
+<span class="r-in"><span>     package <span class="op">=</span> <span class="st">"MutSeqR"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">plot_radar</span><span class="op">(</span></span></span>
+<span class="r-in"><span>     mf_data <span class="op">=</span> <span class="va">mf_ex</span>,</span></span>
+<span class="r-in"><span>     response_col <span class="op">=</span> <span class="st">"mf_min"</span>,</span></span>
+<span class="r-in"><span>     label_col <span class="op">=</span> <span class="st">"normalized_subtype"</span>,</span></span>
+<span class="r-in"><span>     facet_col <span class="op">=</span> <span class="st">"dose_group"</span>,</span></span>
+<span class="r-in"><span>     indiv_y <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="plot_radar-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
