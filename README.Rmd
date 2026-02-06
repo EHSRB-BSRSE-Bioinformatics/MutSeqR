@@ -13,12 +13,8 @@ encoding: UTF-8
 <!-- badges: end -->
 
 > [!IMPORTANT]
-> To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
-> See "working_version" branch if you cannot install the devel verison of Bioconductor
 
-```{r, eval = FALSE}
-BiocManager::install(version='devel', force = TRUE)
-```
+> This version of MutSeqR is built for Bioconductor version Development (v3.23) and R v4.6.0. This is the first Bioconductor release. For older versions of R, please refer to the [working_version](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version) on GitHub.
 
 ## Important Notice
 
@@ -56,28 +52,28 @@ You can also view [GitHub releases](https://github.com/EHSRB-BSRSE-Bioinformatic
 
 ## Installation
 
-Install the package from github:
+To install this package, start R (version "4.6") and enter:
 
 ```{r, eval = FALSE}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
-```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
-Load the package
+# The following initializes usage of Bioc devel
+BiocManager::install(version='devel')
 
-```r
-library(MutSeqR)
+BiocManager::install("MutSeqR")
 ```
 
 ## Examples
 
-Example data is loaded through BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
+Example data is loaded through BioConductor ExperimentHub data package.
 
 ```{r, eval = FALSE}
-BiocManager::install(version='devel', force = TRUE)
 BiocManager::install("ExperimentHub")
+
 library(ExperimentHub)
+
+# Create an index
 eh <- ExperimentHub()
 query(eh, "MutSeqRData")
 ```
