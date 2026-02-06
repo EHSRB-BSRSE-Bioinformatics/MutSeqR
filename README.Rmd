@@ -84,7 +84,4 @@ If you encounter a clear bug, please file an issue with a minimal reproducible e
 
 To cite this package in publications use:
 
-```{r echo = FALSE, results='asis'}
-cit <- citation("MutSeqR")
-cat(format(cit, style = "text"), sep = "\n\n")
-```
+Annette E Dodge, Andrew Williams, Danielle P M LeBlanc, David M Schuster, Elena Esina, Charles C Valentine, Jesse J Salk, Alex Y Maslov, Chris Bradley, Carole L Yauk, Francesco Marchetti, Matthew J Meier, MutSeqR: an open source R package for standardized analysis of error-corrected next-generation sequencing data in genetic toxicology, Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf265, https://doi.org/10.1093/bioadv/vbaf265
