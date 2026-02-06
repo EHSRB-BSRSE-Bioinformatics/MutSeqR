@@ -61,7 +61,6 @@ Imports:
     plyranges,
     rlang,
     S4Vectors,
-    Seqinfo,
     stringr,
     SummarizedExperiment,
     tidyr,

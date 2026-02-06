@@ -10,7 +10,15 @@ encoding: UTF-8
 [![R-CMD-check](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-  <!-- badges: end -->
+<!-- badges: end -->
+
+> [!IMPORTANT]
+> To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
+> See "working_version" branch if you cannot install the devel verison of Bioconductor
+
+```{r, eval = FALSE}
+BiocManager::install(version='devel', force = TRUE)
+```
 
 ## Important Notice
 
@@ -50,15 +58,34 @@ You can also view [GitHub releases](https://github.com/EHSRB-BSRSE-Bioinformatic
 
 Install the package from github:
 
-```r
-# install.packages("devtools")
-devtools::install_github("EHSRB-BSRSE-Bioinformatics/MutSeqR")
+```{r, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
 ```
 
 Load the package
 
 ```r
 library(MutSeqR)
+```
+
+## Examples
+
+Example data is loaded through BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
+
+```{r, eval = FALSE}
+BiocManager::install(version='devel', force = TRUE)
+BiocManager::install("ExperimentHub")
+library(ExperimentHub)
+eh <- ExperimentHub()
+query(eh, "MutSeqRData")
+```
+
+Access example data through the index:
+
+```{r, eval = FALSE}
+example_data <- eh[["EH9857"]]
 ```
 
 ## Getting Help
