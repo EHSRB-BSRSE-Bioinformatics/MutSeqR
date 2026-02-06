@@ -13,26 +13,8 @@ encoding: UTF-8
 <!-- badges: end -->
 
 > [!IMPORTANT]
-> To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
-> See "working_version" branch if you cannot install the devel verison of Bioconductor
 
-
-``` r
-BiocManager::install(version='devel', force = TRUE)
-```
-
-## Important Notice
-
-This branch is designed to be compatible with Bioconductor. For full package utility, please install the devel version of bioconductor packages:
-
-
-``` r
-BiocManager::install(version='devel', force = TRUE)
-```
-
-```
-## Error in loadNamespace(x): there is no package called 'BiocManager'
-```
+> This version of MutSeqR is built for Bioconductor version Development (v3.23) and R v4.6.0. This is the first Bioconductor release. If you cannot install the Development version, or are using an older version of R, please use the [working_version](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/tree/working_version) branch on GitHub.
 
 ## Overview
 
@@ -62,30 +44,30 @@ You can also view [GitHub releases](https://github.com/EHSRB-BSRSE-Bioinformatic
 
 ## Installation
 
-Install the package from github:
+To install this package, start R (version "4.6") and enter:
 
 
 ``` r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
-```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
-Load the package
+# The following initializes usage of Bioc devel
+BiocManager::install(version='devel')
 
-```r
-library(MutSeqR)
+BiocManager::install("MutSeqR")
 ```
 
 ## Examples
 
-Example data is loaded through BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
+Example data is loaded through BioConductor ExperimentHub data package.
 
 
 ``` r
-BiocManager::install(version='devel', force = TRUE)
 BiocManager::install("ExperimentHub")
+
 library(ExperimentHub)
+
+# Create an index
 eh <- ExperimentHub()
 query(eh, "MutSeqRData")
 ```
@@ -105,11 +87,4 @@ If you encounter a clear bug, please file an issue with a minimal reproducible e
 
 To cite this package in publications use:
 
-
-```
-## Error in citation("MutSeqR"): there is no package called 'MutSeqR'
-```
-
-```
-## Error: object 'cit' not found
-```
+Annette E Dodge, Andrew Williams, Danielle P M LeBlanc, David M Schuster, Elena Esina, Charles C Valentine, Jesse J Salk, Alex Y Maslov, Chris Bradley, Carole L Yauk, Francesco Marchetti, Matthew J Meier, MutSeqR: an open source R package for standardized analysis of error-corrected next-generation sequencing data in genetic toxicology, Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf265, https://doi.org/10.1093/bioadv/vbaf265
