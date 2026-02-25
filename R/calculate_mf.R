@@ -781,6 +781,21 @@ calculate_mf <- function(mutation_data,
             dplyr::select(-"subtype_depth")
     }
 
+    # Give warning if metadata cols are being retained but have NAs due to
+    # missing subtypes in the data
+    if (length(retain_metadata_cols) > 0 && 
+        anyNA(summary_table[retain_metadata_cols])) {
+        warning(
+            "NA values detected in retained metadata columns. ",
+            "This is expected for summary rows of group/subtype ",
+            "combinations that did not exist in the original input. NA values ",
+            "indicate missing metadata and may affect plotting or downstream ",
+            "analysis. Suggestion: Review the summary table, consider filling",
+            " NAs with appropriate values for your dataset or join the ",
+            "metadata to the summary data using dplyr::left_join()."
+        )
+    }
+
     if (!summary) {
         return(mut_freq_table)
     } else {
