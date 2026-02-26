@@ -67,12 +67,43 @@ BiocManager::install("ExperimentHub")
 library(ExperimentHub)
 eh <- ExperimentHub()
 query(eh, "MutSeqRData")
+#  EH9857 | Example import_mut_data
+#  EH9858 | Example import_mut_data using Custom column names
+#  EH9859 | Example import_vcf_data
+#  EH9860 | Example mutation data
+#  EH9861 | Example mutation data filtered
+#  EH9862 | Precalculated Depth at Base 6 Resolution
+#  EH9863 | Precalculated Depth at Base 12 Resolution
+#  EH9864 | Precalculated Depth at Base 96 Resolution
+#  EH9865 | Precalculated Depth at Base 192 Resolution
 ```
 
 Access example data through the index:
 
 ```{r, eval = FALSE}
 example_data <- eh[["EH9857"]]
+```
+
+If you cannot install the devel version of BiocManager, you can download example data from [zenodo](https://zenodo.org/records/15732134).
+
+Files:
+
+| Query Code | Title                                             | File Type | File Name                                    | Download URL                                                                           |
+| ---------- | ------------------------------------------------- | --------- | -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| EH9857     | Example import_mut_data                           | rds       | example_import_mut_data.rds                  | https://zenodo.org/records/15732134/files/example_import_mut_data.rds                  |
+| EH9858     | Example import_mut_data using Custom column names | txt       | example_import_mut_data_custom_col_names.txt | https://zenodo.org/records/15732134/files/example_import_mut_data_custom_col_names.txt |
+| EH9859     | Example import_vcf_data                           | VCF       | example_import_vcf_data_cleaned.vcf.bgz      | https://zenodo.org/records/15732134/files/example_import_vcf_data_cleaned.vcf.bgz      |
+| EH9860     | Example mutation data                             | rds       | example_mutation_data.rds                    | https://zenodo.org/records/15732134/files/example_mutation_data.rds                    |
+| EH9861     | Example mutation data filtered                    | rds       | example_mutation_data_filtered.rds           | https://zenodo.org/records/15732134/files/example_mutation_data_filtered.rds           |
+| EH9862     | Precalculated Depth at Base 6 Resolution          | rds       | example_mutation_data_filtered.rds           | https://zenodo.org/records/15732134/files/precalc_depth_base_6_example.rds             |
+| EH9863     | Precalculated Depth at Base 12 Resolution         | rds       | precalc_depth_base_12_example.rds            | https://zenodo.org/records/15732134/files/precalc_depth_base_12_example.rds            |
+| EH9864     | Precalculated Depth at Base 96 Resolution         | rds       | precalc_depth_base_96_example.rds            | https://zenodo.org/records/15732134/files/precalc_depth_base_96_example.rds            |
+| EH9865     | Precalculated Depth at Base 192 Resolution        | rds       | precalc_depth_base_192_example.rds           | https://zenodo.org/records/15732134/files/precalc_depth_base_192_example.rds           |
+
+Load RDS files with:
+
+```{r, eval = FALSE}
+readRDS(file = "example_import_mut_data.rds")
 ```
 
 ## Getting Help
