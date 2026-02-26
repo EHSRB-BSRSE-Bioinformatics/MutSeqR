@@ -1,3 +1,8 @@
+---
+output: github_document
+encoding: UTF-8
+---
+
 # MutSeqR <a href="https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/"><img src="man/figures/MutSeqR_hex_logo.png" align="right" height="138" style="float:right; height:200px;" alt="The MutSeqR logo."></a>
 
 <!-- badges: start -->
@@ -8,12 +13,7 @@
 <!-- badges: end -->
 
 > [!IMPORTANT]
-> MutSeqR is currently under review for Bioconductor. The most recent changes can be found in the devel branch. To use this version of the package, please install the devel version of Bioconductor. We will maintain seperate branches until MutSeqR is in the latest release of Bioconductor.
-
-
-``` r
-BiocManager::install(version='devel', force = TRUE)
-```
+> MutSeqR is currently awaiting release on Bioconductor v3.23 (development version). The most recent changes can be found on the Main branch but require the installation of the devel version of Bioconductor and R version 4.6.0. The working_version branch is compatible with R v >= 3.5.0. We will maintain the seperate working_version branch until MutSeqR is in the latest release of Bioconductor.
 
 ## Overview
 
@@ -49,7 +49,7 @@ Install the package from github:
 ``` r
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR")
+BiocManager::install("EHSRB-BSRSE-Bioinformatics/MutSeqR@working_version")
 ```
 
 Load the package
