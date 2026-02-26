@@ -9,7 +9,7 @@
 #' Run dose-response modeling using PROAST.
 #'
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
-#' @param datatype Non-interactive mode parameter. What type of response data do you want to consider? Options are 'continuous, individual data'.
+#' @param datatype Non-interactive mode parameter. What type of response data do you want to consider? Currently only 'continuous, individual data'is supported.
 #' @param model_choice Non-interactive mode parameter. Do you want to fit a single model or fit various nested families of models? Options are 'single model', 'select model 3 or 5 from various families of models', 'select model 3 from various nested families of models', 'select model 5 from various nested families of models', 'select model 15 in terms of RPF'. Recommended: 'select model 3 or 5 from various families of models'.
 #' @param setting_choice Non-interactive mode parameter. Do you want to fit a set of models, or choose a single model? Options are 'single model', 'set of models'.
 #' Recommended: 'set of models'.
@@ -15152,4 +15152,5 @@ f.choose.model <- function(
     return(ans.all)
   })
 }
+
 
