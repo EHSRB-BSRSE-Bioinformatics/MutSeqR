@@ -14372,15 +14372,16 @@ parse_PROAST_output <- function(result) {
 #' @description Independently generate the model plots from the raw results.
 #' @param proast_results_list The raw results list. This is the output of
 #' \code{\link{f.proast}}
-#' @param output_path The file path to the output directory. If the output_path
-#' is NULL, it will save it to the working directory. If the output_path
-#' doesn't exist, it will be created.
-#' @param output_type The file type to export the plots. Options are 'svg',
-#' 'jpeg', 'pdf', 'png', 'tiff', or 'none'. If "none", the plots
-#' will be displayed to the graphics window, recorded with recordPlot(), and
-#' returned as a list.
-#' @param prefix A custom prefix to append to the file names. Default is
-#' "PROAST_".
+#' @param output_type How do you want to output the plots. If "none", the plots
+#' will be displayed to the graphics window and returned as a list. Plots can be
+#' replayed using replayPlot(). Alternatively, the plots may be saved to file.
+#' Options are 'svg', 'jpeg', 'pdf', 'png', or 'tiff'. Plots will be save to
+#' the output_path.
+#' @param output_path Where to save the exported plots. A file path. If the
+#' output_path is NULL, plots will be saved to the working directory. If the
+#' output_path doesn't exist, it will be created.
+#' @param prefix A custom prefix to append to the file names of exported plots.
+#' Plot names are PROAST_[modeltype].
 #' @param model_averaging A logical variable indicating whether you want to
 #' generate the model averaging figure  (TRUE) or the plots of the individual
 #' models (FALSE). You plot one or the other, not both.  Plotting the model
