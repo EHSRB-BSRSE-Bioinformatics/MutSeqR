@@ -61,7 +61,9 @@ library(MutSeqR)
 
 ## Examples
 
-Example data is loaded through BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
+Example data is provided to follow along with the vignettes.
+
+Example data is loaded through a BioConductor ExperimentHub data package. It is available via the 'devel' version of BiocManager.
 
 
 ``` r
