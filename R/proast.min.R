@@ -13308,7 +13308,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       # Open the graphics window
       if (!HTML) { # This can't be FALSE or else error: ans.all$TREND is of length zero
         if (ans.all$nr.models == 1) {
-          if (!knitting) {
+          if (!knitting && display_plots) {
             f.graph.window(1)
           }
         } else {
@@ -13321,6 +13321,7 @@ if (!WAPP) { # Record the plots, don't save to file.
           }
           name.wapp <- paste("a", ans.all$yans, "exphill", sep = "")
           if (display_plots && !knitting) {
+            print("Opening graphics window...")
             f.create.graphwin(
               .gw.size[1],
               .gw.size[2],
@@ -13332,13 +13333,14 @@ if (!WAPP) { # Record the plots, don't save to file.
               output_type = output_type,
               filename = filename
             )
+            par(mfcol = c(1, 2))
+            par(mar = c(5.5, 4.8, 4, 12))
+            par(cex.main = 1.2)
+            par(cex.sub = 1)
+            par(cex.lab = 1.5)
+            par(cex = 0.6)
           }
-          par(mfcol = c(1, 2))
-          par(mar = c(5.5, 4.8, 4, 12))
-          par(cex.main = 1.2)
-          par(cex.sub = 1)
-          par(cex.lab = 1.5)
-          par(cex = 0.6)
+
         }
         y.pos <- 0
         assign(".ypos", y.pos, pos = .proast_env)
@@ -13369,7 +13371,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       }
 
       # Record the Expon plot, if we are not making more plots
-      if (ans.all$nr.models == 1 && !WAPP) {
+      if (ans.all$nr.models == 1 && !WAPP && display_plots) {
         plot_list$Expon <- recordPlot()
       }
 
@@ -13403,7 +13405,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       } # Done Hill
 
       #   Record the Expon/Hill Plot for Continuous Data
-      if (!WAPP) {
+      if (!WAPP && display_plots) {
         plot_list$Expon_HILL <- recordPlot()
       }
 
@@ -13458,7 +13460,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       }
 
       # Save the InvExpon Plot if we are not continuing with the LN
-      if (ans.all$nr.models == 3 && !WAPP) {
+      if (ans.all$nr.models == 3 && !WAPP && display_plots) {
         plot_list$InvExp <- recordPlot()
       }
 
@@ -13487,7 +13489,7 @@ if (!WAPP) { # Record the plots, don't save to file.
         }
       }
       # Save the InvExpon/LN plot
-      if (!WAPP) {
+      if (!WAPP && display_plots) {
         plot_list$InvExp_LN <- recordPlot()
       }
     }
