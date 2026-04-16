@@ -9,7 +9,7 @@
 #' @return A data frame that combines the mutation data with the sample
 #' metadata.
 #' @importFrom dplyr left_join
-import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
+import_sample_data <- function(sample_data, sd_sep = "\t") {
     if (is.data.frame(sample_data)) {
         sd <- sample_data
         if (nrow(sd) == 0) {
@@ -23,7 +23,12 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
         if (file.info(sample_file)$size == 0) {
             stop("You are trying to import an empty sample data file")
         }
-        sd <- read.delim(sample_file, sep = sd_sep, header = TRUE)
+        sd <- read.delim(
+            sample_file,
+            sep = sd_sep,
+            header = TRUE,
+            check.names = FALSE
+        )
         if (ncol(sd) <= 1) {
             stop(
                 "Your imported sample data only has one column. You may want",
@@ -35,16 +40,14 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
         stop("sample_data must be a character string or a data frame")
     }
 
-    # Defensive check: Ensure "sample" column exists in the metadata
+    # DEFENSIVE CHECK: Ensure "sample" column exists in the metadata
     if (!"sample" %in% colnames(sd)) {
-        # Check for casing typos
         if (any(tolower(colnames(sd)) == "sample")) {
             stop(
                 "Error merging sample metadata: A column exactly named 'sample' is required, ",
                 "but found a variation with different casing. Column names are case-sensitive."
             )
         } else {
-            # Show the user what columns were actually found
             available_cols <- paste(head(colnames(sd), 10), collapse = ", ")
             stop(
                 "Error merging sample metadata: The required column 'sample' was not found.\n",
@@ -55,11 +58,9 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
         }
     }
 
-    # Join
-    joined_data <- dplyr::left_join(mutation_data, sd, suffix = c("", ".sd"))
-    message("Sample metadata successfully joined to mutation data\n")
-    return(joined_data)
+    return(sd)
 }
+
 
 #' Join Regions Metadata
 #' @description This function imports the regions metadata and joins it with

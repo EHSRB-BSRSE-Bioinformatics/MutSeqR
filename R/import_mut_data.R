@@ -198,6 +198,26 @@ import_mut_data <- function(
     )
   )
 
+  # Check if BS_genome is actually installed locally
+  if (!is.null(BS_genome)) {
+    if (!(BS_genome %in% BSgenome::installed.genomes())) {
+      stop(
+        "The specified BS genome ('",
+        BS_genome,
+        "') is valid, but is not installed locally. ",
+        "Please install it using BiocManager::install('",
+        BS_genome,
+        "') before proceeding."
+      )
+    }
+  }
+
+  # Load and validate sample metadata before heavy lifting
+  sample_df <- NULL
+  if (!is.null(sample_data)) {
+    sample_df <- import_sample_data(sample_data, sd_sep)
+  }
+
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
     dat <- mut_file
