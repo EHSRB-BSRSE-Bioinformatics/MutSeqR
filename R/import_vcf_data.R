@@ -129,7 +129,7 @@
 #' }
 #' @examples
 #' # Mutation data is just for example purposes. It does not reflect real data
-#' file <- system.file("extdata", "Example_files", 
+#' file <- system.file("extdata", "Example_files",
 #'                    "simple_vcf_data.vcf", package = "MutSeqR")
 #' # Import the data
 #' imported_example_data <- import_vcf_data(
@@ -149,81 +149,105 @@
 #' @importFrom Seqinfo seqnames
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
-import_vcf_data <- function(vcf_file,
-                            sample_data = NULL,
-                            sd_sep = "\t",
-                            regions = NULL,
-                            rg_sep = "\t",
-                            is_0_based_rg = FALSE,
-                            padding = 0,
-                            BS_genome = NULL,
-                            output_granges = FALSE) {
-    stopifnot(
-        !missing(vcf_file) && is.character(vcf_file),
-        is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
-        is.character(sd_sep),
-        is.null(regions) || is.character(regions) || is.data.frame(regions) || methods::is(regions, "GRanges"),
-        is.character(rg_sep),
-        is.logical(is_0_based_rg),
-        is.numeric(padding) && padding >= 0,
-        is.logical(output_granges)
+import_vcf_data <- function(
+  vcf_file,
+  sample_data = NULL,
+  sd_sep = "\t",
+  regions = NULL,
+  rg_sep = "\t",
+  is_0_based_rg = FALSE,
+  padding = 0,
+  BS_genome = NULL,
+  output_granges = FALSE
+) {
+  stopifnot(
+    !missing(vcf_file) && is.character(vcf_file),
+    is.null(sample_data) ||
+      is.character(sample_data) ||
+      is.data.frame(sample_data),
+    is.character(sd_sep),
+    is.null(regions) ||
+      is.character(regions) ||
+      is.data.frame(regions) ||
+      methods::is(regions, "GRanges"),
+    is.character(rg_sep),
+    is.logical(is_0_based_rg),
+    is.numeric(padding) && padding >= 0,
+    is.logical(output_granges)
+  )
+  BS_genome <- match.arg(
+    BS_genome,
+    choices = c(
+      NULL,
+      BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
     )
-    BS_genome <- match.arg(BS_genome,
-        choices = c(
-            NULL,
-            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-        )
+  )
+
+  vcf_file <- file.path(vcf_file)
+
+  # Read and bind vcfs from folder
+  if (file.info(vcf_file)$isdir == TRUE) {
+    vcf_files <- list.files(
+      vcf_file,
+      pattern = "\\.g?vcf(\\.bgz|\\.gz)?$",
+      full.names = TRUE
     )
-
-    vcf_file <- file.path(vcf_file)
-
-    # Read and bind vcfs from folder
-    if (file.info(vcf_file)$isdir == TRUE) {
-        vcf_files <- list.files(vcf_file, pattern = "\\.g?vcf(\\.bgz|\\.gz)?$", full.names = TRUE)
-        if (length(vcf_files) == 0) stop("No VCF files found in directory: ", vcf_file)
-        # Read and combine VCF files
-        vcf_list <- lapply(vcf_files, function(file) {
-            vcf <- VariantAnnotation::readVcf(file)
-            vcf <- vcf_sample_fix(vcf) # fix sample column
-            # Ensure consistent colData rownames so rbind doesn't complain
-            rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
-            return(vcf)
-        })
-        vcf <- do.call(VariantAnnotation::rbind, vcf_list)
-    } else {
-        # Read a single vcf file
-        vcf <- VariantAnnotation::readVcf(vcf_file)
-        # Rename or create the "sample" column in the INFO field
-        vcf <- vcf_sample_fix(vcf)
+    if (length(vcf_files) == 0) {
+      stop("No VCF files found in directory: ", vcf_file)
     }
-    # Extract FIXED Fields
-    ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
-    alt <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
-    # Extract mutation data into a dataframe
-    dat <- data.frame(
-        contig = SummarizedExperiment::seqnames(vcf),
-        start = SummarizedExperiment::start(vcf),
-        ref = VariantAnnotation::ref(vcf),
-        alt = alt
-    )
-    # Extract INFO fields
-    info <- as.data.frame(VariantAnnotation::info(vcf))
+    # Read and combine VCF files
+    vcf_list <- lapply(vcf_files, function(file) {
+      vcf <- VariantAnnotation::readVcf(file)
+      vcf <- vcf_sample_fix(vcf) # fix sample column
+      # Ensure consistent colData rownames so rbind doesn't complain
+      rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
+      return(vcf)
+    })
+    vcf <- do.call(VariantAnnotation::rbind, vcf_list)
+  } else {
+    # Read a single vcf file
+    vcf <- VariantAnnotation::readVcf(vcf_file)
+    # Rename or create the "sample" column in the INFO field
+    vcf <- vcf_sample_fix(vcf)
+  }
+  # Extract FIXED Fields
+  ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
+  alt <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
+  # Extract mutation data into a dataframe
+  dat <- data.frame(
+    contig = SummarizedExperiment::seqnames(vcf),
+    start = SummarizedExperiment::start(vcf),
+    ref = VariantAnnotation::ref(vcf),
+    alt = alt
+  )
+  # Extract INFO fields
+  info <- as.data.frame(VariantAnnotation::info(vcf))
 
-    # Extract GENO fields depending on the type of data
-    geno <- VariantAnnotation::geno(vcf)
-    geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
+  # Extract GENO fields depending on the type of data
+  geno <- VariantAnnotation::geno(vcf)
+  geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
   for (field_name in names(geno)) {
     field <- geno[[field_name]]
-    if (is.list(field)) { # Ex. AD
+    if (is.list(field)) {
+      # Ex. AD
       max_length <- max(vapply(field, length, integer(1)))
-      expanded_field <- do.call(rbind, lapply(field, function(x) {
-        c(x, rep(NA, max_length - length(x)))
-      }))
-      colnames(expanded_field) <- paste(field_name, seq_len(max_length), sep = "_")
+      expanded_field <- do.call(
+        rbind,
+        lapply(field, function(x) {
+          c(x, rep(NA, max_length - length(x)))
+        })
+      )
+      colnames(expanded_field) <- paste(
+        field_name,
+        seq_len(max_length),
+        sep = "_"
+      )
       geno_df <- cbind(geno_df, expanded_field)
-    } else if (is.matrix(field)) { # Ex. GT, DP, VD
+    } else if (is.matrix(field)) {
+      # Ex. GT, DP, VD
       geno_df[[field_name]] <- as.vector(field)
-    } else if (is.array(field) && length(dim(field)) == 3) { # Ex. RD, ALD
+    } else if (is.array(field) && length(dim(field)) == 3) {
+      # Ex. RD, ALD
       # Collapse the array over the 2nd and 3rd dimensions
       collapsed_field <- apply(field, c(1), function(x) as.vector(x))
       collapsed_field <- as.data.frame(t(collapsed_field))
@@ -242,13 +266,14 @@ import_vcf_data <- function(vcf_file,
   dat <- cbind(dat, geno_df, info)
   row.names(dat) <- NULL
 
+  # Rename columns to default names
+  dat <- rename_columns(dat)
+
   # Join with sample metadata if provided
   if (!is.null(sample_data)) {
     dat <- import_sample_data(dat, sample_data, sd_sep)
   }
 
-  # Rename columns to default names
-  dat <- rename_columns(dat)
   # Check for all required columns before proceeding
   dat <- MutSeqR::check_required_columns(dat, op$base_required_mut_cols)
   context_exists <- "context" %in% colnames(dat)
@@ -286,7 +311,9 @@ import_vcf_data <- function(vcf_file,
   if (!is.null(regions)) {
     mut_ranges <- import_regions_metadata(
       mutation_granges = mut_ranges,
-      regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
+      regions = regions,
+      rg_sep = rg_sep,
+      is_0_based_rg = is_0_based_rg,
       padding = padding
     )
   }
@@ -319,17 +346,23 @@ import_vcf_data <- function(vcf_file,
     if (no_calls_exists && depth_exists) {
       dat <- dat %>%
         dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-    } else if (length(ad_columns) > 0) { # create total_depth from AD
+    } else if (length(ad_columns) > 0) {
+      # create total_depth from AD
       dat$total_depth <- rowSums(dat[, ad_columns], na.rm = TRUE)
-    } else { # use the DP field
+    } else {
+      # use the DP field
       if (depth_exists) {
         dat <- dat %>%
           dplyr::mutate(
             total_depth = .data$depth
           )
-        warning("Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README")
+        warning(
+          "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
+        )
       } else {
-        warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
+        warning(
+          "Could not find an appropriate depth column. Some package functionality may be limited.\n"
+        )
       }
     }
   }
@@ -341,11 +374,16 @@ import_vcf_data <- function(vcf_file,
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
+    warning(
+      sum(dat$row_has_duplicate),
+      " rows were found whose position was the same as that of at least one other row for the same sample."
+    )
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.")
+      warning(
+        "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+      )
     }
   }
 

@@ -144,38 +144,58 @@
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 import_mut_data <- function(
-    mut_file, mut_sep = "\t", is_0_based_mut = TRUE,
-    sample_data = NULL, sd_sep = "\t",
-    regions = NULL, rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
-    BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE) {
-
+  mut_file,
+  mut_sep = "\t",
+  is_0_based_mut = TRUE,
+  sample_data = NULL,
+  sd_sep = "\t",
+  regions = NULL,
+  rg_sep = "\t",
+  is_0_based_rg = TRUE,
+  padding = 0,
+  BS_genome = NULL,
+  custom_column_names = NULL,
+  output_granges = FALSE
+) {
   stopifnot(
-      "mut_file is required" = !missing(mut_file),
-      "mut_file must be a character indicating a filepath or a data frame" =
-          is.character(mut_file) || is.data.frame(mut_file),
-      "mut_sep must be a character string" = is.character(mut_sep),
-      "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
-      "sample_data must be NULL, a character indicating a filepath, or a data frame" =
-          is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
-      "sd_sep must be a character string" = is.character(sd_sep),
-      "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" =
-          is.null(regions) || is.character(regions) ||
-              is.data.frame(regions) || methods::is(regions, "GRanges"),
-      "rg_sep must be a character string" = is.character(rg_sep),
-      "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
-      "padding must be a non-negative integer" =
-          is.numeric(padding) && padding >= 0 && (padding %% 1 == 0),
-      "BS_genome must be NULL or a character string" =
-          is.null(BS_genome) || is.character(BS_genome),
-      "custom_column_names must be NULL or a list" =
-          is.null(custom_column_names) || is.list(custom_column_names),
-      "output_granges must be a logical variable" = is.logical(output_granges)
+    "mut_file is required" = !missing(mut_file),
+    "mut_file must be a character indicating a filepath or a data frame" = is.character(
+      mut_file
+    ) ||
+      is.data.frame(mut_file),
+    "mut_sep must be a character string" = is.character(mut_sep),
+    "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
+    "sample_data must be NULL, a character indicating a filepath, or a data frame" = is.null(
+      sample_data
+    ) ||
+      is.character(sample_data) ||
+      is.data.frame(sample_data),
+    "sd_sep must be a character string" = is.character(sd_sep),
+    "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" = is.null(
+      regions
+    ) ||
+      is.character(regions) ||
+      is.data.frame(regions) ||
+      methods::is(regions, "GRanges"),
+    "rg_sep must be a character string" = is.character(rg_sep),
+    "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
+    "padding must be a non-negative integer" = is.numeric(padding) &&
+      padding >= 0 &&
+      (padding %% 1 == 0),
+    "BS_genome must be NULL or a character string" = is.null(BS_genome) ||
+      is.character(BS_genome),
+    "custom_column_names must be NULL or a list" = is.null(
+      custom_column_names
+    ) ||
+      is.list(custom_column_names),
+    "output_granges must be a logical variable" = is.logical(output_granges)
   )
-    BS_genome <- match.arg(BS_genome,
-        choices = c(
-            NULL,
-            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-        )
+  BS_genome <- match.arg(
+    BS_genome,
+    choices = c(
+      NULL,
+      BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+    )
   )
 
   # Import the mut files: data frame or file path
@@ -210,7 +230,10 @@ import_mut_data <- function(
         stop("All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning("The following files in the specified directory are empty and will not be imported: ", empty_list_str)
+        warning(
+          "The following files in the specified directory are empty and will not be imported: ",
+          empty_list_str
+        )
       }
 
       # Remove empty files from mut_files
@@ -218,38 +241,48 @@ import_mut_data <- function(
 
       # Read in the files and bind them together
       dat <- lapply(mut_files, function(file) {
-        read.table(file,
-          header = TRUE, sep = mut_sep,
+        read.table(
+          file,
+          header = TRUE,
+          sep = mut_sep,
           fileEncoding = "UTF-8-BOM"
         )
-      }) %>% dplyr::bind_rows()
+      }) %>%
+        dplyr::bind_rows()
     } else {
       # Handle the case where mut_file exists and is a file
       if (file_info$size == 0 || is.na(file_info$size)) {
         stop("You are trying to import an empty file")
       }
-      dat <- read.table(mut_file,
-        header = TRUE, sep = mut_sep,
+      dat <- read.table(
+        mut_file,
+        header = TRUE,
+        sep = mut_sep,
         fileEncoding = "UTF-8-BOM"
       )
     }
     if (ncol(dat) <= 1) {
-      stop("Your imported data only has one column.
+      stop(
+        "Your imported data only has one column.
            You may want to set mut_sep to properly reflect
-           the delimiter used for the data you are importing.")
+           the delimiter used for the data you are importing."
+      )
     }
   }
-  ## Sample Data File
-  if (!is.null(sample_data)) {
-    dat <- import_sample_data(dat, sample_data, sd_sep)
-  }
-  # Rename columns to default (including custom names)
+
+  # Rename columns to default (including custom names) FIRST
   if (!is.null(custom_column_names)) {
     cols <- modifyList(MutSeqR::op$column, custom_column_names)
     dat <- rename_columns(dat, cols)
   } else {
     dat <- rename_columns(dat)
   }
+
+  ## Sample Data File
+  if (!is.null(sample_data)) {
+    dat <- import_sample_data(dat, sample_data, sd_sep)
+  }
+
   # Check that all required columns are present
   dat <- check_required_columns(dat, op$base_required_mut_cols)
   context_exists <- "context" %in% colnames(dat)
@@ -287,7 +320,9 @@ import_mut_data <- function(
   if (!is.null(regions)) {
     mut_ranges <- import_regions_metadata(
       mutation_granges = mut_ranges,
-      regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
+      regions = regions,
+      rg_sep = rg_sep,
+      is_0_based_rg = is_0_based_rg,
       padding = padding
     )
   }
@@ -321,10 +356,14 @@ import_mut_data <- function(
   }
   if (!total_depth_exists && !no_calls_exists && depth_exists) {
     dat <- dplyr::rename(dat, total_depth = "depth")
-    warning("Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n")
+    warning(
+      "Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n"
+    )
   }
   if (!total_depth_exists && !depth_exists) {
-    warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
+    warning(
+      "Could not find an appropriate depth column. Some package functionality may be limited.\n"
+    )
   }
 
   # Check for duplicated rows
@@ -334,11 +373,16 @@ import_mut_data <- function(
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
+    warning(
+      sum(dat$row_has_duplicate),
+      " rows were found whose position was the same as that of at least one other row for the same sample."
+    )
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.")
+      warning(
+        "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+      )
     }
   }
 
