@@ -45,6 +45,11 @@
 #' "BSgenome.Rnorvegicus.UCSC.rn6"
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation
 #' data to output as a GRanges object. Default output is as a dataframe.
+#' @param remove_sample_suffix An optional character string representing a regular
+#' expression to remove unwanted suffixes from VCF sample names prior to joining
+#' with metadata. For example, if your VCF sample is "Sample1.cons.filtered" but
+#' your metadata sheet just says "Sample1", you can use `remove_sample_suffix = "\\.cons\\.filtered$"`.
+#' Default is NULL.
 #' @details The required fields are:
 #'
 #' **FIXED FIELDS**
@@ -158,7 +163,8 @@ import_vcf_data <- function(
   is_0_based_rg = FALSE,
   padding = 0,
   BS_genome = NULL,
-  output_granges = FALSE
+  output_granges = FALSE,
+  remove_sample_suffix = NULL
 ) {
   stopifnot(
     !missing(vcf_file) && is.character(vcf_file),
@@ -166,6 +172,7 @@ import_vcf_data <- function(
       is.character(sample_data) ||
       is.data.frame(sample_data),
     is.character(sd_sep),
+    is.null(remove_sample_suffix) || is.character(remove_sample_suffix),
     is.null(regions) ||
       is.character(regions) ||
       is.data.frame(regions) ||
@@ -309,12 +316,58 @@ import_vcf_data <- function(
         "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
       )
     }
+
+    # Diagnostic check for metadata sample name match
+    # Defensively unlist if the VCF INFO sample column is a list/CharacterList
+    if (is.list(dat$sample)) {
+      dat$sample <- vapply(
+        dat$sample,
+        function(x) paste(x, collapse = ","),
+        character(1)
+      )
+    }
+
+    # Cast to character vectors to ensure exact string matching
+    dat$sample <- as.character(dat$sample)
+
+    # Strip suffix if provided
+    if (!is.null(remove_sample_suffix)) {
+      dat$sample <- gsub(
+        pattern = remove_sample_suffix,
+        replacement = "",
+        x = dat$sample
+      )
+    }
+
+    sample_df$sample <- as.character(sample_df$sample)
+
+    mut_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+
+    # We strictly care if the mutation data has samples NOT found in the metadata
+    missing_in_meta <- setdiff(mut_samples, meta_samples)
+
+    if (length(missing_in_meta) > 0) {
+      stop(
+        "Mismatch in sample names: Some samples in your VCF data are MISSING from the metadata.\n",
+        "Sample names must match EXACTLY. Please check for suffixes (e.g. '.cons.filtered') in your VCF files or typos in your metadata file.\n\n",
+        "Unmatched samples in VCF data: ",
+        paste(utils::head(missing_in_meta, 3), collapse = ", "),
+        "\n",
+        "Available samples in metadata: ",
+        paste(utils::head(meta_samples, 3), collapse = ", "),
+        "\n",
+        call. = FALSE
+      )
+    }
+
     dat <- dplyr::left_join(
       dat,
       sample_df,
       by = "sample",
       suffix = c("", ".sd")
     )
+
     message("Sample metadata successfully joined to mutation data\n")
   }
 

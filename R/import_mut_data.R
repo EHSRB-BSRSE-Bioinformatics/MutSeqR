@@ -305,6 +305,41 @@ import_mut_data <- function(
         "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
       )
     }
+
+    # Diagnostic check for metadata sample name match
+    # Defensively unlist if the sample column is structured as a list
+    if (is.list(dat$sample)) {
+      dat$sample <- vapply(
+        dat$sample,
+        function(x) paste(x, collapse = ","),
+        character(1)
+      )
+    }
+
+    # Cast to character vectors to ensure setdiff works properly
+    dat$sample <- as.character(dat$sample)
+    sample_df$sample <- as.character(sample_df$sample)
+
+    mut_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+
+    # We strictly care if the mutation data has samples NOT found in the metadata
+    missing_in_meta <- setdiff(mut_samples, meta_samples)
+
+    if (length(missing_in_meta) > 0) {
+      stop(
+        "Mismatch in sample names: Some samples in your mutation data are MISSING from the metadata.\n",
+        "Sample names must match EXACTLY. Please check for trailing suffixes or typos in your metadata file.\n\n",
+        "Unmatched samples in mutation data: ",
+        paste(utils::head(missing_in_meta, 3), collapse = ", "),
+        "\n",
+        "Available samples in metadata: ",
+        paste(utils::head(meta_samples, 3), collapse = ", "),
+        "\n",
+        call. = FALSE
+      )
+    }
+
     dat <- dplyr::left_join(
       dat,
       sample_df,
