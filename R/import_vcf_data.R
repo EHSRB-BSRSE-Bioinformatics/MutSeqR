@@ -217,6 +217,7 @@ import_vcf_data <- function(
   dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
     start = SummarizedExperiment::start(vcf),
+    end = SummarizedExperiment::end(vcf),
     ref = VariantAnnotation::ref(vcf),
     alt = alt
   )
@@ -258,9 +259,11 @@ import_vcf_data <- function(
       geno_df[[field_name]] <- field
     }
   }
-  # Ensure info and geno do not have the same columns
-  common_cols <- intersect(colnames(info), colnames(geno_df))
-  info <- info[, !(colnames(info) %in% common_cols), drop = FALSE]
+  # Ensure info does not overwrite columns already in dat or geno_df (like END or DP)
+  # We do a case-insensitive match so "END" in info is safely dropped in favor of "end" in dat
+  common_cols_idx <- tolower(colnames(info)) %in%
+    tolower(c(colnames(dat), colnames(geno_df)))
+  info <- info[, !common_cols_idx, drop = FALSE]
 
   # Combine data frames
   dat <- cbind(dat, geno_df, info)
