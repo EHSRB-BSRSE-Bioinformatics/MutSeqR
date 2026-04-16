@@ -220,6 +220,14 @@ import_vcf_data <- function(
       vcf <- VariantAnnotation::readVcf(file)
       vcf <- vcf_sample_fix(vcf) # fix sample column
       # Ensure consistent colData rownames so rbind doesn't complain
+
+      # Coerce ALT to CharacterList for every VCF.
+      # This prevents rbind crashes when mixing strict DNA alleles (e.g. A, C)
+      # with gVCF/SV alleles (e.g. <NON_REF>, .)
+      VariantAnnotation::alt(
+        vcf
+      ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
+
       rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
       return(vcf)
     })
@@ -229,18 +237,20 @@ import_vcf_data <- function(
     vcf <- VariantAnnotation::readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
     vcf <- vcf_sample_fix(vcf)
+    VariantAnnotation::alt(
+      vcf
+    ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
   }
-  # Extract FIXED Fields
-  ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
-  alt <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
   # Extract mutation data into a dataframe
+  ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
   dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
     start = SummarizedExperiment::start(vcf),
     end = SummarizedExperiment::end(vcf),
     ref = VariantAnnotation::ref(vcf),
-    alt = alt
+    alt = VariantAnnotation::alt(vcf)
   )
+
   # Extract INFO fields
   info <- as.data.frame(VariantAnnotation::info(vcf))
 
@@ -293,8 +303,19 @@ import_vcf_data <- function(
   dat <- rename_columns(dat)
 
   # Join with sample metadata if provided
-  if (!is.null(sample_data)) {
-    dat <- import_sample_data(dat, sample_data, sd_sep)
+  if (!is.null(sample_df)) {
+    if (!"sample" %in% colnames(dat)) {
+      stop(
+        "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+      )
+    }
+    dat <- dplyr::left_join(
+      dat,
+      sample_df,
+      by = "sample",
+      suffix = c("", ".sd")
+    )
+    message("Sample metadata successfully joined to mutation data\n")
   }
 
   # Check for all required columns before proceeding

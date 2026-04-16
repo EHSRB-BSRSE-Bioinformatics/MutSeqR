@@ -290,7 +290,7 @@ import_mut_data <- function(
     }
   }
 
-  # Rename columns to default (including custom names) FIRST
+  # Rename columns to default (including custom names)
   if (!is.null(custom_column_names)) {
     cols <- modifyList(MutSeqR::op$column, custom_column_names)
     dat <- rename_columns(dat, cols)
@@ -298,9 +298,20 @@ import_mut_data <- function(
     dat <- rename_columns(dat)
   }
 
-  ## Sample Data File
-  if (!is.null(sample_data)) {
-    dat <- import_sample_data(dat, sample_data, sd_sep)
+  ## Join with sample metadata if provided
+  if (!is.null(sample_df)) {
+    if (!"sample" %in% colnames(dat)) {
+      stop(
+        "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+      )
+    }
+    dat <- dplyr::left_join(
+      dat,
+      sample_df,
+      by = "sample",
+      suffix = c("", ".sd")
+    )
+    message("Sample metadata successfully joined to mutation data\n")
   }
 
   # Check that all required columns are present
