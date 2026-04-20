@@ -9,7 +9,7 @@
 #' @return A data frame that combines the mutation data with the sample
 #' metadata.
 #' @importFrom dplyr left_join
-import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
+import_sample_data <- function(sample_data, sd_sep = "\t") {
     if (is.data.frame(sample_data)) {
         sd <- sample_data
         if (nrow(sd) == 0) {
@@ -23,7 +23,12 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
         if (file.info(sample_file)$size == 0) {
             stop("You are trying to import an empty sample data file")
         }
-        sd <- read.delim(sample_file, sep = sd_sep, header = TRUE)
+        sd <- read.delim(
+            sample_file,
+            sep = sd_sep,
+            header = TRUE,
+            check.names = FALSE
+        )
         if (ncol(sd) <= 1) {
             stop(
                 "Your imported sample data only has one column. You may want",
@@ -34,11 +39,299 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
     } else {
         stop("sample_data must be a character string or a data frame")
     }
-    # Join
-    joined_data <- dplyr::left_join(mutation_data, sd, suffix = c("", ".sd"))
-    message("Sample metadata successfully joined to mutation data\n")
-    return(joined_data)
+
+    # DEFENSIVE CHECK: Ensure "sample" column exists in the metadata
+    if (!"sample" %in% colnames(sd)) {
+        if (any(tolower(colnames(sd)) == "sample")) {
+            stop(
+                "Error merging sample metadata: A column exactly named 'sample' is required, ",
+                "but found a variation with different casing. Column names are case-sensitive."
+            )
+        } else {
+            available_cols <- paste(head(colnames(sd), 10), collapse = ", ")
+            stop(
+                "Error merging sample metadata: The required column 'sample' was not found.\n",
+                "Please ensure your sample metadata contains a column named 'sample'.\n",
+                "Columns found: ",
+                available_cols
+            )
+        }
+    }
+
+    return(sd)
 }
+
+
+#' Join imported mutation data with sample metadata
+#' @param dat A data frame containing imported mutation data.
+#' @param sample_df A data frame containing sample metadata.
+#' @param source_label A short label used in user-facing error messages.
+#' @param mismatch_hint Extra guidance appended to sample mismatch errors.
+#' @param remove_sample_suffix Optional regex suffix to strip from sample names.
+#' @importFrom dplyr left_join
+join_import_sample_metadata <- function(
+    dat,
+    sample_df = NULL,
+    source_label = "mutation data",
+    mismatch_hint = "Please check for trailing suffixes or typos in your metadata file.",
+    remove_sample_suffix = NULL
+) {
+    if (is.null(sample_df)) {
+        return(dat)
+    }
+
+    if (!"sample" %in% colnames(dat)) {
+        stop(
+            "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+        )
+    }
+
+    if (is.list(dat$sample)) {
+        dat$sample <- vapply(
+            dat$sample,
+            function(x) paste(x, collapse = ","),
+            character(1)
+        )
+    }
+
+    dat$sample <- as.character(dat$sample)
+
+    if (!is.null(remove_sample_suffix)) {
+        dat$sample <- gsub(
+            pattern = remove_sample_suffix,
+            replacement = "",
+            x = dat$sample
+        )
+    }
+
+    sample_df$sample <- as.character(sample_df$sample)
+
+    imported_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+    missing_in_meta <- setdiff(imported_samples, meta_samples)
+
+    if (length(missing_in_meta) > 0) {
+        stop(
+            "Mismatch in sample names: Some samples in your ",
+            source_label,
+            " are MISSING from the metadata.\n",
+            "Sample names must match EXACTLY. ",
+            mismatch_hint,
+            "\n\n",
+            "Unmatched samples in ",
+            source_label,
+            ": ",
+            paste(utils::head(missing_in_meta, 3), collapse = ", "),
+            "\n",
+            "Available samples in metadata: ",
+            paste(utils::head(meta_samples, 3), collapse = ", "),
+            "\n",
+            call. = FALSE
+        )
+    }
+
+    dat <- dplyr::left_join(
+        dat,
+        sample_df,
+        by = "sample",
+        suffix = c("", ".sd")
+    )
+
+    message("Sample metadata successfully joined to mutation data\n")
+    dat
+}
+
+
+#' Standardize and validate imported mutation data
+#' @param dat A data frame containing imported mutation data.
+#' @param custom_column_names Optional custom column name mapping overrides.
+#' @param sample_df Optional sample metadata as a data frame.
+#' @param source_label A short label used in user-facing error messages.
+#' @param mismatch_hint Extra guidance appended to sample mismatch errors.
+#' @param remove_sample_suffix Optional regex suffix to strip from sample names.
+#' @param required_columns Required columns that must be present.
+#' @param allow_na_columns Required columns allowed to contain NA values.
+#' @param BS_genome BSgenome package name, used when context needs populating.
+prepare_imported_mutation_data <- function(
+    dat,
+    custom_column_names = NULL,
+    sample_df = NULL,
+    source_label = "mutation data",
+    mismatch_hint = "Please check for trailing suffixes or typos in your metadata file.",
+    remove_sample_suffix = NULL,
+    required_columns = MutSeqR::op$base_required_mut_cols,
+    allow_na_columns = character(0),
+    BS_genome = NULL
+) {
+    if (!is.null(custom_column_names)) {
+        cols <- modifyList(MutSeqR::op$column, custom_column_names)
+        dat <- rename_columns(dat, cols)
+    } else {
+        dat <- rename_columns(dat)
+    }
+
+    dat <- join_import_sample_metadata(
+        dat = dat,
+        sample_df = sample_df,
+        source_label = source_label,
+        mismatch_hint = mismatch_hint,
+        remove_sample_suffix = remove_sample_suffix
+    )
+
+    dat <- check_required_columns(dat, required_columns)
+    context_exists <- "context" %in% colnames(dat)
+
+    required_no_na <- setdiff(required_columns, allow_na_columns)
+    na_columns_required <- required_no_na[
+        vapply(dat[required_no_na], function(x) any(is.na(x)), logical(1))
+    ]
+
+    if (length(na_columns_required) > 0) {
+        stop(
+            "NA values were found within the following required column(s): ",
+            paste(na_columns_required, collapse = ", "),
+            ". Please confirm that your data is complete before proceeding."
+        )
+    }
+
+    if (context_exists && any(is.na(dat$context))) {
+        context_exists <- FALSE
+    }
+
+    if (!context_exists) {
+        validate_BS_genome(BS_genome)
+    }
+
+    list(dat = dat, context_exists = context_exists)
+}
+
+
+#' Convert imported mutation data to GRanges and enrich it
+#' @param dat A data frame containing imported mutation data.
+#' @param context_exists Whether an existing context column can be trusted.
+#' @param regions Optional regions input.
+#' @param rg_sep Region separator.
+#' @param is_0_based_rg Whether region coordinates are 0-based.
+#' @param padding Region padding.
+#' @param BS_genome BSgenome package name used to populate sequence context.
+#' @param starts_in_df_are_0based Whether imported mutation starts are 0-based.
+build_imported_mutation_ranges <- function(
+    dat,
+    context_exists,
+    regions = NULL,
+    rg_sep = "\t",
+    is_0_based_rg = FALSE,
+    padding = 0,
+    BS_genome = NULL,
+    starts_in_df_are_0based = FALSE
+) {
+    mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
+        df = as.data.frame(dat),
+        keep.extra.columns = TRUE,
+        seqnames.field = "contig",
+        start.field = "start",
+        end.field = "end",
+        starts.in.df.are.0based = starts_in_df_are_0based
+    )
+
+    if (!is.null(regions)) {
+        mut_ranges <- import_regions_metadata(
+            mutation_granges = mut_ranges,
+            regions = regions,
+            rg_sep = rg_sep,
+            is_0_based_rg = is_0_based_rg,
+            padding = padding
+        )
+    }
+
+    if (!context_exists) {
+        mut_ranges <- populate_sequence_context(
+            mutation_granges = mut_ranges,
+            BS_genome = BS_genome
+        )
+    }
+
+    mut_ranges
+}
+
+
+#' Mark duplicated genomic positions within samples
+#' @param dat A data frame containing mutation data.
+#' @importFrom dplyr group_by mutate ungroup
+mark_duplicate_mutation_rows <- function(dat) {
+    dat <- dat %>%
+        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+        dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
+        dplyr::ungroup()
+
+    if (sum(dat$row_has_duplicate) > 0) {
+        warning(
+            sum(dat$row_has_duplicate),
+            " rows were found whose position was the same as that of at least one other row for the same sample."
+        )
+
+        if ("total_depth" %in% colnames(dat)) {
+            warning(
+                "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+            )
+        }
+    }
+
+    dat
+}
+
+
+#' Add VAF and reference depth columns when total depth is available
+#' @param dat A data frame containing mutation data.
+#' @importFrom dplyr mutate
+add_vaf_columns <- function(dat) {
+    if ("total_depth" %in% colnames(dat)) {
+        dat <- dat %>%
+            dplyr::mutate(
+                vaf = .data$alt_depth / .data$total_depth,
+                ref_depth = .data$total_depth - .data$alt_depth
+            )
+    }
+
+    dat
+}
+
+
+#' Finalize imported mutation data after source-specific parsing
+#' @param mut_ranges A GRanges object containing imported mutation data.
+#' @param depth_resolver A function that adds or adjusts depth-related columns.
+#' @param output_granges Whether to return a GRanges object.
+finalize_imported_mutation_data <- function(
+    mut_ranges,
+    depth_resolver = identity,
+    output_granges = FALSE
+) {
+    dat <- as.data.frame(mut_ranges) %>%
+        dplyr::rename(contig = "seqnames")
+    dat <- characterize_variants(dat)
+
+    if (!"alt_depth" %in% colnames(dat)) {
+        dat$alt_depth <- 1
+    }
+
+    dat <- depth_resolver(dat)
+    dat <- mark_duplicate_mutation_rows(dat)
+    dat <- add_vaf_columns(dat)
+
+    if (output_granges) {
+        return(GenomicRanges::makeGRangesFromDataFrame(
+            df = dat,
+            keep.extra.columns = TRUE,
+            seqnames.field = "contig",
+            start.field = "start",
+            end.field = "end",
+            starts.in.df.are.0based = FALSE
+        ))
+    }
+
+    dat
+}
+
 
 #' Join Regions Metadata
 #' @description This function imports the regions metadata and joins it with
@@ -57,18 +350,21 @@ import_sample_data <- function(mutation_data, sample_data, sd_sep = "\t") {
 #' @importFrom plyranges join_overlap_left_within_directed
 #' @importFrom BiocGenerics start end
 #' @importFrom S4Vectors mcols
-import_regions_metadata <- function(mutation_granges,
-                                    regions,
-                                    rg_sep,
-                                    is_0_based_rg,
-                                    padding) {
+import_regions_metadata <- function(
+    mutation_granges,
+    regions,
+    rg_sep,
+    is_0_based_rg,
+    padding
+) {
     # load regions file as GRanges
     regions_gr <- MutSeqR::load_regions_file(regions, rg_sep, is_0_based_rg)
     regions_gr$in_regions <- TRUE
 
     # Apply padding
     BiocGenerics::start(regions_gr) <- pmax(
-        BiocGenerics::start(regions_gr) - padding, 1
+        BiocGenerics::start(regions_gr) - padding,
+        1
     )
     BiocGenerics::end(regions_gr) <- BiocGenerics::end(regions_gr) + padding
 
@@ -80,7 +376,9 @@ import_regions_metadata <- function(mutation_granges,
     )
     message("Regions metadata successfully joined to mutation data\n")
     # Count the rows that did not overlap
-    S4Vectors::mcols(mutation_granges)$in_regions[is.na(S4Vectors::mcols(mutation_granges)$in_regions)] <- FALSE
+    S4Vectors::mcols(mutation_granges)$in_regions[is.na(
+        S4Vectors::mcols(mutation_granges)$in_regions
+    )] <- FALSE
     false_count <- sum(mutation_granges$in_regions == FALSE)
     if (false_count > 0) {
         warning(
@@ -133,12 +431,12 @@ populate_sequence_context <- function(mutation_granges, BS_genome, n = 1) {
     extract_context <- function(mut_gr, bsgenome) {
         # Resize the mutation_granges to include the context
         expanded_ranges <- GenomicRanges::GRanges(
-        seqnames = Seqinfo::seqnames(mut_gr),
-        ranges = IRanges::IRanges(
-            start = BiocGenerics::start(mut_gr) - n,
-            end = BiocGenerics::start(mut_gr) + n
-        ),
-        strand = BiocGenerics::strand(mut_gr)
+            seqnames = Seqinfo::seqnames(mut_gr),
+            ranges = IRanges::IRanges(
+                start = BiocGenerics::start(mut_gr) - n,
+                end = BiocGenerics::start(mut_gr) + n
+            ),
+            strand = BiocGenerics::strand(mut_gr)
         )
         # Extract the sequences from the BSgenome
         sequences <- Biostrings::getSeq(bsgenome, expanded_ranges)
@@ -160,14 +458,16 @@ populate_sequence_context <- function(mutation_granges, BS_genome, n = 1) {
 characterize_variants <- function(mutation_data) {
     # RSIDS
     if ("id" %in% colnames(mutation_data)) {
-        mutation_data <- mutation_data %>% dplyr::mutate(
-            is_known = ifelse(!.data$id == ".", "TRUE", "FALSE")
-        )
+        mutation_data <- mutation_data %>%
+            dplyr::mutate(
+                is_known = ifelse(!.data$id == ".", "TRUE", "FALSE")
+            )
     }
     # variation_type
     if ("variation_type" %in% colnames(mutation_data)) {
-        mutation_data <- dplyr::rename(mutation_data,
-        original_variation_type = "variation_type"
+        mutation_data <- dplyr::rename(
+            mutation_data,
+            original_variation_type = "variation_type"
         )
     }
     mutation_data$variation_type <- mapply(
@@ -178,8 +478,12 @@ characterize_variants <- function(mutation_data) {
 
     # Define substitution dictionary to normalize to pyrimidine context
     sub_dict <- c(
-        "G>T" = "C>A", "G>A" = "C>T", "G>C" = "C>G",
-        "A>G" = "T>C", "A>C" = "T>G", "A>T" = "T>A"
+        "G>T" = "C>A",
+        "G>A" = "C>T",
+        "G>C" = "C>G",
+        "A>G" = "T>C",
+        "A>C" = "T>G",
+        "A>T" = "T>A"
     )
     # Calculate columns:
     # nchar_ref, nchar_alt, varlen, short_ref, normalized_ref, subtype,
@@ -187,69 +491,82 @@ characterize_variants <- function(mutation_data) {
     # normalized_context_with_mutation, gc_content
     mutation_data <- mutation_data %>%
         dplyr::mutate(
-        nchar_ref = nchar(ref),
-        nchar_alt = ifelse(!(.data$variation_type %in% c(
-            "no_variant",
-            "sv",
-            "ambiguous",
-            "uncategorized"
-        )),
-        nchar(alt), NA
-        ),
-        varlen =
-            ifelse(.data$variation_type %in%
-                c("insertion", "deletion", "complex"),
-                    .data$nchar_alt - .data$nchar_ref,
-                        ifelse(.data$variation_type %in% c("snv", "mnv"),
-                            .data$nchar_ref, NA
-                        )
+            nchar_ref = nchar(ref),
+            nchar_alt = ifelse(
+                !(.data$variation_type %in%
+                    c(
+                        "no_variant",
+                        "sv",
+                        "ambiguous",
+                        "uncategorized"
+                    )),
+                nchar(alt),
+                NA
             ),
-        short_ref = substr(.data$ref, 1, 1),
-        normalized_ref = dplyr::case_when(
-            substr(.data$ref, 1, 1) == "A" ~ "T",
-            substr(.data$ref, 1, 1) == "G" ~ "C",
-            substr(.data$ref, 1, 1) == "C" ~ "C",
-            substr(.data$ref, 1, 1) == "T" ~ "T"
-        ),
-        subtype =
-            ifelse(.data$variation_type == "snv",
-            paste0(.data$ref, ">", .data$alt),
-            .data$variation_type
+            varlen = ifelse(
+                .data$variation_type %in%
+                    c("insertion", "deletion", "complex"),
+                .data$nchar_alt - .data$nchar_ref,
+                ifelse(
+                    .data$variation_type %in% c("snv", "mnv"),
+                    .data$nchar_ref,
+                    NA
+                )
             ),
-        normalized_subtype = ifelse(.data$subtype %in% names(sub_dict),
-            sub_dict[.data$subtype],
-            .data$subtype
-        ),
-        normalized_context = ifelse(
-            stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
-            mapply(
-            function(x) reverseComplement(x, case = "upper"),
-            .data$context
+            short_ref = substr(.data$ref, 1, 1),
+            normalized_ref = dplyr::case_when(
+                substr(.data$ref, 1, 1) == "A" ~ "T",
+                substr(.data$ref, 1, 1) == "G" ~ "C",
+                substr(.data$ref, 1, 1) == "C" ~ "C",
+                substr(.data$ref, 1, 1) == "T" ~ "T"
             ),
-            .data$context
-        ),
-        context_with_mutation =
-            ifelse(.data$variation_type == "snv",
-            paste0(
-                stringr::str_sub(.data$context, 1, 1),
-                "[", .data$subtype, "]",
-                stringr::str_sub(.data$context, 3, 3)
+            subtype = ifelse(
+                .data$variation_type == "snv",
+                paste0(.data$ref, ">", .data$alt),
+                .data$variation_type
             ),
-            .data$variation_type
+            normalized_subtype = ifelse(
+                .data$subtype %in% names(sub_dict),
+                sub_dict[.data$subtype],
+                .data$subtype
             ),
-        normalized_context_with_mutation =
-            ifelse(.data$variation_type == "snv",
-            paste0(
-                stringr::str_sub(.data$normalized_context, 1, 1),
-                "[", .data$normalized_subtype, "]",
-                stringr::str_sub(.data$normalized_context, 3, 3)
+            normalized_context = ifelse(
+                stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
+                mapply(
+                    function(x) reverseComplement(x, case = "upper"),
+                    .data$context
+                ),
+                .data$context
             ),
-            .data$variation_type
+            context_with_mutation = ifelse(
+                .data$variation_type == "snv",
+                paste0(
+                    stringr::str_sub(.data$context, 1, 1),
+                    "[",
+                    .data$subtype,
+                    "]",
+                    stringr::str_sub(.data$context, 3, 3)
+                ),
+                .data$variation_type
             ),
-        gc_content = (stringr::str_count(string = .data$context, pattern = "G") +
-            stringr::str_count(string = .data$context, pattern = "C"))
-        / stringr::str_count(.data$context),
-        filter_mut = FALSE
+            normalized_context_with_mutation = ifelse(
+                .data$variation_type == "snv",
+                paste0(
+                    stringr::str_sub(.data$normalized_context, 1, 1),
+                    "[",
+                    .data$normalized_subtype,
+                    "]",
+                    stringr::str_sub(.data$normalized_context, 3, 3)
+                ),
+                .data$variation_type
+            ),
+            gc_content = (stringr::str_count(
+                string = .data$context,
+                pattern = "G"
+            ) +
+                stringr::str_count(string = .data$context, pattern = "C")) /
+                stringr::str_count(.data$context),
+            filter_mut = FALSE
         )
     return(mutation_data)
 }
@@ -285,9 +602,11 @@ get_ref_of_mut <- function(mut_string) {
 #' reverseComplement.R
 #' @return A character vector of the reverse complement sequences.
 
-reverseComplement <- function(x,
-                              content = c("dna", "rna"),
-                              case = c("lower", "upper", "as is")) {
+reverseComplement <- function(
+    x,
+    content = c("dna", "rna"),
+    case = c("lower", "upper", "as is")
+) {
     # reverse character vector
     strreverse <- function(x) {
         if (!is.character(x)) {
@@ -300,14 +619,20 @@ reverseComplement <- function(x,
         )
     }
     # Check arguments
-    if (!is.character(x)) x <- as.character(x) # coerse x to a character vector
+    if (!is.character(x)) {
+        x <- as.character(x)
+    } # coerse x to a character vector
     content <- match.arg(content)
     case <- match.arg(case)
     if (length(x) == 0 || (length(x) == 1 && nchar(x) == 0)) {
         return(x)
     } # bail if input is empty
-    if (case == "lower") x <- tolower(x)
-    if (case == "upper") x <- toupper(x)
+    if (case == "lower") {
+        x <- tolower(x)
+    }
+    if (case == "upper") {
+        x <- toupper(x)
+    }
     if (content == "dna") {
         src <- "acgturykmswbdhvnxACGTURYKMSWBDHVNX-"
         dest <- "tgcaayrmkswvhdbnxTGCAAyRMKSWVHDBNX-"
@@ -340,13 +665,29 @@ classify_variation <- function(ref, alt) {
     stopifnot(is.character(ref), is.character(alt))
     no_variant_indicators <- c(".", "", "<NON_REF>")
     structural_indicators <- c(
-        "<DEL>", "<INS>", "<DUP>", "<INV>", "<FUS>",
-        "<CNV>", "<CNV:TR>", "<DUP:TANDEM>", "<DEL:ME>",
+        "<DEL>",
+        "<INS>",
+        "<DUP>",
+        "<INV>",
+        "<FUS>",
+        "<CNV>",
+        "<CNV:TR>",
+        "<DUP:TANDEM>",
+        "<DEL:ME>",
         "<INS:ME>"
     )
     iupac_indicators <- c(
-        "R", "K", "S", "Y", "M",
-        "W", "B", "H", "N", "D", "V"
+        "R",
+        "K",
+        "S",
+        "Y",
+        "M",
+        "W",
+        "B",
+        "H",
+        "N",
+        "D",
+        "V"
     )
 
     # Case: No variant site
@@ -381,9 +722,10 @@ classify_variation <- function(ref, alt) {
         return("deletion")
     }
     # Case: Complex; ref and alt diff lengths & diff base compositions
-    if (nchar(ref) != nchar(alt) &&
-        !grepl(paste0("^", ref), alt) &&
-        !grepl(paste0("^", alt), ref)
+    if (
+        nchar(ref) != nchar(alt) &&
+            !grepl(paste0("^", ref), alt) &&
+            !grepl(paste0("^", alt), ref)
     ) {
         return("complex")
     }
@@ -418,8 +760,8 @@ rename_columns <- function(data, column_map = op$column) {
     # and replace inner dots with underscores
     norm_names <- tolower(original_colnames)
     norm_names <- gsub("^((x\\.+)|(\\.+))?", "", norm_names) # Leading
-    norm_names <- gsub("(\\.+)?$", "", norm_names)           # Trailing
-    norm_names <- gsub("\\.+", "_", norm_names)              # Middle dots to _
+    norm_names <- gsub("(\\.+)?$", "", norm_names) # Trailing
+    norm_names <- gsub("\\.+", "_", norm_names) # Middle dots to _
 
     map_synonyms <- names(column_map)
     map_targets <- unlist(column_map)
@@ -442,14 +784,26 @@ rename_columns <- function(data, column_map = op$column) {
     candidate_indices <- which(synonym & target_is_needed)
 
     if (length(candidate_indices > 0)) {
-        selected_indices <- candidate_indices[!duplicated(map_targets[candidate_indices])]
+        selected_indices <- candidate_indices[
+            !duplicated(map_targets[candidate_indices])
+        ]
         final_synonyms <- map_synonyms[selected_indices]
-        final_targets  <- map_targets[selected_indices]
+        final_targets <- map_targets[selected_indices]
         col_indices <- match(final_synonyms, norm_names)
-        invisible(Map(function(orig, new) {
-            message("Expected '", new, "' but found '", original_colnames[orig], "', renaming it.")
-        }, col_indices, final_targets))
-    
+        invisible(Map(
+            function(orig, new) {
+                message(
+                    "Expected '",
+                    new,
+                    "' but found '",
+                    original_colnames[orig],
+                    "', renaming it."
+                )
+            },
+            col_indices,
+            final_targets
+        ))
+
         # Update names
         original_colnames[col_indices] <- final_targets
     }
@@ -480,11 +834,11 @@ check_required_columns <- function(data, required_columns) {
 
     if (length(missing_columns) > 0) {
         missing_col_names <- paste(missing_columns, collapse = ", ")
-            stop(
-                "Some required columns are missing",
-                "or their synonyms are not found: ",
-                missing_col_names
-            )
+        stop(
+            "Some required columns are missing",
+            "or their synonyms are not found: ",
+            missing_col_names
+        )
     } else {
         return(data)
     }
@@ -498,23 +852,85 @@ check_required_columns <- function(data, required_columns) {
 #' @importFrom SummarizedExperiment colData
 #' @returns The vcf with sample column name corrected
 vcf_sample_fix <- function(vcf) {
-        # Check INFO for Sample column (Incl synonyms)
-        original_names <- names(VariantAnnotation::info(vcf))
-        # Normalize names
-        norm_names <- tolower(original_names)
-        norm_names <- gsub("[ .]", "_", norm_names)
-        # check for synonyms
-        synonyms <- c("sample", "sample_name", "sample_id")
-        match_idx <- match(synonyms, norm_names)
-        found_idx <- match_idx[!is.na(match_idx)]
-        if (length(found_idx) > 0) {
-            # Rename the first match found
-            names(VariantAnnotation::info(vcf))[found_idx[1]] <- "sample"
-        } else if (!"sample" %in% norm_names) {
-            # Fallback to colData rownames (VCF header sample name)
-            # Must have 1 sample per file as per docs
-            sample_name <- rownames(SummarizedExperiment::colData(vcf))
-            VariantAnnotation::info(vcf)$sample <- sample_name
-        }
-        return(vcf)
+    # Check INFO for Sample column (Incl synonyms)
+    original_names <- names(VariantAnnotation::info(vcf))
+    # Normalize names
+    norm_names <- tolower(original_names)
+    norm_names <- gsub("[ .]", "_", norm_names)
+    # check for synonyms
+    synonyms <- c("sample", "sample_name", "sample_id")
+    match_idx <- match(synonyms, norm_names)
+    found_idx <- match_idx[!is.na(match_idx)]
+    if (length(found_idx) > 0) {
+        # Rename the first match found
+        names(VariantAnnotation::info(vcf))[found_idx[1]] <- "sample"
+    } else if (!"sample" %in% norm_names) {
+        # Fallback to colData rownames (VCF header sample name)
+        # Must have 1 sample per file as per docs
+        sample_name <- rownames(SummarizedExperiment::colData(vcf))
+        VariantAnnotation::info(vcf)$sample <- sample_name
+    }
+    return(vcf)
+}
+
+
+#' Validate BSgenome Input
+#'
+#' @description
+#' Internal utility function to validate the \code{BS_genome} argument prior to
+#' sequence context extraction. Ensures that the provided genome is a valid
+#' \pkg{BSgenome} package name and that it is installed locally.
+#'
+#' @param BS_genome A character string specifying the package name of a
+#' \pkg{BSgenome} object (e.g., \code{"BSgenome.Hsapiens.UCSC.hg38"}), or
+#' \code{NULL}.
+#'
+#' @details
+#' This function performs three checks:
+#' \enumerate{
+#'   \item If \code{BS_genome} is \code{NULL}, an error is thrown indicating that
+#'   a genome must be provided when sequence context is required.
+#'   \item If \code{BS_genome} is not among the available \pkg{BSgenome}
+#'   packages, an error is thrown.
+#'   \item If \code{BS_genome} is valid but not installed locally, an error is
+#'   thrown with instructions to install it via \code{BiocManager::install()}.
+#' }
+#'
+#' This function is intended to be called only when sequence context needs to be
+#' populated (i.e., when a \code{context} column is absent or incomplete).
+#'
+#' @return Invisibly returns \code{TRUE} if validation passes; otherwise, an
+#' error is raised.
+#'
+#' @keywords internal
+validate_BS_genome <- function(BS_genome) {
+    if (is.null(BS_genome)) {
+        stop(
+            "The context column is missing, and no BS_genome was provided. ",
+            "Please install and specify an appropriate BSgenome package."
+        )
+    }
+
+    available_BS_genomes <- BSgenome::available.genomes(
+        splitNameParts = TRUE
+    )$pkgname
+
+    if (!BS_genome %in% available_BS_genomes) {
+        stop(
+            "The specified BS genome ('",
+            BS_genome,
+            "') is not a recognized BSgenome package."
+        )
+    }
+
+    if (!BS_genome %in% BSgenome::installed.genomes()) {
+        stop(
+            "The specified BS genome ('",
+            BS_genome,
+            "') is valid, but is not installed locally. ",
+            "Please install it using BiocManager::install('",
+            BS_genome,
+            "') before proceeding."
+        )
+    }
 }

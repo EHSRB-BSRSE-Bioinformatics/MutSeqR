@@ -144,39 +144,65 @@
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 import_mut_data <- function(
-    mut_file, mut_sep = "\t", is_0_based_mut = TRUE,
-    sample_data = NULL, sd_sep = "\t",
-    regions = NULL, rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
-    BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE) {
-
+  mut_file,
+  mut_sep = "\t",
+  is_0_based_mut = TRUE,
+  sample_data = NULL,
+  sd_sep = "\t",
+  regions = NULL,
+  rg_sep = "\t",
+  is_0_based_rg = TRUE,
+  padding = 0,
+  BS_genome = NULL,
+  custom_column_names = NULL,
+  output_granges = FALSE
+) {
   stopifnot(
-      "mut_file is required" = !missing(mut_file),
-      "mut_file must be a character indicating a filepath or a data frame" =
-          is.character(mut_file) || is.data.frame(mut_file),
-      "mut_sep must be a character string" = is.character(mut_sep),
-      "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
-      "sample_data must be NULL, a character indicating a filepath, or a data frame" =
-          is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
-      "sd_sep must be a character string" = is.character(sd_sep),
-      "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" =
-          is.null(regions) || is.character(regions) ||
-              is.data.frame(regions) || methods::is(regions, "GRanges"),
-      "rg_sep must be a character string" = is.character(rg_sep),
-      "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
-      "padding must be a non-negative integer" =
-          is.numeric(padding) && padding >= 0 && (padding %% 1 == 0),
-      "BS_genome must be NULL or a character string" =
-          is.null(BS_genome) || is.character(BS_genome),
-      "custom_column_names must be NULL or a list" =
-          is.null(custom_column_names) || is.list(custom_column_names),
-      "output_granges must be a logical variable" = is.logical(output_granges)
+    "mut_file is required" = !missing(mut_file),
+    "mut_file must be a character indicating a filepath or a data frame" = is.character(
+      mut_file
+    ) ||
+      is.data.frame(mut_file),
+    "mut_sep must be a character string" = is.character(mut_sep),
+    "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
+    "sample_data must be NULL, a character indicating a filepath, or a data frame" = is.null(
+      sample_data
+    ) ||
+      is.character(sample_data) ||
+      is.data.frame(sample_data),
+    "sd_sep must be a character string" = is.character(sd_sep),
+    "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" = is.null(
+      regions
+    ) ||
+      is.character(regions) ||
+      is.data.frame(regions) ||
+      methods::is(regions, "GRanges"),
+    "rg_sep must be a character string" = is.character(rg_sep),
+    "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
+    "padding must be a non-negative integer" = is.numeric(padding) &&
+      padding >= 0 &&
+      (padding %% 1 == 0),
+    "BS_genome must be NULL or a character string" = is.null(BS_genome) ||
+      is.character(BS_genome),
+    "custom_column_names must be NULL or a list" = is.null(
+      custom_column_names
+    ) ||
+      is.list(custom_column_names),
+    "output_granges must be a logical variable" = is.logical(output_granges)
   )
-    BS_genome <- match.arg(BS_genome,
-        choices = c(
-            NULL,
-            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-        )
+  BS_genome <- match.arg(
+    BS_genome,
+    choices = c(
+      NULL,
+      BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+    )
   )
+
+  # Load and validate sample metadata before heavy lifting
+  sample_df <- NULL
+  if (!is.null(sample_data)) {
+    sample_df <- import_sample_data(sample_data, sd_sep)
+  }
 
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
@@ -210,7 +236,10 @@ import_mut_data <- function(
         stop("All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning("The following files in the specified directory are empty and will not be imported: ", empty_list_str)
+        warning(
+          "The following files in the specified directory are empty and will not be imported: ",
+          empty_list_str
+        )
       }
 
       # Remove empty files from mut_files
@@ -218,150 +247,84 @@ import_mut_data <- function(
 
       # Read in the files and bind them together
       dat <- lapply(mut_files, function(file) {
-        read.table(file,
-          header = TRUE, sep = mut_sep,
+        read.table(
+          file,
+          header = TRUE,
+          sep = mut_sep,
           fileEncoding = "UTF-8-BOM"
         )
-      }) %>% dplyr::bind_rows()
+      }) %>%
+        dplyr::bind_rows()
     } else {
       # Handle the case where mut_file exists and is a file
       if (file_info$size == 0 || is.na(file_info$size)) {
         stop("You are trying to import an empty file")
       }
-      dat <- read.table(mut_file,
-        header = TRUE, sep = mut_sep,
+      dat <- read.table(
+        mut_file,
+        header = TRUE,
+        sep = mut_sep,
         fileEncoding = "UTF-8-BOM"
       )
     }
     if (ncol(dat) <= 1) {
-      stop("Your imported data only has one column.
+      stop(
+        "Your imported data only has one column.
            You may want to set mut_sep to properly reflect
-           the delimiter used for the data you are importing.")
-    }
-  }
-  ## Sample Data File
-  if (!is.null(sample_data)) {
-    dat <- import_sample_data(dat, sample_data, sd_sep)
-  }
-  # Rename columns to default (including custom names)
-  if (!is.null(custom_column_names)) {
-    cols <- modifyList(MutSeqR::op$column, custom_column_names)
-    dat <- rename_columns(dat, cols)
-  } else {
-    dat <- rename_columns(dat)
-  }
-  # Check that all required columns are present
-  dat <- check_required_columns(dat, op$base_required_mut_cols)
-  context_exists <- "context" %in% colnames(dat)
-
-  # Check for NA values in required columns.
-  columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(
-    columns_with_na,
-    MutSeqR::op$base_required_mut_cols
-  )
-  if (length(na_columns_required) > 0) {
-    stop(
-      "NA values were found within the following required column(s): ",
-      paste(na_columns_required, collapse = ", "),
-      ". Please confirm that your data is complete before proceeding."
-    )
-  }
-  # Check for NA values in the context column. If so, will populate it.
-  if (context_exists) {
-    if ("context" %in% columns_with_na) {
-      context_exists <- FALSE
-    }
-  }
-
-  # Turn mutation data into GRanges
-  mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-    df = as.data.frame(dat),
-    keep.extra.columns = TRUE,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = is_0_based_mut
-  )
-  # Join Regions Metadata
-  if (!is.null(regions)) {
-    mut_ranges <- import_regions_metadata(
-      mutation_granges = mut_ranges,
-      regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
-      padding = padding
-    )
-  }
-  # Populate Context (if not present)
-  if (!context_exists) {
-    mut_ranges <- populate_sequence_context(
-      mutation_granges = mut_ranges,
-      BS_genome = BS_genome
-    )
-  }
-
-  # Characterize variants
-  dat <- as.data.frame(mut_ranges) %>%
-    dplyr::rename(contig = "seqnames")
-  dat <- characterize_variants(dat)
-
-  # Depth
-  # Add alt_depth column, if it doesn't exist
-  if (!"alt_depth" %in% colnames(dat)) {
-    dat$alt_depth <- 1
-  }
-
-  # Set Depth column as total_depth or depth
-  total_depth_exists <- "total_depth" %in% colnames(dat)
-  depth_exists <- "depth" %in% colnames(dat)
-  no_calls_exists <- "no_calls" %in% colnames(dat)
-
-  if (!total_depth_exists && no_calls_exists && depth_exists) {
-    dat <- dat %>%
-      dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-  }
-  if (!total_depth_exists && !no_calls_exists && depth_exists) {
-    dat <- dplyr::rename(dat, total_depth = "depth")
-    warning("Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n")
-  }
-  if (!total_depth_exists && !depth_exists) {
-    warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
-  }
-
-  # Check for duplicated rows
-  dat <- dat %>%
-    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
-    dplyr::ungroup()
-
-  if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
-
-    # Warn about the depth for the duplicated rows
-    if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.")
-    }
-  }
-
-  # Make VAF and ref_depth columns, if depth exists
-  if ("total_depth" %in% colnames(dat)) {
-    dat <- dat %>%
-      dplyr::mutate(
-        vaf = .data$alt_depth / .data$total_depth,
-        ref_depth = .data$total_depth - .data$alt_depth
+           the delimiter used for the data you are importing."
       )
+    }
   }
 
-  if (output_granges) {
-    gr <- GenomicRanges::makeGRangesFromDataFrame(
-      df = dat,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = FALSE
-    )
-    return(gr)
-  } else {
-    return(dat)
+  prepared <- prepare_imported_mutation_data(
+    dat = dat,
+    custom_column_names = custom_column_names,
+    sample_df = sample_df,
+    source_label = "mutation data",
+    mismatch_hint = "Please check for trailing suffixes or typos in your metadata file.",
+    BS_genome = BS_genome
+  )
+  dat <- prepared$dat
+  context_exists <- prepared$context_exists
+
+  mut_ranges <- build_imported_mutation_ranges(
+    dat = dat,
+    context_exists = context_exists,
+    regions = regions,
+    rg_sep = rg_sep,
+    is_0_based_rg = is_0_based_rg,
+    padding = padding,
+    BS_genome = BS_genome,
+    starts_in_df_are_0based = is_0_based_mut
+  )
+
+  resolve_mut_depth <- function(dat) {
+    total_depth_exists <- "total_depth" %in% colnames(dat)
+    depth_exists <- "depth" %in% colnames(dat)
+    no_calls_exists <- "no_calls" %in% colnames(dat)
+
+    if (!total_depth_exists && no_calls_exists && depth_exists) {
+      dat <- dat %>%
+        dplyr::mutate(total_depth = .data$depth - .data$no_calls)
+    }
+    if (!total_depth_exists && !no_calls_exists && depth_exists) {
+      dat <- dplyr::rename(dat, total_depth = "depth")
+      warning(
+        "Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n"
+      )
+    }
+    if (!total_depth_exists && !depth_exists) {
+      warning(
+        "Could not find an appropriate depth column. Some package functionality may be limited.\n"
+      )
+    }
+
+    dat
   }
+
+  finalize_imported_mutation_data(
+    mut_ranges = mut_ranges,
+    depth_resolver = resolve_mut_depth,
+    output_granges = output_granges
+  )
 }
