@@ -339,12 +339,13 @@ import_mut_data <- function(
   dat <- check_required_columns(dat, op$base_required_mut_cols)
   context_exists <- "context" %in% colnames(dat)
 
-  # Check for NA values in required columns.
-  columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(
-    columns_with_na,
-    MutSeqR::op$base_required_mut_cols
-  )
+  # Check for NA values in required columns
+  required_columns <- MutSeqR::op$base_required_mut_cols
+
+  na_columns_required <- required_columns[
+    vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
+  ]
+
   if (length(na_columns_required) > 0) {
     stop(
       "NA values were found within the following required column(s): ",
@@ -354,7 +355,7 @@ import_mut_data <- function(
   }
 
   # Determine if context needs to be populated
-  if (context_exists && "context" %in% columns_with_na) {
+  if (context_exists && any(is.na(dat$context))) {
     context_exists <- FALSE
   }
 

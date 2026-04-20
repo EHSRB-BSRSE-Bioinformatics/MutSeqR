@@ -376,13 +376,13 @@ import_vcf_data <- function(
   context_exists <- "context" %in% colnames(dat)
 
   # Check for NA values in required columns.
-  # Except for the alt column, which can have NA values.
+  # Except for the alt column, which can have NA values in VCF-derived data.
   required_columns <- setdiff(op$base_required_mut_cols, "alt")
-  columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(
-    columns_with_na,
-    required_columns
-  )
+
+  na_columns_required <- required_columns[
+    vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
+  ]
+
   if (length(na_columns_required) > 0) {
     stop(
       "NA values were found within the following required column(s): ",
@@ -391,13 +391,12 @@ import_vcf_data <- function(
     )
   }
 
-  # Check whether context must be populated.
-  # If the context column is missing or contains NA values,
-  # validate BS_genome now so we can fail early before heavier work.
-  if (context_exists && "context" %in% columns_with_na) {
+  # Determine if context needs to be populated
+  if (context_exists && any(is.na(dat$context))) {
     context_exists <- FALSE
   }
 
+  # Fail early if we will need BSgenome
   if (!context_exists) {
     validate_BS_genome(BS_genome)
   }
