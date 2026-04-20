@@ -663,3 +663,89 @@ validate_BS_genome <- function(BS_genome) {
         )
     }
 }
+
+
+#' Derive end coordinates from a VCF object
+#'
+#' @description
+#' `VariantAnnotation::rowRanges()` defines the range width from `REF`, which is
+#' appropriate for small variants but does not honor structural-variant span
+#' annotations such as `INFO/END`. This helper prefers explicit `END` values
+#' from the INFO field and falls back to `SVLEN` for symbolic non-insertion
+#' alleles when `END` is absent.
+#'
+#' @param vcf A `VCF` object from `VariantAnnotation::readVcf()`.
+#'
+#' @return An integer vector of end coordinates aligned to the rows of `vcf`.
+get_vcf_end_positions <- function(vcf) {
+    end_pos <- as.integer(SummarizedExperiment::end(vcf))
+    info_df <- VariantAnnotation::info(vcf)
+    start_pos <- as.integer(SummarizedExperiment::start(vcf))
+    has_explicit_end <- rep(FALSE, length(end_pos))
+
+    if ("END" %in% names(info_df)) {
+        info_end <- info_df[["END"]]
+        if (is.list(info_end)) {
+            info_end <- vapply(
+                info_end,
+                function(x) {
+                    if (length(x) == 0 || all(is.na(x))) {
+                        NA_integer_
+                    } else {
+                        as.integer(x[[1]])
+                    }
+                },
+                integer(1)
+            )
+        } else {
+            info_end <- as.integer(info_end)
+        }
+
+        valid_end <- !is.na(info_end) & info_end >= start_pos
+        end_pos[valid_end] <- info_end[valid_end]
+        has_explicit_end[valid_end] <- TRUE
+    }
+
+    if ("SVLEN" %in% names(info_df)) {
+        svlen <- info_df[["SVLEN"]]
+        if (is.list(svlen)) {
+            svlen <- vapply(
+                svlen,
+                function(x) {
+                    if (length(x) == 0 || all(is.na(x))) {
+                        NA_integer_
+                    } else {
+                        as.integer(x[[1]])
+                    }
+                },
+                integer(1)
+            )
+        } else {
+            svlen <- as.integer(svlen)
+        }
+
+        svtype <- if ("SVTYPE" %in% names(info_df)) {
+            as.character(info_df[["SVTYPE"]])
+        } else {
+            rep(NA_character_, length(end_pos))
+        }
+        alt_text <- vapply(
+            VariantAnnotation::alt(vcf),
+            function(x) paste(as.character(x), collapse = ","),
+            character(1)
+        )
+
+        derived_end <- start_pos + abs(svlen) - 1L
+        valid_svlen <- !has_explicit_end &
+            !is.na(svlen) &
+            abs(svlen) > 0 &
+            !is.na(derived_end) &
+            derived_end >= start_pos &
+            (is.na(svtype) | svtype != "INS") &
+            !grepl("(^|,)<INS>(,|$)", alt_text)
+
+        end_pos[valid_svlen] <- derived_end[valid_svlen]
+    }
+
+    return(end_pos)
+}

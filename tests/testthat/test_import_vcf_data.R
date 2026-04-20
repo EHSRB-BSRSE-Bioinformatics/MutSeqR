@@ -27,5 +27,21 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
     c("no_variant", "snv", "no_variant", "insertion", "snv",
       "no_variant", "mnv", "snv", "deletion", "no_variant")
   )
+  expect_equal(mut_data$end[mut_data$start == 5819112], 5819113)
   expect_equal(mut_data$vaf, mut_data$alt_depth / mut_data$total_depth)
+})
+
+test_that("import_vcf_data respects INFO END and derives SV end from SVLEN", {
+  file <- file.path("./testdata/structural_vcf_data.vcf")
+
+  mut_data <- import_vcf_data(
+    vcf_file = file,
+    regions = NULL,
+    BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
+    output_granges = FALSE
+  )
+
+  expect_equal(mut_data$variation_type, "sv")
+  expect_equal(mut_data$start, 23665136)
+  expect_equal(mut_data$end, 23666093)
 })

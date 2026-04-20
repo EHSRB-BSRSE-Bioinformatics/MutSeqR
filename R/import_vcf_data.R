@@ -253,7 +253,7 @@ import_vcf_data <- function(
   dat <- data.frame(
     contig = SummarizedExperiment::seqnames(vcf),
     start = SummarizedExperiment::start(vcf),
-    end = SummarizedExperiment::end(vcf),
+    end = get_vcf_end_positions(vcf),
     ref = VariantAnnotation::ref(vcf),
     alt = VariantAnnotation::alt(vcf)
   )
