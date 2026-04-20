@@ -601,3 +601,65 @@ vcf_sample_fix <- function(vcf) {
     }
     return(vcf)
 }
+
+
+#' Validate BSgenome Input
+#'
+#' @description
+#' Internal utility function to validate the \code{BS_genome} argument prior to
+#' sequence context extraction. Ensures that the provided genome is a valid
+#' \pkg{BSgenome} package name and that it is installed locally.
+#'
+#' @param BS_genome A character string specifying the package name of a
+#' \pkg{BSgenome} object (e.g., \code{"BSgenome.Hsapiens.UCSC.hg38"}), or
+#' \code{NULL}.
+#'
+#' @details
+#' This function performs three checks:
+#' \enumerate{
+#'   \item If \code{BS_genome} is \code{NULL}, an error is thrown indicating that
+#'   a genome must be provided when sequence context is required.
+#'   \item If \code{BS_genome} is not among the available \pkg{BSgenome}
+#'   packages, an error is thrown.
+#'   \item If \code{BS_genome} is valid but not installed locally, an error is
+#'   thrown with instructions to install it via \code{BiocManager::install()}.
+#' }
+#'
+#' This function is intended to be called only when sequence context needs to be
+#' populated (i.e., when a \code{context} column is absent or incomplete).
+#'
+#' @return Invisibly returns \code{TRUE} if validation passes; otherwise, an
+#' error is raised.
+#'
+#' @keywords internal
+validate_BS_genome <- function(BS_genome) {
+    if (is.null(BS_genome)) {
+        stop(
+            "The context column is missing, and no BS_genome was provided. ",
+            "Please install and specify an appropriate BSgenome package."
+        )
+    }
+
+    available_BS_genomes <- BSgenome::available.genomes(
+        splitNameParts = TRUE
+    )$pkgname
+
+    if (!BS_genome %in% available_BS_genomes) {
+        stop(
+            "The specified BS genome ('",
+            BS_genome,
+            "') is not a recognized BSgenome package."
+        )
+    }
+
+    if (!BS_genome %in% BSgenome::installed.genomes()) {
+        stop(
+            "The specified BS genome ('",
+            BS_genome,
+            "') is valid, but is not installed locally. ",
+            "Please install it using BiocManager::install('",
+            BS_genome,
+            "') before proceeding."
+        )
+    }
+}

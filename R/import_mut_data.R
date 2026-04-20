@@ -198,20 +198,6 @@ import_mut_data <- function(
     )
   )
 
-  # Check if BS_genome is actually installed locally
-  if (!is.null(BS_genome)) {
-    if (!(BS_genome %in% BSgenome::installed.genomes())) {
-      stop(
-        "The specified BS genome ('",
-        BS_genome,
-        "') is valid, but is not installed locally. ",
-        "Please install it using BiocManager::install('",
-        BS_genome,
-        "') before proceeding."
-      )
-    }
-  }
-
   # Load and validate sample metadata before heavy lifting
   sample_df <- NULL
   if (!is.null(sample_data)) {
@@ -371,6 +357,15 @@ import_mut_data <- function(
     if ("context" %in% columns_with_na) {
       context_exists <- FALSE
     }
+  }
+
+  if (!context_exists) {
+    validate_BS_genome(BS_genome)
+
+    mut_ranges <- populate_sequence_context(
+      mutation_granges = mut_ranges,
+      BS_genome = BS_genome
+    )
   }
 
   # Turn mutation data into GRanges
