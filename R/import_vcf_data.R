@@ -190,20 +190,6 @@ import_vcf_data <- function(
     )
   )
 
-  # Check if BS_genome is actually installed locally
-  if (!is.null(BS_genome)) {
-    if (!(BS_genome %in% BSgenome::installed.genomes())) {
-      stop(
-        "The specified BS genome ('",
-        BS_genome,
-        "') is valid, but is not installed locally. ",
-        "Please install it using BiocManager::install('",
-        BS_genome,
-        "') before proceeding."
-      )
-    }
-  }
-
   # Load and validate sample metadata before heavy lifting
   sample_df <- NULL
   if (!is.null(sample_data)) {
@@ -306,160 +292,43 @@ import_vcf_data <- function(
   dat <- cbind(dat, geno_df, info)
   row.names(dat) <- NULL
 
-  # Rename columns to default names
-  dat <- rename_columns(dat)
+  prepared <- prepare_imported_mutation_data(
+    dat = dat,
+    sample_df = sample_df,
+    source_label = "VCF data",
+    mismatch_hint = "Please check for suffixes (e.g. '.cons.filtered') in your VCF files or typos in your metadata file.",
+    remove_sample_suffix = remove_sample_suffix,
+    allow_na_columns = "alt",
+    BS_genome = BS_genome
+  )
+  dat <- prepared$dat
+  context_exists <- prepared$context_exists
 
-  # Join with sample metadata if provided
-  if (!is.null(sample_df)) {
-    if (!"sample" %in% colnames(dat)) {
-      stop(
-        "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
-      )
-    }
-
-    # Diagnostic check for metadata sample name match
-    # Defensively unlist if the VCF INFO sample column is a list/CharacterList
-    if (is.list(dat$sample)) {
-      dat$sample <- vapply(
-        dat$sample,
-        function(x) paste(x, collapse = ","),
-        character(1)
-      )
-    }
-
-    # Cast to character vectors to ensure exact string matching
-    dat$sample <- as.character(dat$sample)
-
-    # Strip suffix if provided
-    if (!is.null(remove_sample_suffix)) {
-      dat$sample <- gsub(
-        pattern = remove_sample_suffix,
-        replacement = "",
-        x = dat$sample
-      )
-    }
-
-    sample_df$sample <- as.character(sample_df$sample)
-
-    mut_samples <- unique(dat$sample)
-    meta_samples <- unique(sample_df$sample)
-
-    # We strictly care if the mutation data has samples NOT found in the metadata
-    missing_in_meta <- setdiff(mut_samples, meta_samples)
-
-    if (length(missing_in_meta) > 0) {
-      stop(
-        "Mismatch in sample names: Some samples in your VCF data are MISSING from the metadata.\n",
-        "Sample names must match EXACTLY. Please check for suffixes (e.g. '.cons.filtered') in your VCF files or typos in your metadata file.\n\n",
-        "Unmatched samples in VCF data: ",
-        paste(utils::head(missing_in_meta, 3), collapse = ", "),
-        "\n",
-        "Available samples in metadata: ",
-        paste(utils::head(meta_samples, 3), collapse = ", "),
-        "\n",
-        call. = FALSE
-      )
-    }
-
-    dat <- dplyr::left_join(
-      dat,
-      sample_df,
-      by = "sample",
-      suffix = c("", ".sd")
-    )
-
-    message("Sample metadata successfully joined to mutation data\n")
-  }
-
-  # Check for all required columns before proceeding
-  dat <- MutSeqR::check_required_columns(dat, op$base_required_mut_cols)
-  context_exists <- "context" %in% colnames(dat)
-
-  # Check for NA values in required columns.
-  # Except for the alt column, which can have NA values in VCF-derived data.
-  required_columns <- setdiff(op$base_required_mut_cols, "alt")
-
-  na_columns_required <- required_columns[
-    vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
-  ]
-
-  if (length(na_columns_required) > 0) {
-    stop(
-      "NA values were found within the following required column(s): ",
-      paste(na_columns_required, collapse = ", "),
-      ". Please confirm that your data is complete before proceeding."
-    )
-  }
-
-  # Determine if context needs to be populated
-  if (context_exists && any(is.na(dat$context))) {
-    context_exists <- FALSE
-  }
-
-  # Fail early if we will need BSgenome
-  if (!context_exists) {
-    validate_BS_genome(BS_genome)
-  }
-
-  # Turn mutation data into GRanges
-  mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-    df = as.data.frame(dat),
-    keep.extra.columns = TRUE,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end"
+  mut_ranges <- build_imported_mutation_ranges(
+    dat = dat,
+    context_exists = context_exists,
+    regions = regions,
+    rg_sep = rg_sep,
+    is_0_based_rg = is_0_based_rg,
+    padding = padding,
+    BS_genome = BS_genome
   )
 
-  # Join Regions
-  if (!is.null(regions)) {
-    mut_ranges <- import_regions_metadata(
-      mutation_granges = mut_ranges,
-      regions = regions,
-      rg_sep = rg_sep,
-      is_0_based_rg = is_0_based_rg,
-      padding = padding
-    )
-  }
+  resolve_vcf_depth <- function(dat) {
+    total_depth_exists <- "total_depth" %in% colnames(dat)
+    depth_exists <- "depth" %in% colnames(dat)
+    no_calls_exists <- "no_calls" %in% colnames(dat)
+    ad_columns <- grep("^AD_", colnames(dat), value = TRUE)
 
-  # Populate Context (if not present)
-  if (!context_exists) {
-    mut_ranges <- populate_sequence_context(
-      mutation_granges = mut_ranges,
-      BS_genome = BS_genome
-    )
-  }
-  # Characterize variants
-  dat <- as.data.frame(mut_ranges) %>%
-    dplyr::rename(contig = "seqnames")
-  dat <- characterize_variants(dat)
-
-  # Depth
-  # Add alt_depth column, if it doesn't exist
-  if (!"alt_depth" %in% colnames(dat)) {
-    dat$alt_depth <- 1
-  }
-  # Create a total_depth column, if able
-  # Create total_depth and no_calls columns based on set parameter depth_calc.
-  # Requires AD field in FORMAT of vcf. If this field is missing, we use depth instead of total_depth
-  total_depth_exists <- "total_depth" %in% colnames(dat)
-  depth_exists <- "depth" %in% colnames(dat)
-  no_calls_exists <- "no_calls" %in% colnames(dat)
-  ad_columns <- grep("^AD_", colnames(dat), value = TRUE)
-
-  if (!total_depth_exists) {
-    if (no_calls_exists && depth_exists) {
-      dat <- dat %>%
-        dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-    } else if (length(ad_columns) > 0) {
-      # create total_depth from AD
-      dat$total_depth <- rowSums(dat[, ad_columns], na.rm = TRUE)
-    } else {
-      # use the DP field
-      if (depth_exists) {
+    if (!total_depth_exists) {
+      if (no_calls_exists && depth_exists) {
         dat <- dat %>%
-          dplyr::mutate(
-            total_depth = .data$depth
-          )
+          dplyr::mutate(total_depth = .data$depth - .data$no_calls)
+      } else if (length(ad_columns) > 0) {
+        dat$total_depth <- rowSums(dat[, ad_columns], na.rm = TRUE)
+      } else if (depth_exists) {
+        dat <- dat %>%
+          dplyr::mutate(total_depth = .data$depth)
         warning(
           "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
         )
@@ -469,48 +338,13 @@ import_vcf_data <- function(
         )
       }
     }
+
+    dat
   }
 
-  # Check for duplicated rows
-  dat <- dat %>%
-    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
-    dplyr::ungroup()
-
-  if (sum(dat$row_has_duplicate) > 0) {
-    warning(
-      sum(dat$row_has_duplicate),
-      " rows were found whose position was the same as that of at least one other row for the same sample."
-    )
-
-    # Warn about the depth for the duplicated rows
-    if ("total_depth" %in% colnames(dat)) {
-      warning(
-        "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
-      )
-    }
-  }
-
-  # Make VAF and ref_depth columns, if depth exists
-  if ("total_depth" %in% colnames(dat)) {
-    dat <- dat %>%
-      dplyr::mutate(
-        vaf = .data$alt_depth / .data$total_depth,
-        ref_depth = .data$total_depth - .data$alt_depth
-      )
-  }
-
-  if (output_granges) {
-    gr <- GenomicRanges::makeGRangesFromDataFrame(
-      df = dat,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = FALSE
-    )
-    return(gr)
-  } else {
-    return(dat)
-  }
+  finalize_imported_mutation_data(
+    mut_ranges = mut_ranges,
+    depth_resolver = resolve_vcf_depth,
+    output_granges = output_granges
+  )
 }

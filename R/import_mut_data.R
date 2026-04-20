@@ -276,193 +276,55 @@ import_mut_data <- function(
     }
   }
 
-  # Rename columns to default (including custom names)
-  if (!is.null(custom_column_names)) {
-    cols <- modifyList(MutSeqR::op$column, custom_column_names)
-    dat <- rename_columns(dat, cols)
-  } else {
-    dat <- rename_columns(dat)
-  }
-
-  ## Join with sample metadata if provided
-  if (!is.null(sample_df)) {
-    if (!"sample" %in% colnames(dat)) {
-      stop(
-        "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
-      )
-    }
-
-    # Diagnostic check for metadata sample name match
-    # Defensively unlist if the sample column is structured as a list
-    if (is.list(dat$sample)) {
-      dat$sample <- vapply(
-        dat$sample,
-        function(x) paste(x, collapse = ","),
-        character(1)
-      )
-    }
-
-    # Cast to character vectors to ensure setdiff works properly
-    dat$sample <- as.character(dat$sample)
-    sample_df$sample <- as.character(sample_df$sample)
-
-    mut_samples <- unique(dat$sample)
-    meta_samples <- unique(sample_df$sample)
-
-    # We strictly care if the mutation data has samples NOT found in the metadata
-    missing_in_meta <- setdiff(mut_samples, meta_samples)
-
-    if (length(missing_in_meta) > 0) {
-      stop(
-        "Mismatch in sample names: Some samples in your mutation data are MISSING from the metadata.\n",
-        "Sample names must match EXACTLY. Please check for trailing suffixes or typos in your metadata file.\n\n",
-        "Unmatched samples in mutation data: ",
-        paste(utils::head(missing_in_meta, 3), collapse = ", "),
-        "\n",
-        "Available samples in metadata: ",
-        paste(utils::head(meta_samples, 3), collapse = ", "),
-        "\n",
-        call. = FALSE
-      )
-    }
-
-    dat <- dplyr::left_join(
-      dat,
-      sample_df,
-      by = "sample",
-      suffix = c("", ".sd")
-    )
-    message("Sample metadata successfully joined to mutation data\n")
-  }
-
-  # Check that all required columns are present
-  dat <- check_required_columns(dat, op$base_required_mut_cols)
-  context_exists <- "context" %in% colnames(dat)
-
-  # Check for NA values in required columns
-  required_columns <- MutSeqR::op$base_required_mut_cols
-
-  na_columns_required <- required_columns[
-    vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
-  ]
-
-  if (length(na_columns_required) > 0) {
-    stop(
-      "NA values were found within the following required column(s): ",
-      paste(na_columns_required, collapse = ", "),
-      ". Please confirm that your data is complete before proceeding."
-    )
-  }
-
-  # Determine if context needs to be populated
-  if (context_exists && any(is.na(dat$context))) {
-    context_exists <- FALSE
-  }
-
-  # Fail early if we will need BSgenome
-  if (!context_exists) {
-    validate_BS_genome(BS_genome)
-  }
-
-  # Turn mutation data into GRanges
-  mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
-    df = as.data.frame(dat),
-    keep.extra.columns = TRUE,
-    seqnames.field = "contig",
-    start.field = "start",
-    end.field = "end",
-    starts.in.df.are.0based = is_0_based_mut
+  prepared <- prepare_imported_mutation_data(
+    dat = dat,
+    custom_column_names = custom_column_names,
+    sample_df = sample_df,
+    source_label = "mutation data",
+    mismatch_hint = "Please check for trailing suffixes or typos in your metadata file.",
+    BS_genome = BS_genome
   )
-  # Join Regions Metadata
-  if (!is.null(regions)) {
-    mut_ranges <- import_regions_metadata(
-      mutation_granges = mut_ranges,
-      regions = regions,
-      rg_sep = rg_sep,
-      is_0_based_rg = is_0_based_rg,
-      padding = padding
-    )
-  }
-  # Populate Context (if not present)
-  if (!context_exists) {
-    mut_ranges <- populate_sequence_context(
-      mutation_granges = mut_ranges,
-      BS_genome = BS_genome
-    )
-  }
+  dat <- prepared$dat
+  context_exists <- prepared$context_exists
 
-  # Characterize variants
-  dat <- as.data.frame(mut_ranges) %>%
-    dplyr::rename(contig = "seqnames")
-  dat <- characterize_variants(dat)
+  mut_ranges <- build_imported_mutation_ranges(
+    dat = dat,
+    context_exists = context_exists,
+    regions = regions,
+    rg_sep = rg_sep,
+    is_0_based_rg = is_0_based_rg,
+    padding = padding,
+    BS_genome = BS_genome,
+    starts_in_df_are_0based = is_0_based_mut
+  )
 
-  # Depth
-  # Add alt_depth column, if it doesn't exist
-  if (!"alt_depth" %in% colnames(dat)) {
-    dat$alt_depth <- 1
-  }
+  resolve_mut_depth <- function(dat) {
+    total_depth_exists <- "total_depth" %in% colnames(dat)
+    depth_exists <- "depth" %in% colnames(dat)
+    no_calls_exists <- "no_calls" %in% colnames(dat)
 
-  # Set Depth column as total_depth or depth
-  total_depth_exists <- "total_depth" %in% colnames(dat)
-  depth_exists <- "depth" %in% colnames(dat)
-  no_calls_exists <- "no_calls" %in% colnames(dat)
-
-  if (!total_depth_exists && no_calls_exists && depth_exists) {
-    dat <- dat %>%
-      dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-  }
-  if (!total_depth_exists && !no_calls_exists && depth_exists) {
-    dat <- dplyr::rename(dat, total_depth = "depth")
-    warning(
-      "Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n"
-    )
-  }
-  if (!total_depth_exists && !depth_exists) {
-    warning(
-      "Could not find an appropriate depth column. Some package functionality may be limited.\n"
-    )
-  }
-
-  # Check for duplicated rows
-  dat <- dat %>%
-    dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
-    dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
-    dplyr::ungroup()
-
-  if (sum(dat$row_has_duplicate) > 0) {
-    warning(
-      sum(dat$row_has_duplicate),
-      " rows were found whose position was the same as that of at least one other row for the same sample."
-    )
-
-    # Warn about the depth for the duplicated rows
-    if ("total_depth" %in% colnames(dat)) {
+    if (!total_depth_exists && no_calls_exists && depth_exists) {
+      dat <- dat %>%
+        dplyr::mutate(total_depth = .data$depth - .data$no_calls)
+    }
+    if (!total_depth_exists && !no_calls_exists && depth_exists) {
+      dat <- dplyr::rename(dat, total_depth = "depth")
       warning(
-        "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+        "Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n"
       )
     }
-  }
-
-  # Make VAF and ref_depth columns, if depth exists
-  if ("total_depth" %in% colnames(dat)) {
-    dat <- dat %>%
-      dplyr::mutate(
-        vaf = .data$alt_depth / .data$total_depth,
-        ref_depth = .data$total_depth - .data$alt_depth
+    if (!total_depth_exists && !depth_exists) {
+      warning(
+        "Could not find an appropriate depth column. Some package functionality may be limited.\n"
       )
+    }
+
+    dat
   }
 
-  if (output_granges) {
-    gr <- GenomicRanges::makeGRangesFromDataFrame(
-      df = dat,
-      keep.extra.columns = TRUE,
-      seqnames.field = "contig",
-      start.field = "start",
-      end.field = "end",
-      starts.in.df.are.0based = FALSE
-    )
-    return(gr)
-  } else {
-    return(dat)
-  }
+  finalize_imported_mutation_data(
+    mut_ranges = mut_ranges,
+    depth_resolver = resolve_mut_depth,
+    output_granges = output_granges
+  )
 }

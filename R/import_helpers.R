@@ -62,6 +62,277 @@ import_sample_data <- function(sample_data, sd_sep = "\t") {
 }
 
 
+#' Join imported mutation data with sample metadata
+#' @param dat A data frame containing imported mutation data.
+#' @param sample_df A data frame containing sample metadata.
+#' @param source_label A short label used in user-facing error messages.
+#' @param mismatch_hint Extra guidance appended to sample mismatch errors.
+#' @param remove_sample_suffix Optional regex suffix to strip from sample names.
+#' @importFrom dplyr left_join
+join_import_sample_metadata <- function(
+    dat,
+    sample_df = NULL,
+    source_label = "mutation data",
+    mismatch_hint = "Please check for trailing suffixes or typos in your metadata file.",
+    remove_sample_suffix = NULL
+) {
+    if (is.null(sample_df)) {
+        return(dat)
+    }
+
+    if (!"sample" %in% colnames(dat)) {
+        stop(
+            "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+        )
+    }
+
+    if (is.list(dat$sample)) {
+        dat$sample <- vapply(
+            dat$sample,
+            function(x) paste(x, collapse = ","),
+            character(1)
+        )
+    }
+
+    dat$sample <- as.character(dat$sample)
+
+    if (!is.null(remove_sample_suffix)) {
+        dat$sample <- gsub(
+            pattern = remove_sample_suffix,
+            replacement = "",
+            x = dat$sample
+        )
+    }
+
+    sample_df$sample <- as.character(sample_df$sample)
+
+    imported_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+    missing_in_meta <- setdiff(imported_samples, meta_samples)
+
+    if (length(missing_in_meta) > 0) {
+        stop(
+            "Mismatch in sample names: Some samples in your ",
+            source_label,
+            " are MISSING from the metadata.\n",
+            "Sample names must match EXACTLY. ",
+            mismatch_hint,
+            "\n\n",
+            "Unmatched samples in ",
+            source_label,
+            ": ",
+            paste(utils::head(missing_in_meta, 3), collapse = ", "),
+            "\n",
+            "Available samples in metadata: ",
+            paste(utils::head(meta_samples, 3), collapse = ", "),
+            "\n",
+            call. = FALSE
+        )
+    }
+
+    dat <- dplyr::left_join(
+        dat,
+        sample_df,
+        by = "sample",
+        suffix = c("", ".sd")
+    )
+
+    message("Sample metadata successfully joined to mutation data\n")
+    dat
+}
+
+
+#' Standardize and validate imported mutation data
+#' @param dat A data frame containing imported mutation data.
+#' @param custom_column_names Optional custom column name mapping overrides.
+#' @param sample_df Optional sample metadata as a data frame.
+#' @param source_label A short label used in user-facing error messages.
+#' @param mismatch_hint Extra guidance appended to sample mismatch errors.
+#' @param remove_sample_suffix Optional regex suffix to strip from sample names.
+#' @param required_columns Required columns that must be present.
+#' @param allow_na_columns Required columns allowed to contain NA values.
+#' @param BS_genome BSgenome package name, used when context needs populating.
+prepare_imported_mutation_data <- function(
+    dat,
+    custom_column_names = NULL,
+    sample_df = NULL,
+    source_label = "mutation data",
+    mismatch_hint = "Please check for trailing suffixes or typos in your metadata file.",
+    remove_sample_suffix = NULL,
+    required_columns = MutSeqR::op$base_required_mut_cols,
+    allow_na_columns = character(0),
+    BS_genome = NULL
+) {
+    if (!is.null(custom_column_names)) {
+        cols <- modifyList(MutSeqR::op$column, custom_column_names)
+        dat <- rename_columns(dat, cols)
+    } else {
+        dat <- rename_columns(dat)
+    }
+
+    dat <- join_import_sample_metadata(
+        dat = dat,
+        sample_df = sample_df,
+        source_label = source_label,
+        mismatch_hint = mismatch_hint,
+        remove_sample_suffix = remove_sample_suffix
+    )
+
+    dat <- check_required_columns(dat, required_columns)
+    context_exists <- "context" %in% colnames(dat)
+
+    required_no_na <- setdiff(required_columns, allow_na_columns)
+    na_columns_required <- required_no_na[
+        vapply(dat[required_no_na], function(x) any(is.na(x)), logical(1))
+    ]
+
+    if (length(na_columns_required) > 0) {
+        stop(
+            "NA values were found within the following required column(s): ",
+            paste(na_columns_required, collapse = ", "),
+            ". Please confirm that your data is complete before proceeding."
+        )
+    }
+
+    if (context_exists && any(is.na(dat$context))) {
+        context_exists <- FALSE
+    }
+
+    if (!context_exists) {
+        validate_BS_genome(BS_genome)
+    }
+
+    list(dat = dat, context_exists = context_exists)
+}
+
+
+#' Convert imported mutation data to GRanges and enrich it
+#' @param dat A data frame containing imported mutation data.
+#' @param context_exists Whether an existing context column can be trusted.
+#' @param regions Optional regions input.
+#' @param rg_sep Region separator.
+#' @param is_0_based_rg Whether region coordinates are 0-based.
+#' @param padding Region padding.
+#' @param BS_genome BSgenome package name used to populate sequence context.
+#' @param starts_in_df_are_0based Whether imported mutation starts are 0-based.
+build_imported_mutation_ranges <- function(
+    dat,
+    context_exists,
+    regions = NULL,
+    rg_sep = "\t",
+    is_0_based_rg = FALSE,
+    padding = 0,
+    BS_genome = NULL,
+    starts_in_df_are_0based = FALSE
+) {
+    mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
+        df = as.data.frame(dat),
+        keep.extra.columns = TRUE,
+        seqnames.field = "contig",
+        start.field = "start",
+        end.field = "end",
+        starts.in.df.are.0based = starts_in_df_are_0based
+    )
+
+    if (!is.null(regions)) {
+        mut_ranges <- import_regions_metadata(
+            mutation_granges = mut_ranges,
+            regions = regions,
+            rg_sep = rg_sep,
+            is_0_based_rg = is_0_based_rg,
+            padding = padding
+        )
+    }
+
+    if (!context_exists) {
+        mut_ranges <- populate_sequence_context(
+            mutation_granges = mut_ranges,
+            BS_genome = BS_genome
+        )
+    }
+
+    mut_ranges
+}
+
+
+#' Mark duplicated genomic positions within samples
+#' @param dat A data frame containing mutation data.
+#' @importFrom dplyr group_by mutate ungroup
+mark_duplicate_mutation_rows <- function(dat) {
+    dat <- dat %>%
+        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+        dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
+        dplyr::ungroup()
+
+    if (sum(dat$row_has_duplicate) > 0) {
+        warning(
+            sum(dat$row_has_duplicate),
+            " rows were found whose position was the same as that of at least one other row for the same sample."
+        )
+
+        if ("total_depth" %in% colnames(dat)) {
+            warning(
+                "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+            )
+        }
+    }
+
+    dat
+}
+
+
+#' Add VAF and reference depth columns when total depth is available
+#' @param dat A data frame containing mutation data.
+#' @importFrom dplyr mutate
+add_vaf_columns <- function(dat) {
+    if ("total_depth" %in% colnames(dat)) {
+        dat <- dat %>%
+            dplyr::mutate(
+                vaf = .data$alt_depth / .data$total_depth,
+                ref_depth = .data$total_depth - .data$alt_depth
+            )
+    }
+
+    dat
+}
+
+
+#' Finalize imported mutation data after source-specific parsing
+#' @param mut_ranges A GRanges object containing imported mutation data.
+#' @param depth_resolver A function that adds or adjusts depth-related columns.
+#' @param output_granges Whether to return a GRanges object.
+finalize_imported_mutation_data <- function(
+    mut_ranges,
+    depth_resolver = identity,
+    output_granges = FALSE
+) {
+    dat <- as.data.frame(mut_ranges) %>%
+        dplyr::rename(contig = "seqnames")
+    dat <- characterize_variants(dat)
+
+    if (!"alt_depth" %in% colnames(dat)) {
+        dat$alt_depth <- 1
+    }
+
+    dat <- depth_resolver(dat)
+    dat <- mark_duplicate_mutation_rows(dat)
+    dat <- add_vaf_columns(dat)
+
+    if (output_granges) {
+        return(GenomicRanges::makeGRangesFromDataFrame(
+            df = dat,
+            keep.extra.columns = TRUE,
+            seqnames.field = "contig",
+            start.field = "start",
+            end.field = "end",
+            starts.in.df.are.0based = FALSE
+        ))
+    }
+
+    dat
+}
+
+
 #' Join Regions Metadata
 #' @description This function imports the regions metadata and joins it with
 #' the mutation data.
