@@ -352,13 +352,13 @@ import_mut_data <- function(
       ". Please confirm that your data is complete before proceeding."
     )
   }
-  # Check for NA values in the context column. If so, will populate it.
-  if (context_exists) {
-    if ("context" %in% columns_with_na) {
-      context_exists <- FALSE
-    }
+
+  # Determine if context needs to be populated
+  if (context_exists && "context" %in% columns_with_na) {
+    context_exists <- FALSE
   }
 
+  # Fail early if we will need BSgenome
   if (!context_exists) {
     validate_BS_genome(BS_genome)
   }

@@ -390,11 +390,12 @@ import_vcf_data <- function(
       ". Please confirm that your data is complete before proceeding."
     )
   }
-  # Check for NA values in the context column. If so, will populate it.
-  if (context_exists) {
-    if ("context" %in% columns_with_na) {
-      context_exists <- FALSE
-    }
+
+  # Check whether context must be populated.
+  # If the context column is missing or contains NA values,
+  # validate BS_genome now so we can fail early before heavier work.
+  if (context_exists && "context" %in% columns_with_na) {
+    context_exists <- FALSE
   }
 
   if (!context_exists) {
@@ -409,6 +410,7 @@ import_vcf_data <- function(
     start.field = "start",
     end.field = "end"
   )
+
   # Join Regions
   if (!is.null(regions)) {
     mut_ranges <- import_regions_metadata(
@@ -419,6 +421,7 @@ import_vcf_data <- function(
       padding = padding
     )
   }
+
   # Populate Context (if not present)
   if (!context_exists) {
     mut_ranges <- populate_sequence_context(
