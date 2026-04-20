@@ -361,11 +361,6 @@ import_mut_data <- function(
 
   if (!context_exists) {
     validate_BS_genome(BS_genome)
-
-    mut_ranges <- populate_sequence_context(
-      mutation_granges = mut_ranges,
-      BS_genome = BS_genome
-    )
   }
 
   # Turn mutation data into GRanges
