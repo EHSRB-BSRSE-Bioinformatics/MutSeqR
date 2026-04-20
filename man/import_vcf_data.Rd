@@ -13,7 +13,8 @@ import_vcf_data(
   is_0_based_rg = FALSE,
   padding = 0,
   BS_genome = NULL,
-  output_granges = FALSE
+  output_granges = FALSE,
+  remove_sample_suffix = NULL
 )
 }
 \arguments{
@@ -68,6 +69,12 @@ Ex. "BSgenome.Hsapiens.UCSC.hg38" | "BSgenome.Hsapiens.UCSC.hg19" |
 
 \item{output_granges}{\code{TRUE} or \code{FALSE}; whether you want the mutation
 data to output as a GRanges object. Default output is as a dataframe.}
+
+\item{remove_sample_suffix}{An optional character string representing a regular
+expression to remove unwanted suffixes from VCF sample names prior to joining
+with metadata. For example, if your VCF sample is "Sample1.cons.filtered" but
+your metadata sheet just says "Sample1", you can use \code{remove_sample_suffix = "\\\\.cons\\\\.filtered$"}.
+Default is NULL.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the
@@ -161,7 +168,7 @@ the \code{DP} field will be used as the \code{total_depth}.
 }
 \examples{
 # Mutation data is just for example purposes. It does not reflect real data
-file <- system.file("extdata", "Example_files", 
+file <- system.file("extdata", "Example_files",
                    "simple_vcf_data.vcf", package = "MutSeqR")
 # Import the data
 imported_example_data <- import_vcf_data(
