@@ -16,7 +16,8 @@ import_mut_data(
   padding = 0,
   BS_genome = NULL,
   custom_column_names = NULL,
-  output_granges = FALSE
+  output_granges = FALSE,
+  add_chr = FALSE
 )
 }
 \arguments{
@@ -85,6 +86,10 @@ automatically be changed to their default value.}
 
 \item{output_granges}{A logical variable; whether you want the mutation
 data to output as a GRanges object. Default output (FALSE) is as a dataframe.}
+
+\item{add_chr}{A logical variable. If \code{TRUE}, prepends "chr" to contig names
+missing it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure
+compatibility with BSgenome packages. Default is \code{FALSE}.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the

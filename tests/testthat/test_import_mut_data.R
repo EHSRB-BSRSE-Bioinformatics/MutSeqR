@@ -14,7 +14,8 @@ test_that("import simple_mut_import.txt produces all expected warnings", {
     mut_data <- import_mut_data(
       mut_file = file,
       sample_data = sampledata,
-      regions = regions
+      regions = regions,
+      add_chr = TRUE
     )
   )
   expect_true(any(grepl("outside of the specified regions", warn_msgs)))
