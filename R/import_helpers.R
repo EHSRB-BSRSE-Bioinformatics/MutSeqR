@@ -1,13 +1,12 @@
-#' Join Sample Metadata
-#' @description This function imports the sample metadata and joins it with the
-#' mutation data.
-#' @param mutation_data A data frame containing mutation data.
-#' @param sample_data The path to the file containing the sample metadata.
-#' Alternatively, a data frame can be provided directly.
+#' Import Sample Metadata
+#' @description This function imports sample metadata from a file or accepts
+#' a data frame directly, and performs basic validation checks.
+#' @param sample_data The path to the file containing the sample metadata,
+#' or a data frame provided directly.
 #' @param sd_sep The separator used in the sample metadata file.
 #' Default is tab (`\t`).
-#' @return A data frame that combines the mutation data with the sample
-#' metadata.
+#' @return A validated data frame containing sample metadata, including a
+#' required column named `sample`.
 #' @importFrom dplyr left_join
 import_sample_data <- function(sample_data, sd_sep = "\t") {
     if (is.data.frame(sample_data)) {
