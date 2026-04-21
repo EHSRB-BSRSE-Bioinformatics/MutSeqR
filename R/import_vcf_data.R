@@ -236,10 +236,22 @@ import_vcf_data <- function(
       vcf
     ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
   }
+
+  # Convert contig names UCSC format for BSgenome compatibility
+  contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
+  contig_names <- ifelse(
+    grepl("^chr", contig_names, ignore.case = TRUE),
+    contig_names,
+    paste0("chr", contig_names)
+  )
+  # Special case: mt chrom to UCSC format
+  contig_names <- sub("^chrMT$", "chrM", contig_names, ignore.case = TRUE)
+
   # Extract mutation data into a dataframe
-  ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
+  ## To Do: May want to use the expand function to unlist ALT column of a
+  ## CollapsedVCF object to one row per ALT value.
   dat <- data.frame(
-    contig = SummarizedExperiment::seqnames(vcf),
+    contig = contig_names,
     start = SummarizedExperiment::start(vcf),
     end = get_vcf_end_positions(vcf),
     ref = VariantAnnotation::ref(vcf),
