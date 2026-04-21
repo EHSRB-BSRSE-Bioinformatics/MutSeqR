@@ -474,13 +474,12 @@ will check whether each record falls within the given regions. Users can define
 how this filter should be used with `regions_filter`.
 `region_filter = "remove_within"` will remove all rows whose positions overlap
 with the provided regions. `region_filter = "keep_within"` will remove all rows
-whose positions are outside of the provided regions. By default, records that are
-
-> 1bp must start and end within the regions to count as being within the region.
-> `allow_half_overlap = TRUE` allow records that only start or end within the regions
-> but extend outside of them to be counted as being within the region. Twinstrand
-> Mutagenesis Panels may be used by setting `regions` to one of "TSpanel_human",
-> "TSpanel_mouse", or "TSpanel_rat".
+whose positions are outside of the provided regions. By default, records that
+are 1bp+ must start and end within the regions to count as being within the region.
+`allow_half_overlap = TRUE` allow records that only start or end within the regions
+but extend outside of them to be counted as being within the region. Twinstrand
+Mutagenesis Panels may be used by setting `regions` to one of "TSpanel_human",
+"TSpanel_mouse", or "TSpanel_rat".
 
 ## Output
 

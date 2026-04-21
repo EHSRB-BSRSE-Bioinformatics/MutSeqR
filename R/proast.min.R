@@ -9,7 +9,7 @@
 #' Run dose-response modeling using PROAST.
 #'
 #' @param interactive_mode A TRUE/FALSE value specifying whether you want to run interactively (i.e., TRUE, the default) or using command-line mode (i.e., FALSE, non-interactive). If FALSE, you must provide all other parameters.
-#' @param datatype Non-interactive mode parameter. What type of response data do you want to consider? Options are 'continuous, individual data'.
+#' @param datatype Non-interactive mode parameter. What type of response data do you want to consider? Currently only 'continuous, individual data'is supported.
 #' @param model_choice Non-interactive mode parameter. Do you want to fit a single model or fit various nested families of models? Options are 'single model', 'select model 3 or 5 from various families of models', 'select model 3 from various nested families of models', 'select model 5 from various nested families of models', 'select model 15 in terms of RPF'. Recommended: 'select model 3 or 5 from various families of models'.
 #' @param setting_choice Non-interactive mode parameter. Do you want to fit a set of models, or choose a single model? Options are 'single model', 'set of models'.
 #' Recommended: 'set of models'.
@@ -13308,7 +13308,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       # Open the graphics window
       if (!HTML) { # This can't be FALSE or else error: ans.all$TREND is of length zero
         if (ans.all$nr.models == 1) {
-          if (!knitting) {
+          if (!knitting && display_plots) {
             f.graph.window(1)
           }
         } else {
@@ -13321,6 +13321,7 @@ if (!WAPP) { # Record the plots, don't save to file.
           }
           name.wapp <- paste("a", ans.all$yans, "exphill", sep = "")
           if (display_plots && !knitting) {
+            print("Opening graphics window...")
             f.create.graphwin(
               .gw.size[1],
               .gw.size[2],
@@ -13332,13 +13333,14 @@ if (!WAPP) { # Record the plots, don't save to file.
               output_type = output_type,
               filename = filename
             )
+            par(mfcol = c(1, 2))
+            par(mar = c(5.5, 4.8, 4, 12))
+            par(cex.main = 1.2)
+            par(cex.sub = 1)
+            par(cex.lab = 1.5)
+            par(cex = 0.6)
           }
-          par(mfcol = c(1, 2))
-          par(mar = c(5.5, 4.8, 4, 12))
-          par(cex.main = 1.2)
-          par(cex.sub = 1)
-          par(cex.lab = 1.5)
-          par(cex = 0.6)
+
         }
         y.pos <- 0
         assign(".ypos", y.pos, pos = .proast_env)
@@ -13369,7 +13371,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       }
 
       # Record the Expon plot, if we are not making more plots
-      if (ans.all$nr.models == 1 && !WAPP) {
+      if (ans.all$nr.models == 1 && !WAPP && display_plots) {
         plot_list$Expon <- recordPlot()
       }
 
@@ -13403,7 +13405,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       } # Done Hill
 
       #   Record the Expon/Hill Plot for Continuous Data
-      if (!WAPP) {
+      if (!WAPP && display_plots) {
         plot_list$Expon_HILL <- recordPlot()
       }
 
@@ -13458,7 +13460,7 @@ if (!WAPP) { # Record the plots, don't save to file.
       }
 
       # Save the InvExpon Plot if we are not continuing with the LN
-      if (ans.all$nr.models == 3 && !WAPP) {
+      if (ans.all$nr.models == 3 && !WAPP && display_plots) {
         plot_list$InvExp <- recordPlot()
       }
 
@@ -13487,7 +13489,7 @@ if (!WAPP) { # Record the plots, don't save to file.
         }
       }
       # Save the InvExpon/LN plot
-      if (!WAPP) {
+      if (!WAPP && display_plots) {
         plot_list$InvExp_LN <- recordPlot()
       }
     }
@@ -14372,15 +14374,16 @@ parse_PROAST_output <- function(result) {
 #' @description Independently generate the model plots from the raw results.
 #' @param proast_results_list The raw results list. This is the output of
 #' \code{\link{f.proast}}
-#' @param output_path The file path to the output directory. If the output_path
-#' is NULL, it will save it to the working directory. If the output_path
-#' doesn't exist, it will be created.
-#' @param output_type The file type to export the plots. Options are 'svg',
-#' 'jpeg', 'pdf', 'png', 'tiff', or 'none'. If "none", the plots
-#' will be displayed to the graphics window, recorded with recordPlot(), and
-#' returned as a list.
-#' @param prefix A custom prefix to append to the file names. Default is
-#' "PROAST_".
+#' @param output_type How do you want to output the plots. If "none", the plots
+#' will be displayed to the graphics window and returned as a list. Plots can be
+#' replayed using replayPlot(). Alternatively, the plots may be saved to file.
+#' Options are 'svg', 'jpeg', 'pdf', 'png', or 'tiff'. Plots will be save to
+#' the output_path.
+#' @param output_path Where to save the exported plots. A file path. If the
+#' output_path is NULL, plots will be saved to the working directory. If the
+#' output_path doesn't exist, it will be created.
+#' @param prefix A custom prefix to append to the file names of exported plots.
+#' Plot names are PROAST_[modeltype].
 #' @param model_averaging A logical variable indicating whether you want to
 #' generate the model averaging figure  (TRUE) or the plots of the individual
 #' models (FALSE). You plot one or the other, not both.  Plotting the model
@@ -15152,4 +15155,5 @@ f.choose.model <- function(
     return(ans.all)
   })
 }
+
 

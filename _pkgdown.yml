@@ -111,3 +111,4 @@ reference:
       - f.plot.result
       - f.plot.gui
       - cleveland_plot
+      - vcf_sample_fix

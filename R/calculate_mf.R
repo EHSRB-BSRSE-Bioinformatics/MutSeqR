@@ -368,14 +368,6 @@ calculate_mf <- function(mutation_data,
         }
     }
 
-    if (!is.null(retain_metadata_cols)) {
-        required_columns <- c(required_columns, retain_metadata_cols)
-    }
-    mutation_data <- MutSeqR::check_required_columns(
-        mutation_data,
-        required_columns
-    )
-
     if (subtype_resolution %in% c(
         "base_6", "base_12", "base_96", "base_192"
     ) && !("snv" %in% variant_types)) {
@@ -395,6 +387,20 @@ calculate_mf <- function(mutation_data,
         MutSeqR::denominator_dict[[subtype_resolution]]
     )
     denominator_groups <- denominator_groups[!is.na(denominator_groups)]
+
+    # ensure that the cols_to_group are not included in the metadata cols to
+    # retain, as this will cause issues with the grouping in the summary table
+    retain_metadata_cols <- setdiff(retain_metadata_cols, numerator_groups)
+    
+    if (length(retain_metadata_cols) > 0) {
+        required_columns <- c(required_columns, retain_metadata_cols)
+    }
+
+    # Check for required columns in mutation_data
+    mutation_data <- MutSeqR::check_required_columns(
+        mutation_data,
+        required_columns
+    )
 
     # Calculate mutation counts groups
     mut_freq_table <- mutation_data %>%
@@ -641,7 +647,7 @@ calculate_mf <- function(mutation_data,
     }
 
     # grab the metadata columns
-    if (!is.null(retain_metadata_cols)) {
+    if (length(retain_metadata_cols) > 0) {
         metadata <- mut_freq_table %>%
             dplyr::group_by(dplyr::across(dplyr::all_of(numerator_groups))) %>%
             dplyr::summarise(
@@ -773,6 +779,21 @@ calculate_mf <- function(mutation_data,
     if (depth_exists && subtype_resolution %in% c("none", "type")) {
         summary_table <- summary_table %>%
             dplyr::select(-"subtype_depth")
+    }
+
+    # Give warning if metadata cols are being retained but have NAs due to
+    # missing subtypes in the data
+    if (length(retain_metadata_cols) > 0 && 
+        anyNA(summary_table[retain_metadata_cols])) {
+        warning(
+            "NA values detected in retained metadata columns. ",
+            "This is expected for summary rows of group/subtype ",
+            "combinations that did not exist in the original input. NA values ",
+            "indicate missing metadata and may affect plotting or downstream ",
+            "analysis. Suggestion: Review the summary table, consider filling",
+            " NAs with appropriate values for your dataset or join the ",
+            "metadata to the summary data using dplyr::left_join()."
+        )
     }
 
     if (!summary) {
