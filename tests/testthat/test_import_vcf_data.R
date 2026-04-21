@@ -9,7 +9,8 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
   mut_data <- import_vcf_data(vcf_file = file,
     regions = NULL,
     BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
-    output_granges = FALSE
+    output_granges = FALSE,
+    add_chr = TRUE
   )
   colnames <- c(
     MutSeqR::op$base_required_mut_cols,

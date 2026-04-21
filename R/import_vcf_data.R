@@ -50,12 +50,16 @@
 #' with metadata. For example, if your VCF sample is "Sample1.cons.filtered" but
 #' your metadata sheet just says "Sample1", you can use `remove_sample_suffix = "\\.cons\\.filtered$"`.
 #' Default is NULL.
+#' @param add_chr A logical variable. If `TRUE`, prepends "chr" to contig names
+#' missing it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure
+#' compatibility with BSgenome packages. Default is `FALSE`.
 #' @details The required fields are:
 #'
 #' **FIXED FIELDS**
 #' \itemize{
 #' \item `CHROM`: The name of the reference sequence. Equivalent to `contig`.
-#' \item `POS`: The 1-based start position of the feature. Equivalent to  `start`.
+#' \item `POS`: The 1-based start position of the feature. Equivalent to 
+#' `start`.
 #' \item `REF`: The reference allele at this position.
 #' \item `ALT`: The left-aligned, normalized, alternate allele at this position.
 #' Multiple alt alleles called for a single position should be represented as
@@ -64,7 +68,6 @@
 #'
 #' **INFO FIELDS**
 #' \itemize{
-#' \item `END`: The half-open end position of the feature.
 #' \item `sample`: An identifying field for your samples; either in the INFO
 #' field or as the header to the FORMAT field.
 #' }
@@ -98,6 +101,11 @@
 #'
 #' Output Column Definitions:
 #' \itemize{
+#' \item 'end': The half-open end position of the feature. This is calculated
+#' as the 1-based start position + the length of the reference allele - 1. For
+#' structural variants, if the INFO field contains SVLEN, end is calculated as
+#' the 1-based start position + SVLEN - 1. End is only calculated if
+#' not already present in the VCF INFO fields.
 #' \item `short_ref`: The reference base at the start position.
 #' \item `normalized_ref`: The short_ref in C/T-base notation for
 #' this position (e.g. A -> T, G -> C).
@@ -164,7 +172,8 @@ import_vcf_data <- function(
   padding = 0,
   BS_genome = NULL,
   output_granges = FALSE,
-  remove_sample_suffix = NULL
+  remove_sample_suffix = NULL,
+  add_chr = FALSE
 ) {
   stopifnot(
     !missing(vcf_file) && is.character(vcf_file),
@@ -180,7 +189,8 @@ import_vcf_data <- function(
     is.character(rg_sep),
     is.logical(is_0_based_rg),
     is.numeric(padding) && padding >= 0,
-    is.logical(output_granges)
+    is.logical(output_granges),
+    is.logical(add_chr)
   )
   if (!is.null(BS_genome)) {
     BS_genome <- match.arg(
@@ -236,10 +246,23 @@ import_vcf_data <- function(
       vcf
     ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
   }
+  # Extract contigs and add "chr" prefix if specified to be
+  # compatible with BSgenome seqnames.
+  contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
+  if (add_chr) {
+    contig_names <- ifelse(
+      grepl("^chr", contig_names, ignore.case = TRUE),
+        contig_names,
+      paste0("chr", contig_names)
+    )
+  # Special case: mt chrom to UCSC format
+  contig_names <- sub("^chrMT$", "chrM", contig_names, ignore.case = TRUE)
+  }
   # Extract mutation data into a dataframe
-  ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
+  ## To Do: May want to use the expand function to unlist ALT column of a
+  ## CollapsedVCF object to one row per ALT value.
   dat <- data.frame(
-    contig = SummarizedExperiment::seqnames(vcf),
+    contig = contig_names,
     start = SummarizedExperiment::start(vcf),
     end = get_vcf_end_positions(vcf),
     ref = VariantAnnotation::ref(vcf),
@@ -400,6 +423,15 @@ import_vcf_data <- function(
   # Fail early if we will need BSgenome
   if (!context_exists) {
     validate_BS_genome(BS_genome)
+
+    # Check if contigs are formatted correctly for BSgenome
+    if (any(!grepl("^chr", dat$contig, ignore.case = TRUE))) {
+        stop(
+        "BSgenome requires contig names to start with 'chr' (e.g., 'chr1', 'chrX', 'chrM'). ",
+        "One or more contigs in your data do not follow this format. ",
+        "Please set `add_chr = TRUE` to automatically format your contig names."
+        )
+    }
   }
 
   # Turn mutation data into GRanges

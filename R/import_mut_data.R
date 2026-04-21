@@ -56,6 +56,9 @@
 #' automatically be changed to their default value.
 #' @param output_granges A logical variable; whether you want the mutation
 #' data to output as a GRanges object. Default output (FALSE) is as a dataframe.
+#' @param add_chr A logical variable. If `TRUE`, prepends "chr" to contig names 
+#' missing it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure 
+#' compatibility with BSgenome packages. Default is `FALSE`.
 #' @details Required columns for mut files are:
 #' \itemize{
 #'      \item `contig`: The name of the reference sequence.
@@ -155,7 +158,8 @@ import_mut_data <- function(
   padding = 0,
   BS_genome = NULL,
   custom_column_names = NULL,
-  output_granges = FALSE
+  output_granges = FALSE,
+  add_chr = FALSE
 ) {
   stopifnot(
     "mut_file is required" = !missing(mut_file),
@@ -188,7 +192,8 @@ import_mut_data <- function(
       custom_column_names
     ) ||
       is.list(custom_column_names),
-    "output_granges must be a logical variable" = is.logical(output_granges)
+    "output_granges must be a logical variable" = is.logical(output_granges),
+    "add_chr must be a logical variable" = is.logical(add_chr)
   )
   if (!is.null(BS_genome)) {
     BS_genome <- match.arg(
@@ -346,11 +351,23 @@ import_mut_data <- function(
   ]
 
   if (length(na_columns_required) > 0) {
-    stop(
-      "NA values were found within the following required column(s): ",
-      paste(na_columns_required, collapse = ", "),
-      ". Please confirm that your data is complete before proceeding."
+      stop(
+          "NA values were found within the following required column(s): ",
+          paste(na_columns_required, collapse = ", "),
+          ". Please confirm that your data is complete before proceeding."
+      )
+  }
+  
+  # Conditionally convert contig names to UCSC format for BSgenome compatibility
+  if (add_chr) {
+    dat$contig <- as.character(dat$contig)
+    dat$contig <- ifelse(
+      grepl("^chr", dat$contig, ignore.case = TRUE),
+      dat$contig,
+      paste0("chr", dat$contig)
     )
+    # Special case: mt chrom to UCSC format
+    dat$contig <- sub("^chrMT$", "chrM", dat$contig, ignore.case = TRUE)
   }
 
   # Determine if context needs to be populated
@@ -361,6 +378,14 @@ import_mut_data <- function(
   # Fail early if we will need BSgenome
   if (!context_exists) {
     validate_BS_genome(BS_genome)
+    # Check if contigs are formatted correctly for BSgenome
+    if (any(!grepl("^chr", dat$contig, ignore.case = TRUE))) {
+      stop(
+        "BSgenome requires contig names to start with 'chr' (e.g., 'chr1', 'chrX', 'chrM'). ",
+        "One or more contigs in your data do not follow this format. ",
+        "Please set `add_chr = TRUE` to automatically format your contig names for BSgenome compatibility."
+      )
+    }
   }
 
   # Turn mutation data into GRanges
