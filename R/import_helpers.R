@@ -48,7 +48,10 @@ import_sample_data <- function(sample_data, sd_sep = "\t") {
                 "but found a variation with different casing. Column names are case-sensitive."
             )
         } else {
-            available_cols <- paste(head(colnames(sd), 10), collapse = ", ")
+            available_cols <- paste(
+                utils::head(colnames(sd), 10),
+                collapse = ", "
+            )
             stop(
                 "Error merging sample metadata: The required column 'sample' was not found.\n",
                 "Please ensure your sample metadata contains a column named 'sample'.\n",
