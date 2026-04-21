@@ -45,3 +45,12 @@ test_that("import_vcf_data respects INFO END and derives SV end from SVLEN", {
   expect_equal(mut_data$start, 23665136)
   expect_equal(mut_data$end, 23666093)
 })
+
+test_that("import_vcf_data does not coerce a missing BS_genome into an installed check", {
+  file <- file.path("./testdata/simple_vcf_data.vcf")
+
+  expect_error(
+    import_vcf_data(vcf_file = file, regions = NULL, output_granges = FALSE),
+    "no BS_genome was provided"
+  )
+})

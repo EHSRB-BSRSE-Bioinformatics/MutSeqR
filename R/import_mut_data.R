@@ -190,13 +190,12 @@ import_mut_data <- function(
       is.list(custom_column_names),
     "output_granges must be a logical variable" = is.logical(output_granges)
   )
-  BS_genome <- match.arg(
-    BS_genome,
-    choices = c(
-      NULL,
-      BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+  if (!is.null(BS_genome)) {
+    BS_genome <- match.arg(
+      BS_genome,
+      choices = BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
     )
-  )
+  }
 
   # Load and validate sample metadata before heavy lifting
   sample_df <- NULL

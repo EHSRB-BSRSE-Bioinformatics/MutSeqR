@@ -593,11 +593,6 @@ vcf_sample_fix <- function(vcf) {
     if (length(found_idx) > 0) {
         # Rename the first match found
         names(VariantAnnotation::info(vcf))[found_idx[1]] <- "sample"
-    } else if (!"sample" %in% norm_names) {
-        # Fallback to colData rownames (VCF header sample name)
-        # Must have 1 sample per file as per docs
-        sample_name <- rownames(SummarizedExperiment::colData(vcf))
-        VariantAnnotation::info(vcf)$sample <- sample_name
     }
     return(vcf)
 }

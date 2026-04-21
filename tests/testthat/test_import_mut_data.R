@@ -39,3 +39,11 @@ test_that("import simple_mut_import.txt produces all expected warnings", {
                  "snv", "no_variant", "mnv"))
   expect_equal(mut_data$vaf, mut_data$alt_depth / mut_data$total_depth)
 })
+
+test_that("import_mut_data leaves BS_genome as NULL when context is already present", {
+  file <- file.path("./testdata/simple_mut_import.txt")
+
+  expect_no_error(
+    import_mut_data(mut_file = file)
+  )
+})

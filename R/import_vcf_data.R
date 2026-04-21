@@ -182,26 +182,11 @@ import_vcf_data <- function(
     is.numeric(padding) && padding >= 0,
     is.logical(output_granges)
   )
-  BS_genome <- match.arg(
-    BS_genome,
-    choices = c(
-      NULL,
-      BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-    )
-  )
-
-  # Check if BS_genome is actually installed locally
   if (!is.null(BS_genome)) {
-    if (!(BS_genome %in% BSgenome::installed.genomes())) {
-      stop(
-        "The specified BS genome ('",
-        BS_genome,
-        "') is valid, but is not installed locally. ",
-        "Please install it using BiocManager::install('",
-        BS_genome,
-        "') before proceeding."
-      )
-    }
+    BS_genome <- match.arg(
+      BS_genome,
+      choices = BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+    )
   }
 
   # Load and validate sample metadata before heavy lifting
@@ -211,6 +196,9 @@ import_vcf_data <- function(
   }
 
   vcf_file <- file.path(vcf_file)
+  if (!file.exists(vcf_file)) {
+    stop("The file path you've specified is invalid")
+  }
 
   # Read and bind vcfs from folder
   if (file.info(vcf_file)$isdir == TRUE) {
@@ -308,6 +296,19 @@ import_vcf_data <- function(
 
   # Rename columns to default names
   dat <- rename_columns(dat)
+
+  # Recover the sample from the VCF header when it is not present in INFO.
+  # We avoid mutating INFO directly because undeclared INFO fields fail VCF validation.
+  if (!"sample" %in% colnames(dat)) {
+    sample_name <- rownames(SummarizedExperiment::colData(vcf))
+    if (length(sample_name) != 1) {
+      stop(
+        "VCF files must contain exactly one sample per file. ",
+        "Could not recover a unique sample name from the VCF header."
+      )
+    }
+    dat$sample <- sample_name
+  }
 
   # Join with sample metadata if provided
   if (!is.null(sample_df)) {
