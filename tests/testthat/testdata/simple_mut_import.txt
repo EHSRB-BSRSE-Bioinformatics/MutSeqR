@@ -1,5 +1,5 @@
 sample	contig	start	end	ref	alt	alt_depth	total_depth	context
-sample1	chr1	101	102	C	A	1	100	TCA
+sample1	1	101	102	C	A	1	100	TCA
 sample1	chr1	102	103	A	A	0	150	CAT
 sample1	chr1	103	104	T	C	2	200	ATA
 sample1	chr1	104	105	A	G	1	80	TAG

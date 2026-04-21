@@ -45,12 +45,21 @@
 #' "BSgenome.Rnorvegicus.UCSC.rn6"
 #' @param output_granges `TRUE` or `FALSE`; whether you want the mutation
 #' data to output as a GRanges object. Default output is as a dataframe.
+#' @param remove_sample_suffix An optional character string representing a regular
+#' expression to remove unwanted suffixes from VCF sample names prior to joining
+#' with metadata. For example, if your VCF sample is "Sample1.cons.filtered" but
+#' your metadata sheet just says "Sample1", you can use `remove_sample_suffix = "\\.cons\\.filtered$"`.
+#' Default is NULL.
+#' @param add_chr A logical variable. If `TRUE`, prepends "chr" to contig names
+#' missing it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure
+#' compatibility with BSgenome packages. Default is `FALSE`.
 #' @details The required fields are:
 #'
 #' **FIXED FIELDS**
 #' \itemize{
 #' \item `CHROM`: The name of the reference sequence. Equivalent to `contig`.
-#' \item `POS`: The 1-based start position of the feature. Equivalent to  `start`.
+#' \item `POS`: The 1-based start position of the feature. Equivalent to 
+#' `start`.
 #' \item `REF`: The reference allele at this position.
 #' \item `ALT`: The left-aligned, normalized, alternate allele at this position.
 #' Multiple alt alleles called for a single position should be represented as
@@ -59,7 +68,6 @@
 #'
 #' **INFO FIELDS**
 #' \itemize{
-#' \item `END`: The half-open end position of the feature.
 #' \item `sample`: An identifying field for your samples; either in the INFO
 #' field or as the header to the FORMAT field.
 #' }
@@ -93,6 +101,11 @@
 #'
 #' Output Column Definitions:
 #' \itemize{
+#' \item 'end': The half-open end position of the feature. This is calculated
+#' as the 1-based start position + the length of the reference allele - 1. For
+#' structural variants, if the INFO field contains SVLEN, end is calculated as
+#' the 1-based start position + SVLEN - 1. End is only calculated if
+#' not already present in the VCF INFO fields.
 #' \item `short_ref`: The reference base at the start position.
 #' \item `normalized_ref`: The short_ref in C/T-base notation for
 #' this position (e.g. A -> T, G -> C).
@@ -129,7 +142,7 @@
 #' }
 #' @examples
 #' # Mutation data is just for example purposes. It does not reflect real data
-#' file <- system.file("extdata", "Example_files", 
+#' file <- system.file("extdata", "Example_files",
 #'                    "simple_vcf_data.vcf", package = "MutSeqR")
 #' # Import the data
 #' imported_example_data <- import_vcf_data(
@@ -149,81 +162,141 @@
 #' @importFrom Seqinfo seqnames
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
-import_vcf_data <- function(vcf_file,
-                            sample_data = NULL,
-                            sd_sep = "\t",
-                            regions = NULL,
-                            rg_sep = "\t",
-                            is_0_based_rg = FALSE,
-                            padding = 0,
-                            BS_genome = NULL,
-                            output_granges = FALSE) {
-    stopifnot(
-        !missing(vcf_file) && is.character(vcf_file),
-        is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
-        is.character(sd_sep),
-        is.null(regions) || is.character(regions) || is.data.frame(regions) || methods::is(regions, "GRanges"),
-        is.character(rg_sep),
-        is.logical(is_0_based_rg),
-        is.numeric(padding) && padding >= 0,
-        is.logical(output_granges)
+import_vcf_data <- function(
+  vcf_file,
+  sample_data = NULL,
+  sd_sep = "\t",
+  regions = NULL,
+  rg_sep = "\t",
+  is_0_based_rg = FALSE,
+  padding = 0,
+  BS_genome = NULL,
+  output_granges = FALSE,
+  remove_sample_suffix = NULL,
+  add_chr = FALSE
+) {
+  stopifnot(
+    !missing(vcf_file) && is.character(vcf_file),
+    is.null(sample_data) ||
+      is.character(sample_data) ||
+      is.data.frame(sample_data),
+    is.character(sd_sep),
+    is.null(remove_sample_suffix) || is.character(remove_sample_suffix),
+    is.null(regions) ||
+      is.character(regions) ||
+      is.data.frame(regions) ||
+      methods::is(regions, "GRanges"),
+    is.character(rg_sep),
+    is.logical(is_0_based_rg),
+    is.numeric(padding) && padding >= 0,
+    is.logical(output_granges),
+    is.logical(add_chr)
+  )
+  if (!is.null(BS_genome)) {
+    BS_genome <- match.arg(
+      BS_genome,
+      choices = BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
     )
-    BS_genome <- match.arg(BS_genome,
-        choices = c(
-            NULL,
-            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-        )
+  }
+
+  # Load and validate sample metadata before heavy lifting
+  sample_df <- NULL
+  if (!is.null(sample_data)) {
+    sample_df <- import_sample_data(sample_data, sd_sep)
+  }
+
+  vcf_file <- file.path(vcf_file)
+  if (!file.exists(vcf_file)) {
+    stop("The file path you've specified is invalid")
+  }
+
+  # Read and bind vcfs from folder
+  if (file.info(vcf_file)$isdir == TRUE) {
+    vcf_files <- list.files(
+      vcf_file,
+      pattern = "\\.g?vcf(\\.bgz|\\.gz)?$",
+      full.names = TRUE
     )
-
-    vcf_file <- file.path(vcf_file)
-
-    # Read and bind vcfs from folder
-    if (file.info(vcf_file)$isdir == TRUE) {
-        vcf_files <- list.files(vcf_file, pattern = "\\.g?vcf(\\.bgz|\\.gz)?$", full.names = TRUE)
-        if (length(vcf_files) == 0) stop("No VCF files found in directory: ", vcf_file)
-        # Read and combine VCF files
-        vcf_list <- lapply(vcf_files, function(file) {
-            vcf <- VariantAnnotation::readVcf(file)
-            vcf <- vcf_sample_fix(vcf) # fix sample column
-            # Ensure consistent colData rownames so rbind doesn't complain
-            rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
-            return(vcf)
-        })
-        vcf <- do.call(VariantAnnotation::rbind, vcf_list)
-    } else {
-        # Read a single vcf file
-        vcf <- VariantAnnotation::readVcf(vcf_file)
-        # Rename or create the "sample" column in the INFO field
-        vcf <- vcf_sample_fix(vcf)
+    if (length(vcf_files) == 0) {
+      stop("No VCF files found in directory: ", vcf_file)
     }
-    # Extract FIXED Fields
-    ## To Do: May want to use the expand function to unlist ALT column of a CollapsedVCF object to one row per ALT value.
-    alt <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
-    # Extract mutation data into a dataframe
-    dat <- data.frame(
-        contig = SummarizedExperiment::seqnames(vcf),
-        start = SummarizedExperiment::start(vcf),
-        ref = VariantAnnotation::ref(vcf),
-        alt = alt
-    )
-    # Extract INFO fields
-    info <- as.data.frame(VariantAnnotation::info(vcf))
+    # Read and combine VCF files
+    vcf_list <- lapply(vcf_files, function(file) {
+      vcf <- VariantAnnotation::readVcf(file)
+      vcf <- vcf_sample_fix(vcf) # fix sample column
+      # Ensure consistent colData rownames so rbind doesn't complain
 
-    # Extract GENO fields depending on the type of data
-    geno <- VariantAnnotation::geno(vcf)
-    geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
+      # Coerce ALT to CharacterList for every VCF.
+      # This prevents rbind crashes when mixing strict DNA alleles (e.g. A, C)
+      # with gVCF/SV alleles (e.g. <NON_REF>, .)
+      VariantAnnotation::alt(
+        vcf
+      ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
+
+      rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
+      return(vcf)
+    })
+    vcf <- do.call(VariantAnnotation::rbind, vcf_list)
+  } else {
+    # Read a single vcf file
+    vcf <- VariantAnnotation::readVcf(vcf_file)
+    # Rename or create the "sample" column in the INFO field
+    vcf <- vcf_sample_fix(vcf)
+    VariantAnnotation::alt(
+      vcf
+    ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
+  }
+  # Extract contigs and add "chr" prefix if specified to be
+  # compatible with BSgenome seqnames.
+  contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
+  if (add_chr) {
+    contig_names <- ifelse(
+      grepl("^chr", contig_names, ignore.case = TRUE),
+        contig_names,
+      paste0("chr", contig_names)
+    )
+  # Special case: mt chrom to UCSC format
+  contig_names <- sub("^chrMT$", "chrM", contig_names, ignore.case = TRUE)
+  }
+  # Extract mutation data into a dataframe
+  ## To Do: May want to use the expand function to unlist ALT column of a
+  ## CollapsedVCF object to one row per ALT value.
+  dat <- data.frame(
+    contig = contig_names,
+    start = SummarizedExperiment::start(vcf),
+    end = get_vcf_end_positions(vcf),
+    ref = VariantAnnotation::ref(vcf),
+    alt = VariantAnnotation::alt(vcf)
+  )
+
+  # Extract INFO fields
+  info <- as.data.frame(VariantAnnotation::info(vcf))
+
+  # Extract GENO fields depending on the type of data
+  geno <- VariantAnnotation::geno(vcf)
+  geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
   for (field_name in names(geno)) {
     field <- geno[[field_name]]
-    if (is.list(field)) { # Ex. AD
+    if (is.list(field)) {
+      # Ex. AD
       max_length <- max(vapply(field, length, integer(1)))
-      expanded_field <- do.call(rbind, lapply(field, function(x) {
-        c(x, rep(NA, max_length - length(x)))
-      }))
-      colnames(expanded_field) <- paste(field_name, seq_len(max_length), sep = "_")
+      expanded_field <- do.call(
+        rbind,
+        lapply(field, function(x) {
+          c(x, rep(NA, max_length - length(x)))
+        })
+      )
+      colnames(expanded_field) <- paste(
+        field_name,
+        seq_len(max_length),
+        sep = "_"
+      )
       geno_df <- cbind(geno_df, expanded_field)
-    } else if (is.matrix(field)) { # Ex. GT, DP, VD
+    } else if (is.matrix(field)) {
+      # Ex. GT, DP, VD
       geno_df[[field_name]] <- as.vector(field)
-    } else if (is.array(field) && length(dim(field)) == 3) { # Ex. RD, ALD
+    } else if (is.array(field) && length(dim(field)) == 3) {
+      # Ex. RD, ALD
       # Collapse the array over the 2nd and 3rd dimensions
       collapsed_field <- apply(field, c(1), function(x) as.vector(x))
       collapsed_field <- as.data.frame(t(collapsed_field))
@@ -234,33 +307,106 @@ import_vcf_data <- function(vcf_file,
       geno_df[[field_name]] <- field
     }
   }
-  # Ensure info and geno do not have the same columns
-  common_cols <- intersect(colnames(info), colnames(geno_df))
-  info <- info[, !(colnames(info) %in% common_cols), drop = FALSE]
+  # Ensure info does not overwrite columns already in dat or geno_df (like END or DP)
+  # We do a case-insensitive match so "END" in info is safely dropped in favor of "end" in dat
+  common_cols_idx <- tolower(colnames(info)) %in%
+    tolower(c(colnames(dat), colnames(geno_df)))
+  info <- info[, !common_cols_idx, drop = FALSE]
 
   # Combine data frames
   dat <- cbind(dat, geno_df, info)
   row.names(dat) <- NULL
 
-  # Join with sample metadata if provided
-  if (!is.null(sample_data)) {
-    dat <- import_sample_data(dat, sample_data, sd_sep)
-  }
-
   # Rename columns to default names
   dat <- rename_columns(dat)
+
+  # Recover the sample from the VCF header when it is not present in INFO.
+  # We avoid mutating INFO directly because undeclared INFO fields fail VCF validation.
+  if (!"sample" %in% colnames(dat)) {
+    sample_name <- rownames(SummarizedExperiment::colData(vcf))
+    if (length(sample_name) != 1) {
+      stop(
+        "VCF files must contain exactly one sample per file. ",
+        "Could not recover a unique sample name from the VCF header."
+      )
+    }
+    dat$sample <- sample_name
+  }
+
+  # Join with sample metadata if provided
+  if (!is.null(sample_df)) {
+    if (!"sample" %in% colnames(dat)) {
+      stop(
+        "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+      )
+    }
+
+    # Diagnostic check for metadata sample name match
+    # Defensively unlist if the VCF INFO sample column is a list/CharacterList
+    if (is.list(dat$sample)) {
+      dat$sample <- vapply(
+        dat$sample,
+        function(x) paste(x, collapse = ","),
+        character(1)
+      )
+    }
+
+    # Cast to character vectors to ensure exact string matching
+    dat$sample <- as.character(dat$sample)
+
+    # Strip suffix if provided
+    if (!is.null(remove_sample_suffix)) {
+      dat$sample <- gsub(
+        pattern = remove_sample_suffix,
+        replacement = "",
+        x = dat$sample
+      )
+    }
+
+    sample_df$sample <- as.character(sample_df$sample)
+
+    mut_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+
+    # We strictly care if the mutation data has samples NOT found in the metadata
+    missing_in_meta <- setdiff(mut_samples, meta_samples)
+
+    if (length(missing_in_meta) > 0) {
+      stop(
+        "Mismatch in sample names: Some samples in your VCF data are MISSING from the metadata.\n",
+        "Sample names must match EXACTLY. Please check for suffixes (e.g. '.cons.filtered') in your VCF files or typos in your metadata file.\n\n",
+        "Unmatched samples in VCF data: ",
+        paste(utils::head(missing_in_meta, 3), collapse = ", "),
+        "\n",
+        "Available samples in metadata: ",
+        paste(utils::head(meta_samples, 3), collapse = ", "),
+        "\n",
+        call. = FALSE
+      )
+    }
+
+    dat <- dplyr::left_join(
+      dat,
+      sample_df,
+      by = "sample",
+      suffix = c("", ".sd")
+    )
+
+    message("Sample metadata successfully joined to mutation data\n")
+  }
+
   # Check for all required columns before proceeding
   dat <- MutSeqR::check_required_columns(dat, op$base_required_mut_cols)
   context_exists <- "context" %in% colnames(dat)
 
   # Check for NA values in required columns.
-  # Except for the alt column, which can have NA values.
+  # Except for the alt column, which can have NA values in VCF-derived data.
   required_columns <- setdiff(op$base_required_mut_cols, "alt")
-  columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(
-    columns_with_na,
-    required_columns
-  )
+
+  na_columns_required <- required_columns[
+    vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
+  ]
+
   if (length(na_columns_required) > 0) {
     stop(
       "NA values were found within the following required column(s): ",
@@ -268,12 +414,26 @@ import_vcf_data <- function(vcf_file,
       ". Please confirm that your data is complete before proceeding."
     )
   }
-  # Check for NA values in the context column. If so, will populate it.
-  if (context_exists) {
-    if ("context" %in% columns_with_na) {
-      context_exists <- FALSE
+
+  # Determine if context needs to be populated
+  if (context_exists && any(is.na(dat$context))) {
+    context_exists <- FALSE
+  }
+
+  # Fail early if we will need BSgenome
+  if (!context_exists) {
+    validate_BS_genome(BS_genome)
+
+    # Check if contigs are formatted correctly for BSgenome
+    if (any(!grepl("^chr", dat$contig, ignore.case = TRUE))) {
+        stop(
+        "BSgenome requires contig names to start with 'chr' (e.g., 'chr1', 'chrX', 'chrM'). ",
+        "One or more contigs in your data do not follow this format. ",
+        "Please set `add_chr = TRUE` to automatically format your contig names."
+        )
     }
   }
+
   # Turn mutation data into GRanges
   mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
     df = as.data.frame(dat),
@@ -282,14 +442,18 @@ import_vcf_data <- function(vcf_file,
     start.field = "start",
     end.field = "end"
   )
+
   # Join Regions
   if (!is.null(regions)) {
     mut_ranges <- import_regions_metadata(
       mutation_granges = mut_ranges,
-      regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
+      regions = regions,
+      rg_sep = rg_sep,
+      is_0_based_rg = is_0_based_rg,
       padding = padding
     )
   }
+
   # Populate Context (if not present)
   if (!context_exists) {
     mut_ranges <- populate_sequence_context(
@@ -319,17 +483,23 @@ import_vcf_data <- function(vcf_file,
     if (no_calls_exists && depth_exists) {
       dat <- dat %>%
         dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-    } else if (length(ad_columns) > 0) { # create total_depth from AD
+    } else if (length(ad_columns) > 0) {
+      # create total_depth from AD
       dat$total_depth <- rowSums(dat[, ad_columns], na.rm = TRUE)
-    } else { # use the DP field
+    } else {
+      # use the DP field
       if (depth_exists) {
         dat <- dat %>%
           dplyr::mutate(
             total_depth = .data$depth
           )
-        warning("Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README")
+        warning(
+          "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
+        )
       } else {
-        warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
+        warning(
+          "Could not find an appropriate depth column. Some package functionality may be limited.\n"
+        )
       }
     }
   }
@@ -341,11 +511,16 @@ import_vcf_data <- function(vcf_file,
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
+    warning(
+      sum(dat$row_has_duplicate),
+      " rows were found whose position was the same as that of at least one other row for the same sample."
+    )
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.")
+      warning(
+        "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+      )
     }
   }
 

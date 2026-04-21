@@ -1,0 +1,9 @@
+##fileformat=VCFv4.2
+##contig=<ID=chr1,assembly=hg38,length=248956422>
+##INFO=<ID=END,Number=1,Type=Integer,Description="Chr End Position">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Structural variant type">
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Structural variant length">
+##FORMAT=<ID=VD,Number=1,Type=Integer,Description="Variant Depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1
+chr1	23665136	.	N	<DEL>	.	.	SVTYPE=DEL;SVLEN=-958	VD:AD	1:20,1

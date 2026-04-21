@@ -2,24 +2,22 @@
 % Please edit documentation in R/import_helpers.R
 \name{import_sample_data}
 \alias{import_sample_data}
-\title{Join Sample Metadata}
+\title{Import Sample Metadata}
 \usage{
-import_sample_data(mutation_data, sample_data, sd_sep = "\\t")
+import_sample_data(sample_data, sd_sep = "\\t")
 }
 \arguments{
-\item{mutation_data}{A data frame containing mutation data.}
-
-\item{sample_data}{The path to the file containing the sample metadata.
-Alternatively, a data frame can be provided directly.}
+\item{sample_data}{The path to the file containing the sample metadata,
+or a data frame provided directly.}
 
 \item{sd_sep}{The separator used in the sample metadata file.
 Default is tab (\verb{\\t}).}
 }
 \value{
-A data frame that combines the mutation data with the sample
-metadata.
+A validated data frame containing sample metadata, including a
+required column named \code{sample}.
 }
 \description{
-This function imports the sample metadata and joins it with the
-mutation data.
+This function imports sample metadata from a file or accepts
+a data frame directly, and performs basic validation checks.
 }

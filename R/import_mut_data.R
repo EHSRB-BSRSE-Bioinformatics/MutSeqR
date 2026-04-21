@@ -56,6 +56,9 @@
 #' automatically be changed to their default value.
 #' @param output_granges A logical variable; whether you want the mutation
 #' data to output as a GRanges object. Default output (FALSE) is as a dataframe.
+#' @param add_chr A logical variable. If `TRUE`, prepends "chr" to contig names 
+#' missing it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure 
+#' compatibility with BSgenome packages. Default is `FALSE`.
 #' @details Required columns for mut files are:
 #' \itemize{
 #'      \item `contig`: The name of the reference sequence.
@@ -144,39 +147,66 @@
 #' @importFrom BSgenome getBSgenome installed.genomes
 #' @export
 import_mut_data <- function(
-    mut_file, mut_sep = "\t", is_0_based_mut = TRUE,
-    sample_data = NULL, sd_sep = "\t",
-    regions = NULL, rg_sep = "\t", is_0_based_rg = TRUE, padding = 0,
-    BS_genome = NULL, custom_column_names = NULL, output_granges = FALSE) {
-
+  mut_file,
+  mut_sep = "\t",
+  is_0_based_mut = TRUE,
+  sample_data = NULL,
+  sd_sep = "\t",
+  regions = NULL,
+  rg_sep = "\t",
+  is_0_based_rg = TRUE,
+  padding = 0,
+  BS_genome = NULL,
+  custom_column_names = NULL,
+  output_granges = FALSE,
+  add_chr = FALSE
+) {
   stopifnot(
-      "mut_file is required" = !missing(mut_file),
-      "mut_file must be a character indicating a filepath or a data frame" =
-          is.character(mut_file) || is.data.frame(mut_file),
-      "mut_sep must be a character string" = is.character(mut_sep),
-      "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
-      "sample_data must be NULL, a character indicating a filepath, or a data frame" =
-          is.null(sample_data) || is.character(sample_data) || is.data.frame(sample_data),
-      "sd_sep must be a character string" = is.character(sd_sep),
-      "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" =
-          is.null(regions) || is.character(regions) ||
-              is.data.frame(regions) || methods::is(regions, "GRanges"),
-      "rg_sep must be a character string" = is.character(rg_sep),
-      "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
-      "padding must be a non-negative integer" =
-          is.numeric(padding) && padding >= 0 && (padding %% 1 == 0),
-      "BS_genome must be NULL or a character string" =
-          is.null(BS_genome) || is.character(BS_genome),
-      "custom_column_names must be NULL or a list" =
-          is.null(custom_column_names) || is.list(custom_column_names),
-      "output_granges must be a logical variable" = is.logical(output_granges)
+    "mut_file is required" = !missing(mut_file),
+    "mut_file must be a character indicating a filepath or a data frame" = is.character(
+      mut_file
+    ) ||
+      is.data.frame(mut_file),
+    "mut_sep must be a character string" = is.character(mut_sep),
+    "is_0_based_mut must be a logical variable" = is.logical(is_0_based_mut),
+    "sample_data must be NULL, a character indicating a filepath, or a data frame" = is.null(
+      sample_data
+    ) ||
+      is.character(sample_data) ||
+      is.data.frame(sample_data),
+    "sd_sep must be a character string" = is.character(sd_sep),
+    "regions must be NULL, a character indicating a filepath, a data frame, or a GRanges object" = is.null(
+      regions
+    ) ||
+      is.character(regions) ||
+      is.data.frame(regions) ||
+      methods::is(regions, "GRanges"),
+    "rg_sep must be a character string" = is.character(rg_sep),
+    "is_0_based_rg must be a logical variable" = is.logical(is_0_based_rg),
+    "padding must be a non-negative integer" = is.numeric(padding) &&
+      padding >= 0 &&
+      (padding %% 1 == 0),
+    "BS_genome must be NULL or a character string" = is.null(BS_genome) ||
+      is.character(BS_genome),
+    "custom_column_names must be NULL or a list" = is.null(
+      custom_column_names
+    ) ||
+      is.list(custom_column_names),
+    "output_granges must be a logical variable" = is.logical(output_granges),
+    "add_chr must be a logical variable" = is.logical(add_chr)
   )
-    BS_genome <- match.arg(BS_genome,
-        choices = c(
-            NULL,
-            BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-        )
-  )
+  if (!is.null(BS_genome)) {
+    BS_genome <- match.arg(
+      BS_genome,
+      choices = BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
+    )
+  }
+
+  # Load and validate sample metadata before heavy lifting
+  sample_df <- NULL
+  if (!is.null(sample_data)) {
+    sample_df <- import_sample_data(sample_data, sd_sep)
+  }
 
   # Import the mut files: data frame or file path
   if (is.data.frame(mut_file)) {
@@ -210,7 +240,10 @@ import_mut_data <- function(
         stop("All the files in the specified directory are empty")
       }
       if (length(empty_list) != 0) {
-        warning("The following files in the specified directory are empty and will not be imported: ", empty_list_str)
+        warning(
+          "The following files in the specified directory are empty and will not be imported: ",
+          empty_list_str
+        )
       }
 
       # Remove empty files from mut_files
@@ -218,31 +251,35 @@ import_mut_data <- function(
 
       # Read in the files and bind them together
       dat <- lapply(mut_files, function(file) {
-        read.table(file,
-          header = TRUE, sep = mut_sep,
+        read.table(
+          file,
+          header = TRUE,
+          sep = mut_sep,
           fileEncoding = "UTF-8-BOM"
         )
-      }) %>% dplyr::bind_rows()
+      }) %>%
+        dplyr::bind_rows()
     } else {
       # Handle the case where mut_file exists and is a file
       if (file_info$size == 0 || is.na(file_info$size)) {
         stop("You are trying to import an empty file")
       }
-      dat <- read.table(mut_file,
-        header = TRUE, sep = mut_sep,
+      dat <- read.table(
+        mut_file,
+        header = TRUE,
+        sep = mut_sep,
         fileEncoding = "UTF-8-BOM"
       )
     }
     if (ncol(dat) <= 1) {
-      stop("Your imported data only has one column.
+      stop(
+        "Your imported data only has one column.
            You may want to set mut_sep to properly reflect
-           the delimiter used for the data you are importing.")
+           the delimiter used for the data you are importing."
+      )
     }
   }
-  ## Sample Data File
-  if (!is.null(sample_data)) {
-    dat <- import_sample_data(dat, sample_data, sd_sep)
-  }
+
   # Rename columns to default (including custom names)
   if (!is.null(custom_column_names)) {
     cols <- modifyList(MutSeqR::op$column, custom_column_names)
@@ -250,27 +287,104 @@ import_mut_data <- function(
   } else {
     dat <- rename_columns(dat)
   }
+
+  ## Join with sample metadata if provided
+  if (!is.null(sample_df)) {
+    if (!"sample" %in% colnames(dat)) {
+      stop(
+        "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+      )
+    }
+
+    # Diagnostic check for metadata sample name match
+    # Defensively unlist if the sample column is structured as a list
+    if (is.list(dat$sample)) {
+      dat$sample <- vapply(
+        dat$sample,
+        function(x) paste(x, collapse = ","),
+        character(1)
+      )
+    }
+
+    # Cast to character vectors to ensure setdiff works properly
+    dat$sample <- as.character(dat$sample)
+    sample_df$sample <- as.character(sample_df$sample)
+
+    mut_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+
+    # We strictly care if the mutation data has samples NOT found in the metadata
+    missing_in_meta <- setdiff(mut_samples, meta_samples)
+
+    if (length(missing_in_meta) > 0) {
+      stop(
+        "Mismatch in sample names: Some samples in your mutation data are MISSING from the metadata.\n",
+        "Sample names must match EXACTLY. Please check for trailing suffixes or typos in your metadata file.\n\n",
+        "Unmatched samples in mutation data: ",
+        paste(utils::head(missing_in_meta, 3), collapse = ", "),
+        "\n",
+        "Available samples in metadata: ",
+        paste(utils::head(meta_samples, 3), collapse = ", "),
+        "\n",
+        call. = FALSE
+      )
+    }
+
+    dat <- dplyr::left_join(
+      dat,
+      sample_df,
+      by = "sample",
+      suffix = c("", ".sd")
+    )
+    message("Sample metadata successfully joined to mutation data\n")
+  }
+
   # Check that all required columns are present
   dat <- check_required_columns(dat, op$base_required_mut_cols)
   context_exists <- "context" %in% colnames(dat)
 
-  # Check for NA values in required columns.
-  columns_with_na <- colnames(dat)[apply(dat, 2, function(x) any(is.na(x)))]
-  na_columns_required <- intersect(
-    columns_with_na,
-    MutSeqR::op$base_required_mut_cols
-  )
+  # Check for NA values in required columns
+  required_columns <- MutSeqR::op$base_required_mut_cols
+
+  na_columns_required <- required_columns[
+    vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
+  ]
+
   if (length(na_columns_required) > 0) {
-    stop(
-      "NA values were found within the following required column(s): ",
-      paste(na_columns_required, collapse = ", "),
-      ". Please confirm that your data is complete before proceeding."
-    )
+      stop(
+          "NA values were found within the following required column(s): ",
+          paste(na_columns_required, collapse = ", "),
+          ". Please confirm that your data is complete before proceeding."
+      )
   }
-  # Check for NA values in the context column. If so, will populate it.
-  if (context_exists) {
-    if ("context" %in% columns_with_na) {
-      context_exists <- FALSE
+  
+  # Conditionally convert contig names to UCSC format for BSgenome compatibility
+  if (add_chr) {
+    dat$contig <- as.character(dat$contig)
+    dat$contig <- ifelse(
+      grepl("^chr", dat$contig, ignore.case = TRUE),
+      dat$contig,
+      paste0("chr", dat$contig)
+    )
+    # Special case: mt chrom to UCSC format
+    dat$contig <- sub("^chrMT$", "chrM", dat$contig, ignore.case = TRUE)
+  }
+
+  # Determine if context needs to be populated
+  if (context_exists && any(is.na(dat$context))) {
+    context_exists <- FALSE
+  }
+
+  # Fail early if we will need BSgenome
+  if (!context_exists) {
+    validate_BS_genome(BS_genome)
+    # Check if contigs are formatted correctly for BSgenome
+    if (any(!grepl("^chr", dat$contig, ignore.case = TRUE))) {
+      stop(
+        "BSgenome requires contig names to start with 'chr' (e.g., 'chr1', 'chrX', 'chrM'). ",
+        "One or more contigs in your data do not follow this format. ",
+        "Please set `add_chr = TRUE` to automatically format your contig names for BSgenome compatibility."
+      )
     }
   }
 
@@ -287,7 +401,9 @@ import_mut_data <- function(
   if (!is.null(regions)) {
     mut_ranges <- import_regions_metadata(
       mutation_granges = mut_ranges,
-      regions = regions, rg_sep = rg_sep, is_0_based_rg = is_0_based_rg,
+      regions = regions,
+      rg_sep = rg_sep,
+      is_0_based_rg = is_0_based_rg,
       padding = padding
     )
   }
@@ -321,10 +437,14 @@ import_mut_data <- function(
   }
   if (!total_depth_exists && !no_calls_exists && depth_exists) {
     dat <- dplyr::rename(dat, total_depth = "depth")
-    warning("Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n")
+    warning(
+      "Could not find total_depth column and cannot calculate. Will use depth column as total_depth. Renamed 'depth' to 'total_depth'. Review the differences in the README. \n"
+    )
   }
   if (!total_depth_exists && !depth_exists) {
-    warning("Could not find an appropriate depth column. Some package functionality may be limited.\n")
+    warning(
+      "Could not find an appropriate depth column. Some package functionality may be limited.\n"
+    )
   }
 
   # Check for duplicated rows
@@ -334,11 +454,16 @@ import_mut_data <- function(
     dplyr::ungroup()
 
   if (sum(dat$row_has_duplicate) > 0) {
-    warning(sum(dat$row_has_duplicate), " rows were found whose position was the same as that of at least one other row for the same sample.")
+    warning(
+      sum(dat$row_has_duplicate),
+      " rows were found whose position was the same as that of at least one other row for the same sample."
+    )
 
     # Warn about the depth for the duplicated rows
     if ("total_depth" %in% colnames(dat)) {
-      warning("The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.")
+      warning(
+        "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+      )
     }
   }
 

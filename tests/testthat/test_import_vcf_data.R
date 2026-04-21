@@ -9,7 +9,8 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
   mut_data <- import_vcf_data(vcf_file = file,
     regions = NULL,
     BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
-    output_granges = FALSE
+    output_granges = FALSE,
+    add_chr = TRUE
   )
   colnames <- c(
     MutSeqR::op$base_required_mut_cols,
@@ -27,5 +28,30 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
     c("no_variant", "snv", "no_variant", "insertion", "snv",
       "no_variant", "mnv", "snv", "deletion", "no_variant")
   )
+  expect_equal(mut_data$end[mut_data$start == 5819112], 5819113)
   expect_equal(mut_data$vaf, mut_data$alt_depth / mut_data$total_depth)
+})
+
+test_that("import_vcf_data respects INFO END and derives SV end from SVLEN", {
+  file <- file.path("./testdata/structural_vcf_data.vcf")
+
+  mut_data <- import_vcf_data(
+    vcf_file = file,
+    regions = NULL,
+    BS_genome = "BSgenome.Hsapiens.UCSC.hg38",
+    output_granges = FALSE
+  )
+
+  expect_equal(mut_data$variation_type, "sv")
+  expect_equal(mut_data$start, 23665136)
+  expect_equal(mut_data$end, 23666093)
+})
+
+test_that("import_vcf_data does not coerce a missing BS_genome into an installed check", {
+  file <- file.path("./testdata/simple_vcf_data.vcf")
+
+  expect_error(
+    import_vcf_data(vcf_file = file, regions = NULL, output_granges = FALSE),
+    "no BS_genome was provided"
+  )
 })
