@@ -125,7 +125,7 @@ and document any ambiguity in your final notes.
 
 ## Testing And Validation
 
-Prefer targeted validation first, then broader checks if needed.
+Prefer targeted validation first, then broader checks if needed. The end-user will likely have to run these outside the sandbox, so request it on demand.
 
 Useful local commands:
 
