@@ -14,7 +14,8 @@ import_vcf_data(
   padding = 0,
   BS_genome = NULL,
   output_granges = FALSE,
-  remove_sample_suffix = NULL
+  remove_sample_suffix = NULL,
+  add_chr = FALSE
 )
 }
 \arguments{
@@ -75,6 +76,10 @@ expression to remove unwanted suffixes from VCF sample names prior to joining
 with metadata. For example, if your VCF sample is "Sample1.cons.filtered" but
 your metadata sheet just says "Sample1", you can use \code{remove_sample_suffix = "\\\\.cons\\\\.filtered$"}.
 Default is NULL.}
+
+\item{add_chr}{A logical variable. If \code{TRUE}, prepends "chr" to contig names
+missing it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure
+compatibility with BSgenome packages. Default is \code{FALSE}.}
 }
 \value{
 A table where each row is a mutation, and columns indicate the
@@ -84,6 +89,11 @@ data is returned as a dataframe.
 
 Output Column Definitions:
 \itemize{
+\item 'end': The half-open end position of the feature. This is calculated
+as the 1-based start position + the length of the reference allele - 1. For
+structural variants, if the INFO field contains SVLEN, end is calculated as
+the 1-based start position + SVLEN - 1. End is only calculated if
+not already present in the VCF INFO fields.
 \item \code{short_ref}: The reference base at the start position.
 \item \code{normalized_ref}: The short_ref in C/T-base notation for
 this position (e.g. A -> T, G -> C).
@@ -129,7 +139,8 @@ The required fields are:
 \strong{FIXED FIELDS}
 \itemize{
 \item \code{CHROM}: The name of the reference sequence. Equivalent to \code{contig}.
-\item \code{POS}: The 1-based start position of the feature. Equivalent to  \code{start}.
+\item \code{POS}: The 1-based start position of the feature. Equivalent to
+\code{start}.
 \item \code{REF}: The reference allele at this position.
 \item \code{ALT}: The left-aligned, normalized, alternate allele at this position.
 Multiple alt alleles called for a single position should be represented as
@@ -138,7 +149,6 @@ separate rows in the table.
 
 \strong{INFO FIELDS}
 \itemize{
-\item \code{END}: The half-open end position of the feature.
 \item \code{sample}: An identifying field for your samples; either in the INFO
 field or as the header to the FORMAT field.
 }
