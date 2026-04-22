@@ -240,7 +240,10 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
 rdm_fast <- function(depths, p, theta) {
   alpha <- p * theta
   K <- length(p)
-  gammas <- matrix(rgamma(K * length(depths), shape = alpha, rate = 1), nrow = K)
+  gammas <- matrix(
+    rgamma(K * length(depths), shape = alpha, rate = 1),
+    nrow = K
+  )
   probs <- sweep(gammas, 2, colSums(gammas), "/")
   return(
     sapply(
@@ -254,7 +257,8 @@ rdm_fast <- function(depths, p, theta) {
 #' two count matrices represent significantly different mutational spectra. It
 #' utilizes a "hybrid logic": robust parameters (thetas) are estimated utilizing
 #' a ridge penalty (QA phase), while the test statistic (LRT) is evaluated using
-#' the  unpenalized likelihood. Significance is evaluated via parametric bootstrap.
+#' the  unpenalized likelihood. Significance is evaluated via parametric
+#' bootstrap.
 #' @param g1 A numeric count matrix for Group 1 (subtypes as rows, samples as
 #' columns).
 #' @param g2 A numeric count matrix for Group 2 (subtypes as rows, samples as
@@ -327,7 +331,9 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
     s1 <- rdm_fast(depths1, p_null, theta_null)
     s2 <- rdm_fast(depths2, p_null, theta_null)
     s_all <- cbind(s1, s2)
-    ps1 <- rowSums(s1)/sum(s1); ps2 <- rowSums(s2)/sum(s2); psN <- rowSums(s_all)/sum(s_all)
+    ps1 <- rowSums(s1) / sum(s1)
+    ps2 <- rowSums(s2) / sum(s2)
+    psN <- rowSums(s_all) / sum(s_all)
 
     # Estimate bootstrapped parameters with penalty
     sn_p <- optimize(
@@ -336,14 +342,14 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
       maximum = TRUE
     )
     s1_p  <- optimize(
-      f=function(th) dm_loglik_ridge_stable(s1, ps1, th, lambda),
-      interval=safe_bounds,
-      maximum=TRUE
+      f = function(th) dm_loglik_ridge_stable(s1, ps1, th, lambda),
+      interval = safe_bounds,
+      maximum = TRUE
     )
     s2_p  <- optimize(
-      f=function(th) dm_loglik_ridge_stable(s2, ps2, th, lambda),
-      interval=safe_bounds,
-      maximum=TRUE
+      f = function(th) dm_loglik_ridge_stable(s2, ps2, th, lambda),
+      interval = safe_bounds,
+      maximum = TRUE
     )
 
     # Calculate bootstrap LRT (Hybrid logic)
@@ -385,7 +391,7 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
 select_optimal_lambda <- function(
   count_matrix,
   lambdas = c(0.1, 0.5, 1, 5, 10, 50, 100)
-  ) {
+) {
   n_samples <- ncol(count_matrix)
   cv_scores <- numeric(length(lambdas))
   names(cv_scores) <- as.character(lambdas)
@@ -402,13 +408,9 @@ select_optimal_lambda <- function(
       p_shrunk <- (raw_counts + lam) / (sum(raw_counts) + (K * lam))
       # Optimize theta on training set
       opt <- optimize(
-        f = function(th) dm_loglik_ridge_stable(
-          train_data,
-          p_shrunk,
-          th,
-          lambda = lam
-        ), 
-        interval = c(1, 100000), maximum = TRUE
+        f = function(th) dm_loglik_ridge_stable(train_data, p_shrunk, th, lambda = lam),
+        interval = c(1, 100000),
+        maximum = TRUE
       )
       # Evaluate unpenalized likelihood on held-out sample
       loglik_sum <- loglik_sum +

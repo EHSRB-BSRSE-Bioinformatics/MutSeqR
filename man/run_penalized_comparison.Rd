@@ -37,5 +37,6 @@ Core statistical engine for the RP-DMM test. Evaluates whether
 two count matrices represent significantly different mutational spectra. It
 utilizes a "hybrid logic": robust parameters (thetas) are estimated utilizing
 a ridge penalty (QA phase), while the test statistic (LRT) is evaluated using
-the  unpenalized likelihood. Significance is evaluated via parametric bootstrap.
+the  unpenalized likelihood. Significance is evaluated via parametric
+bootstrap.
 }
