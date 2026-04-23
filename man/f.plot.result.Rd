@@ -27,7 +27,7 @@ Options are 'svg', 'jpeg', 'pdf', 'png', or 'tiff'. Plots will be save to
 the output_path.}
 
 \item{prefix}{A custom prefix to append to the file names of exported plots.
-Plot names are PROAST_\link{modeltype}.}
+Plot names are PROAST_modeltype.}
 
 \item{model_averaging}{A logical variable indicating whether you want to
 generate the model averaging figure  (TRUE) or the plots of the individual
