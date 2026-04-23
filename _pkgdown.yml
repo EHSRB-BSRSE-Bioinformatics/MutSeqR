@@ -59,6 +59,8 @@ reference:
       - spectra_comparison
       - signature_fitting
       - cluster_spectra
+      - spectra_comparison_rpdmm
+      - select_optimal_lambda
 
   - title: Visualization Utilities
     desc: General plotting functions.

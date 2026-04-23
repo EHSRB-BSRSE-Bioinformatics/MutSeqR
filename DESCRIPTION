@@ -62,9 +62,12 @@ Imports:
     rlang,
     S4Vectors,
     Seqinfo,
+    stats,
     stringr,
     SummarizedExperiment,
+    tibble,
     tidyr,
+    utils,
     VariantAnnotation
 Suggests:
     binom,
