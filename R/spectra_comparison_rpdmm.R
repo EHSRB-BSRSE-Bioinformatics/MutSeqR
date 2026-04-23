@@ -14,7 +14,7 @@
 #' each row. If using multiple exp_variables, separate levels with a colon
 #' (e.g., "Drug:High").
 #' @param cont_sep Character. The delimiter used to import the contrasts
-#' table if a filepath is provided. Default is "\t" (tab).
+#' table if a filepath is provided. Default is tab.
 #' @param mf_type Character. The type of mutation frequency count to use.
 #' Choices  are "min" or "max". Default is "min" (recommended).
 #' @param lambda Numeric. The strength of the ridge penalty. Default is 1.0.
@@ -29,6 +29,7 @@
 #' @export
 #' @importFrom dplyr select rename left_join
 #' @importFrom tidyr pivot_wider
+#' @importFrom tibble column_to_rownames
 
 spectra_comparison_rpdmm <- function(
   mf_data,
@@ -237,18 +238,19 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
 #' parameter).
 #' @returns A numeric matrix of simulated mutation counts, with subtypes as
 #' rows and simulated samples as columns.
+#' @importFrom stats rgamma rmultinom
 rdm_fast <- function(depths, p, theta) {
   alpha <- p * theta
   K <- length(p)
   gammas <- matrix(
-    rgamma(K * length(depths), shape = alpha, rate = 1),
+    stats::rgamma(K * length(depths), shape = alpha, rate = 1),
     nrow = K
   )
   probs <- sweep(gammas, 2, colSums(gammas), "/")
   return(
     sapply(
       seq_along(depths),
-      function(j) rmultinom(1, size = depths[j], prob = probs[, j])
+      function(j) stats::rmultinom(1, size = depths[j], prob = probs[, j])
     )
   )
 }
@@ -278,6 +280,7 @@ rdm_fast <- function(depths, p, theta) {
 #'   \item \code{theta_shared}: Numeric. The optimized robust theta under the
 #' Null hypothesis.
 #' }
+#' @importFrom stats optimize
 run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
   # 1. Data Setup
   all_data <- cbind(g1, g2)
@@ -291,17 +294,17 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
   # --- 2. ROBUST ESTIMATION (The QA Phase) ---
   # We estimate the individual group thetas first.
   # These serve as our QA metrics.
-  opt_n_pen <- optimize(
+  opt_n_pen <- stats::optimize(
     f = function(th) dm_loglik_ridge_stable(all_data, p_null, th, lambda),
     interval = safe_bounds,
     maximum = TRUE
   )
-  opt_1_pen <- optimize(
+  opt_1_pen <- stats::optimize(
     f = function(th) dm_loglik_ridge_stable(g1, p_g1, th, lambda),
     interval = safe_bounds,
     maximum = TRUE
   )
-  opt_2_pen <- optimize(
+  opt_2_pen <- stats::optimize(
     f = function(th) dm_loglik_ridge_stable(g2, p_g2, th, lambda),
     interval = safe_bounds,
     maximum = TRUE
@@ -336,17 +339,17 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
     psN <- rowSums(s_all) / sum(s_all)
 
     # Estimate bootstrapped parameters with penalty
-    sn_p <- optimize(
+    sn_p <- stats::optimize(
       f = function(th) dm_loglik_ridge_stable(s_all, psN, th, lambda),
       interval = safe_bounds,
       maximum = TRUE
     )
-    s1_p  <- optimize(
+    s1_p  <- stats::optimize(
       f = function(th) dm_loglik_ridge_stable(s1, ps1, th, lambda),
       interval = safe_bounds,
       maximum = TRUE
     )
-    s2_p  <- optimize(
+    s2_p  <- stats::optimize(
       f = function(th) dm_loglik_ridge_stable(s2, ps2, th, lambda),
       interval = safe_bounds,
       maximum = TRUE
@@ -388,6 +391,7 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
 #' log-likelihood score achieved by each tested lambda.
 #' }
 #' @export
+#' @importFrom stats optimize
 select_optimal_lambda <- function(
   count_matrix,
   lambdas = c(0.1, 0.5, 1, 5, 10, 50, 100)
@@ -407,7 +411,7 @@ select_optimal_lambda <- function(
       raw_counts <- rowSums(train_data)
       p_shrunk <- (raw_counts + lam) / (sum(raw_counts) + (K * lam))
       # Optimize theta on training set
-      opt <- optimize(
+      opt <- stats::optimize(
         f = function(th) dm_loglik_ridge_stable(train_data, p_shrunk, th, lambda = lam),
         interval = c(1, 100000),
         maximum = TRUE
