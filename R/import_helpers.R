@@ -8,6 +8,7 @@
 #' @return A validated data frame containing sample metadata, including a
 #' required column named `sample`.
 #' @importFrom dplyr left_join
+#' @importFrom utils head
 import_sample_data <- function(sample_data, sd_sep = "\t") {
     if (is.data.frame(sample_data)) {
         sd <- sample_data

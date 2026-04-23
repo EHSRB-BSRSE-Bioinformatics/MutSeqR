@@ -31,7 +31,7 @@ each row. If using multiple exp_variables, separate levels with a colon
 (e.g., "Drug:High").}
 
 \item{cont_sep}{Character. The delimiter used to import the contrasts
-table if a filepath is provided. Default is "\t" (tab).}
+table if a filepath is provided. Default is tab.}
 
 \item{mf_type}{Character. The type of mutation frequency count to use.
 Choices  are "min" or "max". Default is "min" (recommended).}
