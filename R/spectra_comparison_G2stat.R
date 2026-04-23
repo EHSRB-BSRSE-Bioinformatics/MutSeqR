@@ -97,7 +97,6 @@ spectra_comparison <- function(mf_data,
                                mf_type = "min",
                                contrasts,
                                cont_sep = "\t") {
-  
     # Validation & Setup
     stopifnot(
         !missing(mf_data) && is.data.frame(mf_data),
@@ -130,7 +129,7 @@ spectra_comparison <- function(mf_data,
         tidyr::pivot_wider(names_from = "group_key", values_from = "count", values_fill = 0)
 
     # Convert to matrix
-    count_matrix <- as.matrix(wide_data[, -1]) 
+    count_matrix <- as.matrix(wide_data[, -1])
     # Assign row names (subtypes)
     rownames(count_matrix) <- as.character(wide_data[[1]]) 
 
@@ -187,7 +186,7 @@ spectra_comparison <- function(mf_data,
 
     # Run Comparisons
     results_matrix <- mapply(calculate_g2_pair, 
-                            as.character(contrast_table[, 1]), 
+                            as.character(contrast_table[, 1]),
                             as.character(contrast_table[, 2]))
     
     # Transpose results (mapply returns Cols=Contrasts, Rows=Stats)
@@ -208,6 +207,10 @@ spectra_comparison <- function(mf_data,
     
     # Reorder columns
     results_df <- results_df[, c("contrasts", "G2", "p.value", "adj_p.value", "Significance")]
-    
+  message("Warning: we have recently become aware that large mutation counts
+    can lead to inflated G2 statistics and false positives. We are actively
+    investigating this issue and will update the function accordingly. In the
+    meantime, we recommend using this function with caution, especially for
+    comparisons involving large mutation counts (> 10 mutations per sample).")
     return(results_df)
 }

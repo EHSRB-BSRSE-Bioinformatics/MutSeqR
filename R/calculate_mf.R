@@ -463,7 +463,6 @@ calculate_mf <- function(mutation_data,
                 }
             }
             # check for required columns in depth_df
-            # If they are just using snvs, maybe don't require group_depth
             required_columns <- c(denominator_groups, "group_depth")
             if (subtype_resolution %in% c(
                 "base_6", "base_12", "base_96", "base_192"
@@ -478,6 +477,24 @@ calculate_mf <- function(mutation_data,
                 stop(
                     "Missing columns in precalc_depth_data: ",
                     paste(missing_columns, collapse = ", "), "\n"
+                )
+            }
+            
+            # Validate resolution of the depth data
+            dup_check <- depth_df %>%
+                dplyr::group_by(dplyr::across(dplyr::all_of(denominator_groups))) %>%
+                dplyr::tally(name = "n") %>%
+                dplyr::filter(n > 1)
+
+            if (nrow(dup_check) > 0) {
+                stop(
+                    "Your precalc_depth_data is at a finer grouping than required (contains multiple ",
+                    "rows per combination of: ", paste(denominator_groups, collapse=", "), ").\n",
+                    "This usually means depth values are specified for a finer group (e.g. per sample) when grouping is by ",
+                    paste(cols_to_group, collapse=", "), ".\n",
+                    "Remove the extra group resolution or summarize the depth first.",
+                    "\nFirst problematic group(s):\n",
+                    paste0(utils::capture.output(print(head(dup_check, 10))), collapse="\n")
                 )
             }
             # Merge depth_df with mut_freq_table

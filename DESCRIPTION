@@ -1,6 +1,6 @@
 Package: MutSeqR
 Title: Analysis of Error-Corrected Sequencing Data for Mutation Detection
-Version: 0.99.9
+Version: 0.99.10
 Date: 2025-12-09
 Authors@R: c(
     person("Annette E.", "Dodge",
@@ -62,9 +62,12 @@ Imports:
     rlang,
     S4Vectors,
     Seqinfo,
+    stats,
     stringr,
     SummarizedExperiment,
+    tibble,
     tidyr,
+    utils,
     VariantAnnotation
 Suggests:
     binom,

@@ -14383,7 +14383,7 @@ parse_PROAST_output <- function(result) {
 #' output_path is NULL, plots will be saved to the working directory. If the
 #' output_path doesn't exist, it will be created.
 #' @param prefix A custom prefix to append to the file names of exported plots.
-#' Plot names are PROAST_[modeltype].
+#' Plot names are PROAST_modeltype.
 #' @param model_averaging A logical variable indicating whether you want to
 #' generate the model averaging figure  (TRUE) or the plots of the individual
 #' models (FALSE). You plot one or the other, not both.  Plotting the model
