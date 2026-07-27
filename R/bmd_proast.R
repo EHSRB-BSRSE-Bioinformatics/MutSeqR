@@ -30,6 +30,13 @@
 #' @param raw_results A logical value indicating whether to return the raw
 #' results from the PROAST analysis. If FALSE, data is returned as a
 #' summary table.
+#' @param return_bootstrap_curves A logical value indicating whether tidy
+#' numeric dose-response coordinates should be retained for every
+#' model-averaged bootstrap curve. The data are stored in
+#' `raw_results[[...]]$MA$bootstrap_curves`, so `raw_results = TRUE` is needed
+#' to access them. Columns are `bootstrap`, `model`, `covariate`, `dose`, and
+#' `response`; dose and response are in their original, untransformed units.
+#' Defaults to FALSE to avoid additional memory use.
 #' @param plot_results A logical value indicating whether to plot the BMD models
 #' and/or the Cleveland plots. Default is FALSE. Plots may be exported
 #' directly to an output_path, or returned within a list to the user.
@@ -186,7 +193,8 @@ bmd_proast <- function(
     plot_results = FALSE,
     output_path = NULL,
     raw_results = FALSE,
-    seed = 125) {
+    seed = 125,
+    return_bootstrap_curves = FALSE) {
 
     if(seed != 0 && !requireNamespace("withr", quietly = TRUE)) {
       stop("Package \"withr\" needed for this function to use a seed.",
@@ -213,6 +221,8 @@ bmd_proast <- function(
         "output_path must be either NULL or a filepath (character)" =
             is.null(output_path) || is.character(output_path),
         "raw_results must be a logical value" = is.logical(raw_results),
+        "return_bootstrap_curves must be a logical value" =
+            is.logical(return_bootstrap_curves),
         "seed must be a number" = is.numeric(seed)
     )
 
@@ -241,6 +251,7 @@ bmd_proast <- function(
     selected_model = "exponential",
     model_averaging = model_averaging,
     num_bootstraps = num_bootstraps,
+    return_bootstrap_curves = return_bootstrap_curves,
     display_plots = FALSE,
     seed = seed
   )
