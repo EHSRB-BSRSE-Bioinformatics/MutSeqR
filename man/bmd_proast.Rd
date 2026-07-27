@@ -16,7 +16,8 @@ bmd_proast(
   plot_results = FALSE,
   output_path = NULL,
   raw_results = FALSE,
-  seed = 125
+  seed = 125,
+  return_bootstrap_curves = FALSE
 )
 }
 \arguments{
@@ -66,6 +67,14 @@ summary table.}
 \item{seed}{An integer value to set the random seed for reproducibility
 when using model averaging. Default is 125. Use 0 for a random seed each
 time.}
+
+\item{return_bootstrap_curves}{A logical value indicating whether tidy
+numeric dose-response coordinates should be retained for every
+model-averaged bootstrap curve. The data are stored in
+\code{raw_results[[...]]$MA$bootstrap_curves}, so \code{raw_results = TRUE} is needed
+to access them. Columns are \code{bootstrap}, \code{model}, \code{covariate}, \code{dose}, and
+\code{response}; dose and response are in their original, untransformed units.
+Defaults to FALSE to avoid additional memory use.}
 }
 \value{
 A summmary data frame of final results. If plots or raw results
