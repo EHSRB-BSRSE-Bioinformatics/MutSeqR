@@ -37,6 +37,7 @@
 #' @param scale.ans Logical. If TRUE, applies scaling to the answers/results (advanced use only). Defaults to FALSE.
 #' @param const.var Logical. If TRUE, constrains variance during model fitting (advanced option for troubleshooting). Defaults to FALSE.
 #' @param seed Integer. Random seed for reproducibility. Defaults to 125. Use 0 to get a random seed each time.
+#' @param return_bootstrap_curves Logical. If TRUE, retain tidy numeric coordinates for each model-averaged bootstrap curve. Defaults to FALSE.
 #' @importFrom utils menu
 #' @importFrom stats setNames
 #' @return Results from PROAST.
@@ -67,7 +68,8 @@ f.proast <- function(odt = list(),
                      add_nonzero_val_to_dat = FALSE,
                      nonzero_val = NULL,
                      detection_limit = NULL,
-                     seed = 125) {
+                     seed = 125,
+                     return_bootstrap_curves = FALSE) {
     message("Independent variable: ", indep_var_choice)
     if (interactive_mode == TRUE) {
         message("Running in interactive mode...")
@@ -90,7 +92,7 @@ f.proast <- function(odt = list(),
         ans.all$const.var <- const.var
         ans.all$quick.ans <- 1
         if (ans.all$cont) 
-            quit <- f.con(ans.all, list.logic = TRUE, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat,nonzero_val = nonzero_val,detection_limit = detection_limit)
+            quit <- f.con(ans.all, list.logic = TRUE, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat,nonzero_val = nonzero_val,detection_limit = detection_limit, return_bootstrap_curves = return_bootstrap_curves)
         if (quit) {
             if (interactive_mode == FALSE) {
                 result <- as.list(.proast_env)
@@ -198,7 +200,7 @@ f.proast <- function(odt = list(),
                 }
             }
             if (ans.all$quick.ans > 1) 
-                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
+                quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit, return_bootstrap_curves = return_bootstrap_curves)
         }
         if (dtype %in% c(2, 3, 4, 6, 84)) {
             ans.all$cont <- FALSE
@@ -289,7 +291,7 @@ f.proast <- function(odt = list(),
                              detection_limit = detection_limit)
     }
     if (ans.all$cont) 
-        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
+        quit <- f.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, selected_model = selected_model, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit, return_bootstrap_curves = return_bootstrap_curves)
     if (quit) {
         if (interactive_mode == FALSE) {
             result <- as.list(.proast_env)
@@ -8312,7 +8314,8 @@ f.move.sublist <- function(lst, sub) {
 }
 
 
-f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
+f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE,
+                     return_curve = FALSE) {
     with(ans.all, {
         length.xx.interpol <- 1000
         ans.all$nr.models <- nr.models
@@ -8440,6 +8443,8 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
         }
         if (!first.call) {
             Vced.ma <- numeric()
+            if (return_curve)
+                curve.lst <- vector("list", nr.gr)
             for (group in 1:nr.gr) {
                 yy.ma <- numeric(length.xx.interpol + 1)
                 yy.ma.plt <- numeric(length(xline))
@@ -8513,6 +8518,27 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
                   bg.resp <- unique(yy.ma[xx.interpol == 0])
                   ces.abs <- (CES + 1) * bg.resp
                 }
+                # This weighted response is the exact curve drawn below.
+                # lines.plt.lst contains a selected-model curve instead.
+                if (return_curve) {
+                  group.txt <- if (length(covar.txt) >= group) {
+                    as.character(covar.txt[group])
+                  } else if (length(gr.txt) >= group) {
+                    as.character(gr.txt[group])
+                  } else {
+                    as.character(group)
+                  }
+                  if (nr.gr == 1 && (is.na(group.txt) || group.txt == "")) {
+                    group.txt <- "all"
+                  }
+                  curve.lst[[group]] <- data.frame(
+                    model = "model_average",
+                    covariate = group.txt,
+                    dose = as.numeric(xline),
+                    response = as.numeric(yy.ma.plt),
+                    stringsAsFactors = FALSE
+                  )
+                }
                 CED.lst <- approx(yy.ma, xx.interpol, xout = ces.abs)
                 if (0) {
                   print("f.ced.ma")
@@ -8585,7 +8611,14 @@ f.ced.ma <- function(ans.all, xline, first.call, display_plots = TRUE) {
                 f.plot.frq(ans.all.tmp)
                 lines((xx), yy.ma)
             }
-            return(signif(Vced.ma, 4))
+            Vced.ma <- signif(Vced.ma, 4)
+            if (return_curve) {
+                return(list(
+                  bmd = Vced.ma,
+                  curves = do.call(rbind, curve.lst)
+                ))
+            }
+            return(Vced.ma)
         }
     })
 }
@@ -8820,7 +8853,8 @@ f.boot.ma <- function(
   display_plots = TRUE,
   filename = NULL,
   output_type = NULL,
-  knitting = FALSE) {
+  knitting = FALSE,
+  return_bootstrap_curves = FALSE) {
   date.0 <- date()
   
   if (ans.all$seed.bt != 0) {
@@ -8899,6 +8933,8 @@ f.boot.ma <- function(
                 ans.all.bt$full.ans <- 2
                 Vced.ma <- numeric()
                 ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
+                if (return_bootstrap_curves)
+                    bootstrap.curves.lst <- vector("list", nr.boot.ma)
                 if (!WAPP && output) 
                     cat("run ")
                 for (ii in (1:nr.boot.ma)) {
@@ -8938,7 +8974,23 @@ f.boot.ma <- function(
                         ans.all.bt$output <- FALSE
                         ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
                     }
-                    Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
+                    ced.ma <- f.ced.ma(
+                        ans.all.bt,
+                        xline = xline,
+                        first.call = FALSE,
+                        display_plots = display_plots,
+                        return_curve = return_bootstrap_curves
+                    )
+                    if (return_bootstrap_curves) {
+                        Vced.ma <- ced.ma$bmd
+                        ced.ma$curves$bootstrap <- ii
+                        ced.ma$curves <- ced.ma$curves[
+                            c("bootstrap", "model", "covariate", "dose", "response")
+                        ]
+                        bootstrap.curves.lst[[ii]] <- ced.ma$curves
+                    } else {
+                        Vced.ma <- ced.ma
+                    }
                     ced.ma.matr[ii, ] <- Vced.ma
                 }
                 Vlower.ma <- numeric()
@@ -8965,6 +9017,13 @@ f.boot.ma <- function(
                         BMDupper.ma = Vupper.ma
                     )
                 ans.all$MA$ced.ma.matr <- ced.ma.matr
+                if (return_bootstrap_curves) {
+                    ans.all$MA$bootstrap_curves <- do.call(
+                        rbind,
+                        bootstrap.curves.lst
+                    )
+                    rownames(ans.all$MA$bootstrap_curves) <- NULL
+                }
                 CI.row.ma <- numeric()
                 for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], Vupper.ma[ii])
                 ans.all$MA$CI.row.ma <- CI.row.ma
@@ -9060,6 +9119,8 @@ f.boot.ma <- function(
         ans.all.bt$full.ans <- 2
         Vced.ma <- numeric()
         ced.ma.matr <- matrix(nrow = nr.boot.ma, ncol = nr.gr)
+        if (return_bootstrap_curves)
+            bootstrap.curves.lst <- vector("list", nr.boot.ma)
         if (!WAPP && output) 
             cat("run ")
         for (ii in (1:nr.boot.ma)) {
@@ -9098,7 +9159,23 @@ f.boot.ma <- function(
                 ans.all.bt$output <- FALSE
                 ans.all.bt <- f.select.con(ans.all.bt, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
             }
-            Vced.ma <- f.ced.ma(ans.all.bt, xline = xline, first.call = FALSE, display_plots = display_plots)
+            ced.ma <- f.ced.ma(
+                ans.all.bt,
+                xline = xline,
+                first.call = FALSE,
+                display_plots = display_plots,
+                return_curve = return_bootstrap_curves
+            )
+            if (return_bootstrap_curves) {
+                Vced.ma <- ced.ma$bmd
+                ced.ma$curves$bootstrap <- ii
+                ced.ma$curves <- ced.ma$curves[
+                    c("bootstrap", "model", "covariate", "dose", "response")
+                ]
+                bootstrap.curves.lst[[ii]] <- ced.ma$curves
+            } else {
+                Vced.ma <- ced.ma
+            }
             ced.ma.matr[ii, ] <- Vced.ma
         }
         Vlower.ma <- numeric()
@@ -9117,6 +9194,13 @@ f.boot.ma <- function(
         if (nr.gr == 1) 
             ans.all$MA$conf.int.ma <- data.frame(subgroup = "all", BMDlower.ma = Vlower.ma, BMDupper.ma = Vupper.ma)
         ans.all$MA$ced.ma.matr <- ced.ma.matr
+        if (return_bootstrap_curves) {
+            ans.all$MA$bootstrap_curves <- do.call(
+                rbind,
+                bootstrap.curves.lst
+            )
+            rownames(ans.all$MA$bootstrap_curves) <- NULL
+        }
         CI.row.ma <- numeric()
         for (ii in 1:nr.gr) CI.row.ma <- c(CI.row.ma, Vlower.ma[ii], Vupper.ma[ii])
         ans.all$MA$CI.row.ma <- CI.row.ma
@@ -9206,7 +9290,8 @@ f.con <- function(ans.all,
                   display_plots = TRUE,
                   add_nonzero_val_to_dat = FALSE,
                   nonzero_val = NULL,
-                  detection_limit = NULL) {
+                  detection_limit = NULL,
+                  return_bootstrap_curves = FALSE) {
     f.assign(".Pr.last", ans.all)
     if (list.logic) {
         cat("\n You have chosen previous results concerning:   ")
@@ -9300,7 +9385,7 @@ f.con <- function(ans.all,
                                          detection_limit = detection_limit)
             if (ans.all$fitted) ans.all$show <- f.show.con(ans.all)
             if (!ans.all$fitted) {
-                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit) else {
+                if (ans.all$model.ans %in% 38:40) ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit, return_bootstrap_curves = return_bootstrap_curves) else {
                   ans.all <- f.execute(ans.all,
                                        interactive_mode = interactive_mode,
                                        add_nonzero_val_to_dat = add_nonzero_val_to_dat,
@@ -9352,7 +9437,7 @@ f.con <- function(ans.all,
                 }
             }
             if (ans.all$quick.ans > 1) {
-                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit)
+                ans.all <- f.quick.con(ans.all, indep_var_choice = indep_var_choice, Vyans_input = Vyans_input, covariates = covariates, custom_CES = custom_CES, model_selection = model_selection, lower_dd = lower_dd, upper_dd = upper_dd, interactive_mode = interactive_mode, adjust_CES_to_group_SD = adjust_CES_to_group_SD, model_averaging = model_averaging, num_bootstraps = num_bootstraps, .proast_env = .proast_env, display_plots = display_plots, add_nonzero_val_to_dat = add_nonzero_val_to_dat, nonzero_val = nonzero_val, detection_limit = detection_limit, return_bootstrap_curves = return_bootstrap_curves)
                 
                 # Human-readable list of models
                 list.of.models <- c("exponential", "Hill", "inverse exponential", "lognormal DR")
@@ -9570,7 +9655,8 @@ f.quick.con <- function(ans.all,
                         display_plots = TRUE,
                         add_nonzero_val_to_dat = FALSE,
                         nonzero_val = NULL,
-                        detection_limit = NULL) {
+                        detection_limit = NULL,
+                        return_bootstrap_curves = FALSE) {
         message("indep_var_choice: ", indep_var_choice)
     if (ans.all$WAPP) {
         ans.all$gui <- TRUE
@@ -10038,7 +10124,13 @@ f.quick.con <- function(ans.all,
                   if (ans.all$TREND) {
                     ans.all$MA.running <- TRUE
                     cat("\n\nCalculating confidence intervals by model averaging, this may make some time ....\n\n")
-                    ans.all <- f.boot.ma(ans.all, interactive_mode = interactive_mode, .proast_env = .proast_env, display_plots = display_plots)
+                    ans.all <- f.boot.ma(
+                      ans.all,
+                      interactive_mode = interactive_mode,
+                      .proast_env = .proast_env,
+                      display_plots = display_plots,
+                      return_bootstrap_curves = return_bootstrap_curves
+                    )
                     cat("\nThe model-average BMD confidence interval is:\n")
                     print(ans.all$MA$conf.int.ma)
                     cat("\n")
