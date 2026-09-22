@@ -261,12 +261,14 @@ import_vcf_data <- function(
   # Extract mutation data into a dataframe
   ## To Do: May want to use the expand function to unlist ALT column of a
   ## CollapsedVCF object to one row per ALT value.
+  ref <- as.character(VariantAnnotation::ref(vcf))
+  alt <- vcf_alt_to_character(VariantAnnotation::alt(vcf))
   dat <- data.frame(
     contig = contig_names,
     start = SummarizedExperiment::start(vcf),
     end = get_vcf_end_positions(vcf),
-    ref = VariantAnnotation::ref(vcf),
-    alt = VariantAnnotation::alt(vcf)
+    ref = ref,
+    alt = alt
   )
 
   # Extract INFO fields
