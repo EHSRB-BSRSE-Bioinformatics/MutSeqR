@@ -1280,6 +1280,10 @@ depth). If a depth column does not exist, per-sample precalculated depth can be
 provided for any subtype resolution to calculate mutation frequencies. If an
 exp_variable is provided, the Summary_Report will automatically sum the
 per-sample depths to obtain the depth per experimental group as needed.
+When a base96 depth file is supplied, it must contain one row for each of the
+32 normalized trinucleotide contexts for every sample. The report derives
+global and base6 depths from those rows when their respective files are omitted.
+Explicit global and base6 files take precedence for their own resolutions.
 
 _In order for MutSeqR to calculate the depth from the mutation data, the_
 _data must have the depth-value for **every sequenced site**. It is not_
@@ -1291,20 +1295,22 @@ _column, it will proceed to calculate the depth from the mutation data_.
 - _precalc_depth_data_global_: Optional file path to the precalculated per-sample
   total_depth data. This is the total number of bases sequenced per sample, used
   for calculating mutation frequencies. Columns are "sample" and "group_depth".
-  If using an exp_variable (see below), please also include it in this table.
+  This file may be omitted when a base96 depth file is supplied.
   The file path will be read as projectdir/precalc_depth_data_global.
 - _precalc_depth_data_base6_: Optional file path to the precalculated per-sample
   total_depth data in the base_6 context. This is the total number of C and T
   bases sequenced for each sample. Columns are "sample", "normalized_ref", and
-  "subtype_depth". If using an exp_variable (see below), please also include it
-  in this table. The file path will be read as
+  "subtype_depth". This file may be omitted when a base96 depth file is
+  supplied. The file path will be read as
   projectdir/precalc_depth_data_base6.
 - _precalc_depth_data_base96_: Optional file path to the precalculated
   per-sample total_depth data in the base_96 context. This is the total
   number bases sequenced per sample for each of the 32 possible trinucleotide
   contexts in their pyrimidine notation. Columns are "sample",
-  "normalized_context", and "subtype_depth". If using an exp_variable,
-  please also include it in this table. The file path will be read as
+  "normalized_context", and "subtype_depth". Each sample must include exactly
+  one row for all 32 contexts; include zero-depth contexts explicitly. The
+  report can derive omitted global and base6 files from this table. The file
+  path will be read as
   projectdir/precalc_depth_data_base96.
 - _precalc_depth_data_rg_: Optional file path to the precalculated
   per-sample total_depth data for each target region. This is the total
