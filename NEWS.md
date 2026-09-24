@@ -1,3 +1,15 @@
+# MutSeqR 1.1.0 (2025-12-09)
+
+Development version following the Bioconductor 3.23 release (version
+numbering bumped by the Bioconductor team). No functional changes since
+1.0.0.
+
+# MutSeqR 1.0.0 (2025-12-09)
+
+First release on Bioconductor (Bioconductor 3.23). Contains all changes
+from the 0.99.x development series, most recently the reviewer-comment
+fixes listed under 0.99.4 below.
+
 # MutSeqR 0.99.4 (2025-12-09)
 
 Preparing for Bioconductor release. We address comments from Bioconductor reviewers. Major changes include parameter validation and vectoriation of functions. filter_mut() "snv_in_germ_mnv" parameter was fixed such that it now only filters out overlapping snvs if their variation matches that of the germline mnv (previously it was blanket removing all snvs that overlap with germline mnvs). plot_lollipop() can now colour the plot by different subtype resolutions (previously just base_6). Fixed plot_spectra() axes labels after clustering (previously not showing labels).
