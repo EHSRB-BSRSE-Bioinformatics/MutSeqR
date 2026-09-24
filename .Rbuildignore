@@ -11,3 +11,6 @@
 ^_pkgdown\.yml$
 README.Rmd
 AGENTS.md
+^scripts$
+^pixi\.toml$
+^pixi\.lock$
