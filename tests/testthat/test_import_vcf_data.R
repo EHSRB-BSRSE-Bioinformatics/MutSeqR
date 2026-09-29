@@ -33,7 +33,7 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
     "nchar_ref", "nchar_alt", "varlen",
     "gc_content", "row_has_duplicate",
     "strand", "width", # added by GRanges
-    "alt.group", "alt.group_name", "AD_1", "AD_2" # vcf cols
+    "AD_1", "AD_2" # vcf cols
   )
   expect_named(mut_data, colnames, ignore.order = TRUE) # check columns
   expect_equal(nrow(mut_data), 10)
