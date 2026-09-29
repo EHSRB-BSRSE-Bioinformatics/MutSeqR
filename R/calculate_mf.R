@@ -199,7 +199,7 @@
 #'   correct_depth_by_indel_priority = TRUE
 #' )
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
-#' select distinct ungroup
+#'  select distinct ungroup
 #' @importFrom magrittr %>%
 #' @importFrom data.table :=
 #' @importFrom rlang .data
