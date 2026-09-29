@@ -4,21 +4,27 @@
 \alias{write_depth_data}
 \title{Prepare depth tables from a single resolution-specific input}
 \usage{
-write_depth_data(depth_data, d_sep)
+write_depth_data(depth_data, d_sep = "\\t", group_cols = "sample")
 }
 \arguments{
 \item{depth_data}{A data frame or path to a delimited file. It must contain
-\code{sample}, \code{subtype_depth}, and exactly one context column from
-\code{denominator_dict} for \code{base_6}, \code{base_12}, \code{base_96}, or \code{base_192}.}
+the columns named in \code{group_cols}, \code{subtype_depth}, and exactly one context
+column from \code{denominator_dict} for \code{base_6}, \code{base_12}, \code{base_96}, or
+\code{base_192}.}
 
 \item{d_sep}{A single-character delimiter used to read \code{depth_data} when it
 is a file path.}
+
+\item{group_cols}{Character vector of columns that identify independent
+groups in \code{depth_data}. Defaults to \code{"sample"}; use other columns when
+depth data is already aggregated to those groups.}
 }
 \value{
 A named list of the depth tables at available subtype resolutions:
-"base192", "base96", "base12", "base6", "global" (none). Each subtype table
-contains \code{sample}, its \code{denominator_dict} context column, \code{subtype_depth},
-and \code{group_depth}; the global table contains \code{sample} and \code{group_depth}.
+"base192", "base96", "base12", "base6", "global" (none). Each subtype
+table contains the \code{group_cols}, its \code{denominator_dict} context column,
+\code{subtype_depth}, and \code{group_depth}; the global table contains \code{group_cols}
+and \code{group_depth}.
 }
 \description{
 Reads and validates a precalculated depth data frame
@@ -27,13 +33,13 @@ denominator context column, and derives all lower-resolution depth
 tables that can be recovered from that input.
 }
 \details{
-The input must contain columns "sample", "subtype_depth" and the appropriate
-context column. Use \code{MutSeqR::denominator_dict} to see the context column
-name associated with each subtype resolution. Each sample must have exactly
-one row for every context in \code{MutSeqR::context_list} at the given
-resolution; contexts with zero depth must be included explicitly. Duplicate
-sample-context pairs, unknown contexts, missing contexts, or non-finite
-per-sample depth totals produce an error.
+The input must contain the grouping columns, \code{subtype_depth}, and the
+appropriate context column. Use \code{MutSeqR::denominator_dict} to see the
+context column name associated with each subtype resolution. Each group must
+have exactly one row for every context in \code{MutSeqR::context_list} at the
+given resolution; contexts with zero depth must be included explicitly.
+Duplicate group-context pairs, unknown contexts, missing contexts, or
+non-finite per-group depth totals produce an error.
 
 \emph{Base192} input produces Base96, Base12, Base6, and global depth tables.
 \emph{Base96} input produces Base6 and global tables, but cannot produce

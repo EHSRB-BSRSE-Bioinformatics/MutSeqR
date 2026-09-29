@@ -16,6 +16,29 @@ test_that("base6 depth data derives global report depth", {
   expect_null(prepared$base12)
   expect_null(prepared$base96)
 })
+
+test_that("write_depth_data accepts arbitrary groups without sample", {
+  grouped_depth <- data.frame(
+    dose_group = c("control", "control", "treated", "treated"),
+    normalized_ref = rep(MutSeqR::context_list$base_6, 2),
+    subtype_depth = c(10, 20, 30, 40)
+  )
+
+  prepared <- write_depth_data(
+    grouped_depth,
+    d_sep = "\t",
+    group_cols = "dose_group"
+  )
+
+  expect_equal(prepared$global$dose_group, c("control", "treated"))
+  expect_equal(prepared$global$group_depth, c(30, 70))
+  expect_equal(prepared$base6$dose_group, grouped_depth$dose_group)
+  expect_equal(prepared$base6$normalized_ref, grouped_depth$normalized_ref)
+  expect_equal(prepared$base6$subtype_depth, grouped_depth$subtype_depth)
+  expect_equal(prepared$base6$group_depth, c(30, 30, 70, 70))
+  expect_false("sample" %in% names(prepared$global))
+})
+
 test_that("base12 depth data derives global and base6 report depths", {
   base12 <- data.frame(
     sample = rep("sample1", 4),
@@ -115,7 +138,7 @@ test_that("write_depth_data validates columns, values, and contexts", {
   overflow$subtype_depth <- c(1e308, 1e308)
   expect_error(
     MutSeqR::write_depth_data(overflow, d_sep = "\t"),
-    "overflowed for sample.*sample1"
+    "overflowed for group.*sample1"
   )
   invalid_context <- valid
   invalid_context$normalized_ref[1] <- "A"
