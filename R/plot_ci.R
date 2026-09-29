@@ -33,8 +33,8 @@
 #' @importFrom dplyr arrange pull mutate group_by ungroup across where desc
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggplot2 ggplot aes geom_line geom_point theme_minimal theme
-#' scale_color_manual scale_x_continuous geom_text labs element_text
-#' element_rect element_blank element_line
+#'  scale_color_manual scale_x_continuous geom_text labs element_text
+#'  element_rect element_blank element_line
 plot_ci <- function(data,
                     order = "none",
                     custom_order = NULL,

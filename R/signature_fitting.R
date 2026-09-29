@@ -28,7 +28,7 @@
 #' @returns Creates a subfolder "SigProfiler" in the output directory with
 #' SigProfiler tools results. For a complete breakdown of the results, see the
 #' Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
-#' [group] > matrices > output > Assignment_Solution > Activities >
+#' group > matrices > output > Assignment_Solution > Activities >
 #' SampleReconstruction > WebPNGs.
 #' These plots show a summary of the signature assignment results for each
 #' group. In each plot, the top left panel represents the base_96 mutation
