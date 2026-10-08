@@ -51,10 +51,13 @@ test_that("directory header samples are retained in GRanges output", {
 test_that("compressed directory VCFs preserve sample identities", {
   directory <- withr::local_tempdir()
   files <- list.files(test_path("testdata", "vcf_header_samples"), full.names = TRUE)
-  for (file in files) {
-    connection <- gzfile(file.path(directory, paste0(basename(file), ".gz")), "wt")
-    writeLines(readLines(file), connection)
-    close(connection)
+  # Use BGZF rather than ordinary gzip for portable htslib header rewinding.
+  # Exercise both supported compressed suffixes.
+  suffixes <- c(".gz", ".bgz")
+  for (i in seq_along(files)) {
+    Rsamtools::bgzip(files[i],
+      dest = file.path(directory, paste0(basename(files[i]), suffixes[i]))
+    )
   }
   dat <- import_vcf_data(directory)
 
