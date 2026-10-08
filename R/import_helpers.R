@@ -747,3 +747,31 @@ get_vcf_end_positions <- function(vcf) {
 
     return(end_pos)
 }
+
+#' Convert VCF alternate alleles to character values
+#'
+#' Converts the list-like ALT field from a VCF object without dispatching
+#' through Bioconductor's `as.data.frame()` methods. The conversion preserves
+#' one output value per VCF record. Multiple alternate alleles in a record are
+#' joined with commas, and records without an alternate allele are represented
+#' by `NA_character_`.
+#'
+#' @param alt A list-like collection of alternate alleles, such as the value
+#'   returned by [VariantAnnotation::alt()].
+#'
+#' @return A character vector with one element per VCF record.
+#'
+#' @keywords internal
+vcf_alt_to_character <- function(alt) {
+    vapply(
+        as.list(alt),
+        function(x) {
+            if (length(x) == 0L || all(is.na(x))) {
+                NA_character_
+            } else {
+                paste(as.character(x), collapse = ",")
+            }
+        },
+        character(1)
+    )
+}
