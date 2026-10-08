@@ -1,0 +1,9 @@
+##fileformat=VCFv4.2
+##contig=<ID=chr1,length=1000>
+##INFO=<ID=context,Number=1,Type=String,Description="Reference trinucleotide context">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position">
+##FORMAT=<ID=VD,Number=1,Type=Integer,Description="Variant depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Reference and alternate depths">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S-MGT112-01
+chr1	10	.	C	A	.	.	context=ACA;END=10	VD:AD	1:99,1
+chr1	20	.	T	C	.	.	context=ATA;END=20	VD:AD	1:99,1

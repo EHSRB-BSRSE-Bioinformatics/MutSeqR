@@ -211,6 +211,8 @@ import_vcf_data <- function(
   }
 
   # Read and bind vcfs from folder
+  vcf_header_samples <- NULL
+
   if (file.info(vcf_file)$isdir == TRUE) {
     vcf_files <- list.files(
       vcf_file,
@@ -223,6 +225,13 @@ import_vcf_data <- function(
     # Read and combine VCF files
     vcf_list <- lapply(vcf_files, function(file) {
       vcf <- VariantAnnotation::readVcf(file)
+
+      # Save the original header before replacing it with 'sample_info'.
+      original_sample_name <- rownames(SummarizedExperiment::colData(vcf))
+      if (length(original_sample_name) != 1L ||
+        is.na(original_sample_name) || !nzchar(original_sample_name)) {
+        stop("Expected one named sample in VCF file: ", basename(file))
+      }
       vcf <- vcf_sample_fix(vcf) # fix sample column
       # Ensure consistent colData rownames so rbind doesn't complain
 
@@ -234,9 +243,13 @@ import_vcf_data <- function(
       ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
 
       rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
-      return(vcf)
+      return(list(vcf = vcf, sample_name = original_sample_name))
     })
-    vcf <- do.call(VariantAnnotation::rbind, vcf_list)
+    # Keep header identities in original VCF record order.
+    vcf_header_samples <- unlist(lapply(vcf_list, function(x) {
+      rep(x$sample_name, nrow(x$vcf))
+    }), use.names = FALSE)
+    vcf <- do.call(VariantAnnotation::rbind, lapply(vcf_list, `[[`, "vcf"))
   } else {
     # Read a single vcf file
     vcf <- VariantAnnotation::readVcf(vcf_file)
@@ -321,6 +334,14 @@ import_vcf_data <- function(
 
   # Rename columns to default names
   dat <- rename_columns(dat)
+
+  # The VCF headers were normalized for rbind; restore per-record IDs.
+  if (!is.null(vcf_header_samples) && !"sample" %in% colnames(dat)) {
+    if (length(vcf_header_samples) != nrow(dat)) {
+      stop("Internal error: VCF sample mapping length does not match variant rows.")
+    }
+    dat$sample <- vcf_header_samples
+  }
 
   # Recover the sample from the VCF header when it is not present in INFO.
   # We avoid mutating INFO directly because undeclared INFO fields fail VCF validation.
