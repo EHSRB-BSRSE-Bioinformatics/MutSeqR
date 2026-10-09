@@ -1580,6 +1580,27 @@ The Summary Report consists of the following sections.
 
 If an experimental variable is not provided, statistical analysis will be skipped.
 
+## Summary Report Dependencies
+
+The summary report uses package dependencies that are Optional for MutSeqR functionality. The report will check that you have installed all required packages before running. Use the following code to install all required packages:
+
+```{r report-dependencies, eval=FALSE}
+install.packages(c(
+  "DT",
+  "bs4Dash",
+  "colorspace",
+  "dendsort",
+  "ggh4x",
+  "ggrepel",
+  "gtools",
+  "packcircles",
+  "patchwork",
+  "RColorBrewer",
+  "doBy", "car", "lme4", "withr",
+  "openxlsx", "BSgenome"
+))
+```
+
 # References
 
 # Appendix

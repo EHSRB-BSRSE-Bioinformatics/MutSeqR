@@ -77,6 +77,8 @@ Output saved to : `r params$outputdir`
 # Import the Mutation Data
 
 ```{r import-data}
+# These exact warning strings control report depth handling. Changes to either
+# warning must be accompanied by updates to the corresponding import tests.
 no_depth_warning <- "Could not find an appropriate depth column. Some package functionality may be limited.\n"
 correct_depth_warning <-  "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
 warnings_list <- character(0)
@@ -103,7 +105,7 @@ if (params$file_type == "table") {
   correct_depth <- any(grepl(correct_depth_warning,
                              warnings_list,
                              fixed = TRUE))
-} else if (params$mut_file_type == "vcf") {
+} else if (params$file_type == "vcf") {
   mutation_data <- withCallingHandlers(
     import_vcf_data(vcf_file = params$mutation_file,
                     sample_data = params$sample_data,
@@ -121,8 +123,8 @@ if (params$file_type == "table") {
                              warnings_list,
                              fixed = TRUE))
 }
-# Read each supplied depth table once. Base96 can fill in omitted global and
-# base6 denominators for the report.
+# Read each supplied depth table once. Context-resolved inputs can fill in
+# omitted lower-resolution denominators for the report.
 read_report_depth <- function(path) {
   if (is.null(path)) return(NULL)
   read.delim(path, sep = params$d_sep, header = TRUE,
@@ -139,7 +141,9 @@ if (!is.null(params$exp_variable)) {
 depth_global_input <- read_report_depth(params$precalc_depth_data_global)
 depth_base6_input <- read_report_depth(params$precalc_depth_data_base6)
 depth_base96_input <- read_report_depth(params$precalc_depth_data_base96)
+depth_base192_input <- read_report_depth(params$precalc_depth_data_base192)
 report_depth_data <- MutSeqR:::prepare_report_depth_data(
+  base192 = depth_base192_input,
   base96 = depth_base96_input,
   global = depth_global_input,
   base6 = depth_base6_input
@@ -275,8 +279,8 @@ if (is.null(report_depth_data$global)) {
       Cannot calculate the sample group depth.
       Cannot calculate mutation frequencies.")
 } else {
-  cat(if (is.null(depth_global_input) && !is.null(depth_base96_input)) {
-    "Using sample group depth derived from the supplied base96 depth data."
+  cat(if (is.null(depth_global_input)) {
+    "Using sample group depth derived from supplied context-resolved depth data."
   } else {
     paste("Importing precalculated sample group depth from ",
           params$precalc_depth_data_global, sep = "")
