@@ -22,6 +22,7 @@ Agents working here should optimize for:
 - `vignettes/`: long-form user documentation and workflow examples.
 - `inst/extdata/`: shipped templates, example files, config YAMLs, and helper assets.
 - `pkgdown/`: website assets.
+- `_pkgdown.yml`: website configuration and function reference index.
 - `README.md`, `NEWS.md`, `DESCRIPTION`, `NAMESPACE`: package metadata and top-level docs.
 
 ## Package Shape
@@ -69,6 +70,12 @@ single source for expected user-facing workflow and terminology.
   API changes.
 - Follow the existing style: base R plus tidyverse/Bioconductor idioms, with
   explicit namespace qualification used frequently in import code.
+- Whenever a function is added, renamed, removed, or modified, review
+  `_pkgdown.yml` for corresponding reference-index changes. Every documented
+  topic must be included in an appropriate `reference` section unless its
+  roxygen documentation uses `@keywords internal` to exclude it from the index.
+  Regenerate documentation after changing roxygen and validate the index with
+  `pkgdown::build_reference()` when R and package dependencies are available.
 
 ### Data model expectations
 

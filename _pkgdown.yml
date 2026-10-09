@@ -82,6 +82,7 @@ reference:
   - title: Mutation Output
     desc: Data export functions.
     contents:
+      - write_depth_data
       - write_mutation_calling_file
       - write_mutational_matrix
       - write_reference_fasta
