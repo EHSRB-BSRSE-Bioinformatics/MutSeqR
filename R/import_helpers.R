@@ -775,3 +775,268 @@ vcf_alt_to_character <- function(alt) {
         character(1)
     )
 }
+
+# Extract one VCF into a mutation table without changing its header or binding
+# it to another VCF. Header identity and FORMAT fields are therefore resolved
+# while they still belong to exactly one input file.
+extract_vcf_table <- function(vcf, add_chr = FALSE, file = NULL) {
+    header_sample <- rownames(SummarizedExperiment::colData(vcf))
+    if (length(header_sample) != 1L || is.na(header_sample) ||
+        !nzchar(header_sample)) {
+        if (is.null(file)) {
+            stop("Expected one named sample in VCF header")
+        }
+        stop("Expected one named sample in VCF file: ", basename(file))
+    }
+    if (nrow(vcf) == 0L) {
+        return(list(
+            data = data.frame(
+                contig = character(), start = integer(), end = integer(),
+                ref = character(), alt = character(), sample = character()
+            ),
+            header_sample = header_sample
+        ))
+    }
+
+    contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
+    if (add_chr) {
+        contig_names <- ifelse(
+            grepl("^chr", contig_names, ignore.case = TRUE),
+            contig_names,
+            paste0("chr", contig_names)
+        )
+        contig_names <- sub("^chrMT$", "chrM", contig_names,
+                            ignore.case = TRUE)
+    }
+    dat <- data.frame(
+        contig = contig_names,
+        start = SummarizedExperiment::start(vcf),
+        end = get_vcf_end_positions(vcf),
+        ref = as.character(VariantAnnotation::ref(vcf)),
+        alt = vcf_alt_to_character(VariantAnnotation::alt(vcf))
+    )
+
+    info <- as.data.frame(VariantAnnotation::info(vcf))
+    # Match vcf_sample_fix() precedence without mutating the VCF INFO header.
+    norm_names <- tolower(gsub("[ .]", "_", names(info)))
+    sample_idx <- match(c("sample", "sample_name", "sample_id"), norm_names)
+    sample_idx <- sample_idx[!is.na(sample_idx)]
+    if (length(sample_idx) > 0L) {
+        names(info)[sample_idx[[1L]]] <- "sample"
+    }
+
+    geno <- VariantAnnotation::geno(vcf)
+    geno_df <- data.frame(row.names = seq_len(nrow(vcf)))
+    for (field_name in names(geno)) {
+        field <- geno[[field_name]]
+        if (is.list(field)) {
+            max_length <- if (length(field) == 0L) 0L else
+                max(vapply(field, length, integer(1)))
+            if (max_length > 0L) {
+                expanded_field <- do.call(
+                    rbind,
+                    lapply(field, function(x) {
+                        c(x, rep(NA, max_length - length(x)))
+                    })
+                )
+                colnames(expanded_field) <- paste(
+                    field_name, seq_len(max_length), sep = "_"
+                )
+                geno_df <- cbind(geno_df, expanded_field)
+            }
+        } else if (is.matrix(field)) {
+            geno_df[[field_name]] <- as.vector(field)
+        } else if (is.array(field) && length(dim(field)) == 3L) {
+            collapsed_field <- apply(field, c(1), function(x) as.vector(x))
+            collapsed_field <- as.data.frame(t(collapsed_field))
+            ncols <- ncol(collapsed_field)
+            colnames(collapsed_field) <- paste(
+                field_name, seq_len(ncols), sep = "_"
+            )
+            geno_df <- cbind(geno_df, collapsed_field)
+        } else {
+            geno_df[[field_name]] <- field
+        }
+    }
+
+    # Preserve the previous collision rule: fixed/FORMAT columns win over
+    # INFO fields, including case-only collisions such as INFO/END.
+    duplicate_info <- tolower(names(info)) %in%
+        tolower(c(names(dat), names(geno_df)))
+    info <- info[, !duplicate_info, drop = FALSE]
+    dat <- cbind(dat, geno_df, info)
+    row.names(dat) <- NULL
+    dat <- rename_columns(dat)
+    if (!"sample" %in% names(dat)) {
+        dat$sample <- rep(header_sample, nrow(dat))
+    }
+    list(data = dat, header_sample = header_sample)
+}
+
+# Apply the existing sample metadata matching rules to one extracted VCF table.
+join_vcf_sample_data <- function(dat, sample_df, remove_sample_suffix) {
+    if (is.null(sample_df)) {
+        return(dat)
+    }
+    if (!"sample" %in% names(dat)) {
+        stop("Error in mutation data: 'sample' column is missing prior to joining sample metadata.")
+    }
+    if (is.list(dat$sample)) {
+        dat$sample <- vapply(
+            dat$sample,
+            function(x) paste(x, collapse = ","),
+            character(1)
+        )
+    }
+    dat$sample <- as.character(dat$sample)
+    if (!is.null(remove_sample_suffix)) {
+        dat$sample <- gsub(remove_sample_suffix, "", dat$sample)
+    }
+    sample_df$sample <- as.character(sample_df$sample)
+    mut_samples <- unique(dat$sample)
+    meta_samples <- unique(sample_df$sample)
+    missing_in_meta <- setdiff(mut_samples, meta_samples)
+    if (length(missing_in_meta) > 0L) {
+        stop(
+            "Mismatch in sample names: Some samples in your VCF data are MISSING from the metadata.\n",
+            "Sample names must match EXACTLY. Please check for suffixes (e.g. '.cons.filtered') in your VCF files or typos in your metadata file.\n\n",
+            "Unmatched samples in VCF data: ",
+            paste(utils::head(missing_in_meta, 3), collapse = ", "), "\n",
+            "Available samples in metadata: ",
+            paste(utils::head(meta_samples, 3), collapse = ", "), "\n",
+            call. = FALSE
+        )
+    }
+    dplyr::left_join(dat, sample_df, by = "sample", suffix = c("", ".sd"))
+}
+
+# Normalize selected depth fields within their source file, before directory
+# tables are combined. This prevents one file's schema from supplying another's.
+normalize_vcf_depth <- function(dat, file, header_sample) {
+    if (!"alt_depth" %in% names(dat)) {
+        dat$alt_depth <- 1
+    }
+    depth_error <- function(column, rows, reason = "is missing or non-numeric") {
+        rows <- unique(rows)
+        sample <- if ("sample" %in% names(dat)) as.character(dat$sample[rows]) else
+            rep(header_sample, length(rows))
+        position <- if ("start" %in% names(dat)) as.character(dat$start[rows]) else
+            rep("unknown", length(rows))
+        details <- paste0(sample, "@", position)
+        stop(
+            "The depth column '", column, "' ", reason, " in ", basename(file),
+            " for sample/position: ",
+            paste(utils::head(details, 5), collapse = ", "),
+            call. = FALSE
+        )
+    }
+    require_numeric <- function(x, column) {
+        if (is.numeric(x)) {
+            return(x)
+        }
+        if (is.logical(x) && all(is.na(x))) {
+            return(x)
+        }
+        depth_error(column, seq_len(nrow(dat)), "must be numeric")
+    }
+    source <- NULL
+    if ("total_depth" %in% names(dat)) {
+        source <- "total_depth"
+        total <- require_numeric(dat$total_depth, "total_depth")
+    } else if (all(c("depth", "no_calls") %in% names(dat))) {
+        source <- "depth - no_calls"
+        depth <- require_numeric(dat$depth, "depth")
+        no_calls <- require_numeric(dat$no_calls, "no_calls")
+        total <- depth - no_calls
+    } else {
+        ad_columns <- grep("^AD_", names(dat), value = TRUE)
+        if (length(ad_columns) > 0L) {
+            source <- paste(ad_columns, collapse = ", ")
+            ad <- dat[, ad_columns, drop = FALSE]
+            for (column in ad_columns) {
+                ad[[column]] <- require_numeric(ad[[column]], column)
+            }
+            total <- rowSums(ad, na.rm = TRUE)
+        } else if ("depth" %in% names(dat)) {
+            source <- "depth"
+            total <- require_numeric(dat$depth, "depth")
+            warning(
+                "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
+            )
+        } else {
+            return(list(data = dat, has_depth = FALSE, source = NULL))
+        }
+    }
+
+    alt <- require_numeric(dat$alt_depth, "alt_depth")
+    bad_total <- which(is.na(total))
+    bad_alt <- which(is.na(alt))
+    if (length(bad_total) > 0L || length(bad_alt) > 0L) {
+        if (length(bad_total) > 0L) depth_error(source, bad_total)
+        depth_error("alt_depth", bad_alt)
+    }
+    ref_depth <- total - alt
+    bad_ref <- which(is.na(ref_depth))
+    if (length(bad_ref) > 0L) {
+        depth_error("ref_depth", bad_ref, "is missing after total_depth - alt_depth")
+    }
+    dat$alt_depth <- alt
+    dat$total_depth <- total
+    list(data = dat, has_depth = TRUE, source = source)
+}
+
+# Region joins are performed per file so region-provided depth remains attached
+# to that file's rows. The caller prepares and pads regions only once.
+join_vcf_regions <- function(mutation_granges, regions_gr) {
+    regions_gr$in_regions <- TRUE
+    joined <- plyranges::join_overlap_left_within_directed(
+        mutation_granges, regions_gr, suffix = c("", "_regions")
+    )
+    S4Vectors::mcols(joined)$in_regions[is.na(
+        S4Vectors::mcols(joined)$in_regions
+    )] <- FALSE
+    false_count <- sum(joined$in_regions == FALSE)
+    if (false_count > 0L) {
+        warning(
+            false_count,
+            " rows were outside of the specified regions.",
+            " To remove these rows, use the filter_mut() function\n"
+        )
+    }
+    joined
+}
+
+# bind_rows() promotes integer and double columns naturally. Stop before it can
+# silently turn incompatible scalar/list columns into character values.
+bind_vcf_tables <- function(tables, files) {
+    columns <- unique(unlist(lapply(tables, names), use.names = FALSE))
+    for (column in columns) {
+        present <- which(vapply(tables, function(x) column %in% names(x), logical(1)))
+        if (length(present) < 2L) next
+        types <- vapply(present, function(i) {
+            x <- tables[[i]][[column]]
+            if (is.list(x)) "list" else if (is.factor(x)) "factor" else
+                typeof(x)
+        }, character(1))
+        compatible <- length(unique(types)) == 1L ||
+            all(types %in% c("integer", "double"))
+        if (!compatible) {
+            stop(
+                "Cannot combine VCF column '", column, "' with incompatible types: ",
+                paste(paste0(basename(files[present]), " (", types, ")"),
+                      collapse = ", "),
+                call. = FALSE
+            )
+        }
+    }
+    tryCatch(
+        dplyr::bind_rows(tables),
+        error = function(e) {
+            stop(
+                "Could not combine VCF tables from files ",
+                paste(basename(files), collapse = ", "), ": ", conditionMessage(e),
+                call. = FALSE
+            )
+        }
+    )
+}

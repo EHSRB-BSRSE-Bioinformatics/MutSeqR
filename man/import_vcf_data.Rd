@@ -175,6 +175,17 @@ position, regardless of whether a variant was called, along with the
 required for some downstream analyses. AD is used to calculate the
 \code{total_depth} (the read depth excluding No-calls). If AD is not available,
 the \code{DP} field will be used as the \code{total_depth}.
+
+For directory imports, each file is converted to a table and its depth is
+resolved before the tables are combined. Existing \code{total_depth} takes
+precedence, followed by \code{depth - no_calls}, the sum of \code{AD}, and finally
+\code{DP}. Sample or region metadata can supply depth fields before this step.
+The AD sum retains its existing handling of missing allele counts.
+
+Files with no usable depth columns can be imported with reduced downstream
+functionality, but cannot be combined with files that have depth. Missing
+or non-numeric selected depth values produce an error identifying the file,
+sample, and position; another depth source is not substituted for that row.
 }
 \examples{
 # Mutation data is just for example purposes. It does not reflect real data
