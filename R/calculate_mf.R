@@ -496,10 +496,10 @@ calculate_mf <- function(mutation_data,
                         unname(MutSeqR::denominator_dict[input_resolutions])
                     )
                 ]
-                if ("sample" %in% names(depth_df)) {
-                    input_group_cols <- "sample"
-                } else if (all(cols_to_group %in% names(depth_df))) {
+                if (all(cols_to_group %in% names(depth_df))) {
                     input_group_cols <- cols_to_group
+                } else if ("sample" %in% names(depth_df)) {
+                    input_group_cols <- "sample"
                 } else {
                     stop(
                         "Context-resolved precalc_depth_data must contain ",
