@@ -664,6 +664,7 @@ validate_BS_genome <- function(BS_genome) {
 
 
 #' Derive end coordinates from a VCF object
+#' @keywords internal
 #'
 #' @description
 #' `VariantAnnotation::rowRanges()` defines the range width from `REF`, which is

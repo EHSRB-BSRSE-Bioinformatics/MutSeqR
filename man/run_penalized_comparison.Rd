@@ -40,3 +40,4 @@ a ridge penalty (QA phase), while the test statistic (LRT) is evaluated using
 the  unpenalized likelihood. Significance is evaluated via parametric
 bootstrap.
 }
+\keyword{internal}
