@@ -211,6 +211,8 @@ import_vcf_data <- function(
   }
 
   # Read and bind vcfs from folder
+  vcf_header_samples <- NULL
+
   if (file.info(vcf_file)$isdir == TRUE) {
     vcf_files <- list.files(
       vcf_file,
@@ -223,8 +225,18 @@ import_vcf_data <- function(
     # Read and combine VCF files
     vcf_list <- lapply(vcf_files, function(file) {
       vcf <- VariantAnnotation::readVcf(file)
-      vcf <- vcf_sample_fix(vcf) # fix sample column
-      # Ensure consistent colData rownames so rbind doesn't complain
+
+      # Extracts the sample name from the format field's header
+      original_sample_name <- rownames(SummarizedExperiment::colData(vcf))
+      if (length(original_sample_name) != 1L ||
+        is.na(original_sample_name) || !nzchar(original_sample_name)) {
+        stop(
+          "Expected one named sample in VCF file: ", basename(file),
+          ". Multisample VCF files and missing sample names are not supported."
+        )
+      }
+      # Find "sample" or its synonym in the INFO field
+      vcf <- vcf_sample_fix(vcf)
 
       # Coerce ALT to CharacterList for every VCF.
       # This prevents rbind crashes when mixing strict DNA alleles (e.g. A, C)
@@ -233,10 +245,16 @@ import_vcf_data <- function(
         vcf
       ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
 
+      # rename the format field's header to "sample_info" to be
+      # consistent across all vcf files.
       rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
-      return(vcf)
+      return(list(vcf = vcf, sample_name = original_sample_name))
     })
-    vcf <- do.call(VariantAnnotation::rbind, vcf_list)
+    # Keep header identities in original VCF record order.
+    vcf_header_samples <- unlist(lapply(vcf_list, function(x) {
+      rep(x$sample_name, nrow(x$vcf))
+    }), use.names = FALSE)
+    vcf <- do.call(VariantAnnotation::rbind, lapply(vcf_list, `[[`, "vcf"))
   } else {
     # Read a single vcf file
     vcf <- VariantAnnotation::readVcf(vcf_file)
@@ -322,7 +340,16 @@ import_vcf_data <- function(
   # Rename columns to default names
   dat <- rename_columns(dat)
 
-  # Recover the sample from the VCF header when it is not present in INFO.
+  # Create the sample column from the previously extracted vcf_header_samples string (multiple vcf import)
+  if (!is.null(vcf_header_samples) && !"sample" %in% colnames(dat)) {
+    if (length(vcf_header_samples) != nrow(dat)) {
+      stop("Internal error: VCF sample mapping length does not match variant rows.")
+    }
+    dat$sample <- vcf_header_samples
+  }
+
+  # For single input vcf, check that the sample wasn't already in the info field
+  # If not, recover the sample from the VCF format field header.
   # We avoid mutating INFO directly because undeclared INFO fields fail VCF validation.
   if (!"sample" %in% colnames(dat)) {
     sample_name <- rownames(SummarizedExperiment::colData(vcf))

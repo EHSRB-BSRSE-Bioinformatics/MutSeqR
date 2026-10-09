@@ -98,6 +98,7 @@ Suggests:
     RColorBrewer,
     reticulate,    
     rmarkdown,
+    Rsamtools,
     scales,
     shiny,
     testthat (>= 3.0.0),
