@@ -1,5 +1,10 @@
 # MutSeqR (development version)
 
+- VCF directory imports now combine extracted tables after resolving sample
+  identity and depth within each file. Existing depth formulas and site-depth
+  correction are preserved. Depth-free imports remain supported, but cannot be
+  mixed with depth-bearing files; missing selected depths fail explicitly.
+
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample
   metadata and can join matching metadata correctly.

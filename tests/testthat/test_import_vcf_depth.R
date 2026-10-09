@@ -27,6 +27,26 @@ test_that("sample and region metadata can still supply depth", {
   expect_depth_values(import_vcf_data(file, regions = regions), c(175, 175))
 })
 
+test_that("annotated tables retain the parent import schema and numeric types", {
+  directory <- withr::local_tempdir()
+  file <- write_depth_vcf(directory, "annotated.vcf")
+  metadata <- data.frame(sample = "sample1", dose = 10)
+  regions <- data.frame(contig = "chr1", start = 1, end = 100, label = "target")
+  dat <- import_vcf_data(file, sample_data = metadata, regions = regions)
+  # Verified against the pre-refactor importer, not inferred from new helpers.
+  expect_named(dat, c(
+    "contig", "start", "end", "width", "strand", "ref", "alt",
+    "alt_depth", "AD_1", "AD_2", "context", "sample", "dose", "label",
+    "in_regions", "variation_type", "nchar_ref", "nchar_alt", "varlen",
+    "short_ref", "normalized_ref", "subtype", "normalized_subtype",
+    "normalized_context", "context_with_mutation", "normalized_context_with_mutation",
+    "gc_content", "filter_mut", "total_depth", "row_has_duplicate", "vaf", "ref_depth"
+  ))
+  expect_type(dat$alt_depth, "integer")
+  expect_type(dat$total_depth, "double")
+  expect_depth_values(dat, c(100, 200))
+})
+
 test_that("AD arithmetic and absent alternate depth defaults stay unchanged", {
   directory <- withr::local_tempdir()
   file <- write_depth_vcf(directory, "partial.vcf",
