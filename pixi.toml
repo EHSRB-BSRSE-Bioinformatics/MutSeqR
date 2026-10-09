@@ -1,0 +1,40 @@
+# MutSeqR development environment
+#
+# pixi manages the R runtime + tooling (pandoc, git, ...). R *package*
+# dependencies are installed from CRAN/Bioconductor into this environment
+# via `pixi run setup` (see scripts/setup-deps.R) — conda-forge's
+# Bioconductor coverage is not complete, so we don't rely on it.
+#
+# Quick start:
+#   pixi install
+#   pixi run setup
+#   pixi run test
+#
+# Note: tasks that use bash (prepare-release) require WSL/Git-Bash on
+# Windows.
+
+[workspace]
+name = "mutseqr"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+# R version matching the current Bioconductor release (3.23 -> R 4.5)
+r-base = "4.5.*"
+pandoc = ">=3.6"
+git = "*"
+[tasks]
+# one-time (or after adding new deps): installs dev tools + all package
+# deps from DESCRIPTION (CRAN + Bioconductor)
+setup = "Rscript scripts/setup-deps.R"
+
+# everyday development
+test = "Rscript -e 'devtools::load_all(quiet = TRUE); devtools::test()'"
+document = "Rscript -e 'devtools::document()'"
+check = "Rscript -e 'rcmdcheck::rcmdcheck()'"
+bioccheck = "Rscript -e 'BiocCheck::BiocCheck(\".\")'"
+pkgdown = "Rscript -e 'pkgdown::build_site()'"
+
+# release workflow: document -> NEWS check -> z-bump -> test -> commit
+# (requires bash; on Windows use WSL or Git-Bash)
+prepare-release = "bash scripts/prepare-release.sh"

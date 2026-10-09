@@ -1,5 +1,19 @@
 library(testthat)
 
+test_that("VCF ALT values are converted without expanding records", {
+  alt <- IRanges::CharacterList(
+    "T",
+    c("A", "C"),
+    "<DEL>",
+    character()
+  )
+
+  expect_identical(
+    MutSeqR:::vcf_alt_to_character(alt),
+    c("T", "A,C", "<DEL>", NA_character_)
+  )
+})
+
 # Define a test case for import_mut_data function
 test_that("import_vcf_datafunction correctly imports vcf files", {
   # Create temporary test file with example mutation data
@@ -19,10 +33,14 @@ test_that("import_vcf_datafunction correctly imports vcf files", {
     "nchar_ref", "nchar_alt", "varlen",
     "gc_content", "row_has_duplicate",
     "strand", "width", # added by GRanges
-    "alt.group", "alt.group_name", "AD_1", "AD_2" # vcf cols
+    "AD_1", "AD_2" # vcf cols
   )
   expect_named(mut_data, colnames, ignore.order = TRUE) # check columns
   expect_equal(nrow(mut_data), 10)
+  expect_type(mut_data$ref, "character")
+  expect_type(mut_data$alt, "character")
+  expect_equal(mut_data$ref[mut_data$start == 5819110], "A")
+  expect_equal(mut_data$alt[mut_data$start == 5819110], "T")
   expect_equal(
     mut_data$variation_type,
     c("no_variant", "snv", "no_variant", "insertion", "snv",
@@ -45,6 +63,9 @@ test_that("import_vcf_data respects INFO END and derives SV end from SVLEN", {
   expect_equal(mut_data$variation_type, "sv")
   expect_equal(mut_data$start, 23665136)
   expect_equal(mut_data$end, 23666093)
+  expect_type(mut_data$ref, "character")
+  expect_type(mut_data$alt, "character")
+  expect_equal(mut_data$alt, "<DEL>")
 })
 
 test_that("import_vcf_data does not coerce a missing BS_genome into an installed check", {
