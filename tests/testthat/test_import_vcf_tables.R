@@ -113,6 +113,43 @@ test_that("header-only files are skipped but all-empty imports fail clearly", {
   expect_equal(dat$sample, c("sampleB", "sampleB"))
 })
 
+test_that("empty sites-only VCFs need no sample header", {
+  directory <- withr::local_tempdir()
+  empty <- file.path(directory, "a_sites_only.vcf")
+  writeLines(c(
+    "##fileformat=VCFv4.2",
+    "##contig=<ID=chr1,length=1000>",
+    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO"
+  ), empty)
+
+  expect_error(import_vcf_data(empty), "VCF file contains no variant records")
+  expect_error(import_vcf_data(directory), "No variant records")
+
+  named_empty <- write_depth_vcf(directory, "b_empty.vcf")
+  lines <- readLines(named_empty)
+  writeLines(lines[startsWith(lines, "#")], named_empty)
+  expect_error(import_vcf_data(directory), "No variant records")
+
+  populated <- write_depth_vcf(directory, "c_populated.vcf", sample = "sampleC")
+  expect_identical(import_vcf_data(directory), import_vcf_data(populated))
+})
+
+test_that("nonempty sites-only VCFs still require a named sample", {
+  directory <- withr::local_tempdir()
+  file <- file.path(directory, "sites_only.vcf")
+  writeLines(c(
+    "##fileformat=VCFv4.2",
+    "##contig=<ID=chr1,length=1000>",
+    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+    "chr1\t10\t.\tC\tA\t.\t.\t."
+  ), file)
+
+  expect_error(import_vcf_data(file),
+    "Expected one named sample in VCF file: sites_only.vcf", fixed = TRUE)
+  expect_error(import_vcf_data(directory),
+    "Expected one named sample in VCF file: sites_only.vcf", fixed = TRUE)
+})
+
 test_that("incompatible INFO field types identify the column and files", {
   directory <- withr::local_tempdir()
   first <- write_depth_vcf(directory, "a.vcf", sample = "sampleA",
