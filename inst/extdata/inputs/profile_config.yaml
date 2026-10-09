@@ -7,6 +7,8 @@ Duplex_Sequencing:
 # Filtering Parameters
   vaf_cutoff: 0.01
   snv_in_germ_mnv: yes
+  recurrent_germ: no
+  recurrence_limit: 0
   rm_abnormal_vaf: no
   custom_filter_col: filter
   custom_filter_val: EndRepairFillInArtifact
@@ -28,6 +30,8 @@ CODEC:
 # Filtering Parameters
   vaf_cutoff: 1
   snv_in_germ_mnv: no
+  recurrent_germ: no
+  recurrence_limit: 0
   rm_abnormal_vaf: no
   custom_filter_col: NULL
   custom_filter_val: NULL

@@ -46,6 +46,8 @@ Custom_Profile_Params:
 # Filtering Parameters
   vaf_cutoff: 1 # Numeric values from 0-1. Flag variants with a VAF > vaf_cutoff for filtering (germline variants).
   snv_in_germ_mnv: FALSE # Flag SNVs that overlap with germline MNVs for filtering.
+  recurrent_germ: FALSE # Flag variants identical to germline variants in another sample. Requires vaf_cutoff < 1.
+  recurrence_limit: 0 # Flag variants found in this many or more samples. Set to 0 to skip recurrence filtering.
   rm_abnormal_vaf: FALSE # Remove records where the VAF is between 0.05-0.45, or between 0.55-0.95.
   custom_filter_col: NULL # Apply a custom filter to the specified column.
   custom_filter_val: NULL # The value in custom_filter_col by which to filter.
