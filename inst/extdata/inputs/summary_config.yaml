@@ -17,9 +17,9 @@ params:
   sd_sep: "/t" # The delimiter for importing the sample metadata. Default is tab-delimited.
 # Calculating MF
 # Precalculated depth data is only required for mutation data that does not contain total_depth or depth values for every sequenced site.
-  precalc_depth_data_global: Null # The file path to the precalculated per-sample total_depth data. This is the total number of bases sequenced per sample, used for calculating mutation frequencies. Columns are "sample" and "group_depth".
-  precalc_depth_data_base6: Null # The file path to the precalculated per-sample total_depth data in the base_6 context. This is the total number of C and T bases sequenced for each sample. Columns are "sample", "normalized_ref", and "subtype_depth". If using an exp_variable, please also include it in this table.
-  precalc_depth_data_base96: Null # The file path to the precalculated per-sample total_depth data in the base_96 context. This is the total number bases sequenced per sample for each of the 32 possible trinucleotide contexts in their pyrimidine notation. Columns are "sample", "normalized_context", and "subtype_depth". If using an exp_variable, please also include it in this table.
+  precalc_depth_data_global: Null # Optional per-sample group depth (columns: sample, group_depth). Can be derived from base96 when omitted.
+  precalc_depth_data_base6: Null # Optional per-sample C/T depth (columns: sample, normalized_ref, subtype_depth). Can be derived from base96 when omitted.
+  precalc_depth_data_base96: Null # Optional per-sample depth by all 32 normalized trinucleotide contexts (sample, normalized_context, subtype_depth). If supplied, omitted global/base6 files are derived from it.
   precalc_depth_data_rg: Null # The file path to the precalculated per-sample total_depth data for each target region. This is the total number of bases sequenced per sample for each region. Columns are "sample", 'region_col', "group_depth". Only applicable if performing  regions analysis.
   d_sep: "\t" # The delimiter for importing the the precal_depth_data_global. Default is tab-delimited. This will be the same for all precalc-depth-data.
 # Statistical Analysis

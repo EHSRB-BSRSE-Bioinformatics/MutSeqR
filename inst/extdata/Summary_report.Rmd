@@ -121,7 +121,30 @@ if (params$file_type == "table") {
                              warnings_list,
                              fixed = TRUE))
 }
-if (no_depth & is.null(params$precalc_depth_data_global)) {
+# Read each supplied depth table once. Base96 can fill in omitted global and
+# base6 denominators for the report.
+read_report_depth <- function(path) {
+  if (is.null(path)) return(NULL)
+  read.delim(path, sep = params$d_sep, header = TRUE,
+             stringsAsFactors = FALSE, check.names = FALSE)
+}
+sample_exp_map <- NULL
+if (!is.null(params$exp_variable)) {
+  sample_exp_map <- dplyr::distinct(
+    mutation_data,
+    sample,
+    .data[[params$exp_variable]]
+  )
+}
+depth_global_input <- read_report_depth(params$precalc_depth_data_global)
+depth_base6_input <- read_report_depth(params$precalc_depth_data_base6)
+depth_base96_input <- read_report_depth(params$precalc_depth_data_base96)
+report_depth_data <- MutSeqR:::prepare_report_depth_data(
+  base96 = depth_base96_input,
+  global = depth_global_input,
+  base6 = depth_base6_input
+)
+if (no_depth && is.null(report_depth_data$global)) {
   no_mf <- TRUE
 } else {
   no_mf <- FALSE
@@ -247,13 +270,17 @@ to TRUE automatically when overlapping positions are detected within
 the mutation data.
 
 ```{r no-depth-msg-global, eval=no_depth, results='asis'}
-if (is.null(params$precalc_depth_data_global)) {
+if (is.null(report_depth_data$global)) {
   cat("No appropriate total_depth column within the mutation data.
       Cannot calculate the sample group depth.
       Cannot calculate mutation frequencies.")
 } else {
-  cat("Importing precalculated sample group depth from ", params$projectdir,
-      "/", params$precalc_depth_data_global, sep = "")
+  cat(if (is.null(depth_global_input) && !is.null(depth_base96_input)) {
+    "Using sample group depth derived from the supplied base96 depth data."
+  } else {
+    paste("Importing precalculated sample group depth from ",
+          params$precalc_depth_data_global, sep = "")
+  })
 }
 ```
 
@@ -266,7 +293,7 @@ mf_data <- calculate_mf(
   subtype_resolution = "none",
   variant_types = c("-ambiguous", "-uncategorized"),
   calculate_depth = !no_depth,
-  precalc_depth_data = params$precalc_depth_data_global,
+  precalc_depth_data = report_depth_data$global,
   d_sep = params$d_sep,
   correct_depth = correct_depth,
   retain_metadata_cols = params$exp_variable
@@ -711,14 +738,12 @@ mf6 <- calculate_mf(
   subtype_resolution = "base_6",
   variant_types = c("-ambiguous", "-uncategorized"),
   calculate_depth = !no_depth,
-  precalc_depth_data = params$precalc_depth_data_base6,
+  precalc_depth_data = report_depth_data$base6,
   d_sep = params$d_sep,
   correct_depth = correct_depth
 )
 # Add expv separately to prevent NANs in data
 if (!is.null(params$exp_variable)) {
-  sample_exp_map <- filtered_mutation_data %>%
-    dplyr::distinct(sample, .data[[params$exp_variable]])
   mf6 <- dplyr::left_join(mf6, sample_exp_map, by = "sample")
 }
 if ("mf_min" %in% colnames(mf6)) {
@@ -794,21 +819,22 @@ plot5.12
 
 # Precalc_depth: Aggregate across the experimental variable
 
-if (!is.null(params$precalc_depth_data_base6)) {
-  depth_base6_expv <- read.delim(
-    file.path(params$precalc_depth_data_base6),
-    sep = params$d_sep, header = TRUE
-  )
-  # add on the experimental variable
-  depth_base6_expv <- dplyr::left_join(depth_base6_expv, sample_exp_map, by = "sample")
-
-  depth_base6_expv <- depth_base6_expv %>%
+depth_base6_expv <- NULL
+if (!is.null(report_depth_data$base6)) {
+  depth_base6_expv <- report_depth_data$base6 %>%
+    dplyr::left_join(sample_exp_map, by = "sample") %>%
     dplyr::group_by(normalized_ref,
                     dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-    dplyr::summarize(subtype_depth = sum(subtype_depth),
-                     group_depth = sum(group_depth))
-} else {
-  depth_base6_expv <- NULL
+    dplyr::summarize(subtype_depth = sum(subtype_depth), .groups = "drop")
+  group_depth_expv <- report_depth_data$base6 %>%
+    dplyr::distinct(sample, group_depth) %>%
+    dplyr::left_join(sample_exp_map, by = "sample") %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(params$exp_variable))) %>%
+    dplyr::summarize(group_depth = sum(group_depth), .groups = "drop")
+  depth_base6_expv <- dplyr::left_join(
+    depth_base6_expv, group_depth_expv,
+    by = params$exp_variable
+  )
 }
 # Calculate subtype sums and proportions for the experimental variable
 mf6_expv <- calculate_mf(
@@ -931,7 +957,7 @@ mf96 <- calculate_mf(
   subtype_resolution = "base_96",
   variant_types = "snv",
   calculate_depth = !no_depth,
-  precalc_depth_data = params$precalc_depth_data_base96,
+  precalc_depth_data = report_depth_data$base96,
   d_sep = params$d_sep,
   correct_depth = correct_depth
 )
@@ -985,19 +1011,22 @@ Results[["96-base MF per Sample"]] <- mf96
 
 ```{r trinuc-spectra-expc, eval=!is.null(params$exp_variable)}
 # Precalc_depth: Aggregate across the experimental variable
-if (!is.null(params$precalc_depth_data_base96)) {
-  precalc_depth_data_base96 <- read.delim(
-      file.path(params$precalc_depth_data_base96),
-      sep = params$d_sep, header = TRUE
-  )
-
-  precalc_depth_data_base96 <- dplyr::left_join(precalc_depth_data_base96, sample_exp_map, by = "sample") %>%
+precalc_depth_data_base96 <- NULL
+if (!is.null(report_depth_data$base96)) {
+  precalc_depth_data_base96 <- report_depth_data$base96 %>%
+    dplyr::left_join(sample_exp_map, by = "sample") %>%
     dplyr::group_by(normalized_context,
                     dplyr::across(dplyr::all_of(params$exp_variable))) %>%
-    dplyr::summarize(subtype_depth = sum(subtype_depth),
-                     group_depth = sum(group_depth))
-} else {
-  precalc_depth_data_base96 <- NULL
+    dplyr::summarize(subtype_depth = sum(subtype_depth), .groups = "drop")
+  group_depth_expv <- report_depth_data$base96 %>%
+    dplyr::distinct(sample, group_depth) %>%
+    dplyr::left_join(sample_exp_map, by = "sample") %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(params$exp_variable))) %>%
+    dplyr::summarize(group_depth = sum(group_depth), .groups = "drop")
+  precalc_depth_data_base96 <- dplyr::left_join(
+    precalc_depth_data_base96, group_depth_expv,
+    by = params$exp_variable
+  )
 }
 # Calculate subtype sums and proportions for the experimental variable
 mf96_expv <- calculate_mf(

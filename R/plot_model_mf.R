@@ -38,10 +38,10 @@
 #' @return A ggplot object.
 #' @export
 #' @importFrom dplyr select ends_with filter mutate group_by summarize left_join
-#' rename across all_of
+#'  rename across all_of
 #' @importFrom ggplot2 aes geom_bar geom_errorbar geom_point
-#' geom_text ggplot guides labs theme position_dodge scale_fill_manual
-#' element_blank element_line
+#'  geom_text ggplot guides labs theme position_dodge scale_fill_manual
+#'  element_blank element_line
 #' @importFrom grDevices colorRampPalette
 #' @importFrom stats setNames
 #' @examples

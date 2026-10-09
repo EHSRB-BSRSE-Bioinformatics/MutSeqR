@@ -31,3 +31,4 @@ utilizing  lgamma components and matrix operations. The ridge penalty
 shrinks probability vectors toward a uniform distribution to stabilize
 optimization for sparse or heavily overdispersed data.
 }
+\keyword{internal}

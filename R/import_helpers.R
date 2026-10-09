@@ -576,9 +576,9 @@ check_required_columns <- function(data, required_columns) {
     }
 }
 
-#' Retrieve the sample column from VCF files
-#' @description Checks to find the sample name of the vcf in the INFO field or
-#' in the FORMAT header. Can also handle sample name synonyms.
+#' Retrieve the sample column from INFO field of VCF files
+#' @description Checks to find the sample name of the vcf in the INFO field
+#' Can also handle sample name synonyms.
 #' @param vcf The imported VCF
 #' @importFrom VariantAnnotation info
 #' @importFrom SummarizedExperiment colData
@@ -664,6 +664,7 @@ validate_BS_genome <- function(BS_genome) {
 
 
 #' Derive end coordinates from a VCF object
+#' @keywords internal
 #'
 #' @description
 #' `VariantAnnotation::rowRanges()` defines the range width from `REF`, which is

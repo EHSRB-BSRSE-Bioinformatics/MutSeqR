@@ -26,3 +26,4 @@ Dirichlet-Multinomial distribution. This function is highly optimized for
 parametric bootstrapping, utilizing a Gamma-Multinomial approximation for
 speed.
 }
+\keyword{internal}

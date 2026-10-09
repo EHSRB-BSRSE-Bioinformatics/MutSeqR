@@ -98,6 +98,7 @@ Suggests:
     RColorBrewer,
     reticulate,    
     rmarkdown,
+    Rsamtools,
     scales,
     shiny,
     testthat (>= 3.0.0),
@@ -112,6 +113,6 @@ Config/reticulate: list( packages = list( list(package =
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 BugReports: https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues
 URL: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/
+Config/roxygen2/version: 8.1.0
