@@ -40,7 +40,7 @@ mouse_mm10 <- find_BS_genome("mouse", "mm10")
 #> 'getOption("repos")' replaces Bioconductor standard repositories, see
 #> 'help("repositories", package = "BiocManager")' for details.
 #> Replacement repositories:
-#>     CRAN: https://cran.rstudio.com
+#>     CRAN: https://cloud.R-project.org
 #> Selected reference genome: BSgenome.Mmusculus.UCSC.mm10
 #> Reference genome is already installed.
 #> Once installed, supply 'BSgenome.Mmusculus.UCSC.mm10' as the BS_genome parameter.

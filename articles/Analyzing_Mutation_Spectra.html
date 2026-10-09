@@ -12,8 +12,8 @@
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="MutSeqR: Analyzing Mutation Spectra">
@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MutSeqR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,7 +123,7 @@ the other group. To test the significance of the homogeneity hypothesis,
 the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>G</mi><mn>2</mn></msup><annotation encoding="application/x-tex">G^{2}</annotation></semantics></math>
 likelihood ratio statistic is used:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>G</mi><mn>2</mn></msup><mo>=</mo><mn>2</mn><mspace width="0.222em"></mspace><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>R</mi></munderover><mspace width="0.222em"></mspace><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>T</mi></munderover><mspace width="0.222em"></mspace><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mspace width="0.222em"></mspace><mi>l</mi><mi>o</mi><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msub><mi>E</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">G^{2} = 2\  \sum_{i=1}^{R}\  \sum_{j=1}^{T}\  Y_{ij}\  log(\frac{Y_{ij}}{E_{ij}})</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>G</mi><mn>2</mn></msup><mo>=</mo><mn>2</mn><mspace width="0.222em"></mspace><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>R</mi></munderover><mspace width="0.222em"></mspace><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>T</mi></munderover><mspace width="0.222em"></mspace><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mspace width="0.222em"></mspace><mi>l</mi><mi>o</mi><mi>g</mi><mo stretchy="false" form="prefix">(</mo><mfrac><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msub><mi>E</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mfrac><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">G^{2} = 2\  \sum_{i=1}^{R}\  \sum_{j=1}^{T}\  Y_{ij}\  log(\frac{Y_{ij}}{E_{ij}})</annotation></semantics></math></p>
 <p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">Y_{ij}</annotation></semantics></math>
 represents the mutation counts and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>E</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">E_{ij}</annotation></semantics></math>
@@ -137,7 +137,7 @@ spectral differences. Thus, as the column totals become large,
 may be referred to a
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>χ</mi><mn>2</mn></msup><annotation encoding="application/x-tex">\chi^{2}</annotation></semantics></math>
 distribution with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>R</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">(R -  1)(T - 1)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>R</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">(</mo><mi>T</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(R -  1)(T - 1)</annotation></semantics></math>
 degrees of freedom. The
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>G</mi><mn>2</mn></msup><annotation encoding="application/x-tex">G^{2}</annotation></semantics></math>
 statistic may exhibit high false positive rates in small sample sizes
@@ -148,7 +148,7 @@ This has the effect of reducing the rate at which
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>G</mi><mn>2</mn></msup><annotation encoding="application/x-tex">G^{2}</annotation></semantics></math>
 rejects each null hypothesis, providing greater stability in terms of
 false positive error rates. Thus when
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mi>/</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>R</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>&lt;</mo><mn>20</mn></mrow><annotation encoding="application/x-tex">N/(R-1) &lt; 20</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mi>/</mi><mo stretchy="false" form="prefix">(</mo><mi>R</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>&lt;</mo><mn>20</mn></mrow><annotation encoding="application/x-tex">N/(R-1) &lt; 20</annotation></semantics></math>,
 where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
 is the total mutation counts across both groups, the function will use a
@@ -1058,9 +1058,9 @@ trinucleotide context normalized to the sequencing depth.
 <div class="section level3">
 <h3 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
-<pre><code><span><span class="co">## R Under development (unstable) (2026-02-04 r89376)</span></span>
+<pre><code><span><span class="co">## R Under development (unstable) (2026-10-08 r90650)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">## Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">## Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Matrix products: default</span></span>
 <span><span class="co">## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -1079,87 +1079,84 @@ trinucleotide context normalized to the sequencing depth.
 <span><span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">## [1] ExperimentHub_3.1.0 AnnotationHub_4.1.0 BiocFileCache_3.1.0</span></span>
-<span><span class="co">## [4] dbplyr_2.5.1        BiocGenerics_0.57.0 generics_0.1.4     </span></span>
-<span><span class="co">## [7] MutSeqR_0.99.9      htmltools_0.5.9     DT_0.34.0          </span></span>
+<span><span class="co">## [1] ExperimentHub_3.2.2 AnnotationHub_4.2.2 BiocFileCache_3.2.0</span></span>
+<span><span class="co">## [4] dbplyr_2.6.0        BiocGenerics_0.58.1 generics_0.1.4     </span></span>
+<span><span class="co">## [7] MutSeqR_1.1.1       htmltools_0.5.9     DT_0.34.0          </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
-<span><span class="co">##   [1] DBI_1.2.3                   bitops_1.0-9               </span></span>
-<span><span class="co">##   [3] httr2_1.2.2                 rlang_1.1.7                </span></span>
-<span><span class="co">##   [5] magrittr_2.0.4              otel_0.2.0                 </span></span>
-<span><span class="co">##   [7] matrixStats_1.5.0           compiler_4.6.0             </span></span>
-<span><span class="co">##   [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     </span></span>
-<span><span class="co">##  [11] png_0.1-8                   systemfonts_1.3.1          </span></span>
-<span><span class="co">##  [13] vctrs_0.7.1                 stringr_1.6.0              </span></span>
+<span><span class="co">##   [1] DBI_1.3.0                   bitops_1.1-0               </span></span>
+<span><span class="co">##   [3] httr2_1.3.0                 rlang_1.3.0                </span></span>
+<span><span class="co">##   [5] magrittr_2.0.5              otel_0.2.0                 </span></span>
+<span><span class="co">##   [7] matrixStats_1.5.0           compiler_4.7.0             </span></span>
+<span><span class="co">##   [9] RSQLite_3.53.3              GenomicFeatures_1.64.0     </span></span>
+<span><span class="co">##  [11] png_0.1-9                   systemfonts_1.3.2          </span></span>
+<span><span class="co">##  [13] vctrs_0.7.3                 stringr_1.6.0              </span></span>
 <span><span class="co">##  [15] pkgconfig_2.0.3             crayon_1.5.3               </span></span>
-<span><span class="co">##  [17] fastmap_1.2.0               XVector_0.51.0             </span></span>
-<span><span class="co">##  [19] labeling_0.4.3              Rsamtools_2.27.0           </span></span>
-<span><span class="co">##  [21] rmarkdown_2.30              ragg_1.5.0                 </span></span>
-<span><span class="co">##  [23] purrr_1.2.1                 bit_4.6.0                  </span></span>
-<span><span class="co">##  [25] xfun_0.56                   cachem_1.1.0               </span></span>
-<span><span class="co">##  [27] cigarillo_1.1.0             jsonlite_2.0.0             </span></span>
-<span><span class="co">##  [29] blob_1.3.0                  DelayedArray_0.37.0        </span></span>
-<span><span class="co">##  [31] BiocParallel_1.45.0         parallel_4.6.0             </span></span>
-<span><span class="co">##  [33] R6_2.6.1                    plyranges_1.31.1           </span></span>
-<span><span class="co">##  [35] VariantAnnotation_1.57.1    bslib_0.10.0               </span></span>
-<span><span class="co">##  [37] stringi_1.8.7               RColorBrewer_1.1-3         </span></span>
-<span><span class="co">##  [39] rtracklayer_1.71.3          GenomicRanges_1.63.1       </span></span>
-<span><span class="co">##  [41] jquerylib_0.1.4             Seqinfo_1.1.0              </span></span>
-<span><span class="co">##  [43] SummarizedExperiment_1.41.0 knitr_1.51                 </span></span>
-<span><span class="co">##  [45] IRanges_2.45.0              Matrix_1.7-4               </span></span>
-<span><span class="co">##  [47] tidyselect_1.2.1            dichromat_2.0-0.1          </span></span>
+<span><span class="co">##  [17] fastmap_1.2.0               XVector_0.52.0             </span></span>
+<span><span class="co">##  [19] labeling_0.4.3              Rsamtools_2.28.0           </span></span>
+<span><span class="co">##  [21] rmarkdown_2.32              ragg_1.5.2                 </span></span>
+<span><span class="co">##  [23] purrr_1.2.2                 bit_4.6.0                  </span></span>
+<span><span class="co">##  [25] xfun_0.61                   cachem_1.1.0               </span></span>
+<span><span class="co">##  [27] cigarillo_1.2.1             jsonlite_2.0.0             </span></span>
+<span><span class="co">##  [29] blob_1.3.0                  DelayedArray_0.38.2        </span></span>
+<span><span class="co">##  [31] BiocParallel_1.46.0         parallel_4.7.0             </span></span>
+<span><span class="co">##  [33] R6_2.6.1                    plyranges_1.32.0           </span></span>
+<span><span class="co">##  [35] VariantAnnotation_1.58.0    bslib_0.12.0               </span></span>
+<span><span class="co">##  [37] stringi_1.8.9               RColorBrewer_1.1-3         </span></span>
+<span><span class="co">##  [39] rtracklayer_1.72.0          GenomicRanges_1.64.0       </span></span>
+<span><span class="co">##  [41] jquerylib_0.1.4             Seqinfo_1.2.0              </span></span>
+<span><span class="co">##  [43] SummarizedExperiment_1.42.0 knitr_1.52                 </span></span>
+<span><span class="co">##  [45] IRanges_2.46.0              Matrix_1.7-6               </span></span>
+<span><span class="co">##  [47] tidyselect_1.2.1            dichromat_2.0-1            </span></span>
 <span><span class="co">##  [49] abind_1.4-8                 yaml_2.3.12                </span></span>
-<span><span class="co">##  [51] codetools_0.2-20            curl_7.0.0                 </span></span>
-<span><span class="co">##  [53] lattice_0.22-7              tibble_3.3.1               </span></span>
-<span><span class="co">##  [55] withr_3.0.2                 Biobase_2.71.0             </span></span>
-<span><span class="co">##  [57] KEGGREST_1.51.1             S7_0.2.1                   </span></span>
+<span><span class="co">##  [51] codetools_0.2-20            curl_8.0.0                 </span></span>
+<span><span class="co">##  [53] lattice_0.23-1              tibble_3.3.1               </span></span>
+<span><span class="co">##  [55] withr_3.0.3                 Biobase_2.72.0             </span></span>
+<span><span class="co">##  [57] KEGGREST_1.52.2             S7_0.2.2                   </span></span>
 <span><span class="co">##  [59] evaluate_1.0.5              desc_1.4.3                 </span></span>
-<span><span class="co">##  [61] Biostrings_2.79.4           pillar_1.11.1              </span></span>
+<span><span class="co">##  [61] Biostrings_2.80.2           pillar_1.11.1              </span></span>
 <span><span class="co">##  [63] BiocManager_1.30.27         filelock_1.0.3             </span></span>
-<span><span class="co">##  [65] MatrixGenerics_1.23.0       stats4_4.6.0               </span></span>
-<span><span class="co">##  [67] rprojroot_2.1.1             RCurl_1.98-1.17            </span></span>
-<span><span class="co">##  [69] BiocVersion_3.23.1          S4Vectors_0.49.0           </span></span>
-<span><span class="co">##  [71] ggplot2_4.0.2               scales_1.4.0               </span></span>
-<span><span class="co">##  [73] dendsort_0.3.4              glue_1.8.0                 </span></span>
-<span><span class="co">##  [75] tools_4.6.0                 BiocIO_1.21.0              </span></span>
-<span><span class="co">##  [77] data.table_1.18.2.1         BSgenome_1.79.1            </span></span>
-<span><span class="co">##  [79] GenomicAlignments_1.47.0    fs_1.6.6                   </span></span>
-<span><span class="co">##  [81] XML_3.99-0.20               grid_4.6.0                 </span></span>
+<span><span class="co">##  [65] MatrixGenerics_1.24.0       stats4_4.7.0               </span></span>
+<span><span class="co">##  [67] rprojroot_2.1.1             RCurl_1.98-1.20            </span></span>
+<span><span class="co">##  [69] BiocVersion_3.23.1          S4Vectors_0.50.3           </span></span>
+<span><span class="co">##  [71] ggplot2_4.0.3               scales_1.4.0               </span></span>
+<span><span class="co">##  [73] dendsort_0.3.4              glue_1.8.1                 </span></span>
+<span><span class="co">##  [75] tools_4.7.0                 BiocIO_1.22.0              </span></span>
+<span><span class="co">##  [77] data.table_1.18.6.1         BSgenome_1.80.0            </span></span>
+<span><span class="co">##  [79] GenomicAlignments_1.48.0    fs_2.1.0                   </span></span>
+<span><span class="co">##  [81] XML_3.99-0.25               grid_4.7.0                 </span></span>
 <span><span class="co">##  [83] tidyr_1.3.2                 crosstalk_1.2.2            </span></span>
-<span><span class="co">##  [85] AnnotationDbi_1.73.0        patchwork_1.3.2            </span></span>
-<span><span class="co">##  [87] restfulr_0.0.16             cli_3.6.5                  </span></span>
-<span><span class="co">##  [89] rappdirs_0.3.4              textshaping_1.0.4          </span></span>
-<span><span class="co">##  [91] viridisLite_0.4.3           S4Arrays_1.11.1            </span></span>
-<span><span class="co">##  [93] ggdendro_0.2.0              dplyr_1.2.0                </span></span>
+<span><span class="co">##  [85] AnnotationDbi_1.74.0        patchwork_1.3.2            </span></span>
+<span><span class="co">##  [87] restfulr_0.0.17             cli_3.6.6                  </span></span>
+<span><span class="co">##  [89] rappdirs_0.3.4              textshaping_1.0.5          </span></span>
+<span><span class="co">##  [91] viridisLite_0.4.3           S4Arrays_1.12.1            </span></span>
+<span><span class="co">##  [93] ggdendro_0.2.0              dplyr_1.2.1                </span></span>
 <span><span class="co">##  [95] gtable_0.3.6                sass_0.4.10                </span></span>
-<span><span class="co">##  [97] digest_0.6.39               SparseArray_1.11.10        </span></span>
+<span><span class="co">##  [97] digest_0.6.39               SparseArray_1.12.3         </span></span>
 <span><span class="co">##  [99] rjson_0.2.23                htmlwidgets_1.6.4          </span></span>
 <span><span class="co">## [101] farver_2.1.2                memoise_2.0.1              </span></span>
-<span><span class="co">## [103] pkgdown_2.2.0               lifecycle_1.0.5            </span></span>
-<span><span class="co">## [105] httr_1.4.7                  here_1.0.2                 </span></span>
-<span><span class="co">## [107] bit64_4.6.0-1               MASS_7.3-65</span></span></code></pre>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<span><span class="co">## [103] pkgdown_2.2.1               lifecycle_1.0.5            </span></span>
+<span><span class="co">## [105] httr_1.4.9                  here_1.0.2                 </span></span>
+<span><span class="co">## [107] bit64_4.8.6                 MASS_7.3-66</span></span></code></pre>
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-bergstrom-2019" class="csl-entry">
-Bergstrom, Erik N., Mi Ni Huang, Uma Mahto, Mark Barnes, Michael R.
-Stratton, Steven G. Rozen, and Ludmil B. Alexandrov. 2019.
+Bergstrom, Erik N., Mi Ni Huang, Uma Mahto, et al. 2019.
 <span>“<span>SigProfilerMatrixGenerator</span>: A Tool for Visualizing
 and Exploring Patterns of Small Mutational Events.”</span> <em>BMC
 Genomics</em> 20 (1): 685. <a href="https://doi.org/10.1186/s12864-019-6041-2" class="external-link">https://doi.org/10.1186/s12864-019-6041-2</a>.
 </div>
 <div id="ref-diaz-gay-2023" class="csl-entry">
-Díaz-Gay, Marcos, Raviteja Vangara, Mark Barnes, Xi Wang, S M Ashiqul
-Islam, Ian Vermes, Stephen Duke, et al. 2023. <span>“Assigning
-Mutational Signatures to Individual Samples and Individual Somatic
-Mutations with <span>SigProfilerAssignment</span>.”</span> Edited by
-Christina Kendziorski. <em>Bioinformatics</em> 39 (12): btad756. <a href="https://doi.org/10.1093/bioinformatics/btad756" class="external-link">https://doi.org/10.1093/bioinformatics/btad756</a>.
+Díaz-Gay, Marcos, Raviteja Vangara, Mark Barnes, et al. 2023.
+<span>“Assigning Mutational Signatures to Individual Samples and
+Individual Somatic Mutations with
+<span>SigProfilerAssignment</span>.”</span> <em>Bioinformatics</em> 39
+(12): btad756. <a href="https://doi.org/10.1093/bioinformatics/btad756" class="external-link">https://doi.org/10.1093/bioinformatics/btad756</a>.
 </div>
 <div id="ref-khandekar-2023" class="csl-entry">
-Khandekar, Azhar, Raviteja Vangara, Mark Barnes, Marcos Díaz-Gay, Ammal
-Abbasi, Erik N. Bergstrom, Christopher D. Steele, Nischalan Pillay, and
-Ludmil B. Alexandrov. 2023. <span>“Visualizing and Exploring Patterns of
-Large Mutational Events with
-<span>SigProfilerMatrixGenerator</span>.”</span> <em>BMC Genomics</em>
-24 (1): 469. <a href="https://doi.org/10.1186/s12864-023-09584-y" class="external-link">https://doi.org/10.1186/s12864-023-09584-y</a>.
+Khandekar, Azhar, Raviteja Vangara, Mark Barnes, et al. 2023.
+<span>“Visualizing and Exploring Patterns of Large Mutational Events
+with <span>SigProfilerMatrixGenerator</span>.”</span> <em>BMC
+Genomics</em> 24 (1): 469. <a href="https://doi.org/10.1186/s12864-023-09584-y" class="external-link">https://doi.org/10.1186/s12864-023-09584-y</a>.
 </div>
 <div id="ref-piegorsch-1994" class="csl-entry">
 Piegorsch, W W, and A J Bailer. 1994. <span>“Statistical Approaches for
@@ -1180,7 +1177,7 @@ Data.”</span> <em>Genetics</em> 136 (1): 403–16. <a href="https://doi.org/10
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

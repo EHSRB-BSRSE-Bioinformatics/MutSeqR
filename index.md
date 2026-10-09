@@ -61,6 +61,7 @@ releases](https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/releases).
 To install this package, start R (version “4.6”) and enter:
 
 ``` r
+
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
@@ -75,6 +76,7 @@ BiocManager::install("MutSeqR")
 Example data is loaded through BioConductor ExperimentHub data package.
 
 ``` r
+
 BiocManager::install("ExperimentHub")
 
 library(ExperimentHub)
@@ -87,6 +89,7 @@ query(eh, "MutSeqRData")
 Access example data through the index:
 
 ``` r
+
 example_data <- eh[["EH9857"]]
 ```
 

@@ -8,10 +8,12 @@ populations and species.
 ## Load MutSeqR and Example Data
 
 ``` r
+
 library(MutSeqR)
 ```
 
 ``` r
+
 library(ExperimentHub)
 # load the index
 eh <- ExperimentHub()
@@ -27,30 +29,33 @@ at any resolution between user-defined groups using a modified
 contingency table approach (Piegorsch and Bailer 1994).
 
 This approach is applied to the mutation counts of each subtype in a
-given group. The contingency table is represented as $R*T$ where $R$ is
-the number of subtypes, and $T$ is the number of groups.
+given group. The contingency table is represented as $`R * T`$ where
+$`R`$ is the number of subtypes, and $`T`$ is the number of groups.
 [`spectra_comparison()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/spectra_comparison.md)
-performs comparisons between $T = 2$ specified groups. The statistical
+performs comparisons between $`T = 2`$ specified groups. The statistical
 hypothesis of homogeneity is that the proportion (count/group total) of
 each mutation subtype equals that of the other group. To test the
-significance of the homogeneity hypothesis, the $G^{2}$ likelihood ratio
-statistic is used:
+significance of the homogeneity hypothesis, the $`G^{2}`$ likelihood
+ratio statistic is used:
 
-$$G^{2} = 2\ \sum\limits_{i = 1}^{R}\ \sum\limits_{j = 1}^{T}\ Y_{ij}\ log\left( \frac{Y_{ij}}{E_{ij}} \right)$$
+``` math
+G^{2} = 2\  \sum_{i=1}^{R}\  \sum_{j=1}^{T}\  Y_{ij}\  log(\frac{Y_{ij}}{E_{ij}})
+```
 
-$Y_{ij}$ represents the mutation counts and $E_{ij}$ are the *expected*
-counts under the null hypothesis. The $G^{2}$ statistic possesses
-approximately a $\chi^{2}$ distribution in large sample sizes under the
-null hypothesis of no spectral differences. Thus, as the column totals
-become large, $G^{2}$ may be referred to a $\chi^{2}$ distribution with
-$(R - 1)(T - 1)$ degrees of freedom. The $G^{2}$ statistic may exhibit
-high false positive rates in small sample sizes when referred to a
-$\chi^{2}$ distribution. In such cases, we instead switch to an
-F-distribution. This has the effect of reducing the rate at which
-$G^{2}$ rejects each null hypothesis, providing greater stability in
-terms of false positive error rates. Thus when $N/(R - 1) < 20$, where
-$N$ is the total mutation counts across both groups, the function will
-use a F-distribution, otherwise it will use a $\chi^{2}$-distribution.
+$`Y_{ij}`$ represents the mutation counts and $`E_{ij}`$ are the
+*expected* counts under the null hypothesis. The $`G^{2}`$ statistic
+possesses approximately a $`\chi^{2}`$ distribution in large sample
+sizes under the null hypothesis of no spectral differences. Thus, as the
+column totals become large, $`G^{2}`$ may be referred to a $`\chi^{2}`$
+distribution with $`(R -  1)(T - 1)`$ degrees of freedom. The $`G^{2}`$
+statistic may exhibit high false positive rates in small sample sizes
+when referred to a $`\chi^{2}`$ distribution. In such cases, we instead
+switch to an F-distribution. This has the effect of reducing the rate at
+which $`G^{2}`$ rejects each null hypothesis, providing greater
+stability in terms of false positive error rates. Thus when
+$`N/(R-1) < 20`$, where $`N`$ is the total mutation counts across both
+groups, the function will use a F-distribution, otherwise it will use a
+$`\chi^{2}`$-distribution.
 
 This comparison assumes independance among the observations. Each tabled
 observation represents a sum of independent contributions to the total
@@ -86,7 +91,7 @@ experiment variable, seperate the levels of the variables you are
 comparing with a colon. A level from each variable must be included in
 all values of the contrasts table.
 
-The function will output the $G^{2}$ statistic and p-value for each
+The function will output the $`G^{2}`$ statistic and p-value for each
 specified comparison listed in `constrasts`. P-values are adjusted for
 multiple comparison using the Sidak method (**adj_p.value**).
 
@@ -102,6 +107,7 @@ resolution. This function will use the mutation sums (sum_min) that are
 calculated for each subtype per dose group, not the frequencies.
 
 ``` r
+
 # load example data:
 example_data <- eh[["EH9861"]]
 
@@ -118,6 +124,7 @@ comparisons we want to perform. We will compare each BaP dose group to
 the control group.
 
 ``` r
+
 # Create the contrast table
 contrasts_table <- data.frame(
   col1 = c("Low", "Medium", "High"),
@@ -128,6 +135,7 @@ contrasts_table <- data.frame(
 Finally, run the analysis.
 
 ``` r
+
 # Run the analysis
 ex_spectra_comp <- spectra_comparison(
   mf_data = mf_data_6_dose,
@@ -205,6 +213,7 @@ tools directly in as described in their respective
 version of python 3.8 or newer.
 
 ``` r
+
 # Install reticulate
 install.packages("reticulate")
 
@@ -233,6 +242,7 @@ or higher).
 BaP* *dose group.*
 
 ``` r
+
 # Run Analysis
 signature_fitting(
   mutation_data = example_data, # filtered mutation data
@@ -278,30 +288,30 @@ their respective folders in the output directory. **Only the SBS96
 matrix is used for refitting**. *Matrices are stored as `.all` files
 which can be viewed in a text-editor.*
 
-| Folder | File                                    | Definition                                                                                                                                                                       | Plot file                          |
-|--------|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|
-| SBS    | *project.SBS6.all*                      | The 6 pyrimidine single-nucleotide variants. *C\>A, C\>G, C\>T, T\>A, T\>C, or T\>G*                                                                                             | *plots/SBS_6_plots_project.pdf*    |
-| SBS    | *project.SBS18.all*                     | The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N).                            |                                    |
-| SBS    | *project.SBS24.all*                     | The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N).         | *plots/SBS_24_plots_project.pdf*   |
-| SBS    | **project.SBS96.all**                   | The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A\[C\>G\]T*                                                     | *plots/SBS_96_plots_project.pdf*   |
-| SBS    | *project.SBS288.all*                    | The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).                                                                                       | *plots/SBS_288_plots_project.pdf*  |
-| SBS    | *project.SBS384.all*                    | The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).                                                                                    | *plots/SBS_384_plots_project.pdf*  |
-| SBS    | *project.SBS1536.all*                   | The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations). *Ex. AA\[C\>G\]TT*                                              | *plots/SBS_1536_plots_project.pdf* |
-| SBS    | *project.SBS4608.all*                   | The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N).                                                                                     |                                    |
-| SBS    | *project.SBS6144.all*                   | The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B).                                                                                  |                                    |
-| DBS    | *project.DBS78.all*                     | The 78 pyrimidine double-nucleotide variants.                                                                                                                                    | *plots/DBS_78_plots_project.pdf*   |
-| DBS    | *project.DBS150.all*                    | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 3 transcriptionla bias categories (U, T, N).                                                    |                                    |
-| DBS    | *project.DBS186.all*                    | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 4 transcriptional bias categories (U, T, N, B).                                                 | *plots/DBS_186_plots_project.pdf*  |
-| DBS    | *project.DBS1248.all*                   | The 78 pyrimidine double-nucleotide variants alongside their flanking nucleotides (Possible starting nucleotides (4) x 78 x possible ending nucleotides (4) = 1248 combinations) |                                    |
-| DBS    | *project.DBS2400.all*                   | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within transcriptional bias categories (U, T, N).            |                                    |
-| DBS    | *project.DBS2676.all*                   | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within 4 transcriptional bias categories (U, T, N, B).       |                                    |
-| TSB    | *strandBiasTes_24.txt*                  | Transcription Strand Bias Test stats of the SBS6 variants                                                                                                                        |                                    |
-| TSB    | *strandBiasTes_384.txt*                 | Transcription Strand Bias Test stats of the SBS96 variants                                                                                                                       |                                    |
-| TSB    | *strandBiasTes_6144.txt*                | Transcription Strand Bias Test stats of the SBS1536 variants                                                                                                                     |                                    |
-| TSB    | *significantResults_strandBiasTest.txt* | Returns significant results from the three files above.                                                                                                                          |                                    |
+| Folder | File | Definition | Plot file |
+|----|----|----|----|
+| SBS | *project.SBS6.all* | The 6 pyrimidine single-nucleotide variants. *C\>A, C\>G, C\>T, T\>A, T\>C, or T\>G* | *plots/SBS_6_plots_project.pdf* |
+| SBS | *project.SBS18.all* | The 6 pyrimidine single-nucleotide variants within 3 transcriptional bias categories: Untranscribed (U), Transcribed (T), Non-Transcribed Region (N). |  |
+| SBS | *project.SBS24.all* | The 6 pyrimidine single-nucleotide variants within 4 transcriptional bias categories: Untranscribed (U), Transcribed (T), Bidirectional (B), Non-Transcribed Region (N). | *plots/SBS_24_plots_project.pdf* |
+| SBS | **project.SBS96.all** | The 6 pyrimidine single-nucleotide variants alongside their flanking nucleotides (4 x 4 = 16 combinations). *Ex. A\[C\>G\]T* | *plots/SBS_96_plots_project.pdf* |
+| SBS | *project.SBS288.all* | The 96-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N). | *plots/SBS_288_plots_project.pdf* |
+| SBS | *project.SBS384.all* | The 96-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B). | *plots/SBS_384_plots_project.pdf* |
+| SBS | *project.SBS1536.all* | The 6 pyrimidine single-nucleotide variants alongside their flanking dinucleotides (16 x 16 = 256 combinations). *Ex. AA\[C\>G\]TT* | *plots/SBS_1536_plots_project.pdf* |
+| SBS | *project.SBS4608.all* | The 1536-base single-nucleotide variants within 3 transcriptional bias categories (U, T, N). |  |
+| SBS | *project.SBS6144.all* | The 1536-base single-nucleotide variants within 4 transcriptional bias categories (U, T, N, B). |  |
+| DBS | *project.DBS78.all* | The 78 pyrimidine double-nucleotide variants. | *plots/DBS_78_plots_project.pdf* |
+| DBS | *project.DBS150.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 3 transcriptionla bias categories (U, T, N). |  |
+| DBS | *project.DBS186.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines x 4 transcriptional bias categories (U, T, N, B). | *plots/DBS_186_plots_project.pdf* |
+| DBS | *project.DBS1248.all* | The 78 pyrimidine double-nucleotide variants alongside their flanking nucleotides (Possible starting nucleotides (4) x 78 x possible ending nucleotides (4) = 1248 combinations) |  |
+| DBS | *project.DBS2400.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within transcriptional bias categories (U, T, N). |  |
+| DBS | *project.DBS2676.all* | The 36 dinucleotide combinations that have only all purines or all pyrimidines alongside their flanking nucleotides within 4 transcriptional bias categories (U, T, N, B). |  |
+| TSB | *strandBiasTes_24.txt* | Transcription Strand Bias Test stats of the SBS6 variants |  |
+| TSB | *strandBiasTes_384.txt* | Transcription Strand Bias Test stats of the SBS96 variants |  |
+| TSB | *strandBiasTes_6144.txt* | Transcription Strand Bias Test stats of the SBS1536 variants |  |
+| TSB | *significantResults_strandBiasTest.txt* | Returns significant results from the three files above. |  |
 
 (#tab:mat-files) Output Files from SigProfilerMatrixGeneration by
-Folder.
+Folder. {.table}
 
 **Doublet-base Matrices (DBS)**: DBS are somatic mutations in which a
 set of two adjacent DNA base-pairs are simultaneously substituted with
@@ -344,14 +354,15 @@ for [transcription strand
 bias](https://osf.io/s93d5/wiki/5.%20Output%20-%20TSB/). Mutations are
 first classified within the four transcriptional bias categories:
 
-| Category           | Description                                                   |
-|--------------------|---------------------------------------------------------------|
-| Transcribed (T)    | The variant is on the transcribed (template) strand.          |
-| Untranscribed (U)  | The variant is on the untranscribed (coding) strand.          |
-| Bidirectional (B)  | The variant is on both strands and is transcribed either way. |
-| Nontranscribed (N) | The variant is in a non-coding region and is untranslated.    |
+| Category | Description |
+|----|----|
+| Transcribed (T) | The variant is on the transcribed (template) strand. |
+| Untranscribed (U) | The variant is on the untranscribed (coding) strand. |
+| Bidirectional (B) | The variant is on both strands and is transcribed either way. |
+| Nontranscribed (N) | The variant is in a non-coding region and is untranslated. |
 
 (#tab:transcript-cat) SigProfiler Transcriptional Bias Categories.
+{.table}
 
 The tool will then perform a transcription strand bias test which
 compares the number of transcribed and untranscribed mutations for each
@@ -377,27 +388,27 @@ of 3 subdirectories; “Activities”, “Signatures”, and “Solution_Stats�
 
 **Activities**
 
-| File                                     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| *Assignment_Solution_Activities.txt*     | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample’s original mutation matrix caused by a particular mutational process.                                                                                                                                                                        |
-| *Assignment_Solution_Activity_Plots.pdf* | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis.                                                                                                                                                                                                                                                                                                                                                                                                             |
-| *Assignment_Solution_TMB_plot.pdf*       | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase.                                                                                                                                                                                                                      |
-| *Decomposed_Mutation_Probabilities.txt*  | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures.                                                                                                                                                       |
-| *SampleReconstruction*                   | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure. |
+| File | Description |
+|----|----|
+| *Assignment_Solution_Activities.txt* | This file contains the activity matrix for the selected signatures. The first column lists all of the samples/groups. All of the following columns list the calculated activity value for the respective signatures. Signature activities correspond to the specific numbers of mutations from the sample’s original mutation matrix caused by a particular mutational process. |
+| *Assignment_Solution_Activity_Plots.pdf* | This file contains a stacked barplot showing the number of mutations in each signature on the y-axis and the samples/groups on the x-axis. |
+| *Assignment_Solution_TMB_plot.pdf* | This file contains a tumor mutational burden plot. The y-axis is the somatic mutations per megabase and the x-axis is the number of samples/groups plotted over the total number of samples/groups included. The column names are the mutational signatures and the plot is ordered by the median somatic mutations per megabase. |
+| *Decomposed_Mutation_Probabilities.txt* | This file contains the probabilities of each of the 96 mutation types in each sample/group. The probabilities refer to the probability of each mutation type being caused by a specific signature. The first column lists all the samples/groups, the second column lists all the mutation types, and the following columns list the calculated probability value for the respective signatures. |
+| *SampleReconstruction* | This folder contains generated plots for each sample/group summarizing the assignment results. Each plot consists of three panels. (i) Original: a bar plot of the inputted 96SBS mutation matrix for the sample/group. (ii) Reconstructed: a bar plot of the reconstruction of the original mutation matrix. (iii) The mutational profiles for each of the known mutational signatures assigned to that sample/group, including the activities for each signature. Accuracy metrics for the reconstruction are displayed at the bottom of the figure. |
 
 **Signatures**
 
-| Files                                  | Description                                                                                                                                                                                                                                            |
-|----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| *Assignment_Solution_Signatures.txt*   | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures.                                                                                  |
+| Files | Description |
+|----|----|
+| *Assignment_Solution_Signatures.txt* | The distribution of mutation types in the input mutational signatures. The first column lists all 96 of the mutation types. The following columns are the signatures. |
 | *SBS_96_plots_Assignment_Solution.pdf* | Barplots for each signature identified that depicts the proportion of the mutation types for that signature. The top right corner also lists the total number of mutations and the percentage of total mutations assigned to the mutational signature. |
 
 **Solution_Stats**
 
-| Files                                              | Description                                                                                                                                                                                                                                                                                                                                                                        |
-|----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| *Assignment_Solution_Samples_Stats.txt*            | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
-| *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps.                                                                                                                                                         |
+| Files | Description |
+|----|----|
+| *Assignment_Solution_Samples_Stats.txt* | The accuracy metrics for the reconstruction. statistics for each sample including the total number of mutations, cosine similarity, L1 norm (calculated as the sum of the absolute values of the vector), L1 norm percentage, L2 norm (calculated as the square root of the sum of the squared vector values), and L2 norm percentage, along with the Kullback-Leibler divergence. |
+| *Assignment_Solution_Signature_Assignment_log.txt* | The events that occur when known signatures are assigned to an input sample. The information includes the L2 error and cosine similarity between the reconstructed and original sample within different composition steps. |
 
 **Other Files**
 
@@ -427,6 +438,7 @@ the* *24 samples using the SigProfiler Web Tool. Output a mutation
 calling file that* *can be uploaded to the webtool.*
 
 ``` r
+
 write_mutation_calling_file(
   mutation_data = example_data,
   project_name = "Example",
@@ -448,6 +460,7 @@ saved to the specified output directory.
 can be* *uploaded to the webtool.*
 
 ``` r
+
 write_mutational_matrix(
   mutation_data = example_data,
   group = "dose_group",
@@ -471,6 +484,7 @@ dose. We will exclude ambiguous or uncategorized variants since we don’t
 have any in this data.
 
 ``` r
+
 mf_data_6_dose <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "dose_group",
@@ -484,6 +498,7 @@ will specify to our function that the dose_group variable should be used
 to order the levels in the plot.
 
 ``` r
+
 # Set the desired order for the dose group:
 mf_data_6_dose$dose_group <- factor(
   mf_data_6_dose$dose_group,
@@ -496,6 +511,7 @@ mf_data_6_dose$dose_group <- factor(
 *Example 5. Plot the base_6 proportions for each dose group.*
 
 ``` r
+
 # Plot
 plot <- plot_spectra(
   mf_data = mf_data_6_dose,
@@ -528,6 +544,7 @@ proportion normalized to sequencing depth.
 *Example 6. Plot the base_6 frequences for each dose group.*
 
 ``` r
+
 # Plot
 plot <- plot_spectra(
   mf_data = mf_data_6_dose,
@@ -560,6 +577,7 @@ frequency (mutations/bp).
 *Example 7. Plot the base_6 mutation sums for each dose group.*
 
 ``` r
+
 # Plot
 plot <- plot_spectra(
   mf_data = mf_data_6_dose,
@@ -601,6 +619,7 @@ correspond to their\* \_associated dose groups. We will see that samples
 largly cluster within their* *dose groups.*
 
 ``` r
+
 # Calculate the mf data at the 6-base resolution for each sample
 mf_data_6 <- calculate_mf(
   mutation_data = example_data,
@@ -653,6 +672,7 @@ We will first calculate the mf at the 96-based resolution per dose
 group. For this example, we will focus only on SNV mutations.
 
 ``` r
+
 # Calculate the mf data at the 96-base resolution for each dose
 mf_data_96_dose <- calculate_mf(
   mutation_data = example_data,
@@ -663,6 +683,7 @@ mf_data_96_dose <- calculate_mf(
 ```
 
 ``` r
+
 # Plot
 plots <- plot_trinucleotide(
   mf_96 = mf_data_96_dose,
@@ -746,6 +767,7 @@ density becomes too high to represent using traditional plots.
 *by dose group.*
 
 ``` r
+
 # Calculate the mf data at the 96-base resolution for each sample
 mf_data_96 <- calculate_mf(
   mutation_data = example_data,
@@ -782,9 +804,9 @@ trinucleotide context normalized to the sequencing depth.
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-02-04 r89376)
+    ## R Under development (unstable) (2026-10-08 r90650)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.3 LTS
+    ## Running under: Ubuntu 24.04.5 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -803,84 +825,80 @@ trinucleotide context normalized to the sequencing depth.
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ## [1] ExperimentHub_3.1.0 AnnotationHub_4.1.0 BiocFileCache_3.1.0
-    ## [4] dbplyr_2.5.1        BiocGenerics_0.57.0 generics_0.1.4     
-    ## [7] MutSeqR_0.99.9      htmltools_0.5.9     DT_0.34.0          
+    ## [1] ExperimentHub_3.2.2 AnnotationHub_4.2.2 BiocFileCache_3.2.0
+    ## [4] dbplyr_2.6.0        BiocGenerics_0.58.1 generics_0.1.4     
+    ## [7] MutSeqR_1.1.1       htmltools_0.5.9     DT_0.34.0          
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] DBI_1.2.3                   bitops_1.0-9               
-    ##   [3] httr2_1.2.2                 rlang_1.1.7                
-    ##   [5] magrittr_2.0.4              otel_0.2.0                 
-    ##   [7] matrixStats_1.5.0           compiler_4.6.0             
-    ##   [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     
-    ##  [11] png_0.1-8                   systemfonts_1.3.1          
-    ##  [13] vctrs_0.7.1                 stringr_1.6.0              
+    ##   [1] DBI_1.3.0                   bitops_1.1-0               
+    ##   [3] httr2_1.3.0                 rlang_1.3.0                
+    ##   [5] magrittr_2.0.5              otel_0.2.0                 
+    ##   [7] matrixStats_1.5.0           compiler_4.7.0             
+    ##   [9] RSQLite_3.53.3              GenomicFeatures_1.64.0     
+    ##  [11] png_0.1-9                   systemfonts_1.3.2          
+    ##  [13] vctrs_0.7.3                 stringr_1.6.0              
     ##  [15] pkgconfig_2.0.3             crayon_1.5.3               
-    ##  [17] fastmap_1.2.0               XVector_0.51.0             
-    ##  [19] labeling_0.4.3              Rsamtools_2.27.0           
-    ##  [21] rmarkdown_2.30              ragg_1.5.0                 
-    ##  [23] purrr_1.2.1                 bit_4.6.0                  
-    ##  [25] xfun_0.56                   cachem_1.1.0               
-    ##  [27] cigarillo_1.1.0             jsonlite_2.0.0             
-    ##  [29] blob_1.3.0                  DelayedArray_0.37.0        
-    ##  [31] BiocParallel_1.45.0         parallel_4.6.0             
-    ##  [33] R6_2.6.1                    plyranges_1.31.1           
-    ##  [35] VariantAnnotation_1.57.1    bslib_0.10.0               
-    ##  [37] stringi_1.8.7               RColorBrewer_1.1-3         
-    ##  [39] rtracklayer_1.71.3          GenomicRanges_1.63.1       
-    ##  [41] jquerylib_0.1.4             Seqinfo_1.1.0              
-    ##  [43] SummarizedExperiment_1.41.0 knitr_1.51                 
-    ##  [45] IRanges_2.45.0              Matrix_1.7-4               
-    ##  [47] tidyselect_1.2.1            dichromat_2.0-0.1          
+    ##  [17] fastmap_1.2.0               XVector_0.52.0             
+    ##  [19] labeling_0.4.3              Rsamtools_2.28.0           
+    ##  [21] rmarkdown_2.32              ragg_1.5.2                 
+    ##  [23] purrr_1.2.2                 bit_4.6.0                  
+    ##  [25] xfun_0.61                   cachem_1.1.0               
+    ##  [27] cigarillo_1.2.1             jsonlite_2.0.0             
+    ##  [29] blob_1.3.0                  DelayedArray_0.38.2        
+    ##  [31] BiocParallel_1.46.0         parallel_4.7.0             
+    ##  [33] R6_2.6.1                    plyranges_1.32.0           
+    ##  [35] VariantAnnotation_1.58.0    bslib_0.12.0               
+    ##  [37] stringi_1.8.9               RColorBrewer_1.1-3         
+    ##  [39] rtracklayer_1.72.0          GenomicRanges_1.64.0       
+    ##  [41] jquerylib_0.1.4             Seqinfo_1.2.0              
+    ##  [43] SummarizedExperiment_1.42.0 knitr_1.52                 
+    ##  [45] IRanges_2.46.0              Matrix_1.7-6               
+    ##  [47] tidyselect_1.2.1            dichromat_2.0-1            
     ##  [49] abind_1.4-8                 yaml_2.3.12                
-    ##  [51] codetools_0.2-20            curl_7.0.0                 
-    ##  [53] lattice_0.22-7              tibble_3.3.1               
-    ##  [55] withr_3.0.2                 Biobase_2.71.0             
-    ##  [57] KEGGREST_1.51.1             S7_0.2.1                   
+    ##  [51] codetools_0.2-20            curl_8.0.0                 
+    ##  [53] lattice_0.23-1              tibble_3.3.1               
+    ##  [55] withr_3.0.3                 Biobase_2.72.0             
+    ##  [57] KEGGREST_1.52.2             S7_0.2.2                   
     ##  [59] evaluate_1.0.5              desc_1.4.3                 
-    ##  [61] Biostrings_2.79.4           pillar_1.11.1              
+    ##  [61] Biostrings_2.80.2           pillar_1.11.1              
     ##  [63] BiocManager_1.30.27         filelock_1.0.3             
-    ##  [65] MatrixGenerics_1.23.0       stats4_4.6.0               
-    ##  [67] rprojroot_2.1.1             RCurl_1.98-1.17            
-    ##  [69] BiocVersion_3.23.1          S4Vectors_0.49.0           
-    ##  [71] ggplot2_4.0.2               scales_1.4.0               
-    ##  [73] dendsort_0.3.4              glue_1.8.0                 
-    ##  [75] tools_4.6.0                 BiocIO_1.21.0              
-    ##  [77] data.table_1.18.2.1         BSgenome_1.79.1            
-    ##  [79] GenomicAlignments_1.47.0    fs_1.6.6                   
-    ##  [81] XML_3.99-0.20               grid_4.6.0                 
+    ##  [65] MatrixGenerics_1.24.0       stats4_4.7.0               
+    ##  [67] rprojroot_2.1.1             RCurl_1.98-1.20            
+    ##  [69] BiocVersion_3.23.1          S4Vectors_0.50.3           
+    ##  [71] ggplot2_4.0.3               scales_1.4.0               
+    ##  [73] dendsort_0.3.4              glue_1.8.1                 
+    ##  [75] tools_4.7.0                 BiocIO_1.22.0              
+    ##  [77] data.table_1.18.6.1         BSgenome_1.80.0            
+    ##  [79] GenomicAlignments_1.48.0    fs_2.1.0                   
+    ##  [81] XML_3.99-0.25               grid_4.7.0                 
     ##  [83] tidyr_1.3.2                 crosstalk_1.2.2            
-    ##  [85] AnnotationDbi_1.73.0        patchwork_1.3.2            
-    ##  [87] restfulr_0.0.16             cli_3.6.5                  
-    ##  [89] rappdirs_0.3.4              textshaping_1.0.4          
-    ##  [91] viridisLite_0.4.3           S4Arrays_1.11.1            
-    ##  [93] ggdendro_0.2.0              dplyr_1.2.0                
+    ##  [85] AnnotationDbi_1.74.0        patchwork_1.3.2            
+    ##  [87] restfulr_0.0.17             cli_3.6.6                  
+    ##  [89] rappdirs_0.3.4              textshaping_1.0.5          
+    ##  [91] viridisLite_0.4.3           S4Arrays_1.12.1            
+    ##  [93] ggdendro_0.2.0              dplyr_1.2.1                
     ##  [95] gtable_0.3.6                sass_0.4.10                
-    ##  [97] digest_0.6.39               SparseArray_1.11.10        
+    ##  [97] digest_0.6.39               SparseArray_1.12.3         
     ##  [99] rjson_0.2.23                htmlwidgets_1.6.4          
     ## [101] farver_2.1.2                memoise_2.0.1              
-    ## [103] pkgdown_2.2.0               lifecycle_1.0.5            
-    ## [105] httr_1.4.7                  here_1.0.2                 
-    ## [107] bit64_4.6.0-1               MASS_7.3-65
+    ## [103] pkgdown_2.2.1               lifecycle_1.0.5            
+    ## [105] httr_1.4.9                  here_1.0.2                 
+    ## [107] bit64_4.8.6                 MASS_7.3-66
 
-Bergstrom, Erik N., Mi Ni Huang, Uma Mahto, Mark Barnes, Michael R.
-Stratton, Steven G. Rozen, and Ludmil B. Alexandrov. 2019.
+Bergstrom, Erik N., Mi Ni Huang, Uma Mahto, et al. 2019.
 “SigProfilerMatrixGenerator: A Tool for Visualizing and Exploring
 Patterns of Small Mutational Events.” *BMC Genomics* 20 (1): 685.
 <https://doi.org/10.1186/s12864-019-6041-2>.
 
-Díaz-Gay, Marcos, Raviteja Vangara, Mark Barnes, Xi Wang, S M Ashiqul
-Islam, Ian Vermes, Stephen Duke, et al. 2023. “Assigning Mutational
-Signatures to Individual Samples and Individual Somatic Mutations with
-SigProfilerAssignment.” Edited by Christina Kendziorski.
-*Bioinformatics* 39 (12): btad756.
-<https://doi.org/10.1093/bioinformatics/btad756>.
+Díaz-Gay, Marcos, Raviteja Vangara, Mark Barnes, et al. 2023. “Assigning
+Mutational Signatures to Individual Samples and Individual Somatic
+Mutations with SigProfilerAssignment.” *Bioinformatics* 39 (12):
+btad756. <https://doi.org/10.1093/bioinformatics/btad756>.
 
-Khandekar, Azhar, Raviteja Vangara, Mark Barnes, Marcos Díaz-Gay, Ammal
-Abbasi, Erik N. Bergstrom, Christopher D. Steele, Nischalan Pillay, and
-Ludmil B. Alexandrov. 2023. “Visualizing and Exploring Patterns of Large
-Mutational Events with SigProfilerMatrixGenerator.” *BMC Genomics* 24
-(1): 469. <https://doi.org/10.1186/s12864-023-09584-y>.
+Khandekar, Azhar, Raviteja Vangara, Mark Barnes, et al. 2023.
+“Visualizing and Exploring Patterns of Large Mutational Events with
+SigProfilerMatrixGenerator.” *BMC Genomics* 24 (1): 469.
+<https://doi.org/10.1186/s12864-023-09584-y>.
 
 Piegorsch, W W, and A J Bailer. 1994. “Statistical Approaches for
 Analyzing Mutational Spectra: Some Recommendations for Categorical

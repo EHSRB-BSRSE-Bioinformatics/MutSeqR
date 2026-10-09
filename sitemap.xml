@@ -1,5 +1,7 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/404.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/AGENTS.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/CONTRIBUTING.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/LICENSE-text.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/LICENSE.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles/Analyzing_Mutation_Frequencies.html</loc></url>
@@ -22,6 +24,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/cluster_spectra.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/context_list.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/denominator_dict.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/dm_loglik_ridge_stable.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.plot.gui.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.plot.result.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.proast.html</loc></url>
@@ -33,6 +36,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_mutation_palette.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_ref_of_mut.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_seq.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/get_vcf_end_positions.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_mut_data.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_regions_metadata.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_sample_data.html</loc></url>
@@ -54,16 +58,22 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_trinucleotide_heatmap.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/populate_sequence_context.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/print_ascii_art.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/rdm_fast.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/rename_columns.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/render_report.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/reverseComplement.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/run_penalized_comparison.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/select_optimal_lambda.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/setup_mutseqr_python.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/sidak.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/signature_fitting.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/spectra_comparison.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/spectra_comparison_rpdmm.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_dict.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_list.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/validate_BS_genome.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_sample_fix.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_depth_data.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_excel.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutation_calling_file.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutational_matrix.html</loc></url>

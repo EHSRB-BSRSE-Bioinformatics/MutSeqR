@@ -99,15 +99,22 @@ calculate_mf(
 - precalc_depth_data:
 
   A data frame or a file path to a text file containing pre-calculated
-  per-group total_depth values. This data frame should contain the
-  columns for the desired grouping variable(s) and the reference context
-  at the desired subtype resolution (if applicable). The precalculated
-  total_depth column(s) should be called one of `group_depth` and
-  `subtype_depth`. `group_depth` is used for subtype resolutions of
-  "none", "type", and all non-snv mutations in "base_6", "base_12",
-  "base_96", and "base_192". `subtype_depth` is used for snv mutations
-  in "base_6", "base_12", "base_96", and "base_192". You can access a
-  list of context values for each subtype resolution using
+  depth values. A context-resolved input with `subtype_depth`, one
+  context column from `denominator_dict`, and either `sample` or all
+  `cols_to_group` columns can be supplied at any supported resolution;
+  when possible, `calculate_mf()` uses
+  [`write_depth_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_depth_data.md)
+  to derive the requested resolution. Per-sample depths are aggregated
+  to `cols_to_group` using the sample-to-group mapping in
+  `mutation_data`; inputs already summarized by `cols_to_group` are used
+  directly. Otherwise, supply the columns for the desired grouping
+  variable(s) and context at the requested resolution. Depth columns
+  should be named `group_depth` and/or `subtype_depth`. `group_depth` is
+  used for subtype resolutions of "none", "type", and all non-snv
+  mutations in "base_6", "base_12", "base_96", and "base_192".
+  `subtype_depth` is used for snv mutations in "base_6", "base_12",
+  "base_96", and "base_192". You can access a list of context values for
+  each subtype resolution using
   `MutSeqR::context_list$your_subtype_resolution`.
 
 - d_sep:

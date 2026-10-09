@@ -1,24 +1,20 @@
-# Join Sample Metadata
+# Import Sample Metadata
 
-This function imports the sample metadata and joins it with the mutation
-data.
+This function imports sample metadata from a file or accepts a data
+frame directly, and performs basic validation checks.
 
 ## Usage
 
 ``` r
-import_sample_data(mutation_data, sample_data, sd_sep = "\t")
+import_sample_data(sample_data, sd_sep = "\t")
 ```
 
 ## Arguments
 
-- mutation_data:
-
-  A data frame containing mutation data.
-
 - sample_data:
 
-  The path to the file containing the sample metadata. Alternatively, a
-  data frame can be provided directly.
+  The path to the file containing the sample metadata, or a data frame
+  provided directly.
 
 - sd_sep:
 
@@ -26,4 +22,5 @@ import_sample_data(mutation_data, sample_data, sd_sep = "\t")
 
 ## Value
 
-A data frame that combines the mutation data with the sample metadata.
+A validated data frame containing sample metadata, including a required
+column named `sample`.

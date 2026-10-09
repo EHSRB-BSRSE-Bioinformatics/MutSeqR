@@ -58,20 +58,18 @@ signature_fitting(
 Creates a subfolder "SigProfiler" in the output directory with
 SigProfiler tools results. For a complete breakdown of the results, see
 the Readme file for MutSeqR. Most relevant results are stored in
-SigProfiler \>
-[ggplot2::group](https://ggplot2.tidyverse.org/reference/aes_group_order.html)
-\> matrices \> output \> Assignment_Solution \> Activities \>
-SampleReconstruction \> WebPNGs. These plots show a summary of the
-signature assignment results for each group. In each plot, the top left
-panel represents the base_96 mutation count for the group. The bottom
-left panel represents the reconstructed profile. Below the
-reconstruction are the solution statistics that indicate the goodness of
-fit of the reconstructed profile to the observed profile. (Recommended
-cosine similarity \> 0.9). The panels on the right represent the SBS
-signatures that contribute to the reconstructed profile. The signature
-name and its contribution % are shown in the panel. A high contribution
-means a high association of the signature with the group's mutation
-spectra.
+SigProfiler \> group \> matrices \> output \> Assignment_Solution \>
+Activities \> SampleReconstruction \> WebPNGs. These plots show a
+summary of the signature assignment results for each group. In each
+plot, the top left panel represents the base_96 mutation count for the
+group. The bottom left panel represents the reconstructed profile. Below
+the reconstruction are the solution statistics that indicate the
+goodness of fit of the reconstructed profile to the observed profile.
+(Recommended cosine similarity \> 0.9). The panels on the right
+represent the SBS signatures that contribute to the reconstructed
+profile. The signature name and its contribution % are shown in the
+panel. A high contribution means a high association of the signature
+with the group's mutation spectra.
 
 ## Details
 

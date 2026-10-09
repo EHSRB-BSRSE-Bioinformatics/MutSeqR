@@ -1,5 +1,5 @@
-pandoc: 3.1.11
-pkgdown: 2.2.0
+pandoc: 3.8.3
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   articles/Analyzing_Mutation_Frequencies: Analyzing_Mutation_Frequencies.html
@@ -7,7 +7,7 @@ articles:
   articles/General_Visualizations: General_Visualizations.html
   MutSeqR_introduction: MutSeqR_introduction.html
   articles/Target_Analysis: Target_Analysis.html
-last_built: 2026-02-06T23:21Z
+last_built: 2026-10-09T22:57Z
 urls:
   reference: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference
   article: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/articles

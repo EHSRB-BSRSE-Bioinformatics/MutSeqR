@@ -17,7 +17,8 @@ import_mut_data(
   padding = 0,
   BS_genome = NULL,
   custom_column_names = NULL,
-  output_granges = FALSE
+  output_granges = FALSE,
+  add_chr = FALSE
 )
 ```
 
@@ -114,6 +115,12 @@ import_mut_data(
 
   A logical variable; whether you want the mutation data to output as a
   GRanges object. Default output (FALSE) is as a dataframe.
+
+- add_chr:
+
+  A logical variable. If `TRUE`, prepends "chr" to contig names missing
+  it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure
+  compatibility with BSgenome packages. Default is `FALSE`.
 
 ## Value
 
@@ -221,10 +228,6 @@ file <- system.file("extdata", "Example_files",
                    "simple_mut_import.txt", package = "MutSeqR")
 # Import the data
 imported_example_data <- import_mut_data(mut_file = file)
-#> 'getOption("repos")' replaces Bioconductor standard repositories, see
-#> 'help("repositories", package = "BiocManager")' for details.
-#> Replacement repositories:
-#>     CRAN: https://cran.rstudio.com
 #> Warning: 10 rows were found whose position was the same as that of at least one other row for the same sample.
 #> Warning: The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.
 ```

@@ -366,22 +366,21 @@ bmd <- bmd_proast(
 #> due to value of CES
 #> This might result in suboptimal fit of model 52 
 #>  
-#>  Inv.Expon. m5-   0   5   -8.86   27.72
+#>  Inv.Expon. m5-   1   5   14.23   -18.46
 #>  ------------------------------------------------------- 
-#> selected model: Inv.Expon. m3-  
+#> selected model: Inv.Expon. m5-  
 #> 
-#>  estimate for  var- :  0.02745 
-#>   estimate for  a- :  1.701e-07 
-#>   estimate for  CED- :  4.714 
-#>   estimate for  d- :  0.1632 
+#>  estimate for  var- :  0.01789 
+#>   estimate for  a- :  1.718e-07 
+#>   estimate for  CED- :  9.659 
+#>   estimate for  c- :  6.76 
+#>   estimate for  d- :  1.607 
 #> ------------------------------------------------------ 
 #> 
 #>  
 #> The Grubb outlier for this sample size is: 2.80155 
 #>  
-#>  1 outliers detected, with values for x and y: 
-#> 25 9.25584825420905e-07  
-#> 
+#> No outliers detected 
 #> 
 #> 
 #>  calculating confidence intervals ....
@@ -389,9 +388,9 @@ bmd <- bmd_proast(
 #> 
 #> 
 #> the CED (in orig. units) and the 90 % confidence interval is: 
-#>  4.714 
-#>  2.9 
-#>  6.96 
+#>  9.659 
+#>  7.75 
+#>  11.1 
 #> 
 #> 
 #> 
@@ -438,21 +437,24 @@ bmd <- bmd_proast(
 #> 
 #>  The weights used in model averaging are:
 #>    model weight
-#> 1    EXP 0.3316
-#> 2   HILL 0.3316
-#> 3 INVEXP 0.0053
-#> 4   LOGN 0.3316
+#> 1    EXP   0.25
+#> 2   HILL   0.25
+#> 3 INVEXP   0.25
+#> 4   LOGN   0.25
 #> 
 #> Start of MA bootstrap runs ...
-#> run   1  2  3
+#> run   1
+#> Warning: NaNs produced
+#> Warning: NA/NaN function evaluation
+#>   2  3
 #> 
 #> duration of bootstrap calculations:
-#> [1] "Fri Feb  6 23:22:12 2026"
-#> [1] "Fri Feb  6 23:22:12 2026"
+#> [1] "Fri Oct  9 22:57:44 2026"
+#> [1] "Fri Oct  9 22:57:45 2026"
 #> 
 #> The model-average BMD confidence interval is:
 #>   subgroup BMDlower.ma BMDupper.ma
-#> 1      all        8.94          10
+#> 1      all        8.95          10
 #> 
 #> 
 #> 
@@ -463,8 +465,8 @@ bmd <- bmd_proast(
 #> Hill m5-
 #> Hill m5-
 #> Covariate analysis is:FALSE
-#> Inv.Expon. m3-
-#> Inv.Expon. m3-
+#> Inv.Expon. m5-
+#> Inv.Expon. m5-
 #> Covariate analysis is:FALSE
 #> Expon. m5-
 #> Expon. m5-
@@ -476,13 +478,13 @@ bmd <- bmd_proast(
 #>    Selected.Model Response CES   CED CEDL CEDU    AIC Log.Likelihood
 #> 1      Expon. m5-   mf_min 0.5  8.45 6.47 10.3 -18.46          14.23
 #> 2        Hill m5-   mf_min 0.5  9.03 7.02 10.7 -18.46          14.23
-#> 3  Inv.Expon. m3-   mf_min 0.5 4.714  2.9 6.96 -10.18           9.09
+#> 3  Inv.Expon. m5-   mf_min 0.5 9.659 7.75 11.1 -18.46          14.23
 #> 4          LN m5-   mf_min 0.5 9.171 7.27 10.7 -18.46          14.23
-#> 5 Model averaging   mf_min 0.5 9.065 8.94   10    N/A            N/A
-#>                  Var                    a                 d weights
-#> 1  0.017888312831692 1.71849444527397e-07  5.61135528663567  0.3316
-#> 2 0.0178883278572467 1.71849441477975e-07  6.23608032503139  0.3316
-#> 3 0.0274547356721535 1.70137658821088e-07 0.163165375364757  0.0053
-#> 4 0.0178883115661859 1.71849497597811e-07  5.95609683921669  0.3316
-#> 5                N/A                  N/A               N/A      NA
+#> 5 Model averaging   mf_min 0.5 9.082 8.95   10    N/A            N/A
+#>                  Var                    a                d weights
+#> 1 0.0178883138606451 1.71849450798038e-07 5.61135507250048    0.25
+#> 2 0.0178883061920954 1.71849438542249e-07 6.23608007407315    0.25
+#> 3 0.0178883188476066 1.71849432297265e-07 6.76017196943648    0.25
+#> 4 0.0178883147297769   1.718494519122e-07 5.95609651511013    0.25
+#> 5                N/A                  N/A              N/A      NA
 ```

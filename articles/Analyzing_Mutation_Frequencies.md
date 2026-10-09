@@ -3,10 +3,12 @@
 ## Load MutSeqR and Example Data
 
 ``` r
+
 library(MutSeqR)
 ```
 
 ``` r
+
 library(ExperimentHub)
 # load the index
 eh <- ExperimentHub()
@@ -181,11 +183,13 @@ the data.*
 First, we will calculate MF per sample while retaining the dose column.
 
 ``` r
+
 # load example data:
 example_data <- eh[["EH9861"]]
 ```
 
 ``` r
+
 mf_data_global <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -198,6 +202,7 @@ Next, we will build a contrasts table that compares each BaP dose group
 back to the control group.
 
 ``` r
+
 # Create a contrasts table for pairwise comparisons
 contrasts_table <- data.frame(
   col1 = c("Low", "Medium", "High"),
@@ -208,6 +213,7 @@ contrasts_table <- data.frame(
 Finally, we will run the model.
 
 ``` r
+
 # Run the model
 model_by_dose <- model_mf(
   mf_data = mf_data_global,
@@ -252,13 +258,14 @@ validated.
 ##### Model Summary
 
 ``` r
+
 model_by_dose$summary
 ```
 
     ## 
     ## Call:
-    ## stats::glm(formula = model_formula, family = "quasibinomial", 
-    ##     data = mf_data)
+    ## stats::glm(formula = cbind(sum_min, group_depth) ~ dose_group, 
+    ##     family = "quasibinomial", data = mf_data)
     ## 
     ## Coefficients:
     ##                   Estimate Std. Error  t value Pr(>|t|)    
@@ -325,6 +332,7 @@ First, calculate MF for each sample and genomic locus, while retaining
 the dose column.
 
 ``` r
+
 mf_data_rg <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = c("sample", "label"),
@@ -337,6 +345,7 @@ Next, create a contrasts table the compares each dose group back to the
 control for each genomic locus:.
 
 ``` r
+
 combinations <- expand.grid(dose_group = unique(mf_data_rg$dose_group),
                             label = unique(mf_data_rg$label))
 combinations <- combinations[combinations$dose_group != "Control", ]
@@ -350,6 +359,7 @@ covergence by supplying the control argument, which is passed directly
 to [`lme4::glmer()`](https://rdrr.io/pkg/lme4/man/glmer.html).
 
 ``` r
+
 model_by_target <- model_mf(mf_data = mf_data_rg,
   fixed_effects = c("dose_group", "label"),
   test_interaction = TRUE,
@@ -392,6 +402,7 @@ The histogram and the QQ plot indicate normally distributed residuals.
 ##### Model Summary
 
 ``` r
+
 model_by_target$summary
 ```
 
@@ -416,86 +427,86 @@ model_by_target$summary
     ## 
     ## Fixed effects:
     ##                                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                  -1.596e+01  2.222e-01 -71.807  < 2e-16 ***
-    ## dose_groupHigh                1.903e+00  2.395e-01   7.947 1.92e-15 ***
-    ## dose_groupLow                 6.208e-01  2.738e-01   2.267 0.023380 *  
-    ## dose_groupMedium              1.293e+00  2.612e-01   4.951 7.39e-07 ***
-    ## labelchr1.2                   1.382e-01  2.824e-01   0.489 0.624624    
-    ## labelchr10                    4.517e-01  2.682e-01   1.684 0.092109 .  
-    ## labelchr11                    8.366e-01  2.641e-01   3.168 0.001535 ** 
-    ## labelchr12                    5.183e-01  2.660e-01   1.948 0.051365 .  
-    ## labelchr13                    1.984e-02  2.908e-01   0.068 0.945593    
-    ## labelchr14                    6.560e-01  2.671e-01   2.456 0.014043 *  
-    ## labelchr15                    5.084e-01  2.660e-01   1.911 0.056012 .  
-    ## labelchr16                    7.757e-01  2.693e-01   2.881 0.003970 ** 
-    ## labelchr17                    4.593e-01  2.885e-01   1.592 0.111307    
-    ## labelchr18                   -7.519e-03  2.958e-01  -0.025 0.979721    
-    ## labelchr19                   -2.378e-01  3.084e-01  -0.771 0.440585    
-    ## labelchr2                     6.258e-01  2.660e-01   2.352 0.018661 *  
-    ## labelchr3                     2.568e-01  2.863e-01   0.897 0.369732    
-    ## labelchr4                     5.106e-01  2.773e-01   1.841 0.065603 .  
-    ## labelchr5                     4.209e-01  2.824e-01   1.490 0.136186    
-    ## labelchr6                     2.937e-01  2.806e-01   1.046 0.295350    
-    ## labelchr7                    -3.983e-04  2.958e-01  -0.001 0.998926    
-    ## labelchr8                     4.383e-01  2.908e-01   1.507 0.131704    
-    ## labelchr9                     7.000e-01  2.671e-01   2.621 0.008766 ** 
-    ## dose_groupHigh:labelchr1.2   -2.483e-01  3.022e-01  -0.822 0.411347    
-    ## dose_groupLow:labelchr1.2    -2.540e-03  3.459e-01  -0.007 0.994141    
-    ## dose_groupMedium:labelchr1.2 -2.494e-02  3.289e-01  -0.076 0.939548    
-    ## dose_groupHigh:labelchr10    -4.750e-01  2.882e-01  -1.648 0.099285 .  
-    ## dose_groupLow:labelchr10     -3.356e-01  3.360e-01  -0.999 0.317857    
-    ## dose_groupMedium:labelchr10  -3.318e-01  3.167e-01  -1.048 0.294861    
-    ## dose_groupHigh:labelchr11    -5.554e-02  2.809e-01  -0.198 0.843268    
-    ## dose_groupLow:labelchr11      4.252e-01  3.174e-01   1.340 0.180390    
-    ## dose_groupMedium:labelchr11   4.359e-01  3.029e-01   1.439 0.150068    
-    ## dose_groupHigh:labelchr12    -1.676e-01  2.836e-01  -0.591 0.554373    
-    ## dose_groupLow:labelchr12     -1.544e-01  3.287e-01  -0.470 0.638477    
-    ## dose_groupMedium:labelchr12  -1.756e-01  3.115e-01  -0.564 0.572958    
-    ## dose_groupHigh:labelchr13    -3.978e-01  3.125e-01  -1.273 0.202970    
-    ## dose_groupLow:labelchr13      2.170e-03  3.561e-01   0.006 0.995138    
-    ## dose_groupMedium:labelchr13  -2.386e-01  3.425e-01  -0.697 0.486037    
-    ## dose_groupHigh:labelchr14     1.207e-01  2.832e-01   0.426 0.670094    
-    ## dose_groupLow:labelchr14      2.822e-01  3.228e-01   0.874 0.381936    
-    ## dose_groupMedium:labelchr14   4.877e-01  3.055e-01   1.596 0.110378    
-    ## dose_groupHigh:labelchr15    -1.145e+00  2.935e-01  -3.903 9.51e-05 ***
-    ## dose_groupLow:labelchr15     -4.122e-01  3.348e-01  -1.231 0.218290    
-    ## dose_groupMedium:labelchr15  -6.712e-01  3.214e-01  -2.088 0.036792 *  
-    ## dose_groupHigh:labelchr16    -2.607e-01  2.878e-01  -0.906 0.364977    
-    ## dose_groupLow:labelchr16      1.133e-01  3.279e-01   0.346 0.729681    
-    ## dose_groupMedium:labelchr16   6.542e-02  3.125e-01   0.209 0.834154    
-    ## dose_groupHigh:labelchr17     1.326e-01  3.059e-01   0.434 0.664586    
-    ## dose_groupLow:labelchr17      3.705e-01  3.457e-01   1.072 0.283845    
-    ## dose_groupMedium:labelchr17   3.523e-01  3.308e-01   1.065 0.286780    
-    ## dose_groupHigh:labelchr18     3.822e-01  3.118e-01   1.226 0.220225    
-    ## dose_groupLow:labelchr18      4.491e-01  3.525e-01   1.274 0.202678    
-    ## dose_groupMedium:labelchr18   5.986e-01  3.347e-01   1.789 0.073665 .  
-    ## dose_groupHigh:labelchr19     6.478e-02  3.273e-01   0.198 0.843111    
-    ## dose_groupLow:labelchr19      3.157e-01  3.689e-01   0.856 0.392152    
-    ## dose_groupMedium:labelchr19   3.342e-01  3.522e-01   0.949 0.342680    
-    ## dose_groupHigh:labelchr2     -6.041e-01  2.869e-01  -2.106 0.035210 *  
-    ## dose_groupLow:labelchr2      -2.459e-01  3.312e-01  -0.742 0.457836    
-    ## dose_groupMedium:labelchr2   -2.993e-01  3.138e-01  -0.954 0.340146    
-    ## dose_groupHigh:labelchr3     -1.072e+00  3.178e-01  -3.375 0.000739 ***
-    ## dose_groupLow:labelchr3      -5.817e-01  3.701e-01  -1.572 0.116009    
-    ## dose_groupMedium:labelchr3   -6.911e-01  3.503e-01  -1.973 0.048510 *  
-    ## dose_groupHigh:labelchr4     -2.788e-01  2.967e-01  -0.940 0.347321    
-    ## dose_groupLow:labelchr4      -1.492e-01  3.434e-01  -0.435 0.663885    
-    ## dose_groupMedium:labelchr4   -5.001e-02  3.234e-01  -0.155 0.877121    
-    ## dose_groupHigh:labelchr5     -2.603e-01  3.023e-01  -0.861 0.389180    
-    ## dose_groupLow:labelchr5      -4.738e-02  3.471e-01  -0.136 0.891432    
-    ## dose_groupMedium:labelchr5   -1.236e-01  3.312e-01  -0.373 0.709068    
-    ## dose_groupHigh:labelchr6     -2.353e-01  2.999e-01  -0.785 0.432557    
-    ## dose_groupLow:labelchr6      -4.394e-02  3.448e-01  -0.127 0.898606    
-    ## dose_groupMedium:labelchr6   -2.395e-01  3.307e-01  -0.724 0.468894    
-    ## dose_groupHigh:labelchr7      1.376e-01  3.131e-01   0.439 0.660386    
-    ## dose_groupLow:labelchr7       4.021e-01  3.530e-01   1.139 0.254618    
-    ## dose_groupMedium:labelchr7    5.092e-01  3.355e-01   1.518 0.129058    
-    ## dose_groupHigh:labelchr8      2.822e-01  3.074e-01   0.918 0.358623    
-    ## dose_groupLow:labelchr8       5.457e-01  3.454e-01   1.580 0.114098    
-    ## dose_groupMedium:labelchr8    6.388e-01  3.299e-01   1.936 0.052824 .  
-    ## dose_groupHigh:labelchr9     -4.547e-01  2.867e-01  -1.586 0.112740    
-    ## dose_groupLow:labelchr9      -1.701e-01  3.304e-01  -0.515 0.606713    
-    ## dose_groupMedium:labelchr9   -4.265e-01  3.172e-01  -1.345 0.178701    
+    ## (Intercept)                  -1.596e+01  2.225e-01 -71.723  < 2e-16 ***
+    ## dose_groupHigh                1.903e+00  2.398e-01   7.938 2.05e-15 ***
+    ## dose_groupLow                 6.208e-01  2.741e-01   2.265 0.023521 *  
+    ## dose_groupMedium              1.293e+00  2.614e-01   4.948 7.51e-07 ***
+    ## labelchr1.2                   1.382e-01  2.828e-01   0.489 0.625060    
+    ## labelchr10                    4.517e-01  2.685e-01   1.682 0.092520 .  
+    ## labelchr11                    8.366e-01  2.644e-01   3.164 0.001557 ** 
+    ## labelchr12                    5.183e-01  2.664e-01   1.946 0.051662 .  
+    ## labelchr13                    1.984e-02  2.911e-01   0.068 0.945662    
+    ## labelchr14                    6.560e-01  2.674e-01   2.453 0.014166 *  
+    ## labelchr15                    5.084e-01  2.664e-01   1.909 0.056323 .  
+    ## labelchr16                    7.757e-01  2.696e-01   2.877 0.004016 ** 
+    ## labelchr17                    4.593e-01  2.888e-01   1.590 0.111755    
+    ## labelchr18                   -7.519e-03  2.962e-01  -0.025 0.979746    
+    ## labelchr19                   -2.378e-01  3.088e-01  -0.770 0.441157    
+    ## labelchr2                     6.258e-01  2.664e-01   2.349 0.018810 *  
+    ## labelchr3                     2.568e-01  2.867e-01   0.896 0.370334    
+    ## labelchr4                     5.106e-01  2.777e-01   1.839 0.065945 .  
+    ## labelchr5                     4.209e-01  2.828e-01   1.488 0.136683    
+    ## labelchr6                     2.937e-01  2.810e-01   1.045 0.295958    
+    ## labelchr7                    -3.983e-04  2.962e-01  -0.001 0.998927    
+    ## labelchr8                     4.383e-01  2.911e-01   1.506 0.132186    
+    ## labelchr9                     7.000e-01  2.674e-01   2.618 0.008852 ** 
+    ## dose_groupHigh:labelchr1.2   -2.483e-01  3.026e-01  -0.821 0.411880    
+    ## dose_groupLow:labelchr1.2    -2.540e-03  3.463e-01  -0.007 0.994147    
+    ## dose_groupMedium:labelchr1.2 -2.494e-02  3.293e-01  -0.076 0.939613    
+    ## dose_groupHigh:labelchr10    -4.750e-01  2.885e-01  -1.646 0.099669 .  
+    ## dose_groupLow:labelchr10     -3.356e-01  3.364e-01  -0.998 0.318378    
+    ## dose_groupMedium:labelchr10  -3.318e-01  3.171e-01  -1.046 0.295381    
+    ## dose_groupHigh:labelchr11    -5.554e-02  2.812e-01  -0.197 0.843447    
+    ## dose_groupLow:labelchr11      4.252e-01  3.178e-01   1.338 0.180873    
+    ## dose_groupMedium:labelchr11   4.359e-01  3.032e-01   1.438 0.150523    
+    ## dose_groupHigh:labelchr12    -1.676e-01  2.839e-01  -0.591 0.554833    
+    ## dose_groupLow:labelchr12     -1.544e-01  3.291e-01  -0.469 0.638845    
+    ## dose_groupMedium:labelchr12  -1.756e-01  3.119e-01  -0.563 0.573379    
+    ## dose_groupHigh:labelchr13    -3.978e-01  3.128e-01  -1.272 0.203483    
+    ## dose_groupLow:labelchr13      2.170e-03  3.565e-01   0.006 0.995143    
+    ## dose_groupMedium:labelchr13  -2.386e-01  3.429e-01  -0.696 0.486507    
+    ## dose_groupHigh:labelchr14     1.207e-01  2.836e-01   0.426 0.670457    
+    ## dose_groupLow:labelchr14      2.822e-01  3.231e-01   0.873 0.382465    
+    ## dose_groupMedium:labelchr14   4.877e-01  3.058e-01   1.595 0.110778    
+    ## dose_groupHigh:labelchr15    -1.145e+00  2.938e-01  -3.898 9.68e-05 ***
+    ## dose_groupLow:labelchr15     -4.122e-01  3.351e-01  -1.230 0.218786    
+    ## dose_groupMedium:labelchr15  -6.712e-01  3.218e-01  -2.086 0.036991 *  
+    ## dose_groupHigh:labelchr16    -2.607e-01  2.881e-01  -0.905 0.365530    
+    ## dose_groupLow:labelchr16      1.133e-01  3.283e-01   0.345 0.729968    
+    ## dose_groupMedium:labelchr16   6.542e-02  3.128e-01   0.209 0.834334    
+    ## dose_groupHigh:labelchr17     1.326e-01  3.062e-01   0.433 0.664948    
+    ## dose_groupLow:labelchr17      3.705e-01  3.461e-01   1.071 0.284375    
+    ## dose_groupMedium:labelchr17   3.523e-01  3.311e-01   1.064 0.287312    
+    ## dose_groupHigh:labelchr18     3.822e-01  3.121e-01   1.225 0.220757    
+    ## dose_groupLow:labelchr18      4.491e-01  3.529e-01   1.273 0.203175    
+    ## dose_groupMedium:labelchr18   5.986e-01  3.350e-01   1.787 0.073985 .  
+    ## dose_groupHigh:labelchr19     6.478e-02  3.277e-01   0.198 0.843289    
+    ## dose_groupLow:labelchr19      3.157e-01  3.693e-01   0.855 0.392672    
+    ## dose_groupMedium:labelchr19   3.342e-01  3.526e-01   0.948 0.343213    
+    ## dose_groupHigh:labelchr2     -6.041e-01  2.872e-01  -2.104 0.035416 *  
+    ## dose_groupLow:labelchr2      -2.459e-01  3.316e-01  -0.742 0.458322    
+    ## dose_groupMedium:labelchr2   -2.993e-01  3.141e-01  -0.953 0.340667    
+    ## dose_groupHigh:labelchr3     -1.072e+00  3.181e-01  -3.371 0.000749 ***
+    ## dose_groupLow:labelchr3      -5.817e-01  3.705e-01  -1.570 0.116395    
+    ## dose_groupMedium:labelchr3   -6.911e-01  3.507e-01  -1.971 0.048744 *  
+    ## dose_groupHigh:labelchr4     -2.788e-01  2.971e-01  -0.939 0.347874    
+    ## dose_groupLow:labelchr4      -1.492e-01  3.438e-01  -0.434 0.664228    
+    ## dose_groupMedium:labelchr4   -5.001e-02  3.238e-01  -0.154 0.877254    
+    ## dose_groupHigh:labelchr5     -2.603e-01  3.026e-01  -0.860 0.389725    
+    ## dose_groupLow:labelchr5      -4.738e-02  3.475e-01  -0.136 0.891550    
+    ## dose_groupMedium:labelchr5   -1.236e-01  3.315e-01  -0.373 0.709370    
+    ## dose_groupHigh:labelchr6     -2.353e-01  3.002e-01  -0.784 0.433083    
+    ## dose_groupLow:labelchr6      -4.394e-02  3.452e-01  -0.127 0.898716    
+    ## dose_groupMedium:labelchr6   -2.395e-01  3.311e-01  -0.724 0.469372    
+    ## dose_groupHigh:labelchr7      1.376e-01  3.135e-01   0.439 0.660753    
+    ## dose_groupLow:labelchr7       4.021e-01  3.534e-01   1.138 0.255143    
+    ## dose_groupMedium:labelchr7    5.092e-01  3.359e-01   1.516 0.129484    
+    ## dose_groupHigh:labelchr8      2.822e-01  3.078e-01   0.917 0.359175    
+    ## dose_groupLow:labelchr8       5.457e-01  3.458e-01   1.578 0.114497    
+    ## dose_groupMedium:labelchr8    6.388e-01  3.302e-01   1.934 0.053087 .  
+    ## dose_groupHigh:labelchr9     -4.547e-01  2.870e-01  -1.584 0.113151    
+    ## dose_groupLow:labelchr9      -1.701e-01  3.308e-01  -0.514 0.607104    
+    ## dose_groupMedium:labelchr9   -4.265e-01  3.175e-01  -1.343 0.179168    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -504,6 +515,7 @@ We see that several fixed effects have significance.
 ##### ANOVA
 
 ``` r
+
 model_by_target$anova
 ```
 
@@ -511,9 +523,9 @@ model_by_target$anova
     ## 
     ## Response: cbind(sum_min, group_depth)
     ##                    Chisq Df Pr(>Chisq)    
-    ## dose_group        600.61  3  < 2.2e-16 ***
-    ## label            1239.68 19  < 2.2e-16 ***
-    ## dose_group:label  129.41 57  1.493e-07 ***
+    ## dose_group        602.15  3  < 2.2e-16 ***
+    ## label            1238.55 19  < 2.2e-16 ***
+    ## dose_group:label  129.18 57  1.597e-07 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -560,6 +572,7 @@ The output is a ggplot object that can be modified with ggplot2.
 #### Plot Model by Dose
 
 ``` r
+
 plot <- plot_model_mf(
   model_by_dose,
   plot_type = "bar",
@@ -590,6 +603,7 @@ ref_effect to dose_group so that significance labels are generated to
 indicate differences in dose, and not label.
 
 ``` r
+
 # Define the order of the genomic targets for the x-axis:
 # We will order them from lowest to highest MF at the High dose.
 label_order <- model_by_target$point_estimates %>%
@@ -649,6 +663,7 @@ parameter to TRUE.
 *Example 3. Export model results*
 
 ``` r
+
 write_excel(
   model_by_dose,
   workbook_name = "Example_model",
@@ -692,8 +707,8 @@ Ideally, the BMR would be based on a consensus scientific definition of
 what minimal level of change in MF is biologically significant.
 Currently, the default provided by this package calculates the BMD at a
 50% relative increase in MF from the background. This BMR was selected
-based on previous recommendations for genotoxicity assessment by White,
-Long, and Johnson (2020).
+based on previous recommendations for genotoxicity assessment by White
+et al. (2020).
 
 MutSeqR provides `bmd_proast` for BMD modelling, which runs a modified
 version of the [proast71.1](https://www.rivm.nl/en/proast) R library
@@ -751,6 +766,7 @@ filtered the data.*
 Fist, calculate MF per sample while retaining the numeric dose column:
 
 ``` r
+
 # load example data:
 example_data <- eh[["EH9861"]]
 
@@ -765,6 +781,7 @@ mf_data_global <- calculate_mf(
 Next, run bmd_proast()
 
 ``` r
+
 proast_results <- bmd_proast(
   mf_data = mf_data_global,
   dose_col = "dose",
@@ -790,6 +807,7 @@ at a dose of 9.11 mg/kg-bw/d (90% CI 8.39 - 9.87).
 #### Exponential & Hill Models
 
 ``` r
+
 replayPlot(proast_results$mf_min_Expon_HILL)
 ```
 
@@ -807,6 +825,7 @@ each dose is plotted as a large triangle. The estimated BMD is indicated
 by a dotted line.
 
 ``` r
+
 replayPlot(proast_results$mf_max_Expon_HILL)
 ```
 
@@ -826,6 +845,7 @@ by a dotted line.
 #### Inverse Exponential & Log-Normal Models
 
 ``` r
+
 replayPlot(proast_results$mf_min_InvExp_LN)
 ```
 
@@ -843,6 +863,7 @@ triangles. The geometric mean at each dose is plotted as a large
 triangle. The estimated BMD is indicated by a dotted line.
 
 ``` r
+
 replayPlot(proast_results$mf_max_InvExp_LN)
 ```
 
@@ -862,6 +883,7 @@ triangle. The estimated BMD is indicated by a dotted line.
 #### Bootstrap Curves
 
 ``` r
+
 replayPlot(proast_results$mf_max_bootstrap_curves)
 ```
 
@@ -879,12 +901,14 @@ the recommended value is 200).
 #### Cleveland Plots
 
 ``` r
+
 proast_results$mf_min_cleveland
 ```
 
     ## NULL
 
 ``` r
+
 proast_results$mf_max_cleveland
 ```
 
@@ -905,6 +929,7 @@ Github,*
 - calculated independently)\*
 
 ``` r
+
 plot_results <- data.frame(
   Response = c("PROAST", "ToxicR"),
   BMD = c(9.111, 9.641894),
@@ -944,9 +969,9 @@ be great for comparing the potency of different chemicals.
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-02-04 r89376)
+    ## R Under development (unstable) (2026-10-08 r90650)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.3 LTS
+    ## Running under: Ubuntu 24.04.5 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -965,86 +990,81 @@ be great for comparing the potency of different chemicals.
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] ExperimentHub_3.1.0 AnnotationHub_4.1.0 BiocFileCache_3.1.0
-    ##  [4] dbplyr_2.5.1        BiocGenerics_0.57.0 generics_0.1.4     
-    ##  [7] MutSeqR_0.99.9      yulab.utils_0.2.4   htmltools_0.5.9    
+    ##  [1] ExperimentHub_3.2.2 AnnotationHub_4.2.2 BiocFileCache_3.2.0
+    ##  [4] dbplyr_2.6.0        BiocGenerics_0.58.1 generics_0.1.4     
+    ##  [7] MutSeqR_1.1.1       yulab.utils_0.2.5   htmltools_0.5.9    
     ## [10] DT_0.34.0          
     ## 
     ## loaded via a namespace (and not attached):
     ##   [1] RColorBrewer_1.1-3          ggdendro_0.2.0             
-    ##   [3] jsonlite_2.0.0              magrittr_2.0.4             
-    ##   [5] GenomicFeatures_1.63.1      nloptr_2.2.1               
-    ##   [7] farver_2.1.2                rmarkdown_2.30             
-    ##   [9] fs_1.6.6                    BiocIO_1.21.0              
-    ##  [11] ragg_1.5.0                  vctrs_0.7.1                
+    ##   [3] jsonlite_2.0.0              magrittr_2.0.5             
+    ##   [5] GenomicFeatures_1.64.0      nloptr_2.2.1               
+    ##   [7] farver_2.1.2                rmarkdown_2.32             
+    ##   [9] fs_2.1.0                    BiocIO_1.22.0              
+    ##  [11] ragg_1.5.2                  vctrs_0.7.3                
     ##  [13] minqa_1.2.8                 memoise_2.0.1              
-    ##  [15] Rsamtools_2.27.0            RCurl_1.98-1.17            
-    ##  [17] S4Arrays_1.11.1             curl_7.0.0                 
-    ##  [19] broom_1.0.12                Formula_1.2-5              
-    ##  [21] SparseArray_1.11.10         TTR_0.24.4                 
-    ##  [23] sass_0.4.10                 bslib_0.10.0               
-    ##  [25] htmlwidgets_1.6.4           desc_1.4.3                 
-    ##  [27] httr2_1.2.2                 zoo_1.8-15                 
-    ##  [29] cachem_1.1.0                GenomicAlignments_1.47.0   
-    ##  [31] lifecycle_1.0.5             pkgconfig_2.0.3            
-    ##  [33] Matrix_1.7-4                R6_2.6.1                   
-    ##  [35] fastmap_1.2.0               rbibutils_2.4.1            
-    ##  [37] MatrixGenerics_1.23.0       digest_0.6.39              
-    ##  [39] colorspace_2.1-2            AnnotationDbi_1.73.0       
-    ##  [41] S4Vectors_0.49.0            rprojroot_2.1.1            
-    ##  [43] crosstalk_1.2.2             textshaping_1.0.4          
-    ##  [45] GenomicRanges_1.63.1        RSQLite_2.4.6              
-    ##  [47] labeling_0.4.3              filelock_1.0.3             
-    ##  [49] httr_1.4.7                  abind_1.4-8                
-    ##  [51] compiler_4.6.0              microbenchmark_1.5.0       
-    ##  [53] here_1.0.2                  bit64_4.6.0-1              
-    ##  [55] withr_3.0.2                 S7_0.2.1                   
-    ##  [57] backports_1.5.0             tseries_0.10-59            
-    ##  [59] BiocParallel_1.45.0         carData_3.0-6              
-    ##  [61] DBI_1.2.3                   MASS_7.3-65                
-    ##  [63] rappdirs_0.3.4              DelayedArray_0.37.0        
-    ##  [65] rjson_0.2.23                tools_4.6.0                
-    ##  [67] lmtest_0.9-40               otel_0.2.0                 
-    ##  [69] quantmod_0.4.28             nnet_7.3-20                
-    ##  [71] glue_1.8.0                  quadprog_1.5-8             
-    ##  [73] restfulr_0.0.16             nlme_3.1-168               
-    ##  [75] grid_4.6.0                  gtable_0.3.6               
-    ##  [77] BSgenome_1.79.1             tidyr_1.3.2                
-    ##  [79] data.table_1.18.2.1         doBy_4.7.1                 
-    ##  [81] car_3.1-5                   Deriv_4.2.0                
-    ##  [83] XVector_0.51.0              BiocVersion_3.23.1         
-    ##  [85] pillar_1.11.1               stringr_1.6.0              
-    ##  [87] splines_4.6.0               dplyr_1.2.0                
-    ##  [89] lattice_0.22-7              rtracklayer_1.71.3         
-    ##  [91] bit_4.6.0                   tidyselect_1.2.1           
-    ##  [93] Biostrings_2.79.4           knitr_1.51                 
-    ##  [95] reformulas_0.4.4            urca_1.3-4                 
-    ##  [97] IRanges_2.45.0              Seqinfo_1.1.0              
-    ##  [99] SummarizedExperiment_1.41.0 forecast_9.0.0             
-    ## [101] stats4_4.6.0                xfun_0.56                  
-    ## [103] Biobase_2.71.0              timeDate_4052.112          
-    ## [105] matrixStats_1.5.0           stringi_1.8.7              
-    ## [107] yaml_2.3.12                 boot_1.3-32                
-    ## [109] evaluate_1.0.5              codetools_0.2-20           
-    ## [111] cigarillo_1.1.0             tibble_3.3.1               
-    ## [113] BiocManager_1.30.27         cli_3.6.5                  
-    ## [115] Rdpack_2.6.5                systemfonts_1.3.1          
-    ## [117] jquerylib_0.1.4             modelr_0.1.11              
-    ## [119] dichromat_2.0-0.1           Rcpp_1.1.1                 
-    ## [121] png_0.1-8                   XML_3.99-0.20              
-    ## [123] parallel_4.6.0              pkgdown_2.2.0              
-    ## [125] fracdiff_1.5-3              ggplot2_4.0.2              
-    ## [127] blob_1.3.0                  plyranges_1.31.1           
-    ## [129] bitops_1.0-9                lme4_1.1-38                
-    ## [131] VariantAnnotation_1.57.1    scales_1.4.0               
-    ## [133] xts_0.14.1                  purrr_1.2.1                
-    ## [135] crayon_1.5.3                rlang_1.1.7                
-    ## [137] cowplot_1.2.0               KEGGREST_1.51.1
+    ##  [15] Rsamtools_2.28.0            RCurl_1.98-1.20            
+    ##  [17] S4Arrays_1.12.1             curl_8.0.0                 
+    ##  [19] broom_1.0.13                SparseArray_1.12.3         
+    ##  [21] Formula_1.2-6               sass_0.4.10                
+    ##  [23] bslib_0.12.0                htmlwidgets_1.6.4          
+    ##  [25] desc_1.4.3                  httr2_1.3.0                
+    ##  [27] zoo_1.9-1                   cachem_1.1.0               
+    ##  [29] GenomicAlignments_1.48.0    lifecycle_1.0.5            
+    ##  [31] pkgconfig_2.0.3             Matrix_1.7-6               
+    ##  [33] R6_2.6.1                    fastmap_1.2.0              
+    ##  [35] rbibutils_2.4.1             MatrixGenerics_1.24.0      
+    ##  [37] digest_0.6.39               colorspace_2.1-4           
+    ##  [39] AnnotationDbi_1.74.0        S4Vectors_0.50.3           
+    ##  [41] rprojroot_2.1.1             textshaping_1.0.5          
+    ##  [43] crosstalk_1.2.2             GenomicRanges_1.64.0       
+    ##  [45] RSQLite_3.53.3              labeling_0.4.3             
+    ##  [47] filelock_1.0.3              httr_1.4.9                 
+    ##  [49] abind_1.4-8                 compiler_4.7.0             
+    ##  [51] here_1.0.2                  bit64_4.8.6                
+    ##  [53] withr_3.0.3                 S7_0.2.2                   
+    ##  [55] backports_1.5.1             BiocParallel_1.46.0        
+    ##  [57] carData_3.0-6               DBI_1.3.0                  
+    ##  [59] MASS_7.3-66                 rappdirs_0.3.4             
+    ##  [61] DelayedArray_0.38.2         rjson_0.2.23               
+    ##  [63] tools_4.7.0                 otel_0.2.0                 
+    ##  [65] glue_1.8.1                  restfulr_0.0.17            
+    ##  [67] nlme_3.1-171                grid_4.7.0                 
+    ##  [69] gtable_0.3.6                BSgenome_1.80.0            
+    ##  [71] tidyr_1.3.2                 data.table_1.18.6.1        
+    ##  [73] doBy_4.7.2                  car_3.1-5                  
+    ##  [75] Deriv_4.3.5                 XVector_0.52.0             
+    ##  [77] BiocVersion_3.23.1          pillar_1.11.1              
+    ##  [79] stringr_1.6.0               splines_4.7.0              
+    ##  [81] dplyr_1.2.1                 lattice_0.23-1             
+    ##  [83] rtracklayer_1.72.0          bit_4.6.0                  
+    ##  [85] tidyselect_1.2.1            Biostrings_2.80.2          
+    ##  [87] knitr_1.52                  reformulas_0.4.4           
+    ##  [89] urca_1.3-4                  IRanges_2.46.0             
+    ##  [91] Seqinfo_1.2.0               SummarizedExperiment_1.42.0
+    ##  [93] forecast_9.0.2              stats4_4.7.0               
+    ##  [95] xfun_0.61                   Biobase_2.72.0             
+    ##  [97] timeDate_4052.112           matrixStats_1.5.0          
+    ##  [99] stringi_1.8.9               yaml_2.3.12                
+    ## [101] boot_1.3-32                 evaluate_1.0.5             
+    ## [103] codetools_0.2-20            cigarillo_1.2.1            
+    ## [105] tibble_3.3.1                BiocManager_1.30.27        
+    ## [107] cli_3.6.6                   Rdpack_2.6.6               
+    ## [109] systemfonts_1.3.2           jquerylib_0.1.4            
+    ## [111] dichromat_2.0-1             modelr_0.1.11              
+    ## [113] Rcpp_1.1.2                  png_0.1-9                  
+    ## [115] XML_3.99-0.25               parallel_4.7.0             
+    ## [117] pkgdown_2.2.1               fracdiff_1.5-4             
+    ## [119] ggplot2_4.0.3               blob_1.3.0                 
+    ## [121] plyranges_1.32.0            bitops_1.1-0               
+    ## [123] lme4_2.0-6                  VariantAnnotation_1.58.0   
+    ## [125] scales_1.4.0                purrr_1.2.2                
+    ## [127] crayon_1.5.3                rlang_1.3.0                
+    ## [129] cowplot_1.2.0               KEGGREST_1.52.2
 
-Committee, EFSA Scientific, Simon John More, Vasileios Bampidis, Diane
-Benford, Claude Bragard, Thorhallur Ingi Halldorsson, Antonio F
-Hernández-Jerez, et al. 2022. “Guidance on the Use of the Benchmark Dose
-Approach in Risk Assessment.” *EFSA Journal* 20 (10): e07584.
+Committee, EFSA Scientific, Simon John More, Vasileios Bampidis, et al.
+2022. “Guidance on the Use of the Benchmark Dose Approach in Risk
+Assessment.” *EFSA Journal* 20 (10): e07584.
 <https://doi.org/10.2903/j.efsa.2022.7584>.
 
 White, Paul A., Alexandra S. Long, and George E. Johnson. 2020.

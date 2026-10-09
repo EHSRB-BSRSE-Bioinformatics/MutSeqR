@@ -56,6 +56,8 @@ Analysis and visualization of mutation spectra.
   : Run COSMIC signatures comparison using SigProfilerAssignment
 - [`cluster_spectra()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/cluster_spectra.md)
   : Hierarchical Clustering
+- [`select_optimal_lambda()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/select_optimal_lambda.md)
+  : select_optimal_lambda
 
 ## Visualization Utilities
 
@@ -90,6 +92,8 @@ Predefined dictionaries and utility functions.
 
 Data export functions.
 
+- [`write_depth_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_depth_data.md)
+  : Prepare depth tables from a single resolution-specific input
 - [`write_mutation_calling_file()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutation_calling_file.md)
   : Write the mutation calling file to input into the SigProfiler
   Assignment web application.
@@ -125,7 +129,7 @@ Data export functions.
 - [`import_regions_metadata()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_regions_metadata.md)
   : Join Regions Metadata
 - [`import_sample_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_sample_data.md)
-  : Join Sample Metadata
+  : Import Sample Metadata
 - [`populate_sequence_context()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/populate_sequence_context.md)
   : Populate Sequence context
 - [`rename_columns()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/rename_columns.md)

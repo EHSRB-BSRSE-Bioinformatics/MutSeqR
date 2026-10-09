@@ -1,5 +1,23 @@
 # Changelog
 
+## MutSeqR (development version)
+
+- Fixed directory VCF imports losing header-derived sample identifiers
+  during VCF combination. Distinct samples now retain their identities
+  without sample metadata and can join matching metadata correctly.
+
+## MutSeqR 1.1.0 (2025-12-09)
+
+Development version following the Bioconductor 3.23 release (version
+numbering bumped by the Bioconductor team). No functional changes since
+1.0.0.
+
+## MutSeqR 1.0.0 (2025-12-09)
+
+First release on Bioconductor (Bioconductor 3.23). Contains all changes
+from the 0.99.x development series, most recently the reviewer-comment
+fixes listed under 0.99.4 below.
+
 ## MutSeqR 0.99.4 (2025-12-09)
 
 Preparing for Bioconductor release. We address comments from

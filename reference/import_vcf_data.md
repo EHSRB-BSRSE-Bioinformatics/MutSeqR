@@ -14,7 +14,9 @@ import_vcf_data(
   is_0_based_rg = FALSE,
   padding = 0,
   BS_genome = NULL,
-  output_granges = FALSE
+  output_granges = FALSE,
+  remove_sample_suffix = NULL,
+  add_chr = FALSE
 )
 ```
 
@@ -91,6 +93,20 @@ import_vcf_data(
   `TRUE` or `FALSE`; whether you want the mutation data to output as a
   GRanges object. Default output is as a dataframe.
 
+- remove_sample_suffix:
+
+  An optional character string representing a regular expression to
+  remove unwanted suffixes from VCF sample names prior to joining with
+  metadata. For example, if your VCF sample is "Sample1.cons.filtered"
+  but your metadata sheet just says "Sample1", you can use
+  `remove_sample_suffix = "\\.cons\\.filtered$"`. Default is NULL.
+
+- add_chr:
+
+  A logical variable. If `TRUE`, prepends "chr" to contig names missing
+  it (e.g., "1" becomes "chr1") and changes "MT" to "chrM" to ensure
+  compatibility with BSgenome packages. Default is `FALSE`.
+
 ## Value
 
 A table where each row is a mutation, and columns indicate the location,
@@ -99,6 +115,12 @@ data will be returned as a GRanges object, otherwise mutation data is
 returned as a dataframe.
 
 Output Column Definitions:
+
+- 'end': The half-open end position of the feature. This is calculated
+  as the 1-based start position + the length of the reference
+  allele - 1. For structural variants, if the INFO field contains SVLEN,
+  end is calculated as the 1-based start position + SVLEN - 1. End is
+  only calculated if not already present in the VCF INFO fields.
 
 - `short_ref`: The reference base at the start position.
 
@@ -170,8 +192,6 @@ The required fields are:
 
 **INFO FIELDS**
 
-- `END`: The half-open end position of the feature.
-
 - `sample`: An identifying field for your samples; either in the INFO
   field or as the header to the FORMAT field.
 
@@ -203,7 +223,7 @@ be used as the `total_depth`.
 
 ``` r
 # Mutation data is just for example purposes. It does not reflect real data
-file <- system.file("extdata", "Example_files", 
+file <- system.file("extdata", "Example_files",
                    "simple_vcf_data.vcf", package = "MutSeqR")
 # Import the data
 imported_example_data <- import_vcf_data(
@@ -212,17 +232,19 @@ BS_genome = find_BS_genome("mouse", "mm10"))
 #> 'getOption("repos")' replaces Bioconductor standard repositories, see
 #> 'help("repositories", package = "BiocManager")' for details.
 #> Replacement repositories:
-#>     CRAN: https://cran.rstudio.com
+#>     CRAN: https://cloud.R-project.org
 #> Selected reference genome: BSgenome.Mmusculus.UCSC.mm10
 #> Reference genome is already installed.
 #> Once installed, supply 'BSgenome.Mmusculus.UCSC.mm10' as the BS_genome parameter.
 #> 'getOption("repos")' replaces Bioconductor standard repositories, see
 #> 'help("repositories", package = "BiocManager")' for details.
 #> Replacement repositories:
-#>     CRAN: https://cran.rstudio.com
-#> Warning: info fields with no header: sample
-#> Expected 'alt' but found 'alt.value', renaming it.
+#>     CRAN: https://cloud.R-project.org
 #> Expected 'alt_depth' but found 'VD', renaming it.
+#> 'getOption("repos")' replaces Bioconductor standard repositories, see
+#> 'help("repositories", package = "BiocManager")' for details.
+#> Replacement repositories:
+#>     CRAN: https://cloud.R-project.org
 #> Loading reference genome: BSgenome.Mmusculus.UCSC.mm10.
 #> Retrieving context sequences from BSgenome
 ```

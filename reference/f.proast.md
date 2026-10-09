@@ -83,7 +83,7 @@ f.proast(
 - datatype:
 
   Non-interactive mode parameter. What type of response data do you want
-  to consider? Options are 'continuous, individual data'.
+  to consider? Currently only 'continuous, individual data'is supported.
 
 - model_choice:
 

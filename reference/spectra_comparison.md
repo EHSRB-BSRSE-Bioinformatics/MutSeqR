@@ -122,6 +122,11 @@ spectra_comparison(
   mf_type = "min",
   contrasts = contrasts
 )
+#> Warning: we have recently become aware that large mutation counts
+#>     can lead to inflated G2 statistics and false positives. We are actively
+#>     investigating this issue and will update the function accordingly. In the
+#>     meantime, we recommend using this function with caution, especially for
+#>     comparisons involving large mutation counts (> 10 mutations per sample).
 #>                contrasts       G2 p.value adj_p.value Significance
 #> Low       Low vs Control 195.6281       0           0          ***
 #> Medium Medium vs Control 503.3807       0           0          ***

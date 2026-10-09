@@ -253,6 +253,6 @@ model <- model_mf(
 )
 #> Reference level for factor dose: 0
 #> Fitting GLM: glm(cbind(sum_min, group_depth) ~ dose, family = quasibinomial)
-#> Max absolute residual: 4.73969242941171 (Row 14)
+#> Max absolute residual: 4.73969242941164 (Row 14)
 
 ```

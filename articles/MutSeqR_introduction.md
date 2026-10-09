@@ -49,6 +49,7 @@ perform common statistical analyses and visualisations.
 Install the package from Bioconductor:
 
 ``` r
+
 if (!require("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
 }
@@ -58,6 +59,7 @@ BiocManager::install("MutSeqR")
 Load the package
 
 ``` r
+
 library(MutSeqR)
 ```
 
@@ -77,19 +79,20 @@ calculation of mutation subtype frequencies and other site-specific
 frequencies. The data set can be pared down later to include only
 mutations of interest (SNVs, indels, SVs, or any combination).
 
-| **Column**           | **VCF Specification**           | **Definition**                                                                                                                                                                                                                                                     |
-|----------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| contig               | CHROM                           | The name of the reference sequence.                                                                                                                                                                                                                                |
-| start                | POS                             | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import.                                                                                                                                                  |
-| end                  | INFO(END)                       | The half-open end position of the feature in contig.                                                                                                                                                                                                               |
-| ref                  | REF                             | The reference allele at this position.                                                                                                                                                                                                                             |
-| alt                  | ALT                             | The left-aligned, normalized, alternate allele at this position.                                                                                                                                                                                                   |
-| sample               | INFO(sample) or Genotype Header | A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field.                                                                                                            |
-| *SUGGESTED FIELDS*   |                                 |                                                                                                                                                                                                                                                                    |
-| alt_depth            | VD                              | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites.                                                                                                                                      |
-| total_depth or depth | AD or DP                        | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to “depth”. |
+| **Column** | **VCF Specification** | **Definition** |
+|----|----|----|
+| contig | CHROM | The name of the reference sequence. |
+| start | POS | The start position of the feature. 0-based coordinates are accepted but will be changed to 1-based during import. |
+| end | INFO(END) | The half-open end position of the feature in contig. |
+| ref | REF | The reference allele at this position. |
+| alt | ALT | The left-aligned, normalized, alternate allele at this position. |
+| sample | INFO(sample) or Genotype Header | A unique identifier for the sample library. For VCF files, this field may be provided in either the INFO field, or as the header to the GENOTYPE field. |
+| *SUGGESTED FIELDS* |  |  |
+| alt_depth | VD | The read depth supporting the alternate allele. If not included, the function will assume an alt_depth of 1 at variant sites. |
+| total_depth or depth | AD or DP | The total read depth at this position. This column can be “total_depth” which excludes N-calls, or “depth”, which includes N-calls, if “total_depth” is not available. For VCF files, the total_depth is calculated as the sum of AD. DP is equivalent to “depth”. |
 
 (#tab:required-columns) Required columns for mutation data import.
+{.table}
 
 VCF files should follow the VCF specification (version 4.5; Danecek et
 al. ([2011](#ref-danecek-2011))). VCF files may be bg/g-zipped. Each
@@ -101,43 +104,43 @@ fields, and FORMAT fields will be retained upon import.
 Upon import, records are categorized within the `variation_type` column
 based on their REF and ALT. Categories are listed below.
 
-| variation_type | Definition                                                        |
-|----------------|-------------------------------------------------------------------|
-| no_variant     | No variation, the null-case.                                      |
-| snv            | Single nucleotide variant.                                        |
-| mnv            | Multiple nucleotide variant.                                      |
-| insertion      | Insertion.                                                        |
-| deletion       | Deletion.                                                         |
-| complex        | REF and ALT are of different lengths and nucleotide compositions. |
-| symbolic       | Structural variant                                                |
-| ambiguous      | ALT contains IUPAC ambiguity codes.                               |
-| uncategorized  | The record does not fall into any of the preceding categories.    |
+| variation_type | Definition |
+|----|----|
+| no_variant | No variation, the null-case. |
+| snv | Single nucleotide variant. |
+| mnv | Multiple nucleotide variant. |
+| insertion | Insertion. |
+| deletion | Deletion. |
+| complex | REF and ALT are of different lengths and nucleotide compositions. |
+| symbolic | Structural variant |
+| ambiguous | ALT contains IUPAC ambiguity codes. |
+| uncategorized | The record does not fall into any of the preceding categories. |
 
-(#tab:variation-types) Definitions of Variation types.
+(#tab:variation-types) Definitions of Variation types. {.table}
 
 Additional columns are created to further characterise variants.
 
-| Column Name                      | Definition                                                                                                                                                               |
-|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| short_ref                        | The reference base at the start position.                                                                                                                                |
-| normalized_ref                   | The short_ref in C/T (pyrimidine) notation for this position. Ex. `A` -\> `T`, `G` -\> `C`                                                                               |
-| context                          | The trinucleotide context at this position. Consists of the reference base and the two flanking bases. Sequences are retrieved from the appropriate BS genome. Ex. `TAC` |
-| normalized_context               | The trinucleotide context in C/T (pyrimidine) notation for this position (Ex. `TAG` -\> `CTA`)                                                                           |
-| variation_type                   | The type of variant (no_variant, snv, mnv, insertion, deletion, complex, sv, ambiguous, uncategorized)                                                                   |
-| subtype                          | The substitution type of the snv variant (12-base spectrum; Ex. `A>C`)                                                                                                   |
-| normalized_subtype               | The snv subtype in C/T (pyrimidine) notation (6-base spectrum; Ex. `A>C` -\> `T>G`)                                                                                      |
-| context_with_mutation            | The snv subtype including the two flanking nucleotides (192-base spectrum; Ex. `T[A>C]G`)                                                                                |
-| normalized_context_with_mutation | The snv subtype in C/T (pyrimidine) notation including the two flanking nucleotides (96-base spectrum; Ex. `T[A>C]G` -\> `C[T>G]A`)                                      |
-| nchar_ref                        | The length (in bp) of the reference allele.                                                                                                                              |
-| nchar_alt                        | The length (in bp) of the alternate allele.                                                                                                                              |
-| varlen                           | The length (in bp) of the variant.                                                                                                                                       |
-| ref_depth                        | The depth of the reference allele. Calculated as `total_depth` - `alt_depth`, if applicable.                                                                             |
-| vaf                              | The variant allele fraction. Calculated as `alt_depth`/`total_depth`                                                                                                     |
-| gc_content                       | % GC of the trinucleotide context at this position.                                                                                                                      |
-| is_known                         | A logical value indicating if the record is a known variant; i.e. ID field is not NULL.                                                                                  |
-| row_has_duplicate                | A logical value that flags rows whose position is the same as that of at least one other row for the same sample.                                                        |
+| Column Name | Definition |
+|----|----|
+| short_ref | The reference base at the start position. |
+| normalized_ref | The short_ref in C/T (pyrimidine) notation for this position. Ex. `A` -\> `T`, `G` -\> `C` |
+| context | The trinucleotide context at this position. Consists of the reference base and the two flanking bases. Sequences are retrieved from the appropriate BS genome. Ex. `TAC` |
+| normalized_context | The trinucleotide context in C/T (pyrimidine) notation for this position (Ex. `TAG` -\> `CTA`) |
+| variation_type | The type of variant (no_variant, snv, mnv, insertion, deletion, complex, sv, ambiguous, uncategorized) |
+| subtype | The substitution type of the snv variant (12-base spectrum; Ex. `A>C`) |
+| normalized_subtype | The snv subtype in C/T (pyrimidine) notation (6-base spectrum; Ex. `A>C` -\> `T>G`) |
+| context_with_mutation | The snv subtype including the two flanking nucleotides (192-base spectrum; Ex. `T[A>C]G`) |
+| normalized_context_with_mutation | The snv subtype in C/T (pyrimidine) notation including the two flanking nucleotides (96-base spectrum; Ex. `T[A>C]G` -\> `C[T>G]A`) |
+| nchar_ref | The length (in bp) of the reference allele. |
+| nchar_alt | The length (in bp) of the alternate allele. |
+| varlen | The length (in bp) of the variant. |
+| ref_depth | The depth of the reference allele. Calculated as `total_depth` - `alt_depth`, if applicable. |
+| vaf | The variant allele fraction. Calculated as `alt_depth`/`total_depth` |
+| gc_content | % GC of the trinucleotide context at this position. |
+| is_known | A logical value indicating if the record is a known variant; i.e. ID field is not NULL. |
+| row_has_duplicate | A logical value that flags rows whose position is the same as that of at least one other row for the same sample. |
 
-(#tab:mut-columns) Definitions of Mutation data columns.
+(#tab:mut-columns) Definitions of Mutation data columns. {.table}
 
 ### General Usage
 
@@ -182,6 +185,7 @@ be retrieved from the ExperimentHub index (eh) through specific
 accessors.
 
 ``` r
+
 library(ExperimentHub)
 # load the index
 eh <- ExperimentHub()
@@ -190,7 +194,7 @@ query(eh, "MutSeqRData")
 ```
 
     ## ExperimentHub with 9 records
-    ## # snapshotDate(): 2026-01-30
+    ## # snapshotDate(): 2026-04-21
     ## # $dataprovider: Health Canada, TwinStrand Biosciences
     ## # $species: Mus musculus
     ## # $rdataclass: data.frame
@@ -214,6 +218,7 @@ Identify the BS genome: Sequencing data was aligned to the mm10 mouse
 genome.
 
 ``` r
+
 mouse_BS_genome <- find_BS_genome(organism = "mouse", genome = "mm10")
 print(mouse_BS_genome)
 ```
@@ -223,6 +228,7 @@ print(mouse_BS_genome)
 Install the appropriate BS genome:
 
 ``` r
+
 BiocManager("BSgenome.Mmusculus.UCSC.mm10")
 ```
 
@@ -235,10 +241,12 @@ sequenced for the Mouse Mutagenesis Panel* *with the alt_depth and the
 tota_depth values for each record.*
 
 ``` r
+
 example_file <- eh[["EH9859"]]
 ```
 
 ``` r
+
 sample_metadata <- data.frame(
   sample = "dna00996.1",
   dose = "50",
@@ -264,10 +272,12 @@ an .rds file.* *We will load the dataframe and supply it to
 data frames as input.*
 
 ``` r
+
 example_data <- eh[["EH9857"]]
 ```
 
 ``` r
+
 sample_metadata <- data.frame(
   sample = "dna00996.1",
   dose = "50",
@@ -312,6 +322,7 @@ to 1-based. If you do not wish to specify regions, then set the
 to our* *example tabular file.*
 
 ``` r
+
 imported_example_data <- import_mut_data(
   mut_file = example_data,
   sample_data = sample_metadata,
@@ -333,6 +344,7 @@ panels may also be loaded with this function by providing their file
 path to the regions parameter.
 
 ``` r
+
 region_example <- load_regions_file("TSpanel_mouse")
 region_example
 ```
@@ -393,7 +405,7 @@ synonyms are listed below.
 | total_depth | informative_somatic_depth                                  |
 
 (#tab:name-sym) Predefined column name synonyms. Synonyms will be
-automatically changed to the default Column value upon import.
+automatically changed to the default Column value upon import. {.table}
 
 If your data contains a column that is synonymous to one of the required
 columns, but the name is not included in our synonyms list, your column
@@ -402,6 +414,7 @@ Provide this parameter with a list of names to specify the meaning of
 column headers.
 
 ``` r
+
 mut_data <- eh[["EH9858"]]
 ```
 
@@ -415,17 +428,13 @@ mut_data <- eh[["EH9858"]]
     ## loading from cache
 
 ``` r
+
 imported_example_data_custom <- import_mut_data(
   mut_file = mut_data,
   custom_column_names = list(my_contig_name = "contig",
                              my_sample_name = "sample")
 )
 ```
-
-    ## 'getOption("repos")' replaces Bioconductor standard repositories, see
-    ## 'help("repositories", package = "BiocManager")' for details.
-    ## Replacement repositories:
-    ##     CRAN: https://cran.rstudio.com
 
     ## Expected 'contig' but found 'my_contig_name', renaming it.
 
@@ -577,6 +586,7 @@ parameter.
   column. Their `alt_depth` will be removed from their `total_depth`.
 
 ``` r
+
 # load the example data
 example_data <- eh[["EH9860"]]
 ```
@@ -591,6 +601,7 @@ example_data <- eh[["EH9860"]]
     ## loading from cache
 
 ``` r
+
 # Filter
 filtered_example_mutation_data <- filter_mut(
   mutation_data = example_data,
@@ -689,6 +700,7 @@ file “Example mutation data filtered” is the output of filter_mut()*
 *from Example 2*
 
 ``` r
+
 # load example data:
 example_data <- eh[["EH9861"]]
 
@@ -710,6 +722,7 @@ for every level of the designated groups.
 genomic target.*
 
 ``` r
+
 mf_data_rg <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = c("sample", "label"),
@@ -728,6 +741,7 @@ summary table for averaging using the `retain_metadata_cols` parameter.
 *Example 3.3. Calculate the mean MF per dose*
 
 ``` r
+
 mf_data_global <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -747,15 +761,15 @@ mean_mf <- mf_data_global %>%
 Mutations can also be grouped by mutation subtype at varying degrees of
 resolution using the `subtype_resolution` parameter.
 
-| Subtype resolutions | Definition                                                                                                        | Example                                                                |
-|---------------------|-------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| `type`              | The variation type                                                                                                | snv, mnv, insertion, deletion, complex, and symbolic variants          |
-| `base_6`            | The simple spectrum; snv subtypes in their pyrimidine context                                                     | C\>A, C\>G, C\>T, T\>A, T\>C, T\>G                                     |
-| `base_12`           | The snv subtypes                                                                                                  | A\>C, A\>G, A\>T, C\>A, C\>G, C\>T, G\>A, G\>C, G\>T, T\>A, T\>C, T\>G |
-| `base_96`           | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A\[C\>T\]A                                                             |
-| `base_192`          | The snv subtypes reported alongside their two flanking nucleotides                                                | A\[G\>A\]A                                                             |
+| Subtype resolutions | Definition | Example |
+|----|----|----|
+| `type` | The variation type | snv, mnv, insertion, deletion, complex, and symbolic variants |
+| `base_6` | The simple spectrum; snv subtypes in their pyrimidine context | C\>A, C\>G, C\>T, T\>A, T\>C, T\>G |
+| `base_12` | The snv subtypes | A\>C, A\>G, A\>T, C\>A, C\>G, C\>T, G\>A, G\>C, G\>T, T\>A, T\>C, T\>G |
+| `base_96` | The trinculeotide spectrum; the snv subtypes in their pyrimidine context alongside their two flanking nucleotides | A\[C\>T\]A |
+| `base_192` | The snv subtypes reported alongside their two flanking nucleotides | A\[G\>A\]A |
 
-(#tab:subtypes) Definitions of mutation subtype resolutions.
+(#tab:subtypes) Definitions of mutation subtype resolutions. {.table}
 
 Mutations and `total_depth` will be summed across groups for each
 mutation subtype to calculate frequencies. For SNV subtypes, the
@@ -783,27 +797,34 @@ subtype_resolution are defined:
 | `base_192`         | `context_with_mutation`            | `context`            |
 
 (#tab:subtypes-cols) Subtype Resolutions and their associated
-subtype/context columns.
+subtype/context columns. {.table}
 
 The function will also calculate the proportion of mutations for each
 subtype, normalized to the `total_depth`:  
-$$P_{s} = \frac{\left( \frac{M_{s}}{D_{s}} \right)}{\sum\limits_{s}\left( \frac{M_{s}}{D_{s}} \right)}$$  
-Where $P_{s}$ is the normalized mutation proportion for subtype $s$.
-$M_{s}$ is the group mutation sum for subtype $s$. $D_{s}$ is the group
-sum of the `subtype_depth` for subtype $s$.  
+``` math
+P_s = \frac{\left(\frac{M_s}{D_s}\right)}{\sum_s \left(\frac{M_s}{D_s}\right)}
+```
+  
+Where $`P_s`$ is the normalized mutation proportion for subtype $`s`$.
+$`M_s`$ is the group mutation sum for subtype $`s`$. $`D_s`$ is the
+group sum of the `subtype_depth` for subtype $`s`$.  
 If total\*depth is not available for the mutation data,
 [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
 will return the subtype mutation counts per group. It will also
 calculate subtype proportions, without normalizing to the total_depth:  
-$$P\prime\_ s = \frac{M_{s}}{M*{total}}$$  
-Where, $P\prime_{s}$ is the non-normalized mutation proportion of
-subtype $s$. $M_{s}$ is the group mutation sum for subtype $s$.
-$M_{total}$ is the total mutation sum for the group.
+``` math
+P'\_s = \frac{M_s}{M*{total}}
+```
+  
+Where, $`P'_s`$ is the non-normalized mutation proportion of subtype
+$`s`$. $`M_s`$ is the group mutation sum for subtype $`s`$.
+$`M_{total}`$ is the total mutation sum for the group.
 
 *Example 3.4. The following code will return the base_6 mutation spectra
 for* *all samples with mutation proportions normalized to depth.*
 
 ``` r
+
 mf_data_6 <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -832,6 +853,7 @@ mutation types.
 only* *insertion and deletion mutations in the count.*
 
 ``` r
+
 mf_data_global_indels <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -849,6 +871,7 @@ Users may also supply a list of variation_types to exclude to the
 resolution,* *excluding ambiguous and uncategorized mutations.*
 
 ``` r
+
 mf_data_types <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -862,6 +885,7 @@ mf_data_types <- calculate_mf(
 *Example 3.7. Include only snv mutations at the base_96 resolution*
 
 ``` r
+
 mf_data_96 <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -930,6 +954,7 @@ sample MF.*
 **Table 13.** ‘sample_depth’ - Precalculated Depth Data per sample.
 
 ``` r
+
 sample_depth <- data.frame(
   sample = unique(example_data$sample),
   group_depth = c(565395266, 755574283, 639909215, 675090988, 598104021,
@@ -943,6 +968,7 @@ DT::datatable(sample_depth)
 ```
 
 ``` r
+
 mf_data_global_precalc <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -959,6 +985,7 @@ Example.
 sample MF.*
 
 ``` r
+
 mf_data_6_precalc <- calculate_mf(
   mutation_data = example_data,
   cols_to_group = "sample",
@@ -977,14 +1004,17 @@ Precalculated Depth Example.
 View examples for base_12, base_96, and base_192 below:
 
 ``` r
+
 base_12 <- eh[["EH9863"]]
 ```
 
 ``` r
+
 base_96 <- eh[["EH9864"]]
 ```
 
 ``` r
+
 base_192 <- eh[["EH9865"]]
 ```
 
@@ -1036,6 +1066,7 @@ can be modified using ggplot2.
 by* *dose group. See example 3.1 for calculating mf_data_global*
 
 ``` r
+
 # Define the order for dose groups
 mf_data_global$dose_group <- factor(
   mf_data_global$dose_group,
@@ -1074,6 +1105,7 @@ individual values coloured by dose. See example 3.1 for calculating*
 *mf_data_global*
 
 ``` r
+
 plot_mean <- plot_mean_mf(
   mf_data = mf_data_global,
   group_col = "dose_group",
@@ -1115,6 +1147,7 @@ Mutation Frequencies for more information on using
 *Example 4.1. Write MF data to excel workbook.*
 
 ``` r
+
 # save a single data frame to an Excel file
 write_excel(mf_data_global, workbook_name = "example_mf_data")
 
@@ -1133,6 +1166,7 @@ with
 *Examples 4.2: export our example data as a vcf file.*
 
 ``` r
+
 write_vcf_from_mut(example_data)
 ```
 
@@ -1179,6 +1213,7 @@ defines the parameters to be passed to the Summary_Report.rmd. Users
 must fill out the .yaml file and save it.
 
 ``` r
+
 config <- system.file("extdata", "inputs", "summary_config.yaml", package = "MutSeqR")
 file.copy(from = config, to = "path/to/save/the/summary_config.yaml")
 ```
@@ -1190,6 +1225,7 @@ parameter. Provide the name and the file path of the output file to the
 “html_document” (recommended), “pdf_document”, or “all”.
 
 ``` r
+
 render_report(config_file_path = "path/to/summary_config.yaml",
               output_file = "path/to/output_file.html",
               output_format = "html_document")
@@ -1261,7 +1297,12 @@ during import whether the mutation data contains a depth column
 precalculated depth can be provided for any subtype resolution to
 calculate mutation frequencies. If an exp_variable is provided, the
 Summary_Report will automatically sum the per-sample depths to obtain
-the depth per experimental group as needed.
+the depth per experimental group as needed. When a base96 depth file is
+supplied, it must contain one row for each of the 32 normalized
+trinucleotide contexts for every sample. The report derives global and
+base6 depths from those rows when their respective files are omitted.
+Explicit global and base6 files take precedence for their own
+resolutions.
 
 *In order for MutSeqR to calculate the depth from the mutation data,
 the* *data must have the depth-value for **every sequenced site**. It is
@@ -1274,22 +1315,24 @@ calculate the depth from the mutation data*.
 - *precalc_depth_data_global*: Optional file path to the precalculated
   per-sample total_depth data. This is the total number of bases
   sequenced per sample, used for calculating mutation frequencies.
-  Columns are “sample” and “group_depth”. If using an exp_variable (see
-  below), please also include it in this table. The file path will be
-  read as projectdir/precalc_depth_data_global.
+  Columns are “sample” and “group_depth”. This file may be omitted when
+  a base96 depth file is supplied. The file path will be read as
+  projectdir/precalc_depth_data_global.
 - *precalc_depth_data_base6*: Optional file path to the precalculated
   per-sample total_depth data in the base_6 context. This is the total
   number of C and T bases sequenced for each sample. Columns are
-  “sample”, “normalized_ref”, and “subtype_depth”. If using an
-  exp_variable (see below), please also include it in this table. The
-  file path will be read as projectdir/precalc_depth_data_base6.
+  “sample”, “normalized_ref”, and “subtype_depth”. This file may be
+  omitted when a base96 depth file is supplied. The file path will be
+  read as projectdir/precalc_depth_data_base6.
 - *precalc_depth_data_base96*: Optional file path to the precalculated
   per-sample total_depth data in the base_96 context. This is the total
   number bases sequenced per sample for each of the 32 possible
   trinucleotide contexts in their pyrimidine notation. Columns are
-  “sample”, “normalized_context”, and “subtype_depth”. If using an
-  exp_variable, please also include it in this table. The file path will
-  be read as projectdir/precalc_depth_data_base96.
+  “sample”, “normalized_context”, and “subtype_depth”. Each sample must
+  include exactly one row for all 32 contexts; include zero-depth
+  contexts explicitly. The report can derive omitted global and base6
+  files from this table. The file path will be read as
+  projectdir/precalc_depth_data_base96.
 - *precalc_depth_data_rg*: Optional file path to the precalculated
   per-sample total_depth data for each target region. This is the total
   number of bases sequenced per sample for each region. Columns are
@@ -1459,9 +1502,9 @@ be skipped.
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-02-04 r89376)
+    ## R Under development (unstable) (2026-10-08 r90650)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.3 LTS
+    ## Running under: Ubuntu 24.04.5 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -1481,96 +1524,85 @@ be skipped.
     ## [8] base     
     ## 
     ## other attached packages:
-    ##  [1] BSgenome.Mmusculus.UCSC.mm10_1.4.3 BSgenome_1.79.1                   
-    ##  [3] rtracklayer_1.71.3                 BiocIO_1.21.0                     
-    ##  [5] Biostrings_2.79.4                  XVector_0.51.0                    
-    ##  [7] GenomicRanges_1.63.1               Seqinfo_1.1.0                     
-    ##  [9] IRanges_2.45.0                     S4Vectors_0.49.0                  
-    ## [11] ExperimentHub_3.1.0                AnnotationHub_4.1.0               
-    ## [13] BiocFileCache_3.1.0                dbplyr_2.5.1                      
-    ## [15] BiocGenerics_0.57.0                generics_0.1.4                    
-    ## [17] MutSeqR_0.99.9                     htmltools_0.5.9                   
+    ##  [1] BSgenome.Mmusculus.UCSC.mm10_1.4.3 BSgenome_1.80.0                   
+    ##  [3] rtracklayer_1.72.0                 BiocIO_1.22.0                     
+    ##  [5] Biostrings_2.80.2                  XVector_0.52.0                    
+    ##  [7] GenomicRanges_1.64.0               Seqinfo_1.2.0                     
+    ##  [9] IRanges_2.46.0                     S4Vectors_0.50.3                  
+    ## [11] ExperimentHub_3.2.2                AnnotationHub_4.2.2               
+    ## [13] BiocFileCache_3.2.0                dbplyr_2.6.0                      
+    ## [15] BiocGenerics_0.58.1                generics_0.1.4                    
+    ## [17] MutSeqR_1.1.1                      htmltools_0.5.9                   
     ## [19] DT_0.34.0                         
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] DBI_1.2.3                   bitops_1.0-9               
-    ##  [3] httr2_1.2.2                 rlang_1.1.7                
-    ##  [5] magrittr_2.0.4              otel_0.2.0                 
-    ##  [7] matrixStats_1.5.0           compiler_4.6.0             
-    ##  [9] RSQLite_2.4.6               GenomicFeatures_1.63.1     
-    ## [11] png_0.1-8                   systemfonts_1.3.1          
-    ## [13] vctrs_0.7.1                 stringr_1.6.0              
+    ##  [1] DBI_1.3.0                   bitops_1.1-0               
+    ##  [3] httr2_1.3.0                 rlang_1.3.0                
+    ##  [5] magrittr_2.0.5              otel_0.2.0                 
+    ##  [7] matrixStats_1.5.0           compiler_4.7.0             
+    ##  [9] RSQLite_3.53.3              GenomicFeatures_1.64.0     
+    ## [11] png_0.1-9                   systemfonts_1.3.2          
+    ## [13] vctrs_0.7.3                 stringr_1.6.0              
     ## [15] pkgconfig_2.0.3             crayon_1.5.3               
     ## [17] fastmap_1.2.0               labeling_0.4.3             
-    ## [19] Rsamtools_2.27.0            rmarkdown_2.30             
-    ## [21] ragg_1.5.0                  purrr_1.2.1                
-    ## [23] bit_4.6.0                   xfun_0.56                  
-    ## [25] cachem_1.1.0                cigarillo_1.1.0            
+    ## [19] Rsamtools_2.28.0            rmarkdown_2.32             
+    ## [21] ragg_1.5.2                  purrr_1.2.2                
+    ## [23] bit_4.6.0                   xfun_0.61                  
+    ## [25] cachem_1.1.0                cigarillo_1.2.1            
     ## [27] jsonlite_2.0.0              blob_1.3.0                 
-    ## [29] DelayedArray_0.37.0         BiocParallel_1.45.0        
-    ## [31] parallel_4.6.0              R6_2.6.1                   
-    ## [33] plyranges_1.31.1            VariantAnnotation_1.57.1   
-    ## [35] bslib_0.10.0                stringi_1.8.7              
+    ## [29] DelayedArray_0.38.2         BiocParallel_1.46.0        
+    ## [31] parallel_4.7.0              R6_2.6.1                   
+    ## [33] plyranges_1.32.0            VariantAnnotation_1.58.0   
+    ## [35] bslib_0.12.0                stringi_1.8.9              
     ## [37] RColorBrewer_1.1-3          jquerylib_0.1.4            
-    ## [39] SummarizedExperiment_1.41.0 knitr_1.51                 
-    ## [41] Matrix_1.7-4                tidyselect_1.2.1           
-    ## [43] dichromat_2.0-0.1           abind_1.4-8                
+    ## [39] SummarizedExperiment_1.42.0 knitr_1.52                 
+    ## [41] Matrix_1.7-6                tidyselect_1.2.1           
+    ## [43] dichromat_2.0-1             abind_1.4-8                
     ## [45] yaml_2.3.12                 codetools_0.2-20           
-    ## [47] curl_7.0.0                  lattice_0.22-7             
-    ## [49] tibble_3.3.1                withr_3.0.2                
-    ## [51] Biobase_2.71.0              KEGGREST_1.51.1            
-    ## [53] S7_0.2.1                    evaluate_1.0.5             
+    ## [47] curl_8.0.0                  lattice_0.23-1             
+    ## [49] tibble_3.3.1                withr_3.0.3                
+    ## [51] Biobase_2.72.0              KEGGREST_1.52.2            
+    ## [53] S7_0.2.2                    evaluate_1.0.5             
     ## [55] desc_1.4.3                  pillar_1.11.1              
     ## [57] BiocManager_1.30.27         filelock_1.0.3             
-    ## [59] MatrixGenerics_1.23.0       rprojroot_2.1.1            
-    ## [61] RCurl_1.98-1.17             BiocVersion_3.23.1         
-    ## [63] ggplot2_4.0.2               scales_1.4.0               
-    ## [65] glue_1.8.0                  tools_4.6.0                
-    ## [67] data.table_1.18.2.1         GenomicAlignments_1.47.0   
-    ## [69] fs_1.6.6                    XML_3.99-0.20              
-    ## [71] grid_4.6.0                  tidyr_1.3.2                
-    ## [73] crosstalk_1.2.2             colorspace_2.1-2           
-    ## [75] AnnotationDbi_1.73.0        restfulr_0.0.16            
-    ## [77] cli_3.6.5                   rappdirs_0.3.4             
-    ## [79] textshaping_1.0.4           S4Arrays_1.11.1            
-    ## [81] ggdendro_0.2.0              dplyr_1.2.0                
+    ## [59] MatrixGenerics_1.24.0       rprojroot_2.1.1            
+    ## [61] RCurl_1.98-1.20             BiocVersion_3.23.1         
+    ## [63] ggplot2_4.0.3               scales_1.4.0               
+    ## [65] glue_1.8.1                  tools_4.7.0                
+    ## [67] data.table_1.18.6.1         GenomicAlignments_1.48.0   
+    ## [69] fs_2.1.0                    XML_3.99-0.25              
+    ## [71] grid_4.7.0                  tidyr_1.3.2                
+    ## [73] crosstalk_1.2.2             colorspace_2.1-4           
+    ## [75] AnnotationDbi_1.74.0        restfulr_0.0.17            
+    ## [77] cli_3.6.6                   rappdirs_0.3.4             
+    ## [79] textshaping_1.0.5           S4Arrays_1.12.1            
+    ## [81] ggdendro_0.2.0              dplyr_1.2.1                
     ## [83] gtable_0.3.6                sass_0.4.10                
-    ## [85] digest_0.6.39               SparseArray_1.11.10        
+    ## [85] digest_0.6.39               SparseArray_1.12.3         
     ## [87] rjson_0.2.23                htmlwidgets_1.6.4          
     ## [89] farver_2.1.2                memoise_2.0.1              
-    ## [91] pkgdown_2.2.0               lifecycle_1.0.5            
-    ## [93] httr_1.4.7                  here_1.0.2                 
-    ## [95] bit64_4.6.0-1               MASS_7.3-65
+    ## [91] pkgdown_2.2.1               lifecycle_1.0.5            
+    ## [93] httr_1.4.9                  here_1.0.2                 
+    ## [95] bit64_4.8.6                 MASS_7.3-66
 
-Danecek, Petr, Adam Auton, Goncalo Abecasis, Cornelis A. Albers, Eric
-Banks, Mark A. DePristo, Robert E. Handsaker, et al. 2011. “The Variant
+Danecek, Petr, Adam Auton, Goncalo Abecasis, et al. 2011. “The Variant
 Call Format and VCFtools.” *Bioinformatics* 27 (15): 2156–58.
 <https://doi.org/10.1093/bioinformatics/btr330>.
 
-Dodge, Annette E., Danielle P. M. LeBlanc, Gu Zhou, Andrew Williams,
-Matthew J. Meier, Phu Van, Fang Yin Lo, et al. 2023. “Duplex Sequencing
-Provides Detailed Characterization of Mutation Frequencies and Spectra
-in the Bone Marrow of MutaMouse Males Exposed to Procarbazine
-Hydrochloride.” *Archives of Toxicology* 97 (8): 2245–59.
+Dodge, Annette E., Danielle P. M. LeBlanc, Gu Zhou, et al. 2023. “Duplex
+Sequencing Provides Detailed Characterization of Mutation Frequencies
+and Spectra in the Bone Marrow of MutaMouse Males Exposed to
+Procarbazine Hydrochloride.” *Archives of Toxicology* 97 (8): 2245–59.
 <https://doi.org/10.1007/s00204-023-03527-y>.
 
-Kennedy, Scott R., Michael W. Schmitt, Edward J. Fox, Brendan F. Kohrn,
-Jesse J. Salk, Eun Hyun Ahn, Marc J. Prindle, et al. 2014. “Detecting
-Ultralow-Frequency Mutations by Duplex Sequencing.” *Nature Protocols* 9
-(11): 2586–606. <https://doi.org/10.1038/nprot.2014.170>.
+Kennedy, Scott R., Michael W. Schmitt, Edward J. Fox, et al. 2014.
+“Detecting Ultralow-Frequency Mutations by Duplex Sequencing.” *Nature
+Protocols* 9 (11): 2586–606. <https://doi.org/10.1038/nprot.2014.170>.
 
-LeBlanc, Danielle P. M., Matthew Meier, Fang Yin Lo, Elizabeth Schmidt,
-Charles Valentine, Andrew Williams, Jesse J. Salk, Carole L. Yauk, and
-Francesco Marchetti. 2022. “Duplex Sequencing Identifies Genomic
-Features That Determine Susceptibility to Benzo(a)pyrene-Induced in Vivo
-Mutations.” *BMC Genomics* 23 (1): 542.
-<https://doi.org/10.1186/s12864-022-08752-w>.
-
-Marchetti, Francesco, Renato Cardoso, Connie L. Chen, George R. Douglas,
-Joanne Elloway, Patricia A. Escobar, Tod Harper Jr, et al. 2023.
-“Error-Corrected Next-Generation Sequencing to Advance Nonclinical
-Genotoxicity and Carcinogenicity Testing.” *Nature Reviews Drug
-Discovery* 22 (3): 165–66. <https://doi.org/10.1038/d41573-023-00014-y>.
+LeBlanc, Danielle P. M., Matthew Meier, Fang Yin Lo, et al. 2022.
+“Duplex Sequencing Identifies Genomic Features That Determine
+Susceptibility to Benzo(a)pyrene-Induced in Vivo Mutations.” *BMC
+Genomics* 23 (1): 542. <https://doi.org/10.1186/s12864-022-08752-w>.
 
 Marchetti, Francesco, Renato Cardoso, Connie L. Chen, George R. Douglas,
 Joanne Elloway, Patricia A. Escobar, Tod Harper, et al. 2023.
@@ -1578,6 +1610,12 @@ Joanne Elloway, Patricia A. Escobar, Tod Harper, et al. 2023.
 for Genotoxicity and Cancer Risk Assessment.” *Mutation Research.
 Reviews in Mutation Research* 792: 108466.
 <https://doi.org/10.1016/j.mrrev.2023.108466>.
+
+Marchetti, Francesco, Renato Cardoso, Connie L. Chen, George R. Douglas,
+Joanne Elloway, Patricia A. Escobar, Tod Harper Jr, et al. 2023.
+“Error-Corrected Next-Generation Sequencing to Advance Nonclinical
+Genotoxicity and Carcinogenicity Testing.” *Nature Reviews Drug
+Discovery* 22 (3): 165–66. <https://doi.org/10.1038/d41573-023-00014-y>.
 
 Menon, Vijay, and Douglas E. Brash. 2023. “Next-Generation Sequencing
 Methodologies to Detect Low-Frequency Mutations: ‘Catch Me If You Can’.”
