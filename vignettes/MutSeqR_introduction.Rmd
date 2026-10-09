@@ -736,10 +736,20 @@ normalized to the `total_depth`:
 $$P_s = \frac{\left(\frac{M_s}{D_s}\right)}{\sum_s \left(\frac{M_s}{D_s}\right)}$$  
 Where $P_s$ is the normalized mutation proportion for subtype $s$. $M_s$ is
 the group mutation sum for subtype $s$. $D_s$ is the group sum of the
-`subtype_depth` for subtype $s$.  
-If total*depth is not available for the mutation data, `calculate_mf()`
+`subtype_depth` for subtype $s$.
+
+When `calculate_depth` is `TRUE`, MutSeqR assumes that the input includes a
+record for every sequenced site. At an SNV subtype resolution, a missing
+combination of grouping variables and sequence context therefore indicates
+that no sequenced bases have that context. MutSeqR reports a `subtype_depth`
+of 0 and retains `sum_min` and `sum_max` as 0 for these combinations, but
+reports the MF and subtype proportion as `NA`: a mutation frequency cannot be
+calculated without sequenced bases. These `NA` values are excluded when
+normalizing the proportions of the remaining subtypes.
+
+If `total_depth` is not available for the mutation data, `calculate_mf()`
 will return the subtype mutation counts per group. It will also calculate
-subtype proportions, without normalizing to the total_depth:  
+subtype proportions, without normalizing to the `total_depth`:  
 $$P'\_s = \frac{M_s}{M*{total}}$$  
 Where, $P'_s$ is the non-normalized mutation proportion of subtype $s$. $M_s$
 is the group mutation sum for subtype $s$. $M_{total}$ is the total mutation
@@ -912,26 +922,50 @@ _total_depth over the total_depth assigned to the no_variant. This_
 _prioritization can be activated with the `correct_depth_by_indel_priority`_
 _parameter._
 
-## Precalculated Depth
+## What if I don't have the total depth in my data?
 
 For mutation data that does not include a `total_depth` value for each
-sequenced site, precalculated depths for the specified groups can be supplied
-separately to `calculate_mf()` through the `precalc_depth_data` parameter.
-Depth should be provided at the correct subtype resolution for each level of
-the specified grouping variable. This parameter will accept either a data frame
-or a filepath to import the depth data. Required columns are:
+sequenced site (for example, SMM-Seq vcf files that only contain variant
+sites), to calculate mutation frequencies, you will need to precalculate
+the depth per sample and supply it seperately to `calculate_mf()`. It is
+recommended that you calculate the depth for each sample at each of the 64 trinucleotides (i.e. the base_192 resolution). This way, you have the depth
+at a resolution that will allow you to calculate mutation frequecies for the
+mutation subtypes and trinucleotide analysis. Trinucleotide depth can be
+calculated from ECS consensus BAM files, or you can request this information
+from your ECS technology's provider.
 
-1. The user-defined cols_to_group variable(s)
-2. `group_depth`: the `total_depth` summed across the cols_to_group.
-3. The context column for the specified `subtype_resolution`. Only applicable
-   if using the SNV resolutions (base_6, base_12, base_96, base_192). Column names
-   are listed in the table above.
-4. `subtype_depth`: the `total_depth` summed across the cols_to_group for each
-   context. Only applicable if using the SNV resolutions.
+Precalculated depth data is supplied to `calculate_mf()` through the
+`precalc_depth_data` parameter. This parameter will accept either a data
+frame or a filepath to import the depth data. The depth should be provided at
+the specified subtype resolution or at a higher resolution.
 
-_Example 3.8. Use precalculated depth values to calculate the global per sample MF._
+For example, if you are calculating global mutation frequencies
+(`subtype_resolution`="none"), you may supply a `precalc_depth_data`
+consisting of depth per sample. Alternatively, you may supply the depth per
+sample, per trinucleotide, and the function will calculate the global depth
+per sample for you. Similarly, if you are calculating mutation frequencies
+for the 6 subtypes, (`subtype_resolution`="base_6"), you may supply the depth
+per sample per C/T reference, or you may supply the depth per sample, per
+trinucleotide, and it will calculate the depth at the base_6 resolution.
 
-**Table 13. ** 'sample_depth' - Precalculated Depth Data per sample.
+Required columns for `precalc_depth_data` are:
+
+1. sample or the appropriate grouping column (must match or be at a finer
+   resolution level than cols_to_group)
+2. The appropriate context column for the given resolution of your depth data.
+   Ensure that the column is named properly. Column names per `subtype_resolution`
+   are listed in \@ref(tab:subtypes-cols). This does not apply for
+   `precalc_depth_data` at the global (i.e. `none`) or `type` resolution.
+3. `subtype_depth`: the `total_depth` summed across the sample for each
+   context. This does not apply for `precalc_depth_data` at the global
+   (i.e. `none`) or `type` resolution.
+4. `group_depth`: the `total_depth` summed across the `cols_to_group`. This is an
+   _optional_ input for depths at SNV resolution, as it can be calculated from
+   the subtype_depth. Required for `precalc_depth_data` at the global
+   (i.e. `none`) or `type` resolution.
+
+The following tables show the expected precalculated depth data at each
+resolution. These tables are included in the MutSeqRData example data.
 
 ```{r precalc1-depth}
 sample_depth <- data.frame(
@@ -943,8 +977,58 @@ sample_depth <- data.frame(
                   743311822, 799605045, 677693752, 701163532)
 )
 
-DT::datatable(sample_depth)
+base_6 <- eh[["EH9862"]]
+base_12 <- eh[["EH9863"]]
+base_96 <- eh[["EH9864"]]
+base_192 <- eh[["EH9865"]]
 ```
+
+**Table 13.** Precalculated depth data at the global resolution. Applicable to `subtype_resolution` = "none" or "type".
+
+```{r precalc-global-depth-table, echo=FALSE}
+DT::datatable(
+  sample_depth,
+  options = list(pageLength = 5, lengthMenu = c(5, 10, 25), scrollX = TRUE)
+)
+```
+
+**Table 14.** Precalculated depth data at the base_6 resolution.
+
+```{r precalc-base6-depth-table, echo=FALSE}
+DT::datatable(
+  base_6,
+  options = list(pageLength = 5, lengthMenu = c(5, 10, 25), scrollX = TRUE)
+)
+```
+
+**Table 15.** Precalculated depth data at the base_12 resolution.
+
+```{r precalc-base12-depth-table, echo=FALSE}
+DT::datatable(
+  base_12,
+  options = list(pageLength = 5, lengthMenu = c(5, 10, 25), scrollX = TRUE)
+)
+```
+
+**Table 16.** Precalculated depth data at the base_96 resolution.
+
+```{r precalc-base96-depth-table, echo=FALSE}
+DT::datatable(
+  base_96,
+  options = list(pageLength = 5, lengthMenu = c(5, 10, 25), scrollX = TRUE)
+)
+```
+
+**Table 17.** Precalculated depth data at the base_192 resolution.
+
+```{r precalc-base192-depth-table, echo=FALSE}
+DT::datatable(
+  base_192,
+  options = list(pageLength = 5, lengthMenu = c(5, 10, 25), scrollX = TRUE)
+)
+```
+
+_Example 3.8. Use precalculated depth values to calculate the global per sample MF._
 
 ```{r mf-precalc-global}
 mf_data_global_precalc <- calculate_mf(
@@ -956,7 +1040,7 @@ mf_data_global_precalc <- calculate_mf(
 )
 ```
 
-**Table 14.** Mutation Frequency per Sample, Precalculated Depth Example.
+**Table 18.** Mutation Frequency per Sample, Precalculated Depth Example.
 
 ```{r mf-precalc1-table, echo=FALSE}
 DT::datatable(mf_data_global_precalc,
@@ -982,19 +1066,11 @@ mf_data_6_precalc <- calculate_mf(
   cols_to_group = "sample",
   subtype_resolution = "base_6",
   calculate_depth = FALSE,
-  precalc_depth = eh[["EH9862"]]
+  precalc_depth_data = base_6
 )
 ```
 
-**Table 16.** Precalculated Depth Data per sample for base_6 subtype resolution.
-
-```{r precalc2-depth, echo=FALSE}
-depth <- eh[["EH9862"]]
-
-DT::datatable(depth)
-```
-
-**Table 17.** Frequency and Proportions of 6-base Subtypes per Sample, Precalculated Depth Example.
+**Table 19.** Frequency and Proportions of 6-base Subtypes per Sample, Precalculated Depth Example.
 
 ```{r mf-precalc2-table, echo=FALSE}
 DT::datatable(mf_data_6_precalc,
@@ -1013,13 +1089,51 @@ DT::datatable(mf_data_6_precalc,
 )
 ```
 
-View examples for base_12, base_96, and base_192 below:
+_Example 3.10. Use base_192 depth data directly for any subtype resolution._
 
-```{r pre-calc-other-ex}
-base_12 <- eh[["EH9863"]]
-base_96 <- eh[["EH9864"]]
-base_192 <- eh[["EH9865"]]
+Depth data at the base_192 resolution retains the reference base and both
+flanking nucleotides. Therefore, `calculate_mf()` can derive the depth needed
+for every supported `subtype_resolution` from the same `base_192` data frame.
+
+```{r mf-precalc-base192}
+resolutions <- c("none", "type", "base_6", "base_12", "base_96", "base_192")
+mf_data_from_base_192 <- lapply(resolutions, function(resolution) {
+  calculate_mf(
+    mutation_data = example_data,
+    cols_to_group = "sample",
+    subtype_resolution = resolution,
+    calculate_depth = FALSE,
+    precalc_depth_data = base_192
+  )
+})
+names(mf_data_from_base_192) <- resolutions
+
+mf_data_base_96_from_base_192 <- mf_data_from_base_192$base_96
 ```
+
+The utility function that derives depth data from higher-resolution depth data is`write_depth_data()`. It validates a complete context-resolved depth table and
+returns a named list of all the lower-resolution depth tables that can be derived.
+
+```{r write-derived-depth, eval=FALSE}
+derived_depth <- write_depth_data(base_192)
+utils::write.table(
+  derived_depth$base96,
+  file = "base_96_depth.tsv",
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+```
+
+Table: (\#tab:depth-resolution-derivation) Resolutions that can be derived from each precalculated depth input.
+
+| Input depth resolution                | Resolutions available to `calculate_mf()`                  |
+| ------------------------------------- | ---------------------------------------------------------- |
+| Global                                | `none`, `type`                                             |
+| `base_6` (C, T)                       | `none`, `type`, `base_6`                                   |
+| `base_12` (A, C, G, T)                | `none`, `type`, `base_6`, `base_12`                        |
+| `base_96` (normalized trinucleotides) | `none`, `type`, `base_6`, `base_96`                        |
+| `base_192` (trinucleotides)           | `none`, `type`, `base_6`, `base_12`, `base_96`, `base_192` |
 
 ## Summary Table
 
@@ -1284,6 +1398,13 @@ When a base96 depth file is supplied, it must contain one row for each of the
 32 normalized trinucleotide contexts for every sample. The report derives
 global and base6 depths from those rows when their respective files are omitted.
 Explicit global and base6 files take precedence for their own resolutions.
+Alternatively, provide one depth file at any supported context resolution with
+`sample`, `subtype_depth`, and the context column named by
+`denominator_dict[subtype_resolution]`. The report derives all lower resolutions
+that can be recovered from the input. A Base192 file can produce Base96, Base12,
+Base6, and global depths. A Base96 file can produce Base6 and global depths;
+Base12 cannot be reconstructed because Base96 combines reverse-complement
+strands.
 
 _In order for MutSeqR to calculate the depth from the mutation data, the_
 _data must have the depth-value for **every sequenced site**. It is not_
@@ -1312,6 +1433,12 @@ _column, it will proceed to calculate the depth from the mutation data_.
   report can derive omitted global and base6 files from this table. The file
   path will be read as
   projectdir/precalc_depth_data_base96.
+- _precalc_depth_data_: Optional path to one precalculated depth file at any
+  supported subtype resolution. It must contain `sample`, `subtype_depth`, and
+  one context column for that resolution. All contexts must be present for each
+  sample, including rows with zero depth. Do not combine this input with the
+  resolution-specific files above. The path is read as
+  projectdir/precalc_depth_data.
 - _precalc_depth_data_rg_: Optional file path to the precalculated
   per-sample total_depth data for each target region. This is the total
   number of bases sequenced per sample for each region. Columns are "sample",
