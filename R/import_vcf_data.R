@@ -231,9 +231,8 @@ import_vcf_data <- function(
       if (length(original_sample_name) != 1L ||
         is.na(original_sample_name) || !nzchar(original_sample_name)) {
         stop(
-          "Multisample VCF files are not supported.",
-          "Found more than one named sample in VCF file: ",
-          basename(file)
+          "Expected one named sample in VCF file: ", basename(file),
+          ". Multisample VCF files and missing sample names are not supported."
         )
       }
       # Find "sample" or its synonym in the INFO field
