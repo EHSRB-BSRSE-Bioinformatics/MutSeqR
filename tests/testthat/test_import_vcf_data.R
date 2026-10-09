@@ -97,7 +97,8 @@ test_that("import_vcf_data warns when no appropriate depth column is supplied", 
     import_vcf_data(
       vcf_file = no_depth_file,
       BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
-      output_granges = FALSE
+      output_granges = FALSE,
+      add_chr = TRUE
     )
   )
   expect_true(any(grepl(
@@ -119,7 +120,8 @@ test_that("import_vcf_data warns when duplicate positions can double-count depth
     import_vcf_data(
       vcf_file = duplicate_file,
       BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
-      output_granges = FALSE
+      output_granges = FALSE,
+      add_chr = TRUE
     )
   )
   expect_true(any(grepl(
