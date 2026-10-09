@@ -53,3 +53,8 @@ Likelihood Ratio Test (LRT) statistic, and robust overdispersion metrics
 Ridge-penalized Dirichlet-Multinomial test for comparing
 mutation spectra between two groups. Robust for large mutation counts.
 }
+\details{
+Experimental: this function is under construction and its interface
+may change.
+}
+\keyword{internal}

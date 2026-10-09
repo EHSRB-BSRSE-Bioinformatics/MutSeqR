@@ -19,3 +19,4 @@ annotations such as \code{INFO/END}. This helper prefers explicit \code{END} val
 from the INFO field and falls back to \code{SVLEN} for symbolic non-insertion
 alleles when \code{END} is absent.
 }
+\keyword{internal}

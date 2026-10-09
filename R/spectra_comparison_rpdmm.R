@@ -26,6 +26,9 @@
 #' include the group names, comparison string, bootstrap p-value, observed
 #' Likelihood Ratio Test (LRT) statistic, and robust overdispersion metrics
 #' (theta) for group 1, group 2, and the shared null model.
+#' @details Experimental: this function is under construction and its interface
+#' may change.
+#' @keywords internal
 #' @export
 #' @importFrom dplyr select rename left_join
 #' @importFrom tidyr pivot_wider
@@ -168,6 +171,7 @@ spectra_comparison_rpdmm <- function(
 
 
 #' @title dm_loglik_ridge_stable
+#' @keywords internal
 #' @description Computes the robust, ridge-penalized log-likelihood for a
 #' Dirichlet-Multinomial distribution. It safely handles massive counts
 #' utilizing  lgamma components and matrix operations. The ridge penalty
@@ -226,6 +230,7 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
 }
 
 #' @title rdm_fast
+#' @keywords internal
 #' @description Rapidly simulates count matrices drawn from a
 #' Dirichlet-Multinomial distribution. This function is highly optimized for
 #' parametric bootstrapping, utilizing a Gamma-Multinomial approximation for
@@ -255,6 +260,7 @@ rdm_fast <- function(depths, p, theta) {
   )
 }
 #' @title run_penalized_comparison
+#' @keywords internal
 #' @description Core statistical engine for the RP-DMM test. Evaluates whether
 #' two count matrices represent significantly different mutational spectra. It
 #' utilizes a "hybrid logic": robust parameters (thetas) are estimated utilizing
