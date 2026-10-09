@@ -781,13 +781,6 @@ vcf_alt_to_character <- function(alt) {
 # while they still belong to exactly one input file.
 extract_vcf_table <- function(vcf, add_chr = FALSE, file = NULL) {
     header_sample <- rownames(SummarizedExperiment::colData(vcf))
-    if (length(header_sample) != 1L || is.na(header_sample) ||
-        !nzchar(header_sample)) {
-        if (is.null(file)) {
-            stop("Expected one named sample in VCF header")
-        }
-        stop("Expected one named sample in VCF file: ", basename(file))
-    }
     if (nrow(vcf) == 0L) {
         return(list(
             data = data.frame(
@@ -796,6 +789,13 @@ extract_vcf_table <- function(vcf, add_chr = FALSE, file = NULL) {
             ),
             header_sample = header_sample
         ))
+    }
+    if (length(header_sample) != 1L || is.na(header_sample) ||
+        !nzchar(header_sample)) {
+        if (is.null(file)) {
+            stop("Expected one named sample in VCF header")
+        }
+        stop("Expected one named sample in VCF file: ", basename(file))
     }
 
     contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
