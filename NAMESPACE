@@ -222,7 +222,7 @@ importFrom(stringr,
 )
 importFrom(tibble,column_to_rownames)
 importFrom(tidyr,
-  expand_grid,
+  crossing,
   pivot_longer,
   pivot_wider
 )

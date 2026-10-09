@@ -57,7 +57,11 @@ total_depth values may be supplied at the desired subtype_resolution
 using the precalc_depth_data parameter. Alternatively, if no per-group
 total_depth is available, per-group mutation counts will be calculated,
 but mutation frequency will not. In such cases, mutation subtype proportions
-will not be normalized to the total_depth.}
+will not be normalized to the total_depth. When calculating depth at an
+SNV subtype resolution, a group-context combination absent from
+mutation_data is assigned subtype_depth of zero; its mutation frequency
+and proportion are returned as NA and excluded from proportion
+normalization.}
 
 \item{correct_depth}{A logical value. If TRUE, the function will correct the
 \code{total_depth} column in \code{mutation_data} in order to prevent

@@ -91,6 +91,35 @@ test_that("base192 depth data derives every lower resolution", {
   expect_equal(prepared$base12$subtype_depth, c(424, 488, 552, 616))
   expect_equal(prepared$base6$subtype_depth, c(1040, 1040))
 })
+
+test_that("prepare_report_depth_data derives only omitted report depths", {
+  base192 <- data.frame(
+    sample = rep("sample1", length(MutSeqR::context_list$base_192)),
+    context = MutSeqR::context_list$base_192,
+    subtype_depth = seq_along(MutSeqR::context_list$base_192)
+  )
+  base6 <- data.frame(
+    sample = rep("sample1", length(MutSeqR::context_list$base_6)),
+    normalized_ref = MutSeqR::context_list$base_6,
+    subtype_depth = c(10, 20)
+  )
+  global <- data.frame(sample = "sample1", group_depth = 999)
+
+  derived <- MutSeqR:::prepare_report_depth_data(base192 = base192)
+  explicit <- MutSeqR:::prepare_report_depth_data(
+    base192 = base192,
+    base6 = base6,
+    global = global
+  )
+
+  expect_equal(derived$global$group_depth, sum(base192$subtype_depth))
+  expect_equal(nrow(derived$base6), length(MutSeqR::context_list$base_6))
+  expect_equal(nrow(derived$base96), length(MutSeqR::context_list$base_96))
+  expect_equal(nrow(derived$base192), length(MutSeqR::context_list$base_192))
+  expect_equal(explicit$global, global)
+  expect_equal(explicit$base6$subtype_depth, base6$subtype_depth)
+  expect_equal(explicit$base96, derived$base96)
+})
 test_that("write_depth_data reads and validates file paths", {
   base6 <- data.frame(
     sample = c("sample1", "sample1"),
