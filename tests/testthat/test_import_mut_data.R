@@ -93,6 +93,51 @@ test_that("import simple_mut_import.txt produces all expected warnings", {
   expect_equal(mut_data$vaf, mut_data$alt_depth / mut_data$total_depth)
 })
 
+test_that("import_mut_data warns when no appropriate depth column is supplied", {
+  input_file <- file.path("./testdata/simple_mut_import.txt")
+  no_depth_file <- tempfile(fileext = ".txt")
+  on.exit(unlink(no_depth_file), add = TRUE)
+  mutation_data <- utils::read.delim(
+    input_file,
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  mutation_data$total_depth <- NULL
+  utils::write.table(
+    mutation_data,
+    no_depth_file,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+  )
+
+  warning_messages <- testthat::capture_warnings(
+    import_mut_data(mut_file = no_depth_file)
+  )
+  expect_true(any(grepl(
+    "Could not find an appropriate depth column. Some package functionality may be limited.",
+    warning_messages,
+    fixed = TRUE
+  )), info = "Summary_report.Rmd depends on this warning to use precalculated depth.")
+})
+
+test_that("import_mut_data warns when duplicate positions can double-count depth", {
+  input_file <- file.path("./testdata/simple_mut_import.txt")
+  duplicate_file <- tempfile(fileext = ".txt")
+  on.exit(unlink(duplicate_file), add = TRUE)
+  lines <- readLines(input_file)
+  writeLines(c(lines, lines[[2]]), duplicate_file)
+
+  warning_messages <- testthat::capture_warnings(
+    import_mut_data(mut_file = duplicate_file)
+  )
+  expect_true(any(grepl(
+    "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.",
+    warning_messages,
+    fixed = TRUE
+  )), info = "Summary_report.Rmd depends on this warning to enable depth correction.")
+})
+
 test_that("import_mut_data leaves BS_genome as NULL when context is already present", {
   dat <- data.frame(
     contig = c("chr1", "chr1"),
