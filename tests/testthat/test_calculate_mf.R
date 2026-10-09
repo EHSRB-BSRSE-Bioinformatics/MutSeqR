@@ -278,6 +278,61 @@ test_that("calculate_mf derives requested resolution from finer precalc data", {
   )
 })
 
+test_that("calculate_mf accepts precalculated depth at all grouping columns", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  mutation_data$contig <- rep(c("contig_1", "contig_2"),
+                               length.out = nrow(mutation_data))
+  groups <- dplyr::distinct(mutation_data, sample, contig)
+  contig_depth <- merge(
+    groups,
+    data.frame(
+      normalized_context = MutSeqR::context_list$base_96,
+      stringsAsFactors = FALSE
+    ),
+    by = NULL
+  )
+  contig_depth$subtype_depth <- seq_len(nrow(contig_depth))
+
+  mf_data <- calculate_mf(
+    mutation_data,
+    cols_to_group = c("sample", "contig"),
+    subtype_resolution = "base_6",
+    calculate_depth = FALSE,
+    precalc_depth_data = contig_depth
+  )
+
+  expect_true(all(c("sample", "contig", "mf_min", "mf_max") %in%
+                    names(mf_data)))
+  expect_false(anyNA(mf_data$subtype_depth))
+})
+
+test_that("calculate_mf preserves absent contexts as zero depth and NA MF", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  present_contexts <- unique(mutation_data$normalized_context[
+    mutation_data$normalized_context %in% MutSeqR::context_list$base_96
+  ])
+  missing_context <- present_contexts[[1]]
+  mutation_data <- dplyr::filter(
+    mutation_data,
+    .data$normalized_context != missing_context
+  )
+
+  mf_data <- calculate_mf(
+    mutation_data,
+    subtype_resolution = "base_96",
+    variant_types = "snv"
+  )
+  absent_context_rows <- mf_data$normalized_context == missing_context
+
+  expect_true(all(mf_data$subtype_depth[absent_context_rows] == 0))
+  expect_true(all(mf_data$sum_min[absent_context_rows] == 0))
+  expect_true(all(mf_data$sum_max[absent_context_rows] == 0))
+  expect_true(all(is.na(mf_data$mf_min[absent_context_rows])))
+  expect_true(all(is.na(mf_data$mf_max[absent_context_rows])))
+  expect_true(all(is.na(mf_data$proportion_min[absent_context_rows])))
+  expect_true(all(is.na(mf_data$proportion_max[absent_context_rows])))
+})
+
 test_that("calculate_mf rejects precalc data too coarse for requested resolution", {
   mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
   base96 <- expand.grid(
