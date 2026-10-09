@@ -56,11 +56,16 @@
 #' but mutation frequency will not. In such cases, mutation subtype proportions
 #' will not be normalized to the total_depth.
 #' @param precalc_depth_data A data frame or a file path to a text file
-#' containing pre-calculated per-group total_depth values. This data frame
-#' should contain the columns for the desired grouping variable(s)
-#' and the reference context at the desired subtype resolution (if applicable).
-#' The precalculated total_depth column(s) should be called one of
-#' `group_depth` and `subtype_depth`. `group_depth` is used for subtype
+#' containing pre-calculated depth values. A context-resolved input with
+#' `subtype_depth`, one context column from `denominator_dict`, and either
+#' `sample` or all `cols_to_group` columns can be supplied at any supported
+#' resolution; when possible, `calculate_mf()` uses `write_depth_data()` to
+#' derive the requested resolution. Per-sample depths are aggregated to
+#' `cols_to_group` using the sample-to-group mapping in `mutation_data`; inputs
+#' already summarized by `cols_to_group` are used directly. Otherwise, supply
+#' the columns for the desired grouping variable(s) and context at the
+#' requested resolution. Depth columns should be named `group_depth` and/or
+#' `subtype_depth`. `group_depth` is used for subtype
 #' resolutions of "none", "type", and all non-snv mutations in "base_6",
 #' "base_12", "base_96", and "base_192". `subtype_depth` is used for snv
 #' mutations in "base_6", "base_12", "base_96", and "base_192". You can
@@ -199,7 +204,7 @@
 #'   correct_depth_by_indel_priority = TRUE
 #' )
 #' @importFrom dplyr across all_of filter group_by mutate n row_number
-#' select distinct ungroup
+#'  select distinct ungroup
 #' @importFrom magrittr %>%
 #' @importFrom data.table :=
 #' @importFrom rlang .data
@@ -462,6 +467,155 @@ calculate_mf <- function(mutation_data,
                         the delimiter used for the data you are importing.")
                 }
             }
+
+            # Determine the resolution of the input depth data
+            input_resolutions <- c(
+                "base_192", "base_96", "base_12", "base_6"
+            )
+            input_context_columns <- unname(
+                MutSeqR::denominator_dict[input_resolutions]
+            )
+            input_context_columns <- input_context_columns[
+                !is.na(input_context_columns)
+            ]
+            present_context_columns <- intersect(
+                input_context_columns, names(depth_df)
+            )
+            if (length(present_context_columns) > 0L) {
+                if (length(present_context_columns) != 1L) {
+                    stop(
+                        "precalc_depth_data must contain exactly one context ",
+                        "column when using automatic resolution conversion.",
+                        call. = FALSE
+                    )
+                }
+                input_context_column <- present_context_columns[[1L]]
+                input_resolution <- input_resolutions[
+                    match(
+                        input_context_column,
+                        unname(MutSeqR::denominator_dict[input_resolutions])
+                    )
+                ]
+                if ("sample" %in% names(depth_df)) {
+                    input_group_cols <- "sample"
+                } else if (all(cols_to_group %in% names(depth_df))) {
+                    input_group_cols <- cols_to_group
+                } else {
+                    stop(
+                        "Context-resolved precalc_depth_data must contain ",
+                        "either 'sample' or all cols_to_group columns: ",
+                        paste(cols_to_group, collapse = ", "),
+                        call. = FALSE
+                    )
+                }
+                converted_depth <- suppressWarnings(
+                    MutSeqR::write_depth_data(
+                        depth_df,
+                        d_sep = d_sep,
+                        group_cols = input_group_cols
+                    )
+                )
+                depth_key <- switch(
+                    subtype_resolution,
+                    none = "global",
+                    type = "global",
+                    base_6 = "base6",
+                    base_12 = "base12",
+                    base_96 = "base96",
+                    base_192 = "base192"
+                )
+                depth_df <- converted_depth[[depth_key]]
+                if (is.null(depth_df)) {
+                    requested_context_column <-
+                        MutSeqR::denominator_dict[[subtype_resolution]]
+                    stop(
+                        "precalc_depth_data at '", input_resolution,
+                        "' resolution cannot generate depths for subtype_resolution '",
+                        subtype_resolution, "'. Supply data at ",
+                        "'base_192' or another resolution fine enough to ",
+                        "derive '", requested_context_column, "'.",
+                        call. = FALSE
+                    )
+                }
+
+                if (!all(cols_to_group %in% names(depth_df))) {
+                    group_map_columns <- unique(c("sample", cols_to_group))
+                    missing_group_columns <- setdiff(
+                        group_map_columns, names(mutation_data)
+                    )
+                    if (length(missing_group_columns)) {
+                        stop(
+                            "Cannot aggregate per-sample precalc_depth_data ",
+                            "to cols_to_group; mutation_data is missing: ",
+                            paste(missing_group_columns, collapse = ", "),
+                            call. = FALSE
+                        )
+                    }
+                    sample_groups <- mutation_data %>%
+                        dplyr::select(dplyr::all_of(group_map_columns)) %>%
+                        dplyr::distinct()
+                    ambiguous_samples <- sample_groups %>%
+                        dplyr::group_by(.data$sample) %>%
+                        dplyr::summarise(n_groups = dplyr::n(),
+                                         .groups = "drop") %>%
+                        dplyr::filter(.data$n_groups > 1L)
+                    if (nrow(ambiguous_samples)) {
+                        stop(
+                            "Cannot aggregate per-sample precalc_depth_data: ",
+                            "each sample must map to exactly one combination ",
+                            "of cols_to_group. Ambiguous sample(s): ",
+                            paste(utils::head(ambiguous_samples$sample, 10L),
+                                  collapse = ", "),
+                            call. = FALSE
+                        )
+                    }
+                    unmapped_samples <- setdiff(
+                        as.character(converted_depth$global$sample),
+                        as.character(sample_groups$sample)
+                    )
+                    if (length(unmapped_samples)) {
+                        stop(
+                            "Cannot aggregate per-sample precalc_depth_data: ",
+                            "sample(s) are absent from mutation_data: ",
+                            paste(utils::head(unmapped_samples, 10L),
+                                  collapse = ", "),
+                            call. = FALSE
+                        )
+                    }
+
+                    global_depth <- dplyr::left_join(
+                        converted_depth$global,
+                        sample_groups,
+                        by = "sample"
+                    ) %>%
+                        dplyr::group_by(
+                            dplyr::across(dplyr::all_of(cols_to_group))
+                        ) %>%
+                        dplyr::summarise(
+                            group_depth = sum(.data$group_depth),
+                            .groups = "drop"
+                        )
+                    if (depth_key == "global") {
+                        depth_df <- global_depth
+                    } else {
+                        context_column <- MutSeqR::denominator_dict[[
+                            subtype_resolution
+                        ]]
+                        depth_df <- dplyr::left_join(
+                            depth_df, sample_groups, by = "sample"
+                        ) %>%
+                            dplyr::group_by(dplyr::across(dplyr::all_of(
+                                c(cols_to_group, context_column)
+                            ))) %>%
+                            dplyr::summarise(
+                                subtype_depth = sum(.data$subtype_depth),
+                                .groups = "drop"
+                            ) %>%
+                            dplyr::left_join(global_depth, by = cols_to_group)
+                    }
+                }
+            }
+
             # check for required columns in depth_df
             required_columns <- c(denominator_groups, "group_depth")
             if (subtype_resolution %in% c(

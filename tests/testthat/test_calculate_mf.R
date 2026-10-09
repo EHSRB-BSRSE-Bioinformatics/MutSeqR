@@ -178,6 +178,123 @@ test_that("calculate_mf works with precalculated depth", {
     )
   expect_equal(mf_data$proportion_max, expected_prop_max)
 })
+
+test_that("calculate_mf derives requested resolution from finer precalc data", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  samples <- unique(mutation_data$sample)
+  base96 <- expand.grid(
+    normalized_context = MutSeqR::context_list$base_96,
+    sample = samples,
+    stringsAsFactors = FALSE
+  )
+  base96$subtype_depth <- seq_len(nrow(base96))
+  derived <- suppressWarnings(
+    MutSeqR::write_depth_data(base96, d_sep = "\t")
+  )
+
+  global_mf <- calculate_mf(
+    mutation_data, subtype_resolution = "none", calculate_depth = FALSE,
+    precalc_depth_data = base96
+  )
+  base6_mf <- calculate_mf(
+    mutation_data, subtype_resolution = "base_6", calculate_depth = FALSE,
+    precalc_depth_data = base96
+  )
+  base96_mf <- calculate_mf(
+    mutation_data, subtype_resolution = "base_96", calculate_depth = FALSE,
+    variant_types = "snv", precalc_depth_data = base96
+  )
+  base96_file <- tempfile(fileext = ".tsv")
+  on.exit(unlink(base96_file), add = TRUE)
+  utils::write.table(base96, base96_file, sep = "\t", quote = FALSE,
+                     row.names = FALSE)
+  global_file_mf <- calculate_mf(
+    mutation_data, subtype_resolution = "none", calculate_depth = FALSE,
+    precalc_depth_data = base96_file
+  )
+  base192 <- expand.grid(
+    context = MutSeqR::context_list$base_192,
+    sample = samples,
+    stringsAsFactors = FALSE
+  )
+  base192$subtype_depth <- seq_len(nrow(base192))
+  base12_from_base192 <- calculate_mf(
+    mutation_data, subtype_resolution = "base_12", calculate_depth = FALSE,
+    variant_types = "snv", precalc_depth_data = base192
+  )
+  mutation_data$dose_group <- ifelse(
+    mutation_data$sample == samples[[1]], "control", "treated"
+  )
+  grouped_depth <- expand.grid(
+    dose_group = c("control", "treated"),
+    normalized_context = MutSeqR::context_list$base_96,
+    stringsAsFactors = FALSE
+  )
+  grouped_depth$subtype_depth <- seq_len(nrow(grouped_depth))
+  grouped_global_mf <- calculate_mf(
+    mutation_data, cols_to_group = "dose_group", subtype_resolution = "none",
+    calculate_depth = FALSE, precalc_depth_data = grouped_depth
+  )
+  grouped_base6_mf <- calculate_mf(
+    mutation_data, cols_to_group = "dose_group", subtype_resolution = "base_6",
+    calculate_depth = FALSE, precalc_depth_data = grouped_depth
+  )
+  grouped_base96_mf <- calculate_mf(
+    mutation_data, cols_to_group = "dose_group", subtype_resolution = "base_96",
+    variant_types = "snv", calculate_depth = FALSE,
+    precalc_depth_data = grouped_depth
+  )
+  grouped_mf <- calculate_mf(
+    mutation_data, cols_to_group = "dose_group", subtype_resolution = "none",
+    calculate_depth = FALSE, precalc_depth_data = base96
+  )
+  expected_group_depth <- derived$global %>%
+    dplyr::left_join(
+      dplyr::distinct(mutation_data, sample, dose_group),
+      by = "sample"
+    ) %>%
+    dplyr::group_by(dose_group) %>%
+    dplyr::summarise(group_depth = sum(group_depth), .groups = "drop") %>%
+    dplyr::arrange(dose_group)
+
+  expect_equal(global_mf$group_depth, derived$global$group_depth)
+  expect_equal(global_file_mf$group_depth, derived$global$group_depth)
+  expect_true(all(c("mf_min", "mf_max") %in% names(base6_mf)))
+  expect_true(all(c("mf_min", "mf_max") %in% names(base96_mf)))
+  expect_true(all(c("mf_min", "mf_max") %in%
+                    names(base12_from_base192)))
+  expect_true(all(c("mf_min", "mf_max") %in%
+                    names(grouped_global_mf)))
+  expect_true(all(c("mf_min", "mf_max") %in%
+                    names(grouped_base6_mf)))
+  expect_true(all(c("mf_min", "mf_max") %in%
+                    names(grouped_base96_mf)))
+  expect_equal(
+    as.data.frame(
+      dplyr::distinct(grouped_mf, dose_group, group_depth) %>%
+        dplyr::arrange(dose_group)
+    ),
+    as.data.frame(expected_group_depth)
+  )
+})
+
+test_that("calculate_mf rejects precalc data too coarse for requested resolution", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  base96 <- expand.grid(
+    normalized_context = MutSeqR::context_list$base_96,
+    sample = unique(mutation_data$sample),
+    stringsAsFactors = FALSE
+  )
+  base96$subtype_depth <- seq_len(nrow(base96))
+
+  expect_error(
+    calculate_mf(
+      mutation_data, subtype_resolution = "base_12", calculate_depth = FALSE,
+      precalc_depth_data = base96
+    ),
+    "at 'base_96' resolution cannot generate depths.*'base_12'"
+  )
+})
 test_that("calculate_mf selects variation types", {
   mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
   mf_data <- calculate_mf(

@@ -78,11 +78,16 @@ the group will be retained, while the other rows will have their
 \code{total_depth} set to 0. The default is FALSE.}
 
 \item{precalc_depth_data}{A data frame or a file path to a text file
-containing pre-calculated per-group total_depth values. This data frame
-should contain the columns for the desired grouping variable(s)
-and the reference context at the desired subtype resolution (if applicable).
-The precalculated total_depth column(s) should be called one of
-\code{group_depth} and \code{subtype_depth}. \code{group_depth} is used for subtype
+containing pre-calculated depth values. A context-resolved input with
+\code{subtype_depth}, one context column from \code{denominator_dict}, and either
+\code{sample} or all \code{cols_to_group} columns can be supplied at any supported
+resolution; when possible, \code{calculate_mf()} uses \code{write_depth_data()} to
+derive the requested resolution. Per-sample depths are aggregated to
+\code{cols_to_group} using the sample-to-group mapping in \code{mutation_data}; inputs
+already summarized by \code{cols_to_group} are used directly. Otherwise, supply
+the columns for the desired grouping variable(s) and context at the
+requested resolution. Depth columns should be named \code{group_depth} and/or
+\code{subtype_depth}. \code{group_depth} is used for subtype
 resolutions of "none", "type", and all non-snv mutations in "base_6",
 "base_12", "base_96", and "base_192". \code{subtype_depth} is used for snv
 mutations in "base_6", "base_12", "base_96", and "base_192". You can

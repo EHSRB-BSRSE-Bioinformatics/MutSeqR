@@ -36,6 +36,7 @@ export(spectra_comparison)
 export(spectra_comparison_rpdmm)
 export(subtype_dict)
 export(subtype_list)
+export(write_depth_data)
 export(write_excel)
 export(write_mutation_calling_file)
 export(write_mutational_matrix)
@@ -44,157 +45,193 @@ export(write_vcf_from_mut)
 import(ggdendro)
 import(ggplot2)
 import(stringr)
-importFrom(BSgenome,available.genomes)
-importFrom(BSgenome,getBSgenome)
-importFrom(BSgenome,installed.genomes)
-importFrom(BiocGenerics,end)
-importFrom(BiocGenerics,start)
-importFrom(BiocGenerics,strand)
-importFrom(Biostrings,getSeq)
-importFrom(Biostrings,matchPattern)
-importFrom(Biostrings,vcountPattern)
-importFrom(Biostrings,writeXStringSet)
-importFrom(GenomicRanges,GRanges)
-importFrom(GenomicRanges,end)
-importFrom(GenomicRanges,findOverlaps)
-importFrom(GenomicRanges,makeGRangesFromDataFrame)
-importFrom(GenomicRanges,start)
-importFrom(IRanges,IRanges)
-importFrom(IRanges,ranges)
-importFrom(S4Vectors,mcols)
-importFrom(S4Vectors,queryHits)
+importFrom(BSgenome,
+  available.genomes,
+  getBSgenome,
+  installed.genomes
+)
+importFrom(BiocGenerics,
+  end,
+  start,
+  strand
+)
+importFrom(Biostrings,
+  getSeq,
+  matchPattern,
+  vcountPattern,
+  writeXStringSet
+)
+importFrom(GenomicRanges,
+  GRanges,
+  end,
+  findOverlaps,
+  makeGRangesFromDataFrame,
+  start
+)
+importFrom(IRanges,
+  IRanges,
+  ranges
+)
+importFrom(S4Vectors,
+  mcols,
+  queryHits
+)
 importFrom(Seqinfo,seqnames)
 importFrom(SummarizedExperiment,colData)
-importFrom(VariantAnnotation,alt)
-importFrom(VariantAnnotation,asVCF)
-importFrom(VariantAnnotation,geno)
-importFrom(VariantAnnotation,info)
-importFrom(VariantAnnotation,makeVRangesFromGRanges)
-importFrom(VariantAnnotation,rbind)
-importFrom(VariantAnnotation,readVcf)
-importFrom(VariantAnnotation,ref)
-importFrom(VariantAnnotation,writeVcf)
+importFrom(VariantAnnotation,
+  alt,
+  asVCF,
+  geno,
+  info,
+  makeVRangesFromGRanges,
+  rbind,
+  readVcf,
+  ref,
+  writeVcf
+)
 importFrom(data.table,":=")
-importFrom(dplyr,"%>%")
-importFrom(dplyr,across)
-importFrom(dplyr,all_of)
-importFrom(dplyr,arrange)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,case_when)
-importFrom(dplyr,desc)
-importFrom(dplyr,distinct)
-importFrom(dplyr,ends_with)
-importFrom(dplyr,filter)
-importFrom(dplyr,first)
-importFrom(dplyr,group_by)
-importFrom(dplyr,if_else)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,n)
-importFrom(dplyr,n_distinct)
-importFrom(dplyr,pull)
-importFrom(dplyr,relocate)
-importFrom(dplyr,rename)
-importFrom(dplyr,row_number)
-importFrom(dplyr,select)
-importFrom(dplyr,starts_with)
-importFrom(dplyr,summarise)
-importFrom(dplyr,summarize)
-importFrom(dplyr,tally)
-importFrom(dplyr,ungroup)
-importFrom(dplyr,where)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,element_blank)
-importFrom(ggplot2,element_line)
-importFrom(ggplot2,element_rect)
-importFrom(ggplot2,element_text)
-importFrom(ggplot2,facet_wrap)
-importFrom(ggplot2,geom_bar)
-importFrom(ggplot2,geom_errorbar)
-importFrom(ggplot2,geom_line)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,geom_segment)
-importFrom(ggplot2,geom_text)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,ggsave)
-importFrom(ggplot2,ggtitle)
-importFrom(ggplot2,guides)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,position_dodge)
-importFrom(ggplot2,scale_color_manual)
-importFrom(ggplot2,scale_fill_manual)
-importFrom(ggplot2,scale_size_continuous)
-importFrom(ggplot2,scale_x_continuous)
-importFrom(ggplot2,theme)
-importFrom(ggplot2,theme_minimal)
-importFrom(ggplot2,xlab)
-importFrom(ggplot2,ylab)
-importFrom(grDevices,colorRampPalette)
-importFrom(grDevices,dev.cur)
-importFrom(grDevices,dev.list)
-importFrom(grDevices,dev.new)
-importFrom(grDevices,dev.off)
-importFrom(grDevices,png)
-importFrom(grDevices,recordPlot)
-importFrom(grDevices,svg)
-importFrom(graphics,abline)
-importFrom(graphics,boxplot)
-importFrom(graphics,hist)
-importFrom(graphics,lines)
-importFrom(graphics,mtext)
-importFrom(graphics,par)
-importFrom(graphics,plot)
-importFrom(graphics,points)
-importFrom(graphics,text)
-importFrom(graphics,title)
+importFrom(dplyr,
+  "%>%",
+  across,
+  all_of,
+  anti_join,
+  arrange,
+  bind_rows,
+  case_when,
+  desc,
+  distinct,
+  ends_with,
+  filter,
+  first,
+  group_by,
+  if_else,
+  left_join,
+  mutate,
+  n,
+  n_distinct,
+  pull,
+  relocate,
+  rename,
+  row_number,
+  select,
+  starts_with,
+  summarise,
+  summarize,
+  tally,
+  ungroup,
+  where
+)
+importFrom(ggplot2,
+  aes,
+  element_blank,
+  element_line,
+  element_rect,
+  element_text,
+  facet_wrap,
+  geom_bar,
+  geom_errorbar,
+  geom_line,
+  geom_point,
+  geom_segment,
+  geom_text,
+  ggplot,
+  ggsave,
+  ggtitle,
+  guides,
+  labs,
+  position_dodge,
+  scale_color_manual,
+  scale_fill_manual,
+  scale_size_continuous,
+  scale_x_continuous,
+  theme,
+  theme_minimal,
+  xlab,
+  ylab
+)
+importFrom(grDevices,
+  colorRampPalette,
+  dev.cur,
+  dev.list,
+  dev.new,
+  dev.off,
+  png,
+  recordPlot,
+  svg
+)
+importFrom(graphics,
+  abline,
+  boxplot,
+  hist,
+  lines,
+  mtext,
+  par,
+  plot,
+  points,
+  text,
+  title
+)
 importFrom(here,here)
 importFrom(magrittr,"%>%")
 importFrom(methods,is)
-importFrom(plyranges,find_overlaps)
-importFrom(plyranges,join_overlap_left)
-importFrom(plyranges,join_overlap_left_directed)
-importFrom(plyranges,join_overlap_left_within_directed)
-importFrom(rlang,.data)
-importFrom(rlang,sym)
-importFrom(stats,as.dist)
-importFrom(stats,as.formula)
-importFrom(stats,dist)
-importFrom(stats,glm)
-importFrom(stats,hclust)
-importFrom(stats,lm)
-importFrom(stats,median)
-importFrom(stats,model.matrix)
-importFrom(stats,na.omit)
-importFrom(stats,optimize)
-importFrom(stats,pchisq)
-importFrom(stats,pf)
-importFrom(stats,pnorm)
-importFrom(stats,qnorm)
-importFrom(stats,qqline)
-importFrom(stats,qqnorm)
-importFrom(stats,qt)
-importFrom(stats,r2dtable)
-importFrom(stats,relevel)
-importFrom(stats,reshape)
-importFrom(stats,residuals)
-importFrom(stats,rgamma)
-importFrom(stats,rmultinom)
-importFrom(stats,sd)
-importFrom(stats,setNames)
-importFrom(stats,uniroot)
-importFrom(stats,var)
-importFrom(stringr,str_c)
-importFrom(stringr,str_count)
-importFrom(stringr,str_extract)
-importFrom(stringr,str_length)
-importFrom(stringr,str_sub)
+importFrom(plyranges,
+  find_overlaps,
+  join_overlap_left,
+  join_overlap_left_directed,
+  join_overlap_left_within_directed
+)
+importFrom(rlang,
+  .data,
+  sym
+)
+importFrom(stats,
+  as.dist,
+  as.formula,
+  dist,
+  glm,
+  hclust,
+  lm,
+  median,
+  model.matrix,
+  na.omit,
+  optimize,
+  pchisq,
+  pf,
+  pnorm,
+  qnorm,
+  qqline,
+  qqnorm,
+  qt,
+  r2dtable,
+  relevel,
+  reshape,
+  residuals,
+  rgamma,
+  rmultinom,
+  sd,
+  setNames,
+  uniroot,
+  var
+)
+importFrom(stringr,
+  str_c,
+  str_count,
+  str_extract,
+  str_length,
+  str_sub
+)
 importFrom(tibble,column_to_rownames)
-importFrom(tidyr,pivot_longer)
-importFrom(tidyr,pivot_wider)
-importFrom(utils,head)
-importFrom(utils,install.packages)
-importFrom(utils,menu)
-importFrom(utils,modifyList)
-importFrom(utils,read.delim)
-importFrom(utils,read.table)
-importFrom(utils,write.table)
+importFrom(tidyr,
+  expand_grid,
+  pivot_longer,
+  pivot_wider
+)
+importFrom(utils,
+  head,
+  install.packages,
+  menu,
+  modifyList,
+  read.delim,
+  read.table,
+  write.table
+)

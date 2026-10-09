@@ -102,7 +102,7 @@
 #'  # Removing filtered mutations from the total_depth...
 #'  # Filtering complete.
 #' @importFrom dplyr group_by mutate ungroup select filter starts_with
-#' n_distinct first case_when if_else
+#'  n_distinct first case_when if_else
 #' @importFrom GenomicRanges makeGRangesFromDataFrame findOverlaps
 #' @importFrom S4Vectors queryHits mcols
 #' @importFrom plyranges join_overlap_left_directed join_overlap_left_within_directed
