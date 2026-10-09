@@ -54,7 +54,11 @@
 #' using the precalc_depth_data parameter. Alternatively, if no per-group
 #' total_depth is available, per-group mutation counts will be calculated,
 #' but mutation frequency will not. In such cases, mutation subtype proportions
-#' will not be normalized to the total_depth.
+#' will not be normalized to the total_depth. When calculating depth at an
+#' SNV subtype resolution, a group-context combination absent from
+#' mutation_data is assigned subtype_depth of zero; its mutation frequency
+#' and proportion are returned as NA and excluded from proportion
+#' normalization.
 #' @param precalc_depth_data A data frame or a file path to a text file
 #' containing pre-calculated depth values. A context-resolved input with
 #' `subtype_depth`, one context column from `denominator_dict`, and either
@@ -871,13 +875,49 @@ calculate_mf <- function(mutation_data,
         summary_table <- dplyr::left_join(summary_table, depth_df)
     }
 
-    # Replace NAs in data with 0s (sum and MF cols only)
+    missing_context_depth <- depth_exists &&
+        subtype_resolution %in% c(
+            "base_6", "base_12", "base_96", "base_192"
+        ) &&
+        calculate_depth
+    if (missing_context_depth) {
+        summary_table <- summary_table %>%
+            dplyr::mutate(
+                .missing_context_depth = is.na(.data$subtype_depth),
+                subtype_depth = tidyr::replace_na(.data$subtype_depth, 0)
+            )
+    }
+
+    # Summary rows without mutations have zero counts and frequencies.
     summary_table <- summary_table %>%
         dplyr::mutate(
             dplyr::across(
-                dplyr::all_of(summary_cols), ~ tidyr::replace_na(., 0)
+                dplyr::all_of(c("sum_min", "sum_max")),
+                ~ tidyr::replace_na(., 0)
             )
         )
+    if (depth_exists) {
+        summary_table <- summary_table %>%
+            dplyr::mutate(
+                dplyr::across(
+                    dplyr::all_of(c("mf_min", "mf_max")),
+                    ~ tidyr::replace_na(., 0)
+                )
+            )
+        if (missing_context_depth) {
+            summary_table <- summary_table %>%
+                dplyr::mutate(
+                    dplyr::across(
+                        dplyr::all_of(c("mf_min", "mf_max")),
+                        ~ dplyr::if_else(
+                            .data$.missing_context_depth,
+                            NA_real_,
+                            .
+                        )
+                    )
+                )
+        }
+    }
 
     # Calculate the proportions of each subtype
     if (subtype_resolution != "none") {
@@ -911,8 +951,8 @@ calculate_mf <- function(mutation_data,
                     dplyr::across(dplyr::all_of(c(cols_to_group)))
                 ) %>%
                 dplyr::mutate(
-                    total_freq_min = sum(.data$freq_min),
-                    total_freq_max = sum(.data$freq_max)
+                    total_freq_min = sum(.data$freq_min, na.rm = TRUE),
+                    total_freq_max = sum(.data$freq_max, na.rm = TRUE)
                 ) %>%
                 dplyr::ungroup() %>%
                 dplyr::mutate(
@@ -937,14 +977,26 @@ calculate_mf <- function(mutation_data,
                     -"total_group_mut_sum_max"
                 )
         }
-        # replace NAs with 0s (when sum of group = 0, dividing by 0 = NaN)
+        # Keep proportions undefined for contexts with no sequenced bases.
         summary_table <- summary_table %>%
             dplyr::mutate(
                 dplyr::across(
                     c(proportion_min, proportion_max),
-                    ~ tidyr::replace_na(., 0)
+                    ~ if (missing_context_depth) {
+                        dplyr::if_else(
+                            .data$.missing_context_depth,
+                            NA_real_,
+                            tidyr::replace_na(., 0)
+                        )
+                    } else {
+                        tidyr::replace_na(., 0)
+                    }
                 )
             )
+    }
+    if (missing_context_depth) {
+        summary_table <- summary_table %>%
+            dplyr::select(-".missing_context_depth")
     }
     # Remove the subtype_depth column if we are not using it
     if (depth_exists && subtype_resolution %in% c("none", "type")) {
