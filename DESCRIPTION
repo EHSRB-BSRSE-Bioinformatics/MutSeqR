@@ -116,3 +116,4 @@ Roxygen: list(markdown = TRUE)
 BugReports: https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues
 URL: https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/
 Config/roxygen2/version: 8.1.0
+RoxygenNote: 7.3.3
