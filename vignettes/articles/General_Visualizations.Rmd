@@ -87,28 +87,22 @@ caption <- paste(
 )
 ```
 
-First we will calculate the average MFmin for each genomic target across dose groups. We will also define the order in which the genomic targets should appear on our plot. We will arrange genomic targets based on their genic context so that we can visualize differences in mutation frequency driven be genic context. We will colour our labels such that genic regions will be in black and integernic regions will be labeled in red.
+First we will calculate the average MFmin for each genomic target across dose groups. We will also define the order in which the genomic targets should appear on our plot. We will arrange genomic targets ffrom low to high at the High dose group. We will colour our labels based on genic context so that we can visualize differences in mutation frequency driven be genic context. Genic regions will be in black and integernic regions will be labeled in red.
 
 ```{r calc-mf}
 mf <- calculate_mf(
     mutation_data = example_data,
     cols_to_group = c("sample", "label"),
-    retain_metadata_cols = c("dose_group", "genic_context")
+    retain_metadata_cols = "dose_group"
 )
-
-label_order <- mf %>%
-    dplyr::arrange(genic_context) %>%
-    dplyr::pull(label) %>%
-    unique()
-
 avg <- mf %>%
     dplyr::group_by(dose_group, label) %>%
     dplyr::summarise(mean_mf = mean(mf_min))
 
-avg$label <- factor(avg$label, levels = label_order)
-avg$dose_group <- factor(avg$dose_group,
-    levels = c("Control", "Low", "Medium", "High")
-)
+label_order <- avg %>%
+  dplyr::filter(dose_group == "High") %>%
+  dplyr::arrange(mean_mf) %>%
+  pull(label)
 ```
 
 ```{r radar-plot, fig.cap=caption, fig.wide=TRUE}
@@ -117,8 +111,9 @@ plot <- plot_radar(
     response_col = "mean_mf",
     label_col = "label",
     group_col = "dose_group",
-    facet = TRUE,
-    indiv_y = FALSE,
+    facet = FALSE,
+    label_order = "custom",
+    label_order_input = label_order,
     label_colors = c(
     "chr1" = "#ff0000",
     "chr1.2"	= "#000000",
