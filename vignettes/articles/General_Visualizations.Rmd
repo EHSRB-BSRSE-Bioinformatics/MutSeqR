@@ -74,7 +74,9 @@ plot
 
 # Radar Plots
 
-`plot_radar()` is used to visualize mutation frequencies across specified groups as a radar/spider plot. Plots may also be facetted across a second group.
+`plot_radar()` is used to visualize mutation frequencies across specified groups as a radar/spider plot.
+
+Data must include a `response_col` (ex. mf_min) and a `label_col` (the variable by which to plot). You may plot multiple groups of data by specifying the group with `group_col`. The radar plots for each group will be overlaid on top of each other in different colours. Colour may be customized with `custom_palette`. Alternatively, you may facet the radar plots by `group_col` by setting `facet = TRUE`. Finally, you may colour the label values by different colours by providing a named vector to `label_colors`.
 
 _Example 2. Plot the mutation frequency for each of the 20 genomic targets of the TwinStrand Mutagenesis Panel. Facet panels by dose group._
 
@@ -85,7 +87,7 @@ caption <- paste(
 )
 ```
 
-First we will calculate the average MFmin for each genomic target across dose groups. We will also define the order in which the genomic targets should appear on our plot. We will arrange genomic targets based on their genic context so that we can visualize differences in mutation frequency driven be genic context.
+First we will calculate the average MFmin for each genomic target across dose groups. We will also define the order in which the genomic targets should appear on our plot. We will arrange genomic targets based on their genic context so that we can visualize differences in mutation frequency driven be genic context. We will colour our labels such that genic regions will be in black and integernic regions will be labeled in red.
 
 ```{r calc-mf}
 mf <- calculate_mf(
@@ -114,8 +116,31 @@ plot <- plot_radar(
     mf_data = avg,
     response_col = "mean_mf",
     label_col = "label",
-    facet_col = "dose_group",
-    indiv_y = FALSE
+    group_col = "dose_group",
+    facet = TRUE,
+    indiv_y = FALSE,
+    label_colors = c(
+    "chr1" = "#ff0000",
+    "chr1.2"	= "#000000",
+    "chr2" = "#ff0000",
+    "chr3"	= "#000000",
+    "chr4"	= "#ff0000",
+    "chr5"	= "#ff0000",
+    "chr6"	= "#000000",
+    "chr7"	= "#000000",
+    "chr8"	= "#ff0000",
+    "chr9"	= "#000000",
+    "chr10"	= "#ff0000",
+    "chr11"	= "#ff0000",
+    "chr12"	= "#000000",
+    "chr13"	= "#000000",
+    "chr14"	= "#ff0000",
+    "chr15"	= "#000000",
+    "chr16"	= "#ff0000",
+    "chr17"	= "#ff0000",
+    "chr18"	= "#ff0000",
+    "chr19"	= "#000000"
+  )
 )
 
 plot
