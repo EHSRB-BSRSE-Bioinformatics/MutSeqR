@@ -67,4 +67,57 @@ test_that("plot_radar works with facet = TRUE and facet = FALSE", {
     ),
     "Columns not found"
   )
+
+  # Test label_order = "arranged" and "custom"
+  tmp4 <- tempfile(fileext = ".png")
+  png(tmp4)
+  expect_silent(
+    plot_radar(
+      mf_data = test_df,
+      response_col = "mean_mf",
+      label_col = "label",
+      group_col = "dose_group",
+      label_order = "arranged",
+      label_order_input = "mean_mf"
+    )
+  )
+  expect_silent(
+    plot_radar(
+      mf_data = test_df,
+      response_col = "mean_mf",
+      label_col = "label",
+      group_col = "dose_group",
+      label_order = "custom",
+      label_order_input = c("T>A", "C>T", "C>G", "C>A")
+    )
+  )
+  dev.off()
+  unlink(tmp4)
+
+  # Test group_order = "arranged" and "custom"
+  tmp5 <- tempfile(fileext = ".png")
+  png(tmp5)
+  expect_silent(
+    plot_radar(
+      mf_data = test_df,
+      response_col = "mean_mf",
+      label_col = "label",
+      group_col = "dose_group",
+      group_order = "arranged",
+      group_order_input = "mean_mf"
+    )
+  )
+  expect_silent(
+    plot_radar(
+      mf_data = test_df,
+      response_col = "mean_mf",
+      label_col = "label",
+      group_col = "dose_group",
+      group_order = "custom",
+      group_order_input = c("High", "Medium", "Low", "Control"),
+      facet = FALSE
+    )
+  )
+  dev.off()
+  unlink(tmp5)
 })

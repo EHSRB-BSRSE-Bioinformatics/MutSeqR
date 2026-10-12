@@ -8,6 +8,25 @@
 #' @param facet A logical indicating whether to create separate faceted plots for each
 #' group in \code{group_col} (TRUE, default) or plot all groups on a single radar plot
 #' (FALSE).
+#' @param label_order The ordering method for the axis labels. Options are:
+#' \itemize{
+#'   \item \code{"none"}: Default. Uses existing factor levels if \code{label_col} is a factor, or alphabetical order.
+#'   \item \code{"arranged"}: Orders labels based on one or more columns in \code{mf_data} specified by \code{label_order_input}.
+#'   \item \code{"custom"}: Orders labels based on a custom character vector supplied to \code{label_order_input}.
+#' }
+#' @param label_order_input Specifies details for \code{label_order}. If \code{label_order = "arranged"},
+#' a character vector of column name(s) in \code{mf_data} used to arrange the data. If \code{label_order = "custom"},
+#' a character vector of label values in the desired order.
+#' @param group_order The ordering method for the groups. Adjusts the facet order when \code{facet = TRUE}
+#' or the overlay/series order when \code{facet = FALSE}. Options are:
+#' \itemize{
+#'   \item \code{"none"}: Default. Uses existing factor levels if \code{group_col} is a factor, or the order of appearance in \code{mf_data}.
+#'   \item \code{"arranged"}: Orders groups based on one or more columns in \code{mf_data} specified by \code{group_order_input}.
+#'   \item \code{"custom"}: Orders groups based on a custom character vector supplied to \code{group_order_input}.
+#' }
+#' @param group_order_input Specifies details for \code{group_order}. If \code{group_order = "arranged"},
+#' a character vector of column name(s) in \code{mf_data} used to arrange the data. If \code{group_order = "custom"},
+#' a character vector of group values in the desired order.
 #' @param custom_palette A custom color palette to distinguish groups. Can be a named character
 #' vector of colors (with names corresponding to levels/values in \code{group_col}),
 #' an unnamed vector of colors, or the name of an RColorBrewer palette. Default is NULL.
@@ -27,7 +46,7 @@
 #' @param facet_col Deprecated. Use \code{group_col} instead.
 #' @param ... Additional arguments passed to \code{fmsb::radarchart}.
 #' @importFrom tidyr pivot_wider
-#' @importFrom dplyr select all_of
+#' @importFrom dplyr select all_of arrange across
 #' @importFrom grDevices colorRampPalette rainbow
 #' @importFrom graphics layout legend par text
 #' @examples
@@ -63,6 +82,10 @@ plot_radar <- function(mf_data,
                        label_col,
                        group_col = NULL,
                        facet = TRUE,
+                       label_order = "none",
+                       label_order_input = NULL,
+                       group_order = "none",
+                       group_order_input = NULL,
                        custom_palette = NULL,
                        label_colors = NULL,
                        indiv_y = TRUE,
@@ -77,6 +100,9 @@ plot_radar <- function(mf_data,
     group_col <- facet_col
   }
 
+  label_order <- match.arg(label_order, choices = c("none", "arranged", "custom"))
+  group_order <- match.arg(group_order, choices = c("none", "arranged", "custom"))
+
   # --- 1. Validation ---
   stopifnot(
     !missing(mf_data) && is.data.frame(mf_data),
@@ -89,6 +115,20 @@ plot_radar <- function(mf_data,
   # Validate columns exist
   cols_to_check <- c(response_col, label_col)
   if (!is.null(group_col)) cols_to_check <- c(cols_to_check, group_col)
+
+  if (label_order == "arranged") {
+    if (is.null(label_order_input)) {
+      stop("label_order_input must be provided when label_order = 'arranged'.")
+    }
+    cols_to_check <- c(cols_to_check, label_order_input)
+  }
+
+  if (group_order == "arranged") {
+    if (is.null(group_order_input)) {
+      stop("group_order_input must be provided when group_order = 'arranged'.")
+    }
+    cols_to_check <- c(cols_to_check, group_order_input)
+  }
 
   if (!all(cols_to_check %in% colnames(mf_data))) {
     stop("Columns not found: ", paste(setdiff(cols_to_check, colnames(mf_data)), collapse = ", "))
@@ -104,11 +144,23 @@ plot_radar <- function(mf_data,
     indiv_y <- FALSE
   }
 
-  # Ensure consistent ordering if label_col is a factor
-  if (is.factor(mf_data[[label_col]])) {
-    label_levels <- levels(mf_data[[label_col]])
+  # Resolve label levels and ordering
+  if (label_order == "arranged") {
+    arranged_mf <- mf_data %>%
+      dplyr::arrange(dplyr::across(dplyr::all_of(label_order_input)))
+    label_levels <- as.character(unique(arranged_mf[[label_col]]))
+  } else if (label_order == "custom") {
+    if (is.null(label_order_input)) {
+      stop("label_order_input must be provided when label_order = 'custom'.")
+    }
+    label_levels <- as.character(label_order_input)
   } else {
-    label_levels <- sort(unique(mf_data[[label_col]]))
+    # label_order == "none"
+    if (is.factor(mf_data[[label_col]])) {
+      label_levels <- levels(mf_data[[label_col]])
+    } else {
+      label_levels <- sort(unique(mf_data[[label_col]]))
+    }
   }
 
   # Pivot to Wide Format (Rows=Groups, Cols=Labels)
@@ -124,14 +176,29 @@ plot_radar <- function(mf_data,
   valid_levels <- intersect(label_levels, colnames(plot_data))
   plot_data <- plot_data[, c(group_col, valid_levels)]
 
-  # Ensure group is a factor and preserve ordering
-  if (!is.factor(plot_data[[group_col]])) {
-    group_levels <- unique(plot_data[[group_col]])
-    plot_data[[group_col]] <- factor(plot_data[[group_col]], levels = group_levels)
+  # Resolve group levels and ordering
+  if (group_order == "arranged") {
+    arranged_grp <- mf_data %>%
+      dplyr::arrange(dplyr::across(dplyr::all_of(group_order_input)))
+    group_levels <- as.character(unique(arranged_grp[[group_col]]))
+  } else if (group_order == "custom") {
+    if (is.null(group_order_input)) {
+      stop("group_order_input must be provided when group_order = 'custom'.")
+    }
+    group_levels <- as.character(group_order_input)
   } else {
-    group_levels <- levels(plot_data[[group_col]])
-    group_levels <- intersect(group_levels, unique(plot_data[[group_col]]))
+    # group_order == "none"
+    if (is.factor(plot_data[[group_col]])) {
+      group_levels <- levels(plot_data[[group_col]])
+    } else {
+      group_levels <- as.character(unique(plot_data[[group_col]]))
+    }
   }
+  # Keep only group levels present in plot_data
+  group_levels <- intersect(group_levels, as.character(unique(plot_data[[group_col]])))
+
+  plot_data[[group_col]] <- factor(plot_data[[group_col]], levels = group_levels)
+
   # Arrange plot_data rows to match group_levels
   plot_data <- plot_data[match(group_levels, plot_data[[group_col]]), , drop = FALSE]
 

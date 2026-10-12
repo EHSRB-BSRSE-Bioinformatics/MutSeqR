@@ -10,6 +10,10 @@ plot_radar(
   label_col,
   group_col = NULL,
   facet = TRUE,
+  label_order = "none",
+  label_order_input = NULL,
+  group_order = "none",
+  group_order_input = NULL,
   custom_palette = NULL,
   label_colors = NULL,
   indiv_y = TRUE,
@@ -33,6 +37,29 @@ plot_radar(
 \item{facet}{A logical indicating whether to create separate faceted plots for each
 group in \code{group_col} (TRUE, default) or plot all groups on a single radar plot
 (FALSE).}
+
+\item{label_order}{The ordering method for the axis labels. Options are:
+\itemize{
+\item \code{"none"}: Default. Uses existing factor levels if \code{label_col} is a factor, or alphabetical order.
+\item \code{"arranged"}: Orders labels based on one or more columns in \code{mf_data} specified by \code{label_order_input}.
+\item \code{"custom"}: Orders labels based on a custom character vector supplied to \code{label_order_input}.
+}}
+
+\item{label_order_input}{Specifies details for \code{label_order}. If \code{label_order = "arranged"},
+a character vector of column name(s) in \code{mf_data} used to arrange the data. If \code{label_order = "custom"},
+a character vector of label values in the desired order.}
+
+\item{group_order}{The ordering method for the groups. Adjusts the facet order when \code{facet = TRUE}
+or the overlay/series order when \code{facet = FALSE}. Options are:
+\itemize{
+\item \code{"none"}: Default. Uses existing factor levels if \code{group_col} is a factor, or the order of appearance in \code{mf_data}.
+\item \code{"arranged"}: Orders groups based on one or more columns in \code{mf_data} specified by \code{group_order_input}.
+\item \code{"custom"}: Orders groups based on a custom character vector supplied to \code{group_order_input}.
+}}
+
+\item{group_order_input}{Specifies details for \code{group_order}. If \code{group_order = "arranged"},
+a character vector of column name(s) in \code{mf_data} used to arrange the data. If \code{group_order = "custom"},
+a character vector of group values in the desired order.}
 
 \item{custom_palette}{A custom color palette to distinguish groups. Can be a named character
 vector of colors (with names corresponding to levels/values in \code{group_col}),
