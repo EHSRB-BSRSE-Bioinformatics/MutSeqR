@@ -8,7 +8,7 @@ vcf_alt_to_character(alt)
 }
 \arguments{
 \item{alt}{A list-like collection of alternate alleles, such as the value
-returned by \code{\link[VariantAnnotation:VCF-class]{VariantAnnotation::alt()}}.}
+returned by \code{\link[VariantAnnotation:alt]{VariantAnnotation::alt()}}.}
 }
 \value{
 A character vector with one element per VCF record.
