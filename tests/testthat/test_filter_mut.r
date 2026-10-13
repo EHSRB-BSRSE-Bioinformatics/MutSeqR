@@ -86,3 +86,53 @@ test_that("filter simple mutation data", {
   )
   expect_equal(nrow(result), 1)
 })
+
+test_that("filter_mut flags recurrent germline and recurrent variants", {
+  mutation_data <- data.frame(
+    sample = c(
+      "sample1", "sample1", "sample2", "sample3", "sample4",
+      "sample1", "sample2"
+    ),
+    contig = rep("chr1", 7),
+    start = c(101, 101, 101, 101, 102, 104, 104),
+    end = c(101, 101, 101, 101, 102, 104, 104),
+    ref = c("C", "C", "C", "C", "G", "A", "A"),
+    alt = c("T", "T", "T", "T", "A", "A", "A"),
+    vaf = c(0.9, 0.9, 0.9, 0.01, 0.9, 0, 0),
+    variation_type = c("snv", "snv", "snv", "snv", "snv",
+                       "no_variant", "no_variant"),
+    stringsAsFactors = FALSE
+  )
+
+  recurrent_germ <- filter_mut(
+    mutation_data,
+    vaf_cutoff = 0.5,
+    recurrent_germ = TRUE
+  )
+  expect_true(all(recurrent_germ$filter_mut[1:4]))
+  expect_equal(
+    recurrent_germ$filter_reason[1:4],
+    c("germline|recurrent_germ", "germline|recurrent_germ",
+      "germline|recurrent_germ", "recurrent_germ")
+  )
+  expect_equal(recurrent_germ$filter_reason[5], "germline")
+  expect_false(any(recurrent_germ$filter_mut[6:7]))
+  expect_error(
+    filter_mut(mutation_data, recurrent_germ = TRUE),
+    "recurrent_germ requires vaf_cutoff to be less than 1"
+  )
+
+  recurrent_variants <- filter_mut(
+    mutation_data,
+    recurrence_limit = 2
+  )
+  expect_true(all(recurrent_variants$filter_mut[1:4]))
+  expect_equal(
+    recurrent_variants$filter_reason[1:4],
+    rep("recurrence>2", 4)
+  )
+  expect_false(any(recurrent_variants$filter_mut[5:7]))
+
+  skipped_recurrence <- filter_mut(mutation_data, recurrence_limit = 0)
+  expect_false(any(skipped_recurrence$filter_mut))
+})

@@ -432,6 +432,11 @@ calculate the vaf, thus it is recommended to filter germline mutations by
 contrasting against a database of known polymorphisms, or by using conventional
 whole-genome sequencing to identify germline variants for each sample.
 
+`recurrent_germ = TRUE` additionally flags variants that are identical to a
+germline variant in another sample. This requires `vaf_cutoff < 1` so that
+MutSeqR can classify germline variants. Identical variants have the same
+`contig`, `start`, `end`, `ref`, and `alt` values.
+
 ## Quality Assurance
 
 The `filter_mut()` function offers some filtering options to ensure the quality
@@ -450,6 +455,30 @@ organism, we expect variants to have a vaf ~0, 0.5, or 1, reflecting rare
 somatic variants, heterozygous variants, and homozygous variants respectively.
 Users should be aware of the ploidy of their model system when using this
 filter. Non-diploid organisms may exhibit different vafs.
+
+## Recurrent Variants
+
+`recurrence_limit` flags variants observed in a specified number of distinct
+samples. For example, `recurrence_limit = 2` flags variants that occur in two
+or more samples; duplicate rows from the same sample count only once. Set
+`recurrence_limit = 0`, the default, to skip this filter. As with
+`recurrent_germ`, variants are identical when their `contig`, `start`, `end`,
+`ref`, and `alt` values match.
+
+```{r recurrence-filter-examples, eval=FALSE}
+# Flag variants that match a germline variant in another sample.
+recurrent_germ_data <- filter_mut(
+  mutation_data = example_data,
+  vaf_cutoff = 0.01,
+  recurrent_germ = TRUE
+)
+
+# Flag variants observed in two or more distinct samples.
+recurrent_variant_data <- filter_mut(
+  mutation_data = example_data,
+  recurrence_limit = 2
+)
+```
 
 `rm_filtered_mut_from_depth = TRUE` Variants flagged in the `filter_mut`
 column will have their `alt_depth` subtracted from the `total_depth`. When
@@ -1372,6 +1401,11 @@ If using one of the config_profiles, users should skip this section.
   vaf_cutoff as germline variants and filter them from mutation counts.
 - _snv_in_germ_mnv_: A logical variable indicating whether filter_mut should
   flag SNVs that overlap with germline MNVs for filtering.
+- _recurrent_germ_: A logical variable indicating whether filter_mut should
+  flag variants identical to a germline variant in another sample. Requires
+  vaf_cutoff < 1.
+- _recurrence_limit_: A non-negative integer. filter_mut will flag variants
+  found in this many or more distinct samples. Set to 0 to skip this filter.
 - _rm_abnormal_vaf_: A logical variable indicaring whether filter_mut should
   remove records where the VAF is between 0.05-0.45 or between 0.55-0.95.
 - _custom_filter_col_: A column name used by filter_mut to apply a custom filter
