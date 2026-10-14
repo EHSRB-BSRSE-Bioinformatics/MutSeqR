@@ -6,7 +6,9 @@
 #' (mutations/bp). The operation is run using both the minimum and maximum
 #' independent mutation counting methods.
 #' @param mutation_data The data frame (or GRanges) to be processed containing
-#' mutation data. Required columns are listed in details.
+#' mutation data. Required columns are listed in details. Column names
+#' `missing_context_depth` and `.missing_context_depth` are reserved for
+#' internal use and must be renamed before calling this function.
 #' @param cols_to_group A vector of grouping variables. This should be the
 #' groups of interest that you want to calculate a frequency for.
 #' For instance, getting the frequency by `"sample"`. Other options might
@@ -308,6 +310,19 @@ calculate_mf <- function(mutation_data,
     if (inherits(mutation_data, "GRanges")) {
         mutation_data <- as.data.frame(mutation_data)
         mutation_data <- dplyr::rename(contig = seqnames)
+    }
+
+    reserved_columns <- intersect(
+        colnames(mutation_data),
+        c("missing_context_depth", ".missing_context_depth")
+    )
+    if (length(reserved_columns) > 0) {
+        stop(
+            "mutation_data contains reserved column name(s): ",
+            paste(reserved_columns, collapse = ", "),
+            ". Rename these columns before calling calculate_mf().",
+            call. = FALSE
+        )
     }
 
     if (calculate_depth && correct_depth) {
@@ -904,7 +919,7 @@ calculate_mf <- function(mutation_data,
                     dplyr::all_of(c("mf_min", "mf_max")),
                     ~ {
                         values <- tidyr::replace_na(., 0)
-                        if (missing_context_depth) {
+                        if (.env$missing_context_depth) {
                             values[.data$.missing_context_depth] <- NA_real_
                         }
                         values
@@ -978,7 +993,7 @@ calculate_mf <- function(mutation_data,
                     c(proportion_min, proportion_max),
                     ~ {
                         values <- tidyr::replace_na(., 0)
-                        if (missing_context_depth) {
+                        if (.env$missing_context_depth) {
                             values[.data$.missing_context_depth] <- NA_real_
                         }
                         values

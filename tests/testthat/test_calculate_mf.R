@@ -473,3 +473,18 @@ test_that("summary context mapping preserves all subtype resolutions", {
     expect_false(".missing_context_depth" %in% names(mf_data))
   }
 })
+
+
+test_that("calculate_mf rejects reserved missing-context column names", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  for (column in c("missing_context_depth", ".missing_context_depth")) {
+    input <- mutation_data
+    input[[column]] <- FALSE
+    for (return_summary in c(TRUE, FALSE)) {
+      expect_error(
+        calculate_mf(input, summary = return_summary),
+        "reserved column name.*Rename these columns before calling calculate_mf"
+      )
+    }
+  }
+})
