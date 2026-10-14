@@ -569,10 +569,27 @@ calculate_mf <- function(mutation_data,
                 )
             }
             # Merge depth_df with mut_freq_table
+            original_columns <- names(mut_freq_table)
             mut_freq_table <- dplyr::left_join(mut_freq_table, depth_df,
                 by = c(denominator_groups),
                 suffix = c(".x", "")
             )
+            joined_columns <- names(mut_freq_table)[seq_along(original_columns)]
+            renamed_columns <- original_columns != joined_columns
+            if (any(renamed_columns)) {
+                warning(
+                    "Joining precalc_depth_data renamed column(s) in ",
+                    "mutation_data: ",
+                    paste0(
+                        "'", original_columns[renamed_columns], "' -> '",
+                        joined_columns[renamed_columns], "'",
+                        collapse = ", "
+                    ),
+                    ". These names also occur in precalc_depth_data; ",
+                    "columns from precalc_depth_data keep their original names.",
+                    call. = FALSE
+                )
+            }
             depth_exists <- TRUE
         } else {
             warning(
