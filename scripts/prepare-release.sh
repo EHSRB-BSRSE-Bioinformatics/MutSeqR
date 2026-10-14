@@ -2,10 +2,10 @@
 # MutSeqR release preparation (Bioconductor "devel" push workflow).
 #
 # Steps:
-#   1. regenerate docs (roxygen)
-#   2. bump the z version in DESCRIPTION (in-place, format-preserving)
-#   3. check NEWS.md is current (warns/stops if the top entry is stale)
-#   4. run unit tests
+#   1. verify roxygen, README, and pkgdown reference output
+#   2. run unit tests, full R CMD check, and BiocCheck
+#   3. bump the z version in DESCRIPTION (in-place, format-preserving)
+#   4. check NEWS.md is current
 #   5. commit docs + DESCRIPTION (you review NEWS.md and the rest)
 #
 # After this script finishes you still do, by hand:
@@ -27,20 +27,30 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
-## 1. documentation ---------------------------------------------------
-echo "==> 1/5 Regenerating documentation (roxygen)"
-Rscript -e 'devtools::document()'
+## 1. generated documentation -----------------------------------------
+echo "==> 1/5 Checking generated documentation"
+Rscript scripts/check-docs.R
+Rscript scripts/check-readme.R
+Rscript scripts/check-reference.R
 
-## 2. version bump ----------------------------------------------------
-echo "==> 2/5 Bumping z version in DESCRIPTION"
+## 2. package validation ----------------------------------------------
+echo "==> 2/5 Running unit tests"
+Rscript scripts/run-tests.R
+echo "==> 2/5 Running full R CMD check"
+Rscript scripts/run-check.R
+echo "==> 2/5 Running BiocCheck"
+Rscript -e 'BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)'
+
+## 3. version bump ----------------------------------------------------
+echo "==> 3/5 Bumping z version in DESCRIPTION"
 old_ver="$(grep -m1 '^Version:' DESCRIPTION | awk '{print $2}')"
 z="${old_ver##*.}"
 new_ver="${old_ver%.*}.$(( z + 1 ))"
 sed -i "s/^Version: ${old_ver}\$/Version: ${new_ver}/" DESCRIPTION
 echo "    ${old_ver} -> ${new_ver}"
 
-## 3. NEWS.md check ---------------------------------------------------
-echo "==> 3/5 Checking NEWS.md"
+## 4. NEWS.md check ---------------------------------------------------
+echo "==> 4/5 Checking NEWS.md"
 NEWS_TOP="$(grep -m1 '^# ' NEWS.md || true)"
 case "${NEWS_TOP}" in
   *" ${new_ver}"*)
@@ -54,10 +64,6 @@ case "${NEWS_TOP}" in
     echo "    Update NEWS.md before pushing."
     exit 1 ;;
 esac
-
-## 4. tests ------------------------------------------------------------
-echo "==> 4/5 Running unit tests"
-Rscript -e 'devtools::load_all(quiet = TRUE); devtools::test()'
 
 ## 5. commit ------------------------------------------------------------
 echo "==> 5/5 Committing version bump + regenerated docs"
