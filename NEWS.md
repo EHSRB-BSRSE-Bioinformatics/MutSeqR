@@ -1,5 +1,8 @@
 # MutSeqR (development version)
 
+- `calculate_mf()` now warns when joining pre-calculated depth data renames
+  mutation-data columns, listing each original name and its suffixed name.
+
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample
   metadata and can join matching metadata correctly.
