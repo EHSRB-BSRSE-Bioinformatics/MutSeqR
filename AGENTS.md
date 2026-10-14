@@ -132,17 +132,38 @@ and document any ambiguity in your final notes.
 
 ## Testing And Validation
 
-Prefer targeted validation first, then broader checks if needed. The end-user will likely have to run these outside the sandbox, so request it on demand.
+Prefer targeted validation first, then broader checks if needed. This repository
+has a Pixi-managed R environment (`pixi.toml` and `.pixi/envs/default`). Check it
+before concluding that R or package dependencies are unavailable merely because
+`R`/`Rscript` are absent from the shell PATH.
 
-Useful local commands:
+Verified on this workspace: `pixi run --as-is` successfully loads MutSeqR and
+runs tests using the installed environment. `--as-is` combines `--frozen` and
+`--no-install`: it uses the existing environment without updating the lockfile
+or installing dependencies. It works here even when `--locked` and `--frozen`
+reject the manifest/lockfile mismatch. Do not reconcile or reinstall the
+environment as part of unrelated package work. An installed environment is
+required for this mode; inspect `pixi.toml` and report missing dependencies if
+it cannot run.
 
-```powershell
-R -q -e "devtools::load_all()"
-R -q -e "testthat::test_file('tests/testthat/test_import_vcf_data.R')"
-R -q -e "testthat::test_dir('tests/testthat')"
-R -q -e "devtools::document()"
-R -q -e "devtools::check()"
+Useful commands from the repository root (prefix required by the local
+agent instructions):
+
+```bash
+pixi run --as-is Rscript -e 'devtools::load_all(); testthat::test_file("tests/testthat/test_calculate_mf.R", stop_on_failure = TRUE)'
+pixi run --as-is Rscript -e 'devtools::load_all(); devtools::test(stop_on_failure = TRUE)'
+pixi run --as-is document
+pixi run --as-is Rscript -e 'devtools::load_all(); pkgdown::build_reference()'
+pixi run --as-is check
 ```
+
+Load the package before invoking `testthat::test_file()` directly. The `test`
+task also loads the package and runs the full suite, but may exit successfully
+even when tests fail; inspect its summary or use the strict command above. The `document` task
+regenerates roxygen output; review generated changes for unrelated drift.
+Full-suite and reference checks may depend on optional packages, external
+services, or example data. Report actual failures/skips rather than assuming
+all validation must be performed by the end-user.
 
 Additional practical checks:
 
