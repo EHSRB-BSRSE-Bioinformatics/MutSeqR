@@ -7,6 +7,12 @@
 - `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
   which `filter_mut()` can act on with `custom_filter_col = "filter"`.
 
+- `calculate_mf()` gains an optional `depth_group_cols` argument to declare
+  sample-level precalculated depths explicitly, including context-resolved
+  inputs with dose metadata. Declared sample depths are validated and pooled
+  to requested groups; missing sample depths warn with affected groups.
+  Default interpretation is preserved, with guidance for invalid grouped inputs.
+
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample
   metadata and can join matching metadata correctly.

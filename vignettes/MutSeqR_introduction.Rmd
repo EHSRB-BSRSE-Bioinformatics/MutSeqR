@@ -993,6 +993,88 @@ Required columns for `precalc_depth_data` are:
    the subtype_depth. Required for `precalc_depth_data` at the global
    (i.e. `none`) or `type` resolution.
 
+Grouping resolution is separate from sequence-context resolution.
+`cols_to_group` chooses the output unit; `depth_group_cols` declares the supplied
+depth unit. Row uniqueness validates that declaration, rather than deciding
+whether you intended to pool samples.
+
+| Declaration | Depth input | Behavior |
+|---|---|---|
+| `depth_group_cols = NULL` (default) | Existing input forms | Preserves existing interpretation |
+| `depth_group_cols = "sample"` | One row per sample or sample/context | Validates and maps samples using mutation metadata; pools to the output groups |
+| `depth_group_cols` matches `cols_to_group` | One row per output group or group/context | Uses already grouped depths |
+| Other finer depth keys | For example sample-by-locus to dose-by-locus | Summarize explicitly first |
+
+To preserve biological replication, calculate MF by sample and retain dose
+metadata for downstream comparisons:
+
+```{r replicate-precalc-depth, eval=FALSE}
+replicate_mf <- calculate_mf(
+  mutation_data,
+  cols_to_group = "sample",
+  subtype_resolution = "base_6",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_depth,
+  depth_group_cols = "sample",
+  retain_metadata_cols = "dose_group"
+)
+```
+
+To intentionally pool samples by dose, declare sample-level input depths even
+if `sample_depth` also contains `dose_group`:
+
+```{r pooled-precalc-depth, eval=FALSE}
+pooled_mf <- calculate_mf(
+  mutation_data,
+  cols_to_group = "dose_group",
+  subtype_resolution = "base_6",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_depth,
+  depth_group_cols = "sample"
+)
+```
+
+Each sample must belong to exactly one requested grouping combination; the same
+rule applies to combinations such as `c("dose_group", "timepoint")`. Supplied
+metadata must agree with mutation metadata. Global inputs require one finite,
+non-negative `group_depth` per sample; context inputs require one row per
+sample/context and retain the context-validation rules described below.
+
+Without an explicit declaration, global depths must already have the requested
+grouping columns and one row per group. Context-resolved inputs retain the
+existing preference for requested grouping columns when present, otherwise
+using sample metadata. Adding `dose_group` to sample depths does not aggregate
+them; declare `depth_group_cols = "sample"` to avoid that ambiguity.
+
+Samples absent from `mutation_data` cannot be mapped. Explicit sample inputs
+warn if mutation samples have no supplied depth and identify affected groups.
+Only supplied depths contribute to denominators; mutation counts are unchanged.
+Consequently, incomplete depths can inflate pooled MF. Groups with no supplied
+depth retain the existing missing-depth behavior. Default calls gain no new
+missing-sample warning.
+
+The pooled MF is **total mutation count / total depth**, not an arithmetic
+mean of sample MFs. Counts of 2 and 8 at depths of 1,000 and 2,000 give a pooled
+MF of 10/3,000. With `summary = FALSE`, this group result is attached to each
+mutation row in the group.
+
+If a sample spans several loci, sample-wide depth cannot supply locus-specific
+denominators. Supply one depth per requested sample/locus combination:
+
+```{r locus-precalc-depth, eval=FALSE}
+locus_mf <- calculate_mf(
+  mutation_data,
+  cols_to_group = c("sample", "locus"),
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_locus_depth,
+  depth_group_cols = c("sample", "locus")
+)
+```
+
+Context depths additionally require one row per group/context. Supported context
+conversions are unchanged: Base192 can supply Base12, while normalized Base96
+cannot recover Base12 strand-specific depths.
+
 The following tables show the expected precalculated depth data at each
 resolution. These tables are included in the MutSeqRData example data.
 
