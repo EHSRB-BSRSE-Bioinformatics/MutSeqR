@@ -83,10 +83,23 @@ install from CRAN/Bioc (conda-forge's Bioc coverage is incomplete).
 pixi install        # one-time (R 4.5 + pandoc)
 pixi run setup      # installs dev tools + all package deps (see scripts/setup-deps.R)
 pixi run test       # devtools::test()
-pixi run document   # roxygen
-pixi run check      # rcmdcheck
-pixi run bioccheck  # BiocCheck (Bioc's own lint)
+pixi run document        # regenerate roxygen output
+pixi run check-docs      # verify generated Rd, NAMESPACE, and metadata are current
+pixi run check-readme    # verify README.md matches README.Rmd
+pixi run check-reference # verify exported topics are indexed and build reference
+pixi run check           # full R CMD check (fails on errors, warnings, or notes)
+pixi run bioccheck       # BiocCheck (fails the task when checks fail)
+pixi run validate        # run all local documentation and package validation gates
 ```
+
+`check-docs`, `check-readme`, and `check-reference` are also run on every pull
+request by the `Documentation validation` workflow (`docs-and-readme` and
+`reference` jobs). CI checks generated files from a clean checkout; locally, each
+freshness task compares the relevant output before and after that run, so unrelated
+worktree edits do not affect its result. If a check reports changed generated
+files, review and commit those outputs, then rerun the task. Repository branch
+protection can require these workflow checks alongside the existing `R-CMD-check`
+matrix.
 
 Feature flow:
 
@@ -105,7 +118,7 @@ One entry per release at minimum; the release ritual (§5) enforces it.
 Do this after merging to `main`, when the batch is ready:
 
 ```
-pixi run prepare-release        # document -> z-bump -> NEWS check -> test -> commit
+pixi run prepare-release        # documentation + package checks -> z-bump -> NEWS check -> commit
 git push origin main
 git push upstream main:devel    # 'upstream' = git.bioconductor.org; writes to its 'devel'
 ```
@@ -167,9 +180,8 @@ branches (devel: even→odd `y`, e.g. `1.1.0` → `1.3.0` for the cycle after
 
 ## 9. Open items
 
-- CI currently runs R-CMD-check via `r-lib/actions` (R devel only, Bioc
-  deps resolved at runtime). Planned: PR-gated check + **BiocCheck** using
-  the official `bioconductor/bioconductor_docker:<release>` image for exact
-  version parity, plus a devel-tracking job on `main`.
+- Pull requests run R CMD check, generated documentation and README freshness,
+  and pkgdown reference coverage. The pkgdown site continues to publish on
+  release; pull requests validate the reference without publishing it.
 - Optional CI gate: PR touching `R/` must change `DESCRIPTION` Version and
   `NEWS.md`.
