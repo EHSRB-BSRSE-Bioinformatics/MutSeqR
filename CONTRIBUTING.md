@@ -109,7 +109,6 @@ Run `pixi run bioc-devel-build` after changing dependencies in `DESCRIPTION` or
 when you want to pull the newest `bioconductor/bioconductor_docker:devel` base
 image. The native Pixi and container environments remain independent; switching
 between their commands does not create or destroy either one.
-
 `check-docs`, `check-readme`, and `check-reference` are also run on every pull
 request by the `Documentation validation` workflow (`docs-and-readme` and
 `reference` jobs). CI checks generated files from a clean checkout; locally, each
