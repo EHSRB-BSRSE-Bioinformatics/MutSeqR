@@ -33,8 +33,13 @@ if (nzchar(bioc_ver)) {
 BiocManager::install("BiocCheck", ask = FALSE, update = FALSE)
 
 ## package dependencies (hard + soft, from DESCRIPTION) ---------------
+# Include the matching Bioconductor repositories so remotes can resolve
+# Bioconductor Imports as well as CRAN dependencies.
+repos <- BiocManager::repositories()
+
 remotes::install_local(
   dependencies = TRUE,
+  repos = repos,
   force_update = FALSE,
   upgrade = "never"
 )
