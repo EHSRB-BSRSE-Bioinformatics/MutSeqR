@@ -179,6 +179,101 @@ test_that("calculate_mf works with precalculated depth", {
   expect_equal(mf_data$proportion_max, expected_prop_max)
 })
 
+test_that("calculate_mf warns with original and joined column names", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  mutation_data$group_depth <- 100
+  mutation_data$metadata.x <- "original"
+  depth <- data.frame(
+    sample = c("sample1", "sample2", "sample3"),
+    group_depth = c(1500, 1600, 1400),
+    metadata.x = "depth"
+  )
+
+  expect_warning(
+    mf_data <- calculate_mf(
+      mutation_data,
+      calculate_depth = FALSE,
+      precalc_depth_data = depth,
+      summary = FALSE
+    ),
+    paste0(
+      "Joining precalc_depth_data renamed column\\(s\\) in mutation_data: ",
+      "'group_depth' -> 'group_depth\\.x', ",
+      "'metadata\\.x' -> 'metadata\\.x\\.x'"
+    )
+  )
+  expect_equal(mf_data$group_depth.x, mutation_data$group_depth)
+  expect_equal(mf_data$metadata.x.x, mutation_data$metadata.x)
+  expect_equal(mf_data$metadata.x, rep("depth", nrow(mutation_data)))
+  expect_equal(
+    mf_data$group_depth,
+    depth$group_depth[match(mf_data$sample, depth$sample)]
+  )
+  expect_equal(mf_data$mf_min, mf_data$sum_min / mf_data$group_depth)
+  expect_equal(mf_data$mf_max, mf_data$sum_max / mf_data$group_depth)
+})
+
+test_that("calculate_mf warns for existing group_depth or subtype_depth", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  depth <- data.frame(
+    sample = c("sample1", "sample2", "sample3"),
+    group_depth = c(1500, 1600, 1400)
+  )
+
+  for (columns in list(
+    "group_depth", "subtype_depth", c("group_depth", "subtype_depth")
+  )) {
+    input <- mutation_data
+    for (column in columns) {
+      input[[column]] <- 100
+    }
+    expected_warning <- paste0(
+      "Joining precalc_depth_data renamed column(s) in mutation_data: ",
+      paste0("'", columns, "' -> '", columns, ".x'", collapse = ", ")
+    )
+
+    expect_warning(
+      mf_data <- calculate_mf(
+        input,
+        calculate_depth = FALSE,
+        precalc_depth_data = depth,
+        summary = FALSE
+      ),
+      expected_warning,
+      fixed = TRUE
+    )
+    for (column in columns) {
+      expect_equal(mf_data[[paste0(column, ".x")]], input[[column]])
+    }
+    expected_depth <- depth$group_depth[match(mf_data$sample, depth$sample)]
+    expect_equal(mf_data$group_depth, expected_depth)
+    expect_equal(mf_data$subtype_depth, expected_depth)
+    expect_equal(mf_data$mf_min, mf_data$sum_min / expected_depth)
+    expect_equal(mf_data$mf_max, mf_data$sum_max / expected_depth)
+  }
+})
+
+test_that("calculate_mf does not warn for unchanged .x column names", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  mutation_data$metadata.x <- "original"
+  depth <- data.frame(
+    sample = c("sample1", "sample2", "sample3"),
+    group_depth = c(1500, 1600, 1400)
+  )
+
+  expect_warning(
+    mf_data <- calculate_mf(
+      mutation_data,
+      calculate_depth = FALSE,
+      precalc_depth_data = depth,
+      summary = FALSE
+    ),
+    NA
+  )
+  expect_equal(mf_data$metadata.x, mutation_data$metadata.x)
+  expect_equal(mf_data$sample, mutation_data$sample)
+})
+
 test_that("calculate_mf derives requested resolution from finer precalc data", {
   mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
   samples <- unique(mutation_data$sample)
