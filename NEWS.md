@@ -1,5 +1,14 @@
 # MutSeqR (development version)
 
+- `calculate_mf()` gains an optional `depth_group_cols` argument to declare
+  sample-level precalculated depths explicitly, including context-resolved
+  inputs with dose metadata. Declared sample depths are validated and pooled
+  to requested groups; missing sample depths warn with affected groups.
+  Default interpretation is preserved, with guidance for invalid grouped inputs.
+
+- `calculate_mf()` now warns when joining pre-calculated depth data renames
+  mutation-data columns, listing each original name and its suffixed name.
+
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample
   metadata and can join matching metadata correctly.

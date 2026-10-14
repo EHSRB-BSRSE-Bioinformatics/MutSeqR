@@ -16,12 +16,15 @@ calculate_mf(
   precalc_depth_data = NULL,
   d_sep = "\\t",
   summary = TRUE,
-  retain_metadata_cols = NULL
+  retain_metadata_cols = NULL,
+  depth_group_cols = NULL
 )
 }
 \arguments{
 \item{mutation_data}{The data frame (or GRanges) to be processed containing
-mutation data. Required columns are listed in details.}
+mutation data. Required columns are listed in details. Column names
+\code{missing_context_depth} and \code{.missing_context_depth} are reserved for
+internal use and must be renamed before calling this function.}
 
 \item{cols_to_group}{A vector of grouping variables. This should be the
 groups of interest that you want to calculate a frequency for.
@@ -57,7 +60,11 @@ total_depth values may be supplied at the desired subtype_resolution
 using the precalc_depth_data parameter. Alternatively, if no per-group
 total_depth is available, per-group mutation counts will be calculated,
 but mutation frequency will not. In such cases, mutation subtype proportions
-will not be normalized to the total_depth.}
+will not be normalized to the total_depth. When calculating depth at an
+SNV subtype resolution, a group-context combination absent from
+mutation_data is assigned subtype_depth of zero; its mutation frequency
+and proportion are returned as NA and excluded from proportion
+normalization.}
 
 \item{correct_depth}{A logical value. If TRUE, the function will correct the
 \code{total_depth} column in \code{mutation_data} in order to prevent
@@ -92,7 +99,9 @@ resolutions of "none", "type", and all non-snv mutations in "base_6",
 "base_12", "base_96", and "base_192". \code{subtype_depth} is used for snv
 mutations in "base_6", "base_12", "base_96", and "base_192". You can
 access a list of context values for each subtype resolution using
-\code{MutSeqR::context_list$your_subtype_resolution}.}
+\code{MutSeqR::context_list$your_subtype_resolution}.
+Use \code{depth_group_cols = "sample"} to explicitly declare sample-level depths
+and pool them to the requested output groups using mutation metadata.}
 
 \item{d_sep}{The delimiter used in the precalc_depth_data, if applicable.
 Default is tab-delimited.}
@@ -107,6 +116,15 @@ additional flexibility to power users.}
 the metadata columns that you would like to retain in the summary table.
 This may be useful for plotting your summary data. Ex. retain the "dose"
 column when summarising by "sample".}
+
+\item{depth_group_cols}{Optional character vector declaring the grouping
+columns of \code{precalc_depth_data}, independently of the output \code{cols_to_group}.
+NULL preserves the existing interpretation. Set to \code{"sample"} to validate
+sample-level global or context depths and map them to the requested groups,
+even when output grouping metadata is also present in the depth table.
+Alternatively, declare the same grouping columns as \code{cols_to_group} to use
+an already grouped table. Other finer groupings must be summarized explicitly
+first. Requires \code{calculate_depth = FALSE} and \code{precalc_depth_data}.}
 }
 \value{
 A data frame with the mutation frequency calculated. If summary
@@ -209,6 +227,43 @@ subtype within a given group is not recorded in the mutation data, the
 summary table will have no frame of reference for populating the
 metadata_cols. Thus, for subtypes that do not occur in the mutation data
 for a given group, the corresponding metadata_col will be NA.
+
+\strong{Precalculated depth grouping:} Grouping resolution and sequence-context
+resolution are independent. \code{cols_to_group} specifies the output unit;
+\code{depth_group_cols} declares the input depth unit. Uniqueness checks validate
+this declaration rather than infer intent from the number of depth rows.\tabular{lll}{
+   Declaration \tab Depth input \tab Handling \cr
+   NULL \tab Existing input forms \tab Existing interpretation \cr
+   \code{"sample"} \tab One row per sample or sample/context \tab Map and pool samples \cr
+   Same columns as \code{cols_to_group} \tab One row per group or group/context \tab Use directly \cr
+   Other finer depth keys \tab For example sample-by-locus to dose-by-locus \tab Summarize first \cr
+}
+
+
+With \code{depth_group_cols = "sample"}, each sample must map to exactly one
+combination of requested grouping values in \code{mutation_data}. This supports
+arbitrary columns, including dose plus timepoint when constant within sample.
+Supplied grouping metadata must agree with mutation metadata. Global sample
+depths must have one finite, non-negative \code{group_depth} per sample; context
+inputs retain \code{write_depth_data()} validation and conversion rules.
+
+A sample spanning multiple loci or timepoints cannot be split using its
+sample-wide depth. Supply depths already resolved to the requested groups.
+Samples absent from \code{mutation_data} cannot be mapped. Explicit sample inputs
+warn when mutation samples have no supplied depth, identifying affected groups.
+Only supplied depths contribute to pooled denominators; mutation counts retain
+their existing behavior, and groups without depth retain missing-depth behavior.
+Default calls do not gain this warning.
+
+Pooled MF is total mutation count divided by total depth, rather than an
+arithmetic mean of sample MFs. Grouping by \code{"sample"} preserves biological
+replication; retain dose metadata with \code{retain_metadata_cols = "dose_group"}.
+With \code{summary = FALSE}, the same group result is attached to each mutation row.
+Context conversion only derives supported coarser resolutions; normalized
+Base96 cannot recover Base12. With the default declaration, context-resolved
+inputs retain the branch's existing preference for requested grouping columns
+when present, otherwise using the sample mapping. Adding metadata does not
+aggregate depths; explicitly declare sample inputs to override that preference.
 
 \strong{Variant filtering:} Variants flagged as TRUE in the \code{filter_mut} column
 will be excluded from the mutation counts. However, the total_depth of
