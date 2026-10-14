@@ -713,6 +713,11 @@ calculate_mf <- function(mutation_data,
         )
     }
 
+    # Return mutation-level results before building the summary table.
+    if (!summary) {
+        return(mut_freq_table)
+    }
+
     # Create a summary table
     group_list <- lapply(
         cols_to_group,
@@ -801,22 +806,18 @@ calculate_mf <- function(mutation_data,
                 c(snv_subtype, group_list)
             )
             summary_rows <- rbind(summary_rows, summary_rows_snv)
-            summary_rows <- summary_rows %>% # add the context column
-                dplyr::rowwise() %>%
-                dplyr::mutate(
-                    !!paste(denominator_dict[[subtype_resolution]]) :=
-                        get_ref_of_mut(get(subtype_dict[[subtype_resolution]]))
-                )
-            summary_rows <- summary_rows %>%
-                dplyr::mutate(
-                    !!paste0(MutSeqR::denominator_dict[[subtype_resolution]])
-                        := if_else(is.na(!!sym(paste0(MutSeqR::denominator_dict[[subtype_resolution]]))),
-                            "N",
-                            !!sym(paste0(
-                                MutSeqR::denominator_dict[[subtype_resolution]]
-                            ))
-                        )
-                )
+            # Calculate each subtype's context once, then map it to all groups.
+            subtype_column <- MutSeqR::subtype_dict[[subtype_resolution]]
+            context_column <- MutSeqR::denominator_dict[[subtype_resolution]]
+            subtypes <- as.character(summary_rows[[subtype_column]])
+            unique_subtypes <- unique(subtypes)
+            contexts <- vapply(
+                unique_subtypes, get_ref_of_mut, character(1),
+                USE.NAMES = FALSE
+            )
+            summary_rows[[context_column]] <- tidyr::replace_na(
+                contexts[match(subtypes, unique_subtypes)], "N"
+            )
         }
     } else {
         summary_rows <- group_df
@@ -902,22 +903,15 @@ calculate_mf <- function(mutation_data,
             dplyr::mutate(
                 dplyr::across(
                     dplyr::all_of(c("mf_min", "mf_max")),
-                    ~ tidyr::replace_na(., 0)
+                    ~ {
+                        values <- tidyr::replace_na(., 0)
+                        if (missing_context_depth) {
+                            values[.data$.missing_context_depth] <- NA_real_
+                        }
+                        values
+                    }
                 )
             )
-        if (missing_context_depth) {
-            summary_table <- summary_table %>%
-                dplyr::mutate(
-                    dplyr::across(
-                        dplyr::all_of(c("mf_min", "mf_max")),
-                        ~ dplyr::if_else(
-                            .data$.missing_context_depth,
-                            NA_real_,
-                            .
-                        )
-                    )
-                )
-        }
     }
 
     # Calculate the proportions of each subtype
@@ -983,14 +977,12 @@ calculate_mf <- function(mutation_data,
             dplyr::mutate(
                 dplyr::across(
                     c(proportion_min, proportion_max),
-                    ~ if (missing_context_depth) {
-                        dplyr::if_else(
-                            .data$.missing_context_depth,
-                            NA_real_,
-                            tidyr::replace_na(., 0)
-                        )
-                    } else {
-                        tidyr::replace_na(., 0)
+                    ~ {
+                        values <- tidyr::replace_na(., 0)
+                        if (missing_context_depth) {
+                            values[.data$.missing_context_depth] <- NA_real_
+                        }
+                        values
                     }
                 )
             )
@@ -1020,9 +1012,5 @@ calculate_mf <- function(mutation_data,
         )
     }
 
-    if (!summary) {
-        return(mut_freq_table)
-    } else {
-        return(summary_table)
-    }
+    return(summary_table)
 }
