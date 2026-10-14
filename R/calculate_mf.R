@@ -712,6 +712,11 @@ calculate_mf <- function(mutation_data,
         )
     }
 
+    # Return mutation-level results before building the summary table.
+    if (!summary) {
+        return(mut_freq_table)
+    }
+
     # Create a summary table
     group_list <- lapply(
         cols_to_group,
@@ -1019,9 +1024,5 @@ calculate_mf <- function(mutation_data,
         )
     }
 
-    if (!summary) {
-        return(mut_freq_table)
-    } else {
-        return(summary_table)
-    }
+    return(summary_table)
 }
