@@ -29,12 +29,16 @@ git = "*"
 setup = "Rscript scripts/setup-deps.R"
 
 # everyday development
-test = "Rscript -e 'devtools::load_all(quiet = TRUE); devtools::test()'"
+test = "Rscript scripts/run-tests.R"
 document = "Rscript -e 'devtools::document()'"
-check = "Rscript -e 'rcmdcheck::rcmdcheck()'"
-bioccheck = "Rscript -e 'BiocCheck::BiocCheck(\".\")'"
+check-docs = "Rscript scripts/check-docs.R"
+check-readme = "Rscript scripts/check-readme.R"
+check-reference = "Rscript scripts/check-reference.R"
+check = "Rscript scripts/run-check.R"
+bioccheck = "Rscript -e 'BiocCheck::BiocCheck(\".\", `quit-with-status` = TRUE)'"
 pkgdown = "Rscript -e 'pkgdown::build_site()'"
+validate = { depends-on = ["check-docs", "check-readme", "check-reference", "test", "check", "bioccheck"] }
 
-# release workflow: document -> NEWS check -> z-bump -> test -> commit
+# release workflow: documentation -> tests/checks -> NEWS check -> z-bump -> commit
 # (requires bash; on Windows use WSL or Git-Bash)
 prepare-release = "bash scripts/prepare-release.sh"
