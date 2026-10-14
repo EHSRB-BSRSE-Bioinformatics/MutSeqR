@@ -385,3 +385,64 @@ test_that("calculate_mf selects variation types", {
     c(3, 0, 4, 2, 2, 2, 0, 339, 1, 1, 0, 2, 224, 103, 130)
   )
 })
+
+test_that("calculate_mf returns mutation-level frequencies without summarizing", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  summary_data <- calculate_mf(
+    mutation_data,
+    subtype_resolution = "none",
+    correct_depth = FALSE
+  )
+  mf_data <- calculate_mf(
+    mutation_data,
+    subtype_resolution = "none",
+    correct_depth = FALSE,
+    summary = FALSE
+  )
+
+  expect_equal(nrow(mf_data), nrow(mutation_data))
+  expect_true(all(names(mutation_data) %in% names(mf_data)))
+  expect_equal(mf_data[names(mutation_data)], tibble::as_tibble(mutation_data))
+  group_rows <- match(mf_data$sample, summary_data$sample)
+  for (column in c("sum_min", "sum_max", "group_depth", "mf_min", "mf_max")) {
+    expect_equal(mf_data[[column]], summary_data[[column]][group_rows])
+  }
+})
+
+test_that("mutation-level results skip missing summary metadata warnings", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  present_contexts <- unique(mutation_data$normalized_context[
+    mutation_data$normalized_context %in% MutSeqR::context_list$base_96
+  ])
+  mutation_data <- dplyr::filter(
+    mutation_data,
+    .data$normalized_context != present_contexts[[1]]
+  )
+  mutation_data$metadata_label <- "retained"
+
+  expect_warning(
+    calculate_mf(
+      mutation_data,
+      subtype_resolution = "base_96",
+      variant_types = "snv",
+      correct_depth = FALSE,
+      retain_metadata_cols = "metadata_label"
+    ),
+    "NA values detected in retained metadata columns"
+  )
+  expect_warning(
+    mf_data <- calculate_mf(
+      mutation_data,
+      subtype_resolution = "base_96",
+      variant_types = "snv",
+      correct_depth = FALSE,
+      summary = FALSE,
+      retain_metadata_cols = "metadata_label"
+    ),
+    NA
+  )
+  expect_equal(nrow(mf_data), nrow(mutation_data))
+  expect_equal(mf_data$metadata_label, mutation_data$metadata_label)
+  expect_true(all(c("mf_min", "mf_max") %in% names(mf_data)))
+  expect_false(any(c("proportion_min", "proportion_max") %in% names(mf_data)))
+})
