@@ -1,13 +1,11 @@
 # MutSeqR development environment
 #
-# pixi manages the R runtime + tooling (pandoc, git, ...). R *package*
-# dependencies are installed from CRAN/Bioconductor into this environment
-# via `pixi run setup` (see scripts/setup-deps.R) — conda-forge's
-# Bioconductor coverage is not complete, so we don't rely on it.
+# pixi manages the R runtime, CRAN packages, Bioconductor packages, and
+# development tools. Bioconductor packages come from Bioconda, which does
+# not publish Windows builds; Windows can use `pixi run setup` instead.
 #
 # Quick start:
 #   pixi install
-#   pixi run setup
 #   pixi run test
 #
 # Note: tasks that use bash (prepare-release) require WSL/Git-Bash on
@@ -15,7 +13,7 @@
 
 [workspace]
 name = "mutseqr"
-channels = ["conda-forge"]
+channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [dependencies]
@@ -23,9 +21,62 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 r-base = "4.5.*"
 pandoc = ">=3.6"
 git = "*"
+r-devtools = ">=2.5.0,<3"
+r-roxygen2 = ">=8.1.0,<9"
+r-testthat = ">=3.0.0,<4"
+r-rcmdcheck = ">=1.4.0,<2"
+r-pkgdown = ">=2.2.0,<3"
+"r-data.table" = "*"
+"r-dplyr" = "*"
+"r-ggplot2" = "*"
+"r-here" = "*"
+"r-ggdendro" = "*"
+"r-magrittr" = "*"
+"r-rlang" = "*"
+"r-stringr" = "*"
+"r-tibble" = "*"
+"r-tidyr" = "*"
+
+# Bioconda publishes these builds for Linux and macOS. Windows users can
+# install them from Bioconductor with the setup task below.
+[target.linux-64.dependencies]
+bioconductor-biocgenerics = "*"
+bioconductor-biostrings = "*"
+bioconductor-bsgenome = "*"
+bioconductor-genomicranges = "*"
+bioconductor-iranges = "*"
+bioconductor-plyranges = "*"
+bioconductor-s4vectors = "*"
+bioconductor-seqinfo = "*"
+bioconductor-summarizedexperiment = "*"
+bioconductor-variantannotation = "*"
+
+[target.osx-64.dependencies]
+bioconductor-biocgenerics = "*"
+bioconductor-biostrings = "*"
+bioconductor-bsgenome = "*"
+bioconductor-genomicranges = "*"
+bioconductor-iranges = "*"
+bioconductor-plyranges = "*"
+bioconductor-s4vectors = "*"
+bioconductor-seqinfo = "*"
+bioconductor-summarizedexperiment = "*"
+bioconductor-variantannotation = "*"
+
+[target.osx-arm64.dependencies]
+bioconductor-biocgenerics = "*"
+bioconductor-biostrings = "*"
+bioconductor-bsgenome = "*"
+bioconductor-genomicranges = "*"
+bioconductor-iranges = "*"
+bioconductor-plyranges = "*"
+bioconductor-s4vectors = "*"
+bioconductor-seqinfo = "*"
+bioconductor-summarizedexperiment = "*"
+bioconductor-variantannotation = "*"
+
 [tasks]
-# one-time (or after adding new deps): installs dev tools + all package
-# deps from DESCRIPTION (CRAN + Bioconductor)
+# Installs Suggests and any Bioconductor imports missing on Windows.
 setup = "Rscript scripts/setup-deps.R"
 
 # everyday development
