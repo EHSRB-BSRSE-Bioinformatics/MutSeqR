@@ -446,3 +446,30 @@ test_that("mutation-level results skip missing summary metadata warnings", {
   expect_true(all(c("mf_min", "mf_max") %in% names(mf_data)))
   expect_false(any(c("proportion_min", "proportion_max") %in% names(mf_data)))
 })
+
+
+test_that("summary context mapping preserves all subtype resolutions", {
+  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
+  for (resolution in c("base_6", "base_12", "base_96", "base_192")) {
+    mf_data <- calculate_mf(
+      mutation_data,
+      subtype_resolution = resolution,
+      correct_depth = FALSE
+    )
+    subtype_column <- MutSeqR::subtype_dict[[resolution]]
+    context_column <- MutSeqR::denominator_dict[[resolution]]
+    # Compare with the former scalar, per-row context calculation.
+    expected_contexts <- vapply(
+      as.character(mf_data[[subtype_column]]),
+      MutSeqR:::get_ref_of_mut,
+      character(1),
+      USE.NAMES = FALSE
+    )
+    expect_equal(
+      mf_data[[context_column]],
+      tidyr::replace_na(expected_contexts, "N")
+    )
+    expect_false(anyNA(mf_data[[context_column]]))
+    expect_false(".missing_context_depth" %in% names(mf_data))
+  }
+})
