@@ -657,7 +657,8 @@ calculate_mf <- function(mutation_data,
             }
             # Merge depth_df with mut_freq_table
             mut_freq_table <- dplyr::left_join(mut_freq_table, depth_df,
-                by = c(denominator_groups)
+                by = c(denominator_groups),
+                suffix = c(".x", "")
             )
             depth_exists <- TRUE
         } else {
