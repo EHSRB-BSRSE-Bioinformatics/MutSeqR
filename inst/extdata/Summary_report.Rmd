@@ -224,6 +224,8 @@ filtered_mutation_data <- filter_mut(
   mutation_data,
   vaf_cutoff = params$vaf_cutoff,
   snv_in_germ_mnv = params$snv_in_germ_mnv,
+  recurrent_germ = params$recurrent_germ,
+  recurrence_limit = params$recurrence_limit,
   rm_abnormal_vaf = params$rm_abnormal_vaf,
   custom_filter_col = params$custom_filter_col,
   custom_filter_val = params$custom_filter_val,

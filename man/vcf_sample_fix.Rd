@@ -2,7 +2,7 @@
 % Please edit documentation in R/import_helpers.R
 \name{vcf_sample_fix}
 \alias{vcf_sample_fix}
-\title{Retrieve the sample column from VCF files}
+\title{Retrieve the sample column from INFO field of VCF files}
 \usage{
 vcf_sample_fix(vcf)
 }
@@ -13,6 +13,6 @@ vcf_sample_fix(vcf)
 The vcf with sample column name corrected
 }
 \description{
-Checks to find the sample name of the vcf in the INFO field or
-in the FORMAT header. Can also handle sample name synonyms.
+Checks to find the sample name of the vcf in the INFO field
+Can also handle sample name synonyms.
 }
