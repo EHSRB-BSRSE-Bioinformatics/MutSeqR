@@ -13,6 +13,12 @@
   to requested groups; missing sample depths warn with affected groups.
   Default interpretation is preserved, with guidance for invalid grouped inputs.
 
+- `calculate_mf()` infers the grouping resolution of precalculated depths and
+  aggregates finer inputs to `cols_to_group`, preserving context resolution.
+
+- Import functions check for installed BSgenome packages before checking
+  online for available genomes, avoiding an unnecessary internet connection.
+
 - `calculate_mf()` now warns when joining pre-calculated depth data renames
   mutation-data columns, listing each original name and its suffixed name.
 
