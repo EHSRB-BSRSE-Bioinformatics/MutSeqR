@@ -196,12 +196,6 @@ import_vcf_data <- function(
     is.logical(output_granges),
     is.logical(add_chr)
   )
-  if (!is.null(BS_genome)) {
-    BS_genome <- match.arg(
-      BS_genome,
-      choices = BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-    )
-  }
 
   # Load and validate sample metadata before heavy lifting
   sample_df <- NULL
