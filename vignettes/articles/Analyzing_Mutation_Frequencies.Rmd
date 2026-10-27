@@ -108,57 +108,22 @@ adjusted for multiple comparisons using the Sidak method.
 ## Goodness of Fit
 
 The `model_mf` function will output the Pearson residuals appended to the
-`mf_data`. The row with the largest absolute residual will be printed to the console
-so that users may assess it as an outlier. Additionally, Pearson residuals
-will be plotted as a histogram and a QQ-plot to assess model fit. These are diagnostic plots: assess residual patterns and large
-residuals alongside dispersion and the study design. GLM/GLMM Pearson residuals
-need not be normally distributed, and agreement with a normal QQ reference line
-does not establish that all model assumptions hold.
+`mf_data`. The row with the largest absolute residual will be printed to
+the console so that users may assess it as an outlier. Additionally, Pearson
+residuals will be plotted as a histogram and a QQ-plot to assess model fit.
+These are diagnostic plots used to assess residual patterns and large residuals
+alongside dispersion and the study design. Generally, we assume that residuals
+will follow a normal distribution with a mean of 0. Thus, we expect the
+histogram to follow a bell curve and the QQ-plot to be plotted along the
+y=x line.
 
 ## General Usage
 
 Mutation data should first be summarised by biological sample using
-`calculate_mf()`, with `summary = TRUE` (the default). `cols_to_group` selects
-one or more columns in the mutation data that define the unit for summing
-mutation counts and depths: `"sample"` gives an MF for each replicate, while
-`c("sample", "label")` gives an MF for each sample/genomic target combination.
-Use `retain_metadata_cols` to keep experimental variables such as dose in the
-summary without pooling samples by those variables.
-
-Setting `cols_to_group = "dose_group"` instead produces a pooled dose-level MF
-(total mutation count divided by total depth), rather than a mean of replicate
-MFs. For the models below, keep the biological samples as separate observations
-and supply dose as a model effect; pooling by dose would discard that replication.
-
-When supplying `precalc_depth_data`, the optional `depth_group_cols` parameter
-declares the grouping columns of the **input depths**, independently of the
-output grouping in `cols_to_group`. Set `depth_group_cols = "sample"` for
-sample-level global or context depths, even if the depth table also contains
-dose metadata. For example, with one global `group_depth` per sample:
-
-```{r calculate-mf-precalc-replicates, eval=FALSE}
-mf_data_global <- calculate_mf(
-  mutation_data = example_data,
-  cols_to_group = "sample",
-  subtype_resolution = "none",
-  calculate_depth = FALSE,
-  precalc_depth_data = sample_depth,
-  depth_group_cols = "sample",
-  retain_metadata_cols = c("dose_group", "dose")
-)
-```
-
-If a pooled output is requested, sample depths can only be pooled when each
-sample maps to one combination of output grouping values in the mutation data.
-A sample spanning several targets needs target-specific depths for
-`cols_to_group = c("sample", "label")`; its sample-wide depth cannot be split
-among those targets. Supply already grouped depths and declare
-`depth_group_cols = c("sample", "label")` in that case. Other finer depth tables
-must be summarized to the requested groups first. NULL preserves the existing
-depth interpretation. Explicit sample inputs error on ambiguous mappings or
-conflicting metadata and warn about missing sample depths; resolve missing
-depths before interpreting pooled MFs. These parameters are described further
-in the introduction vignette's precalculated-depth section.
+`calculate_mf()`, with `summary = TRUE` (the default). Be sure to retain the
+columns for experimental variables of interest using the `retain_metadata_cols`
+parameter. See MutSeqR_introduction.Rmd for more information on using
+`calculate_mf()`.
 
 You may specify factors and covariates for your model using the `fixed_effects`
 and `random_effects` parameters respectively. If more than one fixed_effect is
@@ -306,7 +271,7 @@ stats::qqline(model_data$residuals, col = "red")
 ```
 
 Inspect departures from the QQ reference line alongside dispersion and other
-residual diagnostics; this plot alone does not validate the model assumptions.
+residual diagnostics.
 
 #### Model Summary
 
@@ -315,9 +280,7 @@ model_by_dose$summary
 ```
 
 The model summary indicates that dose group has a significant effect on mutation
-frequency. The example fits a quasibinomial model. A dispersion parameter above
-1 indicates overdispersion relative to a binomial model; it does not by itself establish a
-good fit.
+frequency. The example fits a quasibinomial model.
 
 #### Model Estimates
 
@@ -904,10 +867,11 @@ plot
 ```
 
 These plots are great for comparing BMDs between different groups. For our purposes,
-we see that PROAST and ToxicR generate BMD results that are pretty similar to each other.
-Overlapping confidence intervals alone do not establish statistical equivalence
-or the absence of a difference between the two methods. These
-plots would also be great for comparing the potency of different chemicals.
+we see that PROAST and ToxicR generate BMD results that are pretty similar to each other. These plots are also great for comparing the potency of different chemicals.
+
+Divide the BMDL by the BMDU to get a statistic for BMD uncertainty. The wider the condidence interval, the lower the certainty.
+
+Overlapping confidence intervals may suggest that two BMDs are similar.
 
 # References
 
