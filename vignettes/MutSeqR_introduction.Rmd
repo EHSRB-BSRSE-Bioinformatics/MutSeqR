@@ -953,130 +953,74 @@ _parameter._
 
 ## What if I don't have the total depth in my data?
 
-For mutation data that does not include a `total_depth` value for each
-sequenced site (for example, SMM-Seq vcf files that only contain variant
-sites), to calculate mutation frequencies, you will need to precalculate
-the depth per sample and supply it seperately to `calculate_mf()`. It is
-recommended that you calculate the depth for each sample at each of the 64 trinucleotides (i.e. the base_192 resolution). This way, you have the depth
-at a resolution that will allow you to calculate mutation frequecies for the
-mutation subtypes and trinucleotide analysis. Trinucleotide depth can be
-calculated from ECS consensus BAM files, or you can request this information
-from your ECS technology's provider.
+If your mutation data do not include `total_depth` for every sequenced site,
+supply precalculated depths to `calculate_mf()`. For example, SMM-Seq VCF files
+that contain only variant sites do not provide the depth needed to calculate
+mutation frequencies across all sequenced sites.
 
-Precalculated depth data is supplied to `calculate_mf()` through the
-`precalc_depth_data` parameter. This parameter will accept either a data
-frame or a filepath to import the depth data. The depth should be provided at
-the specified subtype resolution or at a higher resolution.
+You can calculate depths from ECS consensus BAM files or request them from your
+ECS technology provider. Where possible, obtain depths for each sample at each
+of the 64 trinucleotide contexts (`base_192` resolution). These depths support
+all subtype resolutions, including trinucleotide analyses.
 
-For example, if you are calculating global mutation frequencies
-(`subtype_resolution`="none"), you may supply a `precalc_depth_data`
-consisting of depth per sample. Alternatively, you may supply the depth per
-sample, per trinucleotide, and the function will calculate the global depth
-per sample for you. Similarly, if you are calculating mutation frequencies
-for the 6 subtypes, (`subtype_resolution`="base_6"), you may supply the depth
-per sample per C/T reference, or you may supply the depth per sample, per
-trinucleotide, and it will calculate the depth at the base_6 resolution.
+Pass the depth table to `precalc_depth_data` as either a data frame or a file
+path, and set `calculate_depth = FALSE`. For file input, use `d_sep` to specify
+the delimiter if needed.
 
-Required columns for `precalc_depth_data` are:
+### Choose the depth resolution
 
-1. sample or the appropriate grouping column (must match or be at a finer
-   resolution level than cols_to_group)
-2. The appropriate context column for the given resolution of your depth data.
-   Ensure that the column is named properly. Column names per `subtype_resolution`
-   are listed in \@ref(tab:subtypes-cols). This does not apply for
-   `precalc_depth_data` at the global (i.e. `none`) or `type` resolution.
-3. `subtype_depth`: the `total_depth` summed across the sample for each
-   context. This does not apply for `precalc_depth_data` at the global
-   (i.e. `none`) or `type` resolution.
-4. `group_depth`: the `total_depth` summed across the `cols_to_group`. This is an
-   _optional_ input for depths at SNV resolution, as it can be calculated from
-   the subtype_depth. Required for `precalc_depth_data` at the global
-   (i.e. `none`) or `type` resolution.
+The depth table must support the requested `subtype_resolution`. It can contain
+depths at that resolution or at a finer context resolution from which the
+required depths can be derived:
 
-Grouping resolution is separate from sequence-context resolution.
-`cols_to_group` chooses the output unit; `depth_group_cols` declares the supplied
-depth unit. Row uniqueness validates that declaration, rather than deciding
-whether you intended to pool samples.
+- **Global depths:** use a `group_depth` column for the total depth of each
+  sample or group. These depths support `none` and `type` resolutions.
+- **Context-resolved depths:** use a `subtype_depth` column and exactly one
+  context column identifying the input resolution. See
+  \@ref(tab:subtypes-cols) for the context column names. For example, `base_6`
+  depths distinguish C:G and T:A positions, while `base_192` depths distinguish
+  all 64 trinucleotide contexts.
 
-| Declaration | Depth input | Behavior |
-|---|---|---|
-| `depth_group_cols = NULL` (default) | Existing input forms | Preserves existing interpretation |
-| `depth_group_cols = "sample"` | One row per sample or sample/context | Validates and maps samples using mutation metadata; pools to the output groups |
-| `depth_group_cols` matches `cols_to_group` | One row per output group or group/context | Uses already grouped depths |
-| Other finer depth keys | For example sample-by-locus to dose-by-locus | Summarize explicitly first |
+`calculate_mf()` sums context depths when deriving a coarser resolution,
+including global depths. Not all conversions are possible: normalized
+`base_96` depths, for example, cannot recover the strand-specific depths needed
+for `base_12`. The table below lists the supported conversions.
 
-To preserve biological replication, calculate MF by sample and retain dose
-metadata for downstream comparisons:
+Table: (\#tab:depth-resolution-derivation) Resolutions that can be derived from each precalculated depth input.
 
-```{r replicate-precalc-depth, eval=FALSE}
-replicate_mf <- calculate_mf(
-  mutation_data,
-  cols_to_group = "sample",
-  subtype_resolution = "base_6",
-  calculate_depth = FALSE,
-  precalc_depth_data = sample_depth,
-  depth_group_cols = "sample",
-  retain_metadata_cols = "dose_group"
-)
-```
+| Input depth resolution                | Resolutions available to `calculate_mf()`                  |
+| ------------------------------------- | ---------------------------------------------------------- |
+| Global                                | `none`, `type`                                             |
+| `base_6` (C, T)                       | `none`, `type`, `base_6`                                   |
+| `base_12` (A, C, G, T)                | `none`, `type`, `base_6`, `base_12`                        |
+| `base_96` (normalized trinucleotides) | `none`, `type`, `base_6`, `base_96`                        |
+| `base_192` (trinucleotides)           | `none`, `type`, `base_6`, `base_12`, `base_96`, `base_192` |
 
-To intentionally pool samples by dose, declare sample-level input depths even
-if `sample_depth` also contains `dose_group`:
+### Match depths to the output groups
 
-```{r pooled-precalc-depth, eval=FALSE}
-pooled_mf <- calculate_mf(
-  mutation_data,
-  cols_to_group = "dose_group",
-  subtype_resolution = "base_6",
-  calculate_depth = FALSE,
-  precalc_depth_data = sample_depth,
-  depth_group_cols = "sample"
-)
-```
+Grouping and sequence-context resolution are handled separately. Use
+`cols_to_group` to choose whether mutation frequencies are calculated per
+sample, per experimental group (ex dose), or for another combination of
+variables.
 
-Each sample must belong to exactly one requested grouping combination; the same
-rule applies to combinations such as `c("dose_group", "timepoint")`. Supplied
-metadata must agree with mutation metadata. Global inputs require one finite,
-non-negative `group_depth` per sample; context inputs require one row per
-sample/context and retain the context-validation rules described below.
+The depth table must support the desired grouping. Supply depth at the
+specified group (ex per sample, per experimental variable, etc.) or
+derive group depths from per sample input. `calculate_mf()` sums depths
+across samples to obtain depth for a coarser grouping variable (keeping
+contexts seperate when present).
 
-Without an explicit declaration, global depths must already have the requested
-grouping columns and one row per group. Context-resolved inputs retain the
-existing preference for requested grouping columns when present, otherwise
-using sample metadata. Adding `dose_group` to sample depths does not aggregate
-them; declare `depth_group_cols = "sample"` to avoid that ambiguity.
+To automatically map per sample depth to a coarse grouping variable,
+`calculate_mf()` uses the `sample` column to look up those variables in
+`mutation_data`. Each sample must map to exactly one combination of grouping
+values. Sample-wide depths cannot be split across multiple groups, and depths
+must cover every sample being mapped. Missing sample or output-group depths
+cause an error. As an example, a depth table containing only columns for sample
+and group_depth can be used to calculate mutation frequencies grouped by dose.
 
-Samples absent from `mutation_data` cannot be mapped. Explicit sample inputs
-warn if mutation samples have no supplied depth and identify affected groups.
-Only supplied depths contribute to denominators; mutation counts are unchanged.
-Consequently, incomplete depths can inflate pooled MF. Groups with no supplied
-depth retain the existing missing-depth behavior. Default calls gain no new
-missing-sample warning.
-
-The pooled MF is **total mutation count / total depth**, not an arithmetic
-mean of sample MFs. Counts of 2 and 8 at depths of 1,000 and 2,000 give a pooled
-MF of 10/3,000. With `summary = FALSE`, this group result is attached to each
-mutation row in the group.
-
-If a sample spans several loci, sample-wide depth cannot supply locus-specific
-denominators. Supply one depth per requested sample/locus combination:
-
-```{r locus-precalc-depth, eval=FALSE}
-locus_mf <- calculate_mf(
-  mutation_data,
-  cols_to_group = c("sample", "locus"),
-  calculate_depth = FALSE,
-  precalc_depth_data = sample_locus_depth,
-  depth_group_cols = c("sample", "locus")
-)
-```
-
-Context depths additionally require one row per group/context. Supported context
-conversions are unchanged: Base192 can supply Base12, while normalized Base96
-cannot recover Base12 strand-specific depths.
+### Example depth tables
 
 The following tables show the expected precalculated depth data at each
-resolution. These tables are included in the MutSeqRData example data.
+subtype resolution. The context-resolved tables are available in MutSeqRData.
 
 ```{r precalc1-depth}
 sample_depth <- data.frame(
@@ -1222,29 +1166,73 @@ names(mf_data_from_base_192) <- resolutions
 mf_data_base_96_from_base_192 <- mf_data_from_base_192$base_96
 ```
 
-The utility function that derives depth data from higher-resolution depth data is`write_depth_data()`. It validates a complete context-resolved depth table and
-returns a named list of all the lower-resolution depth tables that can be derived.
+_Example 3.11. Calculate MF per dose group using depths already summed by dose group._
 
-```{r write-derived-depth, eval=FALSE}
-derived_depth <- write_depth_data(base_192)
-utils::write.table(
-  derived_depth$base96,
-  file = "base_96_depth.tsv",
-  sep = "\t",
-  row.names = FALSE,
-  quote = FALSE
+When grouping by an experimental variable, like dose group, supply depth calculated per
+experimental variable.
+
+We will first generate a depth per dose table from the sample_depth and sample metadata extracted from the example_data for the purpose of this example.
+
+```{r mf-precalc-dose-group}
+# generate a depth table per dose for this example
+dose_group_depth <- sample_depth %>%
+  dplyr::left_join(
+    dplyr::distinct(example_data, sample, dose_group),
+    by = "sample"
+  ) %>%
+  dplyr::group_by(dose_group) %>%
+  dplyr::summarise(group_depth = sum(group_depth), .groups = "drop")
+
+mf_data_dose_precalc <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "dose_group",
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = dose_group_depth
 )
 ```
 
-Table: (\#tab:depth-resolution-derivation) Resolutions that can be derived from each precalculated depth input.
+_Example 3.12. Calculate MF per dose group using depths supplied per sample._
 
-| Input depth resolution                | Resolutions available to `calculate_mf()`                  |
-| ------------------------------------- | ---------------------------------------------------------- |
-| Global                                | `none`, `type`                                             |
-| `base_6` (C, T)                       | `none`, `type`, `base_6`                                   |
-| `base_12` (A, C, G, T)                | `none`, `type`, `base_6`, `base_12`                        |
-| `base_96` (normalized trinucleotides) | `none`, `type`, `base_6`, `base_96`                        |
-| `base_192` (trinucleotides)           | `none`, `type`, `base_6`, `base_12`, `base_96`, `base_192` |
+Alternatively, supply `sample_depth` without summing it first.
+`calculate_mf()` looks up each sample's `dose_group` in `example_data` and
+pools the depths automatically. Each sample must belong to exactly one dose
+group, and every sample must have a depth value. This produces the same result
+as Example 3.11.
+
+```{r mf-precalc-dose-from-samples}
+mf_data_dose_from_samples <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "dose_group",
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_depth
+)
+```
+
+_Example 3.13. Calculate MF per sample and genomic target using precalculated depths._
+
+For a higher-resolution grouping, supply depths for each sample and genomic
+target (`label`).
+
+For the purposes of this exmaple, we will extract the depth table from `mf_data_rg`, the
+sample-by-target summary calculated in Example 3.2. A sample-wide depth cannot
+be split into target-specific depths, so both grouping columns must be present
+in the depth table.
+
+```{r mf-precalc-sample-target}
+sample_target_depth <- mf_data_rg %>%
+  dplyr::select(sample, label, group_depth)
+
+mf_data_rg_precalc <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = c("sample", "label"),
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_target_depth,
+  retain_metadata_cols = "dose_group"
+)
+```
 
 ## Summary Table
 
