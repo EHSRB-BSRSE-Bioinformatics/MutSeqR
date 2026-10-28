@@ -182,11 +182,9 @@ test_that("calculate_mf works with precalculated depth", {
 test_that("calculate_mf warns with original and joined column names", {
   mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
   mutation_data$group_depth <- 100
-  mutation_data$metadata.x <- "original"
   depth <- data.frame(
     sample = c("sample1", "sample2", "sample3"),
-    group_depth = c(1500, 1600, 1400),
-    metadata.x = "depth"
+    group_depth = c(1500, 1600, 1400)
   )
 
   expect_warning(
@@ -197,81 +195,20 @@ test_that("calculate_mf warns with original and joined column names", {
       summary = FALSE
     ),
     paste0(
-      "Joining precalc_depth_data renamed column\\(s\\) in mutation_data: ",
-      "'group_depth' -> 'group_depth\\.x', ",
-      "'metadata\\.x' -> 'metadata\\.x\\.x'"
-    )
+      "Joining precalc_depth_data renamed column(s) in mutation_data: ",
+      "'group_depth' -> 'group_depth.x'. These names also occur in ",
+      "precalc_depth_data; columns from precalc_depth_data keep their ",
+      "original names."
+    ),
+    fixed = TRUE
   )
   expect_equal(mf_data$group_depth.x, mutation_data$group_depth)
-  expect_equal(mf_data$metadata.x.x, mutation_data$metadata.x)
-  expect_equal(mf_data$metadata.x, rep("depth", nrow(mutation_data)))
   expect_equal(
     mf_data$group_depth,
     depth$group_depth[match(mf_data$sample, depth$sample)]
   )
   expect_equal(mf_data$mf_min, mf_data$sum_min / mf_data$group_depth)
   expect_equal(mf_data$mf_max, mf_data$sum_max / mf_data$group_depth)
-})
-
-test_that("calculate_mf warns for existing group_depth or subtype_depth", {
-  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
-  depth <- data.frame(
-    sample = c("sample1", "sample2", "sample3"),
-    group_depth = c(1500, 1600, 1400)
-  )
-
-  for (columns in list(
-    "group_depth", "subtype_depth", c("group_depth", "subtype_depth")
-  )) {
-    input <- mutation_data
-    for (column in columns) {
-      input[[column]] <- 100
-    }
-    expected_warning <- paste0(
-      "Joining precalc_depth_data renamed column(s) in mutation_data: ",
-      paste0("'", columns, "' -> '", columns, ".x'", collapse = ", ")
-    )
-
-    expect_warning(
-      mf_data <- calculate_mf(
-        input,
-        calculate_depth = FALSE,
-        precalc_depth_data = depth,
-        summary = FALSE
-      ),
-      expected_warning,
-      fixed = TRUE
-    )
-    for (column in columns) {
-      expect_equal(mf_data[[paste0(column, ".x")]], input[[column]])
-    }
-    expected_depth <- depth$group_depth[match(mf_data$sample, depth$sample)]
-    expect_equal(mf_data$group_depth, expected_depth)
-    expect_equal(mf_data$subtype_depth, expected_depth)
-    expect_equal(mf_data$mf_min, mf_data$sum_min / expected_depth)
-    expect_equal(mf_data$mf_max, mf_data$sum_max / expected_depth)
-  }
-})
-
-test_that("calculate_mf does not warn for unchanged .x column names", {
-  mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
-  mutation_data$metadata.x <- "original"
-  depth <- data.frame(
-    sample = c("sample1", "sample2", "sample3"),
-    group_depth = c(1500, 1600, 1400)
-  )
-
-  expect_warning(
-    mf_data <- calculate_mf(
-      mutation_data,
-      calculate_depth = FALSE,
-      precalc_depth_data = depth,
-      summary = FALSE
-    ),
-    NA
-  )
-  expect_equal(mf_data$metadata.x, mutation_data$metadata.x)
-  expect_equal(mf_data$sample, mutation_data$sample)
 })
 
 test_that("calculate_mf derives requested resolution from finer precalc data", {
@@ -396,8 +333,11 @@ test_that("calculate_mf accepts precalculated depth at all grouping columns", {
     precalc_depth_data = contig_depth
   )
 
-  expect_true(all(c("sample", "contig", "mf_min", "mf_max") %in%
-                    names(mf_data)))
+  expect_true(all(c(
+    "sample", "contig", "normalized_ref", "sum_min", "sum_max",
+    "mf_min", "mf_max", "group_depth", "subtype_depth", "proportion_min",
+    "proportion_max"
+  ) %in% names(mf_data)))
   expect_false(anyNA(mf_data$subtype_depth))
 })
 
@@ -439,11 +379,18 @@ test_that("calculate_mf rejects precalc data too coarse for requested resolution
 
   expect_error(
     calculate_mf(
-      mutation_data, subtype_resolution = "base_12", calculate_depth = FALSE,
+      mutation_data,
+      subtype_resolution = "base_12", calculate_depth = FALSE,
       precalc_depth_data = base96
     ),
-    "at 'base_96' resolution cannot generate depths.*'base_12'"
+    paste0(
+      "precalc_depth_data cannot generate depths for subtype_resolution ",
+      "'base_12'. Supply depth data at 'base_192' or another ",
+      "resolution fine enough to derive 'short_ref'."
+    ),
+    fixed = TRUE
   )
+
 })
 test_that("calculate_mf selects variation types", {
   mutation_data <- readRDS("./testdata/simple_mutation_data.rds")
@@ -623,7 +570,7 @@ test_that("global sample depths pool to arbitrary metadata combinations", {
         for (input in list(depth, depth_file)) {
           actual <- calculate_mf(
             mutations, cols_to_group = groups, subtype_resolution = resolution,
-            calculate_depth = FALSE, precalc_depth_data = input, depth_group_cols = "sample",
+              calculate_depth = FALSE, precalc_depth_data = input,
             summary = summarize
           )
           expect_equal(actual, expected)
@@ -633,17 +580,17 @@ test_that("global sample depths pool to arbitrary metadata combinations", {
     }
   }
   pooled <- calculate_mf(mutations, cols_to_group = "dose",
-                         calculate_depth = FALSE, precalc_depth_data = depth, depth_group_cols = "sample")
+                         calculate_depth = FALSE, precalc_depth_data = depth)
   expect_equal(pooled$group_depth[pooled$dose == 10], 6000)
   expect_equal(pooled$mf_max, pooled$sum_max / pooled$group_depth)
   expect_equal(pooled$mf_min, pooled$sum_min / pooled$group_depth)
   with_metadata <- calculate_mf(
     mutations, cols_to_group = c("dose", "visit"), calculate_depth = FALSE,
-    precalc_depth_data = supplied, depth_group_cols = "sample"
+    precalc_depth_data = supplied
   )
   without_metadata <- calculate_mf(
     mutations, cols_to_group = c("dose", "visit"), calculate_depth = FALSE,
-    precalc_depth_data = depth, depth_group_cols = "sample"
+    precalc_depth_data = depth
   )
   expect_equal(with_metadata, without_metadata)
 })
@@ -654,12 +601,26 @@ test_that("global pooling rejects ambiguous and inconsistent inputs", {
   depth <- fixture$depth
   run <- function(input, data = mutations, groups = "dose") {
     calculate_mf(data, cols_to_group = groups, calculate_depth = FALSE,
-                 precalc_depth_data = input, depth_group_cols = "sample")
+                 precalc_depth_data = input)
   }
-  expect_error(run(rbind(depth, depth[1, ])), "one depth row per sample.*sample1")
+  duplicated <- run(rbind(depth, depth[1, ]))
+  expect_equal(duplicated$group_depth[duplicated$dose == 0], 2000)
   unknown <- depth
   unknown$sample[1] <- "absent_sample"
-  expect_error(run(unknown), "absent from mutation_data: absent_sample")
+  expect_warning(
+    expect_error(
+      run(unknown),
+      paste0(
+        "mutation_data are absent from precalc_depth_data: ",
+        depth$sample[1]
+      ),
+      fixed = TRUE
+    ),
+    "absent from mutation_data: absent_sample",
+    fixed = TRUE
+  )
+  expect_error(run(depth[-nrow(depth), ]),
+               "mutation_data are absent from precalc_depth_data")
   for (value in c(-1, NA_real_, Inf, NaN)) {
     invalid <- depth
     invalid$group_depth[1] <- value
@@ -672,16 +633,13 @@ test_that("global pooling rejects ambiguous and inconsistent inputs", {
     depth, dplyr::distinct(mutations, sample, dose), by = "sample"
   )
   conflicting$dose[1] <- 10
-  expect_error(run(conflicting), "disagree with mutation_data.*sample1")
+  expect_error(run(conflicting), "no depth value for cols_to_group")
   for (column in c("locus", "timepoint")) {
     split <- mutations
     split[[column]] <- rep(c("a", "b"), length.out = nrow(split))
     expect_error(run(depth, split, c("dose", column)),
-                 paste0("cols_to_group.*", column, ".*Ambiguous sample"))
+                 "higher resolution than sample")
   }
-  missing_sample <- mutations
-  missing_sample$sample <- NULL
-  expect_error(run(depth, missing_sample), "mutation_data is missing: sample")
 })
 
 test_that("direct global inputs and missing depths retain their behavior", {
@@ -696,12 +654,14 @@ test_that("direct global inputs and missing depths retain their behavior", {
   actual <- calculate_mf(mutations, cols_to_group = "dose",
                          calculate_depth = FALSE, precalc_depth_data = with_sample)
   expect_equal(actual[names(baseline)], baseline)
-  expect_equal(actual$sample, with_sample$sample)
-  expect_error(calculate_mf(
+  expect_equal(actual$group_depth, baseline$group_depth)
+  # Extra rows of the same group are combined.
+  duplicated <- calculate_mf(
     mutations, cols_to_group = "dose", calculate_depth = FALSE,
     precalc_depth_data = rbind(direct, direct[1, ])
-  ), "finer grouping than required")
-  # Missing-depth and zero-depth handling is identical to the direct path.
+  )
+  expect_equal(duplicated$group_depth[duplicated$dose == 0], 2000)
+  # Zero-depth handling is identical to the direct path.
   for (depth in list(fixture$depth[-1, ],
                     transform(fixture$depth, group_depth = 0))) {
     prepared <- dplyr::left_join(
@@ -710,27 +670,33 @@ test_that("direct global inputs and missing depths retain their behavior", {
       dplyr::group_by(dose) %>%
       dplyr::summarise(group_depth = sum(group_depth), .groups = "drop")
     if (nrow(depth) < nrow(fixture$depth)) {
-      expect_warning(
-        actual <- calculate_mf(
-          mutations, cols_to_group = "dose", calculate_depth = FALSE,
-          precalc_depth_data = depth, depth_group_cols = "sample"
-        ), "No precalculated depth.*sample1.*Affected groups"
-      )
-    } else {
-      actual <- calculate_mf(
+      expect_error(calculate_mf(
         mutations, cols_to_group = "dose", calculate_depth = FALSE,
-        precalc_depth_data = depth, depth_group_cols = "sample"
-      )
+        precalc_depth_data = depth
+      ), paste0(
+        "mutation_data are absent from precalc_depth_data: ",
+        fixture$depth$sample[1]
+      ), fixed = TRUE)
+    } else {
+      expect_equal(calculate_mf(
+        mutations, cols_to_group = "dose", calculate_depth = FALSE,
+        precalc_depth_data = depth
+      ), calculate_mf(
+        mutations, cols_to_group = "dose", calculate_depth = FALSE,
+        precalc_depth_data = prepared
+      ))
     }
-    expect_equal(actual, calculate_mf(
-      mutations, cols_to_group = "dose", calculate_depth = FALSE,
-      precalc_depth_data = prepared
-    ))
   }
   # Existing depth-column suffix precedence is unchanged during pooling.
   mutations$group_depth <- -1
-  result <- calculate_mf(mutations, cols_to_group = "dose", summary = FALSE,
-                         calculate_depth = FALSE, precalc_depth_data = fixture$depth, depth_group_cols = "sample")
+  expect_warning(
+    result <- calculate_mf(
+      mutations, cols_to_group = "dose", summary = FALSE,
+      calculate_depth = FALSE, precalc_depth_data = fixture$depth,
+      depth_group_cols = "sample"
+    ),
+    "'group_depth' -> 'group_depth.x'", fixed = TRUE
+  )
   expect_true(all(result$group_depth.x == -1))
   expect_equal(result$group_depth, ifelse(mutations$dose == 0, 1000, 6000))
 })
@@ -775,29 +741,29 @@ test_that("global pooling checks partial metadata and factor labels", {
   supplied$dose <- factor(c("0", "10", "10"), levels = c("10", "0", "unused"))
   expected <- calculate_mf(
     mutations, cols_to_group = c("dose", "visit"), calculate_depth = FALSE,
-    precalc_depth_data = fixture$depth, depth_group_cols = "sample"
+    precalc_depth_data = fixture$depth
   )
   expect_equal(calculate_mf(
     mutations, cols_to_group = c("dose", "visit"), calculate_depth = FALSE,
-    precalc_depth_data = supplied, depth_group_cols = "sample"
+    precalc_depth_data = supplied
   ), expected)
   supplied$dose[1] <- "10"
   expect_error(calculate_mf(
     mutations, cols_to_group = c("dose", "visit"), calculate_depth = FALSE,
-    precalc_depth_data = supplied, depth_group_cols = "sample"
-  ), "disagree with mutation_data.*sample1")
+    precalc_depth_data = supplied
+  ), "grouping column 'dose' disagrees with mutation_data")
   missing_depth <- fixture$depth
   missing_depth$group_depth <- NULL
   expect_error(calculate_mf(
     mutations, cols_to_group = "dose", calculate_depth = FALSE,
-    precalc_depth_data = missing_depth, depth_group_cols = "sample"
-  ), "group_depth.*finite, non-negative")
+    precalc_depth_data = missing_depth
+  ), "missing 'group_depth'")
   overflowing <- fixture$depth
   overflowing$group_depth <- .Machine$double.xmax
   expect_error(calculate_mf(
     mutations, cols_to_group = "dose", calculate_depth = FALSE,
-    precalc_depth_data = overflowing, depth_group_cols = "sample"
-  ), "pooled group_depth.*not finite")
+    precalc_depth_data = overflowing
+  ), "Summed group_depth is not finite")
 })
 
 test_that("explicit sample context keys resolve the dose metadata ambiguity", {
@@ -819,22 +785,16 @@ test_that("explicit sample context keys resolve the dose metadata ambiguity", {
   grouped <- context_depth %>%
     dplyr::group_by(dose, normalized_ref) %>%
     dplyr::summarise(subtype_depth = sum(subtype_depth), .groups = "drop")
-  expect_error(calculate_mf(
-    mutations, cols_to_group = "dose", subtype_resolution = "base_6",
-    calculate_depth = FALSE, precalc_depth_data = context_depth
-  ), "finer grouping.*depth_group_cols = 'sample'")
   for (resolution in c("none", "type", "base_6")) {
     for (summarize in c(TRUE, FALSE)) {
       expected <- calculate_mf(
         mutations, cols_to_group = "dose", subtype_resolution = resolution,
-        calculate_depth = FALSE, precalc_depth_data = grouped, summary = summarize,
-        depth_group_cols = "dose"
+        calculate_depth = FALSE, precalc_depth_data = grouped, summary = summarize
       )
       for (input in list(context_depth, path)) {
         expect_equal(calculate_mf(
           mutations, cols_to_group = "dose", subtype_resolution = resolution,
-          calculate_depth = FALSE, precalc_depth_data = input, summary = summarize,
-          depth_group_cols = "sample"
+          calculate_depth = FALSE, precalc_depth_data = input, summary = summarize
         ), expected)
       }
     }
@@ -843,101 +803,66 @@ test_that("explicit sample context keys resolve the dose metadata ambiguity", {
   conflict$dose[1] <- 99
   expect_error(calculate_mf(
     mutations, cols_to_group = "dose", subtype_resolution = "base_6",
-    calculate_depth = FALSE, precalc_depth_data = conflict,
-    depth_group_cols = "sample"
-  ), "disagree with mutation_data.*sample1")
-  expect_error(calculate_mf(
+    calculate_depth = FALSE, precalc_depth_data = conflict
+  ), "missing context values")
+  duplicated <- calculate_mf(
     mutations, cols_to_group = "dose", subtype_resolution = "base_6",
     calculate_depth = FALSE,
-    precalc_depth_data = rbind(context_depth, context_depth[1, ]),
-    depth_group_cols = "sample"
-  ), "duplicate combinations")
+    precalc_depth_data = rbind(context_depth, context_depth[1, ])
+  )
+  expect_equal(nrow(duplicated), nrow(calculate_mf(
+    mutations, cols_to_group = "dose", subtype_resolution = "base_6",
+    calculate_depth = FALSE, precalc_depth_data = context_depth
+  )))
 })
 
 test_that("explicit depth declaration preserves sample replicates and default calls", {
   fixture <- pooled_depth_fixture()
   mutations <- fixture$mutations
   depth <- fixture$depth
-  # Omitted and NULL declarations retain the default grouped interpretation.
-  baseline <- calculate_mf(
-    mutations, calculate_depth = FALSE, precalc_depth_data = depth,
-    retain_metadata_cols = "dose"
-  )
-  expect_equal(calculate_mf(
-    mutations, calculate_depth = FALSE, precalc_depth_data = depth,
-    retain_metadata_cols = "dose", depth_group_cols = NULL
-  ), baseline)
-  expect_equal(calculate_mf(
-    mutations, calculate_depth = FALSE, precalc_depth_data = depth,
-    retain_metadata_cols = "dose", depth_group_cols = "sample"
-  ), baseline)
-  expect_equal(nrow(baseline), nrow(depth))
-  expect_equal(baseline$group_depth, depth$group_depth)
-  expect_equal(baseline$dose, c(0, 10, 10))
-  expect_error(calculate_mf(
+  pooled <- calculate_mf(
     mutations, cols_to_group = "dose", calculate_depth = FALSE,
     precalc_depth_data = depth
-  ), "Missing columns.*dose")
-  supplied <- dplyr::left_join(depth, dplyr::distinct(mutations, sample, dose),
-                              by = "sample")
+  )
+  expected_depth <- data.frame(dose = c(0, 10), group_depth = c(1000, 6000))
+  expected <- calculate_mf(
+    mutations, cols_to_group = "dose", calculate_depth = FALSE,
+    precalc_depth_data = expected_depth
+  )
+  expect_equal(pooled, expected)
+  expect_false("depth_group_cols" %in% names(formals(calculate_mf)))
+})
+
+test_that("sample mapping rejects ambiguous and higher-resolution groups", {
+  fixture <- pooled_depth_fixture()
+  mutations <- fixture$mutations
+  first_sample <- unique(mutations$sample)[1]
+  mutations$dose[mutations$sample == first_sample &
+                   seq_len(nrow(mutations)) %% 2L == 0L] <- 10
   expect_error(calculate_mf(
     mutations, cols_to_group = "dose", calculate_depth = FALSE,
-    precalc_depth_data = supplied
-  ), "finer grouping.*depth_group_cols = 'sample'")
-  expect_identical(tail(names(formals(calculate_mf)), 1L), "depth_group_cols")
+    precalc_depth_data = fixture$depth
+  ), "each sample must identify exactly one combination")
+
+  mutations <- fixture$mutations
+  mutations$locus <- seq_len(nrow(mutations))
+  expect_error(calculate_mf(
+    mutations, cols_to_group = c("dose", "locus"), calculate_depth = FALSE,
+    precalc_depth_data = fixture$depth
+  ), "higher resolution than sample")
 })
 
-test_that("depth declarations validate keys and unsupported pooling", {
+test_that("context depths require coverage for every output group", {
   fixture <- pooled_depth_fixture()
-  run <- function(keys, depth = fixture$depth, groups = "dose") {
-    calculate_mf(fixture$mutations, cols_to_group = groups,
-                 calculate_depth = FALSE, precalc_depth_data = depth,
-                 depth_group_cols = keys)
-  }
-  for (keys in list(character(), NA_character_, "", c("sample", "sample"), 1)) {
-    expect_error(run(keys), "depth_group_cols must be NULL")
-  }
-  expect_error(run("absent"), "missing depth_group_cols: absent")
-  fine <- fixture$depth
-  fine$locus <- "a"
-  expect_error(run(c("sample", "locus"), fine), "Summarize the depth table")
-  expect_error(calculate_mf(fixture$mutations, depth_group_cols = "sample"),
-               "requires calculate_depth = FALSE")
-  expect_error(calculate_mf(fixture$mutations, calculate_depth = FALSE,
-                           depth_group_cols = "sample"),
-               "requires calculate_depth = FALSE and precalc_depth_data")
-  data <- fixture$mutations
-  data$locus <- rep(c("a", "b"), length.out = nrow(data))
-  exact <- dplyr::distinct(data, sample, locus)
-  exact$group_depth <- 100
-  expect_equal(
-    calculate_mf(data, cols_to_group = c("sample", "locus"),
-                 calculate_depth = FALSE, precalc_depth_data = exact,
-                 depth_group_cols = c("locus", "sample")),
-    calculate_mf(data, cols_to_group = c("sample", "locus"),
-                 calculate_depth = FALSE, precalc_depth_data = exact)
-  )
-})
-
-test_that("explicit contexts warn for missing samples without changing counts", {
-  fixture <- pooled_depth_fixture()
-  contexts <- expand.grid(sample = fixture$depth$sample[-2],
+  contexts <- expand.grid(sample = fixture$depth$sample[1],
                           normalized_ref = c("C", "T"),
                           stringsAsFactors = FALSE)
   contexts$subtype_depth <- 100
-  expect_warning(
-    actual <- calculate_mf(
-      fixture$mutations, cols_to_group = "dose", subtype_resolution = "base_6",
-      calculate_depth = FALSE, precalc_depth_data = contexts,
-      depth_group_cols = "sample"
-    ), "No precalculated depth.*sample2.*Affected groups.*10"
-  )
-  # The existing implicit context path remains free of this new warning.
-  expect_warning(
-    legacy <- calculate_mf(
-      fixture$mutations, cols_to_group = "dose", subtype_resolution = "base_6",
-      calculate_depth = FALSE, precalc_depth_data = contexts
-    ), NA
-  )
-  expect_equal(actual, legacy)
+  expect_error(calculate_mf(
+    fixture$mutations, cols_to_group = "dose", subtype_resolution = "base_6",
+    calculate_depth = FALSE, precalc_depth_data = contexts
+  ), paste0(
+    "mutation_data are absent from precalc_depth_data: ",
+    paste(fixture$depth$sample[-1], collapse = ", ")
+  ), fixed = TRUE)
 })

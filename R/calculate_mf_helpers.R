@@ -193,11 +193,12 @@ prepare_precalc_depth <- function(depth_df, mutation_data, cols_to_group,
             requested_context_column <-
                 MutSeqR::denominator_dict[[subtype_resolution]]
             stop(
-                "precalc_depth_data at a finer context resolution cannot ",
-                "generate depths for subtype_resolution '", subtype_resolution,
-                "'. Supply data at 'base_192' or another resolution fine ",
-                "enough to derive '", requested_context_column, "'.",
-                call. = FALSE
+              "precalc_depth_data cannot generate depths for ",
+              "subtype_resolution '", subtype_resolution,
+              "'. Supply depth data at 'base_192' or another ",
+              "resolution fine enough to derive '", requested_context_column,
+              "'.", 
+              call. = FALSE
             )
         }
     } else {
