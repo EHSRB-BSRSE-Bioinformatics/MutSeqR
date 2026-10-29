@@ -776,3 +776,80 @@ vcf_alt_to_character <- function(alt) {
         character(1)
     )
 }
+
+#' Derive the alternate allele depth from AD
+#'
+#' Used when the mutation data has no `alt_depth` (VD) column. The alternate
+#' allele depth is the sum of the AD values after the first, and 0 for records
+#' without an alternate allele.
+#'
+#' @param data The mutation data, with `variation_type` and `AD_` columns.
+#' @param ad_columns The `AD_` column names, in allele order.
+#'
+#' @return A numeric vector of alternate allele depths, or `NULL` when AD has
+#'   no alternate allele column.
+#'
+#' @keywords internal
+alt_depth_from_ad <- function(data, ad_columns) {
+    if (length(ad_columns) < 2L) {
+        return(NULL)
+    }
+    ad_alt <- as.matrix(data[, ad_columns[-1], drop = FALSE])
+    alt_depth <- rowSums(ad_alt, na.rm = TRUE)
+    alt_depth[rowSums(!is.na(ad_alt)) == 0L] <- NA
+    alt_depth[data$variation_type == "no_variant"] <- 0
+    alt_depth
+}
+
+#' Estimate the total depth of each record
+#'
+#' Estimates `total_depth` (the read depth excluding N-calls) from the depth
+#' columns available: `depth` - `no_calls`, then the sum of AD, then DP. A
+#' record whose AD lacks the reference depth, or the alternate depth of a
+#' variant, takes DP instead of the sum of what AD has, since that sum misses
+#' reads. Callers such as VarDict leave the reference depth of MNV and complex
+#' calls missing.
+#'
+#' @param data The mutation data, with `variation_type` and any of `depth`,
+#'   `no_calls` and `AD_` columns.
+#'
+#' @return A numeric vector of total depths, or `NULL` when no depth column is
+#'   available.
+#'
+#' @keywords internal
+estimate_total_depth <- function(data) {
+    depth_exists <- "depth" %in% colnames(data)
+    ad_columns <- grep("^AD_", colnames(data), value = TRUE)
+    if (depth_exists && "no_calls" %in% colnames(data)) {
+        return(data$depth - data$no_calls)
+    }
+    if (length(ad_columns) > 0) {
+        ad <- as.matrix(data[, ad_columns, drop = FALSE])
+        total_depth <- rowSums(ad, na.rm = TRUE)
+        missing_alt <- data$variation_type != "no_variant" &
+            rowSums(!is.na(ad[, -1, drop = FALSE])) == 0L
+        incomplete <- is.na(ad[, 1]) | missing_alt
+        if (any(incomplete)) {
+            if (depth_exists) {
+                total_depth[incomplete] <- data$depth[incomplete]
+                warning(
+                    sum(incomplete), " records have an incomplete AD; ",
+                    "their total_depth is set to DP."
+                )
+            } else {
+                warning(
+                    sum(incomplete), " records have an incomplete AD and no ",
+                    "DP; their total_depth sums only the AD values present."
+                )
+            }
+        }
+        return(total_depth)
+    }
+    if (depth_exists) {
+        warning(
+            "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
+        )
+        return(data$depth)
+    }
+    NULL
+}

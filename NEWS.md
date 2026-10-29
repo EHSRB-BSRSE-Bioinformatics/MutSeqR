@@ -1,5 +1,13 @@
 # MutSeqR (development version)
 
+- `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
+  `AD` when a VCF has no `VD`, instead of setting every record's
+  `alt_depth` to 1. Records without an alternate allele get 0.
+- `import_vcf_data()` no longer counts a missing `AD` value as 0 reads. A
+  record whose `AD` lacks the reference depth, as VarDict writes for MNV and
+  complex calls, takes its `total_depth` from `DP`, so its `vaf` is no
+  longer inflated toward 1.
+
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample
   metadata and can join matching metadata correctly.

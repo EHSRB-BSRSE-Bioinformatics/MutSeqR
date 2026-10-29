@@ -166,15 +166,18 @@ Equivalent to \code{depth}. Note that in many VCF files, the DP field
 is defined as \code{total_depth}. However, in most cases, the DP field
 includes N-calls.
 \item \code{VD}: The read depth supporting the alternate allele. If
-not included, the function will add this column, assuming a value of 1.
-Equivalent to \code{alt_depth}.
+not included, the function will take it from the alternate allele depths
+of \code{AD} (0 for records without an alternate allele), or assume a value of
+1 without \code{AD}. Equivalent to \code{alt_depth}.
 }
 We recommend that files include a record for every sequenced
 position, regardless of whether a variant was called, along with the
 \code{AD} for each record. This enables site-specific depth calculations
 required for some downstream analyses. AD is used to calculate the
 \code{total_depth} (the read depth excluding No-calls). If AD is not available,
-the \code{DP} field will be used as the \code{total_depth}.
+or a record's AD is missing its reference depth or the alternate depth of a
+variant, as callers such as VarDict write for MNV and complex calls, the
+\code{DP} field will be used as the \code{total_depth}.
 }
 \examples{
 # Mutation data is just for example purposes. It does not reflect real data
