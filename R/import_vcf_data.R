@@ -153,7 +153,7 @@
 #'  vcf_file = file,
 #' BS_genome = find_BS_genome("mouse", "mm10"))
 #' @importFrom  VariantAnnotation alt info geno readVcf ref rbind
-#' @importFrom dplyr filter group_by left_join mutate rename select summarize ungroup
+#' @importFrom dplyr bind_rows filter group_by left_join mutate rename select summarize ungroup
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @importFrom stringr str_sub str_count
@@ -220,7 +220,7 @@ import_vcf_data <- function(
     if (length(vcf_files) == 0) {
       stop("No VCF files found in directory: ", vcf_file)
     }
-    # Read and combine VCF files
+    # Read each VCF file, to bind their records as data frames
     vcf_list <- lapply(vcf_files, function(file) {
       vcf <- VariantAnnotation::readVcf(file)
 
@@ -235,106 +235,22 @@ import_vcf_data <- function(
       }
       # Find "sample" or its synonym in the INFO field
       vcf <- vcf_sample_fix(vcf)
-
-      # Coerce ALT to CharacterList for every VCF.
-      # This prevents rbind crashes when mixing strict DNA alleles (e.g. A, C)
-      # with gVCF/SV alleles (e.g. <NON_REF>, .)
-      VariantAnnotation::alt(
-        vcf
-      ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
-
-      # rename the format field's header to "sample_info" to be
-      # consistent across all vcf files.
-      rownames(SummarizedExperiment::colData(vcf)) <- "sample_info"
       return(list(vcf = vcf, sample_name = original_sample_name))
     })
     # Keep header identities in original VCF record order.
     vcf_header_samples <- unlist(lapply(vcf_list, function(x) {
       rep(x$sample_name, nrow(x$vcf))
     }), use.names = FALSE)
-    vcf <- do.call(VariantAnnotation::rbind, lapply(vcf_list, `[[`, "vcf"))
+    dat <- dplyr::bind_rows(lapply(vcf_list, function(x) {
+      vcf_to_data_frame(x$vcf, add_chr)
+    }))
   } else {
     # Read a single vcf file
     vcf <- VariantAnnotation::readVcf(vcf_file)
     # Rename or create the "sample" column in the INFO field
     vcf <- vcf_sample_fix(vcf)
-    VariantAnnotation::alt(
-      vcf
-    ) <- IRanges::CharacterList(VariantAnnotation::alt(vcf))
+    dat <- vcf_to_data_frame(vcf, add_chr)
   }
-  # Extract contigs and add "chr" prefix if specified to be
-  # compatible with BSgenome seqnames.
-  contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
-  if (add_chr) {
-    contig_names <- ifelse(
-      grepl("^chr", contig_names, ignore.case = TRUE),
-        contig_names,
-      paste0("chr", contig_names)
-    )
-  # Special case: mt chrom to UCSC format
-  contig_names <- sub("^chrMT$", "chrM", contig_names, ignore.case = TRUE)
-  }
-  # Extract mutation data into a dataframe
-  ## To Do: May want to use the expand function to unlist ALT column of a
-  ## CollapsedVCF object to one row per ALT value.
-  ref <- as.character(VariantAnnotation::ref(vcf))
-  alt <- vcf_alt_to_character(VariantAnnotation::alt(vcf))
-  dat <- data.frame(
-    contig = contig_names,
-    start = SummarizedExperiment::start(vcf),
-    end = get_vcf_end_positions(vcf),
-    ref = ref,
-    alt = alt,
-    filter = as.character(VariantAnnotation::filt(vcf))
-  )
-
-  # Extract INFO fields
-  info <- as.data.frame(VariantAnnotation::info(vcf))
-
-  # Extract GENO fields depending on the type of data
-  geno <- VariantAnnotation::geno(vcf)
-  geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
-  for (field_name in names(geno)) {
-    field <- geno[[field_name]]
-    if (is.list(field)) {
-      # Ex. AD
-      max_length <- max(vapply(field, length, integer(1)))
-      expanded_field <- do.call(
-        rbind,
-        lapply(field, function(x) {
-          c(x, rep(NA, max_length - length(x)))
-        })
-      )
-      colnames(expanded_field) <- paste(
-        field_name,
-        seq_len(max_length),
-        sep = "_"
-      )
-      geno_df <- cbind(geno_df, expanded_field)
-    } else if (is.matrix(field)) {
-      # Ex. GT, DP, VD
-      geno_df[[field_name]] <- as.vector(field)
-    } else if (is.array(field) && length(dim(field)) == 3) {
-      # Ex. RD, ALD
-      # Collapse the array over the 2nd and 3rd dimensions
-      collapsed_field <- apply(field, c(1), function(x) as.vector(x))
-      collapsed_field <- as.data.frame(t(collapsed_field))
-      ncols <- ncol(collapsed_field)
-      colnames(collapsed_field) <- paste(field_name, seq_len(ncols), sep = "_")
-      geno_df <- cbind(geno_df, collapsed_field)
-    } else {
-      geno_df[[field_name]] <- field
-    }
-  }
-  # Ensure info does not overwrite columns already in dat or geno_df (like END or DP)
-  # We do a case-insensitive match so "END" in info is safely dropped in favor of "end" in dat
-  common_cols_idx <- tolower(colnames(info)) %in%
-    tolower(c(colnames(dat), colnames(geno_df)))
-  info <- info[, !common_cols_idx, drop = FALSE]
-
-  # Combine data frames
-  dat <- cbind(dat, geno_df, info)
-  row.names(dat) <- NULL
 
   # Rename columns to default names
   dat <- rename_columns(dat)

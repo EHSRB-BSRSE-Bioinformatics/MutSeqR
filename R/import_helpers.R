@@ -202,11 +202,18 @@ characterize_variants <- function(mutation_data) {
             original_variation_type = "variation_type"
         )
     }
-    mutation_data$variation_type <- mapply(
+    # Classify each distinct REF/ALT pair once, as many records have the same pair.
+    pair_keys <- paste(mutation_data$ref, mutation_data$alt, sep = "\r")
+    first_of_pair <- !duplicated(pair_keys)
+    pair_types <- mapply(
         MutSeqR::classify_variation,
-        mutation_data$ref,
-        mutation_data$alt
+        mutation_data$ref[first_of_pair],
+        mutation_data$alt[first_of_pair],
+        USE.NAMES = FALSE
     )
+    mutation_data$variation_type <- pair_types[
+        match(pair_keys, pair_keys[first_of_pair])
+    ]
 
     # Define substitution dictionary to normalize to pyrimidine context
     sub_dict <- c(
@@ -264,10 +271,7 @@ characterize_variants <- function(mutation_data) {
             ),
             normalized_context = ifelse(
                 stringr::str_sub(.data$context, 2, 2) %in% c("G", "A"),
-                mapply(
-                    function(x) reverseComplement(x, case = "upper"),
-                    .data$context
-                ),
+                reverseComplement(.data$context, case = "upper"),
                 .data$context
             ),
             context_with_mutation = ifelse(
@@ -785,4 +789,104 @@ vcf_alt_to_character <- function(alt) {
         },
         character(1)
     )
+}
+
+#' Extract the records of a single-sample VCF into a data frame
+#'
+#' Builds one row per VCF record with the fixed fields, the
+#' FORMAT fields of the VCF's one sample and the INFO fields. FORMAT fields
+#' with several values per record, such as AD, are spread into one column per
+#' value (`AD_1`, `AD_2`, ...). INFO fields that share a name with a fixed or
+#' FORMAT column, ignoring case, are dropped in their favor.
+#'
+#' @param vcf A single-sample VCF read with [VariantAnnotation::readVcf()].
+#' @param add_chr Whether to prepend "chr" to contig names missing it and
+#'   rename "MT" to "chrM".
+#'
+#' @return A data frame with one row per VCF record.
+#'
+#' @keywords internal
+vcf_to_data_frame <- function(vcf, add_chr = FALSE) {
+    # Coerce ALT to CharacterList so strict DNA alleles (e.g. A, C) and
+    # gVCF/SV alleles (e.g. <NON_REF>, .) convert alike.
+    VariantAnnotation::alt(vcf) <- IRanges::CharacterList(
+        VariantAnnotation::alt(vcf)
+    )
+    # Extract contigs and add "chr" prefix if specified to be
+    # compatible with BSgenome seqnames.
+    contig_names <- as.character(SummarizedExperiment::seqnames(vcf))
+    if (add_chr) {
+        contig_names <- ifelse(
+            grepl("^chr", contig_names, ignore.case = TRUE),
+            contig_names,
+            paste0("chr", contig_names)
+        )
+        # Special case: mt chrom to UCSC format
+        contig_names <- sub("^chrMT$", "chrM", contig_names, ignore.case = TRUE)
+    }
+    # Extract mutation data into a dataframe
+    ## To Do: May want to use the expand function to unlist ALT column of a
+    ## CollapsedVCF object to one row per ALT value.
+    dat <- data.frame(
+        contig = contig_names,
+        start = SummarizedExperiment::start(vcf),
+        end = get_vcf_end_positions(vcf),
+        ref = as.character(VariantAnnotation::ref(vcf)),
+        alt = vcf_alt_to_character(VariantAnnotation::alt(vcf)),
+        filter = as.character(VariantAnnotation::filt(vcf))
+    )
+
+    # Extract INFO fields
+    info <- as.data.frame(VariantAnnotation::info(vcf))
+
+    # Extract GENO fields depending on the type of data
+    geno <- VariantAnnotation::geno(vcf)
+    geno_df <- data.frame(row.names = seq_len(nrow(geno[[1]])))
+    for (field_name in names(geno)) {
+        field <- geno[[field_name]]
+        if (is.list(field)) {
+            # Ex. AD: spread each record's values into one column per value
+            lengths_per_record <- lengths(field)
+            max_length <- max(lengths_per_record)
+            values <- unlist(field, use.names = FALSE)
+            expanded_field <- matrix(
+                values[NA_integer_],
+                nrow = length(field),
+                ncol = max_length
+            )
+            expanded_field[cbind(
+                rep(seq_along(field), lengths_per_record),
+                sequence(lengths_per_record)
+            )] <- values
+            colnames(expanded_field) <- paste(
+                field_name,
+                seq_len(max_length),
+                sep = "_"
+            )
+            geno_df <- cbind(geno_df, expanded_field)
+        } else if (is.matrix(field)) {
+            # Ex. GT, DP, VD
+            geno_df[[field_name]] <- as.vector(field)
+        } else if (is.array(field) && length(dim(field)) == 3) {
+            # Ex. RD, ALD
+            # Collapse the array over the 2nd and 3rd dimensions
+            collapsed_field <- apply(field, c(1), function(x) as.vector(x))
+            collapsed_field <- as.data.frame(t(collapsed_field))
+            ncols <- ncol(collapsed_field)
+            colnames(collapsed_field) <- paste(field_name, seq_len(ncols), sep = "_")
+            geno_df <- cbind(geno_df, collapsed_field)
+        } else {
+            geno_df[[field_name]] <- field
+        }
+    }
+    # Ensure info does not overwrite columns already in dat or geno_df (like END or DP)
+    # We do a case-insensitive match so "END" in info is safely dropped in favor of "end" in dat
+    common_cols_idx <- tolower(colnames(info)) %in%
+        tolower(c(colnames(dat), colnames(geno_df)))
+    info <- info[, !common_cols_idx, drop = FALSE]
+
+    # Combine data frames
+    dat <- cbind(dat, geno_df, info)
+    row.names(dat) <- NULL
+    dat
 }
