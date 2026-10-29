@@ -39,6 +39,7 @@ op$column$position <- "start"
 op$column$start_position <- "start"
 op$column$total_depth <- "total_depth"
 op$column$informative_somatic_depth <- "total_depth"
+op$column$site_dp <- "total_depth" # vartovcf FORMAT SITE_DP
 op$site$columns <- c("contig", "start")
 op$mut_count_method <- "min"
 op$processed_required_mut_cols <-

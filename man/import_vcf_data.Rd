@@ -178,6 +178,10 @@ required for some downstream analyses. AD is used to calculate the
 or a record's AD is missing its reference depth or the alternate depth of a
 variant, as callers such as VarDict write for MNV and complex calls, the
 \code{DP} field will be used as the \code{total_depth}.
+
+The FORMAT field \code{SITE_DP}, which vartovcf writes as the read depth at the
+record's position, is read as the \code{total_depth}. Records whose
+\code{total_depth} is missing take it from AD or DP as above.
 }
 \examples{
 # Mutation data is just for example purposes. It does not reflect real data

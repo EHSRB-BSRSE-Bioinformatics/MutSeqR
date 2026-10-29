@@ -1,0 +1,18 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##FILTER=<ID=NEAR_READ_END,Description="The ALT reads end near the variant">
+##INFO=<ID=CONTEXT,Number=1,Type=String,Description="Reference bases at POS-1, POS and POS+1">
+##INFO=<ID=GVCF_FILL,Number=1,Type=String,Description="How the depth of a filled reference-only record was found">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Read depth for REF then ALT">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=SITE_DP,Number=1,Type=Integer,Description="Read depth at POS, the same on every record at the position">
+##contig=<ID=chr1,length=1000>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1
+chr1	10	.	C	.	.	.	CONTEXT=ACA	GT:AD:DP:SITE_DP	0/0:100:101:100
+chr1	11	.	A	T	.	PASS	CONTEXT=CAT	GT:AD:DP:SITE_DP	0/1:98,2:101:100
+chr1	12	.	TG	CA	.	NEAR_READ_END	CONTEXT=ATG	GT:AD:DP:SITE_DP	0/1:.,3:97:99
+chr1	13	.	G	.	.	.	GVCF_FILL=SPANNED;CONTEXT=TGC	GT:AD:DP:SITE_DP	./.:0:3:3
+chr1	14	.	CAT	C	.	PASS	CONTEXT=GCA	GT:AD:DP:SITE_DP	0/1:95,1:96:96
+chr1	900	.	A	G	.	PASS	CONTEXT=TAG	GT:AD:DP:SITE_DP	0/1:46,4:50:.
+chr1	950	.	GA	TC	.	PASS	CONTEXT=TGA	GT:AD:DP:SITE_DP	0/1:.,5:60:.

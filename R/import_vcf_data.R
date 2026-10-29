@@ -97,6 +97,10 @@
 #' or a record's AD is missing its reference depth or the alternate depth of a
 #' variant, as callers such as VarDict write for MNV and complex calls, the
 #' `DP` field will be used as the `total_depth`.
+#'
+#' The FORMAT field `SITE_DP`, which vartovcf writes as the read depth at the
+#' record's position, is read as the `total_depth`. Records whose
+#' `total_depth` is missing take it from AD or DP as above.
 #' @returns A table where each row is a mutation, and columns indicate the
 #' location, type, and other data. If `output_granges` is set to TRUE, the
 #' mutation data will be returned as a GRanges object, otherwise mutation
@@ -511,12 +515,21 @@ import_vcf_data <- function(
     }
   }
   # Create a total_depth column, if able: from depth - no_calls, AD or DP.
-  if (!"total_depth" %in% colnames(dat)) {
-    estimated <- estimate_total_depth(dat)
+  # A total_depth read from the data (e.g. vartovcf's SITE_DP) that is
+  # missing for some records is completed the same way.
+  total_depth_exists <- "total_depth" %in% colnames(dat)
+  if (!total_depth_exists || anyNA(dat$total_depth)) {
+    estimated <- if (total_depth_exists) {
+      estimate_total_depth(dat[is.na(dat$total_depth), , drop = FALSE])
+    } else {
+      estimate_total_depth(dat)
+    }
     if (is.null(estimated)) {
       warning(
         "Could not find an appropriate depth column. Some package functionality may be limited.\n"
       )
+    } else if (total_depth_exists) {
+      dat$total_depth[is.na(dat$total_depth)] <- estimated
     } else {
       dat$total_depth <- estimated
     }
