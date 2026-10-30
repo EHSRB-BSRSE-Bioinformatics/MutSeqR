@@ -17,7 +17,7 @@
 #' will differ.
 #' @param subtype_resolution The degree at which to resolve the mutation
 #' subtypes when calculating frequencies. Mutation frequency will be calculated
-#' across all col_to_groups for each mutation subtype given the desired
+#' across all `col_to_groups` for each mutation subtype given the desired
 #' resolution. Subtype proportions will also be calculated. Options
 #' are "none", "type", "base_6", "base_12", "base_96", and "base_192". See
 #' details for definitions.
@@ -30,6 +30,15 @@
 #' Default includes all variants. For `calculate_depth = TRUE`: Regardless of
 #' whether or not a variant is included in the mutation counts, the total_depth
 #' for that position will be counted.
+#' @param calculate_depth A logical variable, whether to calculate the
+#' per-group total_depth from the \code{mutation_data}. If set to TRUE, the
+#' mutation data must contain a total_depth value for every sequenced base
+#' (including variants AND no-variant calls). If set to FALSE, pre-calculated
+#' per-group \code{total_depth} values may be supplied at the desired
+#' subtype_resolution using the precalc_depth_data parameter. Alternatively, if
+#' no per-group \code{total_depth} is available, per-group mutation counts will
+#' be calculated, but mutation frequency will not. In such cases, mutation
+#' subtype proportions will not be normalized to the \code{total_depth}.
 #' @param correct_depth A logical value. If TRUE, the function will correct the
 #' \code{total_depth} column in \code{mutation_data} in order to prevent
 #' double-counting the \code{total_depth} values for the same genomic position.
@@ -46,38 +55,15 @@
 #' no_variant. If FALSE, the \code{total_depth} value for the first row in
 #' the group will be retained, while the other rows will have their
 #' \code{total_depth} set to 0. The default is FALSE.
-#' @param calculate_depth A logical variable, whether to calculate the
-#' per-group total_depth from the mutation data. If set to TRUE, the mutation
-#' data must contain a total_depth value for every sequenced base (including
-#' variants AND no-variant calls). If set to FALSE, pre-calculated per-group
-#' total_depth values may be supplied at the desired subtype_resolution
-#' using the precalc_depth_data parameter. Alternatively, if no per-group
-#' total_depth is available, per-group mutation counts will be calculated,
-#' but mutation frequency will not. In such cases, mutation subtype proportions
-#' will not be normalized to the total_depth.
 #' @param precalc_depth_data A data frame or a file path to a text file
-#' containing pre-calculated depth values. A context-resolved input with
-#' `subtype_depth`, one context column from `denominator_dict`, and either
-#' `sample` or all `cols_to_group` columns can be supplied at any supported
-#' resolution; when possible, `calculate_mf()` uses `write_depth_data()` to
-#' derive the requested resolution. Per-sample depths are aggregated to
-#' `cols_to_group` using the sample-to-group mapping in `mutation_data`; inputs
-#' already summarized by `cols_to_group` are used directly. Otherwise, supply
-#' the columns for the desired grouping variable(s) and context at the
-#' requested resolution. Depth columns should be named `group_depth` and/or
-#' `subtype_depth`. `group_depth` is used for subtype
-#' resolutions of "none", "type", and all non-snv mutations in "base_6",
-#' "base_12", "base_96", and "base_192". `subtype_depth` is used for snv
-#' mutations in "base_6", "base_12", "base_96", and "base_192". You can
-#' access a list of context values for each subtype resolution using
-#' `MutSeqR::context_list$your_subtype_resolution`.
+#' containing pre-calculated depth values. See details for required columns.
 #' @param d_sep The delimiter used in the precalc_depth_data, if applicable.
 #' Default is tab-delimited.
 #' @param summary A logical variable, whether to return a summary table
 #' (i.e., where only relevant columns for frequencies and groupings are
 #' returned). Setting this to false returns all columns in the original
 #' mutation_data, which might make plotting more difficult, but may provide
-#' additional flexibility to power users.
+#' additional flexibility to power users. Default is TRUE.
 #' @param retain_metadata_cols a character vector that contains the names of
 #' the metadata columns that you would like to retain in the summary table.
 #' This may be useful for plotting your summary data. Ex. retain the "dose"
@@ -90,15 +76,15 @@
 #' \itemize{
 #' \item `sum_min`: The sum of all mutations within the group, calculated
 #' using the "min" method for mutation counting. All identical mutations
-#' within a samples are assumed to be the result of clonal expansion and are
-#' thus only counted once.
+#' within a sample are assumed to be the result of clonal expansion and are
+#' only counted once.
 #' \item `sum_max`: The sum of all mutations within the group, calculated
 #' using the "max" method for mutaiton counting. All identical mutations
-#' within a sample are assumed to be idenpendant mutational evens and are
+#' within a sample are assumed to be idenpendant mutational events and are
 #' included in the mutation frequency calculation.
 #' \item `group_depth`: The total_depth summed across groups.
 #' \item `subtype_depth`: The total_depth summed across groups for a given
-#' sequence context. Used for calculating subtype frequencies.
+#' sequence context. Used for calculating snv subtype frequencies.
 #' \item `mf_min`: The mutation frequency calculated using the "min"
 #' method for mutation counting. mf_min = sum_min / depth.
 #' \item `mf_max`: The mutation frequency calculated using the "max"
@@ -133,6 +119,9 @@
 #' depth from the mutation data. If you are using precalculated depth data, the
 #' total_depth column is not required.
 #'
+#' MF is total mutation count divided by total depth. If grouping by an
+#' experimental variable note that MF is NOT the arithmetic mean of sample MFs.
+#' 
 #' **Subtype Resolutions:**
 #'  \itemize{
 #'        \item "none" calculates mutation frequencies across all selected
@@ -163,10 +152,10 @@
 #' sequence context in which the SNV subtype occurs. Ex. for base_6, the
 #' two possible reference bases are C or T; hence, the total_depth is
 #' summed seperately for C:G positions and T:A positions. The MF for C>T
-#' mutations is calculated as total # C>T mutations / total_depth for C>G
-#' positions (sum / subtype_depth). Non-SNV mutation types will be caluclated
-#' as their sum / group_depth, since they can occur in the context of any
-#' nucleotide.
+#' mutations is calculated as the total number of C>T mutations / total_depth
+#' for C and G positions (sum / subtype_depth). Non-SNV mutation subtypes will
+#' be caluclated as their sum / group_depth, since they can occur in the
+#' context of any nucleotide.
 #'
 #' **retain_metadata_cols at subtype_resolution:** The summary table uses a
 #' pre-defined list of possible subtypes for each resolution. If a particular
@@ -175,6 +164,39 @@
 #' metadata_cols. Thus, for subtypes that do not occur in the mutation data
 #' for a given group, the corresponding metadata_col will be NA.
 #'
+#' **Precalculated depth:** The precalculated depth data should include depth
+#' calculated per your grouping variable, resolved to the nucleotide context
+#' that supports the `subtype_resolution`. Required columns are:
+#'  \itemize{
+#'      \item `cols_to_group`: (or `seqnames`) The grouping column(s).
+#'      \item a context column: The nucleotide context, depending on the
+#' subtype resolution. Must be one column from `denominator_dict`. This is
+#' not required for subtype resolutions "none" or "type".
+#'      \item `subtype_depth` or `group_depth`: The total_depth summed across
+#' groups (group_depth) and groups & contexts (subtype_depth). group_depth is
+#' used for subtype_resolution = "none" and "type", while subtype_depth is
+#' used for all SNV resolutions.
+#' }
+#' Generally, depth should be precalculated to the grouping variables in 
+#' `cols_to_group`. However, the function is capable of aggregating depth
+#' supplied per sample across a lower resolution grouping variable. The
+#' grouping variable is mapped to sample from the mutation data. This mapping
+#' requires each sample to identify exactly one group value. Mapping to higher-
+#' resolution grouping variables is not possible. For example, you may calculate
+#' mutation frequencies per "dose", and supply precalc_depth_data as group_depth
+#' per sample, assuming that each sample belongs to exactly one dose. However,
+#' you cannot calculate mutation frequencies per contig using this
+#' precalc_depth_data, since each sample maps to more than one contig.
+#' 
+#' precalc_depth_data may be supplied at a higher context resolution than is
+#' required by subtype_resolution. The function will automatically
+#' aggregate depth across possible contexts to support lower-level resolutions.
+#' As such, precalc_depth_data with subtype_depth resolved to the 64
+#' trinucleotide context (base_192; "context") can be used to calculate
+#' mutation frequencies at any given subtype_resolution.
+#' You can access a list of context values for each subtype resolution using
+#' `MutSeqR::context_list$your_subtype_resolution`.
+#' 
 #' **Variant filtering:** Variants flagged as TRUE in the `filter_mut` column
 #' will be excluded from the mutation counts. However, the total_depth of
 #' these variants will be included in the group/subtype depths if
@@ -304,6 +326,19 @@ calculate_mf <- function(mutation_data,
     if (inherits(mutation_data, "GRanges")) {
         mutation_data <- as.data.frame(mutation_data)
         mutation_data <- dplyr::rename(contig = seqnames)
+    }
+
+    reserved_columns <- intersect(
+        colnames(mutation_data),
+        c("missing_context_depth", ".missing_context_depth")
+    )
+    if (length(reserved_columns) > 0) {
+        stop(
+            "mutation_data contains reserved column name(s): ",
+            paste(reserved_columns, collapse = ", "),
+            ". Rename these columns before calling calculate_mf().",
+            call. = FALSE
+        )
     }
 
     if (calculate_depth && correct_depth) {
@@ -445,176 +480,11 @@ calculate_mf <- function(mutation_data,
         depth_exists <- TRUE
     } else {
         if (!is.null(precalc_depth_data)) {
-            if (is.data.frame(precalc_depth_data)) {
-                depth_df <- precalc_depth_data
-            } else if (is.character(precalc_depth_data)) {
-                depth_file <- file.path(precalc_depth_data)
-                if (!file.exists(depth_file)) {
-                    stop("The precalc_depth_data does not exist.")
-                }
-                if (file.info(depth_file)$size == 0) {
-                    stop(
-                        "You are trying to import an empty precalc_depth_data"
-                    )
-                }
-                depth_df <- read.delim(file.path(depth_file),
-                    sep = d_sep,
-                    header = TRUE
-                )
-                if (ncol(depth_df) <= 1) {
-                    stop("Your imported precalc only has one column.
-                        You may want to set d_sep to properly reflect
-                        the delimiter used for the data you are importing.")
-                }
-            }
-
-            # Determine the resolution of the input depth data
-            input_resolutions <- c(
-                "base_192", "base_96", "base_12", "base_6"
+            depth_df <- read_precalc_depth(precalc_depth_data, d_sep)
+            depth_df <- prepare_precalc_depth(
+                depth_df, mutation_data, cols_to_group,
+                subtype_resolution, d_sep
             )
-            input_context_columns <- unname(
-                MutSeqR::denominator_dict[input_resolutions]
-            )
-            input_context_columns <- input_context_columns[
-                !is.na(input_context_columns)
-            ]
-            present_context_columns <- intersect(
-                input_context_columns, names(depth_df)
-            )
-            if (length(present_context_columns) > 0L) {
-                if (length(present_context_columns) != 1L) {
-                    stop(
-                        "precalc_depth_data must contain exactly one context ",
-                        "column when using automatic resolution conversion.",
-                        call. = FALSE
-                    )
-                }
-                input_context_column <- present_context_columns[[1L]]
-                input_resolution <- input_resolutions[
-                    match(
-                        input_context_column,
-                        unname(MutSeqR::denominator_dict[input_resolutions])
-                    )
-                ]
-                if ("sample" %in% names(depth_df)) {
-                    input_group_cols <- "sample"
-                } else if (all(cols_to_group %in% names(depth_df))) {
-                    input_group_cols <- cols_to_group
-                } else {
-                    stop(
-                        "Context-resolved precalc_depth_data must contain ",
-                        "either 'sample' or all cols_to_group columns: ",
-                        paste(cols_to_group, collapse = ", "),
-                        call. = FALSE
-                    )
-                }
-                converted_depth <- suppressWarnings(
-                    MutSeqR::write_depth_data(
-                        depth_df,
-                        d_sep = d_sep,
-                        group_cols = input_group_cols
-                    )
-                )
-                depth_key <- switch(
-                    subtype_resolution,
-                    none = "global",
-                    type = "global",
-                    base_6 = "base6",
-                    base_12 = "base12",
-                    base_96 = "base96",
-                    base_192 = "base192"
-                )
-                depth_df <- converted_depth[[depth_key]]
-                if (is.null(depth_df)) {
-                    requested_context_column <-
-                        MutSeqR::denominator_dict[[subtype_resolution]]
-                    stop(
-                        "precalc_depth_data at '", input_resolution,
-                        "' resolution cannot generate depths for subtype_resolution '",
-                        subtype_resolution, "'. Supply data at ",
-                        "'base_192' or another resolution fine enough to ",
-                        "derive '", requested_context_column, "'.",
-                        call. = FALSE
-                    )
-                }
-
-                if (!all(cols_to_group %in% names(depth_df))) {
-                    group_map_columns <- unique(c("sample", cols_to_group))
-                    missing_group_columns <- setdiff(
-                        group_map_columns, names(mutation_data)
-                    )
-                    if (length(missing_group_columns)) {
-                        stop(
-                            "Cannot aggregate per-sample precalc_depth_data ",
-                            "to cols_to_group; mutation_data is missing: ",
-                            paste(missing_group_columns, collapse = ", "),
-                            call. = FALSE
-                        )
-                    }
-                    sample_groups <- mutation_data %>%
-                        dplyr::select(dplyr::all_of(group_map_columns)) %>%
-                        dplyr::distinct()
-                    ambiguous_samples <- sample_groups %>%
-                        dplyr::group_by(.data$sample) %>%
-                        dplyr::summarise(n_groups = dplyr::n(),
-                                         .groups = "drop") %>%
-                        dplyr::filter(.data$n_groups > 1L)
-                    if (nrow(ambiguous_samples)) {
-                        stop(
-                            "Cannot aggregate per-sample precalc_depth_data: ",
-                            "each sample must map to exactly one combination ",
-                            "of cols_to_group. Ambiguous sample(s): ",
-                            paste(utils::head(ambiguous_samples$sample, 10L),
-                                  collapse = ", "),
-                            call. = FALSE
-                        )
-                    }
-                    unmapped_samples <- setdiff(
-                        as.character(converted_depth$global$sample),
-                        as.character(sample_groups$sample)
-                    )
-                    if (length(unmapped_samples)) {
-                        stop(
-                            "Cannot aggregate per-sample precalc_depth_data: ",
-                            "sample(s) are absent from mutation_data: ",
-                            paste(utils::head(unmapped_samples, 10L),
-                                  collapse = ", "),
-                            call. = FALSE
-                        )
-                    }
-
-                    global_depth <- dplyr::left_join(
-                        converted_depth$global,
-                        sample_groups,
-                        by = "sample"
-                    ) %>%
-                        dplyr::group_by(
-                            dplyr::across(dplyr::all_of(cols_to_group))
-                        ) %>%
-                        dplyr::summarise(
-                            group_depth = sum(.data$group_depth),
-                            .groups = "drop"
-                        )
-                    if (depth_key == "global") {
-                        depth_df <- global_depth
-                    } else {
-                        context_column <- MutSeqR::denominator_dict[[
-                            subtype_resolution
-                        ]]
-                        depth_df <- dplyr::left_join(
-                            depth_df, sample_groups, by = "sample"
-                        ) %>%
-                            dplyr::group_by(dplyr::across(dplyr::all_of(
-                                c(cols_to_group, context_column)
-                            ))) %>%
-                            dplyr::summarise(
-                                subtype_depth = sum(.data$subtype_depth),
-                                .groups = "drop"
-                            ) %>%
-                            dplyr::left_join(global_depth, by = cols_to_group)
-                    }
-                }
-            }
 
             # check for required columns in depth_df
             required_columns <- c(denominator_groups, "group_depth")
@@ -630,31 +500,31 @@ calculate_mf <- function(mutation_data,
             if (length(missing_columns) > 0) {
                 stop(
                     "Missing columns in precalc_depth_data: ",
-                    paste(missing_columns, collapse = ", "), "\n"
-                )
-            }
-            
-            # Validate resolution of the depth data
-            dup_check <- depth_df %>%
-                dplyr::group_by(dplyr::across(dplyr::all_of(denominator_groups))) %>%
-                dplyr::tally(name = "n") %>%
-                dplyr::filter(n > 1)
-
-            if (nrow(dup_check) > 0) {
-                stop(
-                    "Your precalc_depth_data is at a finer grouping than required (contains multiple ",
-                    "rows per combination of: ", paste(denominator_groups, collapse=", "), ").\n",
-                    "This usually means depth values are specified for a finer group (e.g. per sample) when grouping is by ",
-                    paste(cols_to_group, collapse=", "), ".\n",
-                    "Remove the extra group resolution or summarize the depth first.",
-                    "\nFirst problematic group(s):\n",
-                    paste0(utils::capture.output(print(head(dup_check, 10))), collapse="\n")
+                    paste(missing_columns, collapse = ", ")
                 )
             }
             # Merge depth_df with mut_freq_table
+            original_columns <- names(mut_freq_table)
             mut_freq_table <- dplyr::left_join(mut_freq_table, depth_df,
-                by = c(denominator_groups)
+                by = c(denominator_groups),
+                suffix = c(".x", "")
             )
+            joined_columns <- names(mut_freq_table)[seq_along(original_columns)]
+            renamed_columns <- original_columns != joined_columns
+            if (any(renamed_columns)) {
+                warning(
+                    "Joining precalc_depth_data renamed column(s) in ",
+                    "mutation_data: ",
+                    paste0(
+                        "'", original_columns[renamed_columns], "' -> '",
+                        joined_columns[renamed_columns], "'",
+                        collapse = ", "
+                    ),
+                    ". These names also occur in precalc_depth_data; ",
+                    "columns from precalc_depth_data keep their original names.",
+                    call. = FALSE
+                )
+            }
             depth_exists <- TRUE
         } else {
             warning(
@@ -706,6 +576,11 @@ calculate_mf <- function(mutation_data,
             "sum_min",
             "sum_max"
         )
+    }
+
+    # Return mutation-level results before building the summary table.
+    if (!summary) {
+        return(mut_freq_table)
     }
 
     # Create a summary table
@@ -796,22 +671,18 @@ calculate_mf <- function(mutation_data,
                 c(snv_subtype, group_list)
             )
             summary_rows <- rbind(summary_rows, summary_rows_snv)
-            summary_rows <- summary_rows %>% # add the context column
-                dplyr::rowwise() %>%
-                dplyr::mutate(
-                    !!paste(denominator_dict[[subtype_resolution]]) :=
-                        get_ref_of_mut(get(subtype_dict[[subtype_resolution]]))
-                )
-            summary_rows <- summary_rows %>%
-                dplyr::mutate(
-                    !!paste0(MutSeqR::denominator_dict[[subtype_resolution]])
-                        := if_else(is.na(!!sym(paste0(MutSeqR::denominator_dict[[subtype_resolution]]))),
-                            "N",
-                            !!sym(paste0(
-                                MutSeqR::denominator_dict[[subtype_resolution]]
-                            ))
-                        )
-                )
+            # Calculate each subtype's context once, then map it to all groups.
+            subtype_column <- MutSeqR::subtype_dict[[subtype_resolution]]
+            context_column <- MutSeqR::denominator_dict[[subtype_resolution]]
+            subtypes <- as.character(summary_rows[[subtype_column]])
+            unique_subtypes <- unique(subtypes)
+            contexts <- vapply(
+                unique_subtypes, get_ref_of_mut, character(1),
+                USE.NAMES = FALSE
+            )
+            summary_rows[[context_column]] <- tidyr::replace_na(
+                contexts[match(subtypes, unique_subtypes)], "N"
+            )
         }
     } else {
         summary_rows <- group_df
@@ -871,13 +742,42 @@ calculate_mf <- function(mutation_data,
         summary_table <- dplyr::left_join(summary_table, depth_df)
     }
 
-    # Replace NAs in data with 0s (sum and MF cols only)
+    missing_context_depth <- depth_exists &&
+        subtype_resolution %in% c(
+            "base_6", "base_12", "base_96", "base_192"
+        ) &&
+        calculate_depth
+    if (missing_context_depth) {
+        summary_table <- summary_table %>%
+            dplyr::mutate(
+                .missing_context_depth = is.na(.data$subtype_depth),
+                subtype_depth = tidyr::replace_na(.data$subtype_depth, 0)
+            )
+    }
+
+    # Summary rows without mutations have zero counts and frequencies.
     summary_table <- summary_table %>%
         dplyr::mutate(
             dplyr::across(
-                dplyr::all_of(summary_cols), ~ tidyr::replace_na(., 0)
+                dplyr::all_of(c("sum_min", "sum_max")),
+                ~ tidyr::replace_na(., 0)
             )
         )
+    if (depth_exists) {
+        summary_table <- summary_table %>%
+            dplyr::mutate(
+                dplyr::across(
+                    dplyr::all_of(c("mf_min", "mf_max")),
+                    ~ {
+                        values <- tidyr::replace_na(., 0)
+                        if (.env$missing_context_depth) {
+                            values[.data$.missing_context_depth] <- NA_real_
+                        }
+                        values
+                    }
+                )
+            )
+    }
 
     # Calculate the proportions of each subtype
     if (subtype_resolution != "none") {
@@ -911,8 +811,8 @@ calculate_mf <- function(mutation_data,
                     dplyr::across(dplyr::all_of(c(cols_to_group)))
                 ) %>%
                 dplyr::mutate(
-                    total_freq_min = sum(.data$freq_min),
-                    total_freq_max = sum(.data$freq_max)
+                    total_freq_min = sum(.data$freq_min, na.rm = TRUE),
+                    total_freq_max = sum(.data$freq_max, na.rm = TRUE)
                 ) %>%
                 dplyr::ungroup() %>%
                 dplyr::mutate(
@@ -937,14 +837,24 @@ calculate_mf <- function(mutation_data,
                     -"total_group_mut_sum_max"
                 )
         }
-        # replace NAs with 0s (when sum of group = 0, dividing by 0 = NaN)
+        # Keep proportions undefined for contexts with no sequenced bases.
         summary_table <- summary_table %>%
             dplyr::mutate(
                 dplyr::across(
                     c(proportion_min, proportion_max),
-                    ~ tidyr::replace_na(., 0)
+                    ~ {
+                        values <- tidyr::replace_na(., 0)
+                        if (.env$missing_context_depth) {
+                            values[.data$.missing_context_depth] <- NA_real_
+                        }
+                        values
+                    }
                 )
             )
+    }
+    if (missing_context_depth) {
+        summary_table <- summary_table %>%
+            dplyr::select(-".missing_context_depth")
     }
     # Remove the subtype_depth column if we are not using it
     if (depth_exists && subtype_resolution %in% c("none", "type")) {
@@ -967,9 +877,5 @@ calculate_mf <- function(mutation_data,
         )
     }
 
-    if (!summary) {
-        return(mut_freq_table)
-    } else {
-        return(summary_table)
-    }
+    return(summary_table)
 }

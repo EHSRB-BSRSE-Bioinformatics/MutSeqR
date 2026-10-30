@@ -613,15 +613,12 @@ vcf_sample_fix <- function(vcf) {
 #' \code{NULL}.
 #'
 #' @details
-#' This function performs three checks:
-#' \enumerate{
-#'   \item If \code{BS_genome} is \code{NULL}, an error is thrown indicating that
-#'   a genome must be provided when sequence context is required.
-#'   \item If \code{BS_genome} is not among the available \pkg{BSgenome}
-#'   packages, an error is thrown.
-#'   \item If \code{BS_genome} is valid but not installed locally, an error is
-#'   thrown with instructions to install it via \code{BiocManager::install()}.
-#' }
+#' If \code{BS_genome} is \code{NULL}, an error is thrown indicating that a
+#' genome must be provided when sequence context is required. If the genome is
+#' installed, validation passes without network access. Otherwise,
+#' \code{BSgenome::available.genomes()} is queried (requires internet;) and an
+#' error is thrown with installation instructions, or stating that the genome
+#' is not recognized.
 #'
 #' This function is intended to be called only when sequence context needs to be
 #' populated (i.e., when a \code{context} column is absent or incomplete).
@@ -638,9 +635,24 @@ validate_BS_genome <- function(BS_genome) {
         )
     }
 
-    available_BS_genomes <- BSgenome::available.genomes(
-        splitNameParts = TRUE
-    )$pkgname
+    if (BS_genome %in% BSgenome::installed.genomes()) {
+        return(invisible(TRUE))
+    }
+
+   #  Not installed: check if available
+   available_BS_genomes <- tryCatch(
+     BSgenome::available.genomes(splitNameParts = TRUE)$pkgname,
+     error = function(error) {
+       stop(
+                "The specified BS genome (", BS_genome, ") is not installed ",
+                "locally. Could not query BSgenome::available.genomes() to ",
+                "verify whether the specified BS genome is recognized. Check ",
+                "your internet connection and try again. Original error: ",
+                conditionMessage(error),
+                call. = FALSE
+            )
+        }
+    )
 
     if (!BS_genome %in% available_BS_genomes) {
         stop(
@@ -650,16 +662,14 @@ validate_BS_genome <- function(BS_genome) {
         )
     }
 
-    if (!BS_genome %in% BSgenome::installed.genomes()) {
-        stop(
-            "The specified BS genome ('",
-            BS_genome,
-            "') is valid, but is not installed locally. ",
-            "Please install it using BiocManager::install('",
-            BS_genome,
-            "') before proceeding."
-        )
-    }
+    stop(
+        "The specified BS genome ('",
+        BS_genome,
+        "') is not installed locally. ",
+        "Please install it using BiocManager::install('",
+        BS_genome,
+        "') before proceeding."
+    )
 }
 
 
