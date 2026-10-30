@@ -7,6 +7,12 @@
 - `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
   which `filter_mut()` can act on with `custom_filter_col = "filter"`.
 
+- `import_vcf_data()` imports large VCFs several times faster: each file's
+  records are bound as data frames rather than VCF objects, FORMAT fields
+  with several values are spread without a per-record loop, and each
+  distinct REF/ALT pair and context is classified once. Three 48,000-record
+  gVCFs import in 4 seconds instead of 23, with identical results.
+
 - `calculate_mf()` gains an optional `depth_group_cols` argument to declare
   sample-level precalculated depths explicitly, including context-resolved
   inputs with dose metadata. Declared sample depths are validated and pooled
