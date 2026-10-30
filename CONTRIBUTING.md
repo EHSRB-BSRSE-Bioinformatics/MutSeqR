@@ -89,6 +89,7 @@ pixi run document        # regenerate roxygen output
 pixi run check-docs      # verify generated Rd, NAMESPACE, and metadata are current
 pixi run check-readme    # verify README.md matches README.Rmd
 pixi run check-reference # verify exported topics are indexed and build reference
+pixi run install-hooks   # enable this repository's pre-commit checks
 pixi run check           # full R CMD check (fails on errors, warnings, or notes)
 pixi run bioccheck       # BiocCheck (fails the task when checks fail)
 pixi run validate        # run all local documentation and package validation gates
@@ -118,6 +119,13 @@ worktree edits do not affect its result. If a check reports changed generated
 files, review and commit those outputs, then rerun the task. Repository branch
 protection can require these workflow checks alongside the existing `R-CMD-check`
 matrix.
+
+Run `pixi run install-hooks` once after cloning to enable the version-controlled
+pre-commit hook. When a commit includes R/roxygen sources or README sources, the
+hook runs the corresponding freshness check. If generation changes an output,
+review and stage the generated files before committing again. The hook is a fast
+local guard; CI remains the authoritative validation. In an exceptional case,
+Git's standard `--no-verify` option bypasses the local hook.
 
 Feature flow:
 

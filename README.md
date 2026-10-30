@@ -28,9 +28,12 @@ technologies.
 <img src="man/figures/MutSeqR_overview.png" style="display:block; margin:auto; max-width:100%;" alt="A Flowchart showing MutSeqR's function utility and workflow: Data Import, Data Processing, Statistical Analyses, Visualization, Output. Includes a visual of a woman working at a computer.">
 
 <details>
+
 <summary>
+
 <strong> Figure transcript </strong>
 </summary>
+
 <em>1. Data Import: Imports mutation data into the R environment. Binds
 data from multiple libraries into a single object. Joins sample and
 target region metadata to the mutation data. Retrieves trinucleotide
