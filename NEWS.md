@@ -1,5 +1,10 @@
 # MutSeqR (development version)
 
+- `import_vcf_data()` reads FORMAT `SITE_DP`, the read depth at the record's
+  position that [vartovcf](https://github.com/clintval/vartovcf) writes, as
+  the `total_depth`. Records whose `total_depth` is missing take it from `AD`
+  or `DP`.
+
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's
   `alt_depth` to 1. Records without an alternate allele get 0.
