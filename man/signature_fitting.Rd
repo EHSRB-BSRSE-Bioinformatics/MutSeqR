@@ -74,7 +74,7 @@ flagged by the filter_mut column will be excluded.
 }
 \examples{
 \donttest{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
+if (requireNamespace("ExperimentHub", quietly = TRUE)) {
   # Example data consists of 24 mouse bone marrow DNA samples imported
   # using import_mut_data() and filtered with filter_mut as in Example 4.
   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
