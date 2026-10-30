@@ -3,6 +3,9 @@
 - `import_vcf_data()` reads an INFO `CONTEXT_3mer`, as
   [vartovcf](https://github.com/clintval/vartovcf) writes with
   `--context-3mer`, as the `context`, so no BS genome is needed.
+  
+- `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
+  which `filter_mut()` can act on with `custom_filter_col = "filter"`.
 
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample

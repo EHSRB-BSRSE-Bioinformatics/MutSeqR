@@ -122,6 +122,9 @@ type for the snv variant including the two flanking nucleotides
 \item \code{vaf} : The variant allele fraction. Calculated as
 \code{alt_depth}/\code{total_depth}.
 \item \code{gc_content}: \% GC of the trinucleotide context at this position.
+\item \code{filter}: The VCF FILTER value: "PASS", the semicolon-separated
+filters the record failed, or "." when no filters were applied. See the
+\code{custom_filter_col} parameter of \code{filter_mut()} to act on it.
 \item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
 \item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
 the same as that of at least one other row for the same sample.
