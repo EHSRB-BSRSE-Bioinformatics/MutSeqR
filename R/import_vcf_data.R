@@ -36,7 +36,8 @@
 #' include these variants in your region's ranges.
 #' @param BS_genome The pkgname of a BS genome. A BS genome must be installed
 #' prior to import to populate the context column (trinucleotide context for each position).
-#' Only required if data does not already include a context column. Please install the
+#' Only required if data does not already include a context column, such as the
+#' INFO field `CONTEXT_3mer` that vartovcf writes with `--context-3mer`. Please install the
 #' appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
 #' name of the BSgenome package. The pkgname can be found using the find_BS_genome()
 #' function, which requires the species and assembly version.
