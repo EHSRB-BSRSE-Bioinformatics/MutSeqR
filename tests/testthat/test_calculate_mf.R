@@ -692,8 +692,7 @@ test_that("direct global inputs and missing depths retain their behavior", {
   expect_warning(
     result <- calculate_mf(
       mutations, cols_to_group = "dose", summary = FALSE,
-      calculate_depth = FALSE, precalc_depth_data = fixture$depth,
-      depth_group_cols = "sample"
+      calculate_depth = FALSE, precalc_depth_data = fixture$depth
     ),
     "'group_depth' -> 'group_depth.x'", fixed = TRUE
   )
