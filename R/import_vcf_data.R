@@ -85,15 +85,18 @@
 #' is defined as `total_depth`. However, in most cases, the DP field
 #' includes N-calls.
 #'  \item `VD`: The read depth supporting the alternate allele. If
-#' not included, the function will add this column, assuming a value of 1.
-#' Equivalent to `alt_depth`.
+#' not included, the function will take it from the alternate allele depths
+#' of `AD` (0 for records without an alternate allele), or assume a value of
+#' 1 without `AD`. Equivalent to `alt_depth`.
 #' }
 #' We recommend that files include a record for every sequenced
 #' position, regardless of whether a variant was called, along with the
 #' `AD` for each record. This enables site-specific depth calculations
 #' required for some downstream analyses. AD is used to calculate the
 #' `total_depth` (the read depth excluding No-calls). If AD is not available,
-#' the `DP` field will be used as the `total_depth`.
+#' or a record's AD is missing its reference depth or the alternate depth of a
+#' variant, as callers such as VarDict write for MNV and complex calls, the
+#' `DP` field will be used as the `total_depth`.
 #' @returns A table where each row is a mutation, and columns indicate the
 #' location, type, and other data. If `output_granges` is set to TRUE, the
 #' mutation data will be returned as a GRanges object, otherwise mutation
@@ -500,40 +503,26 @@ import_vcf_data <- function(
   dat <- characterize_variants(dat)
 
   # Depth
-  # Add alt_depth column, if it doesn't exist
-  if (!"alt_depth" %in% colnames(dat)) {
-    dat$alt_depth <- 1
-  }
-  # Create a total_depth column, if able
-  # Create total_depth and no_calls columns based on set parameter depth_calc.
-  # Requires AD field in FORMAT of vcf. If this field is missing, we use depth instead of total_depth
-  total_depth_exists <- "total_depth" %in% colnames(dat)
-  depth_exists <- "depth" %in% colnames(dat)
-  no_calls_exists <- "no_calls" %in% colnames(dat)
+  # Add alt_depth column, if it doesn't exist: from the ALT depths of AD,
+  # or assumed to be 1 without them.
   ad_columns <- grep("^AD_", colnames(dat), value = TRUE)
-
-  if (!total_depth_exists) {
-    if (no_calls_exists && depth_exists) {
-      dat <- dat %>%
-        dplyr::mutate(total_depth = .data$depth - .data$no_calls)
-    } else if (length(ad_columns) > 0) {
-      # create total_depth from AD
-      dat$total_depth <- rowSums(dat[, ad_columns], na.rm = TRUE)
+  if (!"alt_depth" %in% colnames(dat)) {
+    alt_depth <- alt_depth_from_ad(dat, ad_columns)
+    if (is.null(alt_depth)) {
+      dat$alt_depth <- 1
     } else {
-      # use the DP field
-      if (depth_exists) {
-        dat <- dat %>%
-          dplyr::mutate(
-            total_depth = .data$depth
-          )
-        warning(
-          "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
-        )
-      } else {
-        warning(
-          "Could not find an appropriate depth column. Some package functionality may be limited.\n"
-        )
-      }
+      dat$alt_depth <- ifelse(is.na(alt_depth), 1, alt_depth)
+    }
+  }
+  # Create a total_depth column, if able: from depth - no_calls, AD or DP.
+  if (!"total_depth" %in% colnames(dat)) {
+    estimated <- estimate_total_depth(dat)
+    if (is.null(estimated)) {
+      warning(
+        "Could not find an appropriate depth column. Some package functionality may be limited.\n"
+      )
+    } else {
+      dat$total_depth <- estimated
     }
   }
 
