@@ -7,6 +7,8 @@
   record whose `AD` lacks the reference depth, as VarDict writes for MNV and
   complex calls, takes its `total_depth` from `DP`, so its `vaf` is no
   longer inflated toward 1.
+- `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
+  which `filter_mut()` can act on with `custom_filter_col = "filter"`.
 
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample

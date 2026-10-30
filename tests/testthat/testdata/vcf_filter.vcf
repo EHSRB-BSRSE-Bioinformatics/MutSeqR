@@ -1,0 +1,12 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##FILTER=<ID=NEAR_READ_END,Description="The ALT reads end near the variant">
+##INFO=<ID=CONTEXT,Number=1,Type=String,Description="Reference bases at POS-1, POS and POS+1">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##contig=<ID=chr1,length=1000>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1
+chr1	10	.	C	.	.	.	CONTEXT=ACA	GT:AD:DP	0/0:100:101
+chr1	11	.	A	T	.	PASS	CONTEXT=CAT	GT:AD:DP	0/1:98,2:101
+chr1	12	.	T	C	.	NEAR_READ_END	CONTEXT=ATG	GT:AD:DP	0/1:95,3:98

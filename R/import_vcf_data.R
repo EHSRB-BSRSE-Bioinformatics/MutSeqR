@@ -136,6 +136,9 @@
 #' \item `vaf` : The variant allele fraction. Calculated as
 #' `alt_depth`/`total_depth`.
 #' \item `gc_content`: % GC of the trinucleotide context at this position.
+#' \item `filter`: The VCF FILTER value: "PASS", the semicolon-separated
+#' filters the record failed, or "." when no filters were applied. See the
+#' `custom_filter_col` parameter of `filter_mut()` to act on it.
 #' \item `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
 #' \item `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is
 #' the same as that of at least one other row for the same sample.
@@ -289,7 +292,8 @@ import_vcf_data <- function(
     start = SummarizedExperiment::start(vcf),
     end = get_vcf_end_positions(vcf),
     ref = ref,
-    alt = alt
+    alt = alt,
+    filter = as.character(VariantAnnotation::filt(vcf))
   )
 
   # Extract INFO fields
