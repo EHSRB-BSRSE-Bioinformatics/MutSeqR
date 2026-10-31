@@ -15,7 +15,7 @@ lhs \%>\% rhs
 The result of calling \code{rhs(lhs)}.
 }
 \description{
-See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.
+See \code{magrittr::\link[magrittr]{\%>\%}} for details.
 }
 \examples{
 df <- data.frame(x = 1:5, y = rnorm(5))
