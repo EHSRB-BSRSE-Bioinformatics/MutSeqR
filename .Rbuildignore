@@ -3,6 +3,7 @@
 ^\.Rproj\.user$
 ^data-raw$
 ^\.github$
+^\.githooks$
 ^doc$
 ^Meta$
 ^.*\.pdf$
@@ -14,3 +15,4 @@ AGENTS.md
 ^scripts$
 ^pixi\.toml$
 ^pixi\.lock$
+^\.pixi$

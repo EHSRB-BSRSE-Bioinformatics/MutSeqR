@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -u
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+cd "$repo_root" || exit 1
+
+check_docs=false
+check_readme=false
+
+while IFS= read -r -d '' path; do
+    case "$path" in
+        R/*.R|DESCRIPTION|NAMESPACE|man/*.Rd|scripts/check-docs.R)
+            check_docs=true
+            ;;
+    esac
+
+    case "$path" in
+        README.Rmd|README.md|scripts/check-readme.R)
+            check_readme=true
+            ;;
+    esac
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+if ! $check_docs && ! $check_readme; then
+    exit 0
+fi
+
+if ! command -v pixi >/dev/null 2>&1; then
+    echo "pre-commit: pixi is required to check generated package files." >&2
+    echo "Install pixi, or use 'git commit --no-verify' only when intentionally bypassing the checks." >&2
+    exit 1
+fi
+
+generated_files_are_staged() {
+    label=$1
+    shift
+
+    if ! git diff --quiet -- "$@" ||
+        test -n "$(git ls-files --others --exclude-standard -- "$@")"; then
+        echo "pre-commit: $label generation left unstaged output." >&2
+        echo "Review and stage the generated files, then commit again." >&2
+        return 1
+    fi
+}
+
+if $check_docs; then
+    echo "pre-commit: checking generated roxygen documentation..."
+    if ! pixi run --as-is check-docs; then
+        echo "pre-commit: roxygen output was stale; review and stage the generated files." >&2
+        exit 1
+    fi
+    generated_files_are_staged "roxygen documentation" DESCRIPTION NAMESPACE man || exit 1
+fi
+
+if $check_readme; then
+    echo "pre-commit: checking README.md..."
+    if ! pixi run --as-is check-readme; then
+        echo "pre-commit: README.md was stale; review and stage it, then commit again." >&2
+        exit 1
+    fi
+    generated_files_are_staged "README" README.md || exit 1
+fi
+
+exit 0

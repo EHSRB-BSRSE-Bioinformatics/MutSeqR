@@ -1,40 +1,130 @@
 # MutSeqR development environment
 #
-# pixi manages the R runtime + tooling (pandoc, git, ...). R *package*
-# dependencies are installed from CRAN/Bioconductor into this environment
-# via `pixi run setup` (see scripts/setup-deps.R) — conda-forge's
-# Bioconductor coverage is not complete, so we don't rely on it.
+# pixi manages the R runtime, package dependencies, development tools, and
+# test data packages. Bioconductor packages come from Bioconda, which does
+# not publish Windows builds, so this development environment supports Linux
+# and Intel macOS.
 #
 # Quick start:
 #   pixi install
-#   pixi run setup
 #   pixi run test
 #
-# Note: tasks that use bash (prepare-release) require WSL/Git-Bash on
-# Windows.
+# Note: prepare-release requires bash.
 
 [workspace]
 name = "mutseqr"
-channels = ["conda-forge"]
-platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64", "osx-64"]
 
 [dependencies]
-# R version matching the current Bioconductor release (3.23 -> R 4.5)
+# R version matching the newest Bioconductor packages currently available from
+# Bioconda (3.22 -> R 4.5). Use the container tasks below for Bioconductor devel.
 r-base = "4.5.*"
 pandoc = ">=3.6"
 git = "*"
+r-devtools = ">=2.5.0,<3"
+r-roxygen2 = ">=8.1.0,<9"
+r-testthat = ">=3.0.0,<4"
+r-rcmdcheck = ">=1.4.0,<2"
+r-pkgdown = ">=2.2.0,<3"
+"r-data.table" = "*"
+"r-binom" = "*"
+"r-biocmanager" = "*"
+"r-bs4dash" = "*"
+"r-car" = "*"
+"r-colorspace" = "*"
+"r-dplyr" = "*"
+"r-dendsort" = "*"
+"r-ggplot2" = "*"
+"r-doby" = "*"
+"r-dt" = "*"
+"r-fmsb" = "*"
+"r-fs" = "*"
+"r-here" = "*"
+"r-ggdendro" = "*"
+"r-magrittr" = "*"
+"r-ggrepel" = "*"
+"r-gtools" = "*"
+"r-htmltools" = "*"
+"r-httr" = "*"
+"r-knitr" = "*"
+"r-lme4" = "*"
+"r-magick" = "*"
+"r-rlang" = "*"
+"r-openxlsx" = "*"
+"r-packcircles" = "*"
+"r-patchwork" = "*"
+"r-rcolorbrewer" = "*"
+"r-reticulate" = "*"
+"r-rmarkdown" = "*"
+"r-stringr" = "*"
+"r-scales" = "*"
+"r-shiny" = "*"
+"r-withr" = "*"
+"r-tibble" = "*"
+"r-tidyr" = "*"
+"r-xml2" = "*"
+"r-yaml" = "*"
+
+# Bioconductor Suggests, development checks, and reference genomes used by
+# the test suite.
+bioconductor-bioccheck = "*"
+bioconductor-biocstyle = "*"
+"bioconductor-bsgenome.hsapiens.ucsc.hg38" = "*"
+"bioconductor-bsgenome.mmusculus.ucsc.mm10" = "*"
+bioconductor-experimenthub = "*"
+bioconductor-rsamtools = "*"
+bioconductor-trackviewer = "*"
+
+# Bioconda publishes these builds for Linux and Intel macOS.
+[target.linux-64.dependencies]
+bioconductor-biocgenerics = "*"
+bioconductor-biostrings = "*"
+bioconductor-bsgenome = "*"
+bioconductor-genomicranges = "*"
+bioconductor-iranges = "*"
+bioconductor-plyranges = "*"
+bioconductor-s4vectors = "*"
+bioconductor-seqinfo = "*"
+bioconductor-summarizedexperiment = "*"
+bioconductor-variantannotation = "*"
+
+[target.osx-64.dependencies]
+bioconductor-biocgenerics = "*"
+bioconductor-biostrings = "*"
+bioconductor-bsgenome = "*"
+bioconductor-genomicranges = "*"
+bioconductor-iranges = "*"
+bioconductor-plyranges = "*"
+bioconductor-s4vectors = "*"
+bioconductor-seqinfo = "*"
+bioconductor-summarizedexperiment = "*"
+bioconductor-variantannotation = "*"
+
 [tasks]
-# one-time (or after adding new deps): installs dev tools + all package
-# deps from DESCRIPTION (CRAN + Bioconductor)
-setup = "Rscript scripts/setup-deps.R"
-
 # everyday development
-test = "Rscript -e 'devtools::load_all(quiet = TRUE); devtools::test()'"
+test = "Rscript scripts/run-tests.R"
 document = "Rscript -e 'devtools::document()'"
-check = "Rscript -e 'rcmdcheck::rcmdcheck()'"
-bioccheck = "Rscript -e 'BiocCheck::BiocCheck(\".\")'"
+check-docs = "Rscript scripts/check-docs.R"
+check-readme = "Rscript scripts/check-readme.R"
+check-reference = "Rscript scripts/check-reference.R"
+install-hooks = "git config core.hooksPath .githooks"
+check = "Rscript scripts/run-check.R"
+bioccheck = "Rscript -e 'BiocCheck::BiocCheck(\".\", `quit-with-status` = TRUE)'"
 pkgdown = "Rscript -e 'pkgdown::build_site()'"
+validate = { depends-on = ["check-docs", "check-readme", "check-reference", "test", "check", "bioccheck"] }
 
-# release workflow: document -> NEWS check -> z-bump -> test -> commit
+# Bioconductor devel in the official container. The image is built automatically
+# on first use; rerun bioc-devel-build to pull a newer devel base image or after
+# changing DESCRIPTION dependencies.
+bioc-devel-build = "bash scripts/run-bioc-devel.sh build"
+bioc-devel-info = "bash scripts/run-bioc-devel.sh info"
+bioc-devel-test = "bash scripts/run-bioc-devel.sh test"
+bioc-devel-check = "bash scripts/run-bioc-devel.sh check"
+bioc-devel-bioccheck = "bash scripts/run-bioc-devel.sh bioccheck"
+bioc-devel-validate = "bash scripts/run-bioc-devel.sh validate"
+bioc-devel-shell = "bash scripts/run-bioc-devel.sh shell"
+
+# release workflow: documentation -> tests/checks -> NEWS check -> z-bump -> commit
 # (requires bash; on Windows use WSL or Git-Bash)
 prepare-release = "bash scripts/prepare-release.sh"

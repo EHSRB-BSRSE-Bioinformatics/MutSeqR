@@ -76,17 +76,56 @@ From the [version numbering rules](https://bioconductor.org/developers/package-g
 
 ## 4. Everyday development
 
-Environment: we use **pixi** for the R runtime + tooling; R *package* deps
-install from CRAN/Bioc (conda-forge's Bioc coverage is incomplete).
+Environment: we use **pixi** for the R runtime, tooling, and all development
+and test dependencies. Bioconductor packages are supplied by Bioconda, so the
+native Pixi development environment supports Linux and Intel macOS. Tests
+against Bioconductor devel use Bioconductor's official Docker image and work on
+any platform where Pixi, Bash, and Docker are available.
 
 ```
-pixi install        # one-time (R 4.5 + pandoc)
-pixi run setup      # installs dev tools + all package deps (see scripts/setup-deps.R)
+pixi install        # one-time: installs R, tooling, package deps, and test data
 pixi run test       # devtools::test()
-pixi run document   # roxygen
-pixi run check      # rcmdcheck
-pixi run bioccheck  # BiocCheck (Bioc's own lint)
+pixi run document        # regenerate roxygen output
+pixi run check-docs      # verify generated Rd, NAMESPACE, and metadata are current
+pixi run check-readme    # verify README.md matches README.Rmd
+pixi run check-reference # verify exported topics are indexed and build reference
+pixi run install-hooks   # enable this repository's pre-commit checks
+pixi run check           # full R CMD check (fails on errors, warnings, or notes)
+pixi run bioccheck       # BiocCheck (fails the task when checks fail)
+pixi run validate        # run all local documentation and package validation gates
+
+# Official Bioconductor devel environment
+pixi run bioc-devel-build     # build/update the local image and its dependencies
+pixi run bioc-devel-info      # show the image's R and Bioconductor versions
+pixi run bioc-devel-test      # run the testthat suite against Bioconductor devel
+pixi run bioc-devel-check     # run R CMD check against Bioconductor devel
+pixi run bioc-devel-bioccheck # run BiocCheck against Bioconductor devel
+pixi run bioc-devel-validate  # run all three devel validation commands
+pixi run bioc-devel-shell     # open an interactive shell in the devel image
 ```
+
+The first devel command builds `mutseqr-bioc-devel:local` automatically. Source
+files are mounted into the container, so normal edits do not require a rebuild.
+Run `pixi run bioc-devel-build` after changing dependencies in `DESCRIPTION` or
+when you want to pull the newest `bioconductor/bioconductor_docker:devel` base
+image. The native Pixi and container environments remain independent; switching
+between their commands does not create or destroy either one.
+
+`check-docs`, `check-readme`, and `check-reference` are also run on every pull
+request by the `Documentation validation` workflow (`docs-and-readme` and
+`reference` jobs). CI checks generated files from a clean checkout; locally, each
+freshness task compares the relevant output before and after that run, so unrelated
+worktree edits do not affect its result. If a check reports changed generated
+files, review and commit those outputs, then rerun the task. Repository branch
+protection can require these workflow checks alongside the existing `R-CMD-check`
+matrix.
+
+Run `pixi run install-hooks` once after cloning to enable the version-controlled
+pre-commit hook. When a commit includes R/roxygen sources or README sources, the
+hook runs the corresponding freshness check. If generation changes an output,
+review and stage the generated files before committing again. The hook is a fast
+local guard; CI remains the authoritative validation. In an exceptional case,
+Git's standard `--no-verify` option bypasses the local hook.
 
 Feature flow:
 
@@ -105,7 +144,7 @@ One entry per release at minimum; the release ritual (§5) enforces it.
 Do this after merging to `main`, when the batch is ready:
 
 ```
-pixi run prepare-release        # document -> z-bump -> NEWS check -> test -> commit
+pixi run prepare-release        # documentation + package checks -> z-bump -> NEWS check -> commit
 git push origin main
 git push upstream main:devel    # 'upstream' = git.bioconductor.org; writes to its 'devel'
 ```
@@ -149,9 +188,9 @@ branches (devel: even→odd `y`, e.g. `1.1.0` → `1.3.0` for the cycle after
 3. Tag + GitHub Release on the *released* commit:
    `v1.2.0-Bioc3.24` → release notes in NEWS → triggers pkgdown.
 4. Update pins for the new Bioc cycle:
-   - `pixi.toml`: `r-base` if R moved (Bioc 3.23 = R 4.5; 3.24 = R 4.6)
-   - CI: `bioconductor_docker` tag / `BiocManager` version, if/when we pin
-     one (see Open items)
+   - `pixi.toml`: update `r-base` when Bioconda publishes packages for the new
+     Bioconductor/R cycle
+   - `pixi run bioc-devel-build`: pull and rebuild the moving devel image
 5. Bump `devel` staging branch current with `main`.
 
 ## 8. Quick reference / troubleshooting
@@ -167,9 +206,8 @@ branches (devel: even→odd `y`, e.g. `1.1.0` → `1.3.0` for the cycle after
 
 ## 9. Open items
 
-- CI currently runs R-CMD-check via `r-lib/actions` (R devel only, Bioc
-  deps resolved at runtime). Planned: PR-gated check + **BiocCheck** using
-  the official `bioconductor/bioconductor_docker:<release>` image for exact
-  version parity, plus a devel-tracking job on `main`.
+- Pull requests run R CMD check, generated documentation and README freshness,
+  and pkgdown reference coverage. The pkgdown site continues to publish on
+  release; pull requests validate the reference without publishing it.
 - Optional CI gate: PR touching `R/` must change `DESCRIPTION` Version and
   `NEWS.md`.
