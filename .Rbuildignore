@@ -3,6 +3,7 @@
 ^\.Rproj\.user$
 ^data-raw$
 ^\.github$
+^\.githooks$
 ^doc$
 ^Meta$
 ^.*\.pdf$
