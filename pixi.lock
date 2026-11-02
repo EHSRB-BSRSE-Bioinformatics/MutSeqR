@@ -12,6 +12,11 @@ platforms:
   - __osx=13.0
   - __archspec=0=x86_64
 environments:
+  container:
+    channels:
+    - url: https://conda.anaconda.org/conda-forge/
+    - url: https://conda.anaconda.org/bioconda/
+    packages: {}
   default:
     channels:
     - url: https://conda.anaconda.org/conda-forge/

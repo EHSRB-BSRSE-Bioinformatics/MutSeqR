@@ -11,7 +11,8 @@ signature_fitting(
   env_name = "MutSeqR",
   group = "sample",
   output_path = NULL,
-  python_version
+  python_version,
+  dry_run = FALSE
 )
 }
 \arguments{
@@ -36,9 +37,15 @@ in the current working directory.}
 
 \item{python_version}{The version of python installed on the user's
 computer.}
+
+\item{dry_run}{Logical. If \code{TRUE}, validate and format the mutation data,
+then return the SigProfiler input data without configuring Python,
+installing dependencies or reference genomes, or running SigProfiler.
+Default is \code{FALSE}.}
 }
 \value{
-Creates a subfolder "SigProfiler" in the output directory with
+If \code{dry_run = TRUE}, a data frame formatted for SigProfiler input.
+Otherwise, creates a subfolder "SigProfiler" in the output directory with
 SigProfiler tools results. For a complete breakdown of the results, see the
 Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
 group > matrices > output > Assignment_Solution > Activities >
@@ -73,27 +80,17 @@ Mutation data will be filtered to only include SNVs. Variants
 flagged by the filter_mut column will be excluded.
 }
 \examples{
-\donttest{
-if (requireNamespace("ExperimentHub", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
-  output_path <- tempdir()
-
-  signature_fitting(
-    mutation_data = example_data,
-    project_name = "Example",
-    project_genome = "mm10",
-    env_name = "MutSeqR",
-    group = "dose",
-    python_version = "3.11",
-    output_path = output_path
-  )
-} 
-}
+example_data <- readRDS(system.file(
+  "extdata", "Example_files", "filtered_simple_mutation_data.rds",
+  package = "MutSeqR"
+))
+sigprofiler_input <- signature_fitting(
+  mutation_data = example_data,
+  project_name = "Example",
+  project_genome = "mm10",
+  group = "sample",
+  dry_run = TRUE
+)
+head(sigprofiler_input)
 
 }

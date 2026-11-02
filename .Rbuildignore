@@ -4,6 +4,8 @@
 ^data-raw$
 ^\.github$
 ^\.githooks$
+^CONTRIBUTING\.md$
+^docker$
 ^doc$
 ^Meta$
 ^.*\.pdf$
@@ -16,3 +18,6 @@ AGENTS.md
 ^pixi\.toml$
 ^pixi\.lock$
 ^\.pixi$
+
+^\.validation$
+^\.dockerignore$

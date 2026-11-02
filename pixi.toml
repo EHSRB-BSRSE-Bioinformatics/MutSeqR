@@ -9,7 +9,8 @@
 #   pixi install
 #   pixi run test
 #
-# Note: prepare-release requires bash.
+# Container tasks require Bash and a running Docker engine.
+# Container-only quick start: pixi run -e container validate
 
 [workspace]
 name = "mutseqr"
@@ -101,6 +102,10 @@ bioconductor-seqinfo = "*"
 bioconductor-summarizedexperiment = "*"
 bioconductor-variantannotation = "*"
 
+[activation.env]
+# Standard R manual fonts without the optional Inconsolata package.
+R_RD4PDF = "times,hyper"
+
 [tasks]
 # everyday development
 test = "Rscript scripts/run-tests.R"
@@ -110,13 +115,17 @@ check-readme = "Rscript scripts/check-readme.R"
 check-reference = "Rscript scripts/check-reference.R"
 install-hooks = "git config core.hooksPath .githooks"
 check = "Rscript scripts/run-check.R"
-bioccheck = "Rscript -e 'BiocCheck::BiocCheck(\".\", `quit-with-status` = TRUE)'"
+bioccheck = "Rscript scripts/run-bioccheck.R"
 pkgdown = "Rscript -e 'pkgdown::build_site()'"
-validate = { depends-on = ["check-docs", "check-readme", "check-reference", "test", "check", "bioccheck"] }
+
+# Shared local/CI gates; the container environment skips native R dependencies.
+[feature.container.tasks]
+validate = "bash scripts/run-bioc-devel.sh validate"
+release-check = "bash scripts/run-bioc-devel.sh release-check"
 
 # Bioconductor devel in the official container. The image is built automatically
-# on first use; rerun bioc-devel-build to pull a newer devel base image or after
-# changing DESCRIPTION dependencies.
+# on first use or when build inputs change. Run bioc-devel-build explicitly
+# to pull a newer devel base image.
 bioc-devel-build = "bash scripts/run-bioc-devel.sh build"
 bioc-devel-info = "bash scripts/run-bioc-devel.sh info"
 bioc-devel-test = "bash scripts/run-bioc-devel.sh test"
@@ -125,6 +134,10 @@ bioc-devel-bioccheck = "bash scripts/run-bioc-devel.sh bioccheck"
 bioc-devel-validate = "bash scripts/run-bioc-devel.sh validate"
 bioc-devel-shell = "bash scripts/run-bioc-devel.sh shell"
 
-# release workflow: documentation -> tests/checks -> NEWS check -> z-bump -> commit
+# Release preparation updates metadata; release-check validates it before commit.
 # (requires bash; on Windows use WSL or Git-Bash)
 prepare-release = "bash scripts/prepare-release.sh"
+
+[environments]
+default = { features = ["container"] }
+container = { features = ["container"], no-default-feature = true }

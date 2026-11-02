@@ -25,7 +25,12 @@
 #' in the current working directory.
 #' @param python_version The version of python installed on the user's
 #' computer.
-#' @returns Creates a subfolder "SigProfiler" in the output directory with
+#' @param dry_run Logical. If `TRUE`, validate and format the mutation data,
+#' then return the SigProfiler input data without configuring Python,
+#' installing dependencies or reference genomes, or running SigProfiler.
+#' Default is `FALSE`.
+#' @returns If `dry_run = TRUE`, a data frame formatted for SigProfiler input.
+#' Otherwise, creates a subfolder "SigProfiler" in the output directory with
 #' SigProfiler tools results. For a complete breakdown of the results, see the
 #' Readme file for MutSeqR. Most relevant results are stored in SigProfiler >
 #' group > matrices > output > Assignment_Solution > Activities >
@@ -43,28 +48,18 @@
 #' @details Mutation data will be filtered to only include SNVs. Variants
 #' flagged by the filter_mut column will be excluded.
 #' @examples
-#' \donttest{
-#' if (requireNamespace("ExperimentHub", quietly = TRUE)) {
-#'   # Example data consists of 24 mouse bone marrow DNA samples imported
-#'   # using import_mut_data() and filtered with filter_mut as in Example 4.
-#'   # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-#'   # retrieved from MutSeqRData, an ExperimentHub data package.
-#'   library(ExperimentHub)
-#'   eh <- ExperimentHub()
-#'   example_data <- eh[["EH9861"]]
-#'   output_path <- tempdir()
-#'
-#'   signature_fitting(
-#'     mutation_data = example_data,
-#'     project_name = "Example",
-#'     project_genome = "mm10",
-#'     env_name = "MutSeqR",
-#'     group = "dose",
-#'     python_version = "3.11",
-#'     output_path = output_path
-#'   )
-#' } 
-#' }
+#' example_data <- readRDS(system.file(
+#'   "extdata", "Example_files", "filtered_simple_mutation_data.rds",
+#'   package = "MutSeqR"
+#' ))
+#' sigprofiler_input <- signature_fitting(
+#'   mutation_data = example_data,
+#'   project_name = "Example",
+#'   project_genome = "mm10",
+#'   group = "sample",
+#'   dry_run = TRUE
+#' )
+#' head(sigprofiler_input)
 #'
 #' @importFrom here here
 #' @importFrom dplyr filter select rename mutate relocate
@@ -79,68 +74,15 @@ signature_fitting <- function(mutation_data,
                               env_name = "MutSeqR",
                               group = "sample",
                               output_path = NULL,
-                              python_version) {
-  stopifnot(
-      "mutation_data is required" = !missing(mutation_data),
-      "python_version is required" = !missing(python_version)
-  )
-
-  if (!requireNamespace("reticulate")) {
-    stop("Reticulate not installed: you need this to run SigProfiler tools in R.")
+                              python_version,
+                              dry_run = FALSE) {
+  stopifnot("mutation_data is required" = !missing(mutation_data))
+  if (!is.logical(dry_run) || length(dry_run) != 1L || is.na(dry_run)) {
+    stop("dry_run must be TRUE or FALSE.")
   }
-  message("Note: This function requires python to be installed on the users
-          computer. If you do not have python installed, you can do so using:
-          reticulate::install_python().
-          \n\nThis function will create a virtual environment using reticulate
-          to run python. Note that it will also install several python
-          dependencies using a conda virtual environment on first use. Please
-          be aware of the implications of this. For advanced use, it is
-          suggested to use the SigProfiler python tools directly in python as
-          described in their respective documentation.")
-  setup_mutseqr_python(force = FALSE)
-  installed_envs <- reticulate::virtualenv_list()
-  # Check if MutSeqR virtualenv already exists
-  if (env_name %in% installed_envs) {
-    # Virtualenv exists, use it
-    reticulate::use_virtualenv(env_name)
-  } else {
-    # Ask the user for confirmation
-    # user_input <- utils::menu("Do you want to create a virtual environment and
-    #                           install the required Python packages? This may
-    #                           take several minutes",
-    #                           title = "Confirmation", choices = c("Yes", "No"))
-
-    # if (user_input == 1) {
-    # Create venv and install packages
-    reticulate::virtualenv_create(env_name, python = reticulate::virtualenv_starter(python_version))
-    # Install required packages
-    # Patched version of pandas and scipy to avoid dependency errors: binom_test
-    reticulate::virtualenv_install(env_name, c(
-      "SigProfilerMatrixGenerator",
-      "SigProfilerAssignment",
-      "SigProfilerExtractor",
-      "pandas==1.5.3",
-      "scipy==1.11.4",
-      "pypdf==4.3.1"
-    ))
-    # } else {
-    #   # User chose not to install the packages
-    #   stop("Installation aborted by the user. Function terminated.")
-    # }
+  if (!dry_run && missing(python_version)) {
+    stop("python_version is required when dry_run = FALSE.")
   }
-
-  # reticulate::install_python(version = python_version)
-  reticulate::use_virtualenv(env_name)
-
-  # SigProfilerMatrixGeneratorR::install(project_genome)
-  signatures_python_code <- system.file("extdata", "signatures.py",
-    package = "MutSeqR"
-  )
-  sig_py <- new.env()
-  reticulate::source_python(signatures_python_code, envir = sig_py)
-
-  message("Installing reference genome if not already installed...")
-  sig_py$install_MutSeqR(genome = project_genome)
 
   message("Creating cleaned data for input into SigProfiler...")
   # Clean data into required format for Alexandrov Lab tools...
@@ -185,6 +127,51 @@ signature_fitting <- function(mutation_data,
   # number values will cause an issue
   signature_data <- signature_data %>%
     dplyr::mutate(Samples = paste0(!!group, "_", Samples))
+
+  if (dry_run) {
+    return(signature_data)
+  }
+
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    stop("Reticulate not installed: you need this to run SigProfiler tools in R.")
+  }
+  message("Note: This function requires python to be installed on the users
+          computer. If you do not have python installed, you can do so using:
+          reticulate::install_python().
+          \n\nThis function will create a virtual environment using reticulate
+          to run python. Note that it will also install several python
+          dependencies using a conda virtual environment on first use. Please
+          be aware of the implications of this. For advanced use, it is
+          suggested to use the SigProfiler python tools directly in python as
+          described in their respective documentation.")
+  setup_mutseqr_python(force = FALSE)
+  installed_envs <- reticulate::virtualenv_list()
+  if (env_name %in% installed_envs) {
+    reticulate::use_virtualenv(env_name)
+  } else {
+    reticulate::virtualenv_create(
+      env_name,
+      python = reticulate::virtualenv_starter(python_version)
+    )
+    reticulate::virtualenv_install(env_name, c(
+      "SigProfilerMatrixGenerator",
+      "SigProfilerAssignment",
+      "SigProfilerExtractor",
+      "pandas==1.5.3",
+      "scipy==1.11.4",
+      "pypdf==4.3.1"
+    ))
+  }
+  reticulate::use_virtualenv(env_name)
+
+  signatures_python_code <- system.file("extdata", "signatures.py",
+    package = "MutSeqR"
+  )
+  sig_py <- new.env()
+  reticulate::source_python(signatures_python_code, envir = sig_py)
+
+  message("Installing reference genome if not already installed...")
+  sig_py$install_MutSeqR(genome = project_genome)
 
   message("Generating output path string...")
   if (is.null(output_path)) {

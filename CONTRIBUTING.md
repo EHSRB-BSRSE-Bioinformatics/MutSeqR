@@ -76,49 +76,87 @@ From the [version numbering rules](https://bioconductor.org/developers/package-g
 
 ## 4. Everyday development
 
-Environment: we use **pixi** for the R runtime, tooling, and all development
-and test dependencies. Bioconductor packages are supplied by Bioconda, so the
-native Pixi development environment supports Linux and Intel macOS. Tests
-against Bioconductor devel use Bioconductor's official Docker image and work on
-any platform where Pixi, Bash, and Docker are available.
+Use **Pixi, Bash, and Docker** for the shared Linux validation environment.
+It extends the official `bioconductor/bioconductor_docker:devel` image with the
+package's dependencies, the exact roxygen2 version declared in `DESCRIPTION`,
+and LaTeX tools for the PDF manual. No host R or TeX installation is needed.
+On Windows, run these commands from WSL with Docker integration enabled.
+The manifest currently supports Linux and Intel macOS; Apple Silicon users
+need an Intel environment/emulation for this manifest.
 
-```
-pixi install        # one-time: installs R, tooling, package deps, and test data
-pixi run test       # devtools::test()
-pixi run document        # regenerate roxygen output
-pixi run check-docs      # verify generated Rd, NAMESPACE, and metadata are current
-pixi run check-readme    # verify README.md matches README.Rmd
-pixi run check-reference # verify exported topics are indexed and build reference
-pixi run install-hooks   # enable this repository's pre-commit checks
-pixi run check           # full R CMD check (fails on errors, warnings, or notes)
-pixi run bioccheck       # BiocCheck (fails the task when checks fail)
-pixi run validate        # run all local documentation and package validation gates
+```bash
+# From a fresh clone: build the image if needed, then run the same gate as CI.
+pixi run --locked -e container validate
 
-# Official Bioconductor devel environment
-pixi run bioc-devel-build     # build/update the local image and its dependencies
-pixi run bioc-devel-info      # show the image's R and Bioconductor versions
-pixi run bioc-devel-test      # run the testthat suite against Bioconductor devel
-pixi run bioc-devel-check     # run R CMD check against Bioconductor devel
-pixi run bioc-devel-bioccheck # run BiocCheck against Bioconductor devel
-pixi run bioc-devel-validate  # run all three devel validation commands
-pixi run bioc-devel-shell     # open an interactive shell in the devel image
+# Before shipping: also require NEWS.md to name the DESCRIPTION version.
+pixi run --locked -e container release-check
+
+# Container diagnostics and individual checks.
+pixi run -e container bioc-devel-info
+pixi run -e container bioc-devel-test
+pixi run -e container bioc-devel-check
+pixi run -e container bioc-devel-bioccheck
+pixi run -e container bioc-devel-shell
+pixi run -e container bioc-devel-build  # refresh the moving devel base/dependencies
 ```
 
-The first devel command builds `mutseqr-bioc-devel:local` automatically. Source
-files are mounted into the container, so normal edits do not require a rebuild.
-Run `pixi run bioc-devel-build` after changing dependencies in `DESCRIPTION` or
-when you want to pull the newest `bioconductor/bioconductor_docker:devel` base
-image. The native Pixi and container environments remain independent; switching
-between their commands does not create or destroy either one.
+The `container` Pixi environment has no R dependencies; it calls the Docker
+engine already installed on your machine. The first run builds
+`mutseqr-bioc-devel:local`. Later runs reuse it; changes to `DESCRIPTION` or the
+Dockerfile automatically trigger a rebuild. Explicitly run `bioc-devel-build`
+to refresh the moving devel image even when those files have not changed.
+`MUTSEQR_BIOC_DEVEL_IMAGE` can override the local image tag.
 
-`check-docs`, `check-readme`, and `check-reference` are also run on every pull
-request by the `Documentation validation` workflow (`docs-and-readme` and
-`reference` jobs). CI checks generated files from a clean checkout; locally, each
-freshness task compares the relevant output before and after that run, so unrelated
-worktree edits do not affect its result. If a check reports changed generated
-files, review and commit those outputs, then rerun the task. Repository branch
-protection can require these workflow checks alongside the existing `R-CMD-check`
-matrix.
+Validation copies the current source tree, including uncommitted edits, into a
+temporary container workspace. Generated documentation, README output, and test
+plots cannot modify your checkout. Check logs are saved under `.validation/`,
+which is ignored by Git and excluded from the package. The interactive shell
+also uses a temporary copy; edits inside it disappear on exit.
+
+`validate` runs documentation and README freshness, pkgdown reference coverage,
+unit tests, full R CMD check (including vignettes and the indexed PDF manual),
+and BiocCheck, stopping on the first failing gate. R CMD check fails on errors,
+warnings, or notes. BiocCheck uses its `quit-with-status` policy; its advisory
+warnings and notes still need review. `release-check` first requires the top
+NEWS heading to be exactly `# MutSeqR <DESCRIPTION Version>`, then runs the same
+validation gates. A passing gate covers these automated checks; external
+services and optional workflows still need appropriate review.
+
+GitHub's `Bioconductor validation` workflow runs this same Dockerfile, scripts,
+and `pixi run --locked -e container validate` on pull requests and pushes to
+`main`. It caches image layers and uploads `.validation/` logs. A separate
+native Windows R-devel job checks platform compatibility and skips the PDF
+manual. The devel image and package repositories move over time, so a cached
+local image can differ from a fresh CI build; refresh it before investigating
+an environment discrepancy. Image/R/Bioconductor versions are printed in logs.
+If branch protection required the old documentation jobs or Linux matrix job,
+replace those required checks with `Bioconductor devel (Linux)`.
+
+For fast editing and tests without Docker, the default Pixi environment provides
+native R, tooling, and package dependencies via conda-forge/Bioconda:
+
+```bash
+pixi install --locked
+pixi run test
+pixi run document
+pixi run check-docs
+pixi run check-readme
+pixi run check-reference
+pixi run install-hooks
+pixi run check       # full check; requires a host LaTeX installation
+pixi run bioccheck
+```
+
+`pixi run validate` and `pixi run release-check` also use the container, but the
+explicit `-e container` form avoids installing the native R environment.
+Native PDF checks use `R_RD4PDF=times,hyper` to avoid the optional Inconsolata
+font; they do not install TeX automatically. Container PDF checks use the same
+font setting with TeX provisioned when the image is built.
+
+The individual native freshness tasks compare output before and after the run.
+If they report changed files, review and commit the generated output, then rerun.
+The container runs these tasks on its temporary copy; regenerate stale files
+with the native `document` task or render README.Rmd locally before committing.
 
 Run `pixi run install-hooks` once after cloning to enable the version-controlled
 pre-commit hook. When a commit includes R/roxygen sources or README sources, the
@@ -144,7 +182,10 @@ One entry per release at minimum; the release ritual (§5) enforces it.
 Do this after merging to `main`, when the batch is ready:
 
 ```
-pixi run prepare-release        # documentation + package checks -> z-bump -> NEWS check -> commit
+pixi run -e container prepare-release  # bump z, finalize NEWS, validate that version
+git diff -- DESCRIPTION NEWS.md
+git add DESCRIPTION NEWS.md
+git commit -m "chore: prepare next Bioconductor version"
 git push origin main
 git push upstream main:devel    # 'upstream' = git.bioconductor.org; writes to its 'devel'
 ```
@@ -157,8 +198,12 @@ Verify it landed:
 - If the push is rejected (non-fast-forward): `git fetch upstream`,
   `git merge upstream/devel`, resolve, then push again.
 
-`prepare-release` intentionally stops short of the `upstream` push —
-pushing to Bioconductor is a deliberate human act.
+`prepare-release` requires a clean worktree, increments z, converts the top
+`# MutSeqR (development version)` NEWS heading to that version, and runs
+`release-check`. If validation fails, the metadata edits remain available for
+review and correction; rerun `release-check` after fixing the failure. It never
+commits or pushes. You can instead edit Version and NEWS yourself and run
+`release-check` directly.
 
 ## 6. Hotfixes to the released version
 
@@ -206,8 +251,8 @@ branches (devel: even→odd `y`, e.g. `1.1.0` → `1.3.0` for the cycle after
 
 ## 9. Open items
 
-- Pull requests run R CMD check, generated documentation and README freshness,
-  and pkgdown reference coverage. The pkgdown site continues to publish on
+- Pull requests run the shared Bioconductor container validation and native
+  Windows R-devel compatibility checks. The pkgdown site continues to publish on
   release; pull requests validate the reference without publishing it.
 - Optional CI gate: PR touching `R/` must change `DESCRIPTION` Version and
   `NEWS.md`.
