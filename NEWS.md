@@ -1,4 +1,4 @@
-# MutSeqR 1.1.1 (2026-11-06)
+# MutSeqR 1.1.1
 
 
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
