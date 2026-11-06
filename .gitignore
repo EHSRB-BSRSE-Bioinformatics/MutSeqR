@@ -55,3 +55,6 @@ docs
 README.Rmd
 
 /.validation/
+
+# Generated R graphics
+Rplots.pdf
