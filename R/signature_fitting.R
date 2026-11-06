@@ -118,8 +118,8 @@ signature_fitting <- function(mutation_data,
     dplyr::mutate(Project = project_name) %>%
     dplyr::mutate(Genome = project_genome) %>%
     dplyr::mutate(Type = "SOMATIC") %>%
-    dplyr::relocate(.data$Project) %>%
-    dplyr::relocate(.data$Genome, .after = .data$ID) %>%
+    dplyr::relocate("Project") %>%
+    dplyr::relocate("Genome", .after = "ID") %>%
     dplyr::mutate(mut_type = "SNP") # This should be fixed before using on other datasets.
 
   # Make sure Samples column is NOT numeric

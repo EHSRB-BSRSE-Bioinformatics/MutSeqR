@@ -9,6 +9,10 @@ A vector with corresponding values
 \usage{
 denominator_dict
 }
+\value{
+A named character vector mapping subtype resolutions to
+reference-context column names, with \code{NA} for \code{none} and \code{type}.
+}
 \description{
 These values are used to cross reference base substitution types to their
 appropriate denominators for calculations. That is", "for example, the 6 base

@@ -2,6 +2,8 @@
 #'
 #' A list of column specifications
 #'
+#' @return A list containing column-name aliases, required mutation-data
+#'   columns, site columns, and default mutation-processing settings.
 #' @format A list with potential variable column names
 #' @examples
 #' # examples of "alt" synonyms
@@ -72,6 +74,8 @@ op$default_vaf_cutoffs <- c(0.3, 0.7, 0.9)
 #' Associates the subtype resolution names with their corresponding column
 #' names in the mutation data.
 #'
+#' @return A named character vector mapping subtype resolutions to
+#'   mutation-data column names, with `NA` for the `none` resolution.
 #' @format A vector with corresponding values
 #' @examples
 #' subtype_dict["base_96"]
@@ -87,6 +91,8 @@ subtype_dict <- c(
 )
 
 #' A comprehensive list of mutation subtypes at different resolutions
+#' @return A named list of character vectors containing mutation types or
+#'   substitution labels for each subtype resolution.
 #' @format A list with corresponding values
 #' @examples
 #' subtype_list[["type"]]
@@ -163,6 +169,8 @@ subtype_list <- list(
 #' substitution frequency should be subsetted based on the normalized_ref
 #' column which would contain only T or C (i.e., the pyrimidine context for
 #' base substitutions).
+#' @return A named character vector mapping subtype resolutions to
+#'   reference-context column names, with `NA` for `none` and `type`.
 #' @format A vector with corresponding values
 #' @examples
 #' denominator_dict["type"]
@@ -176,6 +184,9 @@ denominator_dict <- c(
     "base_192" = "context"
 )
 #' A list of reference contexts at different resolutions
+#' @return A named list whose values are either `NA` for the `none` and `type`
+#'   resolutions or character vectors of reference bases or trinucleotide
+#'   contexts.
 #' @format A list with corresponding values
 #' @examples
 #' context_list[["base_6"]]
@@ -213,10 +224,12 @@ context_list <- list(
 )
 
 #' BS genome organism dictionary
-#' @description A dictionary to map common organism names to their
-#' corresponding BSgenome organism names.
-#' @format A list with organism names as keys and corresponding BSgenome
-#' organism names as values.
+#' @description A dictionary keyed by BSgenome organism identifiers, with
+#' corresponding scientific organism names and common-name aliases as values.
+#' @return A named list mapping BSgenome organism identifiers to character
+#'   vectors of scientific names and common-name aliases.
+#' @format A named list with BSgenome organism identifiers as keys and
+#'   character vectors of scientific names and common-name aliases as values.
 #' @export
 #' @examples
 #' BS_org_map["Hsapiens"]
