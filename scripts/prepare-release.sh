@@ -26,10 +26,19 @@ if [[ "$news_top" != '# MutSeqR (development version)' && "$news_top" != "# MutS
 fi
 
 # POSIX awk and temporary files also work on macOS (unlike GNU sed -i).
-awk -v version="$new_ver" '/^Version:/ {$0 = "Version: " version} {print}' DESCRIPTION > DESCRIPTION.release-tmp
-mv DESCRIPTION.release-tmp DESCRIPTION
-awk -v version="$new_ver" '$0 == "# MutSeqR (development version)" && !changed { $0 = "# MutSeqR " version; changed = 1 } {print}' NEWS.md > NEWS.md.release-tmp
-mv NEWS.md.release-tmp NEWS.md
+# Stage and check both files before changing either tracked file.
+release_tmp=$(mktemp -d)
+trap 'rm -rf "$release_tmp"' EXIT
+awk -v version="$new_ver" '/^Version:/ {$0 = "Version: " version} {print}' DESCRIPTION > "$release_tmp/DESCRIPTION"
+awk -v version="$new_ver" '$0 == "# MutSeqR (development version)" && !changed { $0 = "# MutSeqR " version; changed = 1 } {print}' NEWS.md > "$release_tmp/NEWS.md"
+prepared_ver=$(awk '/^Version:/ {print $2; exit}' "$release_tmp/DESCRIPTION")
+prepared_news_top=$(awk '/^# / {print; exit}' "$release_tmp/NEWS.md")
+if [[ "$prepared_ver" != "$new_ver" || "$prepared_news_top" != "# MutSeqR $new_ver" ]]; then
+  echo "Prepared DESCRIPTION and NEWS.md must both match version $new_ver." >&2
+  exit 1
+fi
+mv "$release_tmp/DESCRIPTION" DESCRIPTION
+mv "$release_tmp/NEWS.md" NEWS.md
 
 echo "Prepared $old_ver -> $new_ver; validating the final version."
 bash scripts/run-bioc-devel.sh release-check

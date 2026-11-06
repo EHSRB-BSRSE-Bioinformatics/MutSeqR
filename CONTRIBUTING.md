@@ -200,10 +200,15 @@ Verify it landed:
 
 `prepare-release` requires a clean worktree, increments z, converts the top
 `# MutSeqR (development version)` NEWS heading to that version, and runs
-`release-check`. If validation fails, the metadata edits remain available for
+`release-check`. Input and prepared metadata are checked before either file is
+replaced; an invalid NEWS heading leaves both files unchanged. If the subsequent
+`release-check` fails, the metadata edits remain available for
 review and correction; rerun `release-check` after fixing the failure. It never
 commits or pushes. You can instead edit Version and NEWS yourself and run
 `release-check` directly.
+
+Run the isolated release-preparation regression tests with
+`bash scripts/test-prepare-release.sh` (requires Bash and Git, not R or Docker).
 
 ## 6. Hotfixes to the released version
 
