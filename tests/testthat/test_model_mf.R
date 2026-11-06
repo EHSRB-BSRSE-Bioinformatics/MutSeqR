@@ -8,9 +8,13 @@ test_that("model_mf works as expected ", {
   )
 
   # Call the model_mf function on the sample data
-  model_results <- model_mf(mf_data = mf_data,
-    fixed_effects = "dose",
-    reference_level = 25
+  expect_warning(
+    model_results <- model_mf(
+      mf_data = mf_data,
+      fixed_effects = "dose",
+      reference_level = 25
+    ),
+    "Dispersion < 1"
   )
 
   # Check if the specified columns are converted to factors
