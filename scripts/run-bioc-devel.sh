@@ -41,6 +41,7 @@ run_container() {
     --user "$(id -u):$(id -g)" \
     --env HOME=/tmp \
     --env EXPERIMENT_HUB_CACHE=/cache/ExperimentHub \
+    --env MUTSEQR_SKIP_VIGNETTES="${MUTSEQR_SKIP_VIGNETTES:-false}" \
     --env MUTSEQR_RESULTS_DIR=/results \
     --env MUTSEQR_CHECK_DIR=/results/check \
     --volume "${repo_root}:/source:ro" \

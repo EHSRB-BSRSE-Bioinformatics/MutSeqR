@@ -13,15 +13,12 @@ jobs:
   validate:
     name: Bioconductor devel (Linux)
     runs-on: ubuntu-latest
+    env:
+      # This runner cannot reliably fetch the large vignette resources from
+      # ExperimentHub/Zenodo; Bioconductor's own build remains the full check.
+      MUTSEQR_SKIP_VIGNETTES: "true"
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/cache@v4
-        with:
-          path: .cache/ExperimentHub
-          key: experimenthub-bioc-devel-${{ hashFiles('vignettes/**/*.Rmd') }}
-          restore-keys: |
-            experimenthub-bioc-devel-
 
       - uses: prefix-dev/setup-pixi@v0.9.5
         with:
