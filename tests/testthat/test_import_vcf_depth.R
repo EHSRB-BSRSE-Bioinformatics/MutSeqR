@@ -35,7 +35,7 @@ test_that("annotated tables retain the parent import schema and numeric types", 
   dat <- import_vcf_data(file, sample_data = metadata, regions = regions)
   # Verified against the pre-refactor importer, not inferred from new helpers.
   expect_named(dat, c(
-    "contig", "start", "end", "width", "strand", "ref", "alt",
+    "contig", "start", "end", "width", "strand", "ref", "alt", "filter",
     "alt_depth", "AD_1", "AD_2", "context", "sample", "dose", "label",
     "in_regions", "variation_type", "nchar_ref", "nchar_alt", "varlen",
     "short_ref", "normalized_ref", "subtype", "normalized_subtype",
@@ -47,16 +47,17 @@ test_that("annotated tables retain the parent import schema and numeric types", 
   expect_depth_values(dat, c(100, 200))
 })
 
-test_that("AD arithmetic and absent alternate depth defaults stay unchanged", {
+test_that("AD arithmetic and alternate depth falls back to AD", {
   directory <- withr::local_tempdir()
   file <- write_depth_vcf(directory, "partial.vcf",
     format_fields = list(VD = c("1", "0"), AD = c("99,.", ".,.")))
   dat <- import_vcf_data(file)
-  expect_depth_values(dat, c(99, 0), c(1, 0))
-  expect_true(is.nan(dat$vaf[2]))
+  # A record with no AD values has no total_depth to estimate.
+  expect_equal(dat$total_depth, c(99, NA))
+  expect_equal(dat$alt_depth, c(1, 0))
 
   file <- write_depth_vcf(directory, "default.vcf", format_fields = list(AD = c("99,1", "198,2")))
-  expect_depth_values(import_vcf_data(file), c(100, 200), c(1, 1))
+  expect_depth_values(import_vcf_data(file), c(100, 200), c(1, 2))
 })
 
 test_that("homogeneous directory depths match individual imports", {

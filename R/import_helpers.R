@@ -817,35 +817,48 @@ alt_depth_from_ad <- function(data, ad_columns) {
 
 #' Estimate the total depth of each record
 #'
-#' Estimates `total_depth` (the read depth excluding N-calls) from the depth
-#' columns available: `depth` - `no_calls`, then the sum of AD, then DP. A
+#' Estimates `total_depth` (the read depth excluding N-calls) record by record
+#' from the first source each has: `total_depth` itself, `depth` - `no_calls`,
+#' the sum of AD, then DP. A
 #' record whose AD lacks the reference depth, or the alternate depth of a
 #' variant, takes DP instead of the sum of what AD has, since that sum misses
 #' reads. Callers such as VarDict leave the reference depth of MNV and complex
 #' calls missing.
 #'
-#' @param data The mutation data, with `variation_type` and any of `depth`,
-#'   `no_calls` and `AD_` columns.
+#' @param data The mutation data, with `variation_type` and any of
+#'   `total_depth`, `depth`, `no_calls` and `AD_` columns.
 #'
 #' @return A numeric vector of total depths, or `NULL` when no depth column is
 #'   available.
 #'
 #' @keywords internal
 estimate_total_depth <- function(data) {
-    depth_exists <- "depth" %in% colnames(data)
-    ad_columns <- grep("^AD_", colnames(data), value = TRUE)
-    if (depth_exists && "no_calls" %in% colnames(data)) {
-        return(data$depth - data$no_calls)
+    n <- nrow(data)
+    total <- if ("total_depth" %in% colnames(data)) {
+        data$total_depth
+    } else {
+        rep(NA_real_, n)
     }
+    depth_exists <- "depth" %in% colnames(data)
+    # Each record takes the first source it has, so a record is never
+    # estimated from a column that only other records (files) carry.
+    if (depth_exists && "no_calls" %in% colnames(data)) {
+        from_calls <- is.na(total)
+        total[from_calls] <- (data$depth - data$no_calls)[from_calls]
+    }
+    ad_columns <- grep("^AD_", colnames(data), value = TRUE)
     if (length(ad_columns) > 0) {
         ad <- as.matrix(data[, ad_columns, drop = FALSE])
-        total_depth <- rowSums(ad, na.rm = TRUE)
-        missing_alt <- data$variation_type != "no_variant" &
+        idx <- which(is.na(total) & rowSums(!is.na(ad)) > 0L)
+        ad <- ad[idx, , drop = FALSE]
+        from_ad <- rowSums(ad, na.rm = TRUE)
+        missing_alt <- data$variation_type[idx] != "no_variant" &
             rowSums(!is.na(ad[, -1, drop = FALSE])) == 0L
         incomplete <- is.na(ad[, 1]) | missing_alt
         if (any(incomplete)) {
             if (depth_exists) {
-                total_depth[incomplete] <- data$depth[incomplete]
+                dp <- data$depth[idx]
+                from_ad[incomplete & !is.na(dp)] <- dp[incomplete & !is.na(dp)]
                 warning(
                     sum(incomplete), " records have an incomplete AD; ",
                     "their total_depth is set to DP."
@@ -857,15 +870,18 @@ estimate_total_depth <- function(data) {
                 )
             }
         }
-        return(total_depth)
+        total[idx] <- from_ad
     }
     if (depth_exists) {
-        warning(
-            "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
-        )
-        return(data$depth)
+        from_dp <- is.na(total) & !is.na(data$depth)
+        if (any(from_dp)) {
+            total[from_dp] <- data$depth[from_dp]
+            warning(
+                "Could not find total_depth column and cannot calculate. The 'total_depth' will be set to DP. You can review the diffference in the README"
+            )
+        }
     }
-    NULL
+    if (all(is.na(total))) NULL else total
 }
 
 #' Extract the records of a single-sample VCF into a data frame
@@ -965,5 +981,212 @@ vcf_to_data_frame <- function(vcf, add_chr = FALSE) {
     # Combine data frames
     dat <- cbind(dat, geno_df, info)
     row.names(dat) <- NULL
+    dat
+}
+
+#' Read one single-sample VCF file into a data frame
+#'
+#' Resolves the sample name while the file's own header is at hand: the INFO
+#' sample field (or a synonym) wins, else the header's sample name.
+#'
+#' @param file Path to a VCF file.
+#' @param add_chr Passed to [vcf_to_data_frame()].
+#'
+#' @return A data frame with a `sample` column, or `NULL` if the file has no
+#'   variant records.
+#'
+#' @keywords internal
+read_vcf_table <- function(file, add_chr = FALSE) {
+    vcf <- VariantAnnotation::readVcf(file)
+    if (nrow(vcf) == 0L) {
+        return(NULL)
+    }
+    header_sample <- rownames(SummarizedExperiment::colData(vcf))
+    if (length(header_sample) != 1L || is.na(header_sample) ||
+        !nzchar(header_sample)) {
+        stop(
+            "Expected one named sample in VCF file: ", basename(file),
+            ". Multisample VCF files and missing sample names are not ",
+            "supported.",
+            call. = FALSE
+        )
+    }
+    dat <- vcf_to_data_frame(vcf_sample_fix(vcf), add_chr)
+    if (!"sample" %in% colnames(dat)) {
+        dat$sample <- header_sample
+    }
+    dat
+}
+
+#' Join sample metadata to mutation data by exact sample name
+#'
+#' @param dat The mutation data, with a `sample` column.
+#' @param sample_df The sample metadata from [import_sample_data()].
+#' @param remove_sample_suffix Optional regex removed from `dat$sample` first.
+#' @param label How to refer to `dat` in error messages.
+#'
+#' @return `dat` with the metadata columns joined.
+#'
+#' @keywords internal
+join_sample_metadata <- function(dat, sample_df, remove_sample_suffix = NULL,
+                                 label = "mutation data") {
+    if (!"sample" %in% colnames(dat)) {
+        stop(
+            "Error in mutation data: 'sample' column is missing prior to joining sample metadata."
+        )
+    }
+    # Defensively collapse list columns (e.g. a CharacterList INFO field)
+    if (is.list(dat$sample)) {
+        dat$sample <- vapply(
+            dat$sample,
+            function(x) paste(x, collapse = ","),
+            character(1)
+        )
+    }
+    dat$sample <- as.character(dat$sample)
+    if (!is.null(remove_sample_suffix)) {
+        dat$sample <- gsub(remove_sample_suffix, "", dat$sample)
+    }
+    sample_df$sample <- as.character(sample_df$sample)
+
+    missing_in_meta <- setdiff(unique(dat$sample), unique(sample_df$sample))
+    if (length(missing_in_meta) > 0) {
+        stop(
+            "Mismatch in sample names: Some samples in your ", label,
+            " are MISSING from the metadata.\n",
+            "Sample names must match EXACTLY. Please check for trailing ",
+            "suffixes (e.g. '.cons.filtered') or typos in your metadata ",
+            "file.\n\n",
+            "Unmatched samples in ", label, ": ",
+            paste(utils::head(missing_in_meta, 3), collapse = ", "), "\n",
+            "Available samples in metadata: ",
+            paste(utils::head(unique(sample_df$sample), 3), collapse = ", "),
+            "\n",
+            call. = FALSE
+        )
+    }
+    dat <- dplyr::left_join(dat, sample_df, by = "sample", suffix = c("", ".sd"))
+    message("Sample metadata successfully joined to mutation data\n")
+    dat
+}
+
+#' Join regions, populate context and characterize variants
+#'
+#' The import steps shared by [import_vcf_data()] and [import_mut_data()],
+#' from required-column checks to variant characterization.
+#'
+#' @param dat Mutation data with `contig`, `start`, `end`, `ref`, `alt`,
+#'   `sample`.
+#' @param is_0_based_mut Whether `start` is 0-based.
+#' @param regions,rg_sep,is_0_based_rg,padding See [import_regions_metadata()].
+#' @param BS_genome Needed only when `context` is absent or incomplete.
+#' @param required_columns Columns that must be present and free of NA.
+#'
+#' @return A data frame of characterized mutations.
+#'
+#' @keywords internal
+annotate_mutations <- function(dat, regions, rg_sep, is_0_based_rg, padding,
+                               BS_genome, is_0_based_mut = FALSE,
+                               required_columns = op$base_required_mut_cols) {
+    dat <- check_required_columns(dat, op$base_required_mut_cols)
+    na_columns_required <- required_columns[
+        vapply(dat[required_columns], function(x) any(is.na(x)), logical(1))
+    ]
+    if (length(na_columns_required) > 0) {
+        stop(
+            "NA values were found within the following required column(s): ",
+            paste(na_columns_required, collapse = ", "),
+            ". Please confirm that your data is complete before proceeding."
+        )
+    }
+
+    context_exists <- "context" %in% colnames(dat) && !anyNA(dat$context)
+    # Fail early if we will need BSgenome
+    if (!context_exists) {
+        validate_BS_genome(BS_genome)
+        if (any(!grepl("^chr", dat$contig, ignore.case = TRUE))) {
+            stop(
+                "BSgenome requires contig names to start with 'chr' (e.g., 'chr1', 'chrX', 'chrM'). ",
+                "One or more contigs in your data do not follow this format. ",
+                "Please set `add_chr = TRUE` to automatically format your contig names for BSgenome compatibility."
+            )
+        }
+    }
+
+    mut_ranges <- GenomicRanges::makeGRangesFromDataFrame(
+        df = as.data.frame(dat),
+        keep.extra.columns = TRUE,
+        seqnames.field = "contig",
+        start.field = "start",
+        end.field = "end",
+        starts.in.df.are.0based = is_0_based_mut
+    )
+    if (!is.null(regions)) {
+        mut_ranges <- import_regions_metadata(
+            mutation_granges = mut_ranges,
+            regions = regions,
+            rg_sep = rg_sep,
+            is_0_based_rg = is_0_based_rg,
+            padding = padding
+        )
+    }
+    if (!context_exists) {
+        mut_ranges <- populate_sequence_context(
+            mutation_granges = mut_ranges,
+            BS_genome = BS_genome
+        )
+    }
+    dat <- as.data.frame(mut_ranges) %>%
+        dplyr::rename(contig = "seqnames")
+    characterize_variants(dat)
+}
+
+#' Flag duplicate positions, add VAF and ref depth, and shape the output
+#'
+#' The final import steps shared by [import_vcf_data()] and
+#' [import_mut_data()].
+#'
+#' @param dat Characterized mutation data with depth columns resolved.
+#' @param output_granges Return a `GRanges` instead of a data frame.
+#'
+#' @return The mutation data as a data frame or `GRanges`.
+#'
+#' @keywords internal
+finalize_mutations <- function(dat, output_granges) {
+    dat <- dat %>%
+        dplyr::group_by(.data$sample, .data$contig, .data$start) %>%
+        dplyr::mutate(row_has_duplicate = dplyr::n() > 1) %>%
+        dplyr::ungroup()
+
+    if (sum(dat$row_has_duplicate) > 0) {
+        warning(
+            sum(dat$row_has_duplicate),
+            " rows were found whose position was the same as that of at least one other row for the same sample."
+        )
+        if ("total_depth" %in% colnames(dat)) {
+            warning(
+                "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances."
+            )
+        }
+    }
+
+    if ("total_depth" %in% colnames(dat)) {
+        dat <- dat %>%
+            dplyr::mutate(
+                vaf = .data$alt_depth / .data$total_depth,
+                ref_depth = .data$total_depth - .data$alt_depth
+            )
+    }
+
+    if (output_granges) {
+        return(GenomicRanges::makeGRangesFromDataFrame(
+            df = dat,
+            keep.extra.columns = TRUE,
+            seqnames.field = "contig",
+            start.field = "start",
+            end.field = "end",
+            starts.in.df.are.0based = FALSE
+        ))
+    }
     dat
 }
