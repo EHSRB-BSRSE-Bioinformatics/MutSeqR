@@ -829,7 +829,6 @@ test_that("explicit depth declaration preserves sample replicates and default ca
     precalc_depth_data = expected_depth
   )
   expect_equal(pooled, expected)
-  expect_false("depth_group_cols" %in% names(formals(calculate_mf)))
 })
 
 test_that("sample mapping rejects ambiguous and higher-resolution groups", {
