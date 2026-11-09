@@ -42,9 +42,11 @@
 #' removed from mutation_data.
 #' @param custom_filter_val A set of values used to filter rows in
 #' \code{mutation_data} based on \code{custom_filter_col}. If a row in
-#' \code{custom_filter_col} matches any value in \code{custom_filter_val},
+#' \code{custom_filter_col} contains any value in \code{custom_filter_val},
 #' it will either be set to TRUE in the \code{filter_mut} column or removed,
-#' depending on \code{custom_filter_rm}.
+#' depending on \code{custom_filter_rm}. A value is found within a row's
+#' value, so a FILTER label is found among the semicolon-separated labels of a
+#' record that failed several filters. A value no row contains gives a warning.
 #' @param custom_filter_rm A logical value. If TRUE, rows in custom_filter_col
 #' that match any value in custom_filter_val will be removed from the
 #' mutation_data. If FALSE, \code{filter_mut} will be set to TRUE for those
@@ -183,11 +185,6 @@ filter_mut <- function(mutation_data,
         custom_filter_col <- match.arg(
             custom_filter_col,
             choices = colnames(mutation_data)
-        )
-        custom_filter_val <- match.arg(
-            custom_filter_val,
-            choices = unique(mutation_data[[custom_filter_col]]),
-            several.ok = TRUE
         )
     }
     if (return_filtered_rows) {
@@ -500,6 +497,17 @@ filter_mut <- function(mutation_data,
                 "You provided a custom filter column but did not specify the",
                 " filter value(s). Please provide the value(s) within the",
                 " custom filter column that should be used to apply the filter"
+            )
+        }
+        found <- vapply(
+            custom_filter_val,
+            function(value) any(grepl(value, mutation_data[[custom_filter_col]])),
+            logical(1)
+        )
+        if (!all(found)) {
+            warning(
+                "No rows in <", custom_filter_col, "> contain: ",
+                paste(custom_filter_val[!found], collapse = ", ")
             )
         }
         pattern <- paste(custom_filter_val, collapse = "|")
