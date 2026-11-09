@@ -42,6 +42,12 @@
 - `calculate_mf()` now warns when joining pre-calculated depth data renames
   mutation-data columns, listing each original name and its suffixed name.
 
+- VCF directory imports now resolve each file's sample name and total depth
+  before combining files, so one file's columns no longer affect another's
+  records, and header-only VCFs in a directory are skipped. `import_vcf_data()`
+  and `import_mut_data()` share their sample-metadata join, annotation and
+  finalization code.
+
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample
   metadata and can join matching metadata correctly.
