@@ -51,7 +51,10 @@ test_that("AD arithmetic and alternate depth falls back to AD", {
   directory <- withr::local_tempdir()
   file <- write_depth_vcf(directory, "partial.vcf",
     format_fields = list(VD = c("1", "0"), AD = c("99,.", ".,.")))
-  dat <- import_vcf_data(file)
+  expect_warning(
+    dat <- import_vcf_data(file),
+    "1 records have an incomplete AD and no DP"
+  )
   # A record with no AD values has no total_depth to estimate.
   expect_equal(dat$total_depth, c(99, NA))
   expect_equal(dat$alt_depth, c(1, 0))
