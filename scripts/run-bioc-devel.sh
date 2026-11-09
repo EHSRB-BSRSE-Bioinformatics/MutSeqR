@@ -34,14 +34,17 @@ ensure_image() {
 
 run_container() {
   mkdir -p "${repo_root}/.validation"
+  mkdir -p "${repo_root}/.cache/ExperimentHub"
   docker run \
     --rm \
     --init \
     --user "$(id -u):$(id -g)" \
     --env HOME=/tmp \
+    --env EXPERIMENT_HUB_CACHE=/cache/ExperimentHub \
     --env MUTSEQR_RESULTS_DIR=/results \
     --env MUTSEQR_CHECK_DIR=/results/check \
     --volume "${repo_root}:/source:ro" \
+    --volume "${repo_root}/.cache/ExperimentHub:/cache/ExperimentHub" \
     --volume "${repo_root}/.validation:/results" \
     --entrypoint /bin/bash \
     "${image_name}" \

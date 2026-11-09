@@ -16,6 +16,7 @@ trap cleanup EXIT
 # BiocCheck requires the source directory to match DESCRIPTION Package.
 mkdir "$workspace/MutSeqR"
 tar --directory /source --exclude='./.git' --exclude='./.pixi' \
+    --exclude='./.cache' \
     --exclude='./.validation' -cf - . | tar --directory "$workspace/MutSeqR" -xf -
 cd "$workspace/MutSeqR"
 "$@"
