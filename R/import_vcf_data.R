@@ -36,7 +36,8 @@
 #' include these variants in your region's ranges.
 #' @param BS_genome The pkgname of a BS genome. A BS genome must be installed
 #' prior to import to populate the context column (trinucleotide context for each position).
-#' Only required if data does not already include a context column. Please install the
+#' Only required if data does not already include a context column, such as the
+#' INFO field `CONTEXT_3mer` that vartovcf writes with `--context-3mer`. Please install the
 #' appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
 #' name of the BSgenome package. The pkgname can be found using the find_BS_genome()
 #' function, which requires the species and assembly version.
@@ -140,6 +141,9 @@
 #' \item `vaf` : The variant allele fraction. Calculated as
 #' `alt_depth`/`total_depth`.
 #' \item `gc_content`: % GC of the trinucleotide context at this position.
+#' \item `filter`: The VCF FILTER value: "PASS", the semicolon-separated
+#' filters the record failed, or "." when no filters were applied. See the
+#' `custom_filter_col` parameter of `filter_mut()` to act on it.
 #' \item `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
 #' \item `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is
 #' the same as that of at least one other row for the same sample.
@@ -199,12 +203,6 @@ import_vcf_data <- function(
     is.logical(output_granges),
     is.logical(add_chr)
   )
-  if (!is.null(BS_genome)) {
-    BS_genome <- match.arg(
-      BS_genome,
-      choices = BSgenome::available.genomes(splitNameParts = TRUE)$pkgname
-    )
-  }
 
   # Load and validate sample metadata before heavy lifting
   sample_df <- NULL
@@ -293,7 +291,8 @@ import_vcf_data <- function(
     start = SummarizedExperiment::start(vcf),
     end = get_vcf_end_positions(vcf),
     ref = ref,
-    alt = alt
+    alt = alt,
+    filter = as.character(VariantAnnotation::filt(vcf))
   )
 
   # Extract INFO fields

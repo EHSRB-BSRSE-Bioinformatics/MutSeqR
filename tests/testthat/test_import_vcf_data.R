@@ -28,7 +28,7 @@ test_that("import_vcf_data preserves alleles and depths from the VCF records", {
     "nchar_ref", "nchar_alt", "varlen",
     "gc_content", "row_has_duplicate",
     "strand", "width", # added by GRanges
-    "AD_1", "AD_2" # vcf cols
+    "AD_1", "AD_2", "filter" # vcf cols
   )
   expect_named(mut_data, colnames, ignore.order = TRUE) # check columns
   expect_equal(nrow(mut_data), 10)
@@ -246,5 +246,59 @@ test_that("directory imports reject multi-sample VCF headers", {
   writeLines(lines, file.path(directory, "multi_sample.vcf"))
 
   expect_error(import_vcf_data(directory), "Expected one named sample in VCF file: multi_sample.vcf")
+})
+
+test_that("import_vcf_data warns when no appropriate depth column is supplied", {
+  input_file <- file.path("./testdata/simple_vcf_data.vcf")
+  no_depth_file <- tempfile(fileext = ".vcf")
+  on.exit(unlink(no_depth_file), add = TRUE)
+  lines <- readLines(input_file)
+  lines <- lines[!grepl("^##FORMAT=<ID=AD,", lines)]
+  record_lines <- !grepl("^#", lines)
+  records <- strsplit(lines[record_lines], "\t", fixed = TRUE)
+  records <- lapply(records, function(record) {
+    record[[9]] <- "VD"
+    record[[10]] <- sub(":.*$", "", record[[10]])
+    paste(record, collapse = "\t")
+  })
+  lines[record_lines] <- unlist(records)
+  writeLines(lines, no_depth_file)
+
+  warning_messages <- testthat::capture_warnings(
+    import_vcf_data(
+      vcf_file = no_depth_file,
+      BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
+      output_granges = FALSE,
+      add_chr = TRUE
+    )
+  )
+  expect_true(any(grepl(
+    "Could not find an appropriate depth column. Some package functionality may be limited.",
+    warning_messages,
+    fixed = TRUE
+  )), info = "Summary_report.Rmd depends on this warning to use precalculated depth.")
+})
+
+test_that("import_vcf_data warns when duplicate positions can double-count depth", {
+  input_file <- file.path("./testdata/simple_vcf_data.vcf")
+  duplicate_file <- tempfile(fileext = ".vcf")
+  on.exit(unlink(duplicate_file), add = TRUE)
+  lines <- readLines(input_file)
+  record_lines <- lines[!grepl("^#", lines)]
+  writeLines(c(lines, record_lines[[1]]), duplicate_file)
+
+  warning_messages <- testthat::capture_warnings(
+    import_vcf_data(
+      vcf_file = duplicate_file,
+      BS_genome = "BSgenome.Mmusculus.UCSC.mm10",
+      output_granges = FALSE,
+      add_chr = TRUE
+    )
+  )
+  expect_true(any(grepl(
+    "The total_depth may be double-counted in some instances due to overlapping positions. Set the correct_depth parameter in calculate_mf() to correct the total_depth for these instances.",
+    warning_messages,
+    fixed = TRUE
+  )), info = "Summary_report.Rmd depends on this warning to enable depth correction.")
 })
 

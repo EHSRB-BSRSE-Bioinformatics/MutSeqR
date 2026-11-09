@@ -60,7 +60,8 @@ include these variants in your region's ranges.}
 
 \item{BS_genome}{The pkgname of a BS genome. A BS genome must be installed
 prior to import to populate the context column (trinucleotide context for each position).
-Only required if data does not already include a context column. Please install the
+Only required if data does not already include a context column, such as the
+INFO field \code{CONTEXT_3mer} that vartovcf writes with \verb{--context-3mer}. Please install the
 appropriate BS genome using BiocManager::install("pkgname") where pkgname is the
 name of the BSgenome package. The pkgname can be found using the find_BS_genome()
 function, which requires the species and assembly version.
@@ -121,6 +122,9 @@ type for the snv variant including the two flanking nucleotides
 \item \code{vaf} : The variant allele fraction. Calculated as
 \code{alt_depth}/\code{total_depth}.
 \item \code{gc_content}: \% GC of the trinucleotide context at this position.
+\item \code{filter}: The VCF FILTER value: "PASS", the semicolon-separated
+filters the record failed, or "." when no filters were applied. See the
+\code{custom_filter_col} parameter of \code{filter_mut()} to act on it.
 \item \code{is_known}: TRUE or FALSE. Flags known variants (ID != ".").
 \item \code{row_has_duplicate}: TRUE or FALSE. Flags rows whose position is
 the same as that of at least one other row for the same sample.

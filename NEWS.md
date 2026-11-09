@@ -8,10 +8,33 @@
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's
   `alt_depth` to 1. Records without an alternate allele get 0.
+  
 - `import_vcf_data()` no longer counts a missing `AD` value as 0 reads. A
   record whose `AD` lacks the reference depth, as VarDict writes for MNV and
   complex calls, takes its `total_depth` from `DP`, so its `vaf` is no
   longer inflated toward 1.
+
+- `import_vcf_data()` reads an INFO `CONTEXT_3mer`, as
+  [vartovcf](https://github.com/clintval/vartovcf) writes with
+  `--context-3mer`, as the `context`, so no BS genome is needed.
+  
+- `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
+  which `filter_mut()` can act on with `custom_filter_col = "filter"`.
+
+- `calculate_mf()` gains an optional `depth_group_cols` argument to declare
+  sample-level precalculated depths explicitly, including context-resolved
+  inputs with dose metadata. Declared sample depths are validated and pooled
+  to requested groups; missing sample depths warn with affected groups.
+  Default interpretation is preserved, with guidance for invalid grouped inputs.
+
+- `calculate_mf()` infers the grouping resolution of precalculated depths and
+  aggregates finer inputs to `cols_to_group`, preserving context resolution.
+
+- Import functions check for installed BSgenome packages before checking
+  online for available genomes, avoiding an unnecessary internet connection.
+
+- `calculate_mf()` now warns when joining pre-calculated depth data renames
+  mutation-data columns, listing each original name and its suffixed name.
 
 - Fixed directory VCF imports losing header-derived sample identifiers during
   VCF combination. Distinct samples now retain their identities without sample

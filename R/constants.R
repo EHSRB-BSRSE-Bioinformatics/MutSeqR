@@ -21,6 +21,7 @@ op$column$vd <- "alt_depth"
 op$column$sequence_context <- "context"
 op$column$trinucleotide_context <- "context"
 op$column$flanking_sequence <- "context"
+op$column$context_3mer <- "context" # vartovcf INFO CONTEXT_3mer
 op$column$chr <- "contig"
 op$column$chromosome <- "contig"
 op$column$seqnames <- "contig"

@@ -250,7 +250,7 @@ plot_spectra <- function(mf_data,
 
     # Main Plot
     bar <- ggplot(data_main, aes(x = .data$group, y = .data$response, fill = .data$subtype)) +
-        geom_bar(stat = "identity", width = 1) +
+        geom_bar(stat = "identity", width = 1, na.rm = TRUE) +
         scale_fill_manual(values = palette) +
         axis_labels +
         common_theme +
@@ -264,7 +264,7 @@ plot_spectra <- function(mf_data,
         # Check if there is actual non-snv data to plot
         if (nrow(data_nonsnv) > 0) {
         bar_nonsnv <- ggplot(data_nonsnv, aes(x = .data$group, y = .data$response, fill = .data$subtype)) +
-            geom_bar(stat = "identity", width = 1) +
+            geom_bar(stat = "identity", width = 1, na.rm = TRUE) +
             scale_fill_manual(values = palette) +
             axis_labels +
             common_theme +
@@ -363,6 +363,14 @@ cluster_spectra <- function(mf_data,
     # Convert to matrix
     mat <- as.matrix(wide_df[, -1])
     rownames(mat) <- wide_df[[group_col]] # group col as rownames
+    complete_subtypes <- colSums(!is.finite(mat)) == 0L
+    if (!any(complete_subtypes)) {
+        stop(
+            "Cannot cluster spectra because no subtype has a finite response ",
+            "for every group."
+        )
+    }
+    mat <- mat[, complete_subtypes, drop = FALSE]
 
     # Distance Calculation
     if (dist == "cosine") {

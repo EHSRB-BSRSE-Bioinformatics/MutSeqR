@@ -21,15 +21,12 @@ sequence context extraction. Ensures that the provided genome is a valid
 \pkg{BSgenome} package name and that it is installed locally.
 }
 \details{
-This function performs three checks:
-\enumerate{
-\item If \code{BS_genome} is \code{NULL}, an error is thrown indicating that
-a genome must be provided when sequence context is required.
-\item If \code{BS_genome} is not among the available \pkg{BSgenome}
-packages, an error is thrown.
-\item If \code{BS_genome} is valid but not installed locally, an error is
-thrown with instructions to install it via \code{BiocManager::install()}.
-}
+If \code{BS_genome} is \code{NULL}, an error is thrown indicating that a
+genome must be provided when sequence context is required. If the genome is
+installed, validation passes without network access. Otherwise,
+\code{BSgenome::available.genomes()} is queried (requires internet;) and an
+error is thrown with installation instructions, or stating that the genome
+is not recognized.
 
 This function is intended to be called only when sequence context needs to be
 populated (i.e., when a \code{context} column is absent or incomplete).
