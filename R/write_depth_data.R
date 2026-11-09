@@ -246,3 +246,67 @@ write_depth_data <- function(depth_data, d_sep = "\t", group_cols = "sample") {
     prepared$global <- global
     prepared
 }
+
+#' Prepare precalculated depth tables for the summary report
+#'
+#' @description Validates context-resolved precalculated depth inputs and
+#' derives the global, base_6, and base_96 tables used by the summary report.
+#' Explicit inputs at a requested resolution take precedence over derived
+#' tables. When an input is omitted, the finest available context-resolved
+#' table is used to derive it.
+#'
+#' @param base192 Optional base_192 depth data. Must be a data frame accepted
+#'   by [write_depth_data()].
+#' @param base96 Optional base_96 depth data. Must be a data frame accepted
+#'   by [write_depth_data()].
+#' @param global Optional global depth data with `sample` and `group_depth`
+#'   columns.
+#' @param base6 Optional base_6 depth data. Must be a data frame accepted by
+#'   [write_depth_data()].
+#'
+#' @return A list with `global`, `base6`, `base96`, and `base192` elements.
+#'   The context-resolved tables include `group_depth` in addition to their
+#'   context and `subtype_depth` columns. Elements are `NULL` when neither an
+#'   explicit input nor a compatible higher-resolution input is available.
+#'
+#' @keywords internal
+prepare_report_depth_data <- function(base192 = NULL, base96 = NULL,
+                                      global = NULL, base6 = NULL) {
+    prepare_context_depth <- function(depth_data) {
+        if (is.null(depth_data)) {
+            return(NULL)
+        }
+        suppressWarnings(MutSeqR::write_depth_data(depth_data))
+    }
+    first_available <- function(...) {
+        values <- list(...)
+        available <- which(!vapply(values, is.null, logical(1)))
+        if (!length(available)) {
+            return(NULL)
+        }
+        values[[available[[1L]]]]
+    }
+
+    base192_depth <- prepare_context_depth(base192)
+    base96_depth <- prepare_context_depth(base96)
+    base6_depth <- prepare_context_depth(base6)
+
+    list(
+        global = first_available(
+            global,
+            base192_depth$global,
+            base96_depth$global,
+            base6_depth$global
+        ),
+        base6 = first_available(
+            base6_depth$base6,
+            base192_depth$base6,
+            base96_depth$base6
+        ),
+        base96 = first_available(
+            base96_depth$base96,
+            base192_depth$base96
+        ),
+        base192 = if (is.null(base192_depth)) NULL else base192_depth$base192
+    )
+}

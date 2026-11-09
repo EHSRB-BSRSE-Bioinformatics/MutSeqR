@@ -34,7 +34,7 @@ will differ.}
 
 \item{subtype_resolution}{The degree at which to resolve the mutation
 subtypes when calculating frequencies. Mutation frequency will be calculated
-across all col_to_groups for each mutation subtype given the desired
+across all \code{col_to_groups} for each mutation subtype given the desired
 resolution. Subtype proportions will also be calculated. Options
 are "none", "type", "base_6", "base_12", "base_96", and "base_192". See
 details for definitions.}
@@ -50,14 +50,14 @@ whether or not a variant is included in the mutation counts, the total_depth
 for that position will be counted.}
 
 \item{calculate_depth}{A logical variable, whether to calculate the
-per-group total_depth from the mutation data. If set to TRUE, the mutation
-data must contain a total_depth value for every sequenced base (including
-variants AND no-variant calls). If set to FALSE, pre-calculated per-group
-total_depth values may be supplied at the desired subtype_resolution
-using the precalc_depth_data parameter. Alternatively, if no per-group
-total_depth is available, per-group mutation counts will be calculated,
-but mutation frequency will not. In such cases, mutation subtype proportions
-will not be normalized to the total_depth.}
+per-group total_depth from the \code{mutation_data}. If set to TRUE, the
+mutation data must contain a total_depth value for every sequenced base
+(including variants AND no-variant calls). If set to FALSE, pre-calculated
+per-group \code{total_depth} values may be supplied at the desired
+subtype_resolution using the precalc_depth_data parameter. Alternatively, if
+no per-group \code{total_depth} is available, per-group mutation counts will
+be calculated, but mutation frequency will not. In such cases, mutation
+subtype proportions will not be normalized to the \code{total_depth}.}
 
 \item{correct_depth}{A logical value. If TRUE, the function will correct the
 \code{total_depth} column in \code{mutation_data} in order to prevent
@@ -78,21 +78,7 @@ the group will be retained, while the other rows will have their
 \code{total_depth} set to 0. The default is FALSE.}
 
 \item{precalc_depth_data}{A data frame or a file path to a text file
-containing pre-calculated depth values. A context-resolved input with
-\code{subtype_depth}, one context column from \code{denominator_dict}, and either
-\code{sample} or all \code{cols_to_group} columns can be supplied at any supported
-resolution; when possible, \code{calculate_mf()} uses \code{write_depth_data()} to
-derive the requested resolution. Per-sample depths are aggregated to
-\code{cols_to_group} using the sample-to-group mapping in \code{mutation_data}; inputs
-already summarized by \code{cols_to_group} are used directly. Otherwise, supply
-the columns for the desired grouping variable(s) and context at the
-requested resolution. Depth columns should be named \code{group_depth} and/or
-\code{subtype_depth}. \code{group_depth} is used for subtype
-resolutions of "none", "type", and all non-snv mutations in "base_6",
-"base_12", "base_96", and "base_192". \code{subtype_depth} is used for snv
-mutations in "base_6", "base_12", "base_96", and "base_192". You can
-access a list of context values for each subtype resolution using
-\code{MutSeqR::context_list$your_subtype_resolution}.}
+containing pre-calculated depth values. See details for required columns.}
 
 \item{d_sep}{The delimiter used in the precalc_depth_data, if applicable.
 Default is tab-delimited.}
@@ -101,7 +87,7 @@ Default is tab-delimited.}
 (i.e., where only relevant columns for frequencies and groupings are
 returned). Setting this to false returns all columns in the original
 mutation_data, which might make plotting more difficult, but may provide
-additional flexibility to power users.}
+additional flexibility to power users. Default is TRUE.}
 
 \item{retain_metadata_cols}{a character vector that contains the names of
 the metadata columns that you would like to retain in the summary table.
@@ -117,15 +103,15 @@ mutation_data.
 \itemize{
 \item \code{sum_min}: The sum of all mutations within the group, calculated
 using the "min" method for mutation counting. All identical mutations
-within a samples are assumed to be the result of clonal expansion and are
-thus only counted once.
+within a sample are assumed to be the result of clonal expansion and are
+only counted once.
 \item \code{sum_max}: The sum of all mutations within the group, calculated
 using the "max" method for mutaiton counting. All identical mutations
-within a sample are assumed to be idenpendant mutational evens and are
+within a sample are assumed to be idenpendant mutational events and are
 included in the mutation frequency calculation.
 \item \code{group_depth}: The total_depth summed across groups.
 \item \code{subtype_depth}: The total_depth summed across groups for a given
-sequence context. Used for calculating subtype frequencies.
+sequence context. Used for calculating snv subtype frequencies.
 \item \code{mf_min}: The mutation frequency calculated using the "min"
 method for mutation counting. mf_min = sum_min / depth.
 \item \code{mf_max}: The mutation frequency calculated using the "max"
@@ -168,6 +154,9 @@ It is also required to include the total_depth column if you are calculating
 depth from the mutation data. If you are using precalculated depth data, the
 total_depth column is not required.
 
+MF is total mutation count divided by total depth. If grouping by an
+experimental variable note that MF is NOT the arithmetic mean of sample MFs.
+
 \strong{Subtype Resolutions:}
 \itemize{
 \item "none" calculates mutation frequencies across all selected
@@ -198,10 +187,10 @@ context. Ex A[G>A]A. The reference context is \code{context}.
 sequence context in which the SNV subtype occurs. Ex. for base_6, the
 two possible reference bases are C or T; hence, the total_depth is
 summed seperately for C:G positions and T:A positions. The MF for C>T
-mutations is calculated as total # C>T mutations / total_depth for C>G
-positions (sum / subtype_depth). Non-SNV mutation types will be caluclated
-as their sum / group_depth, since they can occur in the context of any
-nucleotide.
+mutations is calculated as the total number of C>T mutations / total_depth
+for C and G positions (sum / subtype_depth). Non-SNV mutation subtypes will
+be caluclated as their sum / group_depth, since they can occur in the
+context of any nucleotide.
 
 \strong{retain_metadata_cols at subtype_resolution:} The summary table uses a
 pre-defined list of possible subtypes for each resolution. If a particular
@@ -209,6 +198,39 @@ subtype within a given group is not recorded in the mutation data, the
 summary table will have no frame of reference for populating the
 metadata_cols. Thus, for subtypes that do not occur in the mutation data
 for a given group, the corresponding metadata_col will be NA.
+
+\strong{Precalculated depth:} The precalculated depth data should include depth
+calculated per your grouping variable, resolved to the nucleotide context
+that supports the \code{subtype_resolution}. Required columns are:
+\itemize{
+\item \code{cols_to_group}: (or \code{seqnames}) The grouping column(s).
+\item a context column: The nucleotide context, depending on the
+subtype resolution. Must be one column from \code{denominator_dict}. This is
+not required for subtype resolutions "none" or "type".
+\item \code{subtype_depth} or \code{group_depth}: The total_depth summed across
+groups (group_depth) and groups & contexts (subtype_depth). group_depth is
+used for subtype_resolution = "none" and "type", while subtype_depth is
+used for all SNV resolutions.
+}
+Generally, depth should be precalculated to the grouping variables in
+\code{cols_to_group}. However, the function is capable of aggregating depth
+supplied per sample across a lower resolution grouping variable. The
+grouping variable is mapped to sample from the mutation data. This mapping
+requires each sample to identify exactly one group value. Mapping to higher-
+resolution grouping variables is not possible. For example, you may calculate
+mutation frequencies per "dose", and supply precalc_depth_data as group_depth
+per sample, assuming that each sample belongs to exactly one dose. However,
+you cannot calculate mutation frequencies per contig using this
+precalc_depth_data, since each sample maps to more than one contig.
+
+precalc_depth_data may be supplied at a higher context resolution than is
+required by subtype_resolution. The function will automatically
+aggregate depth across possible contexts to support lower-level resolutions.
+As such, precalc_depth_data with subtype_depth resolved to the 64
+trinucleotide context (base_192; "context") can be used to calculate
+mutation frequencies at any given subtype_resolution.
+You can access a list of context values for each subtype resolution using
+\code{MutSeqR::context_list$your_subtype_resolution}.
 
 \strong{Variant filtering:} Variants flagged as TRUE in the \code{filter_mut} column
 will be excluded from the mutation counts. However, the total_depth of

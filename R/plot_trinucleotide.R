@@ -182,6 +182,9 @@ plot_trinucleotide <- function(
 
   # Override response for 'sum' mode
   if (response == "sum") data$response_val <- data$sum
+  if (!any(is.finite(data$response_val))) {
+    stop("No finite values are available for the selected response.")
+  }
 
   # -Determine Global Y-Axis Max (If not indiv_y)
   if (!indiv_y) {
@@ -206,22 +209,31 @@ plot_trinucleotide <- function(
   create_plot <- function(group_name, plot_data) {
 
     # A. Calculate Y-Max locally
-    local_max <- max(plot_data$response_val, na.rm = TRUE)
+    local_values <- plot_data$response_val[
+      is.finite(plot_data$response_val)
+    ]
+    local_max <- if (length(local_values)) max(local_values) else 0
     target_max <- if (indiv_y) local_max else global_y_max
 
     # Y-Axis Formatting Logic
     if (response == "proportion") {
       y_lab <- "Proportion of Mutations"
-      y_limit <- ceiling(target_max * 10) / 10
+      y_limit <- max(ceiling(target_max * 10) / 10, 0.1)
     } else if (response == "frequency") {
       y_lab <- "Frequency of Mutations"
       # Scientific notation rounding logic
-      sci <- format(target_max, scientific = TRUE)
-      parts <- strsplit(sci, "e")[[1]]
-      y_limit <- as.numeric(paste0(ceiling(as.numeric(parts[1])), "e", parts[2]))
+      if (target_max == 0) {
+        y_limit <- 1
+      } else {
+        sci <- format(target_max, scientific = TRUE)
+        parts <- strsplit(sci, "e")[[1]]
+        y_limit <- as.numeric(paste0(
+          ceiling(as.numeric(parts[1])), "e", parts[2]
+        ))
+      }
     } else {
       y_lab <- "Sum of Mutations"
-      y_limit <- ceiling(target_max / 5) * 5
+      y_limit <- max(ceiling(target_max / 5) * 5, 1)
     }
 
     # B. Labels
@@ -285,7 +297,7 @@ plot_trinucleotide <- function(
         linewidth = 0.6
     ) +
       # Data Bars
-      geom_col(width = 0.5, color = NA, show.legend = FALSE) +
+      geom_col(width = 0.5, color = NA, show.legend = FALSE, na.rm = TRUE) +
       # Header Rectangles
       geom_rect(
         data = rects,

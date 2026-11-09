@@ -1,0 +1,8 @@
+##fileformat=VCFv4.2
+##INFO=<ID=CONTEXT_3mer,Number=1,Type=String,Description="Reference bases at POS-1, POS and POS+1">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=VD,Number=1,Type=Integer,Description="Variant depth">
+##contig=<ID=chr1,length=1000>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1
+chr1	10	.	C	.	.	PASS	CONTEXT_3mer=ACA	AD:VD	100:0
+chr1	11	.	A	T	.	PASS	CONTEXT_3mer=CAT	AD:VD	98,2:2
