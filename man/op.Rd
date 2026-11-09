@@ -9,6 +9,10 @@ A list with potential variable column names
 \usage{
 op
 }
+\value{
+A list containing column-name aliases, required mutation-data
+columns, site columns, and default mutation-processing settings.
+}
 \description{
 A list of column specifications
 }

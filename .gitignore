@@ -53,3 +53,9 @@ docs
 
 # README source
 README.Rmd
+
+/.validation/
+/.cache/
+
+# Generated R graphics
+Rplots.pdf

@@ -3,6 +3,9 @@
 ^\.Rproj\.user$
 ^data-raw$
 ^\.github$
+^\.githooks$
+^CONTRIBUTING\.md$
+^docker$
 ^doc$
 ^Meta$
 ^.*\.pdf$
@@ -14,3 +17,7 @@ AGENTS.md
 ^scripts$
 ^pixi\.toml$
 ^pixi\.lock$
+^\.pixi$
+
+^\.validation$
+^\.dockerignore$

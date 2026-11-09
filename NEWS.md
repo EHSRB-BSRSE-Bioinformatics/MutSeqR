@@ -1,4 +1,4 @@
-# MutSeqR (development version)
+# MutSeqR 1.1.1
 
 - `import_vcf_data()` reads FORMAT `SITE_DP`, the read depth at the record's
   position that [vartovcf](https://github.com/clintval/vartovcf) writes, as

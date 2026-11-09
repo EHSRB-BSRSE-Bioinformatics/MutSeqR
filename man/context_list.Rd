@@ -9,6 +9,11 @@ A list with corresponding values
 \usage{
 context_list
 }
+\value{
+A named list whose values are either \code{NA} for the \code{none} and \code{type}
+resolutions or character vectors of reference bases or trinucleotide
+contexts.
+}
 \description{
 A list of reference contexts at different resolutions
 }

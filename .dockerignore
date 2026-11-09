@@ -1,0 +1,6 @@
+# Only dependency metadata is needed to build the validation image.
+*
+!DESCRIPTION
+!docker/
+docker/*
+!docker/bioc-devel.Dockerfile

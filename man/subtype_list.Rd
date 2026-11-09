@@ -9,6 +9,10 @@ A list with corresponding values
 \usage{
 subtype_list
 }
+\value{
+A named list of character vectors containing mutation types or
+substitution labels for each subtype resolution.
+}
 \description{
 A comprehensive list of mutation subtypes at different resolutions
 }

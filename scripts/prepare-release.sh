@@ -1,75 +1,45 @@
 #!/usr/bin/env bash
-# MutSeqR release preparation (Bioconductor "devel" push workflow).
-#
-# Steps:
-#   1. regenerate docs (roxygen)
-#   2. bump the z version in DESCRIPTION (in-place, format-preserving)
-#   3. check NEWS.md is current (warns/stops if the top entry is stale)
-#   4. run unit tests
-#   5. commit docs + DESCRIPTION (you review NEWS.md and the rest)
-#
-# After this script finishes you still do, by hand:
-#   git push origin main
-#   git push upstream main:devel     # upstream = git.bioconductor.org
-#
-# Usage: bash scripts/prepare-release.sh [--push]
-#   --push  also pushes to origin main (not to Bioconductor)
-
+# Prepare the next devel version, then validate that exact source tree.
+# Review and commit the resulting metadata yourself; this script never pushes.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-do_push=0
-[[ "${1:-}" == "--push" ]] && do_push=1
-
+if [[ $# -ne 0 ]]; then
+  echo "Usage: pixi run -e container prepare-release (no automatic commit or push)" >&2
+  exit 2
+fi
 if [[ -n "$(git status --porcelain)" ]]; then
-  echo "Working tree is dirty; commit or stash your changes first:"
-  git status --short
+  echo "Working tree is dirty; commit or stash your changes first." >&2
+  exit 1
+fi
+old_ver=$(awk '/^Version:/ {print $2; exit}' DESCRIPTION)
+if [[ ! "$old_ver" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "DESCRIPTION Version must have the form x.y.z" >&2
+  exit 1
+fi
+z=${old_ver##*.}
+new_ver="${old_ver%.*}.$((10#$z + 1))"
+news_top=$(awk '/^# / {print; exit}' NEWS.md)
+if [[ "$news_top" != '# MutSeqR (development version)' && "$news_top" != "# MutSeqR $new_ver" ]]; then
+  echo "Start NEWS.md with '# MutSeqR (development version)' or '# MutSeqR $new_ver'." >&2
   exit 1
 fi
 
-## 1. documentation ---------------------------------------------------
-echo "==> 1/5 Regenerating documentation (roxygen)"
-Rscript -e 'devtools::document()'
-
-## 2. version bump ----------------------------------------------------
-echo "==> 2/5 Bumping z version in DESCRIPTION"
-old_ver="$(grep -m1 '^Version:' DESCRIPTION | awk '{print $2}')"
-z="${old_ver##*.}"
-new_ver="${old_ver%.*}.$(( z + 1 ))"
-sed -i "s/^Version: ${old_ver}\$/Version: ${new_ver}/" DESCRIPTION
-echo "    ${old_ver} -> ${new_ver}"
-
-## 3. NEWS.md check ---------------------------------------------------
-echo "==> 3/5 Checking NEWS.md"
-NEWS_TOP="$(grep -m1 '^# ' NEWS.md || true)"
-case "${NEWS_TOP}" in
-  *" ${new_ver}"*)
-    echo "    OK: NEWS.md has an entry for ${new_ver}" ;;
-  *" ${old_ver}"*)
-    echo "    REMINDER: top NEWS.md entry is still ${old_ver}."
-    echo "    Consider adding a '# MutSeqR ${new_ver}' entry." ;;
-  *)
-    echo "    ERROR: top NEWS.md entry ('${NEWS_TOP}') matches neither"
-    echo "    the old (${old_ver}) nor the new (${new_ver}) version."
-    echo "    Update NEWS.md before pushing."
-    exit 1 ;;
-esac
-
-## 4. tests ------------------------------------------------------------
-echo "==> 4/5 Running unit tests"
-Rscript -e 'devtools::load_all(quiet = TRUE); devtools::test()'
-
-## 5. commit ------------------------------------------------------------
-echo "==> 5/5 Committing version bump + regenerated docs"
-git add DESCRIPTION NEWS.md NAMESPACE man/
-git commit -m "chore: version bump ${new_ver}" --allow-empty
-
-if [[ "${do_push}" -eq 1 ]]; then
-  git push origin HEAD
-  echo "Pushed to origin. Next (needs Bioc SSH key): git push upstream main:devel"
-else
-  echo
-  echo "Done. Review the commit, then:"
-  echo "  git push origin main"
-  echo "  git push upstream main:devel   # upstream = git.bioconductor.org:packages/MutSeqR.git"
+# POSIX awk and temporary files also work on macOS (unlike GNU sed -i).
+# Stage and check both files before changing either tracked file.
+release_tmp=$(mktemp -d)
+trap 'rm -rf "$release_tmp"' EXIT
+awk -v version="$new_ver" '/^Version:/ {$0 = "Version: " version} {print}' DESCRIPTION > "$release_tmp/DESCRIPTION"
+awk -v version="$new_ver" '$0 == "# MutSeqR (development version)" && !changed { $0 = "# MutSeqR " version; changed = 1 } {print}' NEWS.md > "$release_tmp/NEWS.md"
+prepared_ver=$(awk '/^Version:/ {print $2; exit}' "$release_tmp/DESCRIPTION")
+prepared_news_top=$(awk '/^# / {print; exit}' "$release_tmp/NEWS.md")
+if [[ "$prepared_ver" != "$new_ver" || "$prepared_news_top" != "# MutSeqR $new_ver" ]]; then
+  echo "Prepared DESCRIPTION and NEWS.md must both match version $new_ver." >&2
+  exit 1
 fi
+mv "$release_tmp/DESCRIPTION" DESCRIPTION
+mv "$release_tmp/NEWS.md" NEWS.md
+
+echo "Prepared $old_ver -> $new_ver; validating the final version."
+bash scripts/run-bioc-devel.sh release-check
+echo "Review DESCRIPTION and NEWS.md, then commit and push when ready."

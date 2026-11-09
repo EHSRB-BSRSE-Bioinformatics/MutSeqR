@@ -9,6 +9,10 @@ A vector with corresponding values
 \usage{
 subtype_dict
 }
+\value{
+A named character vector mapping subtype resolutions to
+mutation-data column names, with \code{NA} for the \code{none} resolution.
+}
 \description{
 Associates the subtype resolution names with their corresponding column
 names in the mutation data.
