@@ -23,8 +23,10 @@
 #' @param n_boot Integer. The number of bootstrap iterations to perform for
 #' p-value calculation. Default is 500.
 #' @returns A data frame containing one row per specified contrast. Columns
-#' include the group names, comparison string, bootstrap p-value, observed
-#' Likelihood Ratio Test (LRT) statistic, and robust overdispersion metrics
+#' include the group names, comparison string, hybrid bootstrap p-value
+#' (\code{p_value}, also returned as \code{p_hybrid}), penalized bootstrap
+#' p-value (\code{p_penalized}), observed hybrid and penalized LRT statistics
+#' (\code{lrt} and \code{lrt_penalized}), and concentration estimates
 #' (theta) for group 1, group 2, and the shared null model.
 #' @details Experimental: this function is under construction and its interface
 #' may change.
@@ -33,6 +35,7 @@
 #' @importFrom dplyr select rename left_join
 #' @importFrom tidyr pivot_wider
 #' @importFrom tibble column_to_rownames
+#' @importFrom utils read.delim
 
 spectra_comparison_rpdmm <- function(
   mf_data,
@@ -51,7 +54,8 @@ spectra_comparison_rpdmm <- function(
     !missing(exp_variable) && all(exp_variable %in% colnames(mf_data)),
     !missing(contrasts),
     is.numeric(lambda) && lambda >= 0,
-    is.numeric(n_boot) && n_boot > 0
+    is.numeric(n_boot) && length(n_boot) == 1 && is.finite(n_boot) &&
+      n_boot > 0 && n_boot == floor(n_boot)
   )
   # Identify the appropriate count column based on mf_type
   mf_type <- match.arg(mf_type, choices = c("min", "max"))
@@ -62,13 +66,12 @@ spectra_comparison_rpdmm <- function(
   potential_cols <- as.vector(subtype_dict)[!is.na(as.vector(subtype_dict))]
   subtype_cols <- intersect(colnames(mf_data), potential_cols)
   subtype_col <- subtype_cols[1]
-  if (is.na(subtype_cols)) {
+  if (length(subtype_cols) == 0) {
     stop("No valid subtype column found in mf_data.")
   } else if (length(subtype_cols) > 1) {
     warning("Multiple potential subtype columns found. Using: ", subtype_col)
-  } else {
-    mf_data <- dplyr::rename(mf_data, subtype = !!subtype_col)
   }
+  mf_data <- dplyr::rename(mf_data, subtype = !!subtype_col)
 
   # Concatenate Exp Variable columns into one.
   if (length(exp_variable) > 1) {
@@ -154,6 +157,9 @@ spectra_comparison_rpdmm <- function(
       comparison = paste0(g1_name, " vs ", g2_name),
       p_value = stats$p_value,
       lrt = stats$lrt,
+      p_hybrid = stats$p_hybrid,
+      p_penalized = stats$p_penalized,
+      lrt_penalized = stats$lrt_penalized,
       theta_g1 = stats$theta_g1,
       theta_g2 = stats$theta_g2,
       theta_shared = stats$theta_shared,
@@ -197,7 +203,6 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
     class(x) <- "numeric"
   }
   # --- 2. Safety Constraints ---
-  theta <- min(max(theta, 1e-4), 400000)
   p <- pmax(p, 1e-12)
   p <- p / sum(p)
 
@@ -215,11 +220,6 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
   # We use as.matrix here to double-ensure we don't return a list structure
   numerator_mat <- as.matrix(lgamma(x + alpha_mat) - lgamma(alpha_mat))
 
-  # Check for finiteness (safety fallback for optimization steps)
-  if (!all(is.finite(numerator_mat))) {
-    return(-1e10)
-  }
-
   ll_dm <- term_denominator + sum(numerator_mat)
 
   # --- 4. Scaled Ridge Penalty ---
@@ -229,12 +229,128 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
   return(ll_dm - penalty)
 }
 
+#' @title softmax_stable
+#' @description Converts logits to probabilities using a numerically stable
+#' softmax calculation.
+#' @param phi Numeric vector of category logits.
+#' @returns A numeric probability vector that sums to one.
+#' @keywords internal
+softmax_stable <- function(phi) {
+  shifted <- phi - max(phi)
+  exponentials <- exp(shifted)
+  exponentials / sum(exponentials)
+}
+
+#' @title extract_params
+#' @description Converts optimizer parameters to category probabilities and
+#' the concentration parameter.
+#' @param pars Numeric optimizer vector containing log-theta followed by the
+#' free category logits.
+#' @param category_names Optional names to assign to the probabilities.
+#' @returns A list containing the named probability vector \code{p} and
+#' concentration parameter \code{theta}.
+#' @keywords internal
+extract_params <- function(pars, category_names = NULL) {
+  phi <- c(pars[-1], 0)
+  p <- softmax_stable(phi)
+  names(p) <- category_names
+  list(p = p, theta = exp(pars[1]))
+}
+
+#' @title joint_dm_target
+#' @description Returns the negative ridge-penalized Dirichlet-Multinomial
+#' log-likelihood for joint parameter optimization.
+#' @param pars Numeric optimizer vector containing log-theta and free logits.
+#' @param x Numeric count matrix with categories in rows and samples in columns.
+#' @param lambda Non-negative ridge penalty strength.
+#' @returns A numeric negative penalized log-likelihood.
+#' @keywords internal
+joint_dm_target <- function(pars, x, lambda) {
+  params <- extract_params(pars)
+  -dm_loglik_ridge_stable(x, params$p, params$theta, lambda)
+}
+
+#' @title joint_dm_gradient
+#' @description Computes the gradient of the negative ridge-penalized
+#' Dirichlet-Multinomial log-likelihood.
+#' @param pars Numeric optimizer vector containing log-theta and free logits.
+#' @param x Numeric count matrix with categories in rows and samples in columns.
+#' @param lambda Non-negative ridge penalty strength.
+#' @returns A numeric gradient matching the order of \code{pars}.
+#' @keywords internal
+joint_dm_gradient <- function(pars, x, lambda) {
+  params <- extract_params(pars)
+  raw_p <- params$p
+  clipped_p <- pmax(raw_p, 1e-12)
+  p <- clipped_p / sum(clipped_p)
+  theta <- params$theta
+  alpha <- p * theta
+  depths <- colSums(x)
+  g_alpha <- rowSums(digamma(x + alpha) - digamma(alpha))
+  weighted_gradient <- sum(p * g_alpha)
+
+
+  theta_gradient <- theta * ( # d_ll_d_logtheta
+    sum(digamma(theta) - digamma(depths + theta)) + weighted_gradient
+  )
+
+  deviation <- p - 1 / nrow(x)
+  p_gradient <- theta * g_alpha - 2 * lambda * sum(x) * deviation
+  clipped_gradient <- (
+    p_gradient - sum(p * p_gradient)
+  ) / sum(clipped_p)
+  raw_gradient <- clipped_gradient * (raw_p > 1e-12)
+  phi_gradient <- raw_p * (
+    raw_gradient - sum(raw_p * raw_gradient)
+  )
+  c(-theta_gradient, -phi_gradient[-nrow(x)])
+}
+
+#' @title fit_dmm_fast
+#' @description Fits a ridge-penalized Dirichlet-Multinomial model using
+#' bounded L-BFGS-B optimization.
+#' @param x Numeric count matrix with categories in rows and samples in columns.
+#' @param init_pars Numeric starting values for log-theta and free logits.
+#' @param lambda Non-negative ridge penalty strength.
+#' @returns The optimization result, or \code{NULL} if optimization fails.
+#' @keywords internal
+#' @importFrom stats optim
+fit_dmm_fast <- function(x, init_pars, lambda) {
+  lower <- c(log(1e-4), rep(-20, nrow(x) - 1))
+  upper <- c(log(400000), rep(20, nrow(x) - 1))
+  init_pars <- pmax(lower, pmin(upper, init_pars))
+  result <- tryCatch(
+    stats::optim(
+      par = init_pars,
+      fn = joint_dm_target,
+      gr = joint_dm_gradient,
+      x = x,
+      lambda = lambda,
+      method = "L-BFGS-B",
+      lower = lower,
+      upper = upper,
+      control = list(maxit = 2000, factr = 1e7, pgtol = 1e-7)
+    ),
+    error = function(error) {
+      message("Optimization error: ", conditionMessage(error))
+      NULL
+    }
+  )
+  if (is.null(result)) return(NULL)
+  if (result$convergence != 0 || !is.finite(result$value)) {
+    message("Optimization did not converge. Code: ", result$convergence,
+            "; message: ", result$message)
+    return(NULL)
+  }
+  result
+}
+
 #' @title rdm_fast
 #' @keywords internal
 #' @description Rapidly simulates count matrices drawn from a
 #' Dirichlet-Multinomial distribution. This function is highly optimized for
-#' parametric bootstrapping, utilizing a Gamma-Multinomial approximation for
-#' speed.
+#' parametric bootstrapping, utilizing log-space Gamma draws followed by
+#' multinomial sampling to remain stable for tiny concentration parameters.
 #' @param depths A numeric vector representing the total sequencing depth
 #' (total mutation counts) for each sample to be simulated.
 #' @param p A numeric vector representing the expected probability of each
@@ -243,30 +359,33 @@ dm_loglik_ridge_stable <- function(x, p, theta, lambda = 1.0) {
 #' parameter).
 #' @returns A numeric matrix of simulated mutation counts, with subtypes as
 #' rows and simulated samples as columns.
-#' @importFrom stats rgamma rmultinom
+#' @importFrom stats rgamma rmultinom runif
 rdm_fast <- function(depths, p, theta) {
-  alpha <- p * theta
-  K <- length(p)
-  gammas <- matrix(
-    stats::rgamma(K * length(depths), shape = alpha, rate = 1),
-    nrow = K
-  )
-  probs <- sweep(gammas, 2, colSums(gammas), "/")
-  return(
-    sapply(
-      seq_along(depths),
-      function(j) stats::rmultinom(1, size = depths[j], prob = probs[, j])
-    )
+  categories <- length(p)
+  samples <- length(depths)
+  alpha <- pmax(p * theta, 1e-300)
+  log_gamma <- log(matrix(
+    stats::rgamma(categories * samples, shape = alpha + 1), categories, samples
+  )) + log(matrix(stats::runif(categories * samples), categories, samples)) / alpha
+  log_gamma <- sweep(log_gamma, 2, apply(log_gamma, 2, max), "-")
+  p <- exp(log_gamma)
+  p <- sweep(p, 2, colSums(p), "/")
+  matrix(
+    vapply(seq_len(samples), function(sample_index) {
+      as.numeric(stats::rmultinom(1, depths[sample_index],
+                                 p[, sample_index]))
+    }, numeric(categories)),
+    nrow = categories, ncol = samples
   )
 }
 #' @title run_penalized_comparison
 #' @keywords internal
 #' @description Core statistical engine for the RP-DMM test. Evaluates whether
 #' two count matrices represent significantly different mutational spectra. It
-#' utilizes a "hybrid logic": robust parameters (thetas) are estimated utilizing
-#' a ridge penalty (QA phase), while the test statistic (LRT) is evaluated using
-#' the  unpenalized likelihood. Significance is evaluated via parametric
-#' bootstrap.
+#' jointly estimates category probabilities and concentration parameters using
+#' a ridge penalty. Both unpenalized (hybrid) and penalized LRT statistics
+#' are calibrated by parametric bootstrap. Failed bootstrap fits are excluded;
+#' at least half the requested replicates must succeed.
 #' @param g1 A numeric count matrix for Group 1 (subtypes as rows, samples as
 #' columns).
 #' @param g2 A numeric count matrix for Group 2 (subtypes as rows, samples as
@@ -275,108 +394,101 @@ rdm_fast <- function(depths, p, theta) {
 #' estimation.
 #' @param n_boot Integer. The number of parametric bootstrap iterations to
 #' perform.
-#' @returns A list containing 5 items:
+#' @returns A list containing:
 #' \itemize{
 #'   \item \code{p_value}: Numeric. The bootstrapped p-value.
 #'   \item \code{lrt}: Numeric. The observed unpenalized Likelihood Ratio Test
 #' statistic.
+#'   \item \code{p_hybrid}: Numeric. Alias for \code{p_value}.
+#'   \item \code{p_penalized}: Numeric. The penalized bootstrap p-value.
+#'   \item \code{lrt_penalized}: Numeric. The observed penalized LRT statistic.
 #'   \item \code{theta_g1}: Numeric. The optimized robust theta
 #' (overdispersion) for Group 1.
 #'   \item \code{theta_g2}: Numeric. The optimized robust theta for Group 2.
 #'   \item \code{theta_shared}: Numeric. The optimized robust theta under the
 #' Null hypothesis.
 #' }
-#' @importFrom stats optimize
 run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
-  # 1. Data Setup
+  stopifnot(is.numeric(n_boot), length(n_boot) == 1, is.finite(n_boot),
+            n_boot > 0, n_boot == floor(n_boot))
   all_data <- cbind(g1, g2)
+  categories <- nrow(all_data)
+  category_names <- rownames(all_data)
   depths1 <- colSums(g1)
   depths2 <- colSums(g2)
-  p_null <- rowSums(all_data) / sum(all_data)
-  p_g1 <- rowSums(g1) / sum(g1)
-  p_g2 <- rowSums(g2) / sum(g2)
-  safe_bounds <- c(1e-2, 1000000)
-
-  # --- 2. ROBUST ESTIMATION (The QA Phase) ---
-  # We estimate the individual group thetas first.
-  # These serve as our QA metrics.
-  opt_n_pen <- stats::optimize(
-    f = function(th) dm_loglik_ridge_stable(all_data, p_null, th, lambda),
-    interval = safe_bounds,
-    maximum = TRUE
+  failed_result <- list(
+    p_value = NA_real_, p_hybrid = NA_real_, p_penalized = NA_real_,
+    lrt = NA_real_, lrt_penalized = NA_real_,
+    theta_shared = NA_real_, theta_g1 = NA_real_, theta_g2 = NA_real_
   )
-  opt_1_pen <- stats::optimize(
-    f = function(th) dm_loglik_ridge_stable(g1, p_g1, th, lambda),
-    interval = safe_bounds,
-    maximum = TRUE
-  )
-  opt_2_pen <- stats::optimize(
-    f = function(th) dm_loglik_ridge_stable(g2, p_g2, th, lambda),
-    interval = safe_bounds,
-    maximum = TRUE
-  )
-
-  # Capture the individual group metrics
-  theta_g1 <- opt_1_pen$maximum
-  theta_g2 <- opt_2_pen$maximum
-  theta_null <- opt_n_pen$maximum
-
-  # --- 3. OBSERVED STATISTIC (The Testing Phase) ---
-  # Evaluate using UNPENALIZED likelihood (Hybrid Logic)
-  ll_null_raw <- dm_loglik_ridge_stable(
-    all_data, p_null,
-    theta_null,
-    lambda = 0
-  )
-  ll_alt_raw  <- dm_loglik_ridge_stable(g1, p_g1, theta_g1, lambda = 0) +
-    dm_loglik_ridge_stable(g2, p_g2, theta_g2, lambda = 0)
-
-  obs_lrt <- max(0, 2 * (ll_alt_raw - ll_null_raw))
-
-  # --- 4. BOOTSTRAP LOOP ---
-  boot_stats <- numeric(n_boot)
-  for (i in 1:n_boot) {
-    # Simulate Null Data using the shared robust theta
-    s1 <- rdm_fast(depths1, p_null, theta_null)
-    s2 <- rdm_fast(depths2, p_null, theta_null)
-    s_all <- cbind(s1, s2)
-    ps1 <- rowSums(s1) / sum(s1)
-    ps2 <- rowSums(s2) / sum(s2)
-    psN <- rowSums(s_all) / sum(s_all)
-
-    # Estimate bootstrapped parameters with penalty
-    sn_p <- stats::optimize(
-      f = function(th) dm_loglik_ridge_stable(s_all, psN, th, lambda),
-      interval = safe_bounds,
-      maximum = TRUE
-    )
-    s1_p  <- stats::optimize(
-      f = function(th) dm_loglik_ridge_stable(s1, ps1, th, lambda),
-      interval = safe_bounds,
-      maximum = TRUE
-    )
-    s2_p  <- stats::optimize(
-      f = function(th) dm_loglik_ridge_stable(s2, ps2, th, lambda),
-      interval = safe_bounds,
-      maximum = TRUE
-    )
-
-    # Calculate bootstrap LRT (Hybrid logic)
-    b_ll_n   <- dm_loglik_ridge_stable(s_all, psN, sn_p$maximum, lambda = 0)
-    b_ll_alt <- dm_loglik_ridge_stable(s1, ps1, s1_p$maximum, lambda = 0) +
-      dm_loglik_ridge_stable(s2, ps2, s2_p$maximum, lambda = 0)
-
-    boot_stats[i] <- max(0, 2 * (b_ll_alt - b_ll_n))
+  if (sum(g1) == 0 || sum(g2) == 0) return(failed_result)
+  observed <- pmax(rowSums(all_data) / sum(all_data), 1e-6)
+  observed <- observed / sum(observed)
+  init_pars <- c(log(100), log(observed[-categories] / observed[categories]))
+  fit_null <- fit_dmm_fast(all_data, init_pars, lambda)
+  fit_g1 <- fit_dmm_fast(g1, init_pars, lambda)
+  fit_g2 <- fit_dmm_fast(g2, init_pars, lambda)
+  if (is.null(fit_null) || is.null(fit_g1) || is.null(fit_g2)) {
+    return(failed_result)
   }
-
-  # --- 5. RETURN COMPREHENSIVE RESULTS ---
-  return(list(
-    p_value = mean(boot_stats >= (obs_lrt - 1e-8)),
-    lrt = obs_lrt,
-    theta_g1 = theta_g1,     # QA Metric for Group 1
-    theta_g2 = theta_g2,     # QA Metric for Group 2
-    theta_shared = theta_null # Overall consistency under Null
-  ))
+  null_parameters <- extract_params(fit_null$par, category_names)
+  parameters_g1 <- extract_params(fit_g1$par, category_names)
+  parameters_g2 <- extract_params(fit_g2$par, category_names)
+  raw_null <- dm_loglik_ridge_stable(
+    all_data, null_parameters$p, null_parameters$theta, 0
+  )
+  raw_alt <- dm_loglik_ridge_stable(g1, parameters_g1$p, parameters_g1$theta, 0) +
+    dm_loglik_ridge_stable(g2, parameters_g2$p, parameters_g2$theta, 0)
+  observed_hybrid <- max(0, 2 * (raw_alt - raw_null))
+  observed_penalized <- max(0, 2 * (fit_null$value - fit_g1$value - fit_g2$value))
+  boot_hybrid <- boot_penalized <- numeric(n_boot)
+  valid_boots <- 0L
+  for (iteration in seq_len(n_boot)) {
+    simulated_g1 <- rdm_fast(depths1, null_parameters$p, null_parameters$theta)
+    simulated_g2 <- rdm_fast(depths2, null_parameters$p, null_parameters$theta)
+    simulated_all <- cbind(simulated_g1, simulated_g2)
+    rownames(simulated_g1) <- rownames(simulated_g2) <-
+      rownames(simulated_all) <- category_names
+    boot_null <- fit_dmm_fast(simulated_all, fit_null$par, lambda)
+    boot_g1 <- fit_dmm_fast(simulated_g1, fit_g1$par, lambda)
+    boot_g2 <- fit_dmm_fast(simulated_g2, fit_g2$par, lambda)
+    if (is.null(boot_null) || is.null(boot_g1) || is.null(boot_g2)) next
+    valid_boots <- valid_boots + 1L
+    boot_parameters_null <- extract_params(boot_null$par, category_names)
+    boot_parameters_g1 <- extract_params(boot_g1$par, category_names)
+    boot_parameters_g2 <- extract_params(boot_g2$par, category_names)
+    boot_raw_null <- dm_loglik_ridge_stable(
+      simulated_all, boot_parameters_null$p, boot_parameters_null$theta, 0
+    )
+    boot_raw_alt <- dm_loglik_ridge_stable(
+      simulated_g1,
+      boot_parameters_g1$p,
+      boot_parameters_g1$theta,
+      0
+    ) + dm_loglik_ridge_stable(
+          simulated_g2,
+          boot_parameters_g2$p,
+          boot_parameters_g2$theta,
+          0
+    )
+    boot_hybrid[valid_boots] <- max(0, 2 * (boot_raw_alt - boot_raw_null))
+    # 2(l alt - l null) = 2*(-g1 + -g2 - -null) (please keep this comment for clarity during review)
+    boot_penalized[valid_boots] <- max(
+      0, 2 * (boot_null$value - boot_g1$value - boot_g2$value)
+    )
+  }
+  if (valid_boots < n_boot * 0.5) return(failed_result)
+  result <- list(
+    p_hybrid = (1 + sum(boot_hybrid[seq_len(valid_boots)] >= observed_hybrid)) /
+      (valid_boots + 1),
+    p_penalized = (1 + sum(boot_penalized[seq_len(valid_boots)] >=
+                           observed_penalized)) / (valid_boots + 1),
+    lrt = observed_hybrid, lrt_penalized = observed_penalized,
+    theta_shared = null_parameters$theta,
+    theta_g1 = parameters_g1$theta, theta_g2 = parameters_g2$theta
+  )
+  result$p_value <- result$p_hybrid
+  result
 }
 
 #' @title select_optimal_lambda
@@ -384,24 +496,64 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
 #' select the optimal ridge penalty (lambda) for a given count matrix. Models
 #' are fit on $N-1$ samples using a specified lambda, and unpenalized
 #' likelihood is evaluated on the held-out sample.
-#' @param count_matrix A numeric matrix of mutation counts with subtypes
-#' as rows and samples as columns.
+#' @param mf_data A data frame of sample-level mutation-frequency data,
+#' typically returned by \code{calculate_mf()}. It must contain a sample
+#' column, a recognized subtype column, and the selected sum-count column.
+#' @param mf_type Character. The sum-count column to use: \code{"min"} or
+#' \code{"max"}. Defaults to \code{"min"}.
 #' @param lambdas A numeric vector of lambda penalty values to evaluate.
-#' Default is c(0.1, 0.5, 1, 5, 10, 50, 100).
-#' @returns A list containing two items:
+#' Default is c(0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 5).
+#' @returns A list containing three items:
 #' \itemize{
 #'   \item \code{best_lambda}: Numeric scalar. The lambda value from the
 #' provided vector that yielded the highest overall cross-validation
 #' log-likelihood.
 #'   \item \code{scores}: A named numeric vector detailing the cumulative
 #' log-likelihood score achieved by each tested lambda.
+#'   \item \code{lambdas}: The evaluated candidate penalties. Failed fits
+#' produce \code{NA} scores; if all candidates fail, \code{best_lambda}
+#' is \code{NA_real_}.
 #' }
 #' @export
-#' @importFrom stats optimize
 select_optimal_lambda <- function(
-  count_matrix,
-  lambdas = c(0.1, 0.5, 1, 5, 10, 50, 100)
+  mf_data,
+  mf_type = "min",
+  lambdas = c(0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 5)
 ) {
+  stopifnot(is.data.frame(mf_data), "sample" %in% colnames(mf_data))
+  mf_type <- match.arg(mf_type, choices = c("min", "max"))
+  sum_col <- paste0("sum_", mf_type)
+  if (!sum_col %in% colnames(mf_data)) {
+    stop("mf_data must contain the selected count column: ", sum_col)
+  }
+  potential_cols <- as.vector(subtype_dict)[!is.na(as.vector(subtype_dict))]
+  subtype_cols <- intersect(colnames(mf_data), potential_cols)
+  if (length(subtype_cols) == 0) {
+    stop("No valid subtype column found in mf_data.")
+  }
+  if (length(subtype_cols) > 1) {
+    warning("Multiple potential subtype columns found. Using: ", subtype_cols[1])
+  }
+  count_matrix <- data.frame(
+    subtype = mf_data[[subtype_cols[1]]],
+    sample = mf_data$sample,
+    count = mf_data[[sum_col]]
+  ) %>%
+    dplyr::select("subtype", "sample", "count") %>%
+    tidyr::pivot_wider(
+      names_from = "sample",
+      values_from = "count",
+      values_fill = 0,
+      values_fn = sum
+    ) %>%
+    tibble::column_to_rownames(var = "subtype") %>%
+    as.matrix()
+  stopifnot(is.numeric(count_matrix),
+            nrow(count_matrix) >= 1, ncol(count_matrix) >= 2,
+            all(is.finite(count_matrix)), all(count_matrix >= 0),
+            all(colSums(count_matrix) > 0),
+            is.numeric(lambdas), length(lambdas) > 0,
+            all(is.finite(lambdas)), all(lambdas >= 0))
   n_samples <- ncol(count_matrix)
   cv_scores <- numeric(length(lambdas))
   names(cv_scores) <- as.character(lambdas)
@@ -410,23 +562,31 @@ select_optimal_lambda <- function(
   for (i in seq_along(lambdas)) {
     lam <- lambdas[i]
     loglik_sum <- 0
-    for (j in 1:n_samples) {
+    for (j in seq_len(n_samples)) {
       test_sample <- count_matrix[, j, drop = FALSE]
       train_data <- count_matrix[, -j, drop = FALSE]
-      # Estimate proportions with shrinkage
-      raw_counts <- rowSums(train_data)
-      p_shrunk <- (raw_counts + lam) / (sum(raw_counts) + (K * lam))
-      # Optimize theta on training set
-      opt <- stats::optimize(
-        f = function(th) dm_loglik_ridge_stable(train_data, p_shrunk, th, lambda = lam),
-        interval = c(1, 100000),
-        maximum = TRUE
-      )
-      # Evaluate unpenalized likelihood on held-out sample
-      loglik_sum <- loglik_sum +
-        dm_loglik_ridge_stable(test_sample, p_shrunk, opt$maximum, lambda = 0)
+      # Initial guesses for training data
+      observed <- pmax(rowSums(train_data) / sum(train_data), 1e-6)
+      observed <- observed / sum(observed)
+      init_pars <- c(log(100), log(observed[-K] / observed[K]))
+      # Joint optimization on TRAINING data under current lambda
+      fit_train <- fit_dmm_fast(train_data, init_pars, lam)
+      if (is.null(fit_train)) {
+        loglik_sum <- NA_real_
+        break
+      }
+      # Extract trained parameters
+      params <- extract_params(fit_train$par, rownames(count_matrix))
+      # Evaluate UNPENALIZED log-likelihood on TEST sample
+      # We want to know how well the model predicts held-out data
+      loglik_sum <- loglik_sum + dm_loglik_ridge_stable(
+        test_sample, params$p, params$theta, lambda = 0
+      ) # unpenalized evaluation on test data
     }
     cv_scores[i] <- loglik_sum
   }
-  return(list(best_lambda = lambdas[which.max(cv_scores)], scores = cv_scores))
+  best <- which.max(replace(cv_scores, !is.finite(cv_scores), -Inf))
+  best_lambda <- if (any(is.finite(cv_scores))) lambdas[best] else NA_real_
+  list(best_lambda = best_lambda, scores = cv_scores, lambdas = lambdas)
 }
+

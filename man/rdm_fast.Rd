@@ -23,7 +23,7 @@ rows and simulated samples as columns.
 \description{
 Rapidly simulates count matrices drawn from a
 Dirichlet-Multinomial distribution. This function is highly optimized for
-parametric bootstrapping, utilizing a Gamma-Multinomial approximation for
-speed.
+parametric bootstrapping, utilizing log-space Gamma draws followed by
+multinomial sampling to remain stable for tiny concentration parameters.
 }
 \keyword{internal}
