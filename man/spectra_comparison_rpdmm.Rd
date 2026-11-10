@@ -45,8 +45,10 @@ p-value calculation. Default is 500.}
 }
 \value{
 A data frame containing one row per specified contrast. Columns
-include the group names, comparison string, bootstrap p-value, observed
-Likelihood Ratio Test (LRT) statistic, and robust overdispersion metrics
+include the group names, comparison string, hybrid bootstrap p-value
+(\code{p_value}, also returned as \code{p_hybrid}), penalized bootstrap
+p-value (\code{p_penalized}), observed hybrid and penalized LRT statistics
+(\code{lrt} and \code{lrt_penalized}), and concentration estimates
 (theta) for group 1, group 2, and the shared null model.
 }
 \description{

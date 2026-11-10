@@ -4,23 +4,29 @@
 \alias{select_optimal_lambda}
 \title{select_optimal_lambda}
 \usage{
-select_optimal_lambda(count_matrix, lambdas = c(0.1, 0.5, 1, 5, 10, 50, 100))
+select_optimal_lambda(
+  count_matrix,
+  lambdas = c(0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 5)
+)
 }
 \arguments{
 \item{count_matrix}{A numeric matrix of mutation counts with subtypes
 as rows and samples as columns.}
 
 \item{lambdas}{A numeric vector of lambda penalty values to evaluate.
-Default is c(0.1, 0.5, 1, 5, 10, 50, 100).}
+Default is c(0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 5).}
 }
 \value{
-A list containing two items:
+A list containing three items:
 \itemize{
 \item \code{best_lambda}: Numeric scalar. The lambda value from the
 provided vector that yielded the highest overall cross-validation
 log-likelihood.
 \item \code{scores}: A named numeric vector detailing the cumulative
 log-likelihood score achieved by each tested lambda.
+\item \code{lambdas}: The evaluated candidate penalties. Failed fits
+produce \code{NA} scores; if all candidates fail, \code{best_lambda}
+is \code{NA_real_}.
 }
 }
 \description{

@@ -5,10 +5,17 @@
   the `total_depth`. Records whose `total_depth` is missing take it from `AD`
   or `DP`.
 
+- Introduced `spectra_comparison_rpdmm()` as an alternative to
+  `spectra_comparison()` for comparing mutation spectra. Unlike the classical
+  G2-based comparison, it uses a replicate-aware, ridge-penalized
+  Dirichlet-multinomial model to account for replicate heterogeneity and
+  overdispersion in high-count ECS data. The L2 penalty stabilizes category
+  probability estimates, and hybrid and penalized likelihood-ratio tests are
+  calibrated by parametric bootstrap.
+
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's
   `alt_depth` to 1. Records without an alternate allele get 0.
-  
 - `import_vcf_data()` no longer counts a missing `AD` value as 0 reads. A
   record whose `AD` lacks the reference depth, as VarDict writes for MNV and
   complex calls, takes its `total_depth` from `DP`, so its `vaf` is no
@@ -17,7 +24,6 @@
 - `import_vcf_data()` reads an INFO `CONTEXT_3mer`, as
   [vartovcf](https://github.com/clintval/vartovcf) writes with
   `--context-3mer`, as the `context`, so no BS genome is needed.
-  
 - `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
   which `filter_mut()` can act on with `custom_filter_col = "filter"`.
 

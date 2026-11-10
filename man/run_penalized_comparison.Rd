@@ -20,11 +20,14 @@ estimation.}
 perform.}
 }
 \value{
-A list containing 5 items:
+A list containing:
 \itemize{
 \item \code{p_value}: Numeric. The bootstrapped p-value.
 \item \code{lrt}: Numeric. The observed unpenalized Likelihood Ratio Test
 statistic.
+\item \code{p_hybrid}: Numeric. Alias for \code{p_value}.
+\item \code{p_penalized}: Numeric. The penalized bootstrap p-value.
+\item \code{lrt_penalized}: Numeric. The observed penalized LRT statistic.
 \item \code{theta_g1}: Numeric. The optimized robust theta
 (overdispersion) for Group 1.
 \item \code{theta_g2}: Numeric. The optimized robust theta for Group 2.
@@ -35,9 +38,9 @@ Null hypothesis.
 \description{
 Core statistical engine for the RP-DMM test. Evaluates whether
 two count matrices represent significantly different mutational spectra. It
-utilizes a "hybrid logic": robust parameters (thetas) are estimated utilizing
-a ridge penalty (QA phase), while the test statistic (LRT) is evaluated using
-the  unpenalized likelihood. Significance is evaluated via parametric
-bootstrap.
+jointly estimates category probabilities and concentration parameters using
+a ridge penalty. Both unpenalized (hybrid) and penalized LRT statistics
+are calibrated by parametric bootstrap. Failed bootstrap fits are excluded;
+at least half the requested replicates must succeed.
 }
 \keyword{internal}
