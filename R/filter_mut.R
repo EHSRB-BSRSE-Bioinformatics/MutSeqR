@@ -499,9 +499,19 @@ filter_mut <- function(mutation_data,
                 " custom filter column that should be used to apply the filter"
             )
         }
+        if (length(custom_filter_val) == 0) {
+            stop("`custom_filter_val` must contain at least one value")
+        }
         found <- vapply(
             custom_filter_val,
-            function(value) any(grepl(value, mutation_data[[custom_filter_col]])),
+            function(value) any(
+                grepl(
+                    value,
+                    mutation_data[[custom_filter_col]],
+                    fixed = TRUE
+                ),
+                na.rm = TRUE
+            ),
             logical(1)
         )
         if (!all(found)) {
@@ -510,8 +520,17 @@ filter_mut <- function(mutation_data,
                 paste(custom_filter_val[!found], collapse = ", ")
             )
         }
-        pattern <- paste(custom_filter_val, collapse = "|")
-        custom_filtered_rows <- grepl(pattern, mutation_data[[custom_filter_col]])
+        custom_filtered_rows <- Reduce(
+            `|`,
+            lapply(custom_filter_val, function(value) {
+                grepl(
+                    value,
+                    mutation_data[[custom_filter_col]],
+                    fixed = TRUE
+                )
+            })
+        )
+        custom_filtered_rows[is.na(custom_filtered_rows)] <- FALSE
         custom_filtered_count <- sum(custom_filtered_rows)
         if (custom_filter_rm) {
             if (return_filtered_rows) {
