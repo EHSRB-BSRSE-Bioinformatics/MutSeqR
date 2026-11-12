@@ -1,5 +1,12 @@
 # MutSeqR 1.1.1
 
+- `filter_mut()` flags a `custom_filter_val` wherever a row of
+  `custom_filter_col` contains it, as a FILTER label among the
+  semicolon-separated labels of a record that failed several filters, and
+  warns of a value no row contains instead of stopping. A
+  `custom_filter_col` given without `custom_filter_val` now stops, where it
+  silently filtered on the column's first value.
+
 - `import_vcf_data()` reads FORMAT `SITE_DP`, the read depth at the record's
   position that [vartovcf](https://github.com/clintval/vartovcf) writes, as
   the `total_depth`. Records whose `total_depth` is missing take it from `AD`

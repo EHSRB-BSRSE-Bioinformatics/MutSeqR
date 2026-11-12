@@ -67,9 +67,11 @@ removed from mutation_data.}
 
 \item{custom_filter_val}{A set of values used to filter rows in
 \code{mutation_data} based on \code{custom_filter_col}. If a row in
-\code{custom_filter_col} matches any value in \code{custom_filter_val},
+\code{custom_filter_col} contains any value in \code{custom_filter_val},
 it will either be set to TRUE in the \code{filter_mut} column or removed,
-depending on \code{custom_filter_rm}.}
+depending on \code{custom_filter_rm}. A value is found within a row's
+value, so a FILTER label is found among the semicolon-separated labels of a
+record that failed several filters. A value no row contains gives a warning.}
 
 \item{custom_filter_rm}{A logical value. If TRUE, rows in custom_filter_col
 that match any value in custom_filter_val will be removed from the

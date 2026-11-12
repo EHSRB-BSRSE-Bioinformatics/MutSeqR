@@ -14,3 +14,38 @@ test_that("filter_mut can flag records by their FILTER", {
 
   expect_equal(filtered$filter_mut, c(FALSE, FALSE, TRUE))
 })
+
+test_that("filter_mut flags a FILTER label among several", {
+  dat <- import_vcf_data(test_path("testdata", "vcf_filter.vcf"))
+  dat$filter[3] <- "LOW_HICNT;NEAR_READ_END"
+  filtered <- filter_mut(
+    dat,
+    custom_filter_col = "filter",
+    custom_filter_val = "NEAR_READ_END"
+  )
+
+  expect_equal(filtered$filter_mut, c(FALSE, FALSE, TRUE))
+})
+
+test_that("filter_mut warns of a FILTER label no record carries", {
+  dat <- import_vcf_data(test_path("testdata", "vcf_filter.vcf"))
+  expect_warning(
+    filtered <- filter_mut(
+      dat,
+      custom_filter_col = "filter",
+      custom_filter_val = c("NEAR_READ_END", "STRAND_BIAS")
+    ),
+    "No rows in <filter> contain: STRAND_BIAS"
+  )
+
+  expect_equal(filtered$filter_mut, c(FALSE, FALSE, TRUE))
+})
+
+test_that("filter_mut asks for the values of a custom filter column", {
+  dat <- import_vcf_data(test_path("testdata", "vcf_filter.vcf"))
+
+  expect_error(
+    filter_mut(dat, custom_filter_col = "filter"),
+    "did not specify the filter value"
+  )
+})
