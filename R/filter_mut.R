@@ -36,17 +36,14 @@
 #' FALSE.
 #' @param custom_filter_col The name of the column in mutation_data to apply a
 #' custom filter to. This column will be checked for specific values, as
-#' defined by \code{custom_filter_val}. If any row in this column contains
+#' defined by \code{custom_filter_val}. Values are matched as literal
+#' substrings, not interpreted as regular expressions. If any row contains
 #' one of the specified values, that row will either be flagged in the
 #' \code{filter_mut column} or, if specified by \code{custom_filter_rm},
 #' removed from mutation_data.
 #' @param custom_filter_val A set of values used to filter rows in
-#' \code{mutation_data} based on \code{custom_filter_col}. If a row in
-#' \code{custom_filter_col} contains any value in \code{custom_filter_val},
-#' it will either be set to TRUE in the \code{filter_mut} column or removed,
-#' depending on \code{custom_filter_rm}. A value is found within a row's
-#' value, so a FILTER label is found among the semicolon-separated labels of a
-#' record that failed several filters. A value no row contains gives a warning.
+#' \code{mutation_data} based on \code{custom_filter_col}. Empty and missing
+#' values are not allowed. A value that no row contains gives a warning.
 #' @param custom_filter_rm A logical value. If TRUE, rows in custom_filter_col
 #' that match any value in custom_filter_val will be removed from the
 #' mutation_data. If FALSE, \code{filter_mut} will be set to TRUE for those
@@ -499,9 +496,26 @@ filter_mut <- function(mutation_data,
                 " custom filter column that should be used to apply the filter"
             )
         }
+        if (
+            length(custom_filter_val) == 0L ||
+                anyNA(custom_filter_val) ||
+                any(!nzchar(as.character(custom_filter_val)))
+        ) {
+            stop(
+                "`custom_filter_val` must contain non-empty, non-missing values",
+                call. = FALSE
+            )
+        }
         found <- vapply(
             custom_filter_val,
-            function(value) any(grepl(value, mutation_data[[custom_filter_col]])),
+            function(value) any(
+                grepl(
+                    value,
+                    mutation_data[[custom_filter_col]],
+                    fixed = TRUE
+                ),
+                na.rm = TRUE
+            ),
             logical(1)
         )
         if (!all(found)) {
@@ -510,8 +524,17 @@ filter_mut <- function(mutation_data,
                 paste(custom_filter_val[!found], collapse = ", ")
             )
         }
-        pattern <- paste(custom_filter_val, collapse = "|")
-        custom_filtered_rows <- grepl(pattern, mutation_data[[custom_filter_col]])
+        custom_filtered_rows <- Reduce(
+            `|`,
+            lapply(custom_filter_val, function(value) {
+                grepl(
+                    value,
+                    mutation_data[[custom_filter_col]],
+                    fixed = TRUE
+                )
+            })
+        )
+        custom_filtered_rows[is.na(custom_filtered_rows)] <- FALSE
         custom_filtered_count <- sum(custom_filtered_rows)
         if (custom_filter_rm) {
             if (return_filtered_rows) {

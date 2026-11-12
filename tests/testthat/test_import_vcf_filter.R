@@ -49,3 +49,67 @@ test_that("filter_mut asks for the values of a custom filter column", {
     "did not specify the filter value"
   )
 })
+
+test_that("filter_mut treats a dot as a literal custom filter value", {
+  dat <- import_vcf_data(test_path("testdata", "vcf_filter.vcf"))
+  dat$filter <- c("PASS", ".", "LOW_HICNT;NEAR_READ_END")
+
+  filtered <- filter_mut(
+    dat,
+    custom_filter_col = "filter",
+    custom_filter_val = "."
+  )
+
+  expect_equal(filtered$filter_mut, c(FALSE, TRUE, FALSE))
+})
+
+test_that("filter_mut matches multiple values in compound FILTER entries", {
+  dat <- import_vcf_data(test_path("testdata", "vcf_filter.vcf"))
+  dat$filter <- c("PASS", "LOW_HICNT;NEAR_READ_END", "STRAND_BIAS;LOW_HICNT")
+
+  filtered <- filter_mut(
+    dat,
+    custom_filter_col = "filter",
+    custom_filter_val = c("NEAR_READ_END", "STRAND_BIAS")
+  )
+
+  expect_equal(filtered$filter_mut, c(FALSE, TRUE, TRUE))
+})
+
+test_that("filter_mut rejects empty or missing custom filter values", {
+  dat <- import_vcf_data(test_path("testdata", "vcf_filter.vcf"))
+  expected_error <- "must contain non-empty, non-missing values"
+
+  expect_error(
+    filter_mut(
+      dat,
+      custom_filter_col = "filter",
+      custom_filter_val = character()
+    ),
+    expected_error
+  )
+  expect_error(
+    filter_mut(
+      dat,
+      custom_filter_col = "filter",
+      custom_filter_val = ""
+    ),
+    expected_error
+  )
+  expect_error(
+    filter_mut(
+      dat,
+      custom_filter_col = "filter",
+      custom_filter_val = c("PASS", "")
+    ),
+    expected_error
+  )
+  expect_error(
+    filter_mut(
+      dat,
+      custom_filter_col = "filter",
+      custom_filter_val = c("PASS", NA_character_)
+    ),
+    expected_error
+  )
+})
