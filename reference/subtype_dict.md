@@ -13,6 +13,11 @@ subtype_dict
 
 A vector with corresponding values
 
+## Value
+
+A named character vector mapping subtype resolutions to mutation-data
+column names, with `NA` for the `none` resolution.
+
 ## Examples
 
 ``` r

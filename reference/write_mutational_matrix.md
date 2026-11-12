@@ -84,22 +84,23 @@ example_data <- readRDS(system.file("extdata", "Example_files",
   )
 #> Warning: No depth data provided. Mutation frequencies will not be calculated. Mutation subtype proportions will not be normalized to the total_depth.
   list.files(tempdir())
-#>  [1] "bslib-06dfa953f10b44af4b6ca2dc86bfa180"                                                        
+#>  [1] "bslib-7db77e06500c286c1fb028c3000af854"                                                        
 #>  [2] "downlit"                                                                                       
-#>  [3] "file21df114437c5"                                                                              
-#>  [4] "file21df35e60300"                                                                              
-#>  [5] "file21df4a34f7e3"                                                                              
-#>  [6] "file21df4d78e56f"                                                                              
-#>  [7] "libloc_187_10f1dc1f01615a9f.rds"                                                               
-#>  [8] "libloc_192_4da063ac4afb603c.rds"                                                               
-#>  [9] "libloc_192_5fc0888d6df7bedc.rds"                                                               
-#> [10] "libloc_201_893962b1c5113ec4.rds"                                                               
-#> [11] "mutation_calling_file.txt"                                                                     
-#> [12] "repos_https%3A%2F%2Fbioconductor.org%2Fpackages%2F3.23%2Fdata%2Fannotation%2Fsrc%2Fcontrib.rds"
-#> [13] "sample_base_96_mutational_matrix.txt"                                                          
-#> [14] "temp_libpath21df27f322a8"                                                                      
-#> [15] "test_list.xlsx"                                                                                
-#> [16] "test_single.xlsx"                                                                              
+#>  [3] "fileab7127005e61"                                                                              
+#>  [4] "fileab7129e16e89"                                                                              
+#>  [5] "fileab71611c6c58"                                                                              
+#>  [6] "fileab717465e1bd"                                                                              
+#>  [7] "fileab717e27240"                                                                               
+#>  [8] "libloc_187_10f1dc1f01615a9f.rds"                                                               
+#>  [9] "libloc_192_4da063ac4afb603c.rds"                                                               
+#> [10] "libloc_192_5fc0888d6df7bedc.rds"                                                               
+#> [11] "libloc_201_20f8f50b94430e11.rds"                                                               
+#> [12] "mutation_calling_file.txt"                                                                     
+#> [13] "repos_https%3A%2F%2Fbioconductor.org%2Fpackages%2F3.23%2Fdata%2Fannotation%2Fsrc%2Fcontrib.rds"
+#> [14] "sample_base_96_mutational_matrix.txt"                                                          
+#> [15] "temp_libpathab713f2436a8"                                                                      
+#> [16] "test_list.xlsx"                                                                                
+#> [17] "test_single.xlsx"                                                                              
   # The file is saved in the temporary directory
   # To view the file, use the following code:
   ## output_file <- file.path(tempdir(), "sample_base_96_mutational_matrix.txt")

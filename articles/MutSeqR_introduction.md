@@ -501,6 +501,11 @@ germline mutations by contrasting against a database of known
 polymorphisms, or by using conventional whole-genome sequencing to
 identify germline variants for each sample.
 
+`recurrent_germ = TRUE` additionally flags variants that are identical
+to a germline variant in another sample. This requires `vaf_cutoff < 1`
+so that MutSeqR can classify germline variants. Identical variants have
+the same `contig`, `start`, `end`, `ref`, and `alt` values.
+
 ### Quality Assurance
 
 The
@@ -523,6 +528,31 @@ typical diploid organism, we expect variants to have a vaf ~0, 0.5, or
 homozygous variants respectively. Users should be aware of the ploidy of
 their model system when using this filter. Non-diploid organisms may
 exhibit different vafs.
+
+### Recurrent Variants
+
+`recurrence_limit` flags variants observed in a specified number of
+distinct samples. For example, `recurrence_limit = 2` flags variants
+that occur in two or more samples; duplicate rows from the same sample
+count only once. Set `recurrence_limit = 0`, the default, to skip this
+filter. As with `recurrent_germ`, variants are identical when their
+`contig`, `start`, `end`, `ref`, and `alt` values match.
+
+``` r
+
+# Flag variants that match a germline variant in another sample.
+recurrent_germ_data <- filter_mut(
+  mutation_data = example_data,
+  vaf_cutoff = 0.01,
+  recurrent_germ = TRUE
+)
+
+# Flag variants observed in two or more distinct samples.
+recurrent_variant_data <- filter_mut(
+  mutation_data = example_data,
+  recurrence_limit = 2
+)
+```
 
 `rm_filtered_mut_from_depth = TRUE` Variants flagged in the `filter_mut`
 column will have their `alt_depth` subtracted from the `total_depth`.
@@ -807,11 +837,23 @@ P_s = \frac{\left(\frac{M_s}{D_s}\right)}{\sum_s \left(\frac{M_s}{D_s}\right)}
   
 Where $`P_s`$ is the normalized mutation proportion for subtype $`s`$.
 $`M_s`$ is the group mutation sum for subtype $`s`$. $`D_s`$ is the
-group sum of the `subtype_depth` for subtype $`s`$.  
-If total\*depth is not available for the mutation data,
+group sum of the `subtype_depth` for subtype $`s`$.
+
+When `calculate_depth` is `TRUE`, MutSeqR assumes that the input
+includes a record for every sequenced site. At an SNV subtype
+resolution, a missing combination of grouping variables and sequence
+context therefore indicates that no sequenced bases have that context.
+MutSeqR reports a `subtype_depth` of 0 and retains `sum_min` and
+`sum_max` as 0 for these combinations, but reports the MF and subtype
+proportion as `NA`: a mutation frequency cannot be calculated without
+sequenced bases. These `NA` values are excluded when normalizing the
+proportions of the remaining subtypes.
+
+If `total_depth` is not available for the mutation data,
 [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
 will return the subtype mutation counts per group. It will also
-calculate subtype proportions, without normalizing to the total_depth:  
+calculate subtype proportions, without normalizing to the
+`total_depth`:  
 ``` math
 P'\_s = \frac{M_s}{M*{total}}
 ```
@@ -929,29 +971,86 @@ function may prioritize retaining the re-aligned* *total_depth over the
 total_depth assigned to the no_variant. This* *prioritization can be
 activated with the `correct_depth_by_indel_priority`* *parameter.*
 
-### Precalculated Depth
+### What if I don’t have the total depth in my data?
 
-For mutation data that does not include a `total_depth` value for each
-sequenced site, precalculated depths for the specified groups can be
-supplied separately to
+If your mutation data do not include `total_depth` for every sequenced
+site, supply precalculated depths to
+[`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md).
+For example, SMM-Seq VCF files that contain only variant sites do not
+provide the depth needed to calculate mutation frequencies across all
+sequenced sites.
+
+You can calculate depths from ECS consensus BAM files or request them
+from your ECS technology provider. Where possible, obtain depths for
+each sample at each of the 64 trinucleotide contexts (`base_192`
+resolution). These depths support all subtype resolutions, including
+trinucleotide analyses.
+
+Pass the depth table to `precalc_depth_data` as either a data frame or a
+file path, and set `calculate_depth = FALSE`. For file input, use
+`d_sep` to specify the delimiter if needed.
+
+#### Choose the depth resolution
+
+The depth table must support the requested `subtype_resolution`. It can
+contain depths at that resolution or at a finer context resolution from
+which the required depths can be derived:
+
+- **Global depths:** use a `group_depth` column for the total depth of
+  each sample or group. These depths support `none` and `type`
+  resolutions.
+- **Context-resolved depths:** use a `subtype_depth` column and exactly
+  one context column identifying the input resolution. See
+  @ref(tab:subtypes-cols) for the context column names. For example,
+  `base_6` depths distinguish C:G and T:A positions, while `base_192`
+  depths distinguish all 64 trinucleotide contexts.
+
 [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
-through the `precalc_depth_data` parameter. Depth should be provided at
-the correct subtype resolution for each level of the specified grouping
-variable. This parameter will accept either a data frame or a filepath
-to import the depth data. Required columns are:
+sums context depths when deriving a coarser resolution, including global
+depths. Not all conversions are possible: normalized `base_96` depths,
+for example, cannot recover the strand-specific depths needed for
+`base_12`. The table below lists the supported conversions.
 
-1.  The user-defined cols_to_group variable(s)
-2.  `group_depth`: the `total_depth` summed across the cols_to_group.
-3.  The context column for the specified `subtype_resolution`. Only
-    applicable if using the SNV resolutions (base_6, base_12, base_96,
-    base_192). Column names are listed in the table above.
-4.  `subtype_depth`: the `total_depth` summed across the cols_to_group
-    for each context. Only applicable if using the SNV resolutions.
+| Input depth resolution | Resolutions available to [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md) |
+|----|----|
+| Global | `none`, `type` |
+| `base_6` (C, T) | `none`, `type`, `base_6` |
+| `base_12` (A, C, G, T) | `none`, `type`, `base_6`, `base_12` |
+| `base_96` (normalized trinucleotides) | `none`, `type`, `base_6`, `base_96` |
+| `base_192` (trinucleotides) | `none`, `type`, `base_6`, `base_12`, `base_96`, `base_192` |
 
-*Example 3.8. Use precalculated depth values to calculate the global per
-sample MF.*
+(#tab:depth-resolution-derivation) Resolutions that can be derived from
+each precalculated depth input. {.table}
 
-**Table 13.** ‘sample_depth’ - Precalculated Depth Data per sample.
+#### Match depths to the output groups
+
+Grouping and sequence-context resolution are handled separately. Use
+`cols_to_group` to choose whether mutation frequencies are calculated
+per sample, per experimental group (ex dose), or for another combination
+of variables.
+
+The depth table must support the desired grouping. Supply depth at the
+specified group (ex per sample, per experimental variable, etc.) or
+derive group depths from per sample input.
+[`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+sums depths across samples to obtain depth for a coarser grouping
+variable (keeping contexts seperate when present).
+
+To automatically map per sample depth to a coarse grouping variable,
+[`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+uses the `sample` column to look up those variables in `mutation_data`.
+Each sample must map to exactly one combination of grouping values.
+Sample-wide depths cannot be split across multiple groups, and depths
+must cover every sample being mapped. Missing sample or output-group
+depths cause an error. As an example, a depth table containing only
+columns for sample and group_depth can be used to calculate mutation
+frequencies grouped by dose.
+
+#### Example depth tables
+
+The following tables show the expected precalculated depth data at each
+subtype resolution. The context-resolved tables are available in
+MutSeqRData.
 
 ``` r
 
@@ -964,44 +1063,8 @@ sample_depth <- data.frame(
                   743311822, 799605045, 677693752, 701163532)
 )
 
-DT::datatable(sample_depth)
+base_6 <- eh[["EH9862"]]
 ```
-
-``` r
-
-mf_data_global_precalc <- calculate_mf(
-  mutation_data = example_data,
-  cols_to_group = "sample",
-  subtype_resolution = "none",
-  calculate_depth = FALSE,
-  precalc_depth_data = sample_depth
-)
-```
-
-**Table 14.** Mutation Frequency per Sample, Precalculated Depth
-Example.
-
-*Example 3.9. Use precalculated depth values to calculate the base_6 per
-sample MF.*
-
-``` r
-
-mf_data_6_precalc <- calculate_mf(
-  mutation_data = example_data,
-  cols_to_group = "sample",
-  subtype_resolution = "base_6",
-  calculate_depth = FALSE,
-  precalc_depth = eh[["EH9862"]]
-)
-```
-
-**Table 16.** Precalculated Depth Data per sample for base_6 subtype
-resolution.
-
-**Table 17.** Frequency and Proportions of 6-base Subtypes per Sample,
-Precalculated Depth Example.
-
-View examples for base_12, base_96, and base_192 below:
 
 ``` r
 
@@ -1016,6 +1079,154 @@ base_96 <- eh[["EH9864"]]
 ``` r
 
 base_192 <- eh[["EH9865"]]
+```
+
+**Table 13.** Precalculated depth data at the global resolution.
+Applicable to `subtype_resolution` = “none” or “type”.
+
+**Table 14.** Precalculated depth data at the base_6 resolution.
+
+**Table 15.** Precalculated depth data at the base_12 resolution.
+
+**Table 16.** Precalculated depth data at the base_96 resolution.
+
+**Table 17.** Precalculated depth data at the base_192 resolution.
+
+*Example 3.8. Use precalculated depth values to calculate the global per
+sample MF.*
+
+``` r
+
+mf_data_global_precalc <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "sample",
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_depth
+)
+```
+
+**Table 18.** Mutation Frequency per Sample, Precalculated Depth
+Example.
+
+*Example 3.9. Use precalculated depth values to calculate the base_6 per
+sample MF.*
+
+``` r
+
+mf_data_6_precalc <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "sample",
+  subtype_resolution = "base_6",
+  calculate_depth = FALSE,
+  precalc_depth_data = base_6
+)
+```
+
+**Table 19.** Frequency and Proportions of 6-base Subtypes per Sample,
+Precalculated Depth Example.
+
+*Example 3.10. Use base_192 depth data directly for any subtype
+resolution.*
+
+Depth data at the base_192 resolution retains the reference base and
+both flanking nucleotides. Therefore,
+[`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+can derive the depth needed for every supported `subtype_resolution`
+from the same `base_192` data frame.
+
+``` r
+
+resolutions <- c("none", "type", "base_6", "base_12", "base_96", "base_192")
+mf_data_from_base_192 <- lapply(resolutions, function(resolution) {
+  calculate_mf(
+    mutation_data = example_data,
+    cols_to_group = "sample",
+    subtype_resolution = resolution,
+    calculate_depth = FALSE,
+    precalc_depth_data = base_192
+  )
+})
+names(mf_data_from_base_192) <- resolutions
+
+mf_data_base_96_from_base_192 <- mf_data_from_base_192$base_96
+```
+
+*Example 3.11. Calculate MF per dose group using depths already summed
+by dose group.*
+
+When grouping by an experimental variable, like dose group, supply depth
+calculated per experimental variable.
+
+We will first generate a depth per dose table from the sample_depth and
+sample metadata extracted from the example_data for the purpose of this
+example.
+
+``` r
+
+# generate a depth table per dose for this example
+dose_group_depth <- sample_depth %>%
+  dplyr::left_join(
+    dplyr::distinct(example_data, sample, dose_group),
+    by = "sample"
+  ) %>%
+  dplyr::group_by(dose_group) %>%
+  dplyr::summarise(group_depth = sum(group_depth), .groups = "drop")
+
+mf_data_dose_precalc <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "dose_group",
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = dose_group_depth
+)
+```
+
+*Example 3.12. Calculate MF per dose group using depths supplied per
+sample.*
+
+Alternatively, supply `sample_depth` without summing it first.
+[`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+looks up each sample’s `dose_group` in `example_data` and pools the
+depths automatically. Each sample must belong to exactly one dose group,
+and every sample must have a depth value. This produces the same result
+as Example 3.11.
+
+``` r
+
+mf_data_dose_from_samples <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = "dose_group",
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_depth
+)
+```
+
+*Example 3.13. Calculate MF per sample and genomic target using
+precalculated depths.*
+
+For a higher-resolution grouping, supply depths for each sample and
+genomic target (`label`).
+
+For the purposes of this exmaple, we will extract the depth table from
+`mf_data_rg`, the sample-by-target summary calculated in Example 3.2. A
+sample-wide depth cannot be split into target-specific depths, so both
+grouping columns must be present in the depth table.
+
+``` r
+
+sample_target_depth <- mf_data_rg %>%
+  dplyr::select(sample, label, group_depth)
+
+mf_data_rg_precalc <- calculate_mf(
+  mutation_data = example_data,
+  cols_to_group = c("sample", "label"),
+  subtype_resolution = "none",
+  calculate_depth = FALSE,
+  precalc_depth_data = sample_target_depth,
+  retain_metadata_cols = "dose_group"
+)
 ```
 
 ### Summary Table
@@ -1302,7 +1513,13 @@ supplied, it must contain one row for each of the 32 normalized
 trinucleotide contexts for every sample. The report derives global and
 base6 depths from those rows when their respective files are omitted.
 Explicit global and base6 files take precedence for their own
-resolutions.
+resolutions. Alternatively, provide one depth file at any supported
+context resolution with `sample`, `subtype_depth`, and the context
+column named by `denominator_dict[subtype_resolution]`. The report
+derives all lower resolutions that can be recovered from the input. A
+Base192 file can produce Base96, Base12, Base6, and global depths. A
+Base96 file can produce Base6 and global depths; Base12 cannot be
+reconstructed because Base96 combines reverse-complement strands.
 
 *In order for MutSeqR to calculate the depth from the mutation data,
 the* *data must have the depth-value for **every sequenced site**. It is
@@ -1333,6 +1550,12 @@ calculate the depth from the mutation data*.
   contexts explicitly. The report can derive omitted global and base6
   files from this table. The file path will be read as
   projectdir/precalc_depth_data_base96.
+- *precalc_depth_data*: Optional path to one precalculated depth file at
+  any supported subtype resolution. It must contain `sample`,
+  `subtype_depth`, and one context column for that resolution. All
+  contexts must be present for each sample, including rows with zero
+  depth. Do not combine this input with the resolution-specific files
+  above. The path is read as projectdir/precalc_depth_data.
 - *precalc_depth_data_rg*: Optional file path to the precalculated
   per-sample total_depth data for each target region. This is the total
   number of bases sequenced per sample for each region. Columns are
@@ -1402,6 +1625,12 @@ skip this section.
   counts.
 - *snv_in_germ_mnv*: A logical variable indicating whether filter_mut
   should flag SNVs that overlap with germline MNVs for filtering.
+- *recurrent_germ*: A logical variable indicating whether filter_mut
+  should flag variants identical to a germline variant in another
+  sample. Requires vaf_cutoff \< 1.
+- *recurrence_limit*: A non-negative integer. filter_mut will flag
+  variants found in this many or more distinct samples. Set to 0 to skip
+  this filter.
 - *rm_abnormal_vaf*: A logical variable indicaring whether filter_mut
   should remove records where the VAF is between 0.05-0.45 or between
   0.55-0.95.
@@ -1496,19 +1725,44 @@ The Summary Report consists of the following sections.
 If an experimental variable is not provided, statistical analysis will
 be skipped.
 
+### Summary Report Dependencies
+
+The summary report uses package dependencies that are Optional for
+MutSeqR functionality. The report will check that you have installed all
+required packages before running. Use the following code to install all
+required packages:
+
+``` r
+
+install.packages(c(
+  "DT",
+  "bs4Dash",
+  "colorspace",
+  "dendsort",
+  "ggh4x",
+  "ggrepel",
+  "gtools",
+  "packcircles",
+  "patchwork",
+  "RColorBrewer",
+  "doBy", "car", "lme4", "withr",
+  "openxlsx", "BSgenome"
+))
+```
+
 ## References
 
 ## Appendix
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-10-08 r90650)
+    ## R Under development (unstable) (2026-11-11 r90876)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.5 LTS
+    ## Running under: Ubuntu 26.04.1 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
     ## 
     ## locale:
     ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -1538,7 +1792,7 @@ be skipped.
     ## loaded via a namespace (and not attached):
     ##  [1] DBI_1.3.0                   bitops_1.1-0               
     ##  [3] httr2_1.3.0                 rlang_1.3.0                
-    ##  [5] magrittr_2.0.5              otel_0.2.0                 
+    ##  [5] magrittr_2.0.5              otel_0.3.0                 
     ##  [7] matrixStats_1.5.0           compiler_4.7.0             
     ##  [9] RSQLite_3.53.3              GenomicFeatures_1.64.0     
     ## [11] png_0.1-9                   systemfonts_1.3.2          
@@ -1547,7 +1801,7 @@ be skipped.
     ## [17] fastmap_1.2.0               labeling_0.4.3             
     ## [19] Rsamtools_2.28.0            rmarkdown_2.32             
     ## [21] ragg_1.5.2                  purrr_1.2.2                
-    ## [23] bit_4.6.0                   xfun_0.61                  
+    ## [23] bit_4.6.0                   xfun_0.62                  
     ## [25] cachem_1.1.0                cigarillo_1.2.1            
     ## [27] jsonlite_2.0.0              blob_1.3.0                 
     ## [29] DelayedArray_0.38.2         BiocParallel_1.46.0        
@@ -1559,7 +1813,7 @@ be skipped.
     ## [41] Matrix_1.7-6                tidyselect_1.2.1           
     ## [43] dichromat_2.0-1             abind_1.4-8                
     ## [45] yaml_2.3.12                 codetools_0.2-20           
-    ## [47] curl_8.0.0                  lattice_0.23-1             
+    ## [47] curl_8.1.0                  lattice_0.23-1             
     ## [49] tibble_3.3.1                withr_3.0.3                
     ## [51] Biobase_2.72.0              KEGGREST_1.52.2            
     ## [53] S7_0.2.2                    evaluate_1.0.5             

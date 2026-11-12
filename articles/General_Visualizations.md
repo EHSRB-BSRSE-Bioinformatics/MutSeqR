@@ -63,7 +63,16 @@ mutation’s alternative depth.
 
 [`plot_radar()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_radar.md)
 is used to visualize mutation frequencies across specified groups as a
-radar/spider plot. Plots may also be facetted across a second group.
+radar/spider plot.
+
+Data must include a `response_col` (ex. mf_min) and a `label_col` (the
+variable by which to plot). You may plot multiple groups of data by
+specifying the group with `group_col`. The radar plots for each group
+will be overlaid on top of each other in different colours. Colour may
+be customized with `custom_palette`. Alternatively, you may facet the
+radar plots by `group_col` by setting `facet = TRUE`. Finally, you may
+colour the label values by different colours by providing a named vector
+to `label_colors`.
 
 *Example 2. Plot the mutation frequency for each of the 20 genomic
 targets of the TwinStrand Mutagenesis Panel. Facet panels by dose
@@ -71,31 +80,27 @@ group.*
 
 First we will calculate the average MFmin for each genomic target across
 dose groups. We will also define the order in which the genomic targets
-should appear on our plot. We will arrange genomic targets based on
-their genic context so that we can visualize differences in mutation
-frequency driven be genic context.
+should appear on our plot. We will arrange genomic targets ffrom low to
+high at the High dose group. We will colour our labels based on genic
+context so that we can visualize differences in mutation frequency
+driven be genic context. Genic regions will be in black and integernic
+regions will be labeled in red.
 
 ``` r
 
 mf <- calculate_mf(
     mutation_data = example_data,
     cols_to_group = c("sample", "label"),
-    retain_metadata_cols = c("dose_group", "genic_context")
+    retain_metadata_cols = "dose_group"
 )
-
-label_order <- mf %>%
-    dplyr::arrange(genic_context) %>%
-    dplyr::pull(label) %>%
-    unique()
-
 avg <- mf %>%
     dplyr::group_by(dose_group, label) %>%
     dplyr::summarise(mean_mf = mean(mf_min))
 
-avg$label <- factor(avg$label, levels = label_order)
-avg$dose_group <- factor(avg$dose_group,
-    levels = c("Control", "Low", "Medium", "High")
-)
+label_order <- avg %>%
+  dplyr::filter(dose_group == "High") %>%
+  dplyr::arrange(mean_mf) %>%
+  dplyr::pull(label)
 ```
 
 ``` r
@@ -104,8 +109,32 @@ plot <- plot_radar(
     mf_data = avg,
     response_col = "mean_mf",
     label_col = "label",
-    facet_col = "dose_group",
-    indiv_y = FALSE
+    group_col = "dose_group",
+    facet = FALSE,
+    label_order = "custom",
+    label_order_input = label_order,
+    label_colors = c(
+    "chr1" = "#ff0000",
+    "chr1.2"    = "#000000",
+    "chr2" = "#ff0000",
+    "chr3"  = "#000000",
+    "chr4"  = "#ff0000",
+    "chr5"  = "#ff0000",
+    "chr6"  = "#000000",
+    "chr7"  = "#000000",
+    "chr8"  = "#ff0000",
+    "chr9"  = "#000000",
+    "chr10" = "#ff0000",
+    "chr11" = "#ff0000",
+    "chr12" = "#000000",
+    "chr13" = "#000000",
+    "chr14" = "#ff0000",
+    "chr15" = "#000000",
+    "chr16" = "#ff0000",
+    "chr17" = "#ff0000",
+    "chr18" = "#ff0000",
+    "chr19" = "#000000"
+  )
 )
 ```
 
@@ -173,13 +202,13 @@ separated by genomic target.
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-10-08 r90650)
+    ## R Under development (unstable) (2026-11-11 r90876)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.5 LTS
+    ## Running under: Ubuntu 26.04.1 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
     ## 
     ## locale:
     ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -201,7 +230,7 @@ separated by genomic target.
     ## loaded via a namespace (and not attached):
     ##   [1] DBI_1.3.0                   bitops_1.1-0               
     ##   [3] httr2_1.3.0                 rlang_1.3.0                
-    ##   [5] magrittr_2.0.5              otel_0.2.0                 
+    ##   [5] magrittr_2.0.5              otel_0.3.0                 
     ##   [7] matrixStats_1.5.0           compiler_4.7.0             
     ##   [9] RSQLite_3.53.3              GenomicFeatures_1.64.0     
     ##  [11] png_0.1-9                   systemfonts_1.3.2          
@@ -211,7 +240,7 @@ separated by genomic target.
     ##  [19] XVector_0.52.0              labeling_0.4.3             
     ##  [21] Rsamtools_2.28.0            rmarkdown_2.32             
     ##  [23] ragg_1.5.2                  purrr_1.2.2                
-    ##  [25] bit_4.6.0                   xfun_0.61                  
+    ##  [25] bit_4.6.0                   xfun_0.62                  
     ##  [27] cachem_1.1.0                cigarillo_1.2.1            
     ##  [29] jsonlite_2.0.0              blob_1.3.0                 
     ##  [31] DelayedArray_0.38.2         BiocParallel_1.46.0        
@@ -225,7 +254,7 @@ separated by genomic target.
     ##  [47] IRanges_2.46.0              Matrix_1.7-6               
     ##  [49] tidyselect_1.2.1            dichromat_2.0-1            
     ##  [51] abind_1.4-8                 yaml_2.3.12                
-    ##  [53] codetools_0.2-20            curl_8.0.0                 
+    ##  [53] codetools_0.2-20            curl_8.1.0                 
     ##  [55] lattice_0.23-1              tibble_3.3.1               
     ##  [57] withr_3.0.3                 Biobase_2.72.0             
     ##  [59] KEGGREST_1.52.2             S7_0.2.2                   

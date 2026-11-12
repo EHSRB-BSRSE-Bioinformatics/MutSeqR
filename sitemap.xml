@@ -14,6 +14,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/index.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/news/index.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/BS_org_map.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/alt_depth_from_ad.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/annotate_cpg_sites.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/bmd_proast.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.html</loc></url>
@@ -25,6 +26,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/context_list.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/denominator_dict.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/dm_loglik_ridge_stable.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/estimate_total_depth.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.plot.gui.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.plot.result.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/f.proast.html</loc></url>
@@ -57,6 +59,7 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_trinucleotide.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_trinucleotide_heatmap.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/populate_sequence_context.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/prepare_report_depth_data.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/print_ascii_art.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/rdm_fast.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/rename_columns.html</loc></url>
@@ -72,7 +75,9 @@
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_dict.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/subtype_list.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/validate_BS_genome.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_alt_to_character.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_sample_fix.html</loc></url>
+<url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_to_data_frame.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_depth_data.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_excel.html</loc></url>
 <url><loc>https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/write_mutation_calling_file.html</loc></url>

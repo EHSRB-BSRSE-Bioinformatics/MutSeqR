@@ -93,20 +93,23 @@ are adjusted for multiple comparisons using the Sidak method.
 ### Goodness of Fit
 
 The `model_mf` function will output the Pearson residuals appended to
-the `mf_data`. The row with the highest residual will be printed to the
-console so that users may assess it as an outlier. Additionally, Pearson
-residuals will be plotted as a histogram and a QQ-plot to check for
-deviances from model assumptions. We assume that residuals will follow a
-normal distribution with a mean of 0. Thus, we expect the histogram to
-follow a bell curve and the QQ-plot to be plotted along the y=x line.
+the `mf_data`. The row with the largest absolute residual will be
+printed to the console so that users may assess it as an outlier.
+Additionally, Pearson residuals will be plotted as a histogram and a
+QQ-plot to assess model fit. These are diagnostic plots used to assess
+residual patterns and large residuals alongside dispersion and the study
+design. Generally, we assume that residuals will follow a normal
+distribution with a mean of 0. Thus, we expect the histogram to follow a
+bell curve and the QQ-plot to be plotted along the y=x line.
 
 ### General Usage
 
-Mutation data should first be summarised by sample using
+Mutation data should first be summarised by biological sample using
+[`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md),
+with `summary = TRUE` (the default). Be sure to retain the columns for
+experimental variables of interest using the `retain_metadata_cols`
+parameter. See MutSeqR_introduction.Rmd for more information on using
 [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md).
-The `mf_data` should be output as a summary table. Be sure to retain the
-columns for experimental variables of interest using the
-`retain_metadata_cols` parameter.
 
 You may specify factors and covariates for your model using the
 `fixed_effects` and `random_effects` parameters respectively. If more
@@ -118,9 +121,9 @@ level specified as the reference level will be used as the intercept
 when calculating model coefficients.
 
 You must specify the columns in your `mf_data` that contain the mutation
-counts and the total_depth per sample using the `muts` and
-`total_counts` parameters respectively. Default values should be
-sufficient if the mf_data was created using
+counts and the total_depth per sample using the `muts` and `total_count`
+parameters respectively. Default values should be sufficient if the
+mf_data was created using
 [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md).
 
 To perform pairwise comparisons between levels of your fixed effects,
@@ -145,7 +148,7 @@ corrected for multiple comparisons using the Sidak method.
 
 The function will output a list of results.
 
-- model: the glmm or glmer model object.
+- model: the fitted glm or glmer model object.
 - model_formula: the formula given to glm or glmer.
 - model_data: the supplied `mf_data` with added column for Pearson
   residuals.
@@ -154,12 +157,11 @@ The function will output a list of results.
   fixed_effects. See
   [car::Anova.](https://www.rdocumentation.org/packages/car/versions/1.0-9/topics/Anova).
 - residuals_histogram: the Pearson residuals plotted as a histogram.
-  This is used to check whether the variance is normally distributed. A
-  symmetric bell-shaped histogram, evenly distributed around zero
-  indicates that the normality assumption is likely to be true.
+  This is used to inspect residual spread, asymmetry, and possible
+  outliers.
 - residuals_qq_plot: the Pearson residuals plotted in a
-  quantile-quantile plot. For a normal distribution, we expect points to
-  roughly follow the y=x line.
+  quantile-quantile plot. Points close to the reference line suggest
+  approximate normality, but do not by themselves validate the model.
 - point_estimates_matrix: the contrast matrix used to generate
   point-estimates for the fixed effects.
 - point_estimates: the point estimates for the fixed effects.
@@ -235,8 +237,7 @@ GLM residuals of MFmin modelled as an effect of Dose. x is pearson’s
 residuals, y is frequency. Plotted to validate model assumptions. n =
 24.
 
-The residuals form a bell-curve with a mean of 0 indicating that they
-follow a normal distribution.
+Inspect the histogram for asymmetry and unusually large residuals.
 
 ##### Residuals QQ-plot
 
@@ -251,9 +252,8 @@ quantile-quantile plot. Y is the pearson’s residuals of the model in
 ascending order x is the quantiles of standard normal distribution for n
 of 24. Plotted to validate model assumptions.
 
-The QQ-plot depicts points ollowing the y=x line, indicating that
-residuals follow a normal distribution. Our model assumptions have been
-validated.
+Inspect departures from the QQ reference line alongside dispersion and
+other residual diagnostics.
 
 ##### Model Summary
 
@@ -285,8 +285,7 @@ model_by_dose$summary
     ## Number of Fisher Scoring iterations: 5
 
 The model summary indicates that dose group has a significant effect on
-mutation frequency. Our model fit a quasibiniomal model with a low
-dispersion parameter (4.6) indicating a good fit.
+mutation frequency. The example fits a quasibinomial model.
 
 ##### Model Estimates
 
@@ -397,7 +396,8 @@ expressed as a quantile-quantile plot. Y is the pearson’s residuals of
 the model in ascending order x is the quantiles of standard normal
 distribution for n of 24. Plotted to validate model assumptions.
 
-The histogram and the QQ plot indicate normally distributed residuals.
+Assess these residual plots alongside the mixed-model fit and study
+design.
 
 ##### Model Summary
 
@@ -427,86 +427,86 @@ model_by_target$summary
     ## 
     ## Fixed effects:
     ##                                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                  -1.596e+01  2.225e-01 -71.723  < 2e-16 ***
-    ## dose_groupHigh                1.903e+00  2.398e-01   7.938 2.05e-15 ***
-    ## dose_groupLow                 6.208e-01  2.741e-01   2.265 0.023521 *  
-    ## dose_groupMedium              1.293e+00  2.614e-01   4.948 7.51e-07 ***
-    ## labelchr1.2                   1.382e-01  2.828e-01   0.489 0.625060    
-    ## labelchr10                    4.517e-01  2.685e-01   1.682 0.092520 .  
-    ## labelchr11                    8.366e-01  2.644e-01   3.164 0.001557 ** 
-    ## labelchr12                    5.183e-01  2.664e-01   1.946 0.051662 .  
-    ## labelchr13                    1.984e-02  2.911e-01   0.068 0.945662    
-    ## labelchr14                    6.560e-01  2.674e-01   2.453 0.014166 *  
-    ## labelchr15                    5.084e-01  2.664e-01   1.909 0.056323 .  
-    ## labelchr16                    7.757e-01  2.696e-01   2.877 0.004016 ** 
-    ## labelchr17                    4.593e-01  2.888e-01   1.590 0.111755    
-    ## labelchr18                   -7.519e-03  2.962e-01  -0.025 0.979746    
-    ## labelchr19                   -2.378e-01  3.088e-01  -0.770 0.441157    
-    ## labelchr2                     6.258e-01  2.664e-01   2.349 0.018810 *  
-    ## labelchr3                     2.568e-01  2.867e-01   0.896 0.370334    
-    ## labelchr4                     5.106e-01  2.777e-01   1.839 0.065945 .  
-    ## labelchr5                     4.209e-01  2.828e-01   1.488 0.136683    
-    ## labelchr6                     2.937e-01  2.810e-01   1.045 0.295958    
-    ## labelchr7                    -3.983e-04  2.962e-01  -0.001 0.998927    
-    ## labelchr8                     4.383e-01  2.911e-01   1.506 0.132186    
-    ## labelchr9                     7.000e-01  2.674e-01   2.618 0.008852 ** 
-    ## dose_groupHigh:labelchr1.2   -2.483e-01  3.026e-01  -0.821 0.411880    
-    ## dose_groupLow:labelchr1.2    -2.540e-03  3.463e-01  -0.007 0.994147    
-    ## dose_groupMedium:labelchr1.2 -2.494e-02  3.293e-01  -0.076 0.939613    
-    ## dose_groupHigh:labelchr10    -4.750e-01  2.885e-01  -1.646 0.099669 .  
-    ## dose_groupLow:labelchr10     -3.356e-01  3.364e-01  -0.998 0.318378    
-    ## dose_groupMedium:labelchr10  -3.318e-01  3.171e-01  -1.046 0.295381    
-    ## dose_groupHigh:labelchr11    -5.554e-02  2.812e-01  -0.197 0.843447    
-    ## dose_groupLow:labelchr11      4.252e-01  3.178e-01   1.338 0.180873    
-    ## dose_groupMedium:labelchr11   4.359e-01  3.032e-01   1.438 0.150523    
-    ## dose_groupHigh:labelchr12    -1.676e-01  2.839e-01  -0.591 0.554833    
-    ## dose_groupLow:labelchr12     -1.544e-01  3.291e-01  -0.469 0.638845    
-    ## dose_groupMedium:labelchr12  -1.756e-01  3.119e-01  -0.563 0.573379    
-    ## dose_groupHigh:labelchr13    -3.978e-01  3.128e-01  -1.272 0.203483    
-    ## dose_groupLow:labelchr13      2.170e-03  3.565e-01   0.006 0.995143    
-    ## dose_groupMedium:labelchr13  -2.386e-01  3.429e-01  -0.696 0.486507    
-    ## dose_groupHigh:labelchr14     1.207e-01  2.836e-01   0.426 0.670457    
-    ## dose_groupLow:labelchr14      2.822e-01  3.231e-01   0.873 0.382465    
-    ## dose_groupMedium:labelchr14   4.877e-01  3.058e-01   1.595 0.110778    
-    ## dose_groupHigh:labelchr15    -1.145e+00  2.938e-01  -3.898 9.68e-05 ***
-    ## dose_groupLow:labelchr15     -4.122e-01  3.351e-01  -1.230 0.218786    
-    ## dose_groupMedium:labelchr15  -6.712e-01  3.218e-01  -2.086 0.036991 *  
-    ## dose_groupHigh:labelchr16    -2.607e-01  2.881e-01  -0.905 0.365530    
-    ## dose_groupLow:labelchr16      1.133e-01  3.283e-01   0.345 0.729968    
-    ## dose_groupMedium:labelchr16   6.542e-02  3.128e-01   0.209 0.834334    
-    ## dose_groupHigh:labelchr17     1.326e-01  3.062e-01   0.433 0.664948    
-    ## dose_groupLow:labelchr17      3.705e-01  3.461e-01   1.071 0.284375    
-    ## dose_groupMedium:labelchr17   3.523e-01  3.311e-01   1.064 0.287312    
-    ## dose_groupHigh:labelchr18     3.822e-01  3.121e-01   1.225 0.220757    
-    ## dose_groupLow:labelchr18      4.491e-01  3.529e-01   1.273 0.203175    
-    ## dose_groupMedium:labelchr18   5.986e-01  3.350e-01   1.787 0.073985 .  
-    ## dose_groupHigh:labelchr19     6.478e-02  3.277e-01   0.198 0.843289    
-    ## dose_groupLow:labelchr19      3.157e-01  3.693e-01   0.855 0.392672    
-    ## dose_groupMedium:labelchr19   3.342e-01  3.526e-01   0.948 0.343213    
-    ## dose_groupHigh:labelchr2     -6.041e-01  2.872e-01  -2.104 0.035416 *  
-    ## dose_groupLow:labelchr2      -2.459e-01  3.316e-01  -0.742 0.458322    
-    ## dose_groupMedium:labelchr2   -2.993e-01  3.141e-01  -0.953 0.340667    
-    ## dose_groupHigh:labelchr3     -1.072e+00  3.181e-01  -3.371 0.000749 ***
-    ## dose_groupLow:labelchr3      -5.817e-01  3.705e-01  -1.570 0.116395    
-    ## dose_groupMedium:labelchr3   -6.911e-01  3.507e-01  -1.971 0.048744 *  
-    ## dose_groupHigh:labelchr4     -2.788e-01  2.971e-01  -0.939 0.347874    
-    ## dose_groupLow:labelchr4      -1.492e-01  3.438e-01  -0.434 0.664228    
-    ## dose_groupMedium:labelchr4   -5.001e-02  3.238e-01  -0.154 0.877254    
-    ## dose_groupHigh:labelchr5     -2.603e-01  3.026e-01  -0.860 0.389725    
-    ## dose_groupLow:labelchr5      -4.738e-02  3.475e-01  -0.136 0.891550    
-    ## dose_groupMedium:labelchr5   -1.236e-01  3.315e-01  -0.373 0.709370    
-    ## dose_groupHigh:labelchr6     -2.353e-01  3.002e-01  -0.784 0.433083    
-    ## dose_groupLow:labelchr6      -4.394e-02  3.452e-01  -0.127 0.898716    
-    ## dose_groupMedium:labelchr6   -2.395e-01  3.311e-01  -0.724 0.469372    
-    ## dose_groupHigh:labelchr7      1.376e-01  3.135e-01   0.439 0.660753    
-    ## dose_groupLow:labelchr7       4.021e-01  3.534e-01   1.138 0.255143    
-    ## dose_groupMedium:labelchr7    5.092e-01  3.359e-01   1.516 0.129484    
-    ## dose_groupHigh:labelchr8      2.822e-01  3.078e-01   0.917 0.359175    
-    ## dose_groupLow:labelchr8       5.457e-01  3.458e-01   1.578 0.114497    
-    ## dose_groupMedium:labelchr8    6.388e-01  3.302e-01   1.934 0.053087 .  
-    ## dose_groupHigh:labelchr9     -4.547e-01  2.870e-01  -1.584 0.113151    
-    ## dose_groupLow:labelchr9      -1.701e-01  3.308e-01  -0.514 0.607104    
-    ## dose_groupMedium:labelchr9   -4.265e-01  3.175e-01  -1.343 0.179168    
+    ## (Intercept)                  -15.956883   0.222479 -71.723  < 2e-16 ***
+    ## dose_groupHigh                 1.903274   0.239758   7.938 2.05e-15 ***
+    ## dose_groupLow                  0.620796   0.274101   2.265 0.023523 *  
+    ## dose_groupMedium               1.293410   0.261421   4.948 7.51e-07 ***
+    ## labelchr1.2                    0.138189   0.282785   0.489 0.625074    
+    ## labelchr10                     0.451672   0.268494   1.682 0.092522 .  
+    ## labelchr11                     0.836590   0.264420   3.164 0.001557 ** 
+    ## labelchr12                     0.518344   0.266373   1.946 0.051663 .  
+    ## labelchr13                     0.019838   0.291119   0.068 0.945672    
+    ## labelchr14                     0.655952   0.267409   2.453 0.014167 *  
+    ## labelchr15                     0.508374   0.266371   1.909 0.056324 .  
+    ## labelchr16                     0.775683   0.269628   2.877 0.004016 ** 
+    ## labelchr17                     0.459345   0.288834   1.590 0.111758    
+    ## labelchr18                    -0.007524   0.296168  -0.025 0.979734    
+    ## labelchr19                    -0.237843   0.308780  -0.770 0.441141    
+    ## labelchr2                      0.625774   0.266370   2.349 0.018811 *  
+    ## labelchr3                      0.256826   0.286692   0.896 0.370346    
+    ## labelchr4                      0.510624   0.277697   1.839 0.065947 .  
+    ## labelchr5                      0.420856   0.282780   1.488 0.136677    
+    ## labelchr6                      0.293673   0.280991   1.045 0.295961    
+    ## labelchr7                     -0.000395   0.296168  -0.001 0.998936    
+    ## labelchr8                      0.438290   0.291117   1.506 0.132184    
+    ## labelchr9                      0.699994   0.267408   2.618 0.008853 ** 
+    ## dose_groupHigh:labelchr1.2    -0.248278   0.302567  -0.821 0.411891    
+    ## dose_groupLow:labelchr1.2     -0.002532   0.346300  -0.007 0.994166    
+    ## dose_groupMedium:labelchr1.2  -0.024936   0.329271  -0.076 0.939634    
+    ## dose_groupHigh:labelchr10     -0.475019   0.288511  -1.646 0.099671 .  
+    ## dose_groupLow:labelchr10      -0.335643   0.336390  -0.998 0.318386    
+    ## dose_groupMedium:labelchr10   -0.331786   0.317082  -1.046 0.295389    
+    ## dose_groupHigh:labelchr11     -0.055534   0.281238  -0.197 0.843466    
+    ## dose_groupLow:labelchr11       0.425231   0.317785   1.338 0.180862    
+    ## dose_groupMedium:labelchr11    0.435900   0.303189   1.438 0.150514    
+    ## dose_groupHigh:labelchr12     -0.167641   0.283882  -0.591 0.554834    
+    ## dose_groupLow:labelchr12      -0.154438   0.329080  -0.469 0.638854    
+    ## dose_groupMedium:labelchr12   -0.175600   0.311861  -0.563 0.573387    
+    ## dose_groupHigh:labelchr13     -0.397834   0.312841  -1.272 0.203486    
+    ## dose_groupLow:labelchr13       0.002177   0.356507   0.006 0.995128    
+    ## dose_groupMedium:labelchr13   -0.238611   0.342902  -0.696 0.486519    
+    ## dose_groupHigh:labelchr14      0.120674   0.283572   0.426 0.670437    
+    ## dose_groupLow:labelchr14       0.282234   0.323144   0.873 0.382445    
+    ## dose_groupMedium:labelchr14    0.487738   0.305841   1.595 0.110770    
+    ## dose_groupHigh:labelchr15     -1.145251   0.293772  -3.898 9.68e-05 ***
+    ## dose_groupLow:labelchr15      -0.412148   0.335149  -1.230 0.218793    
+    ## dose_groupMedium:labelchr15   -0.671164   0.321771  -2.086 0.036993 *  
+    ## dose_groupHigh:labelchr16     -0.260719   0.288135  -0.905 0.365545    
+    ## dose_groupLow:labelchr16       0.113319   0.328268   0.345 0.729941    
+    ## dose_groupMedium:labelchr16    0.065434   0.312812   0.209 0.834307    
+    ## dose_groupHigh:labelchr17      0.132621   0.306212   0.433 0.664941    
+    ## dose_groupLow:labelchr17       0.370468   0.346050   1.071 0.284367    
+    ## dose_groupMedium:labelchr17    0.352330   0.331120   1.064 0.287303    
+    ## dose_groupHigh:labelchr18      0.382210   0.312127   1.225 0.220752    
+    ## dose_groupLow:labelchr18       0.449076   0.352886   1.273 0.203167    
+    ## dose_groupMedium:labelchr18    0.598615   0.335034   1.787 0.073982 .  
+    ## dose_groupHigh:labelchr19      0.064785   0.327670   0.198 0.843269    
+    ## dose_groupLow:labelchr19       0.315720   0.369343   0.855 0.392654    
+    ## dose_groupMedium:labelchr19    0.334251   0.352634   0.948 0.343196    
+    ## dose_groupHigh:labelchr2      -0.604108   0.287184  -2.104 0.035417 *  
+    ## dose_groupLow:labelchr2       -0.245882   0.331558  -0.742 0.458332    
+    ## dose_groupMedium:labelchr2    -0.299291   0.314106  -0.953 0.340674    
+    ## dose_groupHigh:labelchr3      -1.072271   0.318099  -3.371 0.000749 ***
+    ## dose_groupLow:labelchr3       -0.581716   0.370507  -1.570 0.116403    
+    ## dose_groupMedium:labelchr3    -0.691077   0.350658  -1.971 0.048747 *  
+    ## dose_groupHigh:labelchr4      -0.278844   0.297052  -0.939 0.347883    
+    ## dose_groupLow:labelchr4       -0.149220   0.343779  -0.434 0.664247    
+    ## dose_groupMedium:labelchr4    -0.049999   0.323766  -0.154 0.877272    
+    ## dose_groupHigh:labelchr5      -0.260287   0.302611  -0.860 0.389713    
+    ## dose_groupLow:labelchr5       -0.047378   0.347478  -0.136 0.891546    
+    ## dose_groupMedium:labelchr5    -0.123564   0.331525  -0.373 0.709361    
+    ## dose_groupHigh:labelchr6      -0.235346   0.300216  -0.784 0.433086    
+    ## dose_groupLow:labelchr6       -0.043936   0.345220  -0.127 0.898726    
+    ## dose_groupMedium:labelchr6    -0.239530   0.331077  -0.723 0.469380    
+    ## dose_groupHigh:labelchr7       0.137579   0.313489   0.439 0.660761    
+    ## dose_groupLow:labelchr7        0.402124   0.353377   1.138 0.255142    
+    ## dose_groupMedium:labelchr7     0.509211   0.335860   1.516 0.129484    
+    ## dose_groupHigh:labelchr8       0.282208   0.307775   0.917 0.359178    
+    ## dose_groupLow:labelchr8        0.545744   0.345779   1.578 0.114496    
+    ## dose_groupMedium:labelchr8     0.638755   0.330239   1.934 0.053086 .  
+    ## dose_groupHigh:labelchr9      -0.454672   0.287012  -1.584 0.113157    
+    ## dose_groupLow:labelchr9       -0.170080   0.330783  -0.514 0.607131    
+    ## dose_groupMedium:labelchr9    -0.426501   0.317505  -1.343 0.179179    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -552,7 +552,7 @@ Plot the results of
 [`model_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/model_mf.md)
 using
 [`plot_model_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/plot_model_mf.md).
-This function will create a bar or line plot of the point estimates.
+This function will create a bar or point plot of the point estimates.
 Users can include the estimated standard error as error bars with
 `plot_error_bars` and add significance labels based on the pairwise
 comparisons with `plot_signif`. The function can plot model results with
@@ -576,7 +576,7 @@ The output is a ggplot object that can be modified with ggplot2.
 plot <- plot_model_mf(
   model_by_dose,
   plot_type = "bar",
-  x_effect = "dose",
+  x_effect = "dose_group",
   plot_error_bars = TRUE,
   plot_signif = TRUE,
   x_order = c("Control", "Low", "Medium", "High"),
@@ -751,10 +751,12 @@ be automatically saved to an output directory specified in
 automcatically be displayed and then returned within a list alongside
 the BMD summary results.
 
-The function will output a data frame of final results, including a BMD
-estimate for each model family and the model averaging results, if
-applicable. Users may access the raw, unparsed PROAST results by setting
-`raw_results = TRUE`.
+The function returns a summary data frame with BMD estimates for the
+model families and model averaging results, if applicable. When plots
+are returned (`plot_results = TRUE` and `output_path = NULL`), the
+result is a list containing `summary` and the plot objects, as in the
+example below. Setting `raw_results = TRUE` also returns a list, with
+the unparsed PROAST results in `raw_results`.
 
 ### Example
 
@@ -947,21 +949,24 @@ plot
 
 ![Benchmark dose with 90% confidence intervals representing the dose at,
 which a 50% increase in mutation frequency occurs from reference level.
-Calculated using ROAST software. Black points represent the BMD, red
+Calculated using PROAST software. Black points represent the BMD, red
 points the BMDL, and blue points, the
 BMDU](Analyzing_Mutation_Frequencies_files/figure-html/plot-ci-1.png)
 
 Benchmark dose with 90% confidence intervals representing the dose at,
 which a 50% increase in mutation frequency occurs from reference level.
-Calculated using ROAST software. Black points represent the BMD, red
+Calculated using PROAST software. Black points represent the BMD, red
 points the BMDL, and blue points, the BMDU
 
 These plots are great for comparing BMDs between different groups. For
 our purposes, we see that PROAST and ToxicR generate BMD results that
-are pretty similar to each other. Since the confidence intervals are
-overlapping, we can say that the results from the two BMD software tools
-are not statistically different from each other. These plots would also
-be great for comparing the potency of different chemicals.
+are pretty similar to each other. These plots are also great for
+comparing the potency of different chemicals.
+
+Divide the BMDL by the BMDU to get a statistic for BMD uncertainty. The
+wider the condidence interval, the lower the certainty.
+
+Overlapping confidence intervals may suggest that two BMDs are similar.
 
 ## References
 
@@ -969,13 +974,13 @@ be great for comparing the potency of different chemicals.
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-10-08 r90650)
+    ## R Under development (unstable) (2026-11-11 r90876)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.5 LTS
+    ## Running under: Ubuntu 26.04.1 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
     ## 
     ## locale:
     ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -1004,7 +1009,7 @@ be great for comparing the potency of different chemicals.
     ##  [11] ragg_1.5.2                  vctrs_0.7.3                
     ##  [13] minqa_1.2.8                 memoise_2.0.1              
     ##  [15] Rsamtools_2.28.0            RCurl_1.98-1.20            
-    ##  [17] S4Arrays_1.12.1             curl_8.0.0                 
+    ##  [17] S4Arrays_1.12.1             curl_8.1.0                 
     ##  [19] broom_1.0.13                SparseArray_1.12.3         
     ##  [21] Formula_1.2-6               sass_0.4.10                
     ##  [23] bslib_0.12.0                htmlwidgets_1.6.4          
@@ -1027,13 +1032,13 @@ be great for comparing the potency of different chemicals.
     ##  [57] carData_3.0-6               DBI_1.3.0                  
     ##  [59] MASS_7.3-66                 rappdirs_0.3.4             
     ##  [61] DelayedArray_0.38.2         rjson_0.2.23               
-    ##  [63] tools_4.7.0                 otel_0.2.0                 
+    ##  [63] tools_4.7.0                 otel_0.3.0                 
     ##  [65] glue_1.8.1                  restfulr_0.0.17            
-    ##  [67] nlme_3.1-171                grid_4.7.0                 
+    ##  [67] nlme_3.1-172                grid_4.7.0                 
     ##  [69] gtable_0.3.6                BSgenome_1.80.0            
     ##  [71] tidyr_1.3.2                 data.table_1.18.6.1        
     ##  [73] doBy_4.7.2                  car_3.1-5                  
-    ##  [75] Deriv_4.3.5                 XVector_0.52.0             
+    ##  [75] Deriv_4.3.6                 XVector_0.52.0             
     ##  [77] BiocVersion_3.23.1          pillar_1.11.1              
     ##  [79] stringr_1.6.0               splines_4.7.0              
     ##  [81] dplyr_1.2.1                 lattice_0.23-1             
@@ -1043,7 +1048,7 @@ be great for comparing the potency of different chemicals.
     ##  [89] urca_1.3-4                  IRanges_2.46.0             
     ##  [91] Seqinfo_1.2.0               SummarizedExperiment_1.42.0
     ##  [93] forecast_9.0.2              stats4_4.7.0               
-    ##  [95] xfun_0.61                   Biobase_2.72.0             
+    ##  [95] xfun_0.62                   Biobase_2.72.0             
     ##  [97] timeDate_4052.112           matrixStats_1.5.0          
     ##  [99] stringi_1.8.9               yaml_2.3.12                
     ## [101] boot_1.3-32                 evaluate_1.0.5             
@@ -1057,7 +1062,7 @@ be great for comparing the potency of different chemicals.
     ## [117] pkgdown_2.2.1               fracdiff_1.5-4             
     ## [119] ggplot2_4.0.3               blob_1.3.0                 
     ## [121] plyranges_1.32.0            bitops_1.1-0               
-    ## [123] lme4_2.0-6                  VariantAnnotation_1.58.0   
+    ## [123] lme4_2.1-0                  VariantAnnotation_1.58.0   
     ## [125] scales_1.4.0                purrr_1.2.2                
     ## [127] crayon_1.5.3                rlang_1.3.0                
     ## [129] cowplot_1.2.0               KEGGREST_1.52.2

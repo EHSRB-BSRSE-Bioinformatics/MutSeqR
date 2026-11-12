@@ -12,7 +12,8 @@ signature_fitting(
   env_name = "MutSeqR",
   group = "sample",
   output_path = NULL,
-  python_version
+  python_version,
+  dry_run = FALSE
 )
 ```
 
@@ -53,11 +54,19 @@ signature_fitting(
 
   The version of python installed on the user's computer.
 
+- dry_run:
+
+  Logical. If `TRUE`, validate and format the mutation data, then return
+  the SigProfiler input data without configuring Python, installing
+  dependencies or reference genomes, or running SigProfiler. Default is
+  `FALSE`.
+
 ## Value
 
-Creates a subfolder "SigProfiler" in the output directory with
-SigProfiler tools results. For a complete breakdown of the results, see
-the Readme file for MutSeqR. Most relevant results are stored in
+If `dry_run = TRUE`, a data frame formatted for SigProfiler input.
+Otherwise, creates a subfolder "SigProfiler" in the output directory
+with SigProfiler tools results. For a complete breakdown of the results,
+see the Readme file for MutSeqR. Most relevant results are stored in
 SigProfiler \> group \> matrices \> output \> Assignment_Solution \>
 Activities \> SampleReconstruction \> WebPNGs. These plots show a
 summary of the signature assignment results for each group. In each
@@ -90,26 +99,29 @@ the filter_mut column will be excluded.
 ## Examples
 
 ``` r
-# \donttest{
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Example data consists of 24 mouse bone marrow DNA samples imported
-  # using import_mut_data() and filtered with filter_mut as in Example 4.
-  # Sequenced on TS Mouse Mutagenesis Panel. Example data is
-  # retrieved from MutSeqRData, an ExperimentHub data package.
-  library(ExperimentHub)
-  eh <- ExperimentHub()
-  example_data <- eh[["EH9861"]]
-  output_path <- tempdir()
-
-  signature_fitting(
-    mutation_data = example_data,
-    project_name = "Example",
-    project_genome = "mm10",
-    env_name = "MutSeqR",
-    group = "dose",
-    python_version = "3.11",
-    output_path = output_path
-  )
-} 
-# }
+example_data <- readRDS(system.file(
+  "extdata", "Example_files", "filtered_simple_mutation_data.rds",
+  package = "MutSeqR"
+))
+sigprofiler_input <- signature_fitting(
+  mutation_data = example_data,
+  project_name = "Example",
+  project_genome = "mm10",
+  group = "sample",
+  dry_run = TRUE
+)
+#> Creating cleaned data for input into SigProfiler...
+head(sigprofiler_input)
+#>   Project        Samples ID Genome mut_type chrom pos_start pos_end ref alt
+#> 1 Example sample_sample1  .   mm10      SNP     1       102     102   C   A
+#> 2 Example sample_sample1  .   mm10      SNP     1       104     104   T   C
+#> 3 Example sample_sample2  .   mm10      SNP     2       202     202   T   A
+#> 4 Example sample_sample2  .   mm10      SNP     2       206     206   G   T
+#> 5 Example sample_sample3  .   mm10      SNP     1       106     106   G   A
+#>      Type
+#> 1 SOMATIC
+#> 2 SOMATIC
+#> 3 SOMATIC
+#> 4 SOMATIC
+#> 5 SOMATIC
 ```

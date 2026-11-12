@@ -1,7 +1,7 @@
 # BS genome organism dictionary
 
-A dictionary to map common organism names to their corresponding
-BSgenome organism names.
+A dictionary keyed by BSgenome organism identifiers, with corresponding
+scientific organism names and common-name aliases as values.
 
 ## Usage
 
@@ -11,8 +11,13 @@ BS_org_map
 
 ## Format
 
-A list with organism names as keys and corresponding BSgenome organism
-names as values.
+A named list with BSgenome organism identifiers as keys and character
+vectors of scientific names and common-name aliases as values.
+
+## Value
+
+A named list mapping BSgenome organism identifiers to character vectors
+of scientific names and common-name aliases.
 
 ## Examples
 

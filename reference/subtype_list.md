@@ -12,6 +12,11 @@ subtype_list
 
 A list with corresponding values
 
+## Value
+
+A named list of character vectors containing mutation types or
+substitution labels for each subtype resolution.
+
 ## Examples
 
 ``` r

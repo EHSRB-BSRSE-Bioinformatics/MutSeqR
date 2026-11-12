@@ -24,17 +24,12 @@ raised.
 
 ## Details
 
-This function performs three checks:
-
-1.  If `BS_genome` is `NULL`, an error is thrown indicating that a
-    genome must be provided when sequence context is required.
-
-2.  If `BS_genome` is not among the available BSgenome packages, an
-    error is thrown.
-
-3.  If `BS_genome` is valid but not installed locally, an error is
-    thrown with instructions to install it via
-    [`BiocManager::install()`](https://bioconductor.github.io/BiocManager/reference/install.html).
+If `BS_genome` is `NULL`, an error is thrown indicating that a genome
+must be provided when sequence context is required. If the genome is
+installed, validation passes without network access. Otherwise,
+[`BSgenome::available.genomes()`](https://rdrr.io/pkg/BSgenome/man/available.genomes.html)
+is queried (requires internet;) and an error is thrown with installation
+instructions, or stating that the genome is not recognized.
 
 This function is intended to be called only when sequence context needs
 to be populated (i.e., when a `context` column is absent or incomplete).

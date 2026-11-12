@@ -804,13 +804,13 @@ trinucleotide context normalized to the sequencing depth.
 
 ### Session Info
 
-    ## R Under development (unstable) (2026-10-08 r90650)
+    ## R Under development (unstable) (2026-11-11 r90876)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.5 LTS
+    ## Running under: Ubuntu 26.04.1 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
     ## 
     ## locale:
     ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -832,7 +832,7 @@ trinucleotide context normalized to the sequencing depth.
     ## loaded via a namespace (and not attached):
     ##   [1] DBI_1.3.0                   bitops_1.1-0               
     ##   [3] httr2_1.3.0                 rlang_1.3.0                
-    ##   [5] magrittr_2.0.5              otel_0.2.0                 
+    ##   [5] magrittr_2.0.5              otel_0.3.0                 
     ##   [7] matrixStats_1.5.0           compiler_4.7.0             
     ##   [9] RSQLite_3.53.3              GenomicFeatures_1.64.0     
     ##  [11] png_0.1-9                   systemfonts_1.3.2          
@@ -842,7 +842,7 @@ trinucleotide context normalized to the sequencing depth.
     ##  [19] labeling_0.4.3              Rsamtools_2.28.0           
     ##  [21] rmarkdown_2.32              ragg_1.5.2                 
     ##  [23] purrr_1.2.2                 bit_4.6.0                  
-    ##  [25] xfun_0.61                   cachem_1.1.0               
+    ##  [25] xfun_0.62                   cachem_1.1.0               
     ##  [27] cigarillo_1.2.1             jsonlite_2.0.0             
     ##  [29] blob_1.3.0                  DelayedArray_0.38.2        
     ##  [31] BiocParallel_1.46.0         parallel_4.7.0             
@@ -855,7 +855,7 @@ trinucleotide context normalized to the sequencing depth.
     ##  [45] IRanges_2.46.0              Matrix_1.7-6               
     ##  [47] tidyselect_1.2.1            dichromat_2.0-1            
     ##  [49] abind_1.4-8                 yaml_2.3.12                
-    ##  [51] codetools_0.2-20            curl_8.0.0                 
+    ##  [51] codetools_0.2-20            curl_8.1.0                 
     ##  [53] lattice_0.23-1              tibble_3.3.1               
     ##  [55] withr_3.0.3                 Biobase_2.72.0             
     ##  [57] KEGGREST_1.52.2             S7_0.2.2                   

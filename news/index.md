@@ -1,6 +1,60 @@
 # Changelog
 
-## MutSeqR (development version)
+## MutSeqR 1.1.1
+
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  reads FORMAT `SITE_DP`, the read depth at the record’s position that
+  [vartovcf](https://github.com/clintval/vartovcf) writes, as the
+  `total_depth`. Records whose `total_depth` is missing take it from
+  `AD` or `DP`.
+
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  takes `alt_depth` from the alternate allele depths of `AD` when a VCF
+  has no `VD`, instead of setting every record’s `alt_depth` to 1.
+  Records without an alternate allele get 0.
+
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  no longer counts a missing `AD` value as 0 reads. A record whose `AD`
+  lacks the reference depth, as VarDict writes for MNV and complex
+  calls, takes its `total_depth` from `DP`, so its `vaf` is no longer
+  inflated toward 1.
+
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  reads an INFO `CONTEXT_3mer`, as
+  [vartovcf](https://github.com/clintval/vartovcf) writes with
+  `--context-3mer`, as the `context`, so no BS genome is needed.
+
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  keeps the VCF `FILTER` value in a new `filter` column, which
+  [`filter_mut()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/filter_mut.md)
+  can act on with `custom_filter_col = "filter"`.
+
+- [`import_vcf_data()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/import_vcf_data.md)
+  imports large VCFs several times faster: each file’s records are bound
+  as data frames rather than VCF objects, FORMAT fields with several
+  values are spread without a per-record loop, and each distinct REF/ALT
+  pair and context is classified once. Three 48,000-record gVCFs import
+  in 4 seconds instead of 23, with identical results.
+
+- [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+  gains an optional `depth_group_cols` argument to declare sample-level
+  precalculated depths explicitly, including context-resolved inputs
+  with dose metadata. Declared sample depths are validated and pooled to
+  requested groups; missing sample depths warn with affected groups.
+  Default interpretation is preserved, with guidance for invalid grouped
+  inputs.
+
+- [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+  infers the grouping resolution of precalculated depths and aggregates
+  finer inputs to `cols_to_group`, preserving context resolution.
+
+- Import functions check for installed BSgenome packages before checking
+  online for available genomes, avoiding an unnecessary internet
+  connection.
+
+- [`calculate_mf()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/calculate_mf.md)
+  now warns when joining pre-calculated depth data renames mutation-data
+  columns, listing each original name and its suffixed name.
 
 - Fixed directory VCF imports losing header-derived sample identifiers
   during VCF combination. Distinct samples now retain their identities

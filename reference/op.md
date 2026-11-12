@@ -12,6 +12,11 @@ op
 
 A list with potential variable column names
 
+## Value
+
+A list containing column-name aliases, required mutation-data columns,
+site columns, and default mutation-processing settings.
+
 ## Examples
 
 ``` r

@@ -12,6 +12,12 @@ context_list
 
 A list with corresponding values
 
+## Value
+
+A named list whose values are either `NA` for the `none` and `type`
+resolutions or character vectors of reference bases or trinucleotide
+contexts.
+
 ## Examples
 
 ``` r

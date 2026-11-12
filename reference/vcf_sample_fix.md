@@ -1,7 +1,7 @@
-# Retrieve the sample column from VCF files
+# Retrieve the sample column from INFO field of VCF files
 
-Checks to find the sample name of the vcf in the INFO field or in the
-FORMAT header. Can also handle sample name synonyms.
+Checks to find the sample name of the vcf in the INFO field Can also
+handle sample name synonyms.
 
 ## Usage
 

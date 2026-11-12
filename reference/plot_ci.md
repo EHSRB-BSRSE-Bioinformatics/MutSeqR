@@ -65,14 +65,17 @@ a ggplot object
 ## Examples
 
 ``` r
-if (requireNamespace("MutSeqRData", quietly = TRUE)) {
-  # Plot results from PROAST
-  dat <- data.frame(
-    Response = c("PROAST MF Min", "PROAST MF Max"),
-    BMD = c(NA, NA),
-    BMDL = c(7.38, 2.98),
-    BMDU = c(10.9, 7.68)
-  )
-  plot <- plot_ci(dat)
-}
+# Plot results from PROAST
+dat <- data.frame(
+  Response = c("PROAST MF Min", "PROAST MF Max"),
+  BMD = c(NA, NA),
+  BMDL = c(7.38, 2.98),
+  BMDU = c(10.9, 7.68)
+)
+plot <- plot_ci(dat)
+#> Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
+#> ℹ Please use the `linewidth` argument instead.
+#> ℹ The deprecated feature was likely used in the MutSeqR package.
+#>   Please report the issue at
+#>   <https://github.com/EHSRB-BSRSE-Bioinformatics/MutSeqR/issues>.
 ```

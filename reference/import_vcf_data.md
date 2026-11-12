@@ -80,7 +80,8 @@ import_vcf_data(
   The pkgname of a BS genome. A BS genome must be installed prior to
   import to populate the context column (trinucleotide context for each
   position). Only required if data does not already include a context
-  column. Please install the appropriate BS genome using
+  column, such as the INFO field `CONTEXT_3mer` that vartovcf writes
+  with `--context-3mer`. Please install the appropriate BS genome using
   BiocManager::install("pkgname") where pkgname is the name of the
   BSgenome package. The pkgname can be found using the find_BS_genome()
   function, which requires the species and assembly version. Ex.
@@ -164,6 +165,12 @@ Output Column Definitions:
 
 - `gc_content`: % GC of the trinucleotide context at this position.
 
+- `filter`: The VCF FILTER value: "PASS", the semicolon-separated
+  filters the record failed, or "." when no filters were applied. See
+  the `custom_filter_col` parameter of
+  [`filter_mut()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/filter_mut.md)
+  to act on it.
+
 - `is_known`: TRUE or FALSE. Flags known variants (ID != ".").
 
 - `row_has_duplicate`: TRUE or FALSE. Flags rows whose position is the
@@ -209,15 +216,22 @@ for full package functionality:
   `total_depth`. However, in most cases, the DP field includes N-calls.
 
 - `VD`: The read depth supporting the alternate allele. If not included,
-  the function will add this column, assuming a value of 1. Equivalent
-  to `alt_depth`.
+  the function will take it from the alternate allele depths of `AD` (0
+  for records without an alternate allele), or assume a value of 1
+  without `AD`. Equivalent to `alt_depth`.
 
 We recommend that files include a record for every sequenced position,
 regardless of whether a variant was called, along with the `AD` for each
 record. This enables site-specific depth calculations required for some
 downstream analyses. AD is used to calculate the `total_depth` (the read
-depth excluding No-calls). If AD is not available, the `DP` field will
-be used as the `total_depth`.
+depth excluding No-calls). If AD is not available, or a record's AD is
+missing its reference depth or the alternate depth of a variant, as
+callers such as VarDict write for MNV and complex calls, the `DP` field
+will be used as the `total_depth`.
+
+The FORMAT field `SITE_DP`, which vartovcf writes as the read depth at
+the record's position, is read as the `total_depth`. Records whose
+`total_depth` is missing take it from AD or DP as above.
 
 ## Examples
 
@@ -229,6 +243,7 @@ file <- system.file("extdata", "Example_files",
 imported_example_data <- import_vcf_data(
  vcf_file = file,
 BS_genome = find_BS_genome("mouse", "mm10"))
+#> Expected 'alt_depth' but found 'VD', renaming it.
 #> 'getOption("repos")' replaces Bioconductor standard repositories, see
 #> 'help("repositories", package = "BiocManager")' for details.
 #> Replacement repositories:
@@ -236,15 +251,6 @@ BS_genome = find_BS_genome("mouse", "mm10"))
 #> Selected reference genome: BSgenome.Mmusculus.UCSC.mm10
 #> Reference genome is already installed.
 #> Once installed, supply 'BSgenome.Mmusculus.UCSC.mm10' as the BS_genome parameter.
-#> 'getOption("repos")' replaces Bioconductor standard repositories, see
-#> 'help("repositories", package = "BiocManager")' for details.
-#> Replacement repositories:
-#>     CRAN: https://cloud.R-project.org
-#> Expected 'alt_depth' but found 'VD', renaming it.
-#> 'getOption("repos")' replaces Bioconductor standard repositories, see
-#> 'help("repositories", package = "BiocManager")' for details.
-#> Replacement repositories:
-#>     CRAN: https://cloud.R-project.org
 #> Loading reference genome: BSgenome.Mmusculus.UCSC.mm10.
 #> Retrieving context sequences from BSgenome
 ```

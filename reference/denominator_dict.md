@@ -16,6 +16,11 @@ denominator_dict
 
 A vector with corresponding values
 
+## Value
+
+A named character vector mapping subtype resolutions to
+reference-context column names, with `NA` for `none` and `type`.
+
 ## Examples
 
 ``` r

@@ -157,4 +157,4 @@ Data export functions.
 - [`cleveland_plot()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/cleveland_plot.md)
   : Cleveland Plot
 - [`vcf_sample_fix()`](https://ehsrb-bsrse-bioinformatics.github.io/MutSeqR/reference/vcf_sample_fix.md)
-  : Retrieve the sample column from VCF files
+  : Retrieve the sample column from INFO field of VCF files
