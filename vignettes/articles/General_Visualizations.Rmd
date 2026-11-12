@@ -102,7 +102,7 @@ avg <- mf %>%
 label_order <- avg %>%
   dplyr::filter(dose_group == "High") %>%
   dplyr::arrange(mean_mf) %>%
-  pull(label)
+  dplyr::pull(label)
 ```
 
 ```{r radar-plot, fig.cap=caption, fig.wide=TRUE}
