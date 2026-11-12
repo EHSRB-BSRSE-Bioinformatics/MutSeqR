@@ -52,7 +52,8 @@ Custom_Profile_Params:
   rm_abnormal_vaf: FALSE # Remove records where the VAF is between 0.05-0.45, or between 0.55-0.95.
   custom_filter_col: NULL # Apply a custom filter to the specified column.
   custom_filter_val: NULL # The value in custom_filter_col by which to filter.
-  custom_filter_rm: FALSE # A logical variable indicating whether records that contain the custom_filter_val within the custom_filter_col should be removed (TRUE) or flagged (FALSE).
+  # Matching mode comes from the selected profile; custom profiles default to exact.
+  custom_filter_rm: FALSE # Whether matching records should be removed (TRUE) or flagged (FALSE).
   filtering_regions: NULL # Optional file path to regions file by which to filter variants. Must contain the contig, start, and end of each region. The file path will be read as projectdir/filtering_regions.
   filtering_rg_sep: "\t" # The delimiter for importing the filtering_regions file.
   regions_filter: "keep_within" # "keep_within" will remove any records that fall outside of the filtering_regions. "remove_within" will remove records that fall inside of the filtering_regions.

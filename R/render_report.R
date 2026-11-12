@@ -97,6 +97,9 @@ render_report <- function(
   } else if (params$config_profile == "None") {
     params <- c(params, config$Custom_Profile_Params)
   }
+  if (is.null(params$custom_filter_match)) {
+    params$custom_filter_match <- "exact"
+  }
 
   # Construct the path to the .Rmd file within the installed package directory
   rmd_file <- "Summary_report.Rmd"

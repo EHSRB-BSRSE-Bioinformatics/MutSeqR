@@ -200,7 +200,8 @@ Removes rows with 0.05 > VAF < 0.45 or 0.55 > VAF < 0.95.
 ```{r echo=FALSE, eval=!is.null(params$custom_filter_col), results='asis'}
 cat("Applying Custom Filter to column: '", params$custom_filter_col, "'. ",
     "Records are ", ifelse(params$custom_filter_rm, " removed", "flagged"),
-    " when the value matches '", params$custom_filter_val, "'", sep = "")
+    " when the value matches '", params$custom_filter_val,
+    "' using ", params$custom_filter_match, " matching.", sep = "")
 ```
 
 **Removing records based on a regions file: `r !is.null(params$filtering_regions)`.**
@@ -233,6 +234,7 @@ filtered_mutation_data <- filter_mut(
   rm_abnormal_vaf = params$rm_abnormal_vaf,
   custom_filter_col = params$custom_filter_col,
   custom_filter_val = params$custom_filter_val,
+  custom_filter_match = params$custom_filter_match,
   custom_filter_rm = params$custom_filter_rm,
   regions = params$filtering_regions,
   rg_sep = params$filtering_rg_sep,

@@ -488,10 +488,11 @@ to variants that were idenfied as germline variants.
 ## Custom Filtering
 
 Users may use the `filter_mut()` function to flag or remove variants based on
-their own custom column. Any record that contains the `custom_filter_val` value
-within the `custom_filter_col` column of the mutation data will be either
-flagged in the `filter_mut` column or, if specified by the `custom_filter_rm`
-parameter, removed from the mutation data.
+their own custom column. `custom_filter_match = "exact"` (the default) matches
+the whole cell value, `"contains"` performs a literal substring match, and
+`"regex"` treats each `custom_filter_val` as a regular expression. To match a
+complete label in a semicolon-separated VCF FILTER value, use a boundary-aware
+regular expression such as `"(^|;)NEAR_READ_END(;|$)"`.
 
 ## Filtering by Regions
 
@@ -547,7 +548,8 @@ filtered_example_mutation_data <- filter_mut(
   regions = "TSpanel_mouse",
   regions_filter = "keep_within",
   custom_filter_col = "filter",
-  custom_filter_val = "EndRepairFillInArtifact",
+  custom_filter_val = "(^|;)EndRepairFillInArtifact(;|$)",
+  custom_filter_match = "regex",
   custom_filter_rm = FALSE,
   snv_in_germ_mnv = TRUE,
   rm_filtered_mut_from_depth = TRUE,
@@ -1608,9 +1610,10 @@ If using one of the config_profiles, users should skip this section.
 - _custom_filter_col_: A column name used by filter_mut to apply a custom filter
   to the specified column.
 - _custom_filter_val_: The value in custom_filter_col by which to filter.
-- _custom_filter_rm_: A logical variable indicating whether records that
-  contain the custom_filter_val within the custom_filter_col should be removed
-  (TRUE) or flagged (FALSE).
+- _custom_filter_match_: "exact" (default) compares complete cell values;
+  "contains" uses literal substring matching; "regex" uses regular expressions.
+- _custom_filter_rm_: A logical variable indicating whether matching records
+  should be removed (TRUE) or flagged (FALSE).
 - _filtering_regions_: Optional file path to regions file by which to filter
   variants. Must contain the contig, start, and end of each region. The file
   path will be read as projectdir/filtering_regions.

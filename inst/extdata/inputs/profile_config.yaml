@@ -11,7 +11,8 @@ Duplex_Sequencing:
   recurrence_limit: 0
   rm_abnormal_vaf: no
   custom_filter_col: filter
-  custom_filter_val: EndRepairFillInArtifact
+  custom_filter_val: "(^|;)EndRepairFillInArtifact(;|$)"
+  custom_filter_match: regex
   custom_filter_rm: no
   regions_filter: "keep_within"
   allow_half_overlap: no
@@ -35,6 +36,7 @@ CODEC:
   rm_abnormal_vaf: no
   custom_filter_col: NULL
   custom_filter_val: NULL
+  custom_filter_match: exact
   custom_filter_rm: no
   filtering_regions: NULL
   filtering_rg_sep: "\t" # doesn't matter

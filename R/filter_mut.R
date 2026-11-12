@@ -36,17 +36,18 @@
 #' FALSE.
 #' @param custom_filter_col The name of the column in mutation_data to apply a
 #' custom filter to. This column will be checked for specific values, as
-#' defined by \code{custom_filter_val}. If any row in this column contains
-#' one of the specified values, that row will either be flagged in the
-#' \code{filter_mut column} or, if specified by \code{custom_filter_rm},
-#' removed from mutation_data.
+#' defined by \code{custom_filter_val}, using the selected match mode. If any
+#' row in this column matches one of the specified values, that row is flagged
+#' in the \code{filter_mut column} or, if specified by
+#' \code{custom_filter_rm}, removed from mutation_data.
 #' @param custom_filter_val A set of values used to filter rows in
-#' \code{mutation_data} based on \code{custom_filter_col}. If a row in
-#' \code{custom_filter_col} contains any value in \code{custom_filter_val},
-#' it will either be set to TRUE in the \code{filter_mut} column or removed,
-#' depending on \code{custom_filter_rm}. A value is found within a row's
-#' value, so a FILTER label is found among the semicolon-separated labels of a
-#' record that failed several filters. A value no row contains gives a warning.
+#' \code{mutation_data} based on \code{custom_filter_col}. The matching
+#' behavior is controlled by \code{custom_filter_match}. A value no row
+#' matches gives a warning.
+#' @param custom_filter_match How to match each value in
+#' \code{custom_filter_val}. "exact" (the default) requires the full cell value
+#' to match. "contains" performs a literal substring match. "regex" treats each
+#' value as a regular expression.
 #' @param custom_filter_rm A logical value. If TRUE, rows in custom_filter_col
 #' that match any value in custom_filter_val will be removed from the
 #' mutation_data. If FALSE, \code{filter_mut} will be set to TRUE for those
@@ -143,7 +144,8 @@ filter_mut <- function(mutation_data,
                        rg_sep = "\t",
                        is_0_based_rg = TRUE,
                        rm_filtered_mut_from_depth = FALSE,
-                       return_filtered_rows = FALSE) {
+                       return_filtered_rows = FALSE,
+                       custom_filter_match = c("exact", "contains", "regex")) {
     # clonality_cutoff NOT CURRENTLY IMPLEMENTED! Up for consideration.
     # This value determines the fraction of reads that
     # is considered a constitutional variant. If a mutation is present at a
@@ -175,6 +177,7 @@ filter_mut <- function(mutation_data,
         "return_filtered_rows must be a logical value" =
             is.logical(return_filtered_rows)
     )
+    custom_filter_match <- match.arg(custom_filter_match)
     if (!missing(regions_filter)) {
         regions_filter <- match.arg(
             regions_filter,
@@ -502,34 +505,35 @@ filter_mut <- function(mutation_data,
         if (length(custom_filter_val) == 0) {
             stop("`custom_filter_val` must contain at least one value")
         }
-        found <- vapply(
-            custom_filter_val,
-            function(value) any(
+        custom_filter_values <- as.character(
+            mutation_data[[custom_filter_col]]
+        )
+        matches_by_value <- lapply(custom_filter_val, function(value) {
+            value <- as.character(value)
+            if (custom_filter_match == "exact") {
+                custom_filter_values == value
+            } else if (custom_filter_match == "contains") {
                 grepl(
                     value,
-                    mutation_data[[custom_filter_col]],
+                    custom_filter_values,
                     fixed = TRUE
-                ),
-                na.rm = TRUE
-            ),
+                )
+            } else {
+                grepl(value, custom_filter_values)
+            }
+        })
+        found <- vapply(
+            matches_by_value,
+            function(matched_rows) any(matched_rows, na.rm = TRUE),
             logical(1)
         )
         if (!all(found)) {
             warning(
-                "No rows in <", custom_filter_col, "> contain: ",
+                "No rows in <", custom_filter_col, "> match: ",
                 paste(custom_filter_val[!found], collapse = ", ")
             )
         }
-        custom_filtered_rows <- Reduce(
-            `|`,
-            lapply(custom_filter_val, function(value) {
-                grepl(
-                    value,
-                    mutation_data[[custom_filter_col]],
-                    fixed = TRUE
-                )
-            })
-        )
+        custom_filtered_rows <- Reduce(`|`, matches_by_value)
         custom_filtered_rows[is.na(custom_filtered_rows)] <- FALSE
         custom_filtered_count <- sum(custom_filtered_rows)
         if (custom_filter_rm) {
@@ -544,8 +548,8 @@ filter_mut <- function(mutation_data,
             }
             mutation_data <- mutation_data[!custom_filtered_rows, ]
             message(
-                "Removed ", custom_filtered_count, " rows with values in <",
-                custom_filter_col, "> that contained ",
+                "Removed ", custom_filtered_count, " rows in <",
+                custom_filter_col, "> that matched ",
                 custom_filter_val, " from mutation_data"
             )
         } else {
