@@ -42,89 +42,196 @@ eh <- ExperimentHub()
 
 # Comparing Mutation Spectra between Groups
 
-The mutation spectra can be compared between experimental groups using the
-`spectra_comparison()` function. This function will compare the proportion
-of mutation subtypes at any resolution between user-defined groups using a
-modified contingency table approach [@piegorsch-1994].
+`spectra_comparison()` compares mutation-category counts between pairs of
+experimental groups at a chosen subtype resolution. It offers two methods:
+`"rpdmm"`, a replicate-aware Ridge-Penalized Dirichlet-Multinomial model
+(RP-DMM), and `"g2"`, the historical pooled contingency-table test.
 
-This approach is applied to the mutation counts of each subtype in a given group. The contingency table is represented as $R * T$ where $R$ is the number of subtypes, and $T$ is the number of groups. `spectra_comparison()` performs comparisons between $T = 2$ specified groups. The statistical hypothesis of homogeneity is that the proportion (count/group total) of each mutation subtype equals that of the other group. To test the significance of the homogeneity hypothesis, the $G^{2}$ likelihood ratio statistic is used:
+**We recommend explicitly selecting `method = "rpdmm"` for future analyses
+of replicated ECS experiments**, provided mutation counts support the chosen
+resolution. The function currently defaults to `"g2"` for compatibility;
+omitting `method` does not select the recommended approach.
 
-$$G^{2} = 2\  \sum_{i=1}^{R}\  \sum_{j=1}^{T}\  Y_{ij}\  log(\frac{Y_{ij}}{E_{ij}})$$
+## RP-DMM: replicate-aware comparison (recommended)
 
-$Y_{ij}$ represents the mutation counts and $E_{ij}$ are the _expected_ counts
-under the null hypothesis. The $G^{2}$ statistic possesses approximately a
-$\chi^{2}$ distribution in large sample sizes under the null hypothesis of
-no spectral differences. Thus, as the column totals become large, $G^{2}$ may
-be referred to a $\chi^{2}$ distribution with $(R -  1)(T - 1)$ degrees of
-freedom. The $G^{2}$ statistic may exhibit high false positive rates in small
-sample sizes when referred to a $\chi^{2}$ distribution. In such cases, we
-instead switch to an F-distribution. This has the effect of reducing the rate
-at which $G^{2}$ rejects each null hypothesis, providing greater stability in
-terms of false positive error rates. Thus when $N/(R-1) < 20$, where $N$ is
-the total mutation counts across both groups, the function will use a
-F-distribution, otherwise it will use a $\chi^{2}$-distribution.
+RP-DMM models the mutation counts of each biological replicate rather than
+pooling replicates into a single spectrum [@williams-rpdmm]. For sample $s$
+in group $g$, let $\mathbf{Y}_{gs}$ contain counts across $K$ mutation
+categories and $N_{gs}$ be their sum. The model is
 
-This comparison assumes independance among the observations. Each tabled
-observation represents a sum of independent contributions to the total mutant
-count. We assume independance is valid for mutants derived from a mixed
-population, however, mutants that are derived clonally from a single progenitor
-cell would violate this assumption. As such, it is recommended to use the
-**MFmin method** of mutation counting for spectral analyses to ensure that
-all mutation counts are independant. In those cases where the independence
-may be invalid, and where additional, extra-multinomial sources of variability
-are present, more complex, hierarchical statistical models are required. This
-is outside the scope of this package.
+$$\mathbf{Y}_{gs} \sim \mathrm{DM}(N_{gs},\theta_g\mathbf{p}_g),$$
+
+where $\mathbf{p}_g$ is the group's mean spectrum and $\theta_g$ is a
+concentration parameter. Smaller $\theta_g$ indicates greater variation
+among replicate spectra (overdispersion); larger values approach the
+multinomial model. This allows for variability beyond that expected from
+mutation sampling alone. Biological replicates, rather than individual
+mutation calls, provide the independent experimental replication.
+
+Parameters are estimated jointly by maximizing the Dirichlet-multinomial
+log-likelihood with a ridge penalty:
+
+$$
+\ell_{\lambda,g}=\ell_{\mathrm{DM},g}
+-\lambda N_g\sum_{k=1}^{K}(p_{gk}-1/K)^2,
+$$
+
+where $N_g$ is the total mutation count in the fitted group. The penalty
+shrinks estimates toward a uniform spectrum, stabilizing weakly supported
+categories. Larger `lambda` values give stronger shrinkage. The public
+`spectra_comparison()` interface uses the supplied `lambda` (default `1`)
+for all fits; it does not automatically select it by cross-validation.
+Use `select_optimal_lambda()` first to choose the penalty from the data, then
+pass its `best_lambda` result to `spectra_comparison()`, as shown below.
+
+For each contrast, the null model shares both the spectrum and concentration
+parameter between groups. The alternative fits separate parameters to each
+group. The function returns two forms of the comparison. The **hybrid**
+statistic (`lrt`) evaluates the unpenalized likelihood at the ridge-fitted
+parameters. The fully penalized statistic (`lrt_penalized`) includes the
+penalty during evaluation as well as fitting. Use the hybrid result as the
+primary inference: the accompanying manuscript supports this approach,
+particularly for high-dimensional spectra where fully penalized evaluation
+can reduce sensitivity to real spectral shifts [@williams-rpdmm].
+
+P-values are obtained by **parametric bootstrap**: counts are
+simulated under the fitted shared null model, preserving each sample's total
+mutation count, and both models are refitted for each simulated dataset.
+`n_boot` controls the number of bootstrap iterations (default `500`). Set a
+random seed for reproducibility and increase `n_boot` when greater precision
+is needed, especially near a decision threshold or after multiplicity
+adjustment. More iterations increase computation time.
+
+Because the alternative allows both spectrum proportions and concentration
+to differ, a significant result can reflect changes in composition,
+replicate consistency, or both. Inspect replicate-level plots alongside the
+statistical results; significance alone does not identify which categories
+changed or establish the biological importance of a difference.
+
+### Selecting the ridge penalty: select_optimal_lambda()
+
+`select_optimal_lambda()` chooses a ridge penalty by leave-one-out
+cross-validation (LOOCV). Supply the sample-level count table at the same
+subtype resolution and with the same `mf_type` used for the comparison.
+Each sample must have a positive total mutation count, and at least two
+samples are required.
+
+For each candidate penalty, the function leaves out one sample, fits a
+penalized Dirichlet-multinomial model to the remaining samples, and evaluates
+the **unpenalized** log-likelihood of the held-out sample. It repeats this for
+every sample and selects the penalty with the highest summed predictive
+log-likelihood. Group labels are not used in this selection: a single penalty
+is chosen from the supplied samples and reused across the planned contrasts.
+This tunes regularization, not the p-values or the adequacy of the model.
+
+The default candidate grid is
+`c(0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 5)`. Use the `lambdas` argument to
+supply a different grid; more candidates and samples require more model fits.
+The returned list contains `best_lambda`, the selected penalty; `scores`,
+the summed LOOCV log-likelihoods; and `lambdas`, the candidate values.
+Failed candidate fits produce missing scores. If no candidate has a finite
+score, `best_lambda` is `NA`; investigate the data and fitting failures
+rather than silently substituting a default penalty. Lambda selection applies
+only to `method = "rpdmm"`, not to G².
+
+### Replication and mutation-count requirements
+
+Retain independent biological samples as separate observations. Technical
+replicates or multiple tissues from the same animal should not be treated as
+independent biological replicates without accounting for their dependence;
+this interface does not fit paired or repeated-measures designs.
+
+Regularization does not make arbitrarily sparse spectra reliable. The
+manuscript suggests approximately six mutations per category on average
+**within each group's total**, or roughly **600 mutations per group** for a
+96-category spectrum, as a practical planning guideline [@williams-rpdmm].
+This is approximate, not a guarantee: examine category sparsity, replicate
+counts, and fit failures. For sparse data, consider a biologically justified
+coarser resolution (such as base_6), more data, or the manuscript's
+replicate-level rank-permutation approach. That rank-permutation test is
+not an available `method` of `spectra_comparison()` in this implementation;
+do not fall back to pooled G² simply because counts are low.
+
+## G²: pooled contingency-table comparison (historical method)
+
+With `method = "g2"`, mutation counts are summed across samples within each
+group to form a $K \times 2$ contingency table [@piegorsch-1994]. The null
+hypothesis is that the two groups have identical mutation-category
+proportions. The likelihood-ratio statistic is
+
+$$
+G^2=2\sum_{k=1}^{K}\sum_{g=1}^{2}
+Y_{kg}\log\left(\frac{Y_{kg}}{E_{kg}}\right),
+$$
+
+where $Y_{kg}$ is the observed count and $E_{kg}$ is its expected count under
+the null. Categories with zero counts in both groups are removed. For large
+counts, the statistic is compared with a $\chi^2$ distribution with $K-1$
+degrees of freedom. When $N/(K-1)<20$, where $N$ is the total count across
+both groups, MutSeqR instead applies an F-distribution approximation to
+improve small-count error control.
+
+The pooled test assumes independent mutation observations and does not model
+replicate-to-replicate heterogeneity. With overdispersed ECS data, pooling
+can create **pseudoreplication**, underestimating uncertainty and producing
+false positives as mutation counts increase, even when groups have the same
+underlying spectrum [@williams-rpdmm]. The small-count F approximation does
+not address this problem. G² remains available for historical comparisons,
+but RP-DMM is recommended for new replicated ECS analyses.
+
+Use `mf_type = "min"` to reduce repeated counting of potentially clonal
+mutations. This is sensible for both methods, but MFmin does **not** guarantee
+independence or remove biological variability between samples.
 
 ### General Usage: spectra_comparison()
 
-The first step is to calculate the per-group mf data at the desired
-subtype_resolution using `calculate_mf()`. This mf_data is then supplied
-to `spectra_comparison()` along with a contrasts table to specify the
-comparisons.
+First use `calculate_mf()` at the desired subtype resolution. For RP-DMM,
+**calculate counts per sample and retain the experimental metadata**; a
+pooled per-group table cannot recover replicate variability. The comparison
+uses `sum_min` or `sum_max`, selected with `mf_type`, rather than mutation
+frequencies or sequencing-depth-normalized proportions.
 
-Specify the variable(s) by which you wish to make your comparisons with The
-`exp_variable` parameter. Variable(s) must be present in your mf_data.
+Specify grouping columns with `exp_variable`. Supply `contrasts` as a
+two-column data frame or a path to a text file (`cont_sep` defaults to a tab).
+Each row compares the first entry with the second. For multiple experimental
+variables, join levels with a colon in the order of `exp_variable`, for example
+`"Low:liver"` for `exp_variable = c("dose_group", "tissue")`.
 
-The `contrasts` parameter can be supplied with either a data
-frame or a filepath to a text file that will be loaded into R. The table must
-consist of two columns, each containing levels within the fixed_effects.
-The level in the first column will be compared to the level in the second
-column for each row. If you are comparing across more than one experiment
-variable, seperate the levels of the variables you are comparing with a
-colon. A level from each variable must be included in all values of the
-contrasts table.
-
-The function will output the $G^{2}$ statistic and p-value for each specified
-comparison listed in `constrasts`. P-values are adjusted for multiple comparison using the Sidak method (**adj_p.value**).
-
-_Example 1. In our example data, we are studying the mutagenic effect of_
-_BaP. Our samples were exposed to three doses of a BaP (Low, Medium, High),_
-_or to the vehicle control (Control). We will compare the base_6 snv subtypes,_
-_along with non-snv variants, of each of the three dose groups to the control._
-_In this way we can investigate if exposure to BaP leads to significant spectral_
-_differences._
-
-First, we will calculate the per-dose MF at the 6-based subtype resolution.
-This function will use the mutation sums (sum_min) that are calculated for
-each subtype per dose group, not the frequencies.
+_Example 1. Compare each BaP dose group (Low, Medium, High) with the vehicle
+control using base_6 SNV subtypes and non-SNV variants._
 
 ```{r calculate-mf-6}
-# load example data:
+# Load example mutation data.
 example_data <- eh[["EH9861"]]
 
-# Calculate the MF per dose at the base_6 resolution.
-mf_data_6_dose <- calculate_mf(
+# Preserve biological samples and their dose-group metadata.
+mf_data_6_sample <- calculate_mf(
   mutation_data = example_data,
-  cols_to_group = "dose_group",
-  subtype_resolution = "base_6"
+  cols_to_group = "sample",
+  subtype_resolution = "base_6",
+  retain_metadata_cols = "dose_group"
 )
+```
+
+Choose a ridge penalty for these sample-level base_6 counts, using the same
+MFmin count definition as the comparison below:
+
+```{r select-lambda6}
+lambda_selection_6 <- select_optimal_lambda(
+  mf_data = mf_data_6_sample,
+  mf_type = "min"
+)
+if (!is.finite(lambda_selection_6$best_lambda)) {
+  stop("Unable to select lambda: no candidate has a finite LOOCV score.")
+}
+lambda_selection_6$best_lambda
+lambda_selection_6$scores
 ```
 
 Next, we generate a contrasts table that specifies the pairwise comparisons we
 want to perform. We will compare each BaP dose group to the control group.
 
 ```{r contrasts1}
-# Create the contrast table
 contrasts_table <- data.frame(
   col1 = c("Low", "Medium", "High"),
   col2 = c("Control", "Control", "Control")
@@ -134,35 +241,62 @@ contrasts_table <- data.frame(
 Finally, run the analysis.
 
 ```{r spectra-comp6}
-# Run the analysis
+set.seed(123)
 ex_spectra_comp <- spectra_comparison(
-  mf_data = mf_data_6_dose,
+  mf_data = mf_data_6_sample,
   exp_variable = "dose_group",
-  contrasts = contrasts_table
+  mf_type = "min",
+  contrasts = contrasts_table,
+  method = "rpdmm",
+  lambda = lambda_selection_6$best_lambda,
+  n_boot = 500
+)
+
+# Adjust the primary hybrid p-values across the three planned comparisons.
+ex_spectra_comp$p_hybrid_holm <- stats::p.adjust(
+  ex_spectra_comp$p_hybrid, method = "holm"
 )
 ```
 
-**Table 23.** Comparison of the 6-base subtype Proportions between Dose Groups.
+**Table 23.** Replicate-aware comparisons of base_6 mutation spectra between
+BaP dose groups and the control.
 
 ```{r spectra-comp-table, echo=FALSE}
-DT::datatable(
-  ex_spectra_comp,
-  options = list(
-    columnDefs = list(
-      list(targets = c("p.value", "adj_p.value"),
-           render = DT::JS("function(data, type, row, meta) { return data.toExponential(2); }"))
-    ),
-    rowCallback = DT::JS(
-      "function(row, data, dataIndex) {
-        $('td:eq(2)', row).css('text-align', 'right'); // Align the content of column 2 to the right
-      }"
-    )
-  )
-) %>%
-  DT::formatRound(columns = "G2", digits = 2)
+DT::datatable(ex_spectra_comp, options = list(scrollX = TRUE)) %>%
+  DT::formatSignif(
+    columns = c("p_value", "p_hybrid", "p_penalized", "p_hybrid_holm"),
+    digits = 3
+  ) %>%
+  DT::formatRound(columns = c("lrt", "lrt_penalized"), digits = 2)
 ```
 
-Our results indicate the base-6 mutation spectra of all three BaP dose groups are significantly different from that of the control group.
+RP-DMM returns `p_hybrid` (also provided as `p_value`), `p_penalized`, their
+corresponding statistics, and concentration estimates (`theta_g1`, `theta_g2`,
+`theta_shared`). Its p-values are **not automatically adjusted for multiple
+comparisons**. The returned `Significance` column uses the unadjusted hybrid
+p-value; use `p_hybrid_holm` in this example to assess the family of three
+comparisons. An adjusted p-value below the chosen significance level supports
+a difference under the joint model. A non-significant result does not prove
+that spectra are identical. Missing results require investigation of count
+sufficiency and model fitting.
+
+For a historical G² comparison, the same sample-level input can be pooled
+internally by selecting `method = "g2"`. Do not supply RP-DMM tuning arguments
+for this method:
+
+```{r spectra-comp-g2, eval=FALSE}
+ex_spectra_comp_g2 <- spectra_comparison(
+  mf_data = mf_data_6_sample,
+  exp_variable = "dose_group",
+  mf_type = "min",
+  contrasts = contrasts_table,
+  method = "g2"
+)
+```
+
+G² returns `G2`, `p.value`, and `adj_p.value`; the last is automatically
+adjusted across the supplied contrasts using the Sidak method. Its adjustment
+does not correct the pooled test's failure to account for replicate variability.
 
 ## Mutational Signatures
 
