@@ -177,8 +177,8 @@ test_that("public comparison aligns subtype rows across groups", {
     dose = c("g1", "g1", "g2", "g2"),
     sum_min = c(10, 5, 8, 7)
   )
-  result <- spectra_comparison_rpdmm(
-    mf_data, "dose", data.frame("g1", "g2")
+  result <- spectra_comparison(
+    mf_data, "dose", contrasts = data.frame("g1", "g2"), method = "rpdmm"
   )
   expect_equal(rownames(observed$g1), c("A", "B", "C"))
   expect_equal(rownames(observed$g2), c("A", "B", "C"))
@@ -193,8 +193,9 @@ test_that("public spectra comparison retains old columns and adds both tests", {
   mf_data$dose <- rep(c("control", "treated"), each = 9)
   mf_data$sum_min <- rep(c(20, 5, 2, 15, 8, 3, 25, 4, 1), 2)
   set.seed(244)
-  result <- spectra_comparison_rpdmm(
-    mf_data, "dose", data.frame("control", "treated"), n_boot = 2
+  result <- spectra_comparison(
+    mf_data, "dose", contrasts = data.frame("control", "treated"),
+    method = "rpdmm", n_boot = 2
   )
   expect_equal(nrow(result), 1L)
   expect_equal(result$p_value, result$p_hybrid)

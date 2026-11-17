@@ -1,24 +1,24 @@
 # MutSeqR 1.1.1
 
+- `spectra_comparison()` selects the existing G2 test with `method = "g2"`
+  (the default) or the replicate-aware test with `method = "rpdmm"`.
+  The summary report now uses the latter with sample-level counts and a ridge
+  penalty chosen by `select_optimal_lambda()` using leave-one-out
+  cross-validation.
+  The replicate-aware, ridge-penalized Dirichlet-multinomial model accounts
+  for replicate heterogeneity and overdispersion in high-count ECS data.
+  The L2 penalty stabilizes category probability estimates, and hybrid and
+  penalized likelihood-ratio tests are calibrated by parametric bootstrap.
+  Both methods share input validation, contrast handling, and count-matrix
+  preparation while retaining pooled G2 counts and per-sample RPDMM counts.
+
 - `import_vcf_data()` reads FORMAT `SITE_DP`, the read depth at the record's
   position that [vartovcf](https://github.com/clintval/vartovcf) writes, as
   the `total_depth`. Records whose `total_depth` is missing take it from `AD`
   or `DP`.
 
-- Introduced `spectra_comparison_rpdmm()` as an alternative to
-  `spectra_comparison()` for comparing mutation spectra. Unlike the classical
-  G2-based comparison, it uses a replicate-aware, ridge-penalized
-  Dirichlet-multinomial model to account for replicate heterogeneity and
-  overdispersion in high-count ECS data. The L2 penalty stabilizes category
-  probability estimates, and hybrid and penalized likelihood-ratio tests are
-  calibrated by parametric bootstrap.
-- Introduced `spectra_comparison_rpdmm()` as an alternative to
-  `spectra_comparison()` for comparing mutation spectra. Unlike the classical
-  G2-based comparison, it uses a replicate-aware, ridge-penalized
-  Dirichlet-multinomial model to account for replicate heterogeneity and
-  overdispersion in high-count ECS data. The L2 penalty stabilizes category
-  probability estimates, and hybrid and penalized likelihood-ratio tests are
-  calibrated by parametric bootstrap.
+- `spectra_comparison_rpdmm()` is now internal. Use
+  `spectra_comparison(method = "rpdmm")` instead of calling it directly.
 
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's

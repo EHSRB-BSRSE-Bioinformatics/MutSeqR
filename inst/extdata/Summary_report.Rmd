@@ -897,19 +897,29 @@ Results[["6-base MF per Exp-variable"]] <- mf6_expv
 ### 6-base Spectral Comparison
 
 ```{r spectra-comparison, eval=!is.null(params$exp_variable)&!is.null(params$contrasts)}
+base6_lambda <- select_optimal_lambda(mf_data = mf6, mf_type = "min")
+if (!is.finite(base6_lambda$best_lambda)) {
+  stop("Unable to select a ridge penalty for the 6-base spectral comparison: all candidate lambda fits failed.")
+}
 base6_comp <- spectra_comparison(
-  mf_data = mf6_expv,
+  mf_data = mf6,
   exp_variable = params$exp_variable,
+  mf_type = "min",
   contrasts = params$contrasts,
-  cont_sep = params$cont_sep
+  cont_sep = params$cont_sep,
+  method = "rpdmm",
+  lambda = base6_lambda$best_lambda
 )
 DT::datatable(
   base6_comp,
-  caption = "6-base spectral comparison",
+  caption = paste0(
+    "6-base spectral comparison (replicate-aware Dirichlet-multinomial; lambda = ",
+    base6_lambda$best_lambda, ")"
+  ),
   options = list(
     columnDefs = list(
-      list(targets = c("p.value", "adj_p.value"),
-           render = JS("function(data, type, row, meta) { return data.toExponential(2); }"))
+      list(targets = c("p_value", "p_hybrid", "p_penalized"),
+           render = JS("function(data, type, row, meta) { return typeof data === 'number' ? data.toExponential(2) : data; }"))
     ),
     rowCallback = JS(
       "function(row, data, dataIndex) {
@@ -918,7 +928,8 @@ DT::datatable(
     )
   )
 ) %>%
-  DT::formatRound(columns = "G2", digits = 2)
+  DT::formatRound(columns = c("lrt", "lrt_penalized", "theta_g1", "theta_g2",
+                              "theta_shared"), digits = 2)
 
 Results[["6-base Spectral Comparison"]] <- base6_comp
 ```
