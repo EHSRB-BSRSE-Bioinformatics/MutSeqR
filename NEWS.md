@@ -12,6 +12,13 @@
   overdispersion in high-count ECS data. The L2 penalty stabilizes category
   probability estimates, and hybrid and penalized likelihood-ratio tests are
   calibrated by parametric bootstrap.
+- Introduced `spectra_comparison_rpdmm()` as an alternative to
+  `spectra_comparison()` for comparing mutation spectra. Unlike the classical
+  G2-based comparison, it uses a replicate-aware, ridge-penalized
+  Dirichlet-multinomial model to account for replicate heterogeneity and
+  overdispersion in high-count ECS data. The L2 penalty stabilizes category
+  probability estimates, and hybrid and penalized likelihood-ratio tests are
+  calibrated by parametric bootstrap.
 
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's
