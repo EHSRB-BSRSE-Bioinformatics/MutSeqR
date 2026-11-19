@@ -10,61 +10,214 @@ spectra_comparison(
   mf_type = "min",
   contrasts,
   cont_sep = "\\t",
-  method = c("g2", "rpdmm"),
+  method = "g2",
   lambda = 1,
   n_boot = 500
 )
 }
 \arguments{
-\item{mf_data}{A data frame from \code{\link[=calculate_mf]{calculate_mf()}} at the desired subtype
-resolution, with the experimental variable columns, a subtype column, and
-\code{sum_min} or \code{sum_max}. For \code{method = "rpdmm"}, the data must be calculated
-per sample and include a \code{sample} column.}
+\item{mf_data}{A data frame produced by \code{\link[=calculate_mf]{calculate_mf()}} at the desired
+subtype resolution. Must contain the experimental variable columns, a
+subtype column, and \code{sum_min} or \code{sum_max}. For \code{method = "rpdmm"},
+calculate counts per sample and retain the experimental group metadata.}
 
 \item{exp_variable}{Column names of the experimental variables to compare.}
 
-\item{mf_type}{Mutation count type, either \code{"min"} (default) or \code{"max"}.}
+\item{mf_type}{Mutation count type, either \code{"min"} (default) or \code{"max"}.
+"min"` is recommended to reduce repeated counting of potentially clonal
+mutations.}
 
-\item{contrasts}{A two-column data frame or path to a file specifying the
-group levels to compare. For multiple experimental variables, join the
-levels in each entry with a colon, in the order given by \code{exp_variable}.}
+\item{contrasts}{A two-column data frame or path to a headerless text
+file specifying the groups to compare. Each row compares the group in
+the first column with the group in the second. For multiple experimental
+variables, join their levels with a colon in the order specified by
+\code{exp_variable}, for example \code{"Low:liver"}.}
 
 \item{cont_sep}{Delimiter for a contrasts file. Defaults to a tab.}
 
-\item{method}{Comparison method: \code{"g2"} (default) or \code{"rpdmm"}.}
+\item{method}{Comparison method: \code{"g2"} (the current default, retained
+for compatibility) or \code{"rpdmm"} (recommended). Explicitly select
+\code{method = "rpdmm"} to account for variation between biological replicates.}
 
-\item{lambda}{Ridge penalty strength for \code{"rpdmm"}. Higher values increase
-shrinkage towards a uniform distribution. Defaults to 1.}
+\item{lambda}{Ridge penalty strength for RP-DMM. Defaults to \code{1}.
+Larger values shrink estimated subtype proportions more strongly
+towards equal proportions, helping stabilize estimates for categories
+with limited data. A value of \code{0} disables the penalty.
+\code{\link[=select_optimal_lambda]{select_optimal_lambda()}} can assist with choosing this value;
+\code{spectra_comparison()} does not select it automatically. Use the same
+subtype resolution and count type for selection and comparison.}
 
-\item{n_boot}{Number of bootstrap iterations for \code{"rpdmm"}. Defaults to 500.
-\code{lambda} and \code{n_boot} cannot be supplied when \code{method = "g2"}.}
+\item{n_boot}{Number of parametric bootstrap iterations for RP-DMM.
+Defaults to \code{500}; must be a positive integer. Larger values improve
+p-value precision but increase computation time. Use \code{\link[=set.seed]{set.seed()}}
+before the comparison to make bootstrap results reproducible.}
 }
 \value{
-A data frame with one row per contrast. The \code{"g2"} method returns
-the G2 statistic and a Sidak-adjusted p-value. The \code{"rpdmm"} method returns
-hybrid and penalized bootstrap p-values, likelihood-ratio statistics, and
-concentration estimates. Its p-values are not adjusted for multiple
-comparisons.
+A data frame with one row per contrast.
+
+For \code{"g2"}, results include \code{G2}, the unadjusted \code{p.value}, and the
+Sidak-adjusted \code{adj_p.value}. The \code{Significance} column is based on
+the adjusted p-value.
+
+For \code{"rpdmm"}, results include:
+\itemize{
+\item \code{p-value}: the primary bootstrap p-value from hybrid evaluation.
+\item \code{lrt}: the hybrid comparison statistic.
+\item \code{p_penalized} and \code{lrt_penalized}: the bootstrap p-value and
+statistic from fully penalized evaluation.
+\item \code{theta_g1}, \code{theta_g2}, and \code{theta_shared}: concentration
+estimates for each group and the shared null model. Smaller values
+indicate greater variation between sample spectra.
+}
+RP-DMM p-values are not adjusted for multiple comparisons. Its
+\code{Significance} column uses the unadjusted hybrid p-value.
 }
 \description{
-Compare mutation spectra using either a G2 contingency-table test or a
-replicate-aware, ridge-penalized Dirichlet-multinomial model.
+Compare the relative proportions of mutation subtypes between experimental
+groups using a pooled G2 test or a replicate-aware, ridge-penalized
+Dirichlet-multinomial model (RP-DMM).
 }
 \details{
-The G2 test pools counts across samples and assumes independent
-observations. Large mutation counts can inflate its statistic and cause
-false positives. The \code{"rpdmm"} method accounts for
-replicate heterogeneity and overdispersion.
+RP-DMM is recommended for new analyses with independent biological
+replicates because it accounts for variation between samples. G2 pools
+mutation counts across samples and does not account for this variation,
+which can lead to false-positive results.
+
+\subsection{Why RP-DMM is recommended}{
+Samples from the same experimental group naturally differ in their
+mutation spectra. RP-DMM retains each sample as a separate observation
+and estimates this between-sample variation, also called overdispersion.
+The biological samples provide the independent replication, rather
+than treating every mutation as an independent experimental replicate.
+
+G2 instead combines all samples within each group into a pooled
+spectrum. When sample spectra vary more than the pooled model allows,
+the test underestimates uncertainty. Increasing mutation counts can
+then produce very small p-values even when the groups share the same
+underlying spectrum. This problem is called pseudoreplication.
+Using minimum mutation counts reduces repeated counting of potentially
+clonal mutations but does not resolve between-sample variability.
+}
+
+\subsection{RP-DMM: statistical approach}{
+For each sample, subtype counts are modeled using a
+Dirichlet-multinomial distribution, conditional on that sample's total
+mutation count. The model estimates a mean spectrum and a concentration
+parameter describing how closely sample spectra cluster around that
+mean. Smaller concentration values indicate greater overdispersion.
+
+Parameters are estimated using a ridge-penalized likelihood. The
+penalty is scaled by the total mutation count in the fitted data and
+shrinks subtype probabilities towards a uniform spectrum. This helps
+stabilize estimation without requiring equally frequent mutation types.
+
+For each contrast, the null model assumes a shared spectrum and
+concentration parameter. The alternative allows both parameters to
+differ between groups. The hybrid statistic evaluates the unpenalized
+likelihood at the ridge-fitted parameters. The fully penalized statistic
+includes the penalty during both fitting and evaluation.
+The hybrid result is recommended as the primary inference, particularly
+for high-dimensional spectra where fully penalized evaluation can
+reduce sensitivity to genuine differences.
+
+P-values are calculated by parametric bootstrap rather than a standard
+chi-squared approximation. Data are simulated from the fitted null
+model while preserving each sample's total mutation count. The models
+are refitted to each simulated dataset to determine how often a
+statistic at least as large as the observed statistic occurs.
+Failed bootstrap fits are excluded; at least half the requested
+iterations must succeed for p-values to be returned.
+}
+
+\subsection{G2: statistical approach and limitations}{
+Subtype counts are summed across samples within each group to form
+a subtype-by-group contingency table. Categories absent from both
+groups are removed. The G2 likelihood-ratio statistic compares observed
+counts with those expected if the groups have identical subtype
+proportions.
+
+P-values use a chi-squared approximation when the combined mutation
+count divided by the number of retained subtypes minus one exceeds
+20. Otherwise, an F approximation is used. This small-count adjustment
+does not account for variation between biological replicates.
+G2 remains available for historical comparisons, but is not recommended
+as the primary analysis of replicated, overdispersed ECS data.
+}
+
+\subsection{Choosing inputs and interpreting results}{
+RP-DMM requires independent biological replicates and sufficient
+mutation counts for the chosen subtype resolution. Technical replicates
+and repeated measurements from the same biological unit should not
+be treated as independent samples. This interface does not model
+paired or repeated-measures designs.
+
+Ridge regularization does not make arbitrarily sparse spectra reliable.
+Consider a coarser subtype resolution or additional data when many
+categories have very few mutations. Low mutation counts alone are
+not a reason to prefer pooled G2.
+
+A significant RP-DMM result can reflect differences in mean subtype
+proportions, between-sample variability, or both, because both sets of
+parameters may differ under the alternative. Examine sample-level
+spectra alongside the test results. Neither method identifies which
+individual subtypes differ, and a non-significant result does not
+establish that spectra are equivalent.
+
+For multiple RP-DMM contrasts, adjust the primary hybrid p-values
+separately, for example using \code{\link[stats:p.adjust]{stats::p.adjust()}} with \code{method = "holm"}.
+Adjusting pooled G2 p-values does not correct pseudoreplication.
+}
+
+\subsection{Reporting the analysis}{
+Report the MutSeqR version, comparison method, biological replicate
+numbers, subtype resolution, mutation count type, and planned contrasts.
+For RP-DMM, also report \code{lambda}, how it was chosen, \code{n_boot}, the
+random seed, whether hybrid or fully penalized results were used,
+and any multiple-comparison adjustment.
+
+Example methods wording for RP-DMM:
+"Mutation spectra were compared using the replicate-aware,
+ridge-penalized Dirichlet-multinomial model implemented in MutSeqR
+\link{version}. Sample-level \link{subtype resolution} mutation counts were
+calculated using \link{minimum/maximum} counting. For each pairwise
+comparison, a model sharing subtype probabilities and a concentration
+parameter between groups was compared with models allowing
+group-specific parameters. Parameters were estimated using a ridge
+penalty of lambda = \link{value; selection procedure}. Hybrid statistics
+were evaluated using the unpenalized likelihood at the penalized
+estimates, and p-values were obtained using \link[scales:number]{number} parametric
+bootstrap iterations, preserving sample mutation totals.
+P-values were \link{adjustment procedure}."
+
+For historical G2 analyses, state that counts were pooled within
+groups, identify the subtype resolution and count type, describe
+the chi-squared/F approximation rule, and report the Sidak adjustment.
+Cite the relevant statistical method in addition to MutSeqR.
+}
 }
 \examples{
 mf_example <- readRDS(
-  system.file("extdata", "Example_files", "mf_data_6.rds",
+  system.file("extdata", "Example_files", "mf_data_6_sample.rds",
               package = "MutSeqR")
 )
 contrasts <- data.frame(
   col1 = c("Low", "Medium", "High"),
   col2 = rep("Control", 3)
 )
-spectra_comparison(mf_example, "dose_group", contrasts = contrasts)
 
+\dontrun{
+set.seed(123)
+results <- spectra_comparison(
+  mf_data = mf_example,
+  exp_variable = "dose_group",
+  mf_type = "min",
+  contrasts = contrasts,
+  method = "rpdmm",
+  lambda = 1,
+  n_boot = 500
+)
+results$p_hybrid_holm <- stats::p.adjust(
+  results$p_hybrid, method = "holm"
+)
+}
 }

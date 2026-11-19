@@ -918,7 +918,7 @@ DT::datatable(
   ),
   options = list(
     columnDefs = list(
-      list(targets = c("p_value", "p_hybrid", "p_penalized"),
+      list(targets = c("p_value", "p_penalized"),
            render = JS("function(data, type, row, meta) { return typeof data === 'number' ? data.toExponential(2) : data; }"))
     ),
     rowCallback = JS(

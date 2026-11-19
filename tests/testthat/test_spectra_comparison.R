@@ -208,9 +208,9 @@ test_that("comparison returns corrected hybrid and penalized bootstrap results",
   counts <- matrix(c(20, 5, 2, 15, 8, 3, 25, 4, 1), 3)
   set.seed(242)
   result <- run_penalized_comparison(counts, counts[, 3:1], n_boot = 4)
-  expect_equal(result$p_value, result$p_hybrid)
+  expect_false("p_hybrid" %in% names(result))
   expect_true(all(is.finite(unlist(result))))
-  expect_true(result$p_hybrid >= 1 / 5 && result$p_hybrid <= 1)
+  expect_true(result$p_value >= 1 / 5 && result$p_value <= 1)
   expect_true(result$p_penalized >= 1 / 5 && result$p_penalized <= 1)
   expect_gte(result$lrt, 0)
   expect_gte(result$lrt_penalized, 0)
@@ -221,7 +221,7 @@ test_that("comparison failures return complete missing results", {
   counts <- matrix(c(20, 5, 15, 8), 2)
   local_mocked_bindings(fit_dmm_fast = function(...) NULL)
   result <- run_penalized_comparison(counts, counts, n_boot = 2)
-  expect_named(result, c("p_hybrid", "p_penalized", "lrt", "lrt_penalized",
+  expect_named(result, c("p_penalized", "lrt", "lrt_penalized",
                          "theta_shared", "theta_g1", "theta_g2", "p_value"),
                ignore.order = TRUE)
   expect_true(all(is.na(unlist(result))))
@@ -238,7 +238,7 @@ test_that("failed bootstrap fits are excluded and require half to succeed", {
   })
   set.seed(243)
   result <- run_penalized_comparison(counts, counts, n_boot = 2)
-  expect_true(result$p_hybrid %in% c(0.5, 1))
+  expect_true(result$p_value %in% c(0.5, 1))
   expect_true(result$p_penalized %in% c(0.5, 1))
   calls <- 0L
   fail_after <- 3L

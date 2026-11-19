@@ -22,10 +22,9 @@ perform.}
 \value{
 A list containing:
 \itemize{
-\item \code{p_value}: Numeric. The bootstrapped p-value.
+\item \code{p_value}: Numeric. The hybrid bootstrap p-value.
 \item \code{lrt}: Numeric. The observed unpenalized Likelihood Ratio Test
 statistic.
-\item \code{p_hybrid}: Numeric. Alias for \code{p_value}.
 \item \code{p_penalized}: Numeric. The penalized bootstrap p-value.
 \item \code{lrt_penalized}: Numeric. The observed penalized LRT statistic.
 \item \code{theta_g1}: Numeric. The optimized robust theta

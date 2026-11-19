@@ -218,10 +218,9 @@ rdm_fast <- function(depths, p, theta) {
 #' perform.
 #' @returns A list containing:
 #' \itemize{
-#'   \item \code{p_value}: Numeric. The bootstrapped p-value.
+#'   \item \code{p_value}: Numeric. The hybrid bootstrap p-value.
 #'   \item \code{lrt}: Numeric. The observed unpenalized Likelihood Ratio Test
 #' statistic.
-#'   \item \code{p_hybrid}: Numeric. Alias for \code{p_value}.
 #'   \item \code{p_penalized}: Numeric. The penalized bootstrap p-value.
 #'   \item \code{lrt_penalized}: Numeric. The observed penalized LRT statistic.
 #'   \item \code{theta_g1}: Numeric. The optimized robust theta
@@ -239,7 +238,7 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
   depths1 <- colSums(g1)
   depths2 <- colSums(g2)
   failed_result <- list(
-    p_value = NA_real_, p_hybrid = NA_real_, p_penalized = NA_real_,
+    p_value = NA_real_, p_penalized = NA_real_,
     lrt = NA_real_, lrt_penalized = NA_real_,
     theta_shared = NA_real_, theta_g1 = NA_real_, theta_g2 = NA_real_
   )
@@ -301,7 +300,7 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
   }
   if (valid_boots < n_boot * 0.5) return(failed_result)
   result <- list(
-    p_hybrid = (1 + sum(boot_hybrid[seq_len(valid_boots)] >= observed_hybrid)) /
+    p_value = (1 + sum(boot_hybrid[seq_len(valid_boots)] >= observed_hybrid)) /
       (valid_boots + 1),
     p_penalized = (1 + sum(boot_penalized[seq_len(valid_boots)] >=
                            observed_penalized)) / (valid_boots + 1),
@@ -309,7 +308,6 @@ run_penalized_comparison <- function(g1, g2, lambda = 1.0, n_boot = 500) {
     theta_shared = null_parameters$theta,
     theta_g1 = parameters_g1$theta, theta_g2 = parameters_g2$theta
   )
-  result$p_value <- result$p_hybrid
   result
 }
 

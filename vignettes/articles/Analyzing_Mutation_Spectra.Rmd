@@ -253,8 +253,8 @@ ex_spectra_comp <- spectra_comparison(
 )
 
 # Adjust the primary hybrid p-values across the three planned comparisons.
-ex_spectra_comp$p_hybrid_holm <- stats::p.adjust(
-  ex_spectra_comp$p_hybrid, method = "holm"
+ex_spectra_comp$p_value_holm <- stats::p.adjust(
+  ex_spectra_comp$p_value, method = "holm"
 )
 ```
 
@@ -264,17 +264,17 @@ BaP dose groups and the control.
 ```{r spectra-comp-table, echo=FALSE}
 DT::datatable(ex_spectra_comp, options = list(scrollX = TRUE)) %>%
   DT::formatSignif(
-    columns = c("p_value", "p_hybrid", "p_penalized", "p_hybrid_holm"),
+    columns = c("p_value", "p_penalized", "p_value_holm"),
     digits = 3
   ) %>%
   DT::formatRound(columns = c("lrt", "lrt_penalized"), digits = 2)
 ```
 
-RP-DMM returns `p_hybrid` (also provided as `p_value`), `p_penalized`, their
+RP-DMM returns the hybrid p-value (`p_value`), `p_penalized`, their
 corresponding statistics, and concentration estimates (`theta_g1`, `theta_g2`,
 `theta_shared`). Its p-values are **not automatically adjusted for multiple
 comparisons**. The returned `Significance` column uses the unadjusted hybrid
-p-value; use `p_hybrid_holm` in this example to assess the family of three
+p-value; use `p_value_holm` in this example to assess the family of three
 comparisons. An adjusted p-value below the chosen significance level supports
 a difference under the joint model. A non-significant result does not prove
 that spectra are identical. Missing results require investigation of count
