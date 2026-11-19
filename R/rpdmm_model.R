@@ -101,31 +101,31 @@ joint_dm_target <- function(pars, x, lambda) {
 #' @returns A numeric gradient matching the order of \code{pars}.
 #' @keywords internal
 joint_dm_gradient <- function(pars, x, lambda) {
-  params <- extract_params(pars)
-  raw_p <- params$p
-  clipped_p <- pmax(raw_p, 1e-12)
-  p <- clipped_p / sum(clipped_p)
-  theta <- params$theta
+  K <- nrow(x)
+  theta <- exp(pars[1])
+  phi <- c(pars[-1], 0)
+  p <- softmax_stable(phi)
   alpha <- p * theta
-  depths <- colSums(x)
+  N_j <- colSums(x)
+
   g_alpha <- rowSums(digamma(x + alpha) - digamma(alpha))
-  weighted_gradient <- sum(p * g_alpha)
 
+  d_ll_dtheta_direct <- sum(digamma(theta) - digamma(N_j + theta))
+  d_ll_dtheta_alpha <- sum(p * g_alpha)
+  d_ll_dtheta <- d_ll_dtheta_direct + d_ll_dtheta_alpha
+  d_ll_d_logtheta <- theta * d_ll_dtheta # d_ll_d_logtheta
 
-  theta_gradient <- theta * ( # d_ll_d_logtheta
-    sum(digamma(theta) - digamma(depths + theta)) + weighted_gradient
-  )
+  weighted_g <- sum(p * g_alpha)
+  d_ll_d_phi <- theta * p * (g_alpha - weighted_g)
+  d_ll_d_phi <- d_ll_d_phi[-K]
 
-  deviation <- p - 1 / nrow(x)
-  p_gradient <- theta * g_alpha - 2 * lambda * sum(x) * deviation
-  clipped_gradient <- (
-    p_gradient - sum(p * p_gradient)
-  ) / sum(clipped_p)
-  raw_gradient <- clipped_gradient * (raw_p > 1e-12)
-  phi_gradient <- raw_p * (
-    raw_gradient - sum(raw_p * raw_gradient)
-  )
-  c(-theta_gradient, -phi_gradient[-nrow(x)])
+  total_counts <- sum(x)
+  u <- 1 / K
+  weighted_penalty <- sum(p * (p - u))
+  d_penalty_d_phi <- 2 * lambda * total_counts * p * ((p - u) - weighted_penalty)
+  d_penalty_d_phi <- d_penalty_d_phi[-K]
+
+  c(-d_ll_d_logtheta, -d_ll_d_phi + d_penalty_d_phi)
 }
 
 #' @title fit_dmm_fast

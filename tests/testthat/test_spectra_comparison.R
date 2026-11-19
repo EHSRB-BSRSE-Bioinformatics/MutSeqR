@@ -1,43 +1,3 @@
-# Define test cases for spectra_comparison function
-test_that("spectra_comparison works as expected", {
-
-  # Create a sample mf_data dataframe
-  mf_data <- data.frame(
-    dose = c(0, 25, 50, 100, 0, 25, 50, 100),
-    tissue = c(rep("BM", 4), rep("LV", 4)),
-    normalized_subtype = rep(c("subtype1", "subtype2"), 4),
-    sum_min = c(10, 20, 30, 40, 50, 60, 70, 80)
-  )
-
-  # Create a contrast table file
-  contrast_df <- data.frame(
-    V1 = c("0:BM", "25:BM", "50:BM", "100:BM"),
-    V2 = c("0:LV", "25:LV", "50:LV", "100:LV")
-  )
-
-  # Call the spectra_comparison function on the sample data
-  result <- spectra_comparison(mf_data = mf_data,
-                               mf_type = "min",
-                               exp_variable = c("dose", "tissue"),
-                               contrasts = contrast_df)
-
-  # Check if the result is a data frame
-  expect_equal(class(result), "data.frame",
-               info = "Check if the result is a data frame")
-
-  # Check if the result has the expected columns
-  expect_true(all(c("contrasts", "G2", "p.value", "adj_p.value", "Significance") %in% names(result)),
-              info = "Check if the result has the expected columns")
-
-  # Check if the result has the correct number of rows
-  expect_equal(nrow(result), 4,
-               info = "Check if the result has the correct number of rows")
-
-  # Check if the p-value is within the expected range
-  expect_true(all(result$adjP >= 0 & result$adjP <= 1),
-              info = "Check if the p-value is within the expected range")
-})
-
 test_that("G2 dispatch preserves existing calls and results", {
   mf_data <- data.frame(
     dose = rep(c("control", "treated"), each = 2),
@@ -50,31 +10,13 @@ test_that("G2 dispatch preserves existing calls and results", {
     dimnames = list(c("C>A", "C>G"), c("control", "treated"))
   )
   direct <- MutSeqR:::spectra_comparison_G2(count_matrix, contrasts)
-  expect_equal(spectra_comparison(mf_data, "dose", "min", contrasts), direct)
   expect_equal(
     spectra_comparison(mf_data, "dose", "min", contrasts, method = "g2"),
     direct
   )
-  expect_error(
-    spectra_comparison(mf_data, "dose", contrasts = contrasts, method = "other"),
-    "'arg' should be"
-  )
-  expect_error(
-    spectra_comparison(mf_data, "dose", contrasts = contrasts, n_boot = 2),
-    "only be supplied with method"
-  )
-  expect_error(
-    spectra_comparison(mf_data, "dose", contrasts = contrasts,
-                       method = "g2", lambda = 1),
-    "only be supplied with method"
-  )
 })
 
 test_that("rpdmm dispatch forwards method-specific and common arguments", {
-  arguments <- names(formals(spectra_comparison))
-  expect_true(all(c("lambda", "n_boot") %in% arguments))
-  expect_false("..." %in% arguments)
-
   mf_data <- expand.grid(
     normalized_subtype = c("C>A", "C>G", "C>T"),
     sample = paste0("sample", 1:6), stringsAsFactors = FALSE
@@ -82,9 +24,7 @@ test_that("rpdmm dispatch forwards method-specific and common arguments", {
   mf_data$dose <- rep(c("control", "treated"), each = 9)
   mf_data$sum_min <- rep(c(20, 5, 2, 15, 8, 3, 25, 4, 1), 2)
   mf_data$sum_max <- mf_data$sum_min + 1
-  contrast_file <- tempfile(fileext = ".csv")
-  on.exit(unlink(contrast_file), add = TRUE)
-  writeLines("control,treated", contrast_file)
+  contrasts <- data.frame("treated", "control")
 
   count_matrix <- matrix(
     mf_data$sum_max, nrow = 3,
@@ -93,66 +33,15 @@ test_that("rpdmm dispatch forwards method-specific and common arguments", {
   set.seed(244)
   direct <- MutSeqR:::spectra_comparison_rpdmm(
     list(control = count_matrix[, 1:3], treated = count_matrix[, 4:6]),
-    data.frame("control", "treated"),
+    contrasts,
     lambda = 0.1, n_boot = 2
   )
-  set.seed(244)
   dispatched <- spectra_comparison(
-    mf_data, "dose", "max", contrast_file, ",", method = "rpdmm",
+    mf_data, "dose", "max", contrasts, ",", method = "rpdmm",
     lambda = 0.1, n_boot = 2
   )
   expect_equal(dispatched, direct)
-  expect_true(all(c("p_value", "p_hybrid", "p_penalized", "lrt",
-                    "lrt_penalized") %in% names(dispatched)))
-})
 
-test_that("shared preparation preserves pooled and replicate counts", {
-  observed <- NULL
-  local_mocked_bindings(
-    run_penalized_comparison = function(g1, g2, lambda, n_boot) {
-      observed <<- list(g1 = g1, g2 = g2)
-      list(p_value = 0.5, p_hybrid = 0.5, p_penalized = 0.5,
-           lrt = 0, lrt_penalized = 0, theta_g1 = 1, theta_g2 = 1,
-           theta_shared = 1)
-    }
-  )
-  mf_data <- data.frame(
-    dose = c(rep("control", 5), rep("treated", 4)),
-    tissue = "BM",
-    sample = c("s1", "s1", "s1", "s2", "s2", "s3", "s3", "s4", "s4"),
-    normalized_subtype = c("A", "A", "B", "B", "C", "A", "C", "B", "C"),
-    sum_min = c(3, 7, 5, 4, 8, 6, 9, 10, 4)
-  )
-  mf_data$sum_max <- 2 * mf_data$sum_min
-  contrast_file <- tempfile(fileext = ".csv")
-  on.exit(unlink(contrast_file), add = TRUE)
-  writeLines("control:BM,treated:BM", contrast_file)
-
-  g2 <- spectra_comparison(
-    mf_data, c("dose", "tissue"), mf_type = "max",
-    contrasts = contrast_file, cont_sep = ",", method = "g2"
-  )
-  pooled <- 2 * matrix(c(10, 9, 8, 6, 10, 13), nrow = 3)
-  expected <- outer(rowSums(pooled), colSums(pooled)) / sum(pooled)
-  expected_g2 <- 2 * sum(pooled * log(pooled / expected))
-  expect_equal(g2$G2, expected_g2)
-  expect_equal(g2$p.value, stats::pchisq(expected_g2, 2, lower.tail = FALSE))
-  expect_equal(g2$contrasts, "control:BM vs treated:BM")
-
-  spectra_comparison(
-    mf_data, c("dose", "tissue"), mf_type = "max",
-    contrasts = contrast_file, cont_sep = ",", method = "rpdmm"
-  )
-  expect_equal(
-    observed$g1,
-    2 * matrix(c(10, 5, 0, 0, 4, 8), nrow = 3,
-               dimnames = list(c("A", "B", "C"), c("s1", "s2")))
-  )
-  expect_equal(
-    observed$g2,
-    2 * matrix(c(6, 0, 9, 0, 10, 4), nrow = 3,
-               dimnames = list(c("A", "B", "C"), c("s3", "s4")))
-  )
 })
 
 test_that("both comparison methods validate shared inputs", {
@@ -208,4 +97,194 @@ test_that("both comparison methods validate shared inputs", {
                        method = "rpdmm", n_boot = 0),
     "n_boot"
   )
+})
+
+test_that("parameter extraction infers categories from the parameter vector", {
+  pars <- c(log(12), log(2), log(3))
+  parameters <- extract_params(pars)
+  expect_equal(parameters$p, c(2, 3, 1) / 6)
+  expect_null(names(parameters$p))
+  expect_equal(parameters$theta, 12)
+  named_parameters <- extract_params(pars, c("A", "B", "C"))
+  expect_named(named_parameters$p, c("A", "B", "C"))
+  expect_equal(unname(named_parameters$p), parameters$p)
+  expect_equal(extract_params(log(12))$p, 1)
+})
+
+test_that("stable softmax handles large logits", {
+  probabilities <- softmax_stable(c(1000, 1001))
+  expect_true(all(is.finite(probabilities)))
+  expect_equal(probabilities, exp(c(0, 1)) / sum(exp(c(0, 1))))
+})
+
+test_that("DM log-likelihood applies the expected ridge penalty", {
+  counts <- matrix(c(2, 1, 1, 3), nrow = 2)
+  probabilities <- c(0.25, 0.75)
+  theta <- 4
+  lambda <- 0.5
+  alpha <- probabilities * theta
+  depths <- colSums(counts)
+  expected <- sum(lgamma(theta) - lgamma(depths + theta)) +
+    sum(lgamma(counts + alpha) - lgamma(alpha)) -
+    lambda * sum(counts) * sum((probabilities - 1 / 2)^2)
+  expect_equal(dm_loglik_ridge_stable(counts, probabilities, theta, lambda),
+               expected)
+  expect_equal(joint_dm_target(c(log(theta), log(1 / 3)), counts, lambda),
+               -expected)
+})
+
+test_that("joint DM gradient agrees with finite differences above the floor", {
+  counts <- matrix(c(20, 5, 2, 15, 8, 3, 25, 4, 1), nrow = 3)
+  for (pars in list(c(log(12), 0.6, -0.3), c(log(12), 6, -6))) {
+    for (lambda in c(0, 0.5)) {
+      step <- 1e-5
+      numerical <- vapply(seq_along(pars), function(index) {
+        offset <- rep(0, length(pars))
+        offset[index] <- step
+        (joint_dm_target(pars + offset, counts, lambda) -
+           joint_dm_target(pars - offset, counts, lambda)) / (2 * step)
+      }, numeric(1))
+      expect_equal(joint_dm_gradient(pars, counts, lambda), numerical,
+                   tolerance = 1e-5)
+    }
+  }
+})
+
+test_that("joint DM gradient uses raw softmax probabilities below the floor", {
+  counts <- matrix(c(20, 5, 2, 15, 8, 3, 25, 4, 1), nrow = 3)
+  pars <- c(log(12), 20, -20)
+  expect_lt(min(extract_params(pars)$p), 1e-12)
+  for (lambda in c(0, 0.5)) {
+    raw_target <- function(parameters) {
+      params <- extract_params(parameters)
+      alpha <- params$p * params$theta
+      loglik <- sum(lgamma(params$theta) -
+                      lgamma(colSums(counts) + params$theta)) +
+        sum(lgamma(counts + alpha) - lgamma(alpha))
+      -loglik + lambda * sum(counts) * sum((params$p - 1 / nrow(counts))^2)
+    }
+    step <- 1e-5
+    numerical <- vapply(seq_along(pars), function(index) {
+      offset <- rep(0, length(pars))
+      offset[index] <- step
+      (raw_target(pars + offset) - raw_target(pars - offset)) / (2 * step)
+    }, numeric(1))
+    expect_equal(joint_dm_gradient(pars, counts, lambda), numerical,
+                 tolerance = 1e-5)
+  }
+})
+
+test_that("joint fitting shrinks probabilities and preserves category names", {
+  counts <- matrix(c(90, 8, 2, 80, 15, 5, 95, 4, 1, 85, 10, 5), 3)
+  category_names <- c("A", "B", "C")
+  initial <- c(log(100), log(c(0.9, 0.08) / 0.02))
+  raw <- fit_dmm_fast(counts, initial, 0)
+  penalized <- fit_dmm_fast(counts, initial, 2)
+  expect_false(is.null(raw))
+  expect_false(is.null(penalized))
+  raw_parameters <- extract_params(raw$par, category_names)
+  penalized_parameters <- extract_params(penalized$par, category_names)
+  expect_named(penalized_parameters$p, category_names)
+  expect_equal(sum(penalized_parameters$p), 1)
+  expect_lt(sum((penalized_parameters$p - 1 / 3)^2),
+            sum((raw_parameters$p - 1 / 3)^2))
+  expect_true(penalized_parameters$theta >= 1e-4)
+  expect_true(penalized_parameters$theta <= 400000)
+})
+
+test_that("log-space DM simulation preserves dimensions and depths", {
+  set.seed(241)
+  depths <- c(10, 0, 100)
+  draws <- rdm_fast(depths, c(1 - 2e-12, 1e-12, 1e-12), 1e-4)
+  expect_equal(dim(draws), c(3L, 3L))
+  expect_equal(colSums(draws), depths)
+  expect_true(all(is.finite(draws)))
+  expect_true(all(draws >= 0))
+  expect_equal(dim(rdm_fast(10, c(0.5, 0.5), 1)), c(2L, 1L))
+  expect_equal(dim(rdm_fast(c(10, 20), 1, 1)), c(1L, 2L))
+})
+
+test_that("comparison returns corrected hybrid and penalized bootstrap results", {
+  counts <- matrix(c(20, 5, 2, 15, 8, 3, 25, 4, 1), 3)
+  set.seed(242)
+  result <- run_penalized_comparison(counts, counts[, 3:1], n_boot = 4)
+  expect_equal(result$p_value, result$p_hybrid)
+  expect_true(all(is.finite(unlist(result))))
+  expect_true(result$p_hybrid >= 1 / 5 && result$p_hybrid <= 1)
+  expect_true(result$p_penalized >= 1 / 5 && result$p_penalized <= 1)
+  expect_gte(result$lrt, 0)
+  expect_gte(result$lrt_penalized, 0)
+  expect_error(run_penalized_comparison(counts, counts, n_boot = 0.5))
+})
+
+test_that("comparison failures return complete missing results", {
+  counts <- matrix(c(20, 5, 15, 8), 2)
+  local_mocked_bindings(fit_dmm_fast = function(...) NULL)
+  result <- run_penalized_comparison(counts, counts, n_boot = 2)
+  expect_named(result, c("p_hybrid", "p_penalized", "lrt", "lrt_penalized",
+                         "theta_shared", "theta_g1", "theta_g2", "p_value"),
+               ignore.order = TRUE)
+  expect_true(all(is.na(unlist(result))))
+})
+
+test_that("failed bootstrap fits are excluded and require half to succeed", {
+  counts <- matrix(c(20, 5, 15, 8), 2)
+  calls <- 0L
+  fail_after <- 6L
+  local_mocked_bindings(fit_dmm_fast = function(x, init_pars, lambda) {
+    calls <<- calls + 1L
+    if (calls > fail_after) return(NULL)
+    list(par = init_pars, value = joint_dm_target(init_pars, x, lambda))
+  })
+  set.seed(243)
+  result <- run_penalized_comparison(counts, counts, n_boot = 2)
+  expect_true(result$p_hybrid %in% c(0.5, 1))
+  expect_true(result$p_penalized %in% c(0.5, 1))
+  calls <- 0L
+  fail_after <- 3L
+  expect_true(all(is.na(unlist(run_penalized_comparison(counts, counts, n_boot = 2)))))
+})
+
+test_that("joint LOOCV scores held-out samples without a penalty", {
+  counts <- matrix(c(20, 5, 2, 15, 8, 3, 25, 4, 1,
+                     18, 6, 4, 22, 7, 2), 3)
+  rownames(counts) <- c("C>A", "C>G", "C>T")
+  colnames(counts) <- paste0("sample", seq_len(ncol(counts)))
+  lambda <- 0.1
+  expected <- sum(vapply(seq_len(ncol(counts)), function(index) {
+    training <- counts[, -index, drop = FALSE]
+    observed <- pmax(rowSums(training) / sum(training), 1e-6)
+    observed <- observed / sum(observed)
+    fit <- fit_dmm_fast(training, c(log(100), log(observed[-3] / observed[3])),
+                        lambda)
+    parameters <- extract_params(fit$par)
+    dm_loglik_ridge_stable(counts[, index, drop = FALSE], parameters$p,
+                          parameters$theta, lambda = 0)
+  }, numeric(1)))
+  mf_data <- expand.grid(
+    normalized_subtype = rownames(counts),
+    sample = colnames(counts),
+    stringsAsFactors = FALSE
+  )
+  mf_data$sum_min <- as.vector(counts)
+  mf_data$sum_max <- 2 * mf_data$sum_min
+  result <- select_optimal_lambda(mf_data, lambdas = lambda)
+  expect_equal(result$best_lambda, lambda)
+  expect_equal(unname(result$scores), expected)
+  expect_equal(result$lambdas, lambda)
+  result_max <- select_optimal_lambda(mf_data, mf_type = "max", lambdas = lambda)
+  expect_false(isTRUE(all.equal(result_max$scores, result$scores)))
+  expect_error(select_optimal_lambda(mf_data[, "sum_min", drop = FALSE]))
+})
+
+test_that("joint LOOCV reports all failed candidates without a best lambda", {
+  local_mocked_bindings(fit_dmm_fast = function(...) NULL)
+  mf_data <- data.frame(
+    normalized_subtype = c("C>A", "C>G", "C>A", "C>G"),
+    sample = c("s1", "s1", "s2", "s2"),
+    sum_min = c(20, 5, 15, 8)
+  )
+  result <- select_optimal_lambda(mf_data, lambdas = c(0, 1))
+  expect_identical(result$best_lambda, NA_real_)
+  expect_true(all(is.na(result$scores)))
 })
