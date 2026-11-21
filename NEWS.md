@@ -11,6 +11,13 @@
   penalized likelihood-ratio tests are calibrated by parametric bootstrap.
   Both methods share input validation, contrast handling, and count-matrix
   preparation while retaining pooled G2 counts and per-sample RPDMM counts.
+  
+- `filter_mut()` matches `custom_filter_val` as a literal substring (not as a
+  regular expression) in rows of `custom_filter_col`, including a FILTER
+  label among semicolon-separated labels, and warns when a value matches no
+  rows. Empty or missing `custom_filter_val` values now produce an error. A
+  `custom_filter_col` given without `custom_filter_val` now stops, where it
+  silently filtered on the column's first value.
 
 - `import_vcf_data()` reads FORMAT `SITE_DP`, the read depth at the record's
   position that [vartovcf](https://github.com/clintval/vartovcf) writes, as
