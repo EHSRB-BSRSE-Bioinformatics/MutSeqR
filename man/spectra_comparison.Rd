@@ -175,10 +175,11 @@ For RP-DMM, also report \code{lambda}, how it was chosen, \code{n_boot}, the
 random seed, whether hybrid or fully penalized results were used,
 and any multiple-comparison adjustment.
 
-Example methods wording for RP-DMM:
+Example methods wording for RP-DMM. Each bracketed item is a
+placeholder to replace with the value from your own analysis:
 "Mutation spectra were compared using the replicate-aware,
 ridge-penalized Dirichlet-multinomial model implemented in MutSeqR
-[version]. Sample-level [subtype resolution] mutation counts were
+(version [X.Y.Z]). Sample-level [subtype resolution] mutation counts were
 calculated using [minimum/maximum] counting. For each pairwise
 comparison, a model sharing subtype probabilities and a concentration
 parameter between groups was compared with models allowing
@@ -192,7 +193,8 @@ P-values were [adjustment procedure]."
 For historical G2 analyses, state that counts were pooled within
 groups, identify the subtype resolution and count type, describe
 the chi-squared/F approximation rule, and report the Sidak adjustment.
-Cite the relevant statistical method in addition to MutSeqR.
+Cite the relevant statistical method in addition to MutSeqR; use
+\code{citation("MutSeqR")} for the package reference.
 }
 }
 \examples{
