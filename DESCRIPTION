@@ -1,7 +1,7 @@
 Package: MutSeqR
 Title: Analysis of Error-Corrected Sequencing Data for Mutation Detection
-Version: 1.1.1
-Date: 2026-09-24
+Version: 1.1.2
+Date: 2026-11-21
 Authors@R: c(
     person("Annette E.", "Dodge",
       email = "annette.dodge@hc-sc.gc.ca",

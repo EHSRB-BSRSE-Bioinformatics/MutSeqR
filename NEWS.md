@@ -1,4 +1,4 @@
-# MutSeqR 1.1.1
+# MutSeqR 1.1.2
 
 - `spectra_comparison()` selects the existing G2 test with `method = "g2"`
   (the default) or the replicate-aware test with `method = "rpdmm"`.
@@ -11,7 +11,7 @@
   penalized likelihood-ratio tests are calibrated by parametric bootstrap.
   Both methods share input validation, contrast handling, and count-matrix
   preparation while retaining pooled G2 counts and per-sample RPDMM counts.
-  
+
 - `filter_mut()` matches `custom_filter_val` as a literal substring (not as a
   regular expression) in rows of `custom_filter_col`, including a FILTER
   label among semicolon-separated labels, and warns when a value matches no
@@ -19,13 +19,15 @@
   `custom_filter_col` given without `custom_filter_val` now stops, where it
   silently filtered on the column's first value.
 
+- `spectra_comparison_rpdmm()` is now internal. Use
+  `spectra_comparison(method = "rpdmm")` instead of calling it directly.
+
+# MutSeqR 1.1.1
+
 - `import_vcf_data()` reads FORMAT `SITE_DP`, the read depth at the record's
   position that [vartovcf](https://github.com/clintval/vartovcf) writes, as
   the `total_depth`. Records whose `total_depth` is missing take it from `AD`
   or `DP`.
-
-- `spectra_comparison_rpdmm()` is now internal. Use
-  `spectra_comparison(method = "rpdmm")` instead of calling it directly.
 
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's
