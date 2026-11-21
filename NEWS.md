@@ -1,5 +1,17 @@
 # MutSeqR 1.1.1
 
+- `spectra_comparison()` selects the existing G2 test with `method = "g2"`
+  (the default) or the replicate-aware test with `method = "rpdmm"`.
+  The summary report now uses the latter with sample-level counts and a ridge
+  penalty chosen by `select_optimal_lambda()` using leave-one-out
+  cross-validation.
+  The replicate-aware, ridge-penalized Dirichlet-multinomial model accounts
+  for replicate heterogeneity and overdispersion in high-count ECS data.
+  The L2 penalty stabilizes category probability estimates, and hybrid and
+  penalized likelihood-ratio tests are calibrated by parametric bootstrap.
+  Both methods share input validation, contrast handling, and count-matrix
+  preparation while retaining pooled G2 counts and per-sample RPDMM counts.
+  
 - `filter_mut()` matches `custom_filter_val` as a literal substring (not as a
   regular expression) in rows of `custom_filter_col`, including a FILTER
   label among semicolon-separated labels, and warns when a value matches no
@@ -12,10 +24,12 @@
   the `total_depth`. Records whose `total_depth` is missing take it from `AD`
   or `DP`.
 
+- `spectra_comparison_rpdmm()` is now internal. Use
+  `spectra_comparison(method = "rpdmm")` instead of calling it directly.
+
 - `import_vcf_data()` takes `alt_depth` from the alternate allele depths of
   `AD` when a VCF has no `VD`, instead of setting every record's
   `alt_depth` to 1. Records without an alternate allele get 0.
-  
 - `import_vcf_data()` no longer counts a missing `AD` value as 0 reads. A
   record whose `AD` lacks the reference depth, as VarDict writes for MNV and
   complex calls, takes its `total_depth` from `DP`, so its `vaf` is no
@@ -24,7 +38,6 @@
 - `import_vcf_data()` reads an INFO `CONTEXT_3mer`, as
   [vartovcf](https://github.com/clintval/vartovcf) writes with
   `--context-3mer`, as the `context`, so no BS genome is needed.
-  
 - `import_vcf_data()` keeps the VCF `FILTER` value in a new `filter` column,
   which `filter_mut()` can act on with `custom_filter_col = "filter"`.
 
