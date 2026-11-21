@@ -178,16 +178,16 @@ and any multiple-comparison adjustment.
 Example methods wording for RP-DMM:
 "Mutation spectra were compared using the replicate-aware,
 ridge-penalized Dirichlet-multinomial model implemented in MutSeqR
-\link{version}. Sample-level \link{subtype resolution} mutation counts were
-calculated using \link{minimum/maximum} counting. For each pairwise
+[version]. Sample-level [subtype resolution] mutation counts were
+calculated using [minimum/maximum] counting. For each pairwise
 comparison, a model sharing subtype probabilities and a concentration
 parameter between groups was compared with models allowing
 group-specific parameters. Parameters were estimated using a ridge
-penalty of lambda = \link{value; selection procedure}. Hybrid statistics
+penalty of lambda = [value; selection procedure]. Hybrid statistics
 were evaluated using the unpenalized likelihood at the penalized
-estimates, and p-values were obtained using \link[scales:number]{number} parametric
+estimates, and p-values were obtained using [number] parametric
 bootstrap iterations, preserving sample mutation totals.
-P-values were \link{adjustment procedure}."
+P-values were [adjustment procedure]."
 
 For historical G2 analyses, state that counts were pooled within
 groups, identify the subtype resolution and count type, describe
